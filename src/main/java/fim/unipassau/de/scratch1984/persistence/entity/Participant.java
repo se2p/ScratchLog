@@ -1,0 +1,119 @@
+package fim.unipassau.de.scratch1984.persistence.entity;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import java.sql.Timestamp;
+
+/**
+ * An entity representing a participation in an experiment.
+ */
+@Entity
+@IdClass(ParticipantId.class)
+public class Participant {
+
+    /**
+     * The {@link User} representing the participant.
+     */
+    @Id
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id")
+    private User user;
+
+    /**
+     * The {@link Experiment} in which the user participated.
+     */
+    @Id
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id")
+    private Experiment experiment;
+
+    /**
+     * The timestamp at which the user started the experiment.
+     */
+    @Column(name = "start")
+    private Timestamp start;
+
+    /**
+     * The timestamp at which the user finished the experiment.
+     */
+    @Column(name = "finish")
+    private Timestamp end;
+
+    /**
+     * Returns the participating user.
+     *
+     * @return The respective user.
+     */
+    public User getUser() {
+        return user;
+    }
+
+    /**
+     * Sets the participating user.
+     *
+     * @param user The user to be set.
+     */
+    public void setUser(final User user) {
+        this.user = user;
+    }
+
+    /**
+     * Returns the experiment in which the user participated.
+     *
+     * @return The respective experiment.
+     */
+    public Experiment getExperiment() {
+        return experiment;
+    }
+
+    /**
+     * Sets the experiment in which the user participated.
+     *
+     * @param experiment The experiment to be set.
+     */
+    public void setExperiment(final Experiment experiment) {
+        this.experiment = experiment;
+    }
+
+    /**
+     * Returns the timestamp at which the user started the experiment.
+     *
+     * @return The starting time.
+     */
+    public Timestamp getStart() {
+        return start;
+    }
+
+    /**
+     * Sets the time at which the user started the experiment.
+     *
+     * @param start The starting time to be set.
+     */
+    public void setStart(final Timestamp start) {
+        this.start = start;
+    }
+
+    /**
+     * Returns the timestamp at which the user finished the experiment.
+     *
+     * @return The finishing time.
+     */
+    public Timestamp getEnd() {
+        return end;
+    }
+
+    /**
+     * Sets the time at which the user finished the experiment.
+     *
+     * @param end The finishing time to be set.
+     */
+    public void setEnd(final Timestamp end) {
+        this.end = end;
+    }
+
+}
