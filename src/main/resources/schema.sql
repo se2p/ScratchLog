@@ -4,7 +4,7 @@
 
 -- scratch1984.experiment definition
 
-CREATE TABLE `experiment` (
+CREATE TABLE IF NOT EXISTS `experiment` (
                               `id` int NOT NULL AUTO_INCREMENT,
                               `name` varchar(255) NOT NULL,
                               `description` text,
@@ -16,7 +16,7 @@ CREATE TABLE `experiment` (
 
 -- scratch1984.`user` definition
 
-CREATE TABLE `user` (
+CREATE TABLE IF NOT EXISTS `user` (
                         `id` int NOT NULL AUTO_INCREMENT,
                         `username` varchar(255) NOT NULL,
                         `role` varchar(255) NOT NULL DEFAULT 'PARTICIPANT',
@@ -28,13 +28,13 @@ CREATE TABLE `user` (
                         `email` varchar(255) DEFAULT NULL,
                         PRIMARY KEY (`id`),
                         UNIQUE KEY `username` (`username`),
-                        UNIQUE KEY `secret` (`secret`),
+                        UNIQUE KEY `secret` (`secret`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- scratch1984.block_event definition
 
-CREATE TABLE `block_event` (
+CREATE TABLE IF NOT EXISTS `block_event` (
                                `id` int NOT NULL AUTO_INCREMENT,
                                `user_id` int NOT NULL,
                                `experiment_id` int NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE `block_event` (
 
 -- scratch1984.click_event definition
 
-CREATE TABLE `click_event` (
+CREATE TABLE IF NOT EXISTS `click_event` (
                                `id` int NOT NULL AUTO_INCREMENT,
                                `user_id` int NOT NULL,
                                `experiment_id` int NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE `click_event` (
 
 -- scratch1984.file definition
 
-CREATE TABLE `file` (
+CREATE TABLE IF NOT EXISTS `file` (
                         `id` int NOT NULL AUTO_INCREMENT,
                         `user_id` int NOT NULL,
                         `experiment_id` int NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE `file` (
 
 -- scratch1984.participant definition
 
-CREATE TABLE `participant` (
+CREATE TABLE IF NOT EXISTS `participant` (
                                `user_id` int NOT NULL,
                                `experiment_id` int NOT NULL,
                                `start` timestamp NULL DEFAULT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE `participant` (
 
 -- scratch1984.resource_event definition
 
-CREATE TABLE `resource_event` (
+CREATE TABLE IF NOT EXISTS `resource_event` (
                                   `id` int NOT NULL AUTO_INCREMENT,
                                   `user_id` int NOT NULL,
                                   `experiment_id` int NOT NULL,

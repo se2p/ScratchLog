@@ -52,14 +52,14 @@ public class File {
      * The {@link User} who added the file.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "user_id")
     private User user;
 
     /**
      * The {@link Experiment} in which the file was added.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "experiment_id")
     private Experiment experiment;
 
     /**

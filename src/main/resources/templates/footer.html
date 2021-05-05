@@ -6,7 +6,22 @@
 </head>
 <body>
 <div th:fragment="footer">
-    <p id="footer" class="footer fixed-bottom">&copy; 2021</p>
+    <div id="footer" class="footer">
+        <p>
+            Copyright &copy; 2021 Scratch 1984<br>
+            <span th:text="#{address}"></span><br>
+            <!--Link to the chair's page-->
+            <a class="link" href="https://www.fim.uni-passau.de/lehrstuhl-fuer-software-engineering-ii/"
+               target="_blank" th:text="#{chair}">
+            </a><br>
+            Prof. Dr. Gordon Fraser
+        </p>
+        <!--Link to the university's general legal notice-->
+        <a class="link" href="https://www.uni-passau.de/impressum/" target="_blank" th:text="#{legal}"></a>
+        <!--Link to the university's general privacy statement-->
+        <a class="link" href="https://www.uni-passau.de/datenschutzerklaerung/" target="_blank" th:text="#{privacy}">
+        </a>
+    </div>
 </div>
 </body>
 </html>

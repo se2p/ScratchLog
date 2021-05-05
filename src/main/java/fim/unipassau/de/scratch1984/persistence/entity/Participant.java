@@ -21,7 +21,7 @@ public class Participant {
      */
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "user_id")
     private User user;
 
     /**
@@ -29,7 +29,7 @@ public class Participant {
      */
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "experiment_id")
     private Experiment experiment;
 
     /**

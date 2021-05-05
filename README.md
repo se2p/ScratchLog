@@ -22,8 +22,8 @@ npm install
 
 #### Configuration
 
-edit `application.properties` in the `resources`folder
-
+- edit `application.properties` in the `resources`folder
+- change `@CrossOrigin(origin = "<url>")` in the `EventRestController` to the application URL
 
 ## Build and Deployment
 

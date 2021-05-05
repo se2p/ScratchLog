@@ -29,14 +29,14 @@ public class BlockEvent {
      * The {@link User} who caused the block event.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "user_id")
     private User user;
 
     /**
      * The {@link Experiment} during which the block event occurred.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "experiment_id")
     private Experiment experiment;
 
     /**

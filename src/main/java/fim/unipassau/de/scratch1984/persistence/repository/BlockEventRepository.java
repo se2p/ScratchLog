@@ -18,8 +18,8 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
      * @param experiment The experiment to search for.
      * @return The xml data or {@code null}, if no entry could be found.
      */
-    @Query(nativeQuery = true, value = "SELECT b.xml FROM block_event AS b WHERE b.user_id = :user AND b.experiment_id "
-            + "= :experiment ORDER BY b.date ASC;")
+    @Query(nativeQuery = true, value = "SELECT b.xml FROM block_event AS b WHERE b.user_id = :uId AND b.experiment_id "
+            + "= :expId ORDER BY b.date ASC;")
     String[] getXMlForUserAndExperiment(@Param("uId") Integer user, @Param("expId") Integer experiment);
 
     /**
@@ -29,8 +29,8 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
      * @param experiment The experiment to search for.
      * @return The json data or {@code null}, if no entry could be found.
      */
-    @Query(nativeQuery = true, value = "SELECT b.json FROM block_event AS b WHERE b.user_id = :user AND b.experiment_id"
-            + " = :experiment ORDER BY b.date ASC;")
+    @Query(nativeQuery = true, value = "SELECT b.json FROM block_event AS b WHERE b.user_id = :uId AND b.experiment_id"
+            + " = :expId ORDER BY b.date ASC;")
     String[] getJsonForUserAndExperiment(@Param("uId") Integer user, @Param("expId") Integer experiment);
 
 }

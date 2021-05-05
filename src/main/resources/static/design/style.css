@@ -1,15 +1,25 @@
 body {
     overflow-x: hidden;
-    height: 100vh;
+    height: 100%;
 }
 
 #header {
-    height: 10vh;
+    position: absolute;
+    height: 60px;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
 }
 
 #content {
-    overflow-y: scroll;
-    height: 80vh;
+    position: absolute;
+    top: 60px;
+    bottom: 170px;
+    left: 0;
+    right: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .col-sm-2 {
@@ -21,11 +31,32 @@ body {
     padding: 1%;
 }
 
+.align-vcenter {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
 #footer {
+    position: absolute;
+    height: 170px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
     text-align: center;
     background-color: #212529;
     color: white;
     margin: 0;
-    padding: 1%;
-    height: 10vh;
+    padding-top: 1%;
+}
+
+.link,
+.link:hover {
+    text-decoration: none;
+    color: #ffa600;
+    margin: 1%;
+}
+
+.navbar-brand {
+    margin: 1%;
 }

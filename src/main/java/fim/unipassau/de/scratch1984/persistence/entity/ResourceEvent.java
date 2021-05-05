@@ -28,14 +28,14 @@ public class ResourceEvent {
      * The {@link User} who caused the resource event.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "user_id")
     private User user;
 
     /**
      * The {@link Experiment} during which the resource event occurred.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "experiment_id")
     private Experiment experiment;
 
     /**

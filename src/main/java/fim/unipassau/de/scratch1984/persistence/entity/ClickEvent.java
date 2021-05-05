@@ -28,14 +28,14 @@ public class ClickEvent {
      * The {@link User} who caused the click event.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "user_id")
     private User user;
 
     /**
      * The {@link Experiment} during which the click event occurred.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "experiment_id")
     private Experiment experiment;
 
     /**

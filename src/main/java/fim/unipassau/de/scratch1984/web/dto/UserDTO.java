@@ -158,6 +158,24 @@ public class UserDTO {
     }
 
     /**
+     * Returns the user's password.
+     *
+     * @return The user's hashed password.
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * Sets the user's password.
+     *
+     * @param password The password to be set.
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    /**
      * Returns the user's secret.
      *
      * @return The user's secret.
