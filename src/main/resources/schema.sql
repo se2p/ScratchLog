@@ -53,29 +53,6 @@ CREATE TABLE IF NOT EXISTS `block_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
--- scratch1984.click_event definition
-
-CREATE TABLE IF NOT EXISTS `click_event` (
-                               `id` int NOT NULL AUTO_INCREMENT,
-                               `user_id` int NOT NULL,
-                               `experiment_id` int NOT NULL,
-                               `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                               `event_type` varchar(255) NOT NULL,
-                               `event` varchar(255) NOT NULL,
-                               `x_or_key` varchar(255) NOT NULL,
-                               `y_or_code` varchar(255) NOT NULL,
-                               `class` varchar(255) DEFAULT NULL,
-                               `node_name` varchar(255) DEFAULT NULL,
-                               `button` varchar(255) DEFAULT NULL,
-                               `data_id` varchar(255) DEFAULT NULL,
-                               PRIMARY KEY (`id`),
-                               KEY `user_id` (`user_id`),
-                               KEY `experiment_id` (`experiment_id`),
-                               CONSTRAINT `click_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
-                               CONSTRAINT `click_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-
 -- scratch1984.file definition
 
 CREATE TABLE IF NOT EXISTS `file` (
@@ -146,22 +123,6 @@ group by
     `b`.`user_id`,
     `b`.`experiment_id`,
     `b`.`event`;
-
-
--- scratch1984.user_num_click_events source
-
-CREATE OR REPLACE VIEW `scratch1984`.`user_num_click_events` (`user`, `experiment`, `count`, `event`) AS
-select
-    `c`.`user_id` AS `user_id`,
-    `c`.`experiment_id` AS `experiment_id`,
-    count(`c`.`event`) AS `COUNT(c.event)`,
-    `c`.`event` AS `event`
-from
-    `scratch1984`.`click_event` `c`
-group by
-    `c`.`user_id`,
-    `c`.`experiment_id`,
-    `c`.`event`;
 
 
 -- scratch1984.user_num_resource_events source

@@ -9,7 +9,6 @@ import java.util.Objects;
  */
 public class ResourceEventDTO {
 
-    //TODO just use String instead?
     /**
      * All possible event types for a resource event.
      */

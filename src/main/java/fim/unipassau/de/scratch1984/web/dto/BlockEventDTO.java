@@ -9,36 +9,44 @@ import java.util.Objects;
  */
 public class BlockEventDTO {
 
-    //TODO just use String instead?
     /**
      * All possible event types for a block event.
      */
     public enum BlockEventType {
-        /**
-         * The event was caused by a direct interaction with a block.
-         */
-        BLOCK,
-
         /**
          * The event was caused by a mouse click.
          */
         CLICK,
 
         /**
-         * The event was caused by a sprite rename.
+         * The event was caused by the renaming of a variable or sprite.
          */
-        RENAME
-
-        //TODO alternativ:
-        /*
-        CLICK,
         RENAME,
+
+        /**
+         * The event was caused by the creation of a block, comment or variable.
+         */
         CREATE,
+
+        /**
+         * The event was caused by the change of an existent block or comment.
+         */
         CHANGE,
+
+        /**
+         * The event was caused by a block being moved.
+         */
         MOVE,
+
+        /**
+         * The event was caused by the deletion of a block, variable or comment.
+         */
         DELETE,
+
+        /**
+         * The event was caused by dragging a block.
+         */
         DRAG
-        */
     }
 
     /**
@@ -144,25 +152,6 @@ public class BlockEventDTO {
          * The user deleted a comment.
          */
         COMMENT_DELETE
-
-        //TODO alternativ:
-        /*
-        GREENFLAG,
-        STOPALL,
-        SPRITE,
-        STACK,
-        CREATE,
-        CHANGE,
-        MOVE,
-        DRAGOUTSIDE,
-        ENDDRAGONTO,
-        ENDDRAG,
-        DELETE,
-        VAR_GLOBAL,
-        VAR_LOCAL,
-        VAR,
-        COMMENT
-        */
     }
 
     /**

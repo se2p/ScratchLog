@@ -1,15 +1,12 @@
 package fim.unipassau.de.scratch1984.application.service;
 
 import fim.unipassau.de.scratch1984.persistence.entity.BlockEvent;
-import fim.unipassau.de.scratch1984.persistence.entity.ClickEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.ResourceEvent;
 import fim.unipassau.de.scratch1984.persistence.repository.BlockEventRepository;
-import fim.unipassau.de.scratch1984.persistence.repository.ClickEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
-import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
@@ -36,11 +33,6 @@ public class EventService {
     private final BlockEventRepository blockEventRepository;
 
     /**
-     * The click event repository to use for click event queries.
-     */
-    private final ClickEventRepository clickEventRepository;
-
-    /**
      * The resource event repository to use for resource event queries.
      */
     private final ResourceEventRepository resourceEventRepository;
@@ -50,17 +42,14 @@ public class EventService {
      *
      * @param eventCountRepository The event count repository to use.
      * @param blockEventRepository The block event repository to use.
-     * @param clickEventRepository The click event repository to use.
      * @param resourceEventRepository The resource event repository to use.
      */
     @Autowired
     public EventService(final EventCountRepository eventCountRepository,
                         final BlockEventRepository blockEventRepository,
-                        final ClickEventRepository clickEventRepository,
                         final ResourceEventRepository resourceEventRepository) {
         this.eventCountRepository = eventCountRepository;
         this.blockEventRepository = blockEventRepository;
-        this.clickEventRepository = clickEventRepository;
         this.resourceEventRepository = resourceEventRepository;
     }
 
@@ -70,14 +59,6 @@ public class EventService {
      * @param blockEventDTO The dto containing the event information to set.
      */
     public void saveBlockEvent(final BlockEventDTO blockEventDTO) {
-    }
-
-    /**
-     * Creates a new click event with the given parameters in the database.
-     *
-     * @param clickEventDTO The dto containing the event information to set.
-     */
-    public void saveClickEvent(final ClickEventDTO clickEventDTO) {
     }
 
     /**
@@ -150,16 +131,6 @@ public class EventService {
      * @return The new block event containing the information passed in the DTO.
      */
     private BlockEvent createBlockEvent(final BlockEventDTO blockEventDTO) {
-        return null;
-    }
-
-    /**
-     * Creates a {@link ClickEvent} with the given information of the {@link ClickEventDTO}.
-     *
-     * @param clickEventDTO The dto containing the information.
-     * @return The new block event containing the information passed in the DTO.
-     */
-    private ClickEvent createClickEvent(final ClickEventDTO clickEventDTO) {
         return null;
     }
 

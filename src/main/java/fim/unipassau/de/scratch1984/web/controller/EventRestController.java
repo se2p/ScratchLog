@@ -3,7 +3,6 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
-import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -52,15 +51,6 @@ public class EventRestController {
     }
 
     /**
-     * Saves the click event data passed in the request body.
-     *
-     * @param data The string containing the click event data.
-     */
-    @PostMapping("/click")
-    public void storeClickEvent(@RequestBody final String data) {
-    }
-
-    /**
      * Saves the resource event data passed in the request body.
      *
      * @param data The string containing the resource event data.
@@ -85,16 +75,6 @@ public class EventRestController {
      * @return The new block event DTO containing the information.
      */
     private BlockEventDTO createBlockEventDTO(final String data) {
-        return null;
-    }
-
-    /**
-     * Creates a {@link ClickEventDTO} with the given data.
-     *
-     * @param data The data passed in the request body.
-     * @return The new click event DTO containing the information.
-     */
-    private ClickEventDTO createClickEventDTO(final String data) {
         return null;
     }
 

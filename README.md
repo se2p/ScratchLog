@@ -9,13 +9,13 @@ This is the Scratch instrumentation that will log your every move!
 - Apache Maven (JARHELL!!!!)
 - MySQL
 - npm (only for developement)
+- for data acquisition: instrumented Scratch GUI and Scratch VM
 
-need MySQL database -> define settings in application.properties (user needs delete, insert, update and select rights
-on tables)
+need MySQL database -> define settings in application.properties
 
 ### Run from within an IDE
 
-install npm in `resources/static` folder
+install npm in `resources/static` folder + blockly + scratch-blocks
 ```bash
 npm install
 ```
@@ -24,6 +24,7 @@ npm install
 
 - edit `application.properties` in the `resources`folder
 - change `@CrossOrigin(origin = "<url>")` in the `EventRestController` to the application URL
+- change `baseURL` property in scratch-vm logging
 
 ## Build and Deployment
 
