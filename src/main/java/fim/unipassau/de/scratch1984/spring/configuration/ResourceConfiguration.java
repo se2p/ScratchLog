@@ -1,4 +1,4 @@
-package fim.unipassau.de.scratch1984.spring;
+package fim.unipassau.de.scratch1984.spring.configuration;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;

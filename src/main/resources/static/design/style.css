@@ -1,3 +1,59 @@
+/* Displays the copyright and contact information in the footer on larger screens. */
+@media only screen and (min-height: 601px) {
+    #copyright_header {
+        display: none;
+    }
+
+    #footer {
+        height: 170px;
+    }
+
+    #content {
+        bottom: 170px;
+    }
+}
+
+/* Displays the link to open the copyright and contact information modal on smaller screens. */
+@media only screen and (max-height: 600px) {
+    #copyright_footer {
+        display: none;
+    }
+
+    #footer {
+        height: 60px;
+    }
+
+    #content {
+        bottom: 60px;
+    }
+}
+
+/* Displays the normal navigation bar on large screens. */
+@media only screen and (min-width: 1001px) {
+    #header {
+        height: 60px;
+    }
+
+    #content {
+        top: 60px;
+    }
+}
+
+/* Hides the brand name in the navigation bar on smaller screens. */
+@media only screen and (max-width: 1000px) {
+    #brand {
+        display: none;
+    }
+
+    #header {
+        height: 80px;
+    }
+
+    #content {
+        top: 80px;
+    }
+}
+
 body {
     overflow-x: hidden;
     height: 100%;
@@ -5,7 +61,6 @@ body {
 
 #header {
     position: absolute;
-    height: 60px;
     top: 0;
     left: 0;
     right: 0;
@@ -15,7 +70,6 @@ body {
 #content {
     position: absolute;
     top: 60px;
-    bottom: 170px;
     left: 0;
     right: 0;
     overflow-x: hidden;
@@ -38,7 +92,6 @@ body {
 
 #footer {
     position: absolute;
-    height: 170px;
     bottom: 0;
     left: 0;
     right: 0;
@@ -59,4 +112,32 @@ body {
 
 .navbar-brand {
     margin: 1%;
+}
+
+#openCopyright {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    z-index: 9999;
+    width: max-content;
+    height: max-content;
+    overflow-y: auto;
+    box-shadow: 0 8px 20px 0 rgba(0, 0, 0, .08);
+}
+
+.modal-content {
+    padding: 0 5%;
+    background-color: aliceblue;
+}
+
+.close {
+    color: red;
+    text-align: end;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+#contact_info {
+    text-align: center;
 }
