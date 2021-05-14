@@ -28,6 +28,32 @@
     }
 }
 
+/* Displays the normal navigation bar on large screens. */
+@media only screen and (min-width: 1001px) {
+    #header {
+        height: 60px;
+    }
+
+    #content {
+        top: 60px;
+    }
+}
+
+/* Hides the brand name in the navigation bar on smaller screens. */
+@media only screen and (max-width: 1000px) {
+    #brand {
+        display: none;
+    }
+
+    #header {
+        height: 80px;
+    }
+
+    #content {
+        top: 80px;
+    }
+}
+
 body {
     overflow-x: hidden;
     height: 100%;
@@ -35,7 +61,6 @@ body {
 
 #header {
     position: absolute;
-    height: 60px;
     top: 0;
     left: 0;
     right: 0;

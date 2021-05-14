@@ -9,33 +9,30 @@
 
     <!-- The navigation bar containing navigation elements. -->
     <nav id="header" class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2">
-            <ul class="navbar-nav mr-auto">
-                <li class="navbar-brand">
+        <div class="col-sm-4">
+            <ul class="navbar-nav">
+                <li class="navbar-brand" id="brand">
                     <a class="navbar-brand" href="/">Scratch 1984</a>
                 </li>
-                <li class="nav-item active">
+                <li class="nav-item active my-auto">
                     <a class="nav-link" href="/">Home</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item my-auto">
                     <a id="copyright_header" class="nav-link" href="#">Copyright</a>
                 </li>
             </ul>
         </div>
-        <div class="mx-auto order-0">
+        <div class="mx-auto col-sm-4">
             <form action="#" method="post">
                 <div class="input-group" th:style="${user != null ? 'display:block' : 'display:none'}">
-                    <input class="form-control form-text mt-0" id="username" type="text" size="200" maxlength="50"
+                    <input class="form-control form-text mt-0" id="username" type="text" maxlength="50"
                            th:placeholder="#{search}"/>
                     <input class="btn btn-outline-primary" type="submit" th:value="#{search}"/>
                 </div>
             </form>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".dual-collapse2">
-                <span class="navbar-toggler-icon"></span>
-            </button>
         </div>
-        <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
-            <ul class="navbar-nav ms-auto">
+        <div class="col-sm-4">
+            <ul class="navbar-nav float-end">
                 <li class="nav-item active" th:style="${user == null ? 'display:block' : 'display:none'}">
                     <a id="login" class="nav-link" href="/">Login</a>
                 </li>
