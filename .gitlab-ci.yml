@@ -1,0 +1,31 @@
+stages:
+  - validate
+  - build
+  - test
+
+image: maven:3-jdk-14
+
+before_script:
+  - mvn -v
+  - mvn dependency:resolve -B
+
+############################### JOBS ###############################
+
+Validate:
+  stage: validate
+  script: "mvn validate"
+
+Checkstyle:
+  stage: validate
+  script:
+    - "mvn checkstyle:check"
+
+Compile:
+  stage: build
+  script:
+    - "mvn package"
+
+Unit-Tests:
+  stage: test
+  script:
+    - "mvn test"
