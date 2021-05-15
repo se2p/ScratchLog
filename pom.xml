@@ -26,6 +26,7 @@
         <javax.validation.version>2.0.1.Final</javax.validation.version>
         <mysql.version>8.0.24</mysql.version>
         <h2.version>1.4.200</h2.version>
+        <checkstyle.version>8.37</checkstyle.version>
     </properties>
 
     <dependencies>
@@ -153,6 +154,23 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Checkstyle -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.1.1</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                </configuration>
             </plugin>
         </plugins>
     </build>

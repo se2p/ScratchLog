@@ -18,7 +18,7 @@ Validate:
 Checkstyle:
   stage: validate
   script:
-    - "mvn checkstyle:checkstyle"
+    - "mvn checkstyle:check"
 
 Compile:
   stage: build
