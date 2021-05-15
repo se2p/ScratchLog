@@ -19,4 +19,14 @@ public class HomeController {
         return "index";
     }
 
+    /**
+     * Loads the login page for user authentication.
+     *
+     * @return The login page.
+     */
+    @GetMapping("/login")
+    public String getLoginPage() {
+        return "login";
+    }
+
 }
