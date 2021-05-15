@@ -14,25 +14,30 @@
 <div class="row" id="content">
     <div class="col-sm-2"></div>
     <div class="col-sm-8">
+        <div class="row" th:style="${error != null ? 'display:block' : 'display:none'}">
+            <div class="col-12 alert alert-danger" th:text="${error}"></div>
+        </div>
         <h2 class="mb-5">Login</h2>
-        <form action="#" method="post">
+        <form action="#" th:action="@{/users/login}" th:object="${userDTO}" method="post">
             <div class="row">
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="username" th:text="#{username}"></label>
-                    <div class="input-group has-validation">
-                        <input class="form-control" id="username" type="text" maxlength="50"
-                               th:placeholder="#{username}" required/>
-                        <div class="invalid-feedback"></div>
+                    <div class="input-group">
+                        <input name="username" id="username" type="text" maxlength="50" th:placeholder="#{username}"
+                               th:field="*{username}" th:class="${#fields.hasErrors('username')
+                               ? 'form-control is-invalid' : 'form-control'}" required/>
                     </div>
+                    <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                 </div>
 
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="password" th:text="#{password}"></label>
-                    <div class="input-group has-validation">
-                        <input class="form-control" id="password" type="text" maxlength="50"
-                               th:placeholder="#{password}" required/>
-                        <div class="invalid-feedback"></div>
+                    <div class="input-group">
+                        <input name="password" id="password" type="password" maxlength="50" th:placeholder="#{password}"
+                               th:field="*{password}" th:class="${#fields.hasErrors('password')
+                               ? 'form-control is-invalid' : 'form-control'}" required/>
                     </div>
+                    <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 </div>
 
                 <div class="col-12">

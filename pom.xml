@@ -18,6 +18,7 @@
 
         <!-- Library versions -->
         <spring.version>2.4.5</spring.version>
+        <thymeleaf.version>3.0.4.RELEASE</thymeleaf.version>
         <jQuery.version>3.5.1</jQuery.version>
         <json.version>20190722</json.version>
         <junit.version>5.7.0</junit.version>
@@ -26,6 +27,7 @@
         <javax.validation.version>2.0.1.Final</javax.validation.version>
         <mysql.version>8.0.24</mysql.version>
         <h2.version>1.4.200</h2.version>
+        <maven.checkstyle.version>3.1.1</maven.checkstyle.version>
         <checkstyle.version>8.37</checkstyle.version>
     </properties>
 
@@ -64,6 +66,13 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <version>${spring.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Spring Security Dialect with Thymeleaf -->
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity5</artifactId>
+            <version>${thymeleaf.version}</version>
         </dependency>
 
         <!-- MySQL connector -->
@@ -160,7 +169,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>${maven.checkstyle.version}</version>
                 <dependencies>
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
@@ -170,6 +179,7 @@
                 </dependencies>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
+                    <excludes>fim.unipassau.de.scratch1984.Scratch1984Application</excludes>
                 </configuration>
             </plugin>
         </plugins>

@@ -45,10 +45,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/login").permitAll()
+                .antMatchers("/login").not().authenticated()
                 .antMatchers("/experiment").hasRole("ADMIN")
-                .antMatchers("/user").hasRole("PARTICIPANT")
-                .and().formLogin().loginPage("/login").permitAll()
+                .antMatchers("/user", "/logout").hasRole("PARTICIPANT")
+                .and().formLogin().loginPage("/login").usernameParameter("username")
+                .defaultSuccessUrl("/index", true)
                 .and().headers().frameOptions().sameOrigin();
     }
 
