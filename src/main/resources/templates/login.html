@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Scratch 1984 - Login</title>
+    <link rel="stylesheet" href="/static/design/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/design/style.css">
+</head>
+<body>
+<!-- Navigation bar -->
+<div th:insert="header :: header"></div>
+
+<!-- Page content -->
+<div class="row" id="content">
+    <div class="col-sm-2"></div>
+    <div class="col-sm-8">
+        <div class="row" th:style="${error != null ? 'display:block' : 'display:none'}">
+            <div class="col-12 alert alert-danger" th:text="${error}"></div>
+        </div>
+        <h2 class="mb-5">Login</h2>
+        <form th:action="@{/users/login}" th:object="${userDTO}" th:name="userDTO" method="post">
+            <div class="row">
+                <div class="col-12 mb-3 form-group position-relative">
+                    <label class="form-label" for="username" th:text="#{username}"></label>
+                    <div class="input-group">
+                        <input name="username" id="username" type="text" maxlength="50" th:placeholder="#{username}"
+                               th:field="*{username}" th:class="${#fields.hasErrors('username')
+                               ? 'form-control is-invalid' : 'form-control'}" required/>
+                    </div>
+                    <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                </div>
+
+                <div class="col-12 mb-3 form-group position-relative">
+                    <label class="form-label" for="password" th:text="#{password}"></label>
+                    <div class="input-group">
+                        <input name="password" id="password" type="password" maxlength="50" th:placeholder="#{password}"
+                               th:field="*{password}" th:class="${#fields.hasErrors('password')
+                               ? 'form-control is-invalid' : 'form-control'}" required/>
+                    </div>
+                    <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                </div>
+
+                <div class="col-12">
+                    <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col-sm-2"></div>
+</div>
+
+<!-- Footer -->
+<div th:insert="footer :: footer"></div>
+</body>
+</html>

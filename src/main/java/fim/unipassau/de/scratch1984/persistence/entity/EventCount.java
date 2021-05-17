@@ -52,7 +52,7 @@ public class EventCount {
      *
      * @param user The user ID to be set.
      */
-    public void setUser(Integer user) {
+    public void setUser(final Integer user) {
         this.user = user;
     }
 
@@ -70,7 +70,7 @@ public class EventCount {
      *
      * @param experiment The experiment ID to be set.
      */
-    public void setExperiment(Integer experiment) {
+    public void setExperiment(final Integer experiment) {
         this.experiment = experiment;
     }
 
@@ -88,7 +88,7 @@ public class EventCount {
      *
      * @param count The value to be set.
      */
-    public void setCount(int count) {
+    public void setCount(final int count) {
         this.count = count;
     }
 
@@ -106,7 +106,8 @@ public class EventCount {
      *
      * @param event The event to be set.
      */
-    public void setEvent(String event) {
+    public void setEvent(final String event) {
         this.event = event;
     }
+
 }

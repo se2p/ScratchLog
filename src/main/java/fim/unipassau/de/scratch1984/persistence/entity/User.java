@@ -39,13 +39,13 @@ public class User {
     private String role;
 
     /**
-     * The salt to use when hashing this user's password.
+     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.UserDTO.Language}.
      */
-    @Column(name = "salt")
-    private String salt;
+    @Column(name = "language")
+    private String language;
 
     /**
-     * The user's password hashed using the salt {@link #salt}.
+     * The user's hashed password.
      */
     @Column(name = "password")
     private String password;
@@ -60,13 +60,39 @@ public class User {
      * Boolean indicating whether the user is trying to reset their password.
      */
     @Column(name = "reset_password")
-    private Boolean reset;
+    private boolean reset;
 
     /**
      * Boolean indicating whether the user is active and thus able to use certain functions of the application.
      */
     @Column(name = "active")
-    private Boolean active;
+    private boolean active;
+
+    /**
+     * Default constructor for the user entity.
+     */
+    public User() {
+    }
+
+    /**
+     * Constructs a new user with the given attributes.
+     *
+     * @param username The user's username.
+     * @param email The user's email.
+     * @param role The user's role.
+     * @param language The user's preferred language.
+     * @param password The user's hashed password.
+     * @param secret The user's secret.
+     */
+    public User(final String username, final String email, final String role, final String language,
+                final String password, final String secret) {
+        this.username = username;
+        this.email = email;
+        this.role = role;
+        this.language = language;
+        this.password = password;
+        this.secret = secret;
+    }
 
     /**
      * Returns the user's ID.
@@ -141,21 +167,39 @@ public class User {
     }
 
     /**
-     * Returns the user's salt.
+     * Returns the user's preferred language.
      *
-     * @return The user's salt.
+     * @return The user's preferred language.
      */
-    public String getSalt() {
-        return salt;
+    public String getLanguage() {
+        return language;
     }
 
     /**
-     * Sets the user's salt.
+     * Sets the user's preferred language.
      *
-     * @param salt The salt to be set.
+     * @param salt The language to be set.
      */
-    public void setSalt(final String salt) {
-        this.salt = salt;
+    public void setLanguage(final String salt) {
+        this.language = salt;
+    }
+
+    /**
+     * Returns the user's hashed password.
+     *
+     * @return The user's password.
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * Sets the user's password.
+     *
+     * @param password The password to be set.
+     */
+    public void setPassword(final String password) {
+        this.password = password;
     }
 
     /**
@@ -181,7 +225,7 @@ public class User {
      *
      * @return {@code true} iff a password reset has been requested.
      */
-    public Boolean getReset() {
+    public boolean isReset() {
         return reset;
     }
 
@@ -190,7 +234,7 @@ public class User {
      *
      * @param reset The user's reset status to be set.
      */
-    public void setReset(final Boolean reset) {
+    public void setReset(final boolean reset) {
         this.reset = reset;
     }
 
@@ -199,7 +243,7 @@ public class User {
      *
      * @return {@code true} iff the user is active.
      */
-    public Boolean getActive() {
+    public boolean isActive() {
         return active;
     }
 
@@ -208,7 +252,7 @@ public class User {
      *
      * @param active The user's active status to be set.
      */
-    public void setActive(final Boolean active) {
+    public void setActive(final boolean active) {
         this.active = active;
     }
 

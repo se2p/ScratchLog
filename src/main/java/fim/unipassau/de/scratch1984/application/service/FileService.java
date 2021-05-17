@@ -3,6 +3,8 @@ package fim.unipassau.de.scratch1984.application.service;
 import fim.unipassau.de.scratch1984.persistence.entity.File;
 import fim.unipassau.de.scratch1984.persistence.repository.FileRepository;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +13,11 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class FileService {
+
+    /**
+     * The log instance associated with this class for logging purposes.
+     */
+    private static final Logger logger = LoggerFactory.getLogger(FileService.class);
 
     /**
      * The file repository to use for database queries related to files.
@@ -51,7 +58,7 @@ public class FileService {
      * @param fileDTO The dto containing the information.
      * @return The new file containing the information passed in the DTO.
      */
-    private File createFile (final FileDTO fileDTO) {
+    private File createFile(final FileDTO fileDTO) {
         return null;
     }
 

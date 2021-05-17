@@ -141,3 +141,14 @@ body {
 #contact_info {
     text-align: center;
 }
+
+.validation {
+    color: red;
+}
+
+.btn-link,
+.btn-link:hover,
+.btn-link:active {
+    color: white;
+    text-decoration: none;
+}

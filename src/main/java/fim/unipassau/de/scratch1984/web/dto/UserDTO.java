@@ -23,6 +23,21 @@ public class UserDTO {
     }
 
     /**
+     * All available languages to choose from.
+     */
+    public enum Language {
+        /**
+         * The preferred language is English.
+         */
+        ENGLISH,
+
+        /**
+         * The preferred language is German.
+         */
+        GERMAN
+    }
+
+    /**
      * The user's unique ID.
      */
     private Integer id;
@@ -43,12 +58,12 @@ public class UserDTO {
     private Role role;
 
     /**
-     * The salt to use when hashing this user's password.
+     * The user's preferred language.
      */
-    private String salt;
+    private Language language;
 
     /**
-     * The user's password hashed using the salt {@link #salt}.
+     * The user's hashed password.
      */
     private String password;
 
@@ -60,12 +75,38 @@ public class UserDTO {
     /**
      * Boolean indicating whether the user is trying to reset their password.
      */
-    private Boolean reset;
+    private boolean reset;
 
     /**
      * Boolean indicating whether the user is active and thus able to use certain functions of the application.
      */
-    private Boolean active;
+    private boolean active;
+
+    /**
+     * Default constructor for the user dto.
+     */
+    public UserDTO() {
+    }
+
+    /**
+     * Constructs a new user dto with the given attributes.
+     *
+     * @param username The user's username.
+     * @param email The user's email.
+     * @param role The user's role.
+     * @param language The user's preferred language.
+     * @param password The user's hashed password.
+     * @param secret The user's secret.
+     */
+    public UserDTO(final String username, final String email, final Role role, final Language language,
+                   final String password, final String secret) {
+        this.username = username;
+        this.email = email;
+        this.role = role;
+        this.language = language;
+        this.password = password;
+        this.secret = secret;
+    }
 
     /**
      * Returns the user's ID.
@@ -140,25 +181,25 @@ public class UserDTO {
     }
 
     /**
-     * Returns the user's salt.
+     * Returns the user's preferred language.
      *
-     * @return The user's salt.
+     * @return The user's language.
      */
-    public String getSalt() {
-        return salt;
+    public Language getLanguage() {
+        return language;
     }
 
     /**
-     * Sets the user's salt.
+     * Sets the user's preferred language.
      *
-     * @param salt The salt to be set.
+     * @param language The language to be set.
      */
-    public void setSalt(final String salt) {
-        this.salt = salt;
+    public void setLanguage(final Language language) {
+        this.language = language;
     }
 
     /**
-     * Returns the user's password.
+     * Returns the user's hashed password.
      *
      * @return The user's hashed password.
      */
@@ -171,7 +212,7 @@ public class UserDTO {
      *
      * @param password The password to be set.
      */
-    public void setPassword(String password) {
+    public void setPassword(final String password) {
         this.password = password;
     }
 
@@ -198,7 +239,7 @@ public class UserDTO {
      *
      * @return {@code true} iff a password reset has been requested.
      */
-    public Boolean getReset() {
+    public boolean isReset() {
         return reset;
     }
 
@@ -207,7 +248,7 @@ public class UserDTO {
      *
      * @param reset The user's reset status to be set.
      */
-    public void setReset(final Boolean reset) {
+    public void setReset(final boolean reset) {
         this.reset = reset;
     }
 
@@ -216,7 +257,7 @@ public class UserDTO {
      *
      * @return {@code true} iff the user is active.
      */
-    public Boolean getActive() {
+    public boolean isActive() {
         return active;
     }
 
@@ -225,7 +266,7 @@ public class UserDTO {
      *
      * @param active The user's active status to be set.
      */
-    public void setActive(final Boolean active) {
+    public void setActive(final boolean active) {
         this.active = active;
     }
 
@@ -272,7 +313,7 @@ public class UserDTO {
                 + ", username='" + username + '\''
                 + ", email='" + email + '\''
                 + ", role=" + role
-                + ", salt='" + salt + '\''
+                + ", language='" + language + '\''
                 + ", secret='" + secret + '\''
                 + ", reset=" + reset
                 + ", active=" + active

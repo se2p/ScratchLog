@@ -18,6 +18,7 @@
 
         <!-- Library versions -->
         <spring.version>2.4.5</spring.version>
+        <thymeleaf.version>3.0.4.RELEASE</thymeleaf.version>
         <jQuery.version>3.5.1</jQuery.version>
         <json.version>20190722</json.version>
         <junit.version>5.7.0</junit.version>
@@ -26,6 +27,9 @@
         <javax.validation.version>2.0.1.Final</javax.validation.version>
         <mysql.version>8.0.24</mysql.version>
         <h2.version>1.4.200</h2.version>
+        <maven.checkstyle.version>3.1.1</maven.checkstyle.version>
+        <maven.surefire.version>3.0.0-M5</maven.surefire.version>
+        <checkstyle.version>8.37</checkstyle.version>
     </properties>
 
     <dependencies>
@@ -63,6 +67,13 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <version>${spring.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Spring Security Dialect with Thymeleaf -->
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity5</artifactId>
+            <version>${thymeleaf.version}</version>
         </dependency>
 
         <!-- MySQL connector -->
@@ -128,7 +139,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- H2 database for testing -->
+        <!-- H2 database for in-memory testing -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -153,6 +164,36 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Checkstyle -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven.checkstyle.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${checkstyle.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <excludes>fim.unipassau.de.scratch1984.Scratch1984Application</excludes>
+                </configuration>
+            </plugin>
+
+            <!-- JUnit 5 Tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>fim.unipassau.de.scratch1984.Scratch1984ApplicationTests</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -36,7 +36,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * Configures the URL patterns that are restricted and only accessible for users with certain privileges.
      *
-     * @param http The security context.
+     * @param http The http security.
      * @throws Exception Throws an exception if a user with insufficient privileges tries to access a restricted page.
      */
     @Override
@@ -45,11 +45,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .csrf().disable()
                 .authorizeRequests()
+                .antMatchers("/login").not().authenticated()
                 .antMatchers("/experiment").hasRole("ADMIN")
-                .antMatchers("/user").hasRole("PARTICIPANT")
-                .anyRequest().permitAll()
-                .and()
-                .headers().frameOptions().sameOrigin();
+                .antMatchers("/user", "/logout").hasRole("PARTICIPANT")
+                .and().formLogin().loginPage("/login").usernameParameter("username")
+                .defaultSuccessUrl("/index", true)
+                .and().headers().frameOptions().sameOrigin();
     }
 
 }
