@@ -69,6 +69,32 @@ public class User {
     private boolean active;
 
     /**
+     * Default constructor for the user entity.
+     */
+    public User() {
+    }
+
+    /**
+     * Constructs a new user with the given attributes.
+     *
+     * @param username The user's username.
+     * @param email The user's email.
+     * @param role The user's role.
+     * @param language The user's preferred language.
+     * @param password The user's hashed password.
+     * @param secret The user's secret.
+     */
+    public User(final String username, final String email, final String role, final String language,
+                final String password, final String secret) {
+        this.username = username;
+        this.email = email;
+        this.role = role;
+        this.language = language;
+        this.password = password;
+        this.secret = secret;
+    }
+
+    /**
      * Returns the user's ID.
      *
      * @return The user ID.

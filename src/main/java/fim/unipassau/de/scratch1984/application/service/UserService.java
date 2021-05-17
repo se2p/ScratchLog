@@ -98,7 +98,6 @@ public class UserService {
      * @return The user, if they exist.
      */
     public UserDTO getUser(final String username) {
-        System.out.println("Searching for user with username " + username);
         if (username == null || username.trim().isBlank()) {
             logger.error("The username cannot be null or blank!");
             throw new IllegalArgumentException("The username cannot be null or blank!");
