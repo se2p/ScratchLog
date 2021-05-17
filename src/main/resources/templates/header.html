@@ -24,7 +24,7 @@
         </div>
         <div class="mx-auto col-sm-4">
             <form action="#" method="post">
-                <div class="input-group" sec:authorize="isFullyAuthenticated()">
+                <div class="input-group" sec:authorize="hasRole('ADMIN')">
                     <input class="form-control form-text mt-0" id="username" type="text" maxlength="50"
                            th:placeholder="#{search}"/>
                     <input class="btn btn-outline-primary" type="submit" th:value="#{search}"/>
@@ -34,10 +34,12 @@
         <div class="col-sm-4">
             <ul class="navbar-nav float-end">
                 <li class="nav-item active" sec:authorize="isAnonymous()">
-                    <a id="login" class="nav-link" href="/login">Login</a>
+                    <a id="login" class="btn btn-link" href="/login">Login</a>
                 </li>
-                <li class="nav-item active" sec:authorize="isFullyAuthenticated()">
-                    <a id="logout" class="nav-link" href="/">Logout</a>
+                <li class="nav-item active" sec:authorize="hasRole('ADMIN')">
+                    <form th:action="@{/users/logout}" method="post">
+                        <input class="btn btn-link" type="submit" th:value="Logout">
+                    </form>
                 </li>
             </ul>
         </div>

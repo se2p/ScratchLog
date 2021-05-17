@@ -64,7 +64,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         if (userDTO != null && userDTO.getRole() != null && userDTO.isActive()) {
             if (userDTO.getRole() == UserDTO.Role.PARTICIPANT || userDTO.getRole() == UserDTO.Role.ADMIN) {
-                GrantedAuthority grantedAuthorityUser = new SimpleGrantedAuthority("ROLE_USER");
+                GrantedAuthority grantedAuthorityUser = new SimpleGrantedAuthority("ROLE_PARTICIPANT");
                 authorities.add(grantedAuthorityUser);
             }
 

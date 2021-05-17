@@ -62,7 +62,11 @@ public class UserService {
      * @return {@code true} if a user exists, or {@code false} if not.
      */
     public boolean existsUser(final String username) {
-        return false;
+        if (username == null || username.trim().isBlank()) {
+            return false;
+        }
+
+        return userRepository.existsByUsername(username);
     }
 
     /**

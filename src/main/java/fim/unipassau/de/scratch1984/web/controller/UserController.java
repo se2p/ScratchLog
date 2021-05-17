@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -103,7 +104,7 @@ public class UserController {
                 return "login";
             }
 
-            SecurityContextHolder.clearContext();
+            clearSecurityContext(httpServletRequest);
             updateSecurityContext(userDTO, httpServletRequest);
         } catch (NotFoundException e) {
             logger.error("Failed to log in user with username " + userDTO.getUsername() + ".", e);
@@ -111,6 +112,34 @@ public class UserController {
             return "login";
         }
 
+        return "redirect:/";
+    }
+
+    /**
+     * Invalidates the currently authenticated user's session and redirects them to the index page, or throws a
+     * {@link NotFoundException}, if no such user exists in the database, or an {@link IllegalStateException}, if no
+     * proper spring security authentication can be found.
+     *
+     * @param httpServletRequest The {@link HttpServletRequest} containing the user session.
+     * @return The index page.
+     */
+    @PostMapping("/logout")
+    @Secured("ROLE_ADMIN")
+    public String logoutUser(final HttpServletRequest httpServletRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getName() == null) {
+            logger.error("Can't logout an unauthenticated user!");
+            throw new IllegalStateException("Can't logout an unauthenticated user!");
+        }
+
+        if (!userService.existsUser(authentication.getName())) {
+            logger.error("Can't find user with username " + authentication.getName() + " in the database!");
+            throw new NotFoundException("Can't find user with username " + authentication.getName()
+                    + " in the database!");
+        }
+
+        clearSecurityContext(httpServletRequest);
         return "redirect:/";
     }
 
@@ -125,6 +154,7 @@ public class UserController {
         if (input == null || input.trim().isBlank()) {
             return "empty_string";
         }
+
         if (input.length() > LONG_INPUT) {
             return "long_string";
         }
@@ -147,6 +177,20 @@ public class UserController {
     }
 
     /**
+     * Clears the current security context and invalidates the http session on user login and logout.
+     *
+     * @param httpServletRequest The {@link HttpServletRequest} request containing the current user session.
+     */
+    private void clearSecurityContext(final HttpServletRequest httpServletRequest) {
+        SecurityContextHolder.clearContext();
+        HttpSession session = httpServletRequest.getSession(false);
+
+        if (session != null) {
+            session.invalidate();
+        }
+    }
+
+    /**
      * Updates the spring security context on user login with the given information.
      *
      * @param userDTO The {@link UserDTO} containing the user credentials.
@@ -156,7 +200,6 @@ public class UserController {
         UsernamePasswordAuthenticationToken authReq = new UsernamePasswordAuthenticationToken(userDTO.getUsername(),
                 userDTO.getPassword());
         Authentication auth = authenticationProvider.authenticate(authReq);
-
         SecurityContext sc = SecurityContextHolder.getContext();
         sc.setAuthentication(auth);
         HttpSession session = httpServletRequest.getSession(true);
