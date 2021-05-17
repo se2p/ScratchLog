@@ -36,7 +36,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * Configures the URL patterns that are restricted and only accessible for users with certain privileges.
      *
-     * @param http The security context.
+     * @param http The http security.
      * @throws Exception Throws an exception if a user with insufficient privileges tries to access a restricted page.
      */
     @Override

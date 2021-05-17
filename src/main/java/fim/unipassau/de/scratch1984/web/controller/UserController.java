@@ -17,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -76,9 +77,9 @@ public class UserController {
      * @param bindingResult The binding result for returning information on invalid user input.
      * @return The login page, if an authentication error occurred, or redirect to the index page.
      */
-    @PostMapping("/login")
-    public String loginUser(final UserDTO userDTO, final Model model, final HttpServletRequest httpServletRequest,
-                            final BindingResult bindingResult) {
+    @PostMapping(path = "/login")
+    public String loginUser(@ModelAttribute("userDTO") final UserDTO userDTO, final Model model,
+                            final HttpServletRequest httpServletRequest, final BindingResult bindingResult) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
         String usernameValidation = validateInput(userDTO.getUsername());
