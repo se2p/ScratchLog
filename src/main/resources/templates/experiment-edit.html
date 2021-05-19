@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Experiment - Edit</title>
+    <link rel="stylesheet" href="/static/design/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/design/all.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+    <link rel="stylesheet" href="/static/design/style.css">
+</head>
+<body>
+<!-- Navigation bar -->
+<div th:insert="header :: header"></div>
+
+<!-- Page content -->
+<div class="row" id="content">
+    <div class="col-2"></div>
+    <div class="col-8">
+        <h2 class="mb-5" th:text="#{edit_experiment}"></h2>
+        <div class="d-flex p-2 justify-content-center align-items-center container">
+            <div class="row vw-90">
+                <form th:action="@{/experiment/create}" th:object="${experimentDTO}" th:name="experimentDTO"
+                      method="post">
+                    <div class="mb-3 form-group position-relative">
+                        <label class="form-label" for="title" th:text="#{title}"></label>
+                        <div class="input-group">
+                            <input name="title" id="title" type="text" th:placeholder="#{title}"
+                                   th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
+                                   th:field="*{title}" th:class="${#fields.hasErrors('title')
+                                   ? 'form-control is-invalid' : 'form-control'}" required/>
+                        </div>
+                        <div class="validation" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+                        <div class="form-text" th:text="#{title_max}"></div>
+                    </div>
+                    <div class="mb-3 form-group position-relative">
+                        <label class="form-label" for="description" th:text="#{description}"></label>
+                        <div class="input-group">
+                            <textarea name="description" id="description" type="text" rows="3"
+                                      th:placeholder="#{description_placeholder}"
+                                      th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_AREA}"
+                                      th:field="*{description}" th:class="${#fields.hasErrors('description')
+                                      ? 'form-control is-invalid' : 'form-control'}" required></textarea>
+                        </div>
+                        <div class="validation" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">
+                        </div>
+                        <div class="form-text" th:text="#{description_max}"></div>
+                    </div>
+                    <div class="mb-3 form-group position-relative">
+                        <label class="form-label" for="info" th:text="#{info}"></label>
+                        <textarea name="info" id="info" type="text" rows="10" th:placeholder="#{info_placeholder}"
+                                  th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_AREA}"
+                                  th:field="*{info}" th:class="${#fields.hasErrors('info')
+                                  ? 'form-control is-invalid' : 'form-control'}" autocomplete="off"></textarea>
+                        <div class="validation" th:if="${#fields.hasErrors('info')}" th:errors="*{info}">
+                        </div>
+                        <div class="form-text" th:text="#{markdown}"></div>
+                    </div>
+                    <input class="btn btn-primary" type="submit" th:value="#{save}"/>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-2"></div>
+</div>
+
+<!-- Footer -->
+<div th:insert="footer :: footer"></div>
+
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+
+<script>
+    var simplemde = new SimpleMDE({element: document.getElementById("info")});
+</script>
+</body>
+</html>

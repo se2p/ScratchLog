@@ -76,11 +76,11 @@ body {
     overflow-y: auto;
 }
 
-.col-sm-2 {
+.col-2 {
     background-color: #f3f3f3;
 }
 
-.col-sm-8 {
+.col-8 {
     box-shadow: 0 8px 20px 0 rgba(0,0,0,.08);
     padding: 1%;
 }
@@ -155,4 +155,23 @@ body {
 
 .vw-90 {
     width: 90vw;
+}
+
+pre {
+    padding: 2px;
+    font-size: 105% !important;
+    border-radius: 6px;
+    background-color: #999999;
+}
+
+pre code {
+    font-size: 100% !important;
+}
+
+code {
+    font-family: "Fira Code", Consolas, monospace;
+    padding: 2px;
+    font-size: 105% !important;
+    border-radius: 6px;
+    background-color: #999999;
 }

@@ -13,9 +13,9 @@ public class ExperimentDTO {
     private Integer id;
 
     /**
-     * The unique name of the experiment.
+     * The unique title of the experiment.
      */
-    private String name;
+    private String title;
 
     /**
      * The short description text of the experiment.
@@ -46,21 +46,21 @@ public class ExperimentDTO {
     }
 
     /**
-     * Returns the name of the experiment.
+     * Returns the title of the experiment.
      *
-     * @return The experiment name.
+     * @return The experiment title.
      */
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
     /**
-     * Sets the name of the experiment.
+     * Sets the title of the experiment.
      *
-     * @param name The name to be set.
+     * @param title The title to be set.
      */
-    public void setName(final String name) {
-        this.name = name;
+    public void setTitle(final String title) {
+        this.title = title;
     }
 
     /**
@@ -139,7 +139,7 @@ public class ExperimentDTO {
     public String toString() {
         return "ExperimentDTO{"
                 + "id=" + id
-                + ", name='" + name + '\''
+                + ", title='" + title + '\''
                 + ", description='" + description + '\''
                 + ", info='" + info + '\''
                 + '}';

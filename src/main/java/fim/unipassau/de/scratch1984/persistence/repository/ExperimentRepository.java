@@ -9,19 +9,27 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ExperimentRepository extends JpaRepository<Experiment, Integer> {
 
     /**
-     * Checks, whether an experiment with the given name already exists in the database.
+     * Checks, whether an experiment with the given title already exists in the database.
      *
-     * @param name The name to search for.
+     * @param title The title to search for.
      * @return {@code true} iff the name already exists.
      */
-    boolean existsByName(String name);
+    boolean existsByTitle(String title);
 
     /**
-     * Returns the experiment identified by the given name, if one exists.
+     * Returns the experiment identified by the given title, if one exists.
      *
-     * @param name The name to search for.
+     * @param title The title to search for.
      * @return The experiment data or {@code null}, if no entry could be found.
      */
-    Experiment findByName(String name);
+    Experiment findByTitle(String title);
+
+    /**
+     * Returns the experiment identified by the given id, if one exists.
+     *
+     * @param id The id to search for.
+     * @return The experiment data or {@code null}, if no entry could be found.
+     */
+    Experiment findById(int id);
 
 }

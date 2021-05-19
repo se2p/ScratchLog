@@ -9,7 +9,7 @@
 
     <!-- The navigation bar containing navigation elements. -->
     <nav id="header" class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="col-sm-4">
+        <div class="col-4">
             <ul class="navbar-nav">
                 <li class="navbar-brand" id="brand">
                     <a class="navbar-brand" href="/">Scratch 1984</a>
@@ -25,7 +25,7 @@
                 </li>
             </ul>
         </div>
-        <div class="mx-auto col-sm-4">
+        <div class="mx-auto col-4">
             <form action="#" method="post">
                 <div class="input-group" sec:authorize="hasRole('ADMIN')">
                     <input class="form-control form-text mt-0" id="username" type="text" maxlength="50"
@@ -34,7 +34,7 @@
                 </div>
             </form>
         </div>
-        <div class="col-sm-4">
+        <div class="col-4">
             <ul class="navbar-nav float-end">
                 <li class="nav-item active" sec:authorize="isAnonymous()">
                     <a id="login" class="btn btn-link" href="/login">Login</a>
