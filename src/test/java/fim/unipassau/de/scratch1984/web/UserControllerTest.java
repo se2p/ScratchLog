@@ -19,8 +19,10 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.servlet.LocaleResolver;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.ResourceBundle;
 
@@ -49,6 +51,9 @@ public class UserControllerTest {
     private HttpServletRequest httpServletRequest;
 
     @Mock
+    private HttpServletResponse httpServletResponse;
+
+    @Mock
     private BindingResult bindingResult;
 
     @Mock
@@ -65,6 +70,9 @@ public class UserControllerTest {
 
     @Mock
     private Authentication authentication;
+
+    @Mock
+    private LocaleResolver localeResolver;
 
     private MockedStatic<SecurityContextHolder> securityContextHolder;
     private static final String USERNAME = "admin";
@@ -95,7 +103,8 @@ public class UserControllerTest {
         when(httpServletRequest.getSession(false)).thenReturn(null);
         when(httpServletRequest.getSession(true)).thenReturn(session);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        assertEquals(REDIRECT, userController.loginUser(userDTO, model, httpServletRequest, bindingResult));
+        assertEquals(REDIRECT, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
         verify(authenticationProvider).authenticate(any());
         verify(userService).loginUser(userDTO);
         verify(model, never()).addAttribute(anyString(), anyString());
@@ -106,7 +115,8 @@ public class UserControllerTest {
     public void testLoginUserInactive() {
         userDTO.setActive(false);
         when(userService.loginUser(userDTO)).thenReturn(userDTO);
-        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, bindingResult));
+        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
         verify(userService).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model).addAttribute(anyString(), anyString());
@@ -116,7 +126,8 @@ public class UserControllerTest {
     @Test
     public void testLoginUserNotFound() {
         when(userService.loginUser(userDTO)).thenThrow(NotFoundException.class);
-        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, bindingResult));
+        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
         verify(userService).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model).addAttribute(anyString(), anyString());
@@ -127,7 +138,8 @@ public class UserControllerTest {
     public void testLoginUserUsernameNull() {
         userDTO.setUsername(null);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, bindingResult));
+        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
         verify(userService, never()).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model, never()).addAttribute(anyString(), anyString());
@@ -138,7 +150,8 @@ public class UserControllerTest {
     public void testLoginUserUsernameTooLong() {
         userDTO.setUsername(LONG_USERNAME);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, bindingResult));
+        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
         verify(userService, never()).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model, never()).addAttribute(anyString(), anyString());
@@ -149,7 +162,8 @@ public class UserControllerTest {
     public void testLoginUserPasswordBlank() {
         userDTO.setPassword(BLANK);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, bindingResult));
+        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
         verify(userService, never()).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model, never()).addAttribute(anyString(), anyString());
@@ -161,7 +175,8 @@ public class UserControllerTest {
         userDTO.setUsername(null);
         userDTO.setPassword(null);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, bindingResult));
+        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
         verify(userService, never()).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model, never()).addAttribute(anyString(), anyString());

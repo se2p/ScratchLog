@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Scratch 1984 - Login</title>
+    <title>Login</title>
     <link rel="stylesheet" href="/static/design/bootstrap.min.css">
     <link rel="stylesheet" href="/static/design/style.css">
 </head>
@@ -23,7 +23,8 @@
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="username" th:text="#{username}"></label>
                     <div class="input-group">
-                        <input name="username" id="username" type="text" maxlength="50" th:placeholder="#{username}"
+                        <input name="username" id="username" type="text" th:placeholder="#{username}"
+                               th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                                th:field="*{username}" th:class="${#fields.hasErrors('username')
                                ? 'form-control is-invalid' : 'form-control'}" required/>
                     </div>
@@ -33,7 +34,8 @@
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="password" th:text="#{password}"></label>
                     <div class="input-group">
-                        <input name="password" id="password" type="password" maxlength="50" th:placeholder="#{password}"
+                        <input name="password" id="password" type="password" th:placeholder="#{password}"
+                               th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                                th:field="*{password}" th:class="${#fields.hasErrors('password')
                                ? 'form-control is-invalid' : 'form-control'}" required/>
                     </div>

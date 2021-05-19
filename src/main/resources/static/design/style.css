@@ -152,3 +152,7 @@ body {
     color: white;
     text-decoration: none;
 }
+
+.vw-90 {
+    width: 90vw;
+}
