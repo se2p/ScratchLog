@@ -39,6 +39,12 @@ public class Experiment {
     private String info;
 
     /**
+     * Boolean indicating whether the experiment is running or not.
+     */
+    @Column(name = "active")
+    private boolean active;
+
+    /**
      * Returns the ID of the experiment.
      *
      * @return The experiment ID.
@@ -108,6 +114,24 @@ public class Experiment {
      */
     public void setInfo(final String info) {
         this.info = info;
+    }
+
+    /**
+     * Returns whether the experiment is currently running.
+     *
+     * @return The experiment status.
+     */
+    public boolean isActive() {
+        return active;
+    }
+
+    /**
+     * Sets the running status the experiment.
+     *
+     * @param active The status.
+     */
+    public void setActive(final boolean active) {
+        this.active = active;
     }
 
 }

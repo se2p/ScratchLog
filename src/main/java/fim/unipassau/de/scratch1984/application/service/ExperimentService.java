@@ -5,7 +5,6 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
-import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,6 +147,7 @@ public class ExperimentService {
         if (experimentDTO.getInfo() != null) {
             experiment.setInfo(experimentDTO.getInfo());
         }
+        experiment.setActive(experimentDTO.isActive());
 
         return experiment;
     }
@@ -171,8 +171,9 @@ public class ExperimentService {
             experimentDTO.setDescription(experiment.getDescription());
         }
         if (experiment.getInfo() != null) {
-            experimentDTO.setInfo(MarkdownHandler.toHtml(experiment.getInfo()));
+            experimentDTO.setInfo((experiment.getInfo()));
         }
+        experimentDTO.setActive(experiment.isActive());
 
         return experimentDTO;
     }

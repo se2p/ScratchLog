@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +74,7 @@ public class ExperimentController {
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
             model.addAttribute("experimentDTO", experimentDTO);
             return "experiment";
         } catch (NotFoundException e) {

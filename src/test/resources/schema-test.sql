@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `experiment` (
     `title` varchar(255) NOT NULL,
     `description` text,
     `infotext` text,
+    `active` bit(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `title` (`title`)
 );

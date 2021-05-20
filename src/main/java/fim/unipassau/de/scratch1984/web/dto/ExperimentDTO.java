@@ -28,6 +28,11 @@ public class ExperimentDTO {
     private String info;
 
     /**
+     * Boolean indicating whether the experiment is running or not.
+     */
+    private boolean active;
+
+    /**
      * Returns the ID of the experiment.
      *
      * @return The experiment ID.
@@ -97,6 +102,24 @@ public class ExperimentDTO {
      */
     public void setInfo(final String info) {
         this.info = info;
+    }
+
+    /**
+     * Returns whether the experiment is currently running.
+     *
+     * @return The experiment status.
+     */
+    public boolean isActive() {
+        return active;
+    }
+
+    /**
+     * Sets the running status the experiment.
+     *
+     * @param active The status.
+     */
+    public void setActive(final boolean active) {
+        this.active = active;
     }
 
     /**
