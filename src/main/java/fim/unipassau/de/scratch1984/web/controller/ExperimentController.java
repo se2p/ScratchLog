@@ -131,7 +131,7 @@ public class ExperimentController {
      */
     @PostMapping("/update")
     @Secured("ROLE_ADMIN")
-    public String createExperiment(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO,
+    public String editExperiment(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO,
                                    final BindingResult bindingResult) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
@@ -170,7 +170,7 @@ public class ExperimentController {
     }
 
     /**
-     * Deltes the experiment with the given id from the database and redirects to the index page on success.
+     * Deletes the experiment with the given id from the database and redirects to the index page on success.
      *
      * @param id The id of the experiment.
      * @return The index page.

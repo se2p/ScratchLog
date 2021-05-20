@@ -102,6 +102,11 @@ public class ExperimentService {
      * @return The experiment, if it exists, {@code null} if no experiment with that id exists.
      */
     public ExperimentDTO getExperiment(final int id) {
+        if (id <= 0) {
+            logger.error("Cannot search for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot search for experiment with invalid id " + id + "!");
+        }
+
         Experiment experiment = experimentRepository.findById(id);
 
         if (experiment == null) {

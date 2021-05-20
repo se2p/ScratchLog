@@ -45,6 +45,30 @@ public class Experiment {
     private boolean active;
 
     /**
+     * Default constructor for the experiment entity.
+     */
+    public Experiment() {
+    }
+
+    /**
+     * Constructs a new experiment with the given attributes.
+     *
+     * @param id The experiment id.
+     * @param title The experiment title.
+     * @param description The experiment description.
+     * @param info The experiment information text.
+     * @param active Whether the experiment is currently running or not.
+     */
+    public Experiment(final Integer id, final String title, final String description, final String info,
+                      final boolean active) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.info = info;
+        this.active = active;
+    }
+
+    /**
      * Returns the ID of the experiment.
      *
      * @return The experiment ID.

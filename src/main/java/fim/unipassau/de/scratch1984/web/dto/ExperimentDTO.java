@@ -33,6 +33,30 @@ public class ExperimentDTO {
     private boolean active;
 
     /**
+     * Default constructor for the experiment dto.
+     */
+    public ExperimentDTO() {
+    }
+
+    /**
+     * Constructs a new experiment dto with the given attributes.
+     *
+     * @param id The experiment id.
+     * @param title The experiment title.
+     * @param description The experiment description.
+     * @param info The experiment information text.
+     * @param active Whether the experiment is currently running or not.
+     */
+    public ExperimentDTO(final Integer id, final String title, final String description, final String info,
+                         final boolean active) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.info = info;
+        this.active = active;
+    }
+
+    /**
      * Returns the ID of the experiment.
      *
      * @return The experiment ID.
