@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>Experiment</title>
@@ -14,6 +14,10 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+        <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
+            <a class="btn btn-primary" th:text="#{edit}" th:href="@{/experiment/edit(id=${experimentDTO.id})}"></a>
+            <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
+        </div>
         <h2 class="mb-5" th:text="${experimentDTO.title}"></h2>
         <div class="row">
             <div class="col-12 mb-3" th:text="${experimentDTO.description}"></div>
@@ -24,6 +28,35 @@
     </div>
     <div class="col-2"></div>
 </div>
+
+<!-- The popup dialog to delete the experiment. -->
+<div id="openDelete" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{delete_experiment}"></h2>
+        <div class="mb-3" th:text="#{delete_experiment_warn}"></div>
+        <div class="d-flex justify-content-between">
+            <input id="abort" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/delete(id=${experimentDTO.id})}"></a>
+        </div>
+    </div>
+</div>
+
+<!-- Script to open and close the delete modal. -->
+<script>
+    let deleteModal = document.getElementById("openDelete");
+    let deleteButton = document.getElementById("delete");
+    let abort = document.getElementById("abort");
+    deleteButton.onclick = function() {
+        let content = document.getElementById("content");
+        deleteModal.style.display = "block";
+        content.style.filter = "blur(4px)";
+    }
+    abort.onclick = function () {
+        let content = document.getElementById("content");
+        deleteModal.style.display = "none";
+        content.style.filter = "none";
+    }
+</script>
 
 <!-- Footer -->
 <div th:insert="footer :: footer"></div>

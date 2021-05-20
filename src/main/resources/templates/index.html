@@ -14,6 +14,9 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+        <div class="row" th:style="${param.success != null ? 'display:block' : 'display:none'}">
+            <div class="col-12 alert alert-success" th:text="#{success}"></div>
+        </div>
         <h2 class="mb-5">Scratch 1984</h2>
         <div th:text="#{project_info}"></div>
     </div>

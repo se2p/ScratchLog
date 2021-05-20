@@ -53,10 +53,29 @@ public class ExperimentService {
     }
 
     /**
-     * Creates a new experiment with the given parameters in the database.
+     * Checks, whether any experiment with the given title exists in the database where the id does not match the
+     * given id.
+     *
+     * @param title The title to search for.
+     * @param id The id to compare to.
+     * @return {@code true} if such an experiment exists, or {@code false} if not.
+     */
+    public boolean existsExperiment(final String title, final int id) {
+        if (title == null || title.trim().isBlank() || id <= 0) {
+            return false;
+        }
+
+        Experiment experiment = experimentRepository.findByTitle(title);
+
+        return experiment.getId() != id;
+    }
+
+    /**
+     * Creates a new experiment or updates an existing one with the given parameters in the database. If the information
+     * could not be persisted correctly, a {@link StoreException} is thrown instead.
      *
      * @param experimentDTO The dto containing the experiment information to set.
-     * @return The newly created experiment, if the information was persisted, or {@code null} if not.
+     * @return The newly created experiment, if the information was persisted.
      */
     public ExperimentDTO saveExperiment(final ExperimentDTO experimentDTO) {
         if (experimentDTO.getTitle() == null || experimentDTO.getTitle().trim().isBlank()) {
@@ -95,24 +114,17 @@ public class ExperimentService {
     }
 
     /**
-     * Updates the information of the given experiment with the given values, or creates a new one, if no such
-     * experiment exists.
+     * Deletes the experiment with the given id from the database, if any such experiment exists.
      *
-     * @param experimentDTO The dto containing the updated experiment information.
-     * @return {@code true} if the information was persisted, or {@code false} if not.
+     * @param id The id to search for.
      */
-    public boolean updateExperiment(final ExperimentDTO experimentDTO) {
-        return false;
-    }
+    public void deleteExperiment(final int id) {
+        if (id <= 0) {
+            logger.error("Cannot delete experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot delete experiment with invalid id " + id + "!");
+        }
 
-    /**
-     * Deletes the experiment with the given title from the database, if any such experiment exists.
-     *
-     * @param title The title to search for.
-     * @return {@code true} if the deletion was successful, or {@code false} if not.
-     */
-    public boolean deleteExperiment(final String title) {
-        return false;
+        experimentRepository.deleteById(id);
     }
 
     /**

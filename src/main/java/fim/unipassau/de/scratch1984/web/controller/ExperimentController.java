@@ -65,30 +65,19 @@ public class ExperimentController {
     @GetMapping
     @Secured("ROLE_PARTICIPANT")
     public String getExperiment(@RequestParam("id") final String id, final Model model) {
-        if (id == null) {
-            logger.debug("Cannot return the corresponding experiment page for experiment with id null!");
-            return ERROR;
-        }
-
-        int experimentId = parseExperimentId(id);
+        int experimentId = parseId(id);
 
         if (experimentId == -1) {
-            logger.debug("Cannot return the corresponding experiment page for experiment with invalid id "
-                    + experimentId + "!");
             return ERROR;
         }
 
-        if (model.getAttribute("experimentDTO") == null) {
-            logger.info("Retrieving experiment with id " + experimentId + " from the database.");
-            try {
-                ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-                model.addAttribute("experimentDTO", experimentDTO);
-            } catch (NotFoundException e) {
-                return ERROR;
-            }
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            model.addAttribute("experimentDTO", experimentDTO);
+            return "experiment";
+        } catch (NotFoundException e) {
+            return ERROR;
         }
-
-        return "experiment";
     }
 
     /**
@@ -104,18 +93,44 @@ public class ExperimentController {
     }
 
     /**
-     * Creates a new experiment from the given {@link ExperimentDTO} and redirects to corresponding experiment page on
-     * success. If the input form data is invalid, the current page is returned instead to display the error messages.
+     * Returns the experiment edit page for the experiment with the given id. If no entry can be found in the database,
+     * the user is redirected to the error page instead.
+     *
+     * @param id The id to search for.
+     * @param model The model to hold the information.
+     * @return The experiment edit page on success, or the error page otherwise.
+     */
+    @GetMapping("/edit")
+    @Secured("ROLE_ADMIN")
+    public String getEditExperimentForm(@RequestParam("id") final String id, final Model model) {
+        int experimentId = parseId(id);
+
+        if (experimentId == -1) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO findExperiment = experimentService.getExperiment(experimentId);
+            model.addAttribute("experimentDTO", findExperiment);
+            return "experiment-edit";
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+    }
+
+    /**
+     * Creates a new experiment or updates an existing one with the information given in the {@link ExperimentDTO}
+     * and redirects to corresponding experiment page on success. If the input form data is invalid, the current page is
+     * returned instead to display the error messages.
      *
      * @param experimentDTO The experiment dto containing the input data.
-     * @param model The model to which the newly created dto is appended on success.
      * @param bindingResult The binding result for returning information on invalid user input.
      * @return The experiment edit page, if the input is invalid, or experiment page on success.
      */
-    @PostMapping("/create")
+    @PostMapping("/update")
     @Secured("ROLE_ADMIN")
     public String createExperiment(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO,
-                                   final Model model, final BindingResult bindingResult) {
+                                   final BindingResult bindingResult) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
         String titleValidation = validateInput(experimentDTO.getTitle(), Constants.LARGE_FIELD);
@@ -123,8 +138,6 @@ public class ExperimentController {
 
         if (titleValidation != null) {
             bindingResult.addError(createFieldError("title", titleValidation, resourceBundle));
-        } else if (experimentService.existsExperiment(experimentDTO.getTitle())) {
-            bindingResult.addError(createFieldError("title", "title_exists", resourceBundle));
         }
         if (descriptionValidation != null) {
             bindingResult.addError(createFieldError("description", descriptionValidation,
@@ -133,15 +146,67 @@ public class ExperimentController {
         if (experimentDTO.getInfo().length() > Constants.LARGE_AREA) {
             bindingResult.addError(createFieldError("info", "long_string", resourceBundle));
         }
+        if (experimentDTO.getId() == null) {
+            if (experimentService.existsExperiment(experimentDTO.getTitle())) {
+                logger.error("Experiment with same title exists!");
+                bindingResult.addError(createFieldError("title", "title_exists", resourceBundle));
+            }
+        } else {
+            if (experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())) {
+                logger.error("Experiment with same name but different id exists!");
+                bindingResult.addError(createFieldError("title", "title_exists", resourceBundle));
+            }
+        }
 
         if (bindingResult.hasErrors()) {
             return "experiment-edit";
         }
 
         ExperimentDTO saved = experimentService.saveExperiment(experimentDTO);
-        model.addAttribute("experimentDTO", saved);
 
         return "redirect:/experiment?id=" + saved.getId();
+    }
+
+    /**
+     * Deltes the experiment with the given id from the database and redirects to the index page on success.
+     *
+     * @param id The id of the experiment.
+     * @return The index page.
+     */
+    @GetMapping("/delete")
+    @Secured("ROLE_ADMIN")
+    public String deleteExperiment(@RequestParam("id") final String id) {
+        int experimentId = parseId(id);
+
+        if (experimentId == -1) {
+            return ERROR;
+        }
+
+        experimentService.deleteExperiment(experimentId);
+        return "redirect:/?success=true";
+    }
+
+    /**
+     * Parses the given string to a number, or returns -1, if the id is null or an invalid number.
+     *
+     * @param id The id to check.
+     * @return The number corresponding to the id, if it is a valid number, or -1 otherwise.
+     */
+    private int parseId(final String id) {
+        if (id == null) {
+            logger.debug("Cannot return the corresponding experiment page for experiment with id null!");
+            return -1;
+        }
+
+        int experimentId = parseExperimentId(id);
+
+        if (experimentId <= 0) {
+            logger.debug("Cannot return the corresponding experiment page for experiment with invalid id "
+                    + experimentId + "!");
+            return -1;
+        }
+
+        return experimentId;
     }
 
     /**
