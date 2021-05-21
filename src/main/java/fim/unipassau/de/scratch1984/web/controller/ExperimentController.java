@@ -90,7 +90,7 @@ public class ExperimentController {
      */
     @GetMapping("/create")
     @Secured("ROLE_ADMIN")
-    public String getExperimentForm(final ExperimentDTO experimentDTO) {
+    public String getExperimentForm(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO) {
         return "experiment-edit";
     }
 
@@ -132,7 +132,7 @@ public class ExperimentController {
     @PostMapping("/update")
     @Secured("ROLE_ADMIN")
     public String editExperiment(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO,
-                                   final BindingResult bindingResult) {
+                                 final BindingResult bindingResult) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
         String titleValidation = validateInput(experimentDTO.getTitle(), Constants.LARGE_FIELD);
