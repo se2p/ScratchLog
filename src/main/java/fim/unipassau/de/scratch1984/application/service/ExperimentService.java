@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * A service providing methods related to experiments.
@@ -48,6 +49,7 @@ public class ExperimentService {
      * @param title The title to search for.
      * @return {@code true} if an experiment exists, or {@code false} if not.
      */
+    @Transactional
     public boolean existsExperiment(final String title) {
         if (title == null || title.trim().isBlank()) {
             return false;
@@ -64,6 +66,7 @@ public class ExperimentService {
      * @param id The id to compare to.
      * @return {@code true} if such an experiment exists, or {@code false} if not.
      */
+    @Transactional
     public boolean existsExperiment(final String title, final int id) {
         if (title == null || title.trim().isBlank() || id <= 0) {
             return false;
@@ -81,6 +84,7 @@ public class ExperimentService {
      * @param experimentDTO The dto containing the experiment information to set.
      * @return The newly created experiment, if the information was persisted.
      */
+    @Transactional
     public ExperimentDTO saveExperiment(final ExperimentDTO experimentDTO) {
         if (experimentDTO.getTitle() == null || experimentDTO.getTitle().trim().isBlank()) {
             logger.error("Cannot save experiment with empty title!");
@@ -106,6 +110,7 @@ public class ExperimentService {
      * @param id The id to search for.
      * @return The experiment, if it exists, {@code null} if no experiment with that id exists.
      */
+    @Transactional
     public ExperimentDTO getExperiment(final int id) {
         if (id <= 0) {
             logger.error("Cannot search for experiment with invalid id " + id + "!");
@@ -128,11 +133,12 @@ public class ExperimentService {
      * @param pageable The pageable containing the page size and page number.
      * @return The experiment page.
      */
+    @Transactional
     public Page<Experiment> getExperimentPage(final Pageable pageable) {
         int pageSize = pageable.getPageSize();
         int currentPage = pageable.getPageNumber();
 
-        if (pageSize != Constants.PAGE_SIZE || currentPage < 0) {
+        if (pageSize != Constants.PAGE_SIZE) {
             logger.error("Cannot return experiment page with invalid page size of" + pageSize + " or current page of "
                     + currentPage + "!");
             throw new IllegalArgumentException("Cannot return experiment page with invalid page size of" + pageSize
@@ -155,6 +161,7 @@ public class ExperimentService {
      *
      * @param id The id to search for.
      */
+    @Transactional
     public void deleteExperiment(final int id) {
         if (id <= 0) {
             logger.error("Cannot delete experiment with invalid id " + id + "!");
@@ -169,6 +176,7 @@ public class ExperimentService {
      *
      * @return The last page value.
      */
+    @Transactional
     public int getLastPage() {
         int rows = countExperimentRows();
 
@@ -179,6 +187,24 @@ public class ExperimentService {
         } else {
             return rows / Constants.PAGE_SIZE;
         }
+    }
+
+    /**
+     * Changes the status of the experiment with the given id to the given status value.
+     *
+     * @param status The new status.
+     * @param id The experiment id.
+     * @return The updated experiment data.
+     */
+    @Transactional
+    public ExperimentDTO changeExperimentStatus(final boolean status, final int id) {
+        if (!experimentRepository.existsById(id)) {
+            logger.error("Could not update the status for non-existent experiment with id " + id + "!");
+            throw new NotFoundException("Could not update the status for non-existent experiment with id " + id + "!");
+        }
+        experimentRepository.updateStatusById(id, status);
+        Experiment experiment = experimentRepository.findById(id);
+        return createExperimentDTO(experiment);
     }
 
     /**

@@ -191,6 +191,48 @@ public class ExperimentController {
     }
 
     /**
+     * Changes the experiment status to the given request parameter value. If the passed id or status values are
+     * invalid, or no corresponding experiment exists in the database, the user is redirected to the error page instead.
+     *
+     * @param id The id of the experiment.
+     * @param status The new status of the experiment.
+     * @param model The model to hold the information.
+     * @return The experiment page.
+     */
+    @GetMapping("/status")
+    @Secured("ROLE_ADMIN")
+    public String changeExperimentStatus(@RequestParam("stat") final String status,
+                                         @RequestParam("id") final String id, final Model model) {
+        int experimentId = parseId(id);
+
+        if (experimentId == -1) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO;
+
+            if (status.equals("open")) {
+                experimentDTO = experimentService.changeExperimentStatus(true, experimentId);
+            } else if (status.equals("close")) {
+                experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
+            } else {
+                return ERROR;
+            }
+
+            if (experimentDTO.getInfo() != null) {
+                experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
+            }
+
+            model.addAttribute("experimentDTO", experimentDTO);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return "experiment";
+    }
+
+    /**
      * Parses the given string to a number, or returns -1, if the id is null or an invalid number.
      *
      * @param id The id to check.

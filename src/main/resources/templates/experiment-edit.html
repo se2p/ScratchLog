@@ -22,6 +22,7 @@
                 <form th:action="@{/experiment/update}" th:object="${experimentDTO}" th:name="experimentDTO"
                       method="post">
                     <input type="hidden" th:field="*{id}">
+                    <input type="hidden" th:field="*{active}">
                     <div class="mb-3 form-group position-relative">
                         <label class="form-label" for="title" th:text="#{title}"></label>
                         <div class="input-group">
