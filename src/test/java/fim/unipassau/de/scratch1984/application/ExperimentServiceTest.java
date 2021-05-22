@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,12 +48,14 @@ public class ExperimentServiceTest {
     private static final int INVALID_ID = 2;
     private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "Some info text", false);
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, "Some info text", false);
-
+    private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
+    private Page<Experiment> experimentPage;
 
     @BeforeEach
     public void setup() {
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
+        experiment.setActive(false);
     }
 
     @Test
@@ -197,6 +206,38 @@ public class ExperimentServiceTest {
     }
 
     @Test
+    public void testGetExperimentPage() {
+        List<Experiment> experiments = getExperiments(5);
+        experimentPage = new PageImpl<>(experiments);
+        when(experimentRepository.findAll(any(PageRequest.class))).thenReturn(experimentPage);
+        Page<Experiment> getPage = experimentService.getExperimentPage(pageRequest);
+        assertAll(
+                () -> assertEquals(experimentPage.getTotalElements(), getPage.getTotalElements()),
+                () -> assertEquals(experimentPage.stream().findFirst(), getPage.stream().findFirst()),
+                () -> assertEquals(experimentPage.getSize(), getPage.getSize())
+        );
+        verify(experimentRepository).findAll(any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetExperimentPageEmpty() {
+        experimentPage = new PageImpl<>(new ArrayList<>());
+        when(experimentRepository.findAll(any(PageRequest.class))).thenReturn(experimentPage);
+        Page<Experiment> getPage = experimentService.getExperimentPage(pageRequest);
+        assertTrue(getPage.isEmpty());
+        verify(experimentRepository).findAll(any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetExperimentPageWrongPageSize() {
+        PageRequest wrongPageSize = PageRequest.of(0, 20);
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.getExperimentPage(wrongPageSize)
+        );
+        verify(experimentRepository, never()).findAll(any(PageRequest.class));
+    }
+
+    @Test
     public void testDeleteExperiment() {
         experimentService.deleteExperiment(ID);
         verify(experimentRepository).deleteById(ID);
@@ -208,5 +249,84 @@ public class ExperimentServiceTest {
                 () -> experimentService.deleteExperiment(0)
         );
         verify(experimentRepository, never()).deleteById(anyInt());
+    }
+
+    @Test
+    public void getLastPage() {
+        when(experimentRepository.count()).thenReturn((long) Constants.PAGE_SIZE);
+        assertEquals(0, experimentService.getLastPage());
+        verify(experimentRepository).count();
+    }
+
+    @Test
+    public void getLastPage4() {
+        when(experimentRepository.count()).thenReturn((long) 50);
+        assertEquals(4, experimentService.getLastPage());
+        verify(experimentRepository).count();
+    }
+
+    @Test
+    public void getLastPage5() {
+        when(experimentRepository.count()).thenReturn((long) 51);
+        assertEquals(5, experimentService.getLastPage());
+        verify(experimentRepository).count();
+    }
+
+    @Test
+    public void testGetLastPageTooManyRows() {
+        when(experimentRepository.count()).thenReturn(Long.MAX_VALUE);
+        assertEquals(214748364, experimentService.getLastPage());
+        verify(experimentRepository).count();
+    }
+
+    @Test
+    public void testChangeExperimentStatus() {
+        experiment.setActive(true);
+        when(experimentRepository.existsById(ID)).thenReturn(true);
+        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        ExperimentDTO changedStatus = experimentService.changeExperimentStatus(true, ID);
+        assertAll(
+                () -> assertEquals(experiment.getId(), changedStatus.getId()),
+                () -> assertEquals(experiment.getTitle(), changedStatus.getTitle()),
+                () -> assertEquals(experiment.getDescription(), changedStatus.getDescription()),
+                () -> assertEquals(experiment.getInfo(), changedStatus.getInfo()),
+                () -> assertTrue(changedStatus.isActive())
+        );
+        verify(experimentRepository).existsById(ID);
+        verify(experimentRepository).updateStatusById(ID, true);
+        verify(experimentRepository).findById(ID);
+    }
+
+    @Test
+    public void testChangeExperimentStatusFalse() {
+        when(experimentRepository.existsById(ID)).thenReturn(true);
+        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        ExperimentDTO changedStatus = experimentService.changeExperimentStatus(false, ID);
+        assertAll(
+                () -> assertEquals(experiment.getId(), changedStatus.getId()),
+                () -> assertEquals(experiment.getTitle(), changedStatus.getTitle()),
+                () -> assertEquals(experiment.getDescription(), changedStatus.getDescription()),
+                () -> assertEquals(experiment.getInfo(), changedStatus.getInfo()),
+                () -> assertFalse(changedStatus.isActive())
+        );
+        verify(experimentRepository).existsById(ID);
+        verify(experimentRepository).updateStatusById(ID, false);
+        verify(experimentRepository).findById(ID);
+    }
+
+    @Test
+    public void testChangeExperimentStatusNotFound() {
+        assertThrows(NotFoundException.class, () -> experimentService.changeExperimentStatus(true, ID));
+        verify(experimentRepository).existsById(ID);
+        verify(experimentRepository, never()).updateStatusById(ID, true);
+        verify(experimentRepository, never()).findById(ID);
+    }
+
+    private List<Experiment> getExperiments(int number) {
+        List<Experiment> experiments = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            experiments.add(new Experiment(i, "Experiment " + i, "Description for experiment " + i, "", false));
+        }
+        return experiments;
     }
 }

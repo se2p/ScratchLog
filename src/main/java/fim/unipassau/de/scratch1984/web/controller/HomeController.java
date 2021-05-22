@@ -95,7 +95,7 @@ public class HomeController {
         int current = parsePageValue(currentPage);
         int last = parsePageValue(lastPage);
 
-        if (current == -1 || last == -1 || current >= last) {
+        if (current <= -1 || last <= -1 || current >= last) {
             return ERROR;
         }
 
@@ -129,7 +129,7 @@ public class HomeController {
         int current = parsePageValue(currentPage);
         int last = parsePageValue(lastPage);
 
-        if (current <= 0 || last == -1 || last < current) {
+        if (current <= 0 || last <= -1 || last < current) {
             return ERROR;
         }
 
@@ -160,7 +160,7 @@ public class HomeController {
 
         int last = parsePageValue(lastPage);
 
-        if (last == -1) {
+        if (last <= -1) {
             return ERROR;
         }
 
@@ -190,7 +190,7 @@ public class HomeController {
 
         int last = parsePageValue(lastPage);
 
-        if (last == -1) {
+        if (last <= -1) {
             return ERROR;
         }
 

@@ -205,7 +205,7 @@ public class ExperimentController {
                                          @RequestParam("id") final String id, final Model model) {
         int experimentId = parseId(id);
 
-        if (experimentId == -1) {
+        if (experimentId == -1 || status == null) {
             return ERROR;
         }
 
@@ -217,6 +217,8 @@ public class ExperimentController {
             } else if (status.equals("close")) {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
             } else {
+                logger.debug("Cannot return the corresponding experiment page for requested status change " + status
+                        + "!");
                 return ERROR;
             }
 

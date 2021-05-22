@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -61,6 +62,8 @@ public class ExperimentControllerIntegrationTest {
     private static final String EXPERIMENT_DTO = "experimentDTO";
     private static final String ID_STRING = "1";
     private static final String INVALID_ID = "-1";
+    private static final String ID_PARAM = "id";
+    private static final String STATUS_PARAM = "stat";
     private static final int ID = 1;
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, false);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
@@ -72,6 +75,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
+        experimentDTO.setActive(false);
     }
 
     @AfterEach
@@ -83,13 +87,13 @@ public class ExperimentControllerIntegrationTest {
     public void testGetExperiment() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/experiment")
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
-                .andExpect(model().attribute("experimentDTO", allOf(
+                .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
@@ -103,7 +107,7 @@ public class ExperimentControllerIntegrationTest {
     public void testGetExperimentNotFound() throws Exception {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/experiment")
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -116,7 +120,7 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testGetExperimentInvalidId() throws Exception {
         mvc.perform(get("/experiment")
-                .param("id", INVALID_ID)
+                .param(ID_PARAM, INVALID_ID)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -129,7 +133,7 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testGetExperimentForm() throws  Exception {
         mvc.perform(get("/experiment/create")
-                .flashAttr("experimentDTO", new ExperimentDTO())
+                .flashAttr(EXPERIMENT_DTO, new ExperimentDTO())
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -142,13 +146,13 @@ public class ExperimentControllerIntegrationTest {
     public void testGetEditExperimentForm() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/experiment/edit")
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
-                .andExpect(model().attribute("experimentDTO", allOf(
+                .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
@@ -162,7 +166,7 @@ public class ExperimentControllerIntegrationTest {
     public void testGetEditExperimentFormNotFound() throws Exception {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/experiment/edit")
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -175,7 +179,7 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testGetExperimentFormInvalidId() throws Exception {
         mvc.perform(get("/experiment/edit")
-                .param("id", INFO)
+                .param(ID_PARAM, INFO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -189,7 +193,7 @@ public class ExperimentControllerIntegrationTest {
     public void testEditExperiment() throws Exception {
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
         mvc.perform(post("/experiment/update")
-                .flashAttr("experimentDTO", experimentDTO)
+                .flashAttr(EXPERIMENT_DTO, experimentDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -205,7 +209,7 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
         when(experimentService.existsExperiment(TITLE, ID)).thenReturn(true);
         mvc.perform(post("/experiment/update")
-                .flashAttr("experimentDTO", experimentDTO)
+                .flashAttr(EXPERIMENT_DTO, experimentDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -221,7 +225,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setId(null);
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
         mvc.perform(post("/experiment/update")
-                .flashAttr("experimentDTO", experimentDTO)
+                .flashAttr(EXPERIMENT_DTO, experimentDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -238,7 +242,7 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
         mvc.perform(post("/experiment/update")
-                .flashAttr("experimentDTO", experimentDTO)
+                .flashAttr(EXPERIMENT_DTO, experimentDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -254,7 +258,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setTitle(null);
         experimentDTO.setDescription(null);
         mvc.perform(post("/experiment/update")
-                .flashAttr("experimentDTO", experimentDTO)
+                .flashAttr(EXPERIMENT_DTO, experimentDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -269,7 +273,7 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testDeleteExperiment() throws Exception {
         mvc.perform(get("/experiment/delete")
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -282,7 +286,7 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testDeleteExperimentInvalidId() throws Exception {
         mvc.perform(get("/experiment/delete")
-                .param("id", BLANK)
+                .param(ID_PARAM, BLANK)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -290,5 +294,79 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testChangeExperimentStatusOpen() throws Exception {
+        experimentDTO.setActive(true);
+        when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
+        mvc.perform(get("/experiment/status")
+                .param(STATUS_PARAM, "open")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(model().attribute("experimentDTO", allOf(
+                        hasProperty("id", is(ID)),
+                        hasProperty("title", is(TITLE)),
+                        hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(true))
+                )))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).changeExperimentStatus(true, ID);
+    }
+
+    @Test
+    public void testChangeExperimentStatusClose() throws Exception {
+        when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
+        mvc.perform(get("/experiment/status")
+                .param(STATUS_PARAM, "close")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(model().attribute("experimentDTO", allOf(
+                        hasProperty("id", is(ID)),
+                        hasProperty("title", is(TITLE)),
+                        hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(false))
+                )))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).changeExperimentStatus(false, ID);
+    }
+
+    @Test
+    public void testChangeExperimentStatusInvalid() throws Exception {
+        mvc.perform(get("/experiment/status")
+                .param(STATUS_PARAM, INFO)
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
+    }
+
+    @Test
+    public void testChangeExperimentStatusNotFound() throws Exception {
+        when(experimentService.changeExperimentStatus(false, ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/experiment/status")
+                .param(STATUS_PARAM, "close")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService).changeExperimentStatus(false, ID);
     }
 }

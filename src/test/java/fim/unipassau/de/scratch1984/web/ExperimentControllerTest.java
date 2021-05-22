@@ -18,6 +18,8 @@ import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -254,6 +256,67 @@ public class ExperimentControllerTest {
         String returnString = experimentController.deleteExperiment(INVALID_ID);
         assertEquals(ERROR, returnString);
         verify(experimentService, never()).deleteExperiment(ID);
+    }
+
+    @Test
+    public void testChangeExperimentStatusOpen() {
+        when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
+        String returnString = experimentController.changeExperimentStatus("open", ID_STRING, model);
+        assertEquals(EXPERIMENT, returnString);
+        verify(experimentService).changeExperimentStatus(true, ID);
+        verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testChangeExperimentStatusClose() {
+        when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
+        String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model);
+        assertEquals(EXPERIMENT, returnString);
+        verify(experimentService).changeExperimentStatus(false, ID);
+        verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testChangeExperimentStatusCloseInfoNull() {
+        experimentDTO.setInfo(null);
+        when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
+        String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model);
+        assertEquals(EXPERIMENT, returnString);
+        verify(experimentService).changeExperimentStatus(false, ID);
+        verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testChangeExperimentStatusInvalid() {
+        String returnString = experimentController.changeExperimentStatus("blabla", ID_STRING, model);
+        assertEquals(ERROR, returnString);
+        verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
+        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testChangeExperimentStatusOpenNotFound() {
+        when(experimentService.changeExperimentStatus(true, ID)).thenThrow(NotFoundException.class);
+        String returnString = experimentController.changeExperimentStatus("open", ID_STRING, model);
+        assertEquals(ERROR, returnString);
+        verify(experimentService).changeExperimentStatus(true, ID);
+        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testChangeExperimentStatusStatusNull() {
+        String returnString = experimentController.changeExperimentStatus(null, ID_STRING, model);
+        assertEquals(ERROR, returnString);
+        verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
+        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testChangeExperimentStatusIdNull() {
+        String returnString = experimentController.changeExperimentStatus("open", null, model);
+        assertEquals(ERROR, returnString);
+        verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
+        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     private StringBuilder createLongString(int length) {
