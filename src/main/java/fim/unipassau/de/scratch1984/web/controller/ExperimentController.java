@@ -74,7 +74,9 @@ public class ExperimentController {
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
+            if (experimentDTO.getInfo() != null) {
+                experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
+            }
             model.addAttribute("experimentDTO", experimentDTO);
             return "experiment";
         } catch (NotFoundException e) {

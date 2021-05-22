@@ -52,4 +52,9 @@ public final class Constants {
      */
     public static final int LARGE_AREA = 50_000;
 
+    /**
+     * The page size for a pageable.
+     */
+    public static final int PAGE_SIZE = 10;
+
 }

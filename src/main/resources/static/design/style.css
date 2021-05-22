@@ -110,11 +110,18 @@ body {
     margin: 1%;
 }
 
+.no_decoration,
+.no_decoration:hover {
+    text-decoration: none;
+    color: black;
+    margin: 1%;
+}
+
 .navbar-brand {
     margin: 1%;
 }
 
-#openCopyright {
+#open_copyright {
     position: fixed;
     left: 50%;
     top: 50%;

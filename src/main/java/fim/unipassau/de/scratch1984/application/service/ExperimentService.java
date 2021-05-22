@@ -5,10 +5,15 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 /**
@@ -118,6 +123,34 @@ public class ExperimentService {
     }
 
     /**
+     * Returns a page of experiments corresponding to the parameters passed in the given pageable.
+     *
+     * @param pageable The pageable containing the page size and page number.
+     * @return The experiment page.
+     */
+    public Page<Experiment> getExperimentPage(final Pageable pageable) {
+        int pageSize = pageable.getPageSize();
+        int currentPage = pageable.getPageNumber();
+
+        if (pageSize != Constants.PAGE_SIZE || currentPage < 0) {
+            logger.error("Cannot return experiment page with invalid page size of" + pageSize + " or current page of "
+                    + currentPage + "!");
+            throw new IllegalArgumentException("Cannot return experiment page with invalid page size of" + pageSize
+                    + " or current page of " + currentPage + "!");
+        }
+
+        Page<Experiment> experiments = experimentRepository.findAll(PageRequest.of(currentPage, pageSize,
+                Sort.by("id").descending()));
+
+        if (experiments.isEmpty()) {
+            logger.info("Could not find any experiments for the page with page size of " + pageSize
+                    + ", current page of " + currentPage + " and offset of " + pageable.getOffset() + "!");
+        }
+
+        return experiments;
+    }
+
+    /**
      * Deletes the experiment with the given id from the database, if any such experiment exists.
      *
      * @param id The id to search for.
@@ -129,6 +162,40 @@ public class ExperimentService {
         }
 
         experimentRepository.deleteById(id);
+    }
+
+    /**
+     * Returns the number of the last page for the experiment pagination.
+     *
+     * @return The last page value.
+     */
+    public int getLastPage() {
+        int rows = countExperimentRows();
+
+        if (rows <= Constants.PAGE_SIZE) {
+            return 0;
+        } else if (rows % Constants.PAGE_SIZE == 0) {
+            return rows / Constants.PAGE_SIZE - 1;
+        } else {
+            return rows / Constants.PAGE_SIZE;
+        }
+    }
+
+    /**
+     * Returns the number of rows currently present in the experiment table. If the number of rows is too big to be
+     * represented by an int value, -1 is returned instead.
+     *
+     * @return The row count value.
+     */
+    private int countExperimentRows() {
+        long rows = experimentRepository.count();
+
+        if (rows > (long) Integer.MAX_VALUE) {
+            logger.error("Can't return the correct row count as number of rows is too big to be cast to an int!");
+            return Integer.MAX_VALUE;
+        }
+
+        return (int) rows;
     }
 
     /**

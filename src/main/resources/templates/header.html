@@ -49,9 +49,9 @@
     </nav>
 
     <!-- The modal showing copyright and contact information on small screens -->
-    <div id="openCopyright" class="modal">
+    <div id="open_copyright" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <span class="close"><i class="fas fa-times"></i></span>
             <p id="contact_info">Copyright &copy; 2021 Scratch 1984<br>
                 <span th:text="#{address}"></span><br>
                 <!--Link to the chair's page-->
@@ -64,7 +64,7 @@
 
     <!-- Script to open and close the copyright and contact modal. -->
     <script>
-        let modal = document.getElementById("openCopyright");
+        let modal = document.getElementById("open_copyright");
         let navItem = document.getElementById("copyright_header");
         let span = document.getElementsByClassName("close")[0];
         navItem.onclick = function() {
