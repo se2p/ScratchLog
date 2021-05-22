@@ -1,6 +1,8 @@
 package fim.unipassau.de.scratch1984.persistence.repository;
 
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -42,6 +44,30 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * @return The experiment data or {@code null}, if no entry could be found.
      */
     Experiment findById(int id);
+
+    /**
+     * Returns a page of experiments corresponding to the parameters set in the pageable.
+     *
+     * @param pageable The pageable to use.
+     * @return An new experiment page.
+     */
+    Page<Experiment> findAll(Pageable pageable);
+
+    /**
+     * Returns a page of experiments with the given active status corresponding to the parameters set in the pageable.
+     *
+     * @param active The active status of the experiment.
+     * @param pageable The pageable to use.
+     * @return An new experiment page.
+     */
+    Page<Experiment> findAllByActive(boolean active, Pageable pageable);
+
+    /**
+     * Deletes the experiment with the given id from the database, if existent.
+     *
+     * @param id The experiment id.
+     */
+    void deleteById(int id);
 
     /**
      * Updates the active status of the experiment with the given id to the given value.
