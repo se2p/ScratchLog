@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Error</title>
     <link rel="stylesheet" href="/static/design/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/design/all.css"/>
     <link rel="stylesheet" href="/static/design/style.css">
 </head>
 <body>
@@ -12,12 +13,12 @@
 
 <!-- Page content -->
 <div class="row" id="content">
-    <div class="col-sm-2"></div>
-    <div class="col-sm-8">
-        <h2>Error</h2>
+    <div class="col-2"></div>
+    <div class="col-8">
+        <h2 th:text="#{error}"></h2>
         <div th:text="#{error_notice}"></div>
     </div>
-    <div class="col-sm-2"></div>
+    <div class="col-2"></div>
 </div>
 
 <!-- Footer -->

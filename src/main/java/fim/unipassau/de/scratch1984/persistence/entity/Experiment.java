@@ -21,10 +21,10 @@ public class Experiment {
     private Integer id;
 
     /**
-     * The unique name of the experiment.
+     * The unique title of the experiment.
      */
-    @Column(unique = true, name = "name")
-    private String name;
+    @Column(unique = true, name = "title")
+    private String title;
 
     /**
      * The short description text of the experiment.
@@ -37,6 +37,36 @@ public class Experiment {
      */
     @Column(name = "infotext")
     private String info;
+
+    /**
+     * Boolean indicating whether the experiment is running or not.
+     */
+    @Column(name = "active")
+    private boolean active;
+
+    /**
+     * Default constructor for the experiment entity.
+     */
+    public Experiment() {
+    }
+
+    /**
+     * Constructs a new experiment with the given attributes.
+     *
+     * @param id The experiment id.
+     * @param title The experiment title.
+     * @param description The experiment description.
+     * @param info The experiment information text.
+     * @param active Whether the experiment is currently running or not.
+     */
+    public Experiment(final Integer id, final String title, final String description, final String info,
+                      final boolean active) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.info = info;
+        this.active = active;
+    }
 
     /**
      * Returns the ID of the experiment.
@@ -57,21 +87,21 @@ public class Experiment {
     }
 
     /**
-     * Returns the name of the experiment.
+     * Returns the title of the experiment.
      *
-     * @return The experiment name.
+     * @return The experiment title.
      */
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
     /**
-     * Sets the name of the experiment.
+     * Sets the title of the experiment.
      *
-     * @param name The experiment name to be set.
+     * @param name The experiment title to be set.
      */
-    public void setName(final String name) {
-        this.name = name;
+    public void setTitle(final String name) {
+        this.title = name;
     }
 
     /**
@@ -108,6 +138,24 @@ public class Experiment {
      */
     public void setInfo(final String info) {
         this.info = info;
+    }
+
+    /**
+     * Returns whether the experiment is currently running.
+     *
+     * @return The experiment status.
+     */
+    public boolean isActive() {
+        return active;
+    }
+
+    /**
+     * Sets the running status the experiment.
+     *
+     * @param active The status.
+     */
+    public void setActive(final boolean active) {
+        this.active = active;
     }
 
 }

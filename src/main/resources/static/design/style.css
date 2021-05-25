@@ -76,11 +76,11 @@ body {
     overflow-y: auto;
 }
 
-.col-sm-2 {
+.col-2 {
     background-color: #f3f3f3;
 }
 
-.col-sm-8 {
+.col-8 {
     box-shadow: 0 8px 20px 0 rgba(0,0,0,.08);
     padding: 1%;
 }
@@ -110,11 +110,18 @@ body {
     margin: 1%;
 }
 
+.no_decoration,
+.no_decoration:hover {
+    text-decoration: none;
+    color: black;
+    margin: 1%;
+}
+
 .navbar-brand {
     margin: 1%;
 }
 
-#openCopyright {
+#open_copyright {
     position: fixed;
     left: 50%;
     top: 50%;
@@ -126,8 +133,21 @@ body {
     box-shadow: 0 8px 20px 0 rgba(0, 0, 0, .08);
 }
 
+.modal {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    z-index: 9999;
+    max-width: 600px;
+    max-height: 80%;
+    height: max-content;
+    overflow-y: auto;
+    box-shadow: 0 8px 20px 0 rgba(0, 0, 0, .08);
+}
+
 .modal-content {
-    padding: 0 5%;
+    padding: 3%;
     background-color: aliceblue;
 }
 
@@ -151,4 +171,27 @@ body {
 .btn-link:active {
     color: white;
     text-decoration: none;
+}
+
+.vw-90 {
+    width: 90vw;
+}
+
+pre {
+    padding: 2px;
+    font-size: 105% !important;
+    border-radius: 6px;
+    background-color: #999999;
+}
+
+pre code {
+    font-size: 100% !important;
+}
+
+code {
+    font-family: "Fira Code", Consolas, monospace;
+    padding: 2px;
+    font-size: 105% !important;
+    border-radius: 6px;
+    background-color: #999999;
 }

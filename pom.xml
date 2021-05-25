@@ -18,9 +18,12 @@
 
         <!-- Library versions -->
         <spring.version>2.4.5</spring.version>
+        <security.test.version>5.5.0</security.test.version>
         <thymeleaf.version>3.0.4.RELEASE</thymeleaf.version>
         <jQuery.version>3.5.1</jQuery.version>
         <json.version>20190722</json.version>
+        <commonmark.version>0.16.1</commonmark.version>
+        <font-awesome.version>5.15.2</font-awesome.version>
         <junit.version>5.7.0</junit.version>
         <junitplatform.version>1.7.0</junitplatform.version>
         <mockito.version>3.6.28</mockito.version>
@@ -69,6 +72,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <version>${security.test.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Spring Security Dialect with Thymeleaf -->
         <dependency>
             <groupId>org.thymeleaf.extras</groupId>
@@ -103,6 +113,13 @@
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>${json.version}</version>
+        </dependency>
+
+        <!-- Markdown -->
+        <dependency>
+            <groupId>com.atlassian.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+            <version>${commonmark.version}</version>
         </dependency>
 
         <!-- JUnit 5 -->

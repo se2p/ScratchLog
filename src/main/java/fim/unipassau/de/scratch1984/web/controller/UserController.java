@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +21,12 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.LocaleResolver;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
@@ -50,20 +54,23 @@ public class UserController {
     private final CustomAuthenticationProvider authenticationProvider;
 
     /**
-     * The maximum length for a user input.
+     * The session locale resolver to user for language support.
      */
-    private static final int LONG_INPUT = 50;
+    private final LocaleResolver localeResolver;
 
     /**
      * Constructs a new user controller with the given dependencies.
      *
      * @param userService The user service to use.
      * @param authenticationProvider The authentication provider to use.
+     * @param localeResolver The locale resolver to use.
      */
     @Autowired
-    public UserController(final UserService userService, final CustomAuthenticationProvider authenticationProvider) {
+    public UserController(final UserService userService, final CustomAuthenticationProvider authenticationProvider,
+                          final LocaleResolver localeResolver) {
         this.userService = userService;
         this.authenticationProvider = authenticationProvider;
+        this.localeResolver = localeResolver;
     }
 
     /**
@@ -74,12 +81,14 @@ public class UserController {
      * @param userDTO The {@link UserDTO} containing the login credentials.
      * @param model The model used for saving error messages on a failed authentication.
      * @param httpServletRequest The servlet request.
+     * @param httpServletResponse The servlet response.
      * @param bindingResult The binding result for returning information on invalid user input.
      * @return The login page, if an authentication error occurred, or redirect to the index page.
      */
     @PostMapping(path = "/login")
     public String loginUser(@ModelAttribute("userDTO") final UserDTO userDTO, final Model model,
-                            final HttpServletRequest httpServletRequest, final BindingResult bindingResult) {
+                            final HttpServletRequest httpServletRequest, final HttpServletResponse httpServletResponse,
+                            final BindingResult bindingResult) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
         String usernameValidation = validateInput(userDTO.getUsername());
@@ -107,6 +116,8 @@ public class UserController {
 
             clearSecurityContext(httpServletRequest);
             updateSecurityContext(userDTO, httpServletRequest);
+            localeResolver.setLocale(httpServletRequest, httpServletResponse,
+                    getLocaleFromLanguage(userDTO.getLanguage()));
         } catch (NotFoundException e) {
             logger.error("Failed to log in user with username " + userDTO.getUsername() + ".", e);
             model.addAttribute("error", resourceBundle.getString("authentication_error"));
@@ -146,7 +157,7 @@ public class UserController {
 
     /**
      * Checks, whether the given input string matches the general requirements and returns a custom error message
-     * string if the input does not meet the requirements, or {@code null} if everything is fine.
+     * string if the it does not, or {@code null} if everything is fine.
      *
      * @param input The input string to check.
      * @return The custom error message string or {@code null}.
@@ -156,7 +167,7 @@ public class UserController {
             return "empty_string";
         }
 
-        if (input.length() > LONG_INPUT) {
+        if (input.length() > Constants.SMALL_FIELD) {
             return "long_string";
         }
 
@@ -205,6 +216,19 @@ public class UserController {
         sc.setAuthentication(auth);
         HttpSession session = httpServletRequest.getSession(true);
         session.setAttribute(SPRING_SECURITY_CONTEXT_KEY, sc);
+    }
+
+    /**
+     * Returns the proper {@link Locale} based on the user's preferred language settings.
+     *
+     * @param language The user's preferred language.
+     * @return The corresponding locale, or English as a default value.
+     */
+    private Locale getLocaleFromLanguage(final UserDTO.Language language) {
+        if (language == UserDTO.Language.GERMAN) {
+            return Locale.GERMAN;
+        }
+        return Locale.ENGLISH;
     }
 
 }

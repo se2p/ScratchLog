@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>Scratch 1984</title>
     <link rel="stylesheet" href="/static/design/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/design/all.css"/>
     <link rel="stylesheet" href="/static/design/style.css">
 </head>
 <body>
@@ -12,12 +13,66 @@
 
 <!-- Page content -->
 <div class="row" id="content">
-    <div class="col-sm-2"></div>
-    <div class="col-sm-8">
-        <h2 class="mb-5">Scratch 1984</h2>
-        <div th:text="#{project_info}"></div>
+    <div class="col-2"></div>
+    <div class="col-8">
+        <div class="row" th:style="${param.success != null ? 'display:block' : 'display:none'}">
+            <div class="col-12 alert alert-success" th:text="#{success}"></div>
+        </div>
+        <div sec:authorize="!hasRole('ADMIN')">
+            <h2 class="mb-5">Scratch 1984</h2>
+            <div th:text="#{project_info}"></div>
+        </div>
+        <div sec:authorize="hasRole('ADMIN')">
+            <h2 class="mb-5" th:text="#{experiment}"></h2>
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col" th:text="#{title}"></th>
+                    <th scope="col" th:text="#{description}"></th>
+                    <th class="text-center" scope="col" th:text="#{status}"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="experiment : ${experiments}">
+                    <th scope="row">
+                        <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                           th:text="${experiment.id}"></a>
+                    </th>
+                    <td>
+                        <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                           th:text="${experiment.title}"></a>
+                    </td>
+                    <td>
+                        <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                           th:text="${experiment.description}"></a>
+                    </td>
+                    <td class="text-center"><i th:class="${experiment.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"></i>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="text-center">
+                <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
+                      th:href="@{/first(last=${lastPage})}">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
+                      th:href="@{/previous(page=${page}, last=${lastPage})}">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+                <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
+                      th:href="@{/next(page=${page}, last=${lastPage})}">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
+                      th:href="@{/last(last=${lastPage})}">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            </div>
+        </div>
     </div>
-    <div class="col-sm-2"></div>
+    <div class="col-2"></div>
 </div>
 
 <!-- Footer -->

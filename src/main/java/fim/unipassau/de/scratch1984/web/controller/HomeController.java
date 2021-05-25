@@ -1,10 +1,21 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * The controller for the homepage of the project.
@@ -18,13 +29,179 @@ public class HomeController {
     private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
 
     /**
-     * Loads the index page containing basic information about the project.
+     * The experiment service to use for retrieving experiment information.
+     */
+    private final ExperimentService experimentService;
+
+    /**
+     * String corresponding to redirecting to the error page.
+     */
+    private static final String ERROR = "redirect:/error";
+
+    /**
+     * String corresponding to the index page.
+     */
+    private static final String INDEX = "index";
+
+    /**
+     * Constructs a new home controller with the given dependencies.
      *
+     * @param experimentService The experiment service to use.
+     */
+    @Autowired
+    public HomeController(final ExperimentService experimentService) {
+        this.experimentService = experimentService;
+    }
+
+    /**
+     * Loads the index page containing basic information about the project. If the user is an administrator, a page
+     * containing the latest experiments is loaded instead.
+     *
+     * @param httpServletRequest The servlet request.
+     * @param model The model to store the loaded information in.
      * @return The index page.
      */
     @GetMapping("/")
-    public String getIndexPage() {
-        return "index";
+    public String getIndexPage(final HttpServletRequest httpServletRequest, final Model model) {
+        if (httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+            Page<Experiment> experimentPage = experimentService.getExperimentPage(PageRequest.of(0,
+                    Constants.PAGE_SIZE));
+            model.addAttribute("experiments", experimentPage);
+            model.addAttribute("page", 1);
+            int lastPage = experimentService.getLastPage() + 1;
+            model.addAttribute("lastPage", lastPage);
+        }
+
+        return INDEX;
+    }
+
+    /**
+     * Loads the the next experiment page from the database. If the current page is the last page, the error page is
+     * displayed instead.
+     *
+     * @param model The model to store the loaded information in.
+     * @param currentPage The page currently being displayed.
+     * @param lastPage The last page.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/next")
+    @Secured("ROLE_ADMIN")
+    public String getNextPage(@RequestParam("page") final String currentPage,
+                              @RequestParam("last") final String lastPage, final Model model) {
+        if (currentPage == null || lastPage == null) {
+            return ERROR;
+        }
+
+        int current = parsePageValue(currentPage);
+        int last = parsePageValue(lastPage);
+
+        if (current <= -1 || last <= -1 || current >= last) {
+            return ERROR;
+        }
+
+        Page<Experiment> experimentPage = experimentService.getExperimentPage(PageRequest.of(current,
+                Constants.PAGE_SIZE));
+        current++;
+        model.addAttribute("experiments", experimentPage);
+        model.addAttribute("page", current);
+        model.addAttribute("lastPage", last);
+
+        return INDEX;
+    }
+
+    /**
+     * Loads the the previous experiment page from the database. If the current page is the last page, the error page is
+     * displayed instead.
+     *
+     * @param model The model to store the loaded information in.
+     * @param currentPage The page currently being displayed.
+     * @param lastPage The last page.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/previous")
+    @Secured("ROLE_ADMIN")
+    public String getPreviousPage(@RequestParam("page") final String currentPage,
+                                  @RequestParam("last") final String lastPage, final Model model) {
+        if (currentPage == null || lastPage == null) {
+            return ERROR;
+        }
+
+        int current = parsePageValue(currentPage);
+        int last = parsePageValue(lastPage);
+
+        if (current <= 0 || last <= -1 || last < current) {
+            return ERROR;
+        }
+
+        Page<Experiment> experimentPage = experimentService.getExperimentPage(PageRequest.of(current - 2,
+                Constants.PAGE_SIZE));
+        current--;
+        model.addAttribute("experiments", experimentPage);
+        model.addAttribute("page", current);
+        model.addAttribute("lastPage", last);
+
+        return INDEX;
+    }
+
+    /**
+     * Loads the the first experiment page from the database. If the passed last page is invalid, the error page is
+     * displayed instead.
+     *
+     * @param model The model to store the loaded information in.
+     * @param lastPage The last page.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/first")
+    @Secured("ROLE_ADMIN")
+    public String getFirstPage(@RequestParam("last") final String lastPage, final Model model) {
+        if (lastPage == null) {
+            return ERROR;
+        }
+
+        int last = parsePageValue(lastPage);
+
+        if (last <= -1) {
+            return ERROR;
+        }
+
+        Page<Experiment> experimentPage = experimentService.getExperimentPage(PageRequest.of(0,
+                Constants.PAGE_SIZE));
+        model.addAttribute("experiments", experimentPage);
+        model.addAttribute("page", 1);
+        model.addAttribute("lastPage", last);
+
+        return INDEX;
+    }
+
+    /**
+     * Loads the the last experiment page from the database. If the passed last page is invalid, the error page is
+     * displayed instead.
+     *
+     * @param model The model to store the loaded information in.
+     * @param lastPage The last page.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/last")
+    @Secured("ROLE_ADMIN")
+    public String getLastPage(@RequestParam("last") final String lastPage, final Model model) {
+        if (lastPage == null) {
+            return ERROR;
+        }
+
+        int last = parsePageValue(lastPage);
+
+        if (last <= -1) {
+            return ERROR;
+        }
+
+        Page<Experiment> experimentPage = experimentService.getExperimentPage(PageRequest.of(--last,
+                Constants.PAGE_SIZE));
+        last++;
+        model.addAttribute("experiments", experimentPage);
+        model.addAttribute("page", last);
+        model.addAttribute("lastPage", last);
+
+        return INDEX;
     }
 
     /**
@@ -36,6 +213,20 @@ public class HomeController {
     @GetMapping("/login")
     public String getLoginPage(final UserDTO userDTO) {
         return "login";
+    }
+
+    /**
+     * Returns the corresponding int value of the given page, or -1, if the page is not a number.
+     *
+     * @param pageValue The page value in its string representation.
+     * @return The corresponding int value, or -1.
+     */
+    private int parsePageValue(final String pageValue) {
+        try {
+            return Integer.parseInt(pageValue);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
 }

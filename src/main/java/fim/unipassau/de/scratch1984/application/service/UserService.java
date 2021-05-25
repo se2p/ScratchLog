@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * A service providing methods related to users and experiment participation.
@@ -61,6 +62,7 @@ public class UserService {
      * @param username The username to search for.
      * @return {@code true} if a user exists, or {@code false} if not.
      */
+    @Transactional
     public boolean existsUser(final String username) {
         if (username == null || username.trim().isBlank()) {
             return false;
@@ -97,6 +99,7 @@ public class UserService {
      * @param username The username to search for.
      * @return The user, if they exist.
      */
+    @Transactional
     public UserDTO getUser(final String username) {
         if (username == null || username.trim().isBlank()) {
             logger.error("The username cannot be null or blank!");
@@ -120,6 +123,7 @@ public class UserService {
      * @param userDTO The {@link UserDTO} containing the username and password entered in the login form.
      * @return A new {@link UserDTO} containing the user's information stored in the database.
      */
+    @Transactional
     public UserDTO loginUser(final UserDTO userDTO) {
         User user = userRepository.findUserByUsername(userDTO.getUsername());
 

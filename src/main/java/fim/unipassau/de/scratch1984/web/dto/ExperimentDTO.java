@@ -13,9 +13,9 @@ public class ExperimentDTO {
     private Integer id;
 
     /**
-     * The unique name of the experiment.
+     * The unique title of the experiment.
      */
-    private String name;
+    private String title;
 
     /**
      * The short description text of the experiment.
@@ -26,6 +26,35 @@ public class ExperimentDTO {
      * The information text of the experiment.
      */
     private String info;
+
+    /**
+     * Boolean indicating whether the experiment is running or not.
+     */
+    private boolean active;
+
+    /**
+     * Default constructor for the experiment dto.
+     */
+    public ExperimentDTO() {
+    }
+
+    /**
+     * Constructs a new experiment dto with the given attributes.
+     *
+     * @param id The experiment id.
+     * @param title The experiment title.
+     * @param description The experiment description.
+     * @param info The experiment information text.
+     * @param active Whether the experiment is currently running or not.
+     */
+    public ExperimentDTO(final Integer id, final String title, final String description, final String info,
+                         final boolean active) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.info = info;
+        this.active = active;
+    }
 
     /**
      * Returns the ID of the experiment.
@@ -46,21 +75,21 @@ public class ExperimentDTO {
     }
 
     /**
-     * Returns the name of the experiment.
+     * Returns the title of the experiment.
      *
-     * @return The experiment name.
+     * @return The experiment title.
      */
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
     /**
-     * Sets the name of the experiment.
+     * Sets the title of the experiment.
      *
-     * @param name The name to be set.
+     * @param title The title to be set.
      */
-    public void setName(final String name) {
-        this.name = name;
+    public void setTitle(final String title) {
+        this.title = title;
     }
 
     /**
@@ -97,6 +126,24 @@ public class ExperimentDTO {
      */
     public void setInfo(final String info) {
         this.info = info;
+    }
+
+    /**
+     * Returns whether the experiment is currently running.
+     *
+     * @return The experiment status.
+     */
+    public boolean isActive() {
+        return active;
+    }
+
+    /**
+     * Sets the running status the experiment.
+     *
+     * @param active The status.
+     */
+    public void setActive(final boolean active) {
+        this.active = active;
     }
 
     /**
@@ -139,7 +186,7 @@ public class ExperimentDTO {
     public String toString() {
         return "ExperimentDTO{"
                 + "id=" + id
-                + ", name='" + name + '\''
+                + ", title='" + title + '\''
                 + ", description='" + description + '\''
                 + ", info='" + info + '\''
                 + '}';

@@ -1,7 +1,6 @@
 package fim.unipassau.de.scratch1984.spring.configuration;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -10,7 +9,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * The resource configuration for Spring.
  */
 @Configuration
-@EnableWebMvc
 public class ResourceConfiguration implements WebMvcConfigurer {
 
     /**
