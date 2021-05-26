@@ -2,9 +2,11 @@ package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +17,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
@@ -49,6 +52,9 @@ public class ExperimentControllerIntegrationTest {
     @MockBean
     private ExperimentService experimentService;
 
+    @MockBean
+    private UserService userService;
+
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
     private static final String INFO = "Some info text";
@@ -66,12 +72,15 @@ public class ExperimentControllerIntegrationTest {
     private static final String STATUS_PARAM = "stat";
     private static final int ID = 1;
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, false);
+    private final UserDTO userDTO = new UserDTO("user", "admin1@admin.de", UserDTO.Role.ADMIN,
+            UserDTO.Language.ENGLISH, "admin", "secret1");
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @BeforeEach
     public void setup() {
+        userDTO.setId(ID);
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
@@ -84,6 +93,7 @@ public class ExperimentControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"ADMIN"})
     public void testGetExperiment() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/experiment")
@@ -104,6 +114,7 @@ public class ExperimentControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "user", roles = {"ADMIN"})
     public void testGetExperimentNotFound() throws Exception {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/experiment")
@@ -115,6 +126,65 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).getExperiment(ID);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"PARTICIPANT"})
+    public void testGetExperimentParticipant() throws Exception {
+        when(userService.getUser(anyString())).thenReturn(userDTO);
+        when(userService.existsParticipant(ID, ID)).thenReturn(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        mvc.perform(get("/experiment")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
+                        hasProperty("id", is(ID)),
+                        hasProperty("title", is(TITLE)),
+                        hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("info", is(INFO_PARSED))
+                )))
+                .andExpect(view().name(EXPERIMENT));
+        verify(userService).getUser(anyString());
+        verify(userService).existsParticipant(ID, ID);
+        verify(experimentService).getExperiment(ID);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"PARTICIPANT"})
+    public void testGetExperimentParticipantNotFound() throws Exception {
+        when(userService.getUser(anyString())).thenThrow(NotFoundException.class);
+        mvc.perform(get("/experiment")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUser(anyString());
+        verify(userService, never()).existsParticipant(ID, ID);
+        verify(experimentService, never()).getExperiment(ID);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"PARTICIPANT"})
+    public void testGetExperimentNoParticipant() throws Exception {
+        when(userService.getUser(anyString())).thenReturn(userDTO);
+        mvc.perform(get("/experiment")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUser(anyString());
+        verify(userService).existsParticipant(ID, ID);
+        verify(experimentService, never()).getExperiment(ID);
     }
 
     @Test

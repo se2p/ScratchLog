@@ -2,14 +2,18 @@ package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ResourceBundle;
 
 /**
@@ -35,6 +40,11 @@ public class ExperimentController {
     private static final Logger logger = LoggerFactory.getLogger(ExperimentController.class);
 
     /**
+     * The user service to use for user management.
+     */
+    private final UserService userService;
+
+    /**
      * The experiment service to use for management.
      */
     private final ExperimentService experimentService;
@@ -48,28 +58,48 @@ public class ExperimentController {
      * Constructs a new experiment controller with the given dependencies.
      *
      * @param experimentService The experiment service to use.
+     * @param userService The user service to use.
      */
     @Autowired
-    public ExperimentController(final ExperimentService experimentService) {
+    public ExperimentController(final ExperimentService experimentService, final UserService userService) {
         this.experimentService = experimentService;
+        this.userService = userService;
     }
 
     /**
      * Returns the experiment page displaying the information available for the experiment with the given id. If the
-     * request parameter passed is invalid, or no entry can be found in the database, the user is redirected to the
-     * error page instead.
+     * request parameter passed is invalid, no entry can be found in the database, or the user does not have sufficient
+     * rights to see the page, the user is redirected to the error page instead.
      *
      * @param id The id of the experiment.
      * @param model The model to hold the information.
+     * @param httpServletRequest The servlet request.
      * @return The experiment page on success, or the error page otherwise.
      */
     @GetMapping
     @Secured("ROLE_PARTICIPANT")
-    public String getExperiment(@RequestParam("id") final String id, final Model model) {
+    public String getExperiment(@RequestParam("id") final String id, final Model model,
+                                final HttpServletRequest httpServletRequest) {
         int experimentId = parseId(id);
 
         if (experimentId == -1) {
             return ERROR;
+        }
+
+        if (!httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            try {
+                UserDTO userDTO = userService.getUser(authentication.getName());
+                if (!userService.existsParticipant(userDTO.getId(), experimentId)) {
+                    logger.debug("No participation entry found for the user " + authentication.getName()
+                            + " for the experiment with id " + experimentId + "!");
+                    return ERROR;
+                }
+            } catch (NotFoundException e) {
+                logger.error("Can't find user with username " + authentication.getName() + " in the database!", e);
+                return ERROR;
+            }
         }
 
         try {

@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.application;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -14,11 +15,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import javax.persistence.EntityNotFoundException;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,11 +41,15 @@ public class UserServiceTest {
     private ParticipantRepository participantRepository;
 
     @Mock
+    private ExperimentRepository experimentRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     private static final String USERNAME = "admin";
     private static final String BLANK = "   ";
     private static final String PASSWORD = "admin1";
+    private static final int ID = 1;
     private final User user = new User(USERNAME, "admin1@admin.de", "ADMIN", "ENGLISH", PASSWORD, "secret1");
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, PASSWORD, "secret1");
@@ -74,6 +82,40 @@ public class UserServiceTest {
     public void testExistsUserUsernameBlank() {
         assertFalse(userRepository.existsByUsername(BLANK));
         verify(userRepository, never()).existsByUsername(USERNAME);
+    }
+
+    @Test
+    public void testExistsParticipant() {
+        when(participantRepository.existsByUserAndExperiment(any(), any())).thenReturn(true);
+        assertTrue(userService.existsParticipant(ID, ID));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).existsByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testExistsParticipantEntityNotFound() {
+        when(participantRepository.existsByUserAndExperiment(any(), any())).thenThrow(EntityNotFoundException.class);
+        assertFalse(userService.existsParticipant(ID, ID));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).existsByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testExistsParticipantUserIdInvalid() {
+        assertFalse(userService.existsParticipant(-1, ID));
+        verify(userRepository, never()).getOne(ID);
+        verify(experimentRepository, never()).getOne(ID);
+        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testExistsParticipantExperimentIdInvalid() {
+        assertFalse(userService.existsParticipant(ID, 0));
+        verify(userRepository, never()).getOne(ID);
+        verify(experimentRepository, never()).getOne(ID);
+        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
     }
 
     @Test

@@ -17,9 +17,6 @@
                 <li class="nav-item active my-auto">
                     <a class="nav-link" href="/">Home</a>
                 </li>
-                <li class="nav-item my-auto">
-                    <a id="copyright_header" class="nav-link" href="#">Copyright</a>
-                </li>
                 <li class="nav-item my-auto" sec:authorize="hasRole('ADMIN')">
                     <a id="experiment" class="nav-link" href="/experiment/create" th:text="#{new_experiment}"></a>
                 </li>
@@ -47,37 +44,6 @@
             </ul>
         </div>
     </nav>
-
-    <!-- The modal showing copyright and contact information on small screens -->
-    <div id="open_copyright" class="modal">
-        <div class="modal-content">
-            <span class="close"><i class="fas fa-times"></i></span>
-            <p id="contact_info">Copyright &copy; 2021 Scratch 1984<br>
-                <span th:text="#{address}"></span><br>
-                <!--Link to the chair's page-->
-                <a class="link" href="https://www.fim.uni-passau.de/lehrstuhl-fuer-software-engineering-ii/"
-                   target="_blank" th:text="#{chair}">
-                </a><br>
-                Prof. Dr. Gordon Fraser</p>
-        </div>
-    </div>
-
-    <!-- Script to open and close the copyright and contact modal. -->
-    <script>
-        let modal = document.getElementById("open_copyright");
-        let navItem = document.getElementById("copyright_header");
-        let span = document.getElementsByClassName("close")[0];
-        navItem.onclick = function() {
-            let content = document.getElementById("content");
-            modal.style.display = "block";
-            content.style.filter = "blur(4px)";
-        }
-        span.onclick = function () {
-            let content = document.getElementById("content");
-            modal.style.display = "none";
-            content.style.filter = "none";
-        }
-    </script>
 </div>
 </body>
 </html>

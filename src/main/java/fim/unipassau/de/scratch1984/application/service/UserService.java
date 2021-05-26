@@ -1,8 +1,10 @@
 package fim.unipassau.de.scratch1984.application.service;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -14,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityNotFoundException;
 
 /**
  * A service providing methods related to users and experiment participation.
@@ -32,6 +36,11 @@ public class UserService {
     private final UserRepository userRepository;
 
     /**
+     * The experiment repository to use for database queries related to experiment data.
+     */
+    private final ExperimentRepository experimentRepository;
+
+    /**
      * The participant repository to use for database queries participation data.
      */
     private final ParticipantRepository participantRepository;
@@ -46,13 +55,15 @@ public class UserService {
      *
      * @param userRepository The user repository to use.
      * @param participantRepository The participant repository to use.
+     * @param experimentRepository The experiment repository to use.
      * @param passwordEncoder The password encoder to use.
      */
     @Autowired
     public UserService(final UserRepository userRepository, final ParticipantRepository participantRepository,
-                       final PasswordEncoder passwordEncoder) {
+                       final ExperimentRepository experimentRepository, final PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.participantRepository = participantRepository;
+        this.experimentRepository = experimentRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -69,6 +80,29 @@ public class UserService {
         }
 
         return userRepository.existsByUsername(username);
+    }
+
+    /**
+     * Checks, whether any participant relation for the given user and experiment IDs exists.
+     *
+     * @param userId The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @return {@code true} if a user exists, or {@code false} if not.
+     */
+    @Transactional
+    public boolean existsParticipant(final int userId, final int experimentId) {
+        if (userId < 1 || experimentId < 1) {
+            return false;
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            return participantRepository.existsByUserAndExperiment(user, experiment);
+        } catch (EntityNotFoundException e) {
+            return false;
+        }
     }
 
     /**

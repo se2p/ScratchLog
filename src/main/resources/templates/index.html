@@ -54,19 +54,19 @@
             </table>
             <div class="text-center">
                 <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                      th:href="@{/first(last=${lastPage})}">
+                      th:href="@{/first}">
                     <i class="fas fa-angle-double-left"></i>
                 </a>
                 <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                      th:href="@{/previous(page=${page}, last=${lastPage})}">
+                      th:href="@{/previous(page=${page})}">
                     <i class="fas fa-angle-left"></i>
                 </a>
                 <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
-                      th:href="@{/next(page=${page}, last=${lastPage})}">
+                      th:href="@{/next(page=${page})}">
                     <i class="fas fa-angle-right"></i>
                 </a>
                 <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
-                      th:href="@{/last(last=${lastPage})}">
+                      th:href="@{/last}">
                     <i class="fas fa-angle-double-right"></i>
                 </a>
             </div>
