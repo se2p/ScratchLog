@@ -48,7 +48,7 @@ public class HomeControllerTest {
     private static final String CURRENT = "3";
     private static final String LAST = "4";
     private static final String BLANK = "   ";
-    private static final String INVALID_NUMBER = "-5";
+    private static final int LAST_PAGE = 3;
     private final Page<Experiment> experimentPage = new PageImpl<>(getExperiments(5));
 
     @Test
@@ -76,150 +76,104 @@ public class HomeControllerTest {
 
     @Test
     public void testGetNextPage() {
+        when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        String returnString = homeController.getNextPage(CURRENT, LAST, model);
+        String returnString = homeController.getNextPage(CURRENT, model);
         assertEquals(INDEX, returnString);
+        verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
         verify(model, times(3)).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetNextPageInvalidCurrent() {
-        String returnString = homeController.getNextPage(BLANK, LAST, model);
+        when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
+        String returnString = homeController.getNextPage(BLANK, model);
         assertEquals(ERROR, returnString);
-        verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetNextPageInvalidLast() {
-        String returnString = homeController.getNextPage(CURRENT, INVALID_NUMBER, model);
-        assertEquals(ERROR, returnString);
+        verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetNextPageInvalidCurrentEqualLast() {
-        String returnString = homeController.getNextPage(LAST, LAST, model);
+        when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
+        String returnString = homeController.getNextPage(LAST, model);
         assertEquals(ERROR, returnString);
+        verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetNextPageInvalidCurrentNull() {
-        String returnString = homeController.getNextPage(null, LAST, model);
+        String returnString = homeController.getNextPage(null, model);
         assertEquals(ERROR, returnString);
-        verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetNextPageInvalidLastNull() {
-        String returnString = homeController.getNextPage(CURRENT, null, model);
-        assertEquals(ERROR, returnString);
+        verify(experimentService, never()).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetPrevious() {
+        when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        String returnString = homeController.getPreviousPage(CURRENT, LAST, model);
+        String returnString = homeController.getPreviousPage(CURRENT, model);
         assertEquals(INDEX, returnString);
+        verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
         verify(model, times(3)).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetPreviousCurrent0() {
-        String returnString = homeController.getPreviousPage("0", LAST, model);
+        when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
+        String returnString = homeController.getPreviousPage("0", model);
         assertEquals(ERROR, returnString);
-        verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetPreviousLastInvalid() {
-        String returnString = homeController.getPreviousPage(CURRENT, INVALID_NUMBER, model);
-        assertEquals(ERROR, returnString);
+        verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetPreviousLastSmallerCurrent() {
-        String returnString = homeController.getPreviousPage(CURRENT, "2", model);
+        when(experimentService.getLastPage()).thenReturn(1);
+        String returnString = homeController.getPreviousPage(CURRENT, model);
         assertEquals(ERROR, returnString);
+        verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetPreviousCurrentNull() {
-        String returnString = homeController.getPreviousPage(null, LAST, model);
+        String returnString = homeController.getPreviousPage(null, model);
         assertEquals(ERROR, returnString);
-        verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetPreviousLastNull() {
-        String returnString = homeController.getPreviousPage(CURRENT, null, model);
-        assertEquals(ERROR, returnString);
+        verify(experimentService, never()).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetFirstPage() {
+        when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        String returnString = homeController.getFirstPage(LAST, model);
+        String returnString = homeController.getFirstPage(model);
         assertEquals(INDEX, returnString);
+        verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
         verify(model, times(3)).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetFirstPageLastInvalid() {
-        String returnString = homeController.getFirstPage(INVALID_NUMBER, model);
-        assertEquals(ERROR, returnString);
-        verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetFirstPageLastNull() {
-        String returnString = homeController.getFirstPage(null, model);
-        assertEquals(ERROR, returnString);
-        verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetLastPage() {
+        when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        String returnString = homeController.getLastPage(LAST, model);
+        String returnString = homeController.getLastPage(model);
         assertEquals(INDEX, returnString);
+        verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
         verify(model, times(3)).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetLastPageLastInvalid() {
-        String returnString = homeController.getLastPage(INVALID_NUMBER, model);
-        assertEquals(ERROR, returnString);
-        verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetLastPageLastNull() {
-        String returnString = homeController.getLastPage(null, model);
-        assertEquals(ERROR, returnString);
-        verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test

@@ -81,21 +81,19 @@ public class HomeController {
      *
      * @param model The model to store the loaded information in.
      * @param currentPage The page currently being displayed.
-     * @param lastPage The last page.
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/next")
     @Secured("ROLE_ADMIN")
-    public String getNextPage(@RequestParam("page") final String currentPage,
-                              @RequestParam("last") final String lastPage, final Model model) {
-        if (currentPage == null || lastPage == null) {
+    public String getNextPage(@RequestParam("page") final String currentPage, final Model model) {
+        if (currentPage == null) {
             return ERROR;
         }
 
         int current = parsePageValue(currentPage);
-        int last = parsePageValue(lastPage);
+        int last = experimentService.getLastPage() + 1;
 
-        if (current <= -1 || last <= -1 || current >= last) {
+        if (current <= -1 || current >= last) {
             return ERROR;
         }
 
@@ -115,21 +113,19 @@ public class HomeController {
      *
      * @param model The model to store the loaded information in.
      * @param currentPage The page currently being displayed.
-     * @param lastPage The last page.
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/previous")
     @Secured("ROLE_ADMIN")
-    public String getPreviousPage(@RequestParam("page") final String currentPage,
-                                  @RequestParam("last") final String lastPage, final Model model) {
-        if (currentPage == null || lastPage == null) {
+    public String getPreviousPage(@RequestParam("page") final String currentPage, final Model model) {
+        if (currentPage == null) {
             return ERROR;
         }
 
         int current = parsePageValue(currentPage);
-        int last = parsePageValue(lastPage);
+        int last = experimentService.getLastPage() + 1;
 
-        if (current <= 0 || last <= -1 || last < current) {
+        if (current <= 1 || last < current) {
             return ERROR;
         }
 
@@ -148,21 +144,12 @@ public class HomeController {
      * displayed instead.
      *
      * @param model The model to store the loaded information in.
-     * @param lastPage The last page.
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/first")
     @Secured("ROLE_ADMIN")
-    public String getFirstPage(@RequestParam("last") final String lastPage, final Model model) {
-        if (lastPage == null) {
-            return ERROR;
-        }
-
-        int last = parsePageValue(lastPage);
-
-        if (last <= -1) {
-            return ERROR;
-        }
+    public String getFirstPage(final Model model) {
+        int last = experimentService.getLastPage() + 1;
 
         Page<Experiment> experimentPage = experimentService.getExperimentPage(PageRequest.of(0,
                 Constants.PAGE_SIZE));
@@ -178,21 +165,12 @@ public class HomeController {
      * displayed instead.
      *
      * @param model The model to store the loaded information in.
-     * @param lastPage The last page.
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/last")
     @Secured("ROLE_ADMIN")
-    public String getLastPage(@RequestParam("last") final String lastPage, final Model model) {
-        if (lastPage == null) {
-            return ERROR;
-        }
-
-        int last = parsePageValue(lastPage);
-
-        if (last <= -1) {
-            return ERROR;
-        }
+    public String getLastPage(final Model model) {
+        int last = experimentService.getLastPage() + 1;
 
         Page<Experiment> experimentPage = experimentService.getExperimentPage(PageRequest.of(--last,
                 Constants.PAGE_SIZE));

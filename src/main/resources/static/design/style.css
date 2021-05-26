@@ -1,6 +1,6 @@
 /* Displays the copyright and contact information in the footer on larger screens. */
 @media only screen and (min-height: 601px) {
-    #copyright_header {
+    #copyright_small {
         display: none;
     }
 

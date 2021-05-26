@@ -2,24 +2,34 @@ package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserDTO;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.LocaleResolver;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,6 +45,9 @@ public class ExperimentControllerTest {
     private ExperimentService experimentService;
 
     @Mock
+    private UserService userService;
+
+    @Mock
     private Model model;
 
     @Mock
@@ -46,6 +59,16 @@ public class ExperimentControllerTest {
     @Mock
     private LocaleResolver localeResolver;
 
+    @Mock
+    private HttpServletRequest httpServletRequest;
+
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
+    private MockedStatic<SecurityContextHolder> securityContextHolder;
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
     private static final String INFO = "Some info text";
@@ -58,55 +81,123 @@ public class ExperimentControllerTest {
     private static final String EXPERIMENT_DTO = "experimentDTO";
     private static final String ID_STRING = "1";
     private static final String INVALID_ID = "-1";
+    private static final String ADMIN = "ROLE_ADMIN";
+    private static final String USERNAME = "Admin";
     private static final int ID = 1;
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, false);
+    private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
+            UserDTO.Language.ENGLISH, "admin", "secret1");
 
     @BeforeEach
     public void setup() {
+        userDTO.setId(ID);
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
         experimentDTO.setInfo(INFO);
+        securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
+    }
+
+    @AfterEach
+    public void cleanup() {
+        securityContextHolder.close();
     }
 
     @Test
     public void testGetExperiment() {
+        when(httpServletRequest.isUserInRole(ADMIN)).thenReturn(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        String returnString = experimentController.getExperiment(ID_STRING, model);
+        String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
         assertEquals(EXPERIMENT, returnString);
+        verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperiment(ID);
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     @Test
     public void testGetExperimentNotFound() {
+        when(httpServletRequest.isUserInRole(ADMIN)).thenReturn(true);
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
-        String returnString = experimentController.getExperiment(ID_STRING, model);
+        String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
         assertEquals(ERROR, returnString);
+        verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperiment(ID);
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     @Test
-    public void testGetExperimentIdNull() {
-        String returnString = experimentController.getExperiment(null, model);
+    public void testGetExperimentParticipant() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.existsParticipant(ID, ID)).thenReturn(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
+        assertEquals(EXPERIMENT, returnString);
+        verify(securityContext).getAuthentication();
+        verify(authentication).getName();
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(httpServletRequest).isUserInRole(ADMIN);
+        verify(experimentService).getExperiment(ID);
+        verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testGetExperimentUserNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
+        String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
         assertEquals(ERROR, returnString);
+        verify(securityContext).getAuthentication();
+        verify(authentication, times(2)).getName();
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(httpServletRequest).isUserInRole(ADMIN);
+        verify(experimentService, never()).getExperiment(ID);
+        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testGetExperimentNoParticipant() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
+        assertEquals(ERROR, returnString);
+        verify(securityContext).getAuthentication();
+        verify(authentication, times(2)).getName();
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(httpServletRequest).isUserInRole(ADMIN);
+        verify(experimentService, never()).getExperiment(ID);
+        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testGetExperimentIdNull() {
+        String returnString = experimentController.getExperiment(null, model, httpServletRequest);
+        assertEquals(ERROR, returnString);
+        verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(experimentService, never()).getExperiment(ID);
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     @Test
     public void testGetExperimentIdInvalid() {
-        String returnString = experimentController.getExperiment(INVALID_ID, model);
+        String returnString = experimentController.getExperiment(INVALID_ID, model, httpServletRequest);
         assertEquals(ERROR, returnString);
+        verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(experimentService, never()).getExperiment(ID);
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     @Test
     public void testGetExperimentIdNotANumber() {
-        String returnString = experimentController.getExperiment(BLANK, model);
+        String returnString = experimentController.getExperiment(BLANK, model, httpServletRequest);
         assertEquals(ERROR, returnString);
+        verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(experimentService, never()).getExperiment(ID);
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
