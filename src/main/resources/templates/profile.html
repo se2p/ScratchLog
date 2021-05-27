@@ -16,7 +16,7 @@
     <div class="col-2"></div>
     <div class="col-8">
         <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
-            <a class="btn btn-primary" th:text="#{edit}"></a>
+            <a class="btn btn-primary" th:text="#{edit}" th:href="@{/users/edit(name=${userDTO.username})}"></a>
             <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
         </div>
         <h2 class="mb-3">
@@ -56,7 +56,12 @@
                         <i class="fa fa-envelope fa-3x" aria-hidden="true"></i>
                     </div>
                     <div class="col-9">
-                        <div class="fs-5" th:text="${userDTO.email}"></div>
+                        <div th:if="${userDTO.email != null}">
+                            <div class="fs-5" th:text="${userDTO.email}"></div>
+                        </div>
+                        <div th:unless="${userDTO.email != null}">
+                            <div class="text-muted" th:text="#{no_email}"></div>
+                        </div>
                         <div class="text-muted" th:text="#{email}"></div>
                     </div>
                 </div>
@@ -65,7 +70,7 @@
                         <i class="fa fa-flag fa-3x" aria-hidden="true"></i>
                     </div>
                     <div class="col-9">
-                        <div class="fs-5" th:text="${userDTO.language}"></div>
+                        <div class="fs-5" th:text="${language}"></div>
                         <div class="text-muted" th:text="#{language}"></div>
                     </div>
                 </div>

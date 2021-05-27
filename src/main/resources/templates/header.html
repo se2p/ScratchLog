@@ -25,9 +25,11 @@
         <div class="mx-auto col-4">
             <form action="#" method="post">
                 <div class="input-group" sec:authorize="hasRole('ADMIN')">
-                    <input class="form-control form-text mt-0" id="username" type="text" maxlength="50"
-                           th:placeholder="#{search}"/>
-                    <input class="btn btn-outline-primary" type="submit" th:value="#{search}"/>
+                    <input class="form-control form-text mt-0" id="username" type="text" th:placeholder="#{search}"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                    <a class="input-group-text btn btn-outline-primary">
+                        <i class="fa fa-search"></i>
+                    </a>
                 </div>
             </form>
         </div>
@@ -38,7 +40,6 @@
                 </li>
                 <li class="nav-item active" sec:authorize="hasRole('ADMIN')">
                     <a class="btn btn-link" th:href="@{/users/profile}">
-                        <i class="fa fa-user-circle" aria-hidden="true"></i>
                         <span th:text="#{profile}"></span>
                     </a>
                 </li>
