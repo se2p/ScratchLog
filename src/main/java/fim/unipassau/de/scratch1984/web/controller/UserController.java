@@ -18,9 +18,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.LocaleResolver;
 
 import javax.servlet.http.HttpServletRequest;
@@ -57,6 +59,26 @@ public class UserController {
      * The session locale resolver to user for language support.
      */
     private final LocaleResolver localeResolver;
+
+    /**
+     * String corresponding to the login page.
+     */
+    private static final String LOGIN = "login";
+
+    /**
+     * String corresponding to redirecting to the index page.
+     */
+    private static final String INDEX = "redirect:/";
+
+    /**
+     * String corresponding to redirecting to the error page.
+     */
+    private static final String ERROR = "redirect:/error";
+
+    /**
+     * String corresponding to redirecting to the profile page.
+     */
+    private static final String PROFILE = "profile";
 
     /**
      * Constructs a new user controller with the given dependencies.
@@ -102,7 +124,7 @@ public class UserController {
         }
 
         if (bindingResult.hasErrors()) {
-            return "login";
+            return LOGIN;
         }
 
         try {
@@ -111,7 +133,7 @@ public class UserController {
             if (!authenticated.isActive()) {
                 logger.debug("Tried to log in inactive user with username " + userDTO.getUsername() + ".");
                 model.addAttribute("error", resourceBundle.getString("activate_first"));
-                return "login";
+                return LOGIN;
             }
 
             clearSecurityContext(httpServletRequest);
@@ -121,16 +143,15 @@ public class UserController {
         } catch (NotFoundException e) {
             logger.error("Failed to log in user with username " + userDTO.getUsername() + ".", e);
             model.addAttribute("error", resourceBundle.getString("authentication_error"));
-            return "login";
+            return LOGIN;
         }
 
-        return "redirect:/";
+        return INDEX;
     }
 
     /**
-     * Invalidates the currently authenticated user's session and redirects them to the index page, or throws a
-     * {@link NotFoundException}, if no such user exists in the database, or an {@link IllegalStateException}, if no
-     * proper spring security authentication can be found.
+     * Invalidates the currently authenticated user's session and redirects them to the index page, or the error page,
+     * if no such user exists in the database, or no proper spring security authentication can be found.
      *
      * @param httpServletRequest The {@link HttpServletRequest} containing the user session.
      * @return The index page.
@@ -142,17 +163,57 @@ public class UserController {
 
         if (authentication == null || authentication.getName() == null) {
             logger.error("Can't logout an unauthenticated user!");
-            throw new IllegalStateException("Can't logout an unauthenticated user!");
+            return ERROR;
         }
 
         if (!userService.existsUser(authentication.getName())) {
             logger.error("Can't find user with username " + authentication.getName() + " in the database!");
-            throw new NotFoundException("Can't find user with username " + authentication.getName()
-                    + " in the database!");
+            return ERROR;
         }
 
         clearSecurityContext(httpServletRequest);
-        return "redirect:/";
+        return INDEX;
+    }
+
+    /**
+     * Returns the profile page of the user with the given username, or the authenticated user's own profile page, if
+     * no parameter was passed. If no entry for the username can be found in the database, the user is redirected to
+     * error page instead, and the user's session invalidated, if the user tried to access their own profile page.
+     *
+     * @param username The username to search for.
+     * @param model The model used for saving the user information.
+     * @param httpServletRequest The {@link HttpServletRequest} containing the user session.
+     * @return The index page.
+     */
+    @GetMapping("/profile")
+    @Secured("ROLE_ADMIN")
+    public String getProfile(@RequestParam(value = "name", required = false) final String username, final Model model,
+                             final HttpServletRequest httpServletRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getName() == null) {
+            logger.error("Can't show the profile page for an unauthenticated user!");
+            return ERROR;
+        }
+
+        if (username == null || username.trim().isBlank()) {
+            try {
+                UserDTO userDTO = userService.getUser(authentication.getName());
+                model.addAttribute("userDTO", userDTO);
+                return PROFILE;
+            } catch (NotFoundException e) {
+                clearSecurityContext(httpServletRequest);
+                return ERROR;
+            }
+        }
+
+        try {
+            UserDTO userDTO = userService.getUser(username);
+            model.addAttribute("userDTO", userDTO);
+            return PROFILE;
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
     }
 
     /**

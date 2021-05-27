@@ -37,6 +37,12 @@
                     <a id="login" class="btn btn-link" href="/login">Login</a>
                 </li>
                 <li class="nav-item active" sec:authorize="hasRole('ADMIN')">
+                    <a class="btn btn-link" th:href="@{/users/profile}">
+                        <i class="fa fa-user-circle" aria-hidden="true"></i>
+                        <span th:text="#{profile}"></span>
+                    </a>
+                </li>
+                <li class="nav-item active" sec:authorize="hasRole('ADMIN')">
                     <form th:action="@{/users/logout}" method="post">
                         <input class="btn btn-link" type="submit" th:value="Logout">
                     </form>

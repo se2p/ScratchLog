@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <link rel="stylesheet" href="/static/design/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/design/all.css"/>
+    <link rel="stylesheet" href="/static/design/style.css">
+</head>
+<body>
+<!-- Navigation bar -->
+<div th:insert="header :: header"></div>
+
+<!-- Page content -->
+<div class="row" id="content">
+    <div class="col-2"></div>
+    <div class="col-8">
+        <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
+            <a class="btn btn-primary" th:text="#{edit}"></a>
+            <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
+        </div>
+        <h2 class="mb-3">
+            <span th:text="#{profile_of}"></span>
+            <span th:text="${userDTO.username}"></span>
+        </h2>
+        <div class="row mb-5" th:style="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN
+        ? '' : 'display:none'}">
+            <div class="text-danger fs-5" th:text="#{admin}"></div>
+        </div>
+        <div class="row mb-5" th:style="${userDTO.role != T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN
+        ? '' : 'display:none'}">
+            <div th:style="${userDTO.active ? '' : 'display:none'}">
+                <i class="fa fa-lock-open fa-2x"></i>
+                <span class="text-muted ms-1" th:text="#{activated}"></span>
+            </div>
+            <div th:style="${userDTO.active ? 'display:none' : ''}">
+                <i class="fa fa-lock fa-2x"></i>
+                <span class="text-muted" th:text="#{inactive}"></span>
+            </div>
+        </div>
+        <div class="card mx-5">
+            <h4 class="card-header" th:text="#{profile_info}"></h4>
+            <div class="card-body">
+                <p class="card-text">
+                <div class="row mx-4 mb-3">
+                    <div class="col-3">
+                        <i class="fa fa-user-circle fa-3x" aria-hidden="true"></i>
+                    </div>
+                    <div class="col-9">
+                        <div class="fs-5" th:text="${userDTO.username}"></div>
+                        <div class="text-muted" th:text="#{username}"></div>
+                    </div>
+                </div>
+                <div class="row mx-4 mb-3">
+                    <div class="col-3">
+                        <i class="fa fa-envelope fa-3x" aria-hidden="true"></i>
+                    </div>
+                    <div class="col-9">
+                        <div class="fs-5" th:text="${userDTO.email}"></div>
+                        <div class="text-muted" th:text="#{email}"></div>
+                    </div>
+                </div>
+                <div class="row mx-4 mb-3">
+                    <div class="col-3">
+                        <i class="fa fa-flag fa-3x" aria-hidden="true"></i>
+                    </div>
+                    <div class="col-9">
+                        <div class="fs-5" th:text="${userDTO.language}"></div>
+                        <div class="text-muted" th:text="#{language}"></div>
+                    </div>
+                </div>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-2"></div>
+</div>
+
+<!-- Footer -->
+<div th:insert="footer :: footer"></div>
+</body>
+</body>
+</html>

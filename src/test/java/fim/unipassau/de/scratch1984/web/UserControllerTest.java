@@ -27,7 +27,6 @@ import javax.servlet.http.HttpSession;
 import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -81,6 +80,9 @@ public class UserControllerTest {
     private static final String PASSWORD = "adminPassword";
     private static final String REDIRECT = "redirect:/";
     private static final String LOGIN = "login";
+    private static final String ERROR = "redirect:/error";
+    private static final String PROFILE = "profile";
+    private static final String USER_DTO = "userDTO";
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, PASSWORD, "secret1");
 
@@ -200,7 +202,7 @@ public class UserControllerTest {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
-        assertThrows(NotFoundException.class, () -> userController.logoutUser(httpServletRequest));
+        assertEquals(ERROR, userController.logoutUser(httpServletRequest));
         verify(userService).existsUser(USERNAME);
     }
 
@@ -208,14 +210,94 @@ public class UserControllerTest {
     public void testLogoutUserAuthenticationNameNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertThrows(IllegalStateException.class, () -> userController.logoutUser(httpServletRequest));
+        assertEquals(ERROR, userController.logoutUser(httpServletRequest));
         verify(userService, never()).existsUser(anyString());
     }
 
     @Test
     public void testLogoutUserAuthenticationNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        assertThrows(IllegalStateException.class, () -> userController.logoutUser(httpServletRequest));
+        assertEquals(ERROR, userController.logoutUser(httpServletRequest));
         verify(userService, never()).existsUser(anyString());
+    }
+
+    @Test
+    public void testGetProfile() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        assertEquals(PROFILE, userController.getProfile(USERNAME, model, httpServletRequest));
+        verify(userService).getUser(USERNAME);
+        verify(authentication).getName();
+        verify(model).addAttribute(USER_DTO, userDTO);
+    }
+
+    @Test
+    public void testGetProfileNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
+        verify(userService).getUser(USERNAME);
+        verify(authentication).getName();
+        verify(model, never()).addAttribute(USER_DTO, userDTO);
+    }
+
+    @Test
+    public void testGetProfileOwnProfile() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        assertEquals(PROFILE, userController.getProfile(null, model, httpServletRequest));
+        verify(userService).getUser(USERNAME);
+        verify(authentication, times(2)).getName();
+        verify(model).addAttribute(USER_DTO, userDTO);
+    }
+
+    @Test
+    public void testGetProfileOwnProfileBlank() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        assertEquals(PROFILE, userController.getProfile(BLANK, model, httpServletRequest));
+        verify(userService).getUser(USERNAME);
+        verify(authentication, times(2)).getName();
+        verify(model).addAttribute(USER_DTO, userDTO);
+    }
+
+    @Test
+    public void testGetProfileOwnProfileNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.getProfile(null, model, httpServletRequest));
+        verify(userService).getUser(USERNAME);
+        verify(authentication, times(2)).getName();
+        verify(httpServletRequest).getSession(false);
+        verify(model, never()).addAttribute(USER_DTO, userDTO);
+    }
+
+    @Test
+    public void testGetProfileAuthenticationNameNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        assertEquals(ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
+        verify(authentication).getName();
+        verify(userService, never()).getUser(USERNAME);
+        verify(model, never()).addAttribute(USER_DTO, userDTO);
+    }
+
+    @Test
+    public void testGetProfileAuthenticationNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        assertEquals(ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(USERNAME);
+        verify(model, never()).addAttribute(USER_DTO, userDTO);
     }
 }

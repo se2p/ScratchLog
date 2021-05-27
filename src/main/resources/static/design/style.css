@@ -121,6 +121,10 @@ body {
     margin: 1%;
 }
 
+.nav-item .fa-user-circle {
+    color: white;
+}
+
 #open_copyright {
     position: fixed;
     left: 50%;
