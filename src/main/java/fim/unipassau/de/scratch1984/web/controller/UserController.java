@@ -4,6 +4,9 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
+import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
+import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,9 +79,14 @@ public class UserController {
     private static final String ERROR = "redirect:/error";
 
     /**
-     * String corresponding to redirecting to the profile page.
+     * String corresponding to the profile page.
      */
     private static final String PROFILE = "profile";
+
+    /**
+     * String corresponding to the profile edit page.
+     */
+    private static final String PROFILE_EDIT = "profile-edit";
 
     /**
      * Constructs a new user controller with the given dependencies.
@@ -154,7 +162,7 @@ public class UserController {
      * if no such user exists in the database, or no proper spring security authentication can be found.
      *
      * @param httpServletRequest The {@link HttpServletRequest} containing the user session.
-     * @return The index page.
+     * @return The index page on success, or the error page otherwise.
      */
     @PostMapping("/logout")
     @Secured("ROLE_ADMIN")
@@ -183,12 +191,14 @@ public class UserController {
      * @param username The username to search for.
      * @param model The model used for saving the user information.
      * @param httpServletRequest The {@link HttpServletRequest} containing the user session.
-     * @return The index page.
+     * @return The profile page on success, or the error page otherwise.
      */
     @GetMapping("/profile")
     @Secured("ROLE_ADMIN")
     public String getProfile(@RequestParam(value = "name", required = false) final String username, final Model model,
                              final HttpServletRequest httpServletRequest) {
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
@@ -200,6 +210,8 @@ public class UserController {
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
                 model.addAttribute("userDTO", userDTO);
+                model.addAttribute("language",
+                        resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
                 return PROFILE;
             } catch (NotFoundException e) {
                 clearSecurityContext(httpServletRequest);
@@ -210,6 +222,7 @@ public class UserController {
         try {
             UserDTO userDTO = userService.getUser(username);
             model.addAttribute("userDTO", userDTO);
+            model.addAttribute("language", resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
             return PROFILE;
         } catch (NotFoundException e) {
             return ERROR;
@@ -217,8 +230,155 @@ public class UserController {
     }
 
     /**
+     * Returns the profile edit page of the user with the given username, or the authenticated user's own profile edit
+     * page, if no parameter was passed. If no entry can be found in the database, the user is redirected to the error
+     * page instead, and the user's session invalidated, if the user tried to access their own profile edit page.
+     *
+     * @param username The username to search for.
+     * @param model The model used for saving the user information.
+     * @param httpServletRequest The {@link HttpServletRequest} containing the user session.
+     * @return The profile edit page on success, or the error page otherwise.
+     */
+    @GetMapping("/edit")
+    @Secured("ROLE_ADMIN")
+    public String getEditProfileForm(@RequestParam(value = "name", required = false) final String username,
+                                     final Model model, final HttpServletRequest httpServletRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getName() == null) {
+            logger.error("Can't show the profile page for an unauthenticated user!");
+            return ERROR;
+        }
+
+        if (username == null || username.trim().isBlank()) {
+            try {
+                UserDTO userDTO = userService.getUser(authentication.getName());
+                model.addAttribute("userDTO", userDTO);
+                return PROFILE_EDIT;
+            } catch (NotFoundException e) {
+                clearSecurityContext(httpServletRequest);
+                return ERROR;
+            }
+        }
+
+        try {
+            UserDTO userDTO = userService.getUser(username);
+            model.addAttribute("userDTO", userDTO);
+            return PROFILE_EDIT;
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+    }
+
+    /**
+     * Updates the user information with the values given in the {@link UserDTO} and redirects to corresponding user
+     * page on success. If the input form data is invalid, the current page is returned instead to display the error
+     * messages. If the current user changed their own profile, the security context is updated to save the potentially
+     * new authentication data.
+     *
+     * @param userDTO The user dto containing the input data.
+     * @param bindingResult The binding result for returning information on invalid user input.
+     * @param httpServletRequest The servlet request.
+     * @param httpServletResponse The servlet response.
+     * @return The profile edit page, if the input is invalid, or the profile page on success.
+     */
+    @PostMapping("/update")
+    @Secured("ROLE_ADMIN")
+    public String updateUser(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult,
+                             final HttpServletRequest httpServletRequest,
+                             final HttpServletResponse httpServletResponse) {
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+
+        if (userDTO.getUsername() == null || userDTO.getEmail() == null || userDTO.getNewPassword() == null
+                || userDTO.getConfirmPassword() == null || userDTO.getPassword() == null) {
+            logger.error("The new username, email and passwords should never be null, but only empty strings!");
+            return ERROR;
+        }
+
+        UserDTO findOldUser;
+
+        try {
+            findOldUser = userService.getUserById(userDTO.getId());
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        if (findOldUser.getEmail() != null && userDTO.getEmail().trim().isBlank()) {
+            bindingResult.addError(createFieldError("userDTO", "email", "empty_string", resourceBundle));
+        }
+
+        if (!findOldUser.getUsername().equals(userDTO.getUsername())) {
+            String usernameValidation = UsernameValidator.validate(userDTO.getUsername());
+
+            if (usernameValidation != null) {
+                bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
+            } else if (userService.existsUser(userDTO.getUsername())) {
+                bindingResult.addError(createFieldError("userDTO", "username", "username_exists", resourceBundle));
+            }
+        }
+
+        if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
+            String emailValidation = EmailValidator.validate(userDTO.getEmail());
+
+            if (emailValidation != null) {
+                bindingResult.addError(createFieldError("userDTO", "email", emailValidation, resourceBundle));
+            } else if (userService.existsEmail(userDTO.getEmail())) {
+                bindingResult.addError(createFieldError("userDTO", "email", "email_exists", resourceBundle));
+            }
+        }
+
+        if (!userDTO.getNewPassword().trim().isBlank() || !userDTO.getConfirmPassword().trim().isBlank()) {
+            String passwordValidation = PasswordValidator.validate(userDTO.getNewPassword(),
+                    userDTO.getConfirmPassword());
+
+            if (passwordValidation != null) {
+                bindingResult.addError(createFieldError("userDTO", "newPassword", passwordValidation, resourceBundle));
+            }
+
+            if (userDTO.getPassword().trim().isBlank()) {
+                bindingResult.addError(createFieldError("userDTO", "password", "enter_password", resourceBundle));
+            } else if (!userService.matchesPassword(userDTO.getPassword(), findOldUser.getPassword())) {
+                    bindingResult.addError(createFieldError("userDTO", "password", "invalid_password",
+                            resourceBundle));
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            return PROFILE_EDIT;
+        }
+
+        String username = findOldUser.getUsername();
+
+        if (!findOldUser.getUsername().equals(userDTO.getUsername())) {
+            findOldUser.setUsername(userDTO.getUsername());
+        }
+
+        if (!findOldUser.getEmail().equals(userDTO.getEmail())) {
+            findOldUser.setEmail(userDTO.getEmail());
+        }
+
+        if (!userDTO.getNewPassword().trim().isBlank()) {
+            findOldUser.setPassword(userService.encodePassword(userDTO.getNewPassword()));
+        }
+
+        findOldUser.setLanguage(userDTO.getLanguage());
+        UserDTO updated = userService.updateUser(findOldUser);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (username.equals(authentication.getName())) {
+            clearSecurityContext(httpServletRequest);
+            updateSecurityContext(userDTO, httpServletRequest);
+        }
+
+        localeResolver.setLocale(httpServletRequest, httpServletResponse, getLocaleFromLanguage(userDTO.getLanguage()));
+
+        return "redirect:/users/profile?name=" + updated.getUsername();
+    }
+
+    /**
      * Checks, whether the given input string matches the general requirements and returns a custom error message
-     * string if the it does not, or {@code null} if everything is fine.
+     * string if it does not, or {@code null} if everything is fine.
      *
      * @param input The input string to check.
      * @return The custom error message string or {@code null}.
