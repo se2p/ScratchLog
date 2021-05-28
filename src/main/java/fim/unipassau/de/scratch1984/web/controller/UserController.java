@@ -287,15 +287,14 @@ public class UserController {
     public String updateUser(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult,
                              final HttpServletRequest httpServletRequest,
                              final HttpServletResponse httpServletResponse) {
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
-
         if (userDTO.getUsername() == null || userDTO.getEmail() == null || userDTO.getNewPassword() == null
                 || userDTO.getConfirmPassword() == null || userDTO.getPassword() == null) {
             logger.error("The new username, email and passwords should never be null, but only empty strings!");
             return ERROR;
         }
 
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
         UserDTO findOldUser;
 
         try {
@@ -304,45 +303,9 @@ public class UserController {
             return ERROR;
         }
 
-        if (findOldUser.getEmail() != null && userDTO.getEmail().trim().isBlank()) {
-            bindingResult.addError(createFieldError("userDTO", "email", "empty_string", resourceBundle));
-        }
-
-        if (!findOldUser.getUsername().equals(userDTO.getUsername())) {
-            String usernameValidation = UsernameValidator.validate(userDTO.getUsername());
-
-            if (usernameValidation != null) {
-                bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
-            } else if (userService.existsUser(userDTO.getUsername())) {
-                bindingResult.addError(createFieldError("userDTO", "username", "username_exists", resourceBundle));
-            }
-        }
-
-        if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
-            String emailValidation = EmailValidator.validate(userDTO.getEmail());
-
-            if (emailValidation != null) {
-                bindingResult.addError(createFieldError("userDTO", "email", emailValidation, resourceBundle));
-            } else if (userService.existsEmail(userDTO.getEmail())) {
-                bindingResult.addError(createFieldError("userDTO", "email", "email_exists", resourceBundle));
-            }
-        }
-
-        if (!userDTO.getNewPassword().trim().isBlank() || !userDTO.getConfirmPassword().trim().isBlank()) {
-            String passwordValidation = PasswordValidator.validate(userDTO.getNewPassword(),
-                    userDTO.getConfirmPassword());
-
-            if (passwordValidation != null) {
-                bindingResult.addError(createFieldError("userDTO", "newPassword", passwordValidation, resourceBundle));
-            }
-
-            if (userDTO.getPassword().trim().isBlank()) {
-                bindingResult.addError(createFieldError("userDTO", "password", "enter_password", resourceBundle));
-            } else if (!userService.matchesPassword(userDTO.getPassword(), findOldUser.getPassword())) {
-                    bindingResult.addError(createFieldError("userDTO", "password", "invalid_password",
-                            resourceBundle));
-            }
-        }
+        validateUpdateUsername(userDTO, findOldUser, bindingResult, resourceBundle);
+        validateUpdateEmail(userDTO, findOldUser, bindingResult, resourceBundle);
+        validateUpdatePassword(userDTO, findOldUser, bindingResult, resourceBundle);
 
         if (bindingResult.hasErrors()) {
             return PROFILE_EDIT;
@@ -374,6 +337,79 @@ public class UserController {
         localeResolver.setLocale(httpServletRequest, httpServletResponse, getLocaleFromLanguage(userDTO.getLanguage()));
 
         return "redirect:/users/profile?name=" + updated.getUsername();
+    }
+
+    /**
+     * Validates the username passed in the {@link UserDTO} on updating the given user.
+     *
+     * @param userDTO The user dto containing the new user information.
+     * @param findOldUser The user dto containing the old user information.
+     * @param bindingResult The binding result for returning information on invalid user input.
+     * @param resourceBundle The resource bundle for error translation.
+     */
+    private void validateUpdateUsername(final UserDTO userDTO, final UserDTO findOldUser,
+                                     final BindingResult bindingResult, final ResourceBundle resourceBundle) {
+        if (!findOldUser.getUsername().equals(userDTO.getUsername())) {
+            String usernameValidation = UsernameValidator.validate(userDTO.getUsername());
+
+            if (usernameValidation != null) {
+                bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
+            } else if (userService.existsUser(userDTO.getUsername())) {
+                bindingResult.addError(createFieldError("userDTO", "username", "username_exists", resourceBundle));
+            }
+        }
+    }
+
+    /**
+     * Validates the email passed in the {@link UserDTO} on updating the given user.
+     *
+     * @param userDTO The user dto containing the new user information.
+     * @param findOldUser The user dto containing the old user information.
+     * @param bindingResult The binding result for returning information on invalid user input.
+     * @param resourceBundle The resource bundle for error translation.
+     */
+    private void validateUpdateEmail(final UserDTO userDTO, final UserDTO findOldUser,
+                                        final BindingResult bindingResult, final ResourceBundle resourceBundle) {
+        if (findOldUser.getEmail() != null && userDTO.getEmail().trim().isBlank()) {
+            bindingResult.addError(createFieldError("userDTO", "email", "empty_string", resourceBundle));
+        }
+
+        if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
+            String emailValidation = EmailValidator.validate(userDTO.getEmail());
+
+            if (emailValidation != null) {
+                bindingResult.addError(createFieldError("userDTO", "email", emailValidation, resourceBundle));
+            } else if (userService.existsEmail(userDTO.getEmail())) {
+                bindingResult.addError(createFieldError("userDTO", "email", "email_exists", resourceBundle));
+            }
+        }
+    }
+
+    /**
+     * Validates the passwords passed in the {@link UserDTO} on updating the given user.
+     *
+     * @param userDTO The user dto containing the new user information.
+     * @param findOldUser The user dto containing the old user information.
+     * @param bindingResult The binding result for returning information on invalid user input.
+     * @param resourceBundle The resource bundle for error translation.
+     */
+    private void validateUpdatePassword(final UserDTO userDTO, final UserDTO findOldUser,
+                                     final BindingResult bindingResult, final ResourceBundle resourceBundle) {
+        if (!userDTO.getNewPassword().trim().isBlank() || !userDTO.getConfirmPassword().trim().isBlank()) {
+            String passwordValidation = PasswordValidator.validate(userDTO.getNewPassword(),
+                    userDTO.getConfirmPassword());
+
+            if (passwordValidation != null) {
+                bindingResult.addError(createFieldError("userDTO", "newPassword", passwordValidation, resourceBundle));
+            }
+
+            if (userDTO.getPassword().trim().isBlank()) {
+                bindingResult.addError(createFieldError("userDTO", "password", "enter_password", resourceBundle));
+            } else if (!userService.matchesPassword(userDTO.getPassword(), findOldUser.getPassword())) {
+                bindingResult.addError(createFieldError("userDTO", "password", "invalid_password",
+                        resourceBundle));
+            }
+        }
     }
 
     /**
