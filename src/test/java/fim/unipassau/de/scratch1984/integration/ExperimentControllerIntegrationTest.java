@@ -89,7 +89,7 @@ public class ExperimentControllerIntegrationTest {
 
     @AfterEach
     public void resetService() {
-        reset(experimentService);
+        reset(experimentService, userService);
     }
 
     @Test

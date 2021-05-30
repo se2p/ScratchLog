@@ -47,4 +47,9 @@ public final class Constants {
      */
     public static final int PAGE_SIZE = 10;
 
+    /**
+     * The maximum number of attempts to send an email.
+     */
+    public static final int MAX_EMAIL_TRIES = 3;
+
 }

@@ -231,6 +231,36 @@ public class UserService {
     }
 
     /**
+     * Updates the email of the user with the given id to the given value. If no corresponding user exists, a
+     * {@link NotFoundException} is thrown instead.
+     *
+     * @param id The user's id.
+     * @param email The new email to be set.
+     */
+    @Transactional
+    public void updateEmail(final int id, final String email) {
+        if (id < 1) {
+            logger.error("Cannot search for user with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot search for user with invalid id " + id + "!");
+        } else if (email == null || email.trim().isBlank()) {
+            logger.error("Cannot update email for user with id " + id + " with email null or blank!");
+            throw new IllegalArgumentException("Cannot update email for user with id " + id
+                    + " with email null or blank!");
+        }
+
+        Optional<User> user = userRepository.findById(id);
+
+        if (user.isEmpty()) {
+            logger.error("Could not find user with id " + id + " in the database!");
+            throw new NotFoundException("Could not find user with id " + id + " in the database!");
+        }
+
+        User found = user.get();
+        found.setEmail(email);
+        userRepository.save(found);
+    }
+
+    /**
      * Updates the participation information with the given values.
      *
      * @param participantDTO The dto containing the updated participation information.
@@ -274,7 +304,7 @@ public class UserService {
     /**
      * Creates a {@link User} with the given information of the {@link UserDTO}.
      *
-     * @param userDTO The dto containing the information.
+     * @param userDTO The DTO containing the information.
      * @return The new user containing the information passed in the DTO.
      */
     private User createUser(final UserDTO userDTO) {

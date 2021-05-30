@@ -1,10 +1,13 @@
 package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.UserController;
+import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,12 +26,16 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.mail.MessagingException;
+import java.time.LocalDateTime;
+
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -52,6 +59,12 @@ public class UserControllerIntegrationTest {
     private UserService userService;
 
     @MockBean
+    private TokenService tokenService;
+
+    @MockBean
+    private MailService mailService;
+
+    @MockBean
     private CustomAuthenticationProvider authenticationProvider;
 
     private static final String USERNAME = "admin";
@@ -66,6 +79,7 @@ public class UserControllerIntegrationTest {
     private static final String PROFILE = "profile";
     private static final String PROFILE_EDIT = "profile-edit";
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
+    private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String USER_DTO = "userDTO";
     private static final String NAME = "name";
     private static final int ID = 1;
@@ -73,6 +87,7 @@ public class UserControllerIntegrationTest {
             PASSWORD, "secret1");
     private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH, PASSWORD,
             "secret1");
+    private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -94,7 +109,7 @@ public class UserControllerIntegrationTest {
     }
 
     @AfterEach
-    public void resetService() {reset(userService);}
+    public void resetService() {reset(userService, tokenService, mailService);}
 
     @Test
     public void testLoginUser() throws Exception {
@@ -347,10 +362,9 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
-    public void testUpdateUserChangeEmailAndPassword() throws Exception {
+    public void testUpdateUserChangePassword() throws Exception {
         userDTO.setNewPassword(VALID_PASSWORD);
         userDTO.setConfirmPassword(VALID_PASSWORD);
-        userDTO.setEmail(NEW_EMAIL);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
         when(userService.encodePassword(VALID_PASSWORD)).thenReturn(VALID_PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
@@ -363,11 +377,57 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + USERNAME));
         verify(userService, never()).existsUser(NEW_USERNAME);
-        verify(userService).existsEmail(anyString());
+        verify(userService, never()).existsEmail(anyString());
         verify(userService).matchesPassword(anyString(), anyString());
         verify(userService).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).updateUser(oldDTO);
+    }
+
+    @Test
+    public void testUpdateUserChangeEmail() throws Exception {
+        userDTO.setEmail(NEW_EMAIL);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        mvc.perform(post("/users/update")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(EMAIL_REDIRECT + USERNAME));
+        verify(userService, never()).existsUser(anyString());
+        verify(userService).existsEmail(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService).updateUser(oldDTO);
+        verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+    }
+
+    @Test
+    public void testUpdateUserChangeEmailNotSent() throws Exception {
+        userDTO.setEmail(NEW_EMAIL);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        doThrow(MessagingException.class).when(mailService).sendTemplateMessage(anyString(), any(), any(), any(),
+                anyString(), any(), anyString());
+        mvc.perform(post("/users/update")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(PROFILE_REDIRECT + USERNAME));
+        verify(userService, never()).existsUser(anyString());
+        verify(userService).existsEmail(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService).updateUser(oldDTO);
+        verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
     }
 
     @Test

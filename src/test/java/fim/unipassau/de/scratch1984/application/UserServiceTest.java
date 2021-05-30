@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import javax.persistence.EntityNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -66,25 +67,25 @@ public class UserServiceTest {
     @Test
     public void testExistsUser() {
         when(userRepository.existsByUsername(USERNAME)).thenReturn(true);
-        assertTrue(userRepository.existsByUsername(USERNAME));
+        assertTrue(userService.existsUser(USERNAME));
         verify(userRepository).existsByUsername(USERNAME);
     }
 
     @Test
     public void testExistsUserFalse() {
-        assertFalse(userRepository.existsByUsername(USERNAME));
+        assertFalse(userService.existsUser(USERNAME));
         verify(userRepository).existsByUsername(USERNAME);
     }
 
     @Test
     public void testExistsUserUsernameNull() {
-        assertFalse(userRepository.existsByUsername(null));
+        assertFalse(userService.existsUser(null));
         verify(userRepository, never()).existsByUsername(USERNAME);
     }
 
     @Test
     public void testExistsUserUsernameBlank() {
-        assertFalse(userRepository.existsByUsername(BLANK));
+        assertFalse(userService.existsUser(BLANK));
         verify(userRepository, never()).existsByUsername(USERNAME);
     }
 
@@ -291,6 +292,46 @@ public class UserServiceTest {
         userDTO.setId(0);
         assertThrows(IllegalArgumentException.class,
                 () -> userService.updateUser(userDTO)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateEmail() {
+        when(userRepository.findById(ID)).thenReturn(java.util.Optional.of(user));
+        assertDoesNotThrow(() -> userService.updateEmail(ID, EMAIL));
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    public void testUpdateEmailNotFound() {
+        when(userRepository.findById(ID)).thenReturn(java.util.Optional.empty());
+        assertThrows(NotFoundException.class,
+                () -> userService.updateEmail(ID, EMAIL)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateEmailNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateEmail(ID, null)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateEmailBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateEmail(ID, BLANK)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateEmailIdInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateEmail(0, EMAIL)
         );
         verify(userRepository, never()).save(any());
     }

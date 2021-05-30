@@ -1,12 +1,15 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
+import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,11 +30,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
@@ -52,6 +59,16 @@ public class UserController {
      * The user service to use for user management.
      */
     private final UserService userService;
+
+    /**
+     * The mail service to use for sending emails.
+     */
+    private final MailService mailService;
+
+    /**
+     * The token service to use for generating tokens.
+     */
+    private final TokenService tokenService;
 
     /**
      * The custom authentication provider to use for user authentication.
@@ -91,14 +108,19 @@ public class UserController {
     /**
      * Constructs a new user controller with the given dependencies.
      *
-     * @param userService The user service to use.
-     * @param authenticationProvider The authentication provider to use.
+     * @param userService The {@link UserService} to use.
+     * @param mailService The {@link MailService} to use.
+     * @param tokenService The {@link TokenService} to use.
+     * @param authenticationProvider The {@link CustomAuthenticationProvider} to use.
      * @param localeResolver The locale resolver to use.
      */
     @Autowired
-    public UserController(final UserService userService, final CustomAuthenticationProvider authenticationProvider,
+    public UserController(final UserService userService, final MailService mailService, final TokenService tokenService,
+                          final CustomAuthenticationProvider authenticationProvider,
                           final LocaleResolver localeResolver) {
         this.userService = userService;
+        this.mailService = mailService;
+        this.tokenService = tokenService;
         this.authenticationProvider = authenticationProvider;
         this.localeResolver = localeResolver;
     }
@@ -317,8 +339,10 @@ public class UserController {
             findOldUser.setUsername(userDTO.getUsername());
         }
 
+        boolean sent = false;
+
         if (!findOldUser.getEmail().equals(userDTO.getEmail())) {
-            findOldUser.setEmail(userDTO.getEmail());
+            sent = updateEmail(userDTO.getEmail(), userDTO.getId(), httpServletRequest, resourceBundle);
         }
 
         if (!userDTO.getNewPassword().trim().isBlank()) {
@@ -335,6 +359,10 @@ public class UserController {
         }
 
         localeResolver.setLocale(httpServletRequest, httpServletResponse, getLocaleFromLanguage(userDTO.getLanguage()));
+
+        if (sent) {
+            return "redirect:/users/profile?update=true&name=" + updated.getUsername();
+        }
 
         return "redirect:/users/profile?name=" + updated.getUsername();
     }
@@ -410,6 +438,68 @@ public class UserController {
                         resourceBundle));
             }
         }
+    }
+
+    /**
+     * Generates a new token for the user with the given id with the given email as metadata when a user tries to
+     * tries to update their email address. An email is sent to the new address in which the user is asked to confirm
+     * the change.
+     *
+     * @param email The new email address.
+     * @param id The id of the user for whom the token is to be generated.
+     * @param httpServletRequest The servlet request.
+     * @param resourceBundle The resource bundle for message translations.
+     * @return {@code true} if a token was created and the email sent, or {@code false} otherwise.
+     */
+    private boolean updateEmail(final String email, final int id, final HttpServletRequest httpServletRequest,
+                                final ResourceBundle resourceBundle) {
+        TokenDTO tokenDTO;
+
+        try {
+            tokenDTO = tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, email, id);
+        } catch (NotFoundException e) {
+            return false;
+        }
+
+        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(httpServletRequest).replacePath(null).build()
+                .toUriString();
+        String tokenUrl = baseUrl + "/token?value=" + tokenDTO.getValue();
+        Map<String, Object> templateModel = new HashMap<>();
+        templateModel.put("baseUrl", baseUrl);
+        templateModel.put("token", tokenUrl);
+        return sendEmail(email, null, null, null, resourceBundle.getString("change_email_subject"),
+                templateModel, "change-email.html");
+    }
+
+    /**
+     * Sends the given email template to the given addresses. If the {@link MailService} fails to send the message
+     * three consecutive times, it stops.
+     *
+     * @param to The recipient of the email.
+     * @param cc The address to which a copy of this email should be send.
+     * @param bcc The address to which a blind copy of this email should be send.
+     * @param replyTo The reply to address.
+     * @param subject The subject of this email.
+     * @param templateModel The template model containing additional properties.
+     * @param template The name of the mail template to use.
+     * @return {@code true} if the email was sent successfully, or {@code false} otherwise.
+     */
+    private boolean sendEmail(final String to, final String cc, final String bcc, final String replyTo,
+                           final String subject, final Map<String, Object> templateModel,
+                           final String template) {
+        int tries = 0;
+
+        while (tries < Constants.MAX_EMAIL_TRIES) {
+            try {
+                mailService.sendTemplateMessage(to, cc, bcc, replyTo, subject, templateModel, template);
+                return true;
+            } catch (MessagingException e) {
+                tries++;
+                logger.error("Failed to send message to address " + to + " on try #" + tries + "!", e);
+            }
+        }
+
+        return false;
     }
 
     /**
