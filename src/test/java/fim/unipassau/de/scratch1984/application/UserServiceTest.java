@@ -17,6 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.EntityNotFoundException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,13 +55,17 @@ public class UserServiceTest {
     private static final String BLANK = "   ";
     private static final String PASSWORD = "admin1";
     private static final String EMAIL = "admin1@admin.de";
+    private static final String ADMIN = "ADMIN";
     private static final int ID = 1;
     private final User user = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, "secret1");
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
             PASSWORD, "secret1");
+    private List<User> admins;
 
     @BeforeEach
     public void setup() {
+        admins = new ArrayList<>();
+        admins.add(user);
         user.setId(ID);
         userDTO.setId(ID);
         userDTO.setPassword(PASSWORD);
@@ -348,5 +355,29 @@ public class UserServiceTest {
                 () -> userService.deleteUser(0)
         );
         verify(userRepository, never()).deleteById(anyInt());
+    }
+
+    @Test
+    public void testIsLastAdmin() {
+        admins.add(new User());
+        when(userRepository.findAllByRole(ADMIN)).thenReturn(admins);
+        assertFalse(userService.isLastAdmin());
+        verify(userRepository).findAllByRole(ADMIN);
+    }
+
+    @Test
+    public void testIsLastAdminTrue() {
+        when(userRepository.findAllByRole(ADMIN)).thenReturn(admins);
+        assertTrue(userService.isLastAdmin());
+        verify(userRepository).findAllByRole(ADMIN);
+    }
+
+    @Test
+    public void testIsLastAdminNoAdmins() {
+        when(userRepository.findAllByRole(ADMIN)).thenReturn(new ArrayList<>());
+        assertThrows(IllegalStateException.class,
+                () -> userService.isLastAdmin()
+        );
+        verify(userRepository).findAllByRole(ADMIN);
     }
 }
