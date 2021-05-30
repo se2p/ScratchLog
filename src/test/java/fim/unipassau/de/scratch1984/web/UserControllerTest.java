@@ -102,7 +102,10 @@ public class UserControllerTest {
     private static final String PROFILE_EDIT = "profile-edit";
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
+    private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
+    private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String USER_DTO = "userDTO";
+    private static final String ID_STRING = "1";
     private static final int ID = 1;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, PASSWORD, "secret1");
@@ -120,6 +123,7 @@ public class UserControllerTest {
         userDTO.setUsername(USERNAME);
         userDTO.setPassword(PASSWORD);
         userDTO.setEmail(EMAIL);
+        userDTO.setRole(UserDTO.Role.ADMIN);
         userDTO.setNewPassword("");
         userDTO.setConfirmPassword("");
         securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
@@ -701,5 +705,58 @@ public class UserControllerTest {
         assertEquals(ERROR, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(userService, never()).getUserById(ID);
+    }
+
+    @Test
+    public void testDeleteUser() {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService).isLastAdmin();
+        verify(userService).deleteUser(ID);
+    }
+
+    @Test
+    public void testDeleteUserParticipant() {
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).isLastAdmin();
+        verify(userService).deleteUser(ID);
+    }
+
+    @Test
+    public void testDeleteUserLastAdmin() {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(userService.isLastAdmin()).thenReturn(true);
+        assertEquals(LAST_ADMIN, userController.deleteUser(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService).isLastAdmin();
+        verify(userService, never()).deleteUser(ID);
+    }
+
+    @Test
+    public void testDeleteUserInvalidId() {
+        assertEquals(ERROR, userController.deleteUser("0"));
+        verify(userService, never()).getUserById(ID);
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(ID);
+    }
+
+    @Test
+    public void testDeleteUserNumberFormat() {
+        assertEquals(ERROR, userController.deleteUser(BLANK));
+        verify(userService, never()).getUserById(ID);
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(ID);
+    }
+
+    @Test
+    public void testDeleteUserIdNull() {
+        assertEquals(ERROR, userController.deleteUser(null));
+        verify(userService, never()).getUserById(ID);
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(ID);
     }
 }

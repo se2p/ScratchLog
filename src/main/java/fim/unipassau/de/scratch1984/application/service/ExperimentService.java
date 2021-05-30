@@ -68,7 +68,7 @@ public class ExperimentService {
      */
     @Transactional
     public boolean existsExperiment(final String title, final int id) {
-        if (title == null || title.trim().isBlank() || id <= 0) {
+        if (title == null || title.trim().isBlank() || id < Constants.MIN_ID) {
             return false;
         }
 
@@ -112,7 +112,7 @@ public class ExperimentService {
      */
     @Transactional
     public ExperimentDTO getExperiment(final int id) {
-        if (id <= 0) {
+        if (id < Constants.MIN_ID) {
             logger.error("Cannot search for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for experiment with invalid id " + id + "!");
         }
@@ -163,7 +163,7 @@ public class ExperimentService {
      */
     @Transactional
     public void deleteExperiment(final int id) {
-        if (id <= 0) {
+        if (id < Constants.MIN_ID) {
             logger.error("Cannot delete experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot delete experiment with invalid id " + id + "!");
         }

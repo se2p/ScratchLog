@@ -335,4 +335,18 @@ public class UserServiceTest {
         );
         verify(userRepository, never()).save(any());
     }
+
+    @Test
+    public void testDeleteUser() {
+        userService.deleteUser(ID);
+        verify(userRepository).deleteById(ID);
+    }
+
+    @Test
+    public void testDeleteUserIdInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.deleteUser(0)
+        );
+        verify(userRepository, never()).deleteById(anyInt());
+    }
 }

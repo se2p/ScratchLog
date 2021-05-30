@@ -82,7 +82,7 @@ public class ExperimentController {
                                 final HttpServletRequest httpServletRequest) {
         int experimentId = parseId(id);
 
-        if (experimentId == -1) {
+        if (experimentId < Constants.MIN_ID) {
             return ERROR;
         }
 
@@ -139,7 +139,7 @@ public class ExperimentController {
     public String getEditExperimentForm(@RequestParam("id") final String id, final Model model) {
         int experimentId = parseId(id);
 
-        if (experimentId == -1) {
+        if (experimentId < Constants.MIN_ID) {
             return ERROR;
         }
 
@@ -212,7 +212,7 @@ public class ExperimentController {
     public String deleteExperiment(@RequestParam("id") final String id) {
         int experimentId = parseId(id);
 
-        if (experimentId == -1) {
+        if (experimentId < Constants.MIN_ID) {
             return ERROR;
         }
 
@@ -235,7 +235,7 @@ public class ExperimentController {
                                          @RequestParam("id") final String id, final Model model) {
         int experimentId = parseId(id);
 
-        if (experimentId == -1 || status == null) {
+        if (experimentId < Constants.MIN_ID || status == null) {
             return ERROR;
         }
 
@@ -278,7 +278,7 @@ public class ExperimentController {
 
         int experimentId = parseExperimentId(id);
 
-        if (experimentId <= 0) {
+        if (experimentId < Constants.MIN_ID) {
             logger.debug("Cannot return the corresponding experiment page for experiment with invalid id "
                     + experimentId + "!");
             return -1;

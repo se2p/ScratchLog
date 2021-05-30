@@ -80,8 +80,11 @@ public class UserControllerIntegrationTest {
     private static final String PROFILE_EDIT = "profile-edit";
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
+    private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
+    private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String USER_DTO = "userDTO";
     private static final String NAME = "name";
+    private static final String ID_STRING = "1";
     private static final int ID = 1;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
             PASSWORD, "secret1");
@@ -104,6 +107,7 @@ public class UserControllerIntegrationTest {
         userDTO.setPassword(PASSWORD);
         userDTO.setUsername(USERNAME);
         userDTO.setEmail(EMAIL);
+        userDTO.setRole(UserDTO.Role.ADMIN);
         userDTO.setNewPassword("");
         userDTO.setConfirmPassword("");
     }
@@ -548,5 +552,51 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
+    }
+
+    @Test
+    public void testDeleteUser() throws Exception {
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        mvc.perform(get("/users/delete")
+                .param("id", ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_SUCCESS));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).isLastAdmin();
+        verify(userService).deleteUser(ID);
+    }
+
+    @Test
+    public void testDeleteUserLastAdmin() throws Exception {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(userService.isLastAdmin()).thenReturn(true);
+        mvc.perform(get("/users/delete")
+                .param("id", ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(LAST_ADMIN));
+        verify(userService).getUserById(ID);
+        verify(userService).isLastAdmin();
+        verify(userService, never()).deleteUser(ID);
+    }
+
+    @Test
+    public void testDeleteUserInvalidId() throws Exception {
+        mvc.perform(get("/users/delete")
+                .param("id", "-1")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).getUserById(ID);
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(ID);
     }
 }

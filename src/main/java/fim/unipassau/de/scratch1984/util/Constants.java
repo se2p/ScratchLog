@@ -52,4 +52,9 @@ public final class Constants {
      */
     public static final int MAX_EMAIL_TRIES = 3;
 
+    /**
+     * The minimal id for a user or experiment entity.
+     */
+    public static final int MIN_ID = 1;
+
 }

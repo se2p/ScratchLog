@@ -368,6 +368,39 @@ public class UserController {
     }
 
     /**
+     * Deletes the user with the given id and all related participant data. If no corresponding user entity can be
+     * found, the user is redirected to the error page. If the user is trying to delete the last administrator, they
+     * see an error message instead.
+     *
+     * @param id The id of the user to be deleted.
+     * @return The index page on success, or the profile or error page.
+     */
+    @GetMapping("/delete")
+    @Secured("ROLE_ADMIN")
+    public String deleteUser(@RequestParam("id") final String id) {
+        if (id == null) {
+            logger.debug("Cannot delete user with id null!");
+            return ERROR;
+        }
+
+        int userId = parseUserId(id);
+
+        if (userId < Constants.MIN_ID) {
+            logger.debug("Cannot delete user with invalid id " + id + "!");
+            return ERROR;
+        }
+
+        UserDTO userDTO = userService.getUserById(userId);
+
+        if (userDTO.getRole().equals(UserDTO.Role.ADMIN) && userService.isLastAdmin()) {
+            return "redirect:/users/profile?lastAdmin=true";
+        }
+
+        userService.deleteUser(userDTO.getId());
+        return "redirect:/?success=true";
+    }
+
+    /**
      * Validates the username passed in the {@link UserDTO} on updating the given user.
      *
      * @param userDTO The user dto containing the new user information.
@@ -576,6 +609,20 @@ public class UserController {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;
+    }
+
+    /**
+     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
+     *
+     * @param id The id in its string representation.
+     * @return The corresponding int value, or -1.
+     */
+    private int parseUserId(final String id) {
+        try {
+            return Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
 }

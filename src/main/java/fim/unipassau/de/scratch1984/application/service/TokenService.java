@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.Token;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.TokenRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +79,7 @@ public class TokenService {
      */
     @Transactional
     public TokenDTO generateToken(final TokenDTO.Type type, final String metadata, final int userId) {
-        if (userId < 1) {
+        if (userId < Constants.MIN_ID) {
             logger.error("Cannot generate token with invalid user id " + userId + "!");
             throw new IllegalArgumentException("Cannot generate token with invalid user id " + userId + "!");
         } else if (type == null) {

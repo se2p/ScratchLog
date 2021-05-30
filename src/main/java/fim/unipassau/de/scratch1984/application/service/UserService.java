@@ -7,6 +7,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -107,7 +109,7 @@ public class UserService {
      */
     @Transactional
     public boolean existsParticipant(final int userId, final int experimentId) {
-        if (userId < 1 || experimentId < 1) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             return false;
         }
 
@@ -174,7 +176,7 @@ public class UserService {
      */
     @Transactional
     public UserDTO getUserById(final int id) {
-        if (id < 1) {
+        if (id < Constants.MIN_ID) {
             logger.error("Cannot search for user with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for user with invalid id " + id + "!");
         }
@@ -221,7 +223,7 @@ public class UserService {
      */
     @Transactional
     public UserDTO updateUser(final UserDTO userDTO) {
-        if (userDTO.getId() == null || userDTO.getId() < 1) {
+        if (userDTO.getId() == null || userDTO.getId() < Constants.MIN_ID) {
             logger.error("Cannot save user with invalid id " + userDTO.getId() + "!");
             throw new IllegalArgumentException("Cannot save user with invalid id " + userDTO.getId() + "!");
         }
@@ -239,7 +241,7 @@ public class UserService {
      */
     @Transactional
     public void updateEmail(final int id, final String email) {
-        if (id < 1) {
+        if (id < Constants.MIN_ID) {
             logger.error("Cannot search for user with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for user with invalid id " + id + "!");
         } else if (email == null || email.trim().isBlank()) {
@@ -261,6 +263,23 @@ public class UserService {
     }
 
     /**
+     * Verifies how many users with administrator status are currently registered. If no administrator can be found an
+     * {@link IllegalStateException} is thrown instead.
+     *
+     * @return {@code true} if only one administrator remains in the database, or {@code false} otherwise.
+     */
+    public boolean isLastAdmin() {
+        List<User> admins = userRepository.findAllByRole(UserDTO.Role.ADMIN.toString());
+
+        if (admins.size() < Constants.MIN_ID) {
+            logger.error("There are no users with administrator status in the database!");
+            throw new IllegalStateException("There are no users with administrator status in the database!");
+        }
+
+        return admins.size() == 1;
+    }
+
+    /**
      * Updates the participation information with the given values.
      *
      * @param participantDTO The dto containing the updated participation information.
@@ -271,13 +290,18 @@ public class UserService {
     }
 
     /**
-     * Deletes the user with the given username from the database, if any such user exists.
+     * Deletes the user with the given id from the database, if any such user exists.
      *
-     * @param username The username to search for.
-     * @return {@code true} if the deletion was successful, or {@code false} if not.
+     * @param id The id to search for.
      */
-    public boolean deleteUser(final String username) {
-        return false;
+    @Transactional
+    public void deleteUser(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot delete user with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot delete user with invalid id " + id + "!");
+        }
+
+        userRepository.deleteById(id);
     }
 
     /**
