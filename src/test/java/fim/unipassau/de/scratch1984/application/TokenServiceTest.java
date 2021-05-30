@@ -200,4 +200,18 @@ public class TokenServiceTest {
         );
         verify(tokenRepository, never()).deleteById(anyString());
     }
+
+    @Test
+    public void testDeleteExpiredTokens() {
+        tokenService.deleteExpiredTokens(LocalDateTime.now());
+        verify(tokenRepository).deleteAllByDateBefore(any());
+    }
+
+    @Test
+    public void testDeleteExpiredTokensNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> tokenService.deleteExpiredTokens(null)
+        );
+        verify(tokenRepository, never()).deleteAllByDateBefore(any());
+    }
 }

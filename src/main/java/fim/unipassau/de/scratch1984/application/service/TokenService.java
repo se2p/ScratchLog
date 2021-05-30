@@ -146,6 +146,21 @@ public class TokenService {
     }
 
     /**
+     * Deletes all expired tokens from the database.
+     *
+     * @param localDateTime The current {@link LocalDateTime}.
+     */
+    @Transactional
+    public void deleteExpiredTokens(final LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            logger.error("Cannot delete expired tokens with timestamp null!");
+            throw new IllegalArgumentException("Cannot delete expired tokens with timestamp null!");
+        }
+
+        tokenRepository.deleteAllByDateBefore(Timestamp.valueOf(localDateTime));
+    }
+
+    /**
      * Returns the {@link LocalDateTime} expiration date for a token with the given type.
      *
      * @param type The {@link fim.unipassau.de.scratch1984.web.dto.TokenDTO.Type}.
@@ -155,7 +170,7 @@ public class TokenService {
         LocalDateTime dateTime = LocalDateTime.now();
 
         if (type == TokenDTO.Type.CHANGE_EMAIL) {
-            return dateTime.plusHours(EMAIL_TOKEN_EXPIRES);
+            return dateTime.plusMinutes(EMAIL_TOKEN_EXPIRES);
         }
         if (type == TokenDTO.Type.FORGOT_PASSWORD) {
             return dateTime.plusHours(PASSWORD_TOKEN_EXPIRES);

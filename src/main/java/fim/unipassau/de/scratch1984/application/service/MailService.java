@@ -40,11 +40,6 @@ public class MailService {
     private final SpringTemplateEngine templateEngine;
 
     /**
-     * The maximum number of attempts made to send an email.
-     */
-    private static final int MAX_TRIES = 3;
-
-    /**
      * Constructs a new mail service with the given dependencies.
      *
      * @param emailSender The mail sender to use.
