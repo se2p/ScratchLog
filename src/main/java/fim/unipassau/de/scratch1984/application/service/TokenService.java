@@ -171,9 +171,8 @@ public class TokenService {
         LocalDateTime dateTime = LocalDateTime.now();
 
         if (type == TokenDTO.Type.CHANGE_EMAIL) {
-            return dateTime.plusMinutes(EMAIL_TOKEN_EXPIRES);
-        }
-        if (type == TokenDTO.Type.FORGOT_PASSWORD) {
+            return dateTime.plusHours(EMAIL_TOKEN_EXPIRES);
+        } else if (type == TokenDTO.Type.FORGOT_PASSWORD) {
             return dateTime.plusHours(PASSWORD_TOKEN_EXPIRES);
         } else {
             return dateTime.plusDays(REGISTER_TOKEN_EXPIRES);
