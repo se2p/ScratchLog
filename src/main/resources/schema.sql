@@ -106,6 +106,19 @@ CREATE TABLE IF NOT EXISTS `resource_event` (
                                   CONSTRAINT `resource_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- scratch1984.token definition
+
+CREATE TABLE IF NOT EXISTS `token` (
+                         `value` varchar(255) NOT NULL,
+                         `type` varchar(255) NOT NULL,
+                         `expiration` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                         `metadata` varchar(255) DEFAULT NULL,
+                         `user_id` int NOT NULL,
+                         PRIMARY KEY (`value`),
+                         KEY `user_id` (`user_id`),
+                         CONSTRAINT `token_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 /**************************
  *  Definition of views.  *
  **************************/

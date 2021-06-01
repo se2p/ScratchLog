@@ -2,11 +2,13 @@ package fim.unipassau.de.scratch1984;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Main class starting the application.
  */
 @SpringBootApplication
+@EnableScheduling
 public class Scratch1984Application {
 
     /**

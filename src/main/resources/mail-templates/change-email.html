@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Change Email</title>
+
+    <style>
+        #header, #footer {
+            background-color: #212529;
+            text-align: center;
+            padding: 2%;
+        }
+
+        a,
+        a:hover {
+            text-decoration: none;
+            color: #ffa600;
+        }
+
+        #content {
+            width: 70vw;
+            box-shadow: 0 8px 20px 0 rgba(0,0,0,.08);
+            margin: auto;
+            padding: 2%;
+        }
+
+        #link {
+            margin: 2%;
+        }
+    </style>
+</head>
+<body>
+
+<!-- The header for email templates -->
+<nav id="header">
+    <a th:href="${baseUrl}">Scratch 1984</a>
+</nav>
+
+<!-- Page content -->
+<div id="content">
+    <h2 th:text="#{change_email_template_h2}"></h2>
+    <div th:text="#{change_email_template_text}"></div>
+    <div id="link">
+        <a th:href="${token}" target="_blank" th:text="#{update_email}"></a>
+    </div>
+    <div th:text="#{token_expires_info}"></div>
+</div>
+
+<!-- The footer for email templates -->
+<div id="footer">
+    <a class="link" href="https://www.fim.uni-passau.de/lehrstuhl-fuer-software-engineering-ii/" target="_blank"
+       th:utext="#{copyright_uni}"></a>
+</div>
+</body>
+</html>

@@ -7,6 +7,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * A service providing methods related to users and experiment participation.
@@ -83,6 +86,21 @@ public class UserService {
     }
 
     /**
+     * Checks, whether any user with the given email exists in the database.
+     *
+     * @param email The email to search for.
+     * @return {@code true} if a user exists, or {@code false} if not.
+     */
+    @Transactional
+    public boolean existsEmail(final String email) {
+        if (email == null || email.trim().isBlank()) {
+            return false;
+        }
+
+        return userRepository.existsByEmail(email);
+    }
+
+    /**
      * Checks, whether any participant relation for the given user and experiment IDs exists.
      *
      * @param userId The user id to search for.
@@ -91,7 +109,7 @@ public class UserService {
      */
     @Transactional
     public boolean existsParticipant(final int userId, final int experimentId) {
-        if (userId < 1 || experimentId < 1) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             return false;
         }
 
@@ -151,6 +169,29 @@ public class UserService {
     }
 
     /**
+     * Returns the user with the specified id. If no such user exists, a {@link NotFoundException} is thrown instead.
+     *
+     * @param id The id to search for.
+     * @return The user, if they exist.
+     */
+    @Transactional
+    public UserDTO getUserById(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot search for user with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot search for user with invalid id " + id + "!");
+        }
+
+        Optional<User> user = userRepository.findById(id);
+
+        if (user.isEmpty()) {
+            logger.error("Could not find user with id " + id + ".");
+            throw new NotFoundException("Could not find user with id " + id + ".");
+        }
+
+        return createUserDTO(user.get());
+    }
+
+    /**
      * Verifies the given user's credentials on login and returns an {@link UserDTO} containing the user's information.
      * If no user with matching username and password could be found, a {@link NotFoundException} is thrown instead.
      *
@@ -162,8 +203,7 @@ public class UserService {
         User user = userRepository.findUserByUsername(userDTO.getUsername());
 
         if (user != null) {
-            if ((userDTO.getPassword() != null) && (passwordEncoder.matches(userDTO.getPassword(),
-                    user.getPassword()))) {
+            if ((userDTO.getPassword() != null) && (matchesPassword(userDTO.getPassword(), user.getPassword()))) {
                 return createUserDTO(user);
             } else {
                 logger.error("Failed to log in user with username " + userDTO.getUsername() + ".");
@@ -176,13 +216,67 @@ public class UserService {
     }
 
     /**
-     * Updates the information of the given user with the given values, or creates a new user, if no such user exists.
+     * Updates the information of the given user with the given values.
      *
-     * @param userDTO The dto containing the updated user information.
-     * @return {@code true} if the information was persisted, or {@code false} if not.
+     * @param userDTO The {@link UserDTO} containing the updated user information.
+     * @return The updated user information.
      */
-    public boolean updateUser(final UserDTO userDTO) {
-        return false;
+    @Transactional
+    public UserDTO updateUser(final UserDTO userDTO) {
+        if (userDTO.getId() == null || userDTO.getId() < Constants.MIN_ID) {
+            logger.error("Cannot save user with invalid id " + userDTO.getId() + "!");
+            throw new IllegalArgumentException("Cannot save user with invalid id " + userDTO.getId() + "!");
+        }
+
+        User user = userRepository.save(createUser(userDTO));
+        return createUserDTO(user);
+    }
+
+    /**
+     * Updates the email of the user with the given id to the given value. If no corresponding user exists, a
+     * {@link NotFoundException} is thrown instead.
+     *
+     * @param id The user's id.
+     * @param email The new email to be set.
+     */
+    @Transactional
+    public void updateEmail(final int id, final String email) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot search for user with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot search for user with invalid id " + id + "!");
+        } else if (email == null || email.trim().isBlank()) {
+            logger.error("Cannot update email for user with id " + id + " with email null or blank!");
+            throw new IllegalArgumentException("Cannot update email for user with id " + id
+                    + " with email null or blank!");
+        }
+
+        Optional<User> user = userRepository.findById(id);
+
+        if (user.isEmpty()) {
+            logger.error("Could not find user with id " + id + " in the database!");
+            throw new NotFoundException("Could not find user with id " + id + " in the database!");
+        }
+
+        User found = user.get();
+        found.setEmail(email);
+        userRepository.save(found);
+    }
+
+    /**
+     * Verifies how many users with administrator status are currently registered. If no administrator can be found an
+     * {@link IllegalStateException} is thrown instead.
+     *
+     * @return {@code true} if only one administrator remains in the database, or {@code false} otherwise.
+     */
+    public boolean isLastAdmin() {
+        List<User> admins = userRepository.findAllByRole(UserDTO.Role.ADMIN.toString());
+
+        if (admins.size() < Constants.MIN_ID) {
+            logger.error("There are no users with administrator status in the database!");
+            throw new IllegalStateException("There are no users with administrator status in the database!");
+        }
+
+        return admins.size() == 1;
     }
 
     /**
@@ -196,23 +290,76 @@ public class UserService {
     }
 
     /**
-     * Deletes the user with the given username from the database, if any such user exists.
+     * Deletes the user with the given id from the database, if any such user exists.
      *
-     * @param username The username to search for.
-     * @return {@code true} if the deletion was successful, or {@code false} if not.
+     * @param id The id to search for.
      */
-    public boolean deleteUser(final String username) {
-        return false;
+    @Transactional
+    public void deleteUser(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot delete user with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot delete user with invalid id " + id + "!");
+        }
+
+        userRepository.deleteById(id);
+    }
+
+    /**
+     * Checks, whether the given input string matches the given hashed password value.
+     *
+     * @param input The input string.
+     * @param password The hashed password.
+     * @return {@code true}, if the strings match, or {@code false}, if not.
+     */
+    public boolean matchesPassword(final String input, final String password) {
+        return passwordEncoder.matches(input, password);
+    }
+
+    /**
+     * Encodes the given password string.
+     *
+     * @param password The password to be encoded.
+     * @return The hashed password value.
+     */
+    public String encodePassword(final String password) {
+        return passwordEncoder.encode(password);
     }
 
     /**
      * Creates a {@link User} with the given information of the {@link UserDTO}.
      *
-     * @param userDTO The dto containing the information.
+     * @param userDTO The DTO containing the information.
      * @return The new user containing the information passed in the DTO.
      */
     private User createUser(final UserDTO userDTO) {
-        return null;
+        User user = new User();
+
+        if (userDTO.getId() != null) {
+            user.setId(userDTO.getId());
+        }
+        if (userDTO.getUsername() != null) {
+            user.setUsername(userDTO.getUsername());
+        }
+        if (userDTO.getEmail() != null) {
+            user.setEmail(userDTO.getEmail());
+        }
+        if (userDTO.getRole() != null) {
+            user.setRole(userDTO.getRole().toString());
+        }
+        if (userDTO.getLanguage() != null) {
+            user.setLanguage(userDTO.getLanguage().toString());
+        }
+        if (userDTO.getPassword() != null) {
+            user.setPassword(userDTO.getPassword());
+        }
+        if (userDTO.getSecret() != null) {
+            user.setSecret(userDTO.getSecret());
+        }
+
+        user.setActive(userDTO.isActive());
+        user.setReset(userDTO.isReset());
+
+        return user;
     }
 
     /**

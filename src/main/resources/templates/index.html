@@ -18,6 +18,9 @@
         <div class="row" th:style="${param.success != null ? 'display:block' : 'display:none'}">
             <div class="col-12 alert alert-success" th:text="#{success}"></div>
         </div>
+        <div class="row" th:style="${param.error != null ? 'display:block' : 'display:none'}">
+            <div class="col-12 alert alert-danger" th:text="#{error}"></div>
+        </div>
         <div sec:authorize="!hasRole('ADMIN')">
             <h2 class="mb-5">Scratch 1984</h2>
             <div th:text="#{project_info}"></div>

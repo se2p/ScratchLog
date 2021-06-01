@@ -20,10 +20,11 @@
         </div>
         <h2 class="mb-5">Login</h2>
         <form th:action="@{/users/login}" th:object="${userDTO}" th:name="userDTO" method="post">
-            <div class="row">
+            <div class="row mx-5">
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="username" th:text="#{username}"></label>
                     <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-user"></i></span>
                         <input name="username" id="username" type="text" th:placeholder="#{username}"
                                th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                                th:field="*{username}" th:class="${#fields.hasErrors('username')
@@ -32,9 +33,10 @@
                     <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                 </div>
 
-                <div class="col-12 mb-3 form-group position-relative">
+                <div class="col-12 mb-5 form-group position-relative">
                     <label class="form-label" for="password" th:text="#{password}"></label>
                     <div class="input-group">
+                        <span class="input-group-text"><i class="fa fa-key"></i></span>
                         <input name="password" id="password" type="password" th:placeholder="#{password}"
                                th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                                th:field="*{password}" th:class="${#fields.hasErrors('password')
@@ -43,7 +45,7 @@
                     <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 </div>
 
-                <div class="col-12">
+                <div class="text-center">
                     <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
                 </div>
             </div>

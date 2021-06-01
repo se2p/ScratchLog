@@ -18,19 +18,9 @@ public final class Constants {
     public static final int USERNAME_MIN = 4;
 
     /**
-     * The maximum length of usernames.
-     */
-    public static final int USERNAME_MAX = 16;
-
-    /**
      * The minimum length of passwords.
      */
     public static final int PASSWORD_MIN = 8;
-
-    /**
-     * The maximum length of passwords.
-     */
-    public static final int PASSWORD_MAX = 128;
 
     /**
      * The maximum length of inputs in small or normal text boxes.
@@ -56,5 +46,15 @@ public final class Constants {
      * The page size for a pageable.
      */
     public static final int PAGE_SIZE = 10;
+
+    /**
+     * The maximum number of attempts to send an email.
+     */
+    public static final int MAX_EMAIL_TRIES = 3;
+
+    /**
+     * The minimal id for a user or experiment entity.
+     */
+    public static final int MIN_ID = 1;
 
 }

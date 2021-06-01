@@ -17,12 +17,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.EntityNotFoundException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -49,39 +54,71 @@ public class UserServiceTest {
     private static final String USERNAME = "admin";
     private static final String BLANK = "   ";
     private static final String PASSWORD = "admin1";
+    private static final String EMAIL = "admin1@admin.de";
+    private static final String ADMIN = "ADMIN";
     private static final int ID = 1;
-    private final User user = new User(USERNAME, "admin1@admin.de", "ADMIN", "ENGLISH", PASSWORD, "secret1");
-    private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, PASSWORD, "secret1");
+    private final User user = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, "secret1");
+    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
+            PASSWORD, "secret1");
+    private List<User> admins;
 
     @BeforeEach
     public void setup() {
+        admins = new ArrayList<>();
+        admins.add(user);
+        user.setId(ID);
+        userDTO.setId(ID);
         userDTO.setPassword(PASSWORD);
     }
 
     @Test
     public void testExistsUser() {
         when(userRepository.existsByUsername(USERNAME)).thenReturn(true);
-        assertTrue(userRepository.existsByUsername(USERNAME));
+        assertTrue(userService.existsUser(USERNAME));
         verify(userRepository).existsByUsername(USERNAME);
     }
 
     @Test
     public void testExistsUserFalse() {
-        assertFalse(userRepository.existsByUsername(USERNAME));
+        assertFalse(userService.existsUser(USERNAME));
         verify(userRepository).existsByUsername(USERNAME);
     }
 
     @Test
     public void testExistsUserUsernameNull() {
-        assertFalse(userRepository.existsByUsername(null));
+        assertFalse(userService.existsUser(null));
         verify(userRepository, never()).existsByUsername(USERNAME);
     }
 
     @Test
     public void testExistsUserUsernameBlank() {
-        assertFalse(userRepository.existsByUsername(BLANK));
+        assertFalse(userService.existsUser(BLANK));
         verify(userRepository, never()).existsByUsername(USERNAME);
+    }
+
+    @Test
+    public void testExistsEmail() {
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
+        assertTrue(userService.existsEmail(EMAIL));
+        verify(userRepository).existsByEmail(EMAIL);
+    }
+
+    @Test
+    public void testExistsEmailFalse() {
+        assertFalse(userService.existsEmail(EMAIL));
+        verify(userRepository).existsByEmail(EMAIL);
+    }
+
+    @Test
+    public void testExistsEmailNull() {
+        assertFalse(userService.existsEmail(null));
+        verify(userRepository, never()).existsByEmail(EMAIL);
+    }
+
+    @Test
+    public void testExistsEmailBlank() {
+        assertFalse(userService.existsEmail(BLANK));
+        verify(userRepository, never()).existsByEmail(EMAIL);
     }
 
     @Test
@@ -158,6 +195,36 @@ public class UserServiceTest {
     }
 
     @Test
+    public void testGetUserById() {
+        when(userRepository.findById(ID)).thenReturn(java.util.Optional.of(user));
+        UserDTO found = userService.getUserById(ID);
+        assertAll(
+                () -> assertEquals(USERNAME, found.getUsername()),
+                () -> assertEquals(EMAIL, found.getEmail()),
+                () -> assertEquals(PASSWORD, found.getPassword()),
+                () -> assertEquals(UserDTO.Role.ADMIN, found.getRole()),
+                () -> assertEquals(UserDTO.Language.ENGLISH, found.getLanguage())
+        );
+        verify(userRepository).findById(ID);
+    }
+
+    @Test
+    public void testGetUserByIdEmpty() {
+        assertThrows(NotFoundException.class,
+                () -> userService.getUserById(ID)
+        );
+        verify(userRepository).findById(ID);
+    }
+
+    @Test
+    public void testGetUserByIdInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.getUserById(0)
+        );
+        verify(userRepository, never()).findById(anyInt());
+    }
+
+    @Test
     public void testLoginUser() {
         when(userRepository.findUserByUsername(USERNAME)).thenReturn(user);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
@@ -198,5 +265,119 @@ public class UserServiceTest {
         );
         verify(userRepository).findUserByUsername(USERNAME);
         verify(passwordEncoder, never()).matches(anyString(), anyString());
+    }
+
+    @Test
+    public void testUpdateUser() {
+        when(userRepository.save(any())).thenReturn(user);
+        UserDTO saved = userService.updateUser(userDTO);
+        assertAll(
+                () -> assertEquals(userDTO.getId(), saved.getId()),
+                () -> assertEquals(userDTO.getUsername(), saved.getUsername()),
+                () -> assertEquals(userDTO.getEmail(), saved.getEmail()),
+                () -> assertEquals(userDTO.getRole(), saved.getRole()),
+                () -> assertEquals(userDTO.getLanguage(), saved.getLanguage()),
+                () -> assertEquals(userDTO.getPassword(), saved.getPassword()),
+                () -> assertEquals(userDTO.getSecret(), saved.getSecret()),
+                () -> assertFalse(saved.isActive()),
+                () -> assertFalse(saved.isReset())
+        );
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    public void testUpdateUserIdNull() {
+        userDTO.setId(null);
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateUser(userDTO)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateUserIdInvalid() {
+        userDTO.setId(0);
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateUser(userDTO)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateEmail() {
+        when(userRepository.findById(ID)).thenReturn(java.util.Optional.of(user));
+        assertDoesNotThrow(() -> userService.updateEmail(ID, EMAIL));
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    public void testUpdateEmailNotFound() {
+        when(userRepository.findById(ID)).thenReturn(java.util.Optional.empty());
+        assertThrows(NotFoundException.class,
+                () -> userService.updateEmail(ID, EMAIL)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateEmailNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateEmail(ID, null)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateEmailBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateEmail(ID, BLANK)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateEmailIdInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.updateEmail(0, EMAIL)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testDeleteUser() {
+        userService.deleteUser(ID);
+        verify(userRepository).deleteById(ID);
+    }
+
+    @Test
+    public void testDeleteUserIdInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.deleteUser(0)
+        );
+        verify(userRepository, never()).deleteById(anyInt());
+    }
+
+    @Test
+    public void testIsLastAdmin() {
+        admins.add(new User());
+        when(userRepository.findAllByRole(ADMIN)).thenReturn(admins);
+        assertFalse(userService.isLastAdmin());
+        verify(userRepository).findAllByRole(ADMIN);
+    }
+
+    @Test
+    public void testIsLastAdminTrue() {
+        when(userRepository.findAllByRole(ADMIN)).thenReturn(admins);
+        assertTrue(userService.isLastAdmin());
+        verify(userRepository).findAllByRole(ADMIN);
+    }
+
+    @Test
+    public void testIsLastAdminNoAdmins() {
+        when(userRepository.findAllByRole(ADMIN)).thenReturn(new ArrayList<>());
+        assertThrows(IllegalStateException.class,
+                () -> userService.isLastAdmin()
+        );
+        verify(userRepository).findAllByRole(ADMIN);
     }
 }

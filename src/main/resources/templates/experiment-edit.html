@@ -47,7 +47,7 @@
                         </div>
                         <div class="form-text" th:text="#{description_max}"></div>
                     </div>
-                    <div class="mb-3 form-group position-relative">
+                    <div class="mb-5 form-group position-relative">
                         <label class="form-label" for="info" th:text="#{info}"></label>
                         <textarea name="info" id="info" type="text" rows="10" th:placeholder="#{info_placeholder}"
                                   th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_AREA}"
@@ -57,7 +57,9 @@
                         </div>
                         <div class="form-text" th:text="#{markdown}"></div>
                     </div>
-                    <input class="btn btn-primary" type="submit" th:value="#{save}"/>
+                    <div class="text-center">
+                        <input class="btn btn-primary" type="submit" th:value="#{save}"/>
+                    </div>
                 </form>
             </div>
         </div>

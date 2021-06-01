@@ -68,6 +68,16 @@ public class UserDTO {
     private String password;
 
     /**
+     * The user's new password.
+     */
+    private String newPassword;
+
+    /**
+     * The user's new password repeated.
+     */
+    private String confirmPassword;
+
+    /**
      * The secret used to identify the user.
      */
     private String secret;
@@ -214,6 +224,42 @@ public class UserDTO {
      */
     public void setPassword(final String password) {
         this.password = password;
+    }
+
+    /**
+     * Returns the user's new password.
+     *
+     * @return The user's new password.
+     */
+    public String getNewPassword() {
+        return newPassword;
+    }
+
+    /**
+     * Sets the user's new password.
+     *
+     * @param newPassword The new password to be set.
+     */
+    public void setNewPassword(final String newPassword) {
+        this.newPassword = newPassword;
+    }
+
+    /**
+     * Returns the user's repeated password.
+     *
+     * @return The user's repeated password.
+     */
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    /**
+     * Sets the user's repeated password.
+     *
+     * @param confirmPassword The password to be set.
+     */
+    public void setConfirmPassword(final String confirmPassword) {
+        this.confirmPassword = confirmPassword;
     }
 
     /**
