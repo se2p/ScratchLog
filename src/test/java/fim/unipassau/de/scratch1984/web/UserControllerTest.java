@@ -103,14 +103,16 @@ public class UserControllerTest {
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String USER_DTO = "userDTO";
     private static final String ID_STRING = "1";
+    private static final String SECRET = "secret";
     private static final int ID = 1;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, PASSWORD, "secret1");
+            UserDTO.Language.ENGLISH, PASSWORD, SECRET);
     private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, PASSWORD, "secret1");
+            UserDTO.Language.ENGLISH, PASSWORD, SECRET);
     private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
 
     @BeforeEach
@@ -132,6 +134,93 @@ public class UserControllerTest {
     @AfterEach
     public void cleanup() {
         securityContextHolder.close();
+    }
+
+    @Test
+    public void testAuthenticateUser() {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(httpServletRequest.getSession(false)).thenReturn(null);
+        when(httpServletRequest.getSession(true)).thenReturn(session);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        assertEquals(REDIRECT_EXPERIMENT + ID, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider).authenticate(any());
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserNoParticipant() {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        assertEquals(ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserNotFound() {
+        when(userService.authenticateUser(SECRET)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserInvalidId() {
+        assertEquals(ERROR, userController.authenticateUser("0", SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserIdNull() {
+        assertEquals(ERROR, userController.authenticateUser(null, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserIdBlank() {
+        assertEquals(ERROR, userController.authenticateUser(BLANK, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserSecretNull() {
+        assertEquals(ERROR, userController.authenticateUser(ID_STRING, null, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserSecretBlank() {
+        assertEquals(ERROR, userController.authenticateUser(ID_STRING, BLANK, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
     @Test

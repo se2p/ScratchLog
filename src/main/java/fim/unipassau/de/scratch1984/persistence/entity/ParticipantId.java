@@ -9,14 +9,14 @@ import java.util.Objects;
 public class ParticipantId implements Serializable {
 
     /**
-     * The participating {@link User}.
+     * The id of the participating user.
      */
-    private User user;
+    private int user;
 
     /**
-     * The {@link Experiment} in which the user participated.
+     * The experiment id in which the user participated.
      */
-    private Experiment experiment;
+    private int experiment;
 
     /**
      * Default constructor for the ID.
@@ -25,12 +25,12 @@ public class ParticipantId implements Serializable {
     }
 
     /**
-     * Constructs a new participant ID with the given user and experiment.
+     * Constructs a new participant ID with the given user and experiment IDs.
      *
-     * @param user The participating user.
-     * @param experiment The respective experiment.
+     * @param user The participating user's ID.
+     * @param experiment The respective experiment ID.
      */
-    public ParticipantId(final User user, final Experiment experiment) {
+    public ParticipantId(final int user, final int experiment) {
         this.user = user;
         this.experiment = experiment;
     }
@@ -52,7 +52,7 @@ public class ParticipantId implements Serializable {
         }
 
         ParticipantId that = (ParticipantId) other;
-        return user.equals(that.user) && experiment.equals(that.experiment);
+        return user == that.user && experiment == that.experiment;
     }
 
     /**

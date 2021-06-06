@@ -46,7 +46,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf().disable()
                 .authorizeRequests()
                 .antMatchers("/login").not().authenticated()
-                .antMatchers("/experiment/*", "/users/profile").hasRole("ADMIN")
+                .antMatchers("/experiment/*", "/users/edit", "/users/delete", "/users/update").hasRole("ADMIN")
                 .antMatchers("/users", "/logout", "/experiment").hasRole("PARTICIPANT")
                 .and().formLogin().loginPage("/login").usernameParameter("username")
                 .defaultSuccessUrl("/index", true)

@@ -45,6 +45,27 @@ public class Participant {
     private Timestamp end;
 
     /**
+     * Default constructor for the participant entity.
+     */
+    public Participant() {
+    }
+
+    /**
+     * Constructs a new participant with the given attributes.
+     *
+     * @param user The participating user.
+     * @param experiment The experiment in which the user is participating.
+     * @param start The timestamp at which the user started the experiment.
+     * @param end The timestamp at which the user finished the experiment.
+     */
+    public Participant(final User user, final Experiment experiment, final Timestamp start, final Timestamp end) {
+        this.user = user;
+        this.experiment = experiment;
+        this.start = start;
+        this.end = end;
+    }
+
+    /**
      * Returns the participating user.
      *
      * @return The respective user.

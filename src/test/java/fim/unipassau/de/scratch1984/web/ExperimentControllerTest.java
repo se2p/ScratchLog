@@ -2,7 +2,11 @@ package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -15,6 +19,9 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +30,10 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.LocaleResolver;
 
 import javax.servlet.http.HttpServletRequest;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,6 +57,9 @@ public class ExperimentControllerTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private ParticipantService participantService;
 
     @Mock
     private Model model;
@@ -83,14 +97,17 @@ public class ExperimentControllerTest {
     private static final String INVALID_ID = "-1";
     private static final String ADMIN = "ROLE_ADMIN";
     private static final String USERNAME = "Admin";
+    private static final String PARTICIPANTS = "participants";
     private static final int ID = 1;
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, false);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, "admin", "secret1");
+    private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
 
     @BeforeEach
     public void setup() {
         userDTO.setId(ID);
+        userDTO.setActive(true);
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
@@ -107,11 +124,14 @@ public class ExperimentControllerTest {
     public void testGetExperiment() {
         when(httpServletRequest.isUserInRole(ADMIN)).thenReturn(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
         assertEquals(EXPERIMENT, returnString);
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperiment(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+        verify(model).addAttribute(PARTICIPANTS, participants);
     }
 
     @Test
@@ -133,6 +153,7 @@ public class ExperimentControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.existsParticipant(ID, ID)).thenReturn(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
         assertEquals(EXPERIMENT, returnString);
         verify(securityContext).getAuthentication();
@@ -140,7 +161,9 @@ public class ExperimentControllerTest {
         verify(userService).existsParticipant(userDTO.getId(), ID);
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperiment(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+        verify(model).addAttribute(PARTICIPANTS, participants);
     }
 
     @Test
@@ -165,6 +188,24 @@ public class ExperimentControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
+        assertEquals(ERROR, returnString);
+        verify(securityContext).getAuthentication();
+        verify(authentication, times(2)).getName();
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(httpServletRequest).isUserInRole(ADMIN);
+        verify(experimentService, never()).getExperiment(ID);
+        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
+    }
+
+    @Test
+    public void testGetExperimentParticipantInactive() {
+        userDTO.setActive(false);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.existsParticipant(ID, ID)).thenReturn(true);
         String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
         assertEquals(ERROR, returnString);
         verify(securityContext).getAuthentication();
@@ -352,29 +393,40 @@ public class ExperimentControllerTest {
     @Test
     public void testChangeExperimentStatusOpen() {
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         String returnString = experimentController.changeExperimentStatus("open", ID_STRING, model);
         assertEquals(EXPERIMENT, returnString);
         verify(experimentService).changeExperimentStatus(true, ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+        verify(model).addAttribute(PARTICIPANTS, participants);
     }
 
     @Test
     public void testChangeExperimentStatusClose() {
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model);
         assertEquals(EXPERIMENT, returnString);
         verify(experimentService).changeExperimentStatus(false, ID);
+        verify(participantService).deactivateParticipantAccounts(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+        verify(model).addAttribute(PARTICIPANTS, participants);
     }
 
     @Test
     public void testChangeExperimentStatusCloseInfoNull() {
         experimentDTO.setInfo(null);
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model);
         assertEquals(EXPERIMENT, returnString);
         verify(experimentService).changeExperimentStatus(false, ID);
+        verify(participantService).deactivateParticipantAccounts(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+        verify(model).addAttribute(PARTICIPANTS, participants);
     }
 
     @Test
@@ -414,5 +466,13 @@ public class ExperimentControllerTest {
         StringBuilder longString = new StringBuilder();
         longString.append("a".repeat(Math.max(0, length)));
         return longString;
+    }
+
+    private List<Participant> getParticipants(int number) {
+        List<Participant> participants = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            participants.add(new Participant(new User(), new Experiment(), Timestamp.valueOf(LocalDateTime.now()), null));
+        }
+        return participants;
     }
 }

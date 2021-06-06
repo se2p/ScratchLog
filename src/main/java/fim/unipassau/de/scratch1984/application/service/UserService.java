@@ -1,15 +1,13 @@
 package fim.unipassau.de.scratch1984.application.service;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
-import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
-import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
-import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A service providing methods related to users and experiment participation.
+ * A service providing methods related to users.
  */
 @Service
 public class UserService {
@@ -129,19 +127,21 @@ public class UserService {
      * @param userDTO The dto containing the user information to set.
      * @return The newly created user, if the information was persisted, or {@code null} if not.
      */
+    @Transactional
     public UserDTO saveUser(final UserDTO userDTO) {
-        return null;
-    }
+        if (userDTO.getUsername() == null || userDTO.getUsername().trim().isBlank()) {
+            logger.error("Cannot create user with username null or blank!");
+            throw new IllegalArgumentException("Cannot create user with username null or blank!");
+        }
 
-    /**
-     * Creates a new participation for the given user and experiment in the database.
-     *
-     * @param userDTO The dto containing the user information.
-     * @param experimentDTO The dto containing the experiment information.
-     * @return {@code true} if the information was persisted, or {@code false} if not.
-     */
-    public boolean saveParticipant(final UserDTO userDTO, final ExperimentDTO experimentDTO) {
-        return false;
+        User user = userRepository.save(createUser(userDTO));
+
+        if (user.getId() == null) {
+            logger.error("Failed to save user with username " + userDTO.getUsername());
+            throw new StoreException("Failed to save user with username " + userDTO.getUsername());
+        }
+
+        return createUserDTO(user);
     }
 
     /**
@@ -192,7 +192,7 @@ public class UserService {
     }
 
     /**
-     * Verifies the given user's credentials on login and returns an {@link UserDTO} containing the user's information.
+     * Verifies the given user's credentials on login and returns a {@link UserDTO} containing the user's information.
      * If no user with matching username and password could be found, a {@link NotFoundException} is thrown instead.
      *
      * @param userDTO The {@link UserDTO} containing the username and password entered in the login form.
@@ -213,6 +213,33 @@ public class UserService {
 
         logger.error("Could not find user with username " + userDTO.getUsername() + " in the database.");
         throw new NotFoundException("Incorrect username or password!");
+    }
+
+    /**
+     * Searches for the user with the given secret, activates their account, and returns a {@link UserDTO} containing
+     * the user's information. If no user with matching secret could be found, a {@link NotFoundException} is thrown
+     * instead.
+     *
+     * @param secret The secret to search for.
+     * @return A new {@link UserDTO} containing the user's information stored in the database.
+     */
+    @Transactional
+    public UserDTO authenticateUser(final String secret) {
+        if (secret == null || secret.trim().isBlank()) {
+            logger.error("Cannot search for user with secret null or blank!");
+            throw new IllegalArgumentException("Cannot search for user with secret null or blank!");
+        }
+
+        User user = userRepository.findUserBySecret(secret);
+
+        if (user == null) {
+            logger.error("Could not find any user with the secret " + secret + " in the database!");
+            throw new NotFoundException("Could not find any user with the secret " + secret + " in the database!");
+        }
+
+        user.setActive(true);
+        User saved = userRepository.save(user);
+        return createUserDTO(saved);
     }
 
     /**
@@ -268,6 +295,7 @@ public class UserService {
      *
      * @return {@code true} if only one administrator remains in the database, or {@code false} otherwise.
      */
+    @Transactional
     public boolean isLastAdmin() {
         List<User> admins = userRepository.findAllByRole(UserDTO.Role.ADMIN.toString());
 
@@ -277,16 +305,6 @@ public class UserService {
         }
 
         return admins.size() == 1;
-    }
-
-    /**
-     * Updates the participation information with the given values.
-     *
-     * @param participantDTO The dto containing the updated participation information.
-     * @return {@code true} if the information was persisted, or {@code false} if not.
-     */
-    public boolean updateParticipant(final ParticipantDTO participantDTO) {
-        return false;
     }
 
     /**
@@ -302,6 +320,23 @@ public class UserService {
         }
 
         userRepository.deleteById(id);
+    }
+
+    /**
+     * Returns the current highest user id value.
+     *
+     * @return The id.
+     */
+    @Transactional
+    public int findLastId() {
+        User user = userRepository.findFirstByOrderByIdDesc();
+
+        if (user == null) {
+            logger.error("There are no users in database!");
+            throw new IllegalStateException("There are no users in database!");
+        }
+
+        return user.getId();
     }
 
     /**
@@ -397,26 +432,6 @@ public class UserService {
         userDTO.setActive(user.isActive());
 
         return userDTO;
-    }
-
-    /**
-     * Creates a {@link Participant} with the given information of the {@link ParticipantDTO}.
-     *
-     * @param participantDTO The dto containing the information.
-     * @return The new participant containing the information passed in the DTO.
-     */
-    private Participant createParticipant(final ParticipantDTO participantDTO) {
-        return null;
-    }
-
-    /**
-     * Creates a {@link ParticipantDTO} with the given information from the {@link Participant}.
-     *
-     * @param participant The participant object containing the information.
-     * @return The new participant DTO containing the information passed in the participant object.
-     */
-    private ParticipantDTO createParticipantDTO(final Participant participant) {
-        return null;
     }
 
 }

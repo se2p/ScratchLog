@@ -81,15 +81,17 @@ public class UserControllerIntegrationTest {
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String USER_DTO = "userDTO";
     private static final String NAME = "name";
     private static final String ID_STRING = "1";
+    private static final String SECRET = "secret";
     private static final int ID = 1;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
-            PASSWORD, "secret1");
+            PASSWORD, SECRET);
     private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH, PASSWORD,
-            "secret1");
+            SECRET);
     private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
@@ -114,6 +116,70 @@ public class UserControllerIntegrationTest {
 
     @AfterEach
     public void resetService() {reset(userService, tokenService, mailService);}
+
+    @Test
+    public void testAuthenticateUser() throws Exception {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        mvc.perform(get("/users/authenticate")
+                .param("id", ID_STRING)
+                .param("secret", SECRET)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+    }
+
+    @Test
+    public void testAuthenticateUserNoParticipant() throws Exception {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        mvc.perform(get("/users/authenticate")
+                .param("id", ID_STRING)
+                .param("secret", SECRET)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+    }
+
+    @Test
+    public void testAuthenticateUserNotFound() throws Exception {
+        when(userService.authenticateUser(SECRET)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/users/authenticate")
+                .param("id", ID_STRING)
+                .param("secret", SECRET)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+    }
+
+    @Test
+    public void testAuthenticateUserInvalidId() throws Exception {
+        mvc.perform(get("/users/authenticate")
+                .param("id", "0")
+                .param("secret", SECRET)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+    }
 
     @Test
     public void testLoginUser() throws Exception {

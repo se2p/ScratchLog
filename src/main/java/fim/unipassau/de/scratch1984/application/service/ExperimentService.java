@@ -139,10 +139,9 @@ public class ExperimentService {
         int currentPage = pageable.getPageNumber();
 
         if (pageSize != Constants.PAGE_SIZE) {
-            logger.error("Cannot return experiment page with invalid page size of" + pageSize + " or current page of "
-                    + currentPage + "!");
-            throw new IllegalArgumentException("Cannot return experiment page with invalid page size of" + pageSize
-                    + " or current page of " + currentPage + "!");
+            logger.error("Cannot return experiment page with invalid page size of " + pageSize + "!");
+            throw new IllegalArgumentException("Cannot return experiment page with invalid page size of " + pageSize
+                    + "!");
         }
 
         Page<Experiment> experiments = experimentRepository.findAll(PageRequest.of(currentPage, pageSize,
@@ -202,6 +201,7 @@ public class ExperimentService {
             logger.error("Could not update the status for non-existent experiment with id " + id + "!");
             throw new NotFoundException("Could not update the status for non-existent experiment with id " + id + "!");
         }
+
         experimentRepository.updateStatusById(id, status);
         Experiment experiment = experimentRepository.findById(id);
         return createExperimentDTO(experiment);

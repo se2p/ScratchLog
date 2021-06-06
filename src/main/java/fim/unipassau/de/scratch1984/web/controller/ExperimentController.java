@@ -2,7 +2,9 @@ package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -11,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,9 +49,14 @@ public class ExperimentController {
     private final UserService userService;
 
     /**
-     * The experiment service to use for management.
+     * The experiment service to use for experiment management.
      */
     private final ExperimentService experimentService;
+
+    /**
+     * The participant service to use for participant management.
+     */
+    private final ParticipantService participantService;
 
     /**
      * String corresponding to redirecting to the error page.
@@ -59,11 +68,14 @@ public class ExperimentController {
      *
      * @param experimentService The experiment service to use.
      * @param userService The user service to use.
+     * @param participantService The participant service to use.
      */
     @Autowired
-    public ExperimentController(final ExperimentService experimentService, final UserService userService) {
+    public ExperimentController(final ExperimentService experimentService, final UserService userService,
+                                final ParticipantService participantService) {
         this.experimentService = experimentService;
         this.userService = userService;
+        this.participantService = participantService;
     }
 
     /**
@@ -91,9 +103,10 @@ public class ExperimentController {
 
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
-                if (!userService.existsParticipant(userDTO.getId(), experimentId)) {
+
+                if (!userService.existsParticipant(userDTO.getId(), experimentId) || !userDTO.isActive()) {
                     logger.debug("No participation entry found for the user " + authentication.getName()
-                            + " for the experiment with id " + experimentId + "!");
+                            + " for the experiment with id " + experimentId + " or the user account is not activated!");
                     return ERROR;
                 }
             } catch (NotFoundException e) {
@@ -104,10 +117,15 @@ public class ExperimentController {
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+
             if (experimentDTO.getInfo() != null) {
                 experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
             }
+
+            Page<Participant> participants = participantService.getParticipantPage(experimentId, PageRequest.of(0,
+                    Constants.PAGE_SIZE));
             model.addAttribute("experimentDTO", experimentDTO);
+            model.addAttribute("participants", participants);
             return "experiment";
         } catch (NotFoundException e) {
             return ERROR;
@@ -246,6 +264,7 @@ public class ExperimentController {
                 experimentDTO = experimentService.changeExperimentStatus(true, experimentId);
             } else if (status.equals("close")) {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
+                participantService.deactivateParticipantAccounts(experimentId);
             } else {
                 logger.debug("Cannot return the corresponding experiment page for requested status change " + status
                         + "!");
@@ -256,7 +275,10 @@ public class ExperimentController {
                 experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
             }
 
+            Page<Participant> participants = participantService.getParticipantPage(experimentId, PageRequest.of(0,
+                    Constants.PAGE_SIZE));
             model.addAttribute("experimentDTO", experimentDTO);
+            model.addAttribute("participants", participants);
         } catch (NotFoundException e) {
             return ERROR;
         }

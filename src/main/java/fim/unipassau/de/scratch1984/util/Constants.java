@@ -57,4 +57,9 @@ public final class Constants {
      */
     public static final int MIN_ID = 1;
 
+    /**
+     * The number of bytes that are generated for a user secret.
+     */
+    public static final int SECRET_LENGTH = 32;
+
 }

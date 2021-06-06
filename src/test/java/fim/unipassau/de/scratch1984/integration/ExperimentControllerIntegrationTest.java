@@ -2,7 +2,11 @@ package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -15,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -24,9 +31,15 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -55,6 +68,9 @@ public class ExperimentControllerIntegrationTest {
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private ParticipantService participantService;
+
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
     private static final String INFO = "Some info text";
@@ -70,10 +86,12 @@ public class ExperimentControllerIntegrationTest {
     private static final String INVALID_ID = "-1";
     private static final String ID_PARAM = "id";
     private static final String STATUS_PARAM = "stat";
+    private static final String PARTICIPANTS = "participants";
     private static final int ID = 1;
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, false);
     private final UserDTO userDTO = new UserDTO("user", "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, "admin", "secret1");
+    private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -81,6 +99,7 @@ public class ExperimentControllerIntegrationTest {
     @BeforeEach
     public void setup() {
         userDTO.setId(ID);
+        userDTO.setActive(true);
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
@@ -96,6 +115,7 @@ public class ExperimentControllerIntegrationTest {
     @WithMockUser(username = "user", roles = {"ADMIN"})
     public void testGetExperiment() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -103,6 +123,7 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(PARTICIPANTS, is(participants)))
                 .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
@@ -111,6 +132,7 @@ public class ExperimentControllerIntegrationTest {
                 )))
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -134,6 +156,7 @@ public class ExperimentControllerIntegrationTest {
         when(userService.getUser(anyString())).thenReturn(userDTO);
         when(userService.existsParticipant(ID, ID)).thenReturn(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -141,6 +164,7 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(PARTICIPANTS, is(participants)))
                 .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
@@ -151,6 +175,7 @@ public class ExperimentControllerIntegrationTest {
         verify(userService).getUser(anyString());
         verify(userService).existsParticipant(ID, ID);
         verify(experimentService).getExperiment(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -174,6 +199,25 @@ public class ExperimentControllerIntegrationTest {
     @WithMockUser(username = "user", roles = {"PARTICIPANT"})
     public void testGetExperimentNoParticipant() throws Exception {
         when(userService.getUser(anyString())).thenReturn(userDTO);
+        mvc.perform(get("/experiment")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUser(anyString());
+        verify(userService).existsParticipant(ID, ID);
+        verify(experimentService, never()).getExperiment(ID);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"PARTICIPANT"})
+    public void testGetExperimentParticipantInactive() throws Exception {
+        userDTO.setActive(false);
+        when(userService.getUser(anyString())).thenReturn(userDTO);
+        when(userService.existsParticipant(ID, ID)).thenReturn(true);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -370,6 +414,7 @@ public class ExperimentControllerIntegrationTest {
     public void testChangeExperimentStatusOpen() throws Exception {
         experimentDTO.setActive(true);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, "open")
                 .param(ID_PARAM, ID_STRING)
@@ -377,6 +422,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute("experimentDTO", allOf(
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
@@ -387,11 +433,13 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).changeExperimentStatus(true, ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
     public void testChangeExperimentStatusClose() throws Exception {
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, "close")
                 .param(ID_PARAM, ID_STRING)
@@ -399,6 +447,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute("experimentDTO", allOf(
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
@@ -409,6 +458,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).changeExperimentStatus(false, ID);
+        verify(participantService).deactivateParticipantAccounts(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -438,5 +489,13 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).changeExperimentStatus(false, ID);
+    }
+
+    private List<Participant> getParticipants(int number) {
+        List<Participant> participants = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            participants.add(new Participant(new User(), new Experiment(), Timestamp.valueOf(LocalDateTime.now()), null));
+        }
+        return participants;
     }
 }

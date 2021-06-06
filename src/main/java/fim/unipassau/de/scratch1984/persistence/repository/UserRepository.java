@@ -36,6 +36,14 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     User findUserByUsername(String username);
 
     /**
+     * Returns the user with the given secret, if one exists.
+     *
+     * @param secret The secret to search for.
+     * @return The user data, or {@code null}, if no user could be found.
+     */
+    User findUserBySecret(String secret);
+
+    /**
      * Returns the user identified by the given id, if one exists.
      *
      * @param id The id to search for.
@@ -50,5 +58,12 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @return A list of users or null.
      */
     List<User> findAllByRole(String role);
+
+    /**
+     * Returns the user with the highest user id currently existing in the database.
+     *
+     * @return The user.
+     */
+    User findFirstByOrderByIdDesc();
 
 }

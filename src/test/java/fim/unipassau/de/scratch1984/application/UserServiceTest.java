@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.application;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
@@ -56,10 +57,11 @@ public class UserServiceTest {
     private static final String PASSWORD = "admin1";
     private static final String EMAIL = "admin1@admin.de";
     private static final String ADMIN = "ADMIN";
+    private static final String SECRET = "secret";
     private static final int ID = 1;
-    private final User user = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, "secret1");
+    private final User user = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, SECRET);
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
-            PASSWORD, "secret1");
+            PASSWORD, SECRET);
     private List<User> admins;
 
     @BeforeEach
@@ -68,6 +70,7 @@ public class UserServiceTest {
         admins.add(user);
         user.setId(ID);
         userDTO.setId(ID);
+        userDTO.setUsername(USERNAME);
         userDTO.setPassword(PASSWORD);
     }
 
@@ -153,6 +156,50 @@ public class UserServiceTest {
         verify(userRepository, never()).getOne(ID);
         verify(experimentRepository, never()).getOne(ID);
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testSaveUser() {
+        when(userRepository.save(any())).thenReturn(user);
+        UserDTO saved = userService.saveUser(userDTO);
+        assertAll(
+                () -> assertEquals(user.getId(), saved.getId()),
+                () -> assertEquals(user.getUsername(), saved.getUsername()),
+                () -> assertEquals(user.getEmail(), saved.getEmail()),
+                () -> assertEquals(user.getPassword(), saved.getPassword()),
+                () -> assertEquals(user.getSecret(), saved.getSecret()),
+                () -> assertEquals(user.getRole(), saved.getRole().toString()),
+                () -> assertEquals(user.getLanguage(), saved.getLanguage().toString())
+        );
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    public void testSaveUserIdNull() {
+        user.setId(null);
+        when(userRepository.save(any())).thenReturn(user);
+        assertThrows(StoreException.class,
+                () -> userService.saveUser(userDTO)
+        );
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    public void testSaveUserUsernameNull() {
+        userDTO.setUsername(null);
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.saveUser(userDTO)
+        );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveUserUsernameBlank() {
+        userDTO.setUsername(BLANK);
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.saveUser(userDTO)
+        );
+        verify(userRepository, never()).save(any());
     }
 
     @Test
@@ -268,6 +315,52 @@ public class UserServiceTest {
     }
 
     @Test
+    public void testAuthenticateUser() {
+        when(userRepository.findUserBySecret(SECRET)).thenReturn(user);
+        when(userRepository.save(user)).thenReturn(user);
+        UserDTO authenticated = userService.authenticateUser(SECRET);
+        assertAll(
+                () -> assertEquals(user.getId(), authenticated.getId()),
+                () -> assertEquals(user.getUsername(), authenticated.getUsername()),
+                () -> assertEquals(user.getEmail(), authenticated.getEmail()),
+                () -> assertEquals(user.getPassword(), authenticated.getPassword()),
+                () -> assertEquals(user.getSecret(), authenticated.getSecret()),
+                () -> assertEquals(user.getRole(), authenticated.getRole().toString()),
+                () -> assertEquals(user.getLanguage(), authenticated.getLanguage().toString()),
+                () -> assertTrue(authenticated.isActive())
+        );
+        verify(userRepository).findUserBySecret(SECRET);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void testAuthenticateUserNotFound() {
+        assertThrows(NotFoundException.class,
+                () -> userService.authenticateUser(SECRET)
+        );
+        verify(userRepository).findUserBySecret(SECRET);
+        verify(userRepository, never()).save(user);
+    }
+
+    @Test
+    public void testAuthenticateUserSecretNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.authenticateUser(null)
+        );
+        verify(userRepository, never()).findUserBySecret(anyString());
+        verify(userRepository, never()).save(user);
+    }
+
+    @Test
+    public void testAuthenticateUserSecretBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.authenticateUser(BLANK)
+        );
+        verify(userRepository, never()).findUserBySecret(anyString());
+        verify(userRepository, never()).save(user);
+    }
+
+    @Test
     public void testUpdateUser() {
         when(userRepository.save(any())).thenReturn(user);
         UserDTO saved = userService.updateUser(userDTO);
@@ -344,20 +437,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testDeleteUser() {
-        userService.deleteUser(ID);
-        verify(userRepository).deleteById(ID);
-    }
-
-    @Test
-    public void testDeleteUserIdInvalid() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.deleteUser(0)
-        );
-        verify(userRepository, never()).deleteById(anyInt());
-    }
-
-    @Test
     public void testIsLastAdmin() {
         admins.add(new User());
         when(userRepository.findAllByRole(ADMIN)).thenReturn(admins);
@@ -379,5 +458,34 @@ public class UserServiceTest {
                 () -> userService.isLastAdmin()
         );
         verify(userRepository).findAllByRole(ADMIN);
+    }
+
+    @Test
+    public void testDeleteUser() {
+        userService.deleteUser(ID);
+        verify(userRepository).deleteById(ID);
+    }
+
+    @Test
+    public void testDeleteUserIdInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.deleteUser(0)
+        );
+        verify(userRepository, never()).deleteById(anyInt());
+    }
+
+    @Test
+    public void testFindLastId() {
+        when(userRepository.findFirstByOrderByIdDesc()).thenReturn(user);
+        assertEquals(user.getId(), userService.findLastId());
+        verify(userRepository).findFirstByOrderByIdDesc();
+    }
+
+    @Test
+    public void testFindLastIdNotFound() {
+        assertThrows(IllegalStateException.class,
+                () -> userService.findLastId()
+        );
+        verify(userRepository).findFirstByOrderByIdDesc();
     }
 }

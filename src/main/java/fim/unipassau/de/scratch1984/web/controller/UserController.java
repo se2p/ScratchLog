@@ -126,6 +126,53 @@ public class UserController {
     }
 
     /**
+     * Tries to authenticate the participant with the given secret. On a successful authentication, the participant is
+     * redirected to the corresponding experiment page. If an error occurred during authentication, the user is
+     * redirected to the error page instead.
+     *
+     * @param id The id of the experiment in which the user is participating.
+     * @param secret The user's secret.
+     * @param httpServletRequest The servlet request.
+     * @param httpServletResponse The servlet response.
+     * @return The experiment page on success, or the error page, otherwise.
+     */
+    @GetMapping("/authenticate")
+    public String authenticateUser(@RequestParam("id") final String id, @RequestParam("secret") final String secret,
+                                   final HttpServletRequest httpServletRequest,
+                                   final HttpServletResponse httpServletResponse) {
+        if (id == null || id.trim().isBlank() || secret == null || secret.trim().isBlank()) {
+            logger.error("Cannot authenticate participant with id or secret null or blank!");
+            return ERROR;
+        }
+
+        int experimentId = parseId(id);
+        UserDTO authenticated;
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.debug("Cannot authenticate user with invalid experiment id " + id + "!");
+            return ERROR;
+        }
+
+        try {
+            authenticated = userService.authenticateUser(secret);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        if (!userService.existsParticipant(authenticated.getId(), experimentId)) {
+            logger.error("No participation entry could be found for the user with username "
+                    + authenticated.getUsername() + " and experiment with id " + id + "!");
+            return ERROR;
+        }
+
+        clearSecurityContext(httpServletRequest);
+        updateSecurityContext(authenticated, httpServletRequest);
+        localeResolver.setLocale(httpServletRequest, httpServletResponse,
+                getLocaleFromLanguage(authenticated.getLanguage()));
+        return "redirect:/experiment?id=" + experimentId;
+    }
+
+    /**
      * Tries to authenticate the user with the given credentials. On a successful authentication, the user is redirected
      * to the index page. If an error occurred during authentication, the user stays on the login page and an error
      * message is displayed.
@@ -383,7 +430,7 @@ public class UserController {
             return ERROR;
         }
 
-        int userId = parseUserId(id);
+        int userId = parseId(id);
 
         if (userId < Constants.MIN_ID) {
             logger.debug("Cannot delete user with invalid id " + id + "!");
@@ -617,7 +664,7 @@ public class UserController {
      * @param id The id in its string representation.
      * @return The corresponding int value, or -1.
      */
-    private int parseUserId(final String id) {
+    private int parseId(final String id) {
         try {
             return Integer.parseInt(id);
         } catch (NumberFormatException e) {

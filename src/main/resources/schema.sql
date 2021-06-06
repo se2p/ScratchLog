@@ -153,3 +153,19 @@ group by
     `r`.`user_id`,
     `r`.`experiment_id`,
     `r`.`event`;
+
+-- scratch1984.active_experiments source
+
+CREATE OR REPLACE VIEW `active_experiments` (`experiment`, `participants`, `started`, `finished`) AS
+select
+    `p`.`experiment_id` AS `experiment_id`,
+    count(`p`.`user_id`) AS `COUNT(p.user_id)`,
+    count(`p`.`start`) AS `COUNT(p.start)`,
+    count(`p`.`finish`) AS `COUNT(p.finish)`
+from
+    (`experiment` `e`
+        join `participant` `p`)
+where
+    (`p`.`experiment_id` = `e`.`id`)
+group by
+    `p`.`experiment_id`;

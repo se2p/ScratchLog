@@ -23,7 +23,7 @@
         <div class="row">
             <div class="col-12 mb-5" th:text="${experimentDTO.description}"></div>
         </div>
-        <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
+        <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
             <div>
                 <span class="form-label me-2 fs-5" th:text="#{status}"></span>
                 <i th:class="${experimentDTO.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"></i>
@@ -38,6 +38,50 @@
             <a id="close" class="btn btn-primary" type="submit" th:text="#{close}"
                th:style="${experimentDTO.active ? '' : 'display:none'}"
                th:href="@{/experiment/status(id=${experimentDTO.id}, stat=close)}"></a>
+        </div>
+        <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
+            <div class="col-7">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{username}"></th>
+                        <th class="text-center" scope="col" th:text="#{started}"></th>
+                        <th class="text-center" scope="col" th:text="#{finished}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${participants.isEmpty()}">
+                    <tr>
+                        <td colspan="4" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${participants.isEmpty()}">
+                    <tr th:each="participant : ${participants}">
+                        <th scope="row">
+                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                               th:text="${participant.user.id}"></a>
+                        </th>
+                        <td>
+                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                               th:text="${participant.user.username}"></a>
+                        </td>
+                        <td class="text-center">
+                            <i th:class="${participant.start != null ? 'fa fa-check text-success'
+                            : 'fa fa-times text-danger'}"></i>
+                        </td>
+                        <td class="text-center">
+                            <i th:class="${participant.end != null ? 'fa fa-check text-success'
+                            : 'fa fa-times text-danger'}"></i>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-5 text-end" th:if="${experimentDTO.active}">
+                <a class="btn btn-primary" th:href="@{/participant/add(id=${experimentDTO.id})}">
+                    <span th:text="#{add_participant}"></span>
+                </a>
+            </div>
         </div>
         <div class="row">
             <div class="col-12" th:utext="${experimentDTO.info}"></div>
