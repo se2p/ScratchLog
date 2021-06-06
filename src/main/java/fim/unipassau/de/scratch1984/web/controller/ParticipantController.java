@@ -143,6 +143,7 @@ public class ParticipantController {
      *
      * @param experimentId The id of the experiment in which the user should participate.
      * @param userDTO The {@link UserDTO} containing the username, email and language of the user to be created.
+     * @param model The model to use.
      * @param bindingResult The {@link BindingResult} for returning information on invalid user input.
      * @param httpServletRequest The {@link HttpServletRequest} to get the application's base URL.
      * @return The experiment page on success, or the error page otherwise.
@@ -150,8 +151,8 @@ public class ParticipantController {
     @PostMapping("/add")
     @Secured("ROLE_ADMIN")
     public String addParticipant(@RequestParam(value = "id") final String experimentId,
-                                 @ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult,
-                                 final HttpServletRequest httpServletRequest) {
+                                 @ModelAttribute("userDTO") final UserDTO userDTO, final Model model,
+                                 final BindingResult bindingResult, final HttpServletRequest httpServletRequest) {
         if (userDTO.getUsername() == null || userDTO.getEmail() == null || experimentId == null) {
             logger.error("The new username, email and experiment id cannot be null!");
             return ERROR;
@@ -170,6 +171,7 @@ public class ParticipantController {
         validateUpdateEmail(userDTO.getEmail(), bindingResult, resourceBundle);
 
         if (bindingResult.hasErrors()) {
+            model.addAttribute("experiment", id);
             return PARTICIPANT;
         }
 

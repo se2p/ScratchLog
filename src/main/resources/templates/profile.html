@@ -48,6 +48,19 @@
                    th:href="@{/users/active(id=${userDTO.id})}"></a>
             </div>
         </div>
+        <div class="row mb-5"
+             th:if="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).PARTICIPANT}">
+            <h4 th:text="#{experiments}"></h4>
+            <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${experiments.isEmpty()}">
+                <li class="list-group-item" th:text="#{table_empty}"></li>
+            </ul>
+            <ul class="list-group list-group-horizontal mx-3" th:unless="${experiments.isEmpty()}"
+                th:each="experiment : ${experiments}">
+                <li class="list-group-item">
+                    <a class="no_decoration" th:href="@{/experiment(id=${experiment})}" th:text="${experiment}"></a>
+                </li>
+            </ul>
+        </div>
         <div class="card mx-5">
             <h4 class="card-header" th:text="#{profile_info}"></h4>
             <div class="card-body">

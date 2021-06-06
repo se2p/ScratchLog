@@ -27,9 +27,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -183,12 +185,51 @@ public class ParticipantServiceTest {
         verify(userRepository, never()).save(user);
     }
 
+    @Test
+    public void testGetExperimentIdsForParticipant() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(participantRepository.findAllByUser(user)).thenReturn(participantList);
+        List<Integer> experimentIds = participantService.getExperimentIdsForParticipant(ID);
+        assertAll(
+                () -> assertEquals(5, experimentIds.size()),
+                () -> assertTrue(experimentIds.contains(1)),
+                () -> assertTrue(experimentIds.contains(2)),
+                () -> assertTrue(experimentIds.contains(3)),
+                () -> assertTrue(experimentIds.contains(4)),
+                () -> assertTrue(experimentIds.contains(5))
+        );
+        verify(userRepository).getOne(ID);
+        verify(participantRepository).findAllByUser(user);
+    }
+
+    @Test
+    public void testGetExperimentIdsForParticipantNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(participantRepository.findAllByUser(user)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> participantService.getExperimentIdsForParticipant(ID)
+        );
+        verify(userRepository).getOne(ID);
+        verify(participantRepository).findAllByUser(user);
+    }
+
+    @Test
+    public void testGetExperimentIdsForParticipantIdInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.getExperimentIdsForParticipant(0)
+        );
+        verify(userRepository, never()).getOne(ID);
+        verify(participantRepository, never()).findAllByUser(user);
+    }
+
     private List<Participant> getParticipants(int number) {
         List<Participant> participants = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             User user = new User();
             user.setId(i + 1);
-            participants.add(new Participant(user, new Experiment(), Timestamp.valueOf(LocalDateTime.now()), null));
+            Experiment experiment = new Experiment();
+            experiment.setId(i + 1);
+            participants.add(new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null));
         }
         return participants;
     }

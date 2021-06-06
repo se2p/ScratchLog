@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -175,6 +176,39 @@ public class ParticipantService {
             found.setSecret(null);
             userRepository.save(found);
         }
+    }
+
+    /**
+     * Retrieves the experiment ids of the experiments in which the user with the given user id is participating. If no
+     * corresponding user exists in the database a {@link NotFoundException} is thrown instead.
+     *
+     * @param userId The user id.
+     * @return The list of experiment ids.
+     */
+    @Transactional
+    public List<Integer> getExperimentIdsForParticipant(final int userId) {
+        if (userId < Constants.MIN_ID) {
+            logger.error("Cannot find participant data for user with invalid id " + userId + "!");
+            throw new IllegalArgumentException("Cannot find participant data for user with invalid id "
+                    + userId + "!");
+        }
+
+        List<Participant> participants;
+        List<Integer> ids = new ArrayList<>();
+        User user = userRepository.getOne(userId);
+
+        try {
+            participants = participantRepository.findAllByUser(user);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find user with id " + userId + "!");
+            throw new NotFoundException("Could not find user with id " + userId + "!");
+        }
+
+        for (Participant participant : participants) {
+            ids.add(participant.getExperiment().getId());
+        }
+
+        return ids;
     }
 
     /**

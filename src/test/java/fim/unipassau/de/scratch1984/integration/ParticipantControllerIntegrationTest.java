@@ -224,6 +224,7 @@ public class ParticipantControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(EXPERIMENT, is(ID)))
                 .andExpect(view().name(PARTICIPANT));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -242,6 +243,7 @@ public class ParticipantControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(EXPERIMENT, is(ID)))
                 .andExpect(view().name(PARTICIPANT));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -260,6 +262,7 @@ public class ParticipantControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(EXPERIMENT, is(ID)))
                 .andExpect(view().name(PARTICIPANT));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -271,7 +274,7 @@ public class ParticipantControllerIntegrationTest {
     public void testAddParticipantExperimentIdInvalid() throws Exception {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
-                .param("id", PARTICIPANT)
+                .param("id", "-1")
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)

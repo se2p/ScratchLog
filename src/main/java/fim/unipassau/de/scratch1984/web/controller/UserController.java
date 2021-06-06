@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
@@ -36,7 +37,9 @@ import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -59,6 +62,11 @@ public class UserController {
      * The user service to use for user management.
      */
     private final UserService userService;
+
+    /**
+     * The participant service to use for participant management.
+     */
+    private final ParticipantService participantService;
 
     /**
      * The mail service to use for sending emails.
@@ -109,16 +117,19 @@ public class UserController {
      * Constructs a new user controller with the given dependencies.
      *
      * @param userService The {@link UserService} to use.
+     * @param participantService The {@link ParticipantService} to use.
      * @param mailService The {@link MailService} to use.
      * @param tokenService The {@link TokenService} to use.
      * @param authenticationProvider The {@link CustomAuthenticationProvider} to use.
      * @param localeResolver The locale resolver to use.
      */
     @Autowired
-    public UserController(final UserService userService, final MailService mailService, final TokenService tokenService,
+    public UserController(final UserService userService, final ParticipantService participantService,
+                          final MailService mailService, final TokenService tokenService,
                           final CustomAuthenticationProvider authenticationProvider,
                           final LocaleResolver localeResolver) {
         this.userService = userService;
+        this.participantService = participantService;
         this.mailService = mailService;
         this.tokenService = tokenService;
         this.authenticationProvider = authenticationProvider;
@@ -275,27 +286,33 @@ public class UserController {
             return ERROR;
         }
 
+        UserDTO userDTO;
+        List<Integer> experimentIds = new ArrayList<>();
+
         if (username == null || username.trim().isBlank()) {
             try {
-                UserDTO userDTO = userService.getUser(authentication.getName());
-                model.addAttribute("userDTO", userDTO);
-                model.addAttribute("language",
-                        resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
-                return PROFILE;
+                userDTO = userService.getUser(authentication.getName());
             } catch (NotFoundException e) {
                 clearSecurityContext(httpServletRequest);
                 return ERROR;
             }
+        } else {
+            try {
+                userDTO = userService.getUser(username);
+            } catch (NotFoundException e) {
+                return ERROR;
+            }
         }
 
-        try {
-            UserDTO userDTO = userService.getUser(username);
-            model.addAttribute("userDTO", userDTO);
-            model.addAttribute("language", resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
-            return PROFILE;
-        } catch (NotFoundException e) {
-            return ERROR;
+        if (userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+            experimentIds = participantService.getExperimentIdsForParticipant(userDTO.getId());
         }
+
+        model.addAttribute("experiments", experimentIds);
+        model.addAttribute("userDTO", userDTO);
+        model.addAttribute("language",
+                resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
+        return PROFILE;
     }
 
     /**

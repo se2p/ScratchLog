@@ -50,4 +50,12 @@ public interface ParticipantRepository extends JpaRepository<Participant, Partic
      */
     List<Participant> findAllByExperiment(Experiment experiment);
 
+    /**
+     * Returns a list of all participant relations for the given user, if any entries exist.
+     *
+     * @param user The user to search for.
+     * @return The participation list.
+     */
+    List<Participant> findAllByUser(User user);
+
 }

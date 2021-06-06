@@ -137,7 +137,7 @@ public class ParticipantControllerTest {
     @Test
     public void testAddParticipant() throws MessagingException {
         when(userService.saveUser(userDTO)).thenReturn(userDTO);
-        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.addParticipant(ID_STRING, userDTO,
+        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.addParticipant(ID_STRING, userDTO, model,
                 bindingResult, httpServletRequest));
         verify(userService).saveUser(userDTO);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
@@ -150,8 +150,8 @@ public class ParticipantControllerTest {
         when(userService.saveUser(userDTO)).thenReturn(userDTO);
         doThrow(MessagingException.class).when(mailService).sendTemplateMessage(anyString(), any(), any(), any(),
                 anyString(), any(), anyString());
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO,
-                bindingResult, httpServletRequest));
+        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
+                httpServletRequest));
         verify(userService).saveUser(userDTO);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService, times(Constants.MAX_EMAIL_TRIES)).sendTemplateMessage(anyString(), any(), any(), any(),
@@ -163,7 +163,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantNotFound() throws MessagingException {
         when(userService.saveUser(userDTO)).thenReturn(userDTO);
         doThrow(NotFoundException.class).when(participantService).saveParticipant(userDTO.getId(), ID);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, bindingResult,
+        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService).saveUser(userDTO);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
@@ -176,7 +176,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantExistsEmail() throws MessagingException {
         when(userService.existsEmail(userDTO.getEmail())).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, bindingResult,
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -189,7 +189,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantEmailInvalid() throws MessagingException {
         userDTO.setEmail(PARTICIPANT);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, bindingResult,
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -202,7 +202,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantUsernameExists() throws MessagingException {
         when(userService.existsUser(PARTICIPANT)).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, bindingResult,
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -215,7 +215,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantUsernameInvalid() throws MessagingException {
         userDTO.setUsername(BLANK);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, bindingResult,
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -226,7 +226,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipantExperimentIdInvalid() throws MessagingException {
-        assertEquals(ERROR, participantController.addParticipant("0", userDTO, bindingResult,
+        assertEquals(ERROR, participantController.addParticipant("0", userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -238,7 +238,7 @@ public class ParticipantControllerTest {
     @Test
     public void testAddParticipantUsernameNull() throws MessagingException {
         userDTO.setUsername(null);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, bindingResult,
+        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -250,7 +250,7 @@ public class ParticipantControllerTest {
     @Test
     public void testAddParticipantEmailNull() throws MessagingException {
         userDTO.setEmail(null);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, bindingResult,
+        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
@@ -261,7 +261,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipantExperimentIdNull() throws MessagingException {
-        assertEquals(ERROR, participantController.addParticipant(null, userDTO, bindingResult,
+        assertEquals(ERROR, participantController.addParticipant(null, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);

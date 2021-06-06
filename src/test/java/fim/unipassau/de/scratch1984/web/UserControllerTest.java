@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
@@ -29,11 +30,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -49,6 +53,9 @@ public class UserControllerTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private ParticipantService participantService;
 
     @Mock
     private MailService mailService;
@@ -109,10 +116,10 @@ public class UserControllerTest {
     private static final String ID_STRING = "1";
     private static final String SECRET = "secret";
     private static final int ID = 1;
-    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, PASSWORD, SECRET);
-    private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, PASSWORD, SECRET);
+    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
+            PASSWORD, SECRET);
+    private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
+            PASSWORD, SECRET);
     private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
 
     @BeforeEach
@@ -356,8 +363,27 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         assertEquals(PROFILE, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
+    }
+
+    @Test
+    public void testGetProfileParticipant() {
+        List<Integer> experimentIds = new ArrayList<>();
+        experimentIds.add(ID);
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(participantService.getExperimentIdsForParticipant(userDTO.getId())).thenReturn(experimentIds);
+        assertEquals(PROFILE, userController.getProfile(USERNAME, model, httpServletRequest));
+        verify(userService).getUser(USERNAME);
+        verify(participantService).getExperimentIdsForParticipant(userDTO.getId());
+        verify(authentication).getName();
+        verify(model).addAttribute(USER_DTO, userDTO);
+        verify(model).addAttribute("experiments", experimentIds);
     }
 
     @Test
@@ -368,6 +394,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         assertEquals(ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication).getName();
         verify(model, never()).addAttribute(USER_DTO, userDTO);
     }
@@ -380,6 +407,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         assertEquals(PROFILE, userController.getProfile(null, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication, times(2)).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
     }
@@ -392,6 +420,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         assertEquals(PROFILE, userController.getProfile(BLANK, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication, times(2)).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
     }
@@ -404,6 +433,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         assertEquals(ERROR, userController.getProfile(null, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication, times(2)).getName();
         verify(httpServletRequest).getSession(false);
         verify(model, never()).addAttribute(USER_DTO, userDTO);

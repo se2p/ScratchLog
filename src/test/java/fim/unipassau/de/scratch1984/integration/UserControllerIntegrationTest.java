@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
@@ -28,6 +29,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import javax.mail.MessagingException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
@@ -57,6 +60,9 @@ public class UserControllerIntegrationTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private ParticipantService participantService;
 
     @MockBean
     private TokenService tokenService;
@@ -279,6 +285,30 @@ public class UserControllerIntegrationTest {
                 )))
                 .andExpect(view().name(PROFILE));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(userDTO.getId());
+    }
+
+    @Test
+    public void testGetProfileParticipant() throws Exception {
+        List<Integer> experimentIds = new ArrayList<>();
+        experimentIds.add(ID);
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(participantService.getExperimentIdsForParticipant(userDTO.getId())).thenReturn(experimentIds);
+        mvc.perform(get("/users/profile")
+                .param(NAME, USERNAME)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("experiments", is(experimentIds)))
+                .andExpect(model().attribute(USER_DTO, allOf(
+                        hasProperty("id", is(userDTO.getId())),
+                        hasProperty("username", is(USERNAME))
+                )))
+                .andExpect(view().name(PROFILE));
+        verify(userService).getUser(USERNAME);
+        verify(participantService).getExperimentIdsForParticipant(userDTO.getId());
     }
 
     @Test
@@ -292,6 +322,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(userDTO.getId());
     }
 
     @Test
@@ -309,6 +340,7 @@ public class UserControllerIntegrationTest {
                 )))
                 .andExpect(view().name(PROFILE));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(userDTO.getId());
     }
 
     @Test
