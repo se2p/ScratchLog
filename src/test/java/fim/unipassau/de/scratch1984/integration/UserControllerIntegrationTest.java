@@ -109,6 +109,7 @@ public class UserControllerIntegrationTest {
         userDTO.setPassword(PASSWORD);
         userDTO.setUsername(USERNAME);
         userDTO.setEmail(EMAIL);
+        userDTO.setSecret(SECRET);
         userDTO.setRole(UserDTO.Role.ADMIN);
         userDTO.setNewPassword("");
         userDTO.setConfirmPassword("");
@@ -664,5 +665,77 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).isLastAdmin();
         verify(userService, never()).deleteUser(ID);
+    }
+
+    @Test
+    public void testChangeActiveStatusDeactivate() throws Exception {
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        mvc.perform(get("/users/active")
+                .param("id", ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(PROFILE_REDIRECT + userDTO.getUsername()));
+        verify(userService).getUserById(ID);
+        verify(userService).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusActivate() throws Exception {
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setActive(false);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        mvc.perform(get("/users/active")
+                .param("id", ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(PROFILE_REDIRECT + userDTO.getUsername()));
+        verify(userService).getUserById(ID);
+        verify(userService).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusAdmin() throws Exception {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        mvc.perform(get("/users/active")
+                .param("id", ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusNotFound() throws Exception {
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/users/active")
+                .param("id", ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusInvalidId() throws Exception {
+        mvc.perform(get("/users/active")
+                .param("id", USERNAME)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
     }
 }

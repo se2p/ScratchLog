@@ -448,6 +448,52 @@ public class UserController {
     }
 
     /**
+     * Activates or deactivates the user account of the participant with the given id. If the account is being
+     * deactivated, the participant's secret is set to null to prevent the user from participating in any experiments.
+     * If the operation was successful, the user is redirected to the profile page. If anything went wrong, the user is
+     * redirected to the error page instead.
+     *
+     * @param id The participant's id.
+     * @return The participant's profile page on success, or the error page, otherwise.
+     */
+    @GetMapping("/active")
+    @Secured("ROLE_ADMIN")
+    public String changeActiveStatus(@RequestParam("id") final String id) {
+        if (id == null) {
+            logger.debug("Cannot change active status of user with id null!");
+            return ERROR;
+        }
+
+        int userId = parseId(id);
+
+        if (userId < Constants.MIN_ID) {
+            logger.debug("Cannot change active status of user with invalid id " + id + "!");
+            return ERROR;
+        }
+
+        try {
+            UserDTO userDTO = userService.getUserById(userId);
+
+            if (userDTO.getRole().equals(UserDTO.Role.ADMIN)) {
+                logger.error("Cannot deactivate an administrator profile!");
+                return ERROR;
+            }
+
+            if (userDTO.isActive()) {
+                userDTO.setActive(false);
+                userDTO.setSecret(null);
+            } else {
+                userDTO.setActive(true);
+            }
+
+            userService.updateUser(userDTO);
+            return "redirect:/users/profile?name=" + userDTO.getUsername();
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+    }
+
+    /**
      * Validates the username passed in the {@link UserDTO} on updating the given user.
      *
      * @param userDTO The user dto containing the new user information.

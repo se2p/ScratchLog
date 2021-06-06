@@ -128,6 +128,8 @@ public class UserControllerTest {
         userDTO.setRole(UserDTO.Role.ADMIN);
         userDTO.setNewPassword("");
         userDTO.setConfirmPassword("");
+        userDTO.setActive(true);
+        userDTO.setSecret(SECRET);
         securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
     }
 
@@ -847,5 +849,54 @@ public class UserControllerTest {
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).isLastAdmin();
         verify(userService, never()).deleteUser(ID);
+    }
+
+    @Test
+    public void testChangeActiveStatusDeactivate() {
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(PROFILE_REDIRECT + userDTO.getUsername(), userController.changeActiveStatus(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusActivate() {
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setActive(false);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(PROFILE_REDIRECT + userDTO.getUsername(), userController.changeActiveStatus(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusUserAdmin() {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(ERROR, userController.changeActiveStatus(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusNotFound() {
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.changeActiveStatus(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusIdInvalid() {
+        assertEquals(ERROR, userController.changeActiveStatus(BLANK));
+        verify(userService, never()).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusIdNull() {
+        assertEquals(ERROR, userController.changeActiveStatus(null));
+        verify(userService, never()).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
     }
 }

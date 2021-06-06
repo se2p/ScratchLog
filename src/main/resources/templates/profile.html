@@ -29,19 +29,23 @@
             <span th:text="#{profile_of}"></span>
             <span th:text="${userDTO.username}"></span>
         </h2>
-        <div class="row mb-5" th:style="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN
-        ? '' : 'display:none'}">
+        <div class="row mb-5" th:if="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
             <div class="text-danger fs-5" th:text="#{admin}"></div>
         </div>
-        <div class="row mb-5" th:style="${userDTO.role != T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN
-        ? '' : 'display:none'}">
-            <div th:style="${userDTO.active ? '' : 'display:none'}">
+        <div class="row mb-5" th:unless="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
+            <div class="col-9" th:if="${userDTO.active}">
                 <i class="fa fa-lock-open fa-2x"></i>
                 <span class="text-muted ms-1" th:text="#{activated}"></span>
             </div>
-            <div th:style="${userDTO.active ? 'display:none' : ''}">
+            <div class="col-9" th:unless="${userDTO.active}">
                 <i class="fa fa-lock fa-2x"></i>
-                <span class="text-muted" th:text="#{inactive}"></span>
+                <span class="text-muted ms-1" th:text="#{inactive}"></span>
+            </div>
+            <div class="col-3 text-end" sec:authorize="hasRole('ADMIN')">
+                <a class="btn btn-primary" th:text="#{deactivate}" th:if="${userDTO.active}"
+                   th:href="@{/users/active(id=${userDTO.id})}"></a>
+                <a class="btn btn-primary" th:text="#{activate}" th:unless="${userDTO.active}"
+                   th:href="@{/users/active(id=${userDTO.id})}"></a>
             </div>
         </div>
         <div class="card mx-5">
