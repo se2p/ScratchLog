@@ -140,8 +140,7 @@ public class HomeController {
     }
 
     /**
-     * Loads the the first experiment page from the database. If the passed last page is invalid, the error page is
-     * displayed instead.
+     * Loads the the first experiment page from the database.
      *
      * @param model The model to store the loaded information in.
      * @return The index page on success, or the error page otherwise.
@@ -161,8 +160,7 @@ public class HomeController {
     }
 
     /**
-     * Loads the the last experiment page from the database. If the passed last page is invalid, the error page is
-     * displayed instead.
+     * Loads the the last experiment page from the database.
      *
      * @param model The model to store the loaded information in.
      * @return The index page on success, or the error page otherwise.

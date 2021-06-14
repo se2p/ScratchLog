@@ -148,7 +148,7 @@ group by
 
 -- scratch1984.active_experiments source
 
-CREATE OR REPLACE VIEW `active_experiments` (`experiment`, `participants`, `started`, `finished`) AS
+CREATE OR REPLACE VIEW `experiment_data` (`experiment`, `participants`, `started`, `finished`) AS
 select
     `p`.`experiment_id` AS `experiment_id`,
     count(`p`.`user_id`) AS `COUNT(p.user_id)`,

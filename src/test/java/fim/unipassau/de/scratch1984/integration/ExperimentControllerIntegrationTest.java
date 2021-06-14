@@ -45,6 +45,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -86,7 +87,16 @@ public class ExperimentControllerIntegrationTest {
     private static final String INVALID_ID = "-1";
     private static final String ID_PARAM = "id";
     private static final String STATUS_PARAM = "stat";
+    private static final String PAGE_PARAM = "page";
     private static final String PARTICIPANTS = "participants";
+    private static final String PAGE = "page";
+    private static final String LAST_PAGE_ATTRIBUTE = "lastPage";
+    private static final String CURRENT = "3";
+    private static final String LAST = "4";
+    private static final int FIRST_PAGE = 1;
+    private static final int LAST_PAGE = 3;
+    private static final int PREVIOUS = 2;
+    private static final int NEXT = 4;
     private static final int ID = 1;
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, false);
     private final UserDTO userDTO = new UserDTO("user", "admin1@admin.de", UserDTO.Role.ADMIN,
@@ -115,6 +125,7 @@ public class ExperimentControllerIntegrationTest {
     @WithMockUser(username = "user", roles = {"ADMIN"})
     public void testGetExperiment() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
@@ -124,6 +135,8 @@ public class ExperimentControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(PARTICIPANTS, is(participants)))
+                .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
                 .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
@@ -132,6 +145,7 @@ public class ExperimentControllerIntegrationTest {
                 )))
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
+        verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
@@ -414,6 +428,7 @@ public class ExperimentControllerIntegrationTest {
     public void testChangeExperimentStatusOpen() throws Exception {
         experimentDTO.setActive(true);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, "open")
@@ -423,6 +438,8 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
+                .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
                 .andExpect(model().attribute("experimentDTO", allOf(
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
@@ -433,12 +450,14 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).changeExperimentStatus(true, ID);
+        verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
     public void testChangeExperimentStatusClose() throws Exception {
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, "close")
@@ -448,6 +467,8 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
+                .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
                 .andExpect(model().attribute("experimentDTO", allOf(
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
@@ -489,6 +510,252 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).changeExperimentStatus(false, ID);
+    }
+
+    @Test
+    public void testGetNextPage() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mvc.perform(get("/experiment/next")
+                .param(ID_PARAM, ID_STRING)
+                .param(PAGE_PARAM, CURRENT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(model().attribute(PARTICIPANTS, participants))
+                .andExpect(model().attribute(PAGE, is(NEXT)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
+                .andExpect(model().attribute("experimentDTO", allOf(
+                        hasProperty("id", is(ID)),
+                        hasProperty("title", is(TITLE)),
+                        hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(false))
+                )))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService).getLastParticipantPage(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetNextPageNotFound() throws Exception {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/experiment/next")
+                .param(ID_PARAM, ID_STRING)
+                .param(PAGE_PARAM, CURRENT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService, never()).getLastParticipantPage(ID);
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetNextInvalidId() throws Exception {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/experiment/next")
+                .param(ID_PARAM, BLANK)
+                .param(PAGE_PARAM, CURRENT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService, never()).getExperiment(ID);
+        verify(experimentService, never()).getLastParticipantPage(ID);
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetNextInvalidCurrent() throws Exception {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/experiment/next")
+                .param(ID_PARAM, ID_STRING)
+                .param(PAGE_PARAM, "-1")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService, never()).getExperiment(ID);
+        verify(experimentService, never()).getLastParticipantPage(ID);
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetPreviousPage() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mvc.perform(get("/experiment/previous")
+                .param(ID_PARAM, ID_STRING)
+                .param(PAGE_PARAM, CURRENT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(model().attribute(PARTICIPANTS, participants))
+                .andExpect(model().attribute(PAGE, is(PREVIOUS)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
+                .andExpect(model().attribute("experimentDTO", allOf(
+                        hasProperty("id", is(ID)),
+                        hasProperty("title", is(TITLE)),
+                        hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(false))
+                )))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService).getLastParticipantPage(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetPreviousPageNotFound() throws Exception {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/experiment/previous")
+                .param(ID_PARAM, ID_STRING)
+                .param(PAGE_PARAM, CURRENT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService, never()).getLastParticipantPage(ID);
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetPreviousPageInvalidId() throws Exception {
+        mvc.perform(get("/experiment/previous")
+                .param(ID_PARAM, "0")
+                .param(PAGE_PARAM, CURRENT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService, never()).getExperiment(ID);
+        verify(experimentService, never()).getLastParticipantPage(ID);
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetPreviousPageInvalidCurrent() throws Exception {
+        mvc.perform(get("/experiment/previous")
+                .param(ID_PARAM, ID_STRING)
+                .param(PAGE_PARAM, BLANK)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService, never()).getExperiment(ID);
+        verify(experimentService, never()).getLastParticipantPage(ID);
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetFirstPage() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mvc.perform(get("/experiment/first")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(model().attribute(PARTICIPANTS, participants))
+                .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
+                .andExpect(model().attribute("experimentDTO", allOf(
+                        hasProperty("id", is(ID)),
+                        hasProperty("title", is(TITLE)),
+                        hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(false))
+                )))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService).getLastParticipantPage(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetFirstPageNotFound() throws Exception {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/experiment/first")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService, never()).getLastParticipantPage(ID);
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetLastPage() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mvc.perform(get("/experiment/last")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(model().attribute(PARTICIPANTS, participants))
+                .andExpect(model().attribute(PAGE, is(LAST_PAGE + 1)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
+                .andExpect(model().attribute("experimentDTO", allOf(
+                        hasProperty("id", is(ID)),
+                        hasProperty("title", is(TITLE)),
+                        hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(false))
+                )))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService, times(2)).getLastParticipantPage(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetLastPageNotFound() throws Exception {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/experiment/last")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService, never()).getLastParticipantPage(ID);
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     private List<Participant> getParticipants(int number) {

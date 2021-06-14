@@ -32,7 +32,7 @@
         <div class="row mb-5" th:if="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
             <div class="text-danger fs-5" th:text="#{admin}"></div>
         </div>
-        <div class="row mb-5" th:unless="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
+        <div class="row mb-3" th:unless="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
             <div class="col-9" th:if="${userDTO.active}">
                 <i class="fa fa-lock-open fa-2x"></i>
                 <span class="text-muted ms-1" th:text="#{activated}"></span>

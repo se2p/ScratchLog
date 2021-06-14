@@ -59,6 +59,16 @@ public class ExperimentController {
     private final ParticipantService participantService;
 
     /**
+     * String corresponding to the experiment page.
+     */
+    private static final String EXPERIMENT = "experiment";
+
+    /**
+     * String corresponding to the experiment edit page.
+     */
+    private static final String EXPERIMENT_EDIT = "experiment-edit";
+
+    /**
      * String corresponding to redirecting to the error page.
      */
     private static final String ERROR = "redirect:/error";
@@ -117,16 +127,8 @@ public class ExperimentController {
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-
-            if (experimentDTO.getInfo() != null) {
-                experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
-            }
-
-            Page<Participant> participants = participantService.getParticipantPage(experimentId, PageRequest.of(0,
-                    Constants.PAGE_SIZE));
-            model.addAttribute("experimentDTO", experimentDTO);
-            model.addAttribute("participants", participants);
-            return "experiment";
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
         } catch (NotFoundException e) {
             return ERROR;
         }
@@ -141,7 +143,7 @@ public class ExperimentController {
     @GetMapping("/create")
     @Secured("ROLE_ADMIN")
     public String getExperimentForm(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO) {
-        return "experiment-edit";
+        return EXPERIMENT_EDIT;
     }
 
     /**
@@ -164,7 +166,7 @@ public class ExperimentController {
         try {
             ExperimentDTO findExperiment = experimentService.getExperiment(experimentId);
             model.addAttribute("experimentDTO", findExperiment);
-            return "experiment-edit";
+            return EXPERIMENT_EDIT;
         } catch (NotFoundException e) {
             return ERROR;
         }
@@ -211,7 +213,7 @@ public class ExperimentController {
         }
 
         if (bindingResult.hasErrors()) {
-            return "experiment-edit";
+            return EXPERIMENT_EDIT;
         }
 
         ExperimentDTO saved = experimentService.saveExperiment(experimentDTO);
@@ -249,8 +251,8 @@ public class ExperimentController {
      */
     @GetMapping("/status")
     @Secured("ROLE_ADMIN")
-    public String changeExperimentStatus(@RequestParam("stat") final String status,
-                                         @RequestParam("id") final String id, final Model model) {
+    public String changeExperimentStatus(@RequestParam("stat") final String status, @RequestParam("id") final String id,
+                                         final Model model) {
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID || status == null) {
@@ -271,19 +273,168 @@ public class ExperimentController {
                 return ERROR;
             }
 
-            if (experimentDTO.getInfo() != null) {
-                experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
-            }
-
-            Page<Participant> participants = participantService.getParticipantPage(experimentId, PageRequest.of(0,
-                    Constants.PAGE_SIZE));
-            model.addAttribute("experimentDTO", experimentDTO);
-            model.addAttribute("participants", participants);
+            addModelInfo(0, experimentDTO, model);
         } catch (NotFoundException e) {
             return ERROR;
         }
 
-        return "experiment";
+        return EXPERIMENT;
+    }
+
+    /**
+     * Loads the the next participant page from the database. If the current page is the last page, or no experiment
+     * with a corresponding id could be found in the database, the error page is displayed instead.
+     *
+     * @param id The experiment id.
+     * @param model The model to store the loaded information in.
+     * @param currentPage The page currently being displayed.
+     * @return The experiment page on success, or the error page otherwise.
+     */
+    @GetMapping("/next")
+    @Secured("ROLE_ADMIN")
+    public String getNextPage(@RequestParam("id") final String id, @RequestParam("page") final String currentPage,
+                              final Model model) {
+        if (currentPage == null) {
+            return ERROR;
+        }
+
+        int current = parseNumber(currentPage);
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID || current <= -1) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            if (!addModelInfo(current, experimentDTO, model)) {
+                return ERROR;
+            }
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return EXPERIMENT;
+    }
+
+    /**
+     * Loads the the previous participant page from the database. If the current page is the last page, or no experiment
+     * with a corresponding id could be found in the database, the error page is displayed instead.
+     *
+     * @param id The experiment id.
+     * @param model The model to store the loaded information in.
+     * @param currentPage The page currently being displayed.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/previous")
+    @Secured("ROLE_ADMIN")
+    public String getPreviousPage(@RequestParam("id") final String id, @RequestParam("page") final String currentPage,
+                                  final Model model) {
+        if (currentPage == null) {
+            return ERROR;
+        }
+
+        int current = parseNumber(currentPage);
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID || current <= -1) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            if (!addModelInfo(current - 2, experimentDTO, model)) {
+                return ERROR;
+            }
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return EXPERIMENT;
+    }
+
+    /**
+     * Loads the the first participant page from the database. If the passed id is invalid, or no experiment with the
+     * corresponding id could be found, the error page is displayed instead.
+     *
+     * @param id The experiment id.
+     * @param model The model to store the loaded information in.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/first")
+    @Secured("ROLE_ADMIN")
+    public String getFirstPage(@RequestParam("id") final String id, final Model model) {
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            addModelInfo(0, experimentDTO, model);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return EXPERIMENT;
+    }
+
+    /**
+     * Loads the the last participant page from the database. If the passed experiment id is invalid, or no experiment
+     * with the corresponding id could be found, the error page is displayed instead.
+     *
+     * @param id The experiment id.
+     * @param model The model to store the loaded information in.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/last")
+    @Secured("ROLE_ADMIN")
+    public String getLastPage(@RequestParam("id") final String id, final Model model) {
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            int page = experimentService.getLastParticipantPage(experimentId);
+            addModelInfo(page, experimentDTO, model);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return EXPERIMENT;
+    }
+
+    /**
+     * Retrieves the current participant page information from the database and adds the page to the {@link Model} along
+     * with the {@link ExperimentDTO} and the last page.
+     *
+     * @param page The number of the current participant page to be retrieved.
+     * @param experimentDTO The current experiment dto.
+     * @param model The model used to save the information.
+     * @return {@code true}, if the current page number is lower than the last page number, or {@code false} otherwise.
+     */
+    private boolean addModelInfo(final int page, final ExperimentDTO experimentDTO, final Model model) {
+        if (experimentDTO.getInfo() != null) {
+            experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
+        }
+
+        int last = experimentService.getLastParticipantPage(experimentDTO.getId()) + 1;
+
+        if (page >= last) {
+            return false;
+        }
+
+        Page<Participant> participants = participantService.getParticipantPage(experimentDTO.getId(),
+                PageRequest.of(page, Constants.PAGE_SIZE));
+        model.addAttribute("page", page + 1);
+        model.addAttribute("lastPage", last);
+        model.addAttribute("experimentDTO", experimentDTO);
+        model.addAttribute("participants", participants);
+        return true;
     }
 
     /**
@@ -298,7 +449,7 @@ public class ExperimentController {
             return -1;
         }
 
-        int experimentId = parseExperimentId(id);
+        int experimentId = parseNumber(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.debug("Cannot return the corresponding experiment page for experiment with invalid id "
@@ -315,7 +466,7 @@ public class ExperimentController {
      * @param id The id in its string representation.
      * @return The corresponding int value, or -1.
      */
-    private int parseExperimentId(final String id) {
+    private int parseNumber(final String id) {
         try {
             return Integer.parseInt(id);
         } catch (NumberFormatException e) {
