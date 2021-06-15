@@ -6,7 +6,6 @@ import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
-import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ParticipantController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -26,8 +25,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-import javax.mail.MessagingException;
-
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +32,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -159,6 +155,7 @@ public class ParticipantControllerIntegrationTest {
     @Test
     public void testAddParticipant() throws Exception {
         when(userService.saveUser(userDTO)).thenReturn(userDTO);
+        when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
                 .param("id", ID_STRING)
@@ -170,14 +167,12 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
         verify(userService).saveUser(userDTO);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
-        verify(mailService).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(), anyString());
+        verify(mailService).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
     public void testAddParticipantMessagingError() throws Exception {
         when(userService.saveUser(userDTO)).thenReturn(userDTO);
-        doThrow(MessagingException.class).when(mailService).sendTemplateMessage(anyString(), any(), any(), any(),
-                anyString(), any(), anyString());
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
                 .param("id", ID_STRING)
@@ -189,8 +184,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService).saveUser(userDTO);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, times(Constants.MAX_EMAIL_TRIES)).sendTemplateMessage(anyString(), any(), any(), any(),
-                anyString(), any(), anyString());
+        verify(mailService).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -208,8 +202,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService).saveUser(userDTO);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -228,8 +221,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(PARTICIPANT));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -247,8 +239,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(PARTICIPANT));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -266,8 +257,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(PARTICIPANT));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -283,7 +273,6 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 }

@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -269,6 +270,40 @@ public class UserServiceTest {
                 () -> userService.getUserById(0)
         );
         verify(userRepository, never()).findById(anyInt());
+    }
+
+    @Test
+    public void testGetUserByUsernameOrEmail() {
+        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(user);
+        UserDTO found = userService.getUserByUsernameOrEmail(USERNAME);
+        assertAll(
+                () -> assertEquals(user.getId(), found.getId()),
+                () -> assertEquals(user.getUsername(), found.getUsername()),
+                () -> assertEquals(user.getEmail(), found.getEmail())
+        );
+        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
+    }
+
+    @Test
+    public void testGetUserByUsernameOrEmailUserNull() {
+        assertNull(userService.getUserByUsernameOrEmail(USERNAME));
+        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
+    }
+
+    @Test
+    public void testGetUserByUsernameOrEmailBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.getUserByUsernameOrEmail(BLANK)
+        );
+        verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
+    }
+
+    @Test
+    public void testGetUserByUsernameOrEmailNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.getUserByUsernameOrEmail(null)
+        );
+        verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
     }
 
     @Test

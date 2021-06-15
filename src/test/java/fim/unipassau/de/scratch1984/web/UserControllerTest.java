@@ -25,7 +25,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.LocaleResolver;
 
-import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -39,7 +38,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -595,12 +593,13 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testUpdateUserChangeEmail() throws MessagingException {
+    public void testUpdateUserChangeEmail() {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         assertEquals(EMAIL_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
@@ -610,21 +609,19 @@ public class UserControllerTest {
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
-        verify(mailService).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(), anyString());
+        verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(localeResolver).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
     }
 
     @Test
-    public void testUpdateUserChangeEmailMessaging() throws MessagingException {
+    public void testUpdateUserChangeEmailFalse() {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
-        doThrow(MessagingException.class).when(mailService).sendTemplateMessage(anyString(), any(), any(), any(),
-                anyString(), any(), anyString());
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -633,14 +630,12 @@ public class UserControllerTest {
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
-        verify(mailService, times(3)).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
         verify(localeResolver).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
     }
 
     @Test
-    public void testUpdateUserChangeEmailTokenNotFound() throws MessagingException {
+    public void testUpdateUserChangeEmailTokenNotFound() {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -655,8 +650,7 @@ public class UserControllerTest {
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(localeResolver).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
     }

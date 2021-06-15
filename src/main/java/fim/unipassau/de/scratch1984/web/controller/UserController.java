@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -610,39 +609,8 @@ public class UserController {
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put("baseUrl", baseUrl);
         templateModel.put("token", tokenUrl);
-        return sendEmail(email, null, null, null, resourceBundle.getString("change_email_subject"),
-                templateModel, "change-email.html");
-    }
-
-    /**
-     * Sends the given email template to the given addresses. If the {@link MailService} fails to send the message
-     * three consecutive times, it stops.
-     *
-     * @param to The recipient of the email.
-     * @param cc The address to which a copy of this email should be send.
-     * @param bcc The address to which a blind copy of this email should be send.
-     * @param replyTo The reply to address.
-     * @param subject The subject of this email.
-     * @param templateModel The template model containing additional properties.
-     * @param template The name of the mail template to use.
-     * @return {@code true} if the email was sent successfully, or {@code false} otherwise.
-     */
-    private boolean sendEmail(final String to, final String cc, final String bcc, final String replyTo,
-                           final String subject, final Map<String, Object> templateModel,
-                           final String template) {
-        int tries = 0;
-
-        while (tries < Constants.MAX_EMAIL_TRIES) {
-            try {
-                mailService.sendTemplateMessage(to, cc, bcc, replyTo, subject, templateModel, template);
-                return true;
-            } catch (MessagingException e) {
-                tries++;
-                logger.error("Failed to send message to address " + to + " on try #" + tries + "!", e);
-            }
-        }
-
-        return false;
+        return mailService.sendEmail(email, resourceBundle.getString("change_email_subject"), templateModel,
+                "change-email.html");
     }
 
     /**

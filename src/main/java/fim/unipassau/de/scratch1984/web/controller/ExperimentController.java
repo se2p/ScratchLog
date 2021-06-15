@@ -2,11 +2,13 @@ package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
+import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
@@ -27,8 +29,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -59,6 +65,11 @@ public class ExperimentController {
     private final ParticipantService participantService;
 
     /**
+     * The mail service to use for sending emails.
+     */
+    private final MailService mailService;
+
+    /**
      * String corresponding to the experiment page.
      */
     private static final String EXPERIMENT = "experiment";
@@ -79,13 +90,15 @@ public class ExperimentController {
      * @param experimentService The experiment service to use.
      * @param userService The user service to use.
      * @param participantService The participant service to use.
+     * @param mailService The mail service to use.
      */
     @Autowired
     public ExperimentController(final ExperimentService experimentService, final UserService userService,
-                                final ParticipantService participantService) {
+                                final ParticipantService participantService, final MailService mailService) {
         this.experimentService = experimentService;
         this.userService = userService;
         this.participantService = participantService;
+        this.mailService = mailService;
     }
 
     /**
@@ -279,6 +292,93 @@ public class ExperimentController {
         }
 
         return EXPERIMENT;
+    }
+
+    /**
+     * Searches for a user whose name or email address match the given search string. If a user could be found, they are
+     * added as a participant to the given experiment. If no experiment with the corresponding id could be found or the
+     * id is invalid, the user is redirected to the error page instead.
+     *
+     * @param id The id of the experiment.
+     * @param search The username or email address to search for.
+     * @param model The model used to store the error messages.
+     * @param httpServletRequest The servlet request.
+     * @return The experiment page on success, or the error page otherwise.
+     */
+    @RequestMapping("/search")
+    @Secured("ROLE_ADMIN")
+    public String searchForUser(@RequestParam("participant") final String search, @RequestParam("id") final String id,
+                                final Model model, final HttpServletRequest httpServletRequest) {
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            return ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        String validateSearch = validateInput(search, Constants.LARGE_FIELD);
+        ExperimentDTO experimentDTO;
+
+        try {
+            experimentDTO = experimentService.getExperiment(experimentId);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        if (validateSearch != null) {
+            model.addAttribute("error", resourceBundle.getString(validateSearch));
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        }
+
+        UserDTO userDTO = userService.getUserByUsernameOrEmail(search);
+
+        if (userDTO == null) {
+            model.addAttribute("error", resourceBundle.getString("user_not_found"));
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+            model.addAttribute("error", resourceBundle.getString("user_not_participant"));
+        } else if (userService.existsParticipant(userDTO.getId(), experimentId)) {
+            model.addAttribute("error", resourceBundle.getString("participant_entry"));
+        } else if (userDTO.getSecret() != null) {
+            model.addAttribute("error", resourceBundle.getString("user_participating"));
+        } else if (!experimentDTO.isActive()) {
+            model.addAttribute("error", resourceBundle.getString("experiment_closed"));
+        }
+
+        if (model.getAttribute("error") != null) {
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        }
+
+        String secret;
+
+        try {
+            secret = Secrets.generateRandomBytes(Constants.SECRET_LENGTH);
+            userDTO.setSecret(secret);
+            UserDTO saved = userService.updateUser(userDTO);
+            participantService.saveParticipant(saved.getId(), experimentId);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(httpServletRequest).replacePath(null).build()
+                .toUriString();
+        String experimentUrl = baseUrl + "/users/authenticate?id=" + id + "&secret=" + secret;
+        Map<String, Object> templateModel = new HashMap<>();
+        templateModel.put("baseUrl", baseUrl);
+        templateModel.put("secret", experimentUrl);
+        ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
+                getLocaleFromLanguage(userDTO.getLanguage()));
+
+        if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
+                templateModel, "participant-email")) {
+            return "redirect:/experiment?id=" + id;
+        } else {
+            return ERROR;
+        }
     }
 
     /**
@@ -504,6 +604,19 @@ public class ExperimentController {
      */
     private FieldError createFieldError(final String field, final String error, final ResourceBundle resourceBundle) {
         return new FieldError("experimentDTO", field, resourceBundle.getString(error));
+    }
+
+    /**
+     * Returns the proper {@link Locale} based on the user's preferred language settings.
+     *
+     * @param language The user's preferred language.
+     * @return The corresponding locale, or English as a default value.
+     */
+    private Locale getLocaleFromLanguage(final UserDTO.Language language) {
+        if (language == UserDTO.Language.GERMAN) {
+            return Locale.GERMAN;
+        }
+        return Locale.ENGLISH;
     }
 
 }

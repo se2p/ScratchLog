@@ -192,6 +192,30 @@ public class UserService {
     }
 
     /**
+     * Returns the {@link UserDTO} whose username or email address matches the specified search string. If no such user
+     * exists, {@code null} is returned instead.
+     *
+     * @param search The username or email to search for.
+     * @return The user, if they exist.
+     */
+    @Transactional
+    public UserDTO getUserByUsernameOrEmail(final String search) {
+        if (search == null || search.trim().isBlank()) {
+            logger.error("Cannot search for with search string null or blank!");
+            throw new IllegalArgumentException("Cannot search for with search string null or blank!");
+        }
+
+        User user = userRepository.findUserByUsernameOrEmail(search, search);
+
+        if (user == null) {
+            logger.debug("Could not find user with username or email " + search + "!");
+            return null;
+        }
+
+        return createUserDTO(user);
+    }
+
+    /**
      * Verifies the given user's credentials on login and returns a {@link UserDTO} containing the user's information.
      * If no user with matching username and password could be found, a {@link NotFoundException} is thrown instead.
      *

@@ -5,7 +5,6 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
-import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ParticipantController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -18,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 
-import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 
 import java.util.ResourceBundle;
@@ -135,138 +133,127 @@ public class ParticipantControllerTest {
     }
 
     @Test
-    public void testAddParticipant() throws MessagingException {
+    public void testAddParticipant() {
         when(userService.saveUser(userDTO)).thenReturn(userDTO);
+        when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         assertEquals(REDIRECT_EXPERIMENT + ID, participantController.addParticipant(ID_STRING, userDTO, model,
                 bindingResult, httpServletRequest));
         verify(userService).saveUser(userDTO);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
-        verify(mailService).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(), anyString());
+        verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult, never()).addError(any());
     }
 
     @Test
-    public void testAddParticipantMessagingException() throws MessagingException {
+    public void testAddParticipantMessagingException() {
         when(userService.saveUser(userDTO)).thenReturn(userDTO);
-        doThrow(MessagingException.class).when(mailService).sendTemplateMessage(anyString(), any(), any(), any(),
-                anyString(), any(), anyString());
         assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService).saveUser(userDTO);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, times(Constants.MAX_EMAIL_TRIES)).sendTemplateMessage(anyString(), any(), any(), any(),
-                anyString(), any(), anyString());
+        verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult, never()).addError(any());
     }
 
     @Test
-    public void testAddParticipantNotFound() throws MessagingException {
+    public void testAddParticipantNotFound() {
         when(userService.saveUser(userDTO)).thenReturn(userDTO);
         doThrow(NotFoundException.class).when(participantService).saveParticipant(userDTO.getId(), ID);
         assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService).saveUser(userDTO);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult, never()).addError(any());
     }
 
     @Test
-    public void testAddParticipantExistsEmail() throws MessagingException {
+    public void testAddParticipantExistsEmail() {
         when(userService.existsEmail(userDTO.getEmail())).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult).addError(any());
     }
 
     @Test
-    public void testAddParticipantEmailInvalid() throws MessagingException {
+    public void testAddParticipantEmailInvalid() {
         userDTO.setEmail(PARTICIPANT);
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult).addError(any());
     }
 
     @Test
-    public void testAddParticipantUsernameExists() throws MessagingException {
+    public void testAddParticipantUsernameExists() {
         when(userService.existsUser(PARTICIPANT)).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult).addError(any());
     }
 
     @Test
-    public void testAddParticipantUsernameInvalid() throws MessagingException {
+    public void testAddParticipantUsernameInvalid() {
         userDTO.setUsername(BLANK);
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult).addError(any());
     }
 
     @Test
-    public void testAddParticipantExperimentIdInvalid() throws MessagingException {
+    public void testAddParticipantExperimentIdInvalid() {
         assertEquals(ERROR, participantController.addParticipant("0", userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult, never()).addError(any());
     }
 
     @Test
-    public void testAddParticipantUsernameNull() throws MessagingException {
+    public void testAddParticipantUsernameNull() {
         userDTO.setUsername(null);
         assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult, never()).addError(any());
     }
 
     @Test
-    public void testAddParticipantEmailNull() throws MessagingException {
+    public void testAddParticipantEmailNull() {
         userDTO.setEmail(null);
         assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult, never()).addError(any());
     }
 
     @Test
-    public void testAddParticipantExperimentIdNull() throws MessagingException {
+    public void testAddParticipantExperimentIdNull() {
         assertEquals(ERROR, participantController.addParticipant(null, userDTO, model, bindingResult,
                 httpServletRequest));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult, never()).addError(any());
     }
 }

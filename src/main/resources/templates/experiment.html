@@ -15,6 +15,9 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+        <div class="row" th:if="${error != null}">
+            <div class="col-12 alert alert-danger" th:text="${error}"></div>
+        </div>
         <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
             <a class="btn btn-primary" th:text="#{edit}" th:href="@{/experiment/edit(id=${experimentDTO.id})}"></a>
             <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
@@ -96,9 +99,14 @@
                 </div>
             </div>
             <div class="col-5 text-end" th:if="${experimentDTO.active}">
-                <a class="btn btn-primary" th:href="@{/participant/add(id=${experimentDTO.id})}">
-                    <span th:text="#{add_participant}"></span>
-                </a>
+                <div class="mb-3">
+                    <input id="add" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
+                </div>
+                <div class="mb-3">
+                    <a class="btn btn-primary" th:href="@{/participant/add(id=${experimentDTO.id})}">
+                        <span th:text="#{add_new_participant}"></span>
+                    </a>
+                </div>
             </div>
         </div>
         <div class="row">
@@ -114,28 +122,41 @@
         <h2 th:text="#{delete_experiment}"></h2>
         <div class="mb-3" th:text="#{delete_experiment_warn}"></div>
         <div class="d-flex justify-content-between">
-            <input id="abort" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <input id="abortDelete" class="btn btn-secondary" type="submit" th:value="#{abort}">
             <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/delete(id=${experimentDTO.id})}"></a>
         </div>
     </div>
 </div>
 
-<!-- Script to open and close the delete modal. -->
-<script>
-    let deleteModal = document.getElementById("openDelete");
-    let deleteButton = document.getElementById("delete");
-    let abort = document.getElementById("abort");
-    deleteButton.onclick = function() {
-        let content = document.getElementById("content");
-        deleteModal.style.display = "block";
-        content.style.filter = "blur(4px)";
-    }
-    abort.onclick = function () {
-        let content = document.getElementById("content");
-        deleteModal.style.display = "none";
-        content.style.filter = "none";
-    }
-</script>
+<!-- The popup dialog to add an existing participant to the experiment. -->
+<div id="openAdd" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{add_participant}"></h2>
+        <div class="mb-3" th:text="#{add_participant_info}"></div>
+        <form th:action="@{/experiment/search}">
+            <div class="mb-3 form-group position-relative">
+                <input id="experimentId" type="hidden" th:name="id" th:value="${experimentDTO.id}">
+                <div class="input-group">
+                    <input class="form-control" type="text" th:name="participant" id="participantInput"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                </div>
+                <div id="results"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a id="abortAdd" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input class="btn btn-primary" type="submit" th:value="#{add}"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:src="@{/webjars/jquery/3.5.1/jquery.min.js}"></script>
+
+<!-- Script to open and close the delete and add modals. -->
+<script type="text/javascript" src="/static/js/experimentModals.js"></script>
+
+<!-- Script to fetch the participant suggestions. -->
+<script type="text/javascript" src="/static/js/participantSuggestions.js"></script>
 
 <!-- Footer -->
 <div th:insert="footer :: footer"></div>

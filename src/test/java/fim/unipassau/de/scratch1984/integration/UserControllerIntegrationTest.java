@@ -27,7 +27,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-import javax.mail.MessagingException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +37,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -493,6 +491,7 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -506,6 +505,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).updateUser(oldDTO);
+        verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
     }
 
@@ -515,8 +515,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
-        doThrow(MessagingException.class).when(mailService).sendTemplateMessage(anyString(), any(), any(), any(),
-                anyString(), any(), anyString());
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -530,6 +528,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).updateUser(oldDTO);
+        verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
     }
 
@@ -555,6 +554,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -576,6 +576,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -595,6 +596,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -614,6 +616,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -633,6 +636,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
@@ -651,6 +655,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test

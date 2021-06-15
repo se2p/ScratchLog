@@ -54,9 +54,8 @@
             <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${experiments.isEmpty()}">
                 <li class="list-group-item" th:text="#{table_empty}"></li>
             </ul>
-            <ul class="list-group list-group-horizontal mx-3" th:unless="${experiments.isEmpty()}"
-                th:each="experiment : ${experiments}">
-                <li class="list-group-item">
+            <ul class="list-group list-group-horizontal mx-3" th:unless="${experiments.isEmpty()}">
+                <li class="list-group-item" th:each="experiment : ${experiments}">
                     <a class="no_decoration" th:href="@{/experiment(id=${experiment})}" th:text="${experiment}"></a>
                 </li>
             </ul>

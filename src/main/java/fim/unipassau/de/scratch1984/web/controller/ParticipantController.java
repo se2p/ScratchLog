@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Locale;
@@ -195,39 +194,12 @@ public class ParticipantController {
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
-        if (sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"), templateModel,
-                "participant-email")) {
+        if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
+                templateModel, "participant-email")) {
             return "redirect:/experiment?id=" + id;
         } else {
             return ERROR;
         }
-    }
-
-    /**
-     * Sends the given email template to the given addresses. If the {@link MailService} fails to send the message
-     * three consecutive times, it stops.
-     *
-     * @param to The recipient of the email.
-     * @param subject The subject of this email.
-     * @param templateModel The template model containing additional properties.
-     * @param template The name of the mail template to use.
-     * @return {@code true} if the email was sent successfully, or {@code false} otherwise.
-     */
-    private boolean sendEmail(final String to, final String subject, final Map<String, Object> templateModel,
-                              final String template) {
-        int tries = 0;
-
-        while (tries < Constants.MAX_EMAIL_TRIES) {
-            try {
-                mailService.sendTemplateMessage(to, null, null, null, subject, templateModel, template);
-                return true;
-            } catch (MessagingException e) {
-                tries++;
-                logger.error("Failed to send message to address " + to + " on try #" + tries + "!", e);
-            }
-        }
-
-        return false;
     }
 
     /**
