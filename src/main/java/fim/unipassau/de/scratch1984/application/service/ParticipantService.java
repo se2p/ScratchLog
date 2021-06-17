@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.persistence.entity.ParticipantId;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
@@ -209,6 +210,25 @@ public class ParticipantService {
         }
 
         return ids;
+    }
+
+    /**
+     * Deletes the participant with the given user and experiment id from the database, if any such participant exists.
+     *
+     * @param userId The user id to search for.
+     * @param experimentId The experiment id to search for.
+     */
+    @Transactional
+    public void deleteParticipant(final int userId, final int experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot delete participant with invalid user id " + userId + " or invalid experiment id "
+                    + experimentId + "!");
+            throw new IllegalArgumentException("Cannot delete participant with invalid user id " + userId
+                    + " or invalid experiment id " + experimentId + "!");
+        }
+
+        ParticipantId participantId = new ParticipantId(userId, experimentId);
+        participantRepository.deleteById(participantId);
     }
 
     /**

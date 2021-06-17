@@ -27,7 +27,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -69,11 +71,14 @@ public class ParticipantControllerIntegrationTest {
     private static final String ID_STRING = "1";
     private static final String EXPERIMENT = "experiment";
     private static final String USER_DTO = "userDTO";
+    private static final String INFO = "info";
+    private static final String ERROR_ATTRIBUTE = "error";
+    private static final String ID_PARAM = "id";
     private static final int ID = 1;
     private static final int LAST_ID = ID + 1;
-    private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.ADMIN,
+    private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", "info", true);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, true);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -84,6 +89,7 @@ public class ParticipantControllerIntegrationTest {
         userDTO.setUsername(PARTICIPANT);
         userDTO.setEmail(EMAIL);
         experimentDTO.setActive(true);
+        experimentDTO.setInfo(INFO);
     }
 
     @AfterEach
@@ -274,5 +280,115 @@ public class ParticipantControllerIntegrationTest {
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+    }
+
+    @Test
+    public void testDeleteParticipant() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(userService.updateUser(userDTO)).thenReturn(userDTO);
+        mvc.perform(get("/participant/delete")
+                .param(ID_PARAM, ID_STRING)
+                .param(PARTICIPANT, PARTICIPANT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(userService).updateUser(userDTO);
+        verify(participantService).deleteParticipant(userDTO.getId(), ID);
+    }
+
+    @Test
+    public void testDeleteParticipantUserNotFound() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(userService.updateUser(userDTO)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/participant/delete")
+                .param(ID_PARAM, ID_STRING)
+                .param(PARTICIPANT, PARTICIPANT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(userService).updateUser(userDTO);
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDeleteParticipantNotParticipantEntry() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(ID);
+        mvc.perform(get("/participant/delete")
+                .param(ID_PARAM, ID_STRING)
+                .param(PARTICIPANT, PARTICIPANT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(model().attribute("page", 1))
+                .andExpect(model().attribute("lastPage", ID + 1))
+                .andExpect(model().attribute("experimentDTO", experimentDTO))
+                .andExpect(model().attribute("error", notNullValue()))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(experimentService).getLastParticipantPage(ID);
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDeleteParticipantExperimentNotFound() throws Exception {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        mvc.perform(get("/participant/delete")
+                .param(ID_PARAM, ID_STRING)
+                .param(PARTICIPANT, PARTICIPANT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(experimentService, never()).getLastParticipantPage(anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDeleteParticipantExperimentIdInvalid() throws Exception {
+        mvc.perform(get("/participant/delete")
+                .param(ID_PARAM, BLANK)
+                .param(PARTICIPANT, PARTICIPANT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(experimentService, never()).getLastParticipantPage(anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
     }
 }

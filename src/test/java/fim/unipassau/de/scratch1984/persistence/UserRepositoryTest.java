@@ -46,8 +46,19 @@ public class UserRepositoryTest {
     private User user9 = new User("part1", "part7@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user10 = new User("part2", "part8@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user11 = new User("part3", "part9@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private Experiment experiment = new Experiment(null, "My Experiment", "Some description", "", true);
-    private Participant participant;
+    private User user12 = new User("part4", "part10@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+    private User user13 = new User("part5", "part11@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+    private User user14 = new User("part6", "part12@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+    private User user15 = new User("part7", "part13@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+    private User user16 = new User("part8", "part14@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+    private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", true);
+    private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", true);
+    private Participant participant1 = new Participant(user3, experiment1, null, null);
+    private Participant participant2 = new Participant(user12, experiment1, null, null);
+    private Participant participant3 = new Participant(user13, experiment1, null, null);
+    private Participant participant4 = new Participant(user14, experiment1, null, null);
+    private Participant participant5 = new Participant(user15, experiment1, null, null);
+    private Participant participant6 = new Participant(user16, experiment2, null, null);
 
     @BeforeEach
     public void setup() {
@@ -62,9 +73,19 @@ public class UserRepositoryTest {
         user9 = entityManager.persist(user9);
         user10 = entityManager.persist(user10);
         user11 = entityManager.persist(user11);
-        experiment = entityManager.persist(experiment);
-        participant = new Participant(user3, experiment, null, null);
-        participant = entityManager.persist(participant);
+        user12 = entityManager.persist(user12);
+        user13 = entityManager.persist(user13);
+        user14 = entityManager.persist(user14);
+        user15 = entityManager.persist(user15);
+        user16 = entityManager.persist(user16);
+        experiment1 = entityManager.persist(experiment1);
+        experiment2 = entityManager.persist(experiment2);
+        participant1 = entityManager.persist(participant1);
+        participant2 = entityManager.persist(participant2);
+        participant3 = entityManager.persist(participant3);
+        participant4 = entityManager.persist(participant4);
+        participant5 = entityManager.persist(participant5);
+        participant6 = entityManager.persist(participant6);
     }
 
     @Test
@@ -91,7 +112,7 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindParticipantSuggestionsUsername() {
-        List<User> users = userRepository.findParticipantSuggestions(USERNAME_SEARCH, experiment.getId());
+        List<User> users = userRepository.findParticipantSuggestions(USERNAME_SEARCH, experiment1.getId());
         assertAll(
                 () -> assertEquals(3, users.size()),
                 () -> assertTrue(users.contains(user5)),
@@ -105,7 +126,7 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindParticipantSuggestionsEmail() {
-        List<User> users = userRepository.findParticipantSuggestions(EMAIL_SEARCH, experiment.getId());
+        List<User> users = userRepository.findParticipantSuggestions(EMAIL_SEARCH, experiment1.getId());
         assertAll(
                 () -> assertEquals(5, users.size()),
                 () -> assertTrue(users.contains(user5)),
@@ -121,7 +142,38 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindParticipantSuggestionsEmpty() {
-        List<User> users = userRepository.findParticipantSuggestions(ADMIN1, experiment.getId());
+        List<User> users = userRepository.findParticipantSuggestions(ADMIN1, experiment1.getId());
+        assertTrue(users.isEmpty());
+    }
+
+    @Test
+    public void testFindDeleteParticipantSuggestions() {
+        Participant participant = new Participant(user4, experiment1, null, null);
+        entityManager.persist(participant);
+        List<User> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment1.getId());
+        assertAll(
+                () -> assertEquals(5, users.size()),
+                () -> assertTrue(users.contains(user3)),
+                () -> assertTrue(users.contains(user4)),
+                () -> assertTrue(users.contains(user12)),
+                () -> assertTrue(users.contains(user13)),
+                () -> assertTrue(users.contains(user14)),
+                () -> assertFalse(users.contains(user16))
+        );
+    }
+
+    @Test
+    public void testFindDeleteParticipantSuggestionsOne() {
+        List<User> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment2.getId());
+        assertAll(
+                () -> assertEquals(1, users.size()),
+                () -> assertTrue(users.contains(user16))
+        );
+    }
+
+    @Test
+    public void testFindDeleteParticipantSuggestionsEmpty() {
+        List<User> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, 100);
         assertTrue(users.isEmpty());
     }
 

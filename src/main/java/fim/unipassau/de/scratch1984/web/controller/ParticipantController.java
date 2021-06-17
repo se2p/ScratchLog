@@ -5,7 +5,9 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
 import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
@@ -15,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -74,6 +78,16 @@ public class ParticipantController {
      * String corresponding to the participant page.
      */
     private static final String PARTICIPANT = "participant";
+
+    /**
+     * String corresponding to the experiment page.
+     */
+    private static final String EXPERIMENT = "experiment";
+
+    /**
+     * String corresponding to redirecting to the experiment page.
+     */
+    private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
 
     /**
      * Constructs a new participant controller with the given dependencies.
@@ -196,10 +210,100 @@ public class ParticipantController {
 
         if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
-            return "redirect:/experiment?id=" + id;
+            return REDIRECT_EXPERIMENT + id;
         } else {
             return ERROR;
         }
+    }
+
+    /**
+     * Deletes the participant for the experiment with the given id whose username or email match the given input
+     * string. If no experiment with the corresponding id can be found, or the request parameters do not meet the
+     * requirements, the user is redirected to the error page instead. If no corresponding user can be found, or the
+     * user is not a participant in the given experiment, the experiment page is returned to display an error message.
+     *
+     * @param participant The username or email to search for.
+     * @param id The experiment id.
+     * @param model The model used for the id.
+     * @return A redirection to the experiment page on success, or the error or experiment page otherwise.
+     */
+    @GetMapping("/delete")
+    @Secured("ROLE_ADMIN")
+    public String deleteParticipant(@RequestParam("participant") final String participant,
+                                    @RequestParam("id") final String id, final Model model) {
+        if (participant == null || id == null || participant.trim().isBlank()
+                || participant.length() > Constants.LARGE_FIELD) {
+            logger.error("Cannot delete participant with invalid id or input string!");
+            return ERROR;
+        }
+
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot delete a participant for experiment with invalid id " + id + "!");
+            return ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        ExperimentDTO experimentDTO;
+        UserDTO userDTO = userService.getUserByUsernameOrEmail(participant);
+
+        try {
+            experimentDTO = experimentService.getExperiment(experimentId);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        if (userDTO == null) {
+            model.addAttribute("error", resourceBundle.getString("user_not_found"));
+            addModelInfo(experimentDTO, model);
+            return EXPERIMENT;
+        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+            model.addAttribute("error", resourceBundle.getString("user_not_participant"));
+        } else if (!userService.existsParticipant(userDTO.getId(), experimentId)) {
+            model.addAttribute("error", resourceBundle.getString("no_participant_entry"));
+        } else if (!experimentDTO.isActive()) {
+            model.addAttribute("error", resourceBundle.getString("experiment_closed"));
+        }
+
+        if (model.getAttribute("error") != null) {
+            addModelInfo(experimentDTO, model);
+            return EXPERIMENT;
+        }
+
+        try {
+            userDTO.setSecret(null);
+            userDTO.setActive(false);
+            UserDTO saved = userService.updateUser(userDTO);
+            participantService.deleteParticipant(saved.getId(), experimentId);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return REDIRECT_EXPERIMENT + experimentId;
+    }
+
+    /**
+     * Retrieves the first participant page information from the database and adds the page to the {@link Model} along
+     * with the {@link ExperimentDTO} and the last page.
+     *
+     * @param experimentDTO The current experiment dto.
+     * @param model The model used to save the information.
+     */
+    private void addModelInfo(final ExperimentDTO experimentDTO, final Model model) {
+        if (experimentDTO.getInfo() != null) {
+            experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
+        }
+
+        int last = experimentService.getLastParticipantPage(experimentDTO.getId()) + 1;
+
+        Page<Participant> participants = participantService.getParticipantPage(experimentDTO.getId(),
+                PageRequest.of(0, Constants.PAGE_SIZE));
+        model.addAttribute("page", 1);
+        model.addAttribute("lastPage", last);
+        model.addAttribute("experimentDTO", experimentDTO);
+        model.addAttribute("participants", participants);
     }
 
     /**

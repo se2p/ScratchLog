@@ -79,4 +79,30 @@ public class SearchServiceTest {
         assertEquals(0, userInfo.size());
         verify(userRepository).findParticipantSuggestions(QUERY, ID);
     }
+
+    @Test
+    public void testGetUserDeleteSuggestions() {
+        when(userRepository.findDeleteParticipantSuggestions(QUERY, ID)).thenReturn(users);
+        List<String[]> userInfo = searchService.getUserDeleteSuggestions(QUERY, ID);
+        String[] firstUser = userInfo.get(0);
+        String[] secondUser = userInfo.get(1);
+        String[] thirdUser = userInfo.get(2);
+        assertAll(
+                () -> assertEquals(3, userInfo.size()),
+                () -> assertEquals(USERNAME1, firstUser[0]),
+                () -> assertEquals(EMAIL1, firstUser[1]),
+                () -> assertEquals(USERNAME2, secondUser[0]),
+                () -> assertEquals(EMAIL2, secondUser[1]),
+                () -> assertEquals(USERNAME3, thirdUser[0]),
+                () -> assertEquals(EMAIL3, thirdUser[1])
+        );
+        verify(userRepository).findDeleteParticipantSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetUserDeleteSuggestionsNone() {
+        List<String[]> userInfo = searchService.getUserDeleteSuggestions(QUERY, ID);
+        assertEquals(0, userInfo.size());
+        verify(userRepository).findDeleteParticipantSuggestions(QUERY, ID);
+    }
 }

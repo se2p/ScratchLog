@@ -14,6 +14,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,37 +45,51 @@ public class SearchRestControllerTest {
         when(searchService.getUserSuggestions(QUERY, ID)).thenReturn(userData);
         List<String[]> data = searchRestController.getUserSuggestions(QUERY, ID_STRING);
         assertEquals(5, data.size());
-        verify(searchService).getUserSuggestions(QUERY, ID);
+        verify(searchService).getUserSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsInvalidId() {
         assertTrue(searchRestController.getUserSuggestions(QUERY, "0").isEmpty());
-        verify(searchService, never()).getUserSuggestions(QUERY, ID);
+        verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsIdBlank() {
         assertTrue(searchRestController.getUserSuggestions(QUERY, BLANK).isEmpty());
-        verify(searchService, never()).getUserSuggestions(QUERY, ID);
+        verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsIdNull() {
         assertTrue(searchRestController.getUserSuggestions(QUERY, null).isEmpty());
-        verify(searchService, never()).getUserSuggestions(QUERY, ID);
+        verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsQueryBlank() {
         assertTrue(searchRestController.getUserSuggestions(BLANK, ID_STRING).isEmpty());
-        verify(searchService, never()).getUserSuggestions(QUERY, ID);
+        verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsQueryNull() {
         assertTrue(searchRestController.getUserSuggestions(null, ID_STRING).isEmpty());
-        verify(searchService, never()).getUserSuggestions(QUERY, ID);
+        verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetDeleteUserSuggestions() {
+        when(searchService.getUserDeleteSuggestions(QUERY, ID)).thenReturn(userData);
+        List<String[]> data = searchRestController.getDeleteUserSuggestions(QUERY, ID_STRING);
+        assertEquals(5, data.size());
+        verify(searchService).getUserDeleteSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetDeleteUserSuggestionsInvalidParams() {
+        assertTrue(searchRestController.getDeleteUserSuggestions(BLANK, "0").isEmpty());
+        verify(searchService, never()).getUserDeleteSuggestions(anyString(), anyInt());
     }
 
     private void addUserData(int number) {

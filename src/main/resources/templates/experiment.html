@@ -107,6 +107,10 @@
                         <span th:text="#{add_new_participant}"></span>
                     </a>
                 </div>
+                <div class="mb-3">
+                    <input id="deleteParticipant" type="submit" class="btn btn-danger"
+                           th:value="#{delete_participant}"/>
+                </div>
             </div>
         </div>
         <div class="row">
@@ -145,6 +149,28 @@
             <div class="d-flex justify-content-between">
                 <a id="abortAdd" class="btn btn-secondary" th:text="#{abort}"></a>
                 <input class="btn btn-primary" type="submit" th:value="#{add}"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- The popup dialog to delete an experiment participant. -->
+<div id="openDeleteParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{delete_participant}"></h2>
+        <div class="mb-3" th:text="#{delete_participant_info}"></div>
+        <form th:action="@{/participant/delete}">
+            <div class="mb-3 form-group position-relative">
+                <input id="deleteId" type="hidden" th:name="id" th:value="${experimentDTO.id}">
+                <div class="input-group">
+                    <input class="form-control" type="text" th:name="participant" id="deleteParticipantInput"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                </div>
+                <div id="deleteResults"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a id="abortDeleteParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input class="btn btn-primary" type="submit" th:value="#{delete}"/>
             </div>
         </form>
     </div>

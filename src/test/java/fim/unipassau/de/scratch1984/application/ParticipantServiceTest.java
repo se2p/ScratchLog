@@ -54,7 +54,6 @@ public class ParticipantServiceTest {
     private ParticipantRepository participantRepository;
 
     private static final String USERNAME = "participant";
-    private static final String BLANK = "   ";
     private static final String PASSWORD = "participant1";
     private static final String EMAIL = "participant@participant.de";
     private static final String PARTICIPANT = "PARTICIPANT";
@@ -220,6 +219,28 @@ public class ParticipantServiceTest {
         );
         verify(userRepository, never()).getOne(ID);
         verify(participantRepository, never()).findAllByUser(user);
+    }
+
+    @Test
+    public void testDeleteParticipant() {
+        assertDoesNotThrow(() -> participantService.deleteParticipant(ID, ID));
+        verify(participantRepository).deleteById(any());
+    }
+
+    @Test
+    public void testDeleteParticipantInvalidUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.deleteParticipant(0, ID)
+        );
+        verify(participantRepository, never()).deleteById(any());
+    }
+
+    @Test
+    public void testDeleteParticipantInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.deleteParticipant(ID, -1)
+        );
+        verify(participantRepository, never()).deleteById(any());
     }
 
     private List<Participant> getParticipants(int number) {

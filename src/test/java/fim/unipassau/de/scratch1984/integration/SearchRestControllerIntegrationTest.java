@@ -117,6 +117,37 @@ public class SearchRestControllerIntegrationTest {
         verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
     }
 
+    @Test
+    public void testGetDeleteUserSuggestions() throws Exception {
+        when(searchService.getUserDeleteSuggestions(QUERY, ID)).thenReturn(userData);
+        mvc.perform(get("/search/delete")
+                .param(QUERY_PARAM, QUERY)
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0].[0]").value("participant0"))
+                .andExpect(jsonPath("$.[0].[1]").value("participant0@participant.de"))
+                .andExpect(jsonPath("$.length()").value(5));
+        verify(searchService).getUserDeleteSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetDeleteUserSuggestionsInvalidParams() throws Exception {
+        mvc.perform(get("/search/delete")
+                .param(QUERY_PARAM, BLANK)
+                .param(ID_PARAM, "0")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        verify(searchService, never()).getUserDeleteSuggestions(anyString(), anyInt());
+    }
+
     private void addUserData(int number) {
         userData = new ArrayList<>();
         for (int i = 0; i < number; i++) {

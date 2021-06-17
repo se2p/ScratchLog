@@ -93,6 +93,19 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
 
     /**
+     * Returns a list of the first five users whose email or username contain the given query value who are
+     * participating in the given experiment.
+     *
+     * @param query The username or email to search for.
+     * @param experiment The id of the experiment.
+     * @return A list of users.
+     */
+    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+            + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.id IN (SELECT p.user_id FROM participant AS p WHERE "
+            + "p.experiment_id = :id) LIMIT 5;")
+    List<User> findDeleteParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
+
+    /**
      * Returns the user with the highest user id currently existing in the database.
      *
      * @return The user.

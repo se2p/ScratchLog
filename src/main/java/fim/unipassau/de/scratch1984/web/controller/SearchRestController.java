@@ -42,7 +42,8 @@ public class SearchRestController {
     }
 
     /**
-     * Retrieves a list of up to five usernames and emails where one of the two contain the search query string.
+     * Retrieves a list of up to five usernames and emails where one of the two contain the search query string and who
+     * are not already participating in the experiment with the given id.
      *
      * @param query The username or email to search for.
      * @param id The experiment id.
@@ -52,17 +53,47 @@ public class SearchRestController {
     @Secured("ROLE_ADMIN")
     public List<String[]> getUserSuggestions(@RequestParam("query") final String query,
                                              @RequestParam("id") final String id) {
-        if (query == null || query.trim().isBlank() || id == null || id.trim().isBlank()) {
+        if (invalidParams(query, id)) {
             return new ArrayList<>();
         }
 
         int experimentId = parseNumber(id);
+        return searchService.getUserSuggestions(query, experimentId);
+    }
 
-        if (experimentId < Constants.MIN_ID) {
+    /**
+     * Retrieves a list of up to five usernames and emails where one of the two contain the search query string and
+     * where the user is participating in the experiment with the given id.
+     *
+     * @param query The username or email to search for.
+     * @param id The experiment id.
+     * @return A list of usernames and emails, or an empty list, if no entries could be found.
+     */
+    @GetMapping("/delete")
+    @Secured("ROLE_ADMIN")
+    public List<String[]> getDeleteUserSuggestions(@RequestParam("query") final String query,
+                                                   @RequestParam("id") final String id) {
+        if (invalidParams(query, id)) {
             return new ArrayList<>();
         }
 
-        return searchService.getUserSuggestions(query, experimentId);
+        int experimentId = parseNumber(id);
+        return searchService.getUserDeleteSuggestions(query, experimentId);
+    }
+
+    /**
+     * Checks, whether the given query and id parameters are invalid.
+     *
+     * @param query The query string to check.
+     * @param id The id to check.
+     * @return {@code true} if one of the parameters is invalid, or {@code false} otherwise.
+     */
+    private boolean invalidParams(final String query, final String id) {
+        if (query == null || query.trim().isBlank() || id == null || id.trim().isBlank()) {
+            return true;
+        }
+
+        return parseNumber(id) < Constants.MIN_ID;
     }
 
     /**

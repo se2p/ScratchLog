@@ -23,6 +23,7 @@ import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -62,21 +63,28 @@ public class ParticipantControllerTest {
 
     private static final String ERROR = "redirect:/error";
     private static final String PARTICIPANT = "participant";
+    private static final String EXPERIMENT = "experiment";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String EMAIL = "participant@participant.de";
     private static final String BLANK = "   ";
     private static final String ID_STRING = "1";
+    private static final String INFO = "info";
+    private static final String ERROR_ATTRIBUTE = "error";
+    private static final String LONG_INPUT = "looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong"
+            + "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiinput";
     private static final int ID = 1;
-    private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.ADMIN,
+    private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", "info", true);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, true);
 
     @BeforeEach
     public void setup() {
         userDTO.setId(ID);
         userDTO.setUsername(PARTICIPANT);
         userDTO.setEmail(EMAIL);
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
         experimentDTO.setActive(true);
+        experimentDTO.setInfo(INFO);
     }
 
     @Test
@@ -255,5 +263,161 @@ public class ParticipantControllerTest {
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(bindingResult, never()).addError(any());
+    }
+
+    @Test
+    public void testDeleteParticipant() {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(userService.updateUser(userDTO)).thenReturn(userDTO);
+        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.deleteParticipant(PARTICIPANT, ID_STRING,
+                model));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(userService).updateUser(userDTO);
+        verify(participantService).deleteParticipant(userDTO.getId(), ID);
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantUpdateUserNotFound() {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(userService.updateUser(userDTO)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(userService).updateUser(userDTO);
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantExperimentInactiveInfoNull() {
+        experimentDTO.setInfo(null);
+        experimentDTO.setActive(false);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
+        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantNoParticipantEntry() {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
+        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantUserAdmin() {
+        userDTO.setRole(UserDTO.Role.ADMIN);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
+        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantUserNull() {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantExperimentNotFound() {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantExperimentIdInvalid() {
+        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, "0", model));
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantInputTooLong() {
+        assertEquals(ERROR, participantController.deleteParticipant(LONG_INPUT, ID_STRING, model));
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantInputBlank() {
+        assertEquals(ERROR, participantController.deleteParticipant(BLANK, ID_STRING, model));
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantInputNull() {
+        assertEquals(ERROR, participantController.deleteParticipant(null, ID_STRING, model));
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantIdNull() {
+        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, null, model));
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
     }
 }

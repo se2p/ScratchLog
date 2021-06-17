@@ -45,15 +45,39 @@ public class SearchService {
     }
 
     /**
-     * Retrieves a list of up to five usernames and emails where one of the two contain the search query string.
+     * Retrieves a list of up to five usernames and emails where one of the two contain the search query string and
+     * where the corresponding user is not already participating in the experiment with the given id.
      *
      * @param query The username or email to search for.
      * @param id The experiment id.
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
     public List<String[]> getUserSuggestions(final String query, final int id) {
-        List<String[]> userInfo = new ArrayList<>();
         List<User> users = userRepository.findParticipantSuggestions(query, id);
+        return addUserInfo(users);
+    }
+
+    /**
+     * Retrieves a list of up to five usernames and emails where one of the two contain the search query string and
+     * where the corresponding user is participating in the experiment with the given id.
+     *
+     * @param query The username or email to search for.
+     * @param id The experiment id.
+     * @return A list of usernames and emails, or an empty list, if no entries could be found.
+     */
+    public List<String[]> getUserDeleteSuggestions(final String query, final int id) {
+        List<User> users = userRepository.findDeleteParticipantSuggestions(query, id);
+        return addUserInfo(users);
+    }
+
+    /**
+     * Returns a list of all usernames and emails of the users in the given list.
+     *
+     * @param users The list of users.
+     * @return A list of usernames and emails, or an empty list.
+     */
+    private List<String[]> addUserInfo(final List<User> users) {
+        List<String[]> userInfo = new ArrayList<>();
 
         if (users.isEmpty()) {
             return userInfo;
