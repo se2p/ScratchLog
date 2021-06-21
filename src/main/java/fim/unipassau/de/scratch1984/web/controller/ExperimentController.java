@@ -2,15 +2,21 @@ package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
+import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,8 +29,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -45,9 +55,29 @@ public class ExperimentController {
     private final UserService userService;
 
     /**
-     * The experiment service to use for management.
+     * The experiment service to use for experiment management.
      */
     private final ExperimentService experimentService;
+
+    /**
+     * The participant service to use for participant management.
+     */
+    private final ParticipantService participantService;
+
+    /**
+     * The mail service to use for sending emails.
+     */
+    private final MailService mailService;
+
+    /**
+     * String corresponding to the experiment page.
+     */
+    private static final String EXPERIMENT = "experiment";
+
+    /**
+     * String corresponding to the experiment edit page.
+     */
+    private static final String EXPERIMENT_EDIT = "experiment-edit";
 
     /**
      * String corresponding to redirecting to the error page.
@@ -59,11 +89,16 @@ public class ExperimentController {
      *
      * @param experimentService The experiment service to use.
      * @param userService The user service to use.
+     * @param participantService The participant service to use.
+     * @param mailService The mail service to use.
      */
     @Autowired
-    public ExperimentController(final ExperimentService experimentService, final UserService userService) {
+    public ExperimentController(final ExperimentService experimentService, final UserService userService,
+                                final ParticipantService participantService, final MailService mailService) {
         this.experimentService = experimentService;
         this.userService = userService;
+        this.participantService = participantService;
+        this.mailService = mailService;
     }
 
     /**
@@ -91,9 +126,10 @@ public class ExperimentController {
 
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
-                if (!userService.existsParticipant(userDTO.getId(), experimentId)) {
+
+                if (!userService.existsParticipant(userDTO.getId(), experimentId) || !userDTO.isActive()) {
                     logger.debug("No participation entry found for the user " + authentication.getName()
-                            + " for the experiment with id " + experimentId + "!");
+                            + " for the experiment with id " + experimentId + " or the user account is not activated!");
                     return ERROR;
                 }
             } catch (NotFoundException e) {
@@ -104,11 +140,8 @@ public class ExperimentController {
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            if (experimentDTO.getInfo() != null) {
-                experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
-            }
-            model.addAttribute("experimentDTO", experimentDTO);
-            return "experiment";
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
         } catch (NotFoundException e) {
             return ERROR;
         }
@@ -123,7 +156,7 @@ public class ExperimentController {
     @GetMapping("/create")
     @Secured("ROLE_ADMIN")
     public String getExperimentForm(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO) {
-        return "experiment-edit";
+        return EXPERIMENT_EDIT;
     }
 
     /**
@@ -146,7 +179,7 @@ public class ExperimentController {
         try {
             ExperimentDTO findExperiment = experimentService.getExperiment(experimentId);
             model.addAttribute("experimentDTO", findExperiment);
-            return "experiment-edit";
+            return EXPERIMENT_EDIT;
         } catch (NotFoundException e) {
             return ERROR;
         }
@@ -193,7 +226,7 @@ public class ExperimentController {
         }
 
         if (bindingResult.hasErrors()) {
-            return "experiment-edit";
+            return EXPERIMENT_EDIT;
         }
 
         ExperimentDTO saved = experimentService.saveExperiment(experimentDTO);
@@ -231,8 +264,8 @@ public class ExperimentController {
      */
     @GetMapping("/status")
     @Secured("ROLE_ADMIN")
-    public String changeExperimentStatus(@RequestParam("stat") final String status,
-                                         @RequestParam("id") final String id, final Model model) {
+    public String changeExperimentStatus(@RequestParam("stat") final String status, @RequestParam("id") final String id,
+                                         final Model model) {
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID || status == null) {
@@ -246,22 +279,262 @@ public class ExperimentController {
                 experimentDTO = experimentService.changeExperimentStatus(true, experimentId);
             } else if (status.equals("close")) {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
+                participantService.deactivateParticipantAccounts(experimentId);
             } else {
                 logger.debug("Cannot return the corresponding experiment page for requested status change " + status
                         + "!");
                 return ERROR;
             }
 
-            if (experimentDTO.getInfo() != null) {
-                experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
-            }
-
-            model.addAttribute("experimentDTO", experimentDTO);
+            addModelInfo(0, experimentDTO, model);
         } catch (NotFoundException e) {
             return ERROR;
         }
 
-        return "experiment";
+        return EXPERIMENT;
+    }
+
+    /**
+     * Searches for a user whose name or email address match the given search string. If a user could be found, they are
+     * added as a participant to the given experiment. If no experiment with the corresponding id could be found or the
+     * id is invalid, the user is redirected to the error page instead.
+     *
+     * @param id The id of the experiment.
+     * @param search The username or email address to search for.
+     * @param model The model used to store the error messages.
+     * @param httpServletRequest The servlet request.
+     * @return The experiment page on success, or the error page otherwise.
+     */
+    @RequestMapping("/search")
+    @Secured("ROLE_ADMIN")
+    public String searchForUser(@RequestParam("participant") final String search, @RequestParam("id") final String id,
+                                final Model model, final HttpServletRequest httpServletRequest) {
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            return ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        String validateSearch = validateInput(search, Constants.LARGE_FIELD);
+        ExperimentDTO experimentDTO;
+
+        try {
+            experimentDTO = experimentService.getExperiment(experimentId);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        if (validateSearch != null) {
+            model.addAttribute("error", resourceBundle.getString(validateSearch));
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        }
+
+        UserDTO userDTO = userService.getUserByUsernameOrEmail(search);
+
+        if (userDTO == null) {
+            model.addAttribute("error", resourceBundle.getString("user_not_found"));
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+            model.addAttribute("error", resourceBundle.getString("user_not_participant"));
+        } else if (userService.existsParticipant(userDTO.getId(), experimentId)) {
+            model.addAttribute("error", resourceBundle.getString("participant_entry"));
+        } else if (userDTO.getSecret() != null) {
+            model.addAttribute("error", resourceBundle.getString("user_participating"));
+        } else if (!experimentDTO.isActive()) {
+            model.addAttribute("error", resourceBundle.getString("experiment_closed"));
+        }
+
+        if (model.getAttribute("error") != null) {
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        }
+
+        String secret;
+
+        try {
+            secret = Secrets.generateRandomBytes(Constants.SECRET_LENGTH);
+            userDTO.setSecret(secret);
+            UserDTO saved = userService.updateUser(userDTO);
+            participantService.saveParticipant(saved.getId(), experimentId);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(httpServletRequest).replacePath(null).build()
+                .toUriString();
+        String experimentUrl = baseUrl + "/users/authenticate?id=" + id + "&secret=" + secret;
+        Map<String, Object> templateModel = new HashMap<>();
+        templateModel.put("baseUrl", baseUrl);
+        templateModel.put("secret", experimentUrl);
+        ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
+                getLocaleFromLanguage(userDTO.getLanguage()));
+
+        if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
+                templateModel, "participant-email")) {
+            return "redirect:/experiment?id=" + id;
+        } else {
+            return ERROR;
+        }
+    }
+
+    /**
+     * Loads the the next participant page from the database. If the current page is the last page, or no experiment
+     * with a corresponding id could be found in the database, the error page is displayed instead.
+     *
+     * @param id The experiment id.
+     * @param model The model to store the loaded information in.
+     * @param currentPage The page currently being displayed.
+     * @return The experiment page on success, or the error page otherwise.
+     */
+    @GetMapping("/next")
+    @Secured("ROLE_ADMIN")
+    public String getNextPage(@RequestParam("id") final String id, @RequestParam("page") final String currentPage,
+                              final Model model) {
+        if (currentPage == null) {
+            return ERROR;
+        }
+
+        int current = parseNumber(currentPage);
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID || current <= -1) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            if (!addModelInfo(current, experimentDTO, model)) {
+                return ERROR;
+            }
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return EXPERIMENT;
+    }
+
+    /**
+     * Loads the the previous participant page from the database. If the current page is the last page, or no experiment
+     * with a corresponding id could be found in the database, the error page is displayed instead.
+     *
+     * @param id The experiment id.
+     * @param model The model to store the loaded information in.
+     * @param currentPage The page currently being displayed.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/previous")
+    @Secured("ROLE_ADMIN")
+    public String getPreviousPage(@RequestParam("id") final String id, @RequestParam("page") final String currentPage,
+                                  final Model model) {
+        if (currentPage == null) {
+            return ERROR;
+        }
+
+        int current = parseNumber(currentPage);
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID || current <= -1) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            if (!addModelInfo(current - 2, experimentDTO, model)) {
+                return ERROR;
+            }
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return EXPERIMENT;
+    }
+
+    /**
+     * Loads the the first participant page from the database. If the passed id is invalid, or no experiment with the
+     * corresponding id could be found, the error page is displayed instead.
+     *
+     * @param id The experiment id.
+     * @param model The model to store the loaded information in.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/first")
+    @Secured("ROLE_ADMIN")
+    public String getFirstPage(@RequestParam("id") final String id, final Model model) {
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            addModelInfo(0, experimentDTO, model);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return EXPERIMENT;
+    }
+
+    /**
+     * Loads the the last participant page from the database. If the passed experiment id is invalid, or no experiment
+     * with the corresponding id could be found, the error page is displayed instead.
+     *
+     * @param id The experiment id.
+     * @param model The model to store the loaded information in.
+     * @return The index page on success, or the error page otherwise.
+     */
+    @GetMapping("/last")
+    @Secured("ROLE_ADMIN")
+    public String getLastPage(@RequestParam("id") final String id, final Model model) {
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            int page = experimentService.getLastParticipantPage(experimentId);
+            addModelInfo(page, experimentDTO, model);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return EXPERIMENT;
+    }
+
+    /**
+     * Retrieves the current participant page information from the database and adds the page to the {@link Model} along
+     * with the {@link ExperimentDTO} and the last page.
+     *
+     * @param page The number of the current participant page to be retrieved.
+     * @param experimentDTO The current experiment dto.
+     * @param model The model used to save the information.
+     * @return {@code true}, if the current page number is lower than the last page number, or {@code false} otherwise.
+     */
+    private boolean addModelInfo(final int page, final ExperimentDTO experimentDTO, final Model model) {
+        if (experimentDTO.getInfo() != null) {
+            experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
+        }
+
+        int last = experimentService.getLastParticipantPage(experimentDTO.getId()) + 1;
+
+        if (page >= last) {
+            return false;
+        }
+
+        Page<Participant> participants = participantService.getParticipantPage(experimentDTO.getId(),
+                PageRequest.of(page, Constants.PAGE_SIZE));
+        model.addAttribute("page", page + 1);
+        model.addAttribute("lastPage", last);
+        model.addAttribute("experimentDTO", experimentDTO);
+        model.addAttribute("participants", participants);
+        return true;
     }
 
     /**
@@ -276,7 +549,7 @@ public class ExperimentController {
             return -1;
         }
 
-        int experimentId = parseExperimentId(id);
+        int experimentId = parseNumber(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.debug("Cannot return the corresponding experiment page for experiment with invalid id "
@@ -293,7 +566,7 @@ public class ExperimentController {
      * @param id The id in its string representation.
      * @return The corresponding int value, or -1.
      */
-    private int parseExperimentId(final String id) {
+    private int parseNumber(final String id) {
         try {
             return Integer.parseInt(id);
         } catch (NumberFormatException e) {
@@ -331,6 +604,19 @@ public class ExperimentController {
      */
     private FieldError createFieldError(final String field, final String error, final ResourceBundle resourceBundle) {
         return new FieldError("experimentDTO", field, resourceBundle.getString(error));
+    }
+
+    /**
+     * Returns the proper {@link Locale} based on the user's preferred language settings.
+     *
+     * @param language The user's preferred language.
+     * @return The corresponding locale, or English as a default value.
+     */
+    private Locale getLocaleFromLanguage(final UserDTO.Language language) {
+        if (language == UserDTO.Language.GERMAN) {
+            return Locale.GERMAN;
+        }
+        return Locale.ENGLISH;
     }
 
 }

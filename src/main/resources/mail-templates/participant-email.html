@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Change Email</title>
+    <title>Experiment Participation</title>
 
     <style>
         #header, #footer {
@@ -37,12 +37,12 @@
 
 <!-- Page content -->
 <div id="content">
-    <h2 th:text="#{change_email_template_h2}"></h2>
-    <div th:text="#{change_email_template_text}"></div>
+    <h2 th:text="#{participant_email_template_h2}"></h2>
+    <div th:text="#{participant_email_template_text}"></div>
     <div id="link">
-        <a th:href="${token}" target="_blank" th:text="#{update_email}"></a>
+        <a th:href="${secret}" target="_blank" th:text="#{start_experiment}"></a>
     </div>
-    <div th:text="#{token_expires_info}"></div>
+    <div th:text="#{participant_expires_info}"></div>
 </div>
 
 <!-- The footer for email templates -->

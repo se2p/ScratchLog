@@ -29,20 +29,36 @@
             <span th:text="#{profile_of}"></span>
             <span th:text="${userDTO.username}"></span>
         </h2>
-        <div class="row mb-5" th:style="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN
-        ? '' : 'display:none'}">
+        <div class="row mb-5" th:if="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
             <div class="text-danger fs-5" th:text="#{admin}"></div>
         </div>
-        <div class="row mb-5" th:style="${userDTO.role != T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN
-        ? '' : 'display:none'}">
-            <div th:style="${userDTO.active ? '' : 'display:none'}">
+        <div class="row mb-3" th:unless="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
+            <div class="col-9" th:if="${userDTO.active}">
                 <i class="fa fa-lock-open fa-2x"></i>
                 <span class="text-muted ms-1" th:text="#{activated}"></span>
             </div>
-            <div th:style="${userDTO.active ? 'display:none' : ''}">
+            <div class="col-9" th:unless="${userDTO.active}">
                 <i class="fa fa-lock fa-2x"></i>
-                <span class="text-muted" th:text="#{inactive}"></span>
+                <span class="text-muted ms-1" th:text="#{inactive}"></span>
             </div>
+            <div class="col-3 text-end" sec:authorize="hasRole('ADMIN')">
+                <a class="btn btn-primary" th:text="#{deactivate}" th:if="${userDTO.active}"
+                   th:href="@{/users/active(id=${userDTO.id})}"></a>
+                <a class="btn btn-primary" th:text="#{activate}" th:unless="${userDTO.active}"
+                   th:href="@{/users/active(id=${userDTO.id})}"></a>
+            </div>
+        </div>
+        <div class="row mb-5"
+             th:if="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).PARTICIPANT}">
+            <h4 th:text="#{experiments}"></h4>
+            <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${experiments.isEmpty()}">
+                <li class="list-group-item" th:text="#{table_empty}"></li>
+            </ul>
+            <ul class="list-group list-group-horizontal mx-3" th:unless="${experiments.isEmpty()}">
+                <li class="list-group-item" th:each="experiment : ${experiments}">
+                    <a class="no_decoration" th:href="@{/experiment(id=${experiment})}" th:text="${experiment}"></a>
+                </li>
+            </ul>
         </div>
         <div class="card mx-5">
             <h4 class="card-header" th:text="#{profile_info}"></h4>

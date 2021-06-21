@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
@@ -24,18 +25,19 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.LocaleResolver;
 
-import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -49,6 +51,9 @@ public class UserControllerTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private ParticipantService participantService;
 
     @Mock
     private MailService mailService;
@@ -103,14 +108,16 @@ public class UserControllerTest {
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String USER_DTO = "userDTO";
     private static final String ID_STRING = "1";
+    private static final String SECRET = "secret";
     private static final int ID = 1;
-    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, PASSWORD, "secret1");
-    private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, PASSWORD, "secret1");
+    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
+            PASSWORD, SECRET);
+    private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
+            PASSWORD, SECRET);
     private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
 
     @BeforeEach
@@ -126,12 +133,101 @@ public class UserControllerTest {
         userDTO.setRole(UserDTO.Role.ADMIN);
         userDTO.setNewPassword("");
         userDTO.setConfirmPassword("");
+        userDTO.setActive(true);
+        userDTO.setSecret(SECRET);
         securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
     }
 
     @AfterEach
     public void cleanup() {
         securityContextHolder.close();
+    }
+
+    @Test
+    public void testAuthenticateUser() {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(httpServletRequest.getSession(false)).thenReturn(null);
+        when(httpServletRequest.getSession(true)).thenReturn(session);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        assertEquals(REDIRECT_EXPERIMENT + ID, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider).authenticate(any());
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserNoParticipant() {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        assertEquals(ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserNotFound() {
+        when(userService.authenticateUser(SECRET)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserInvalidId() {
+        assertEquals(ERROR, userController.authenticateUser("0", SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserIdNull() {
+        assertEquals(ERROR, userController.authenticateUser(null, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserIdBlank() {
+        assertEquals(ERROR, userController.authenticateUser(BLANK, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserSecretNull() {
+        assertEquals(ERROR, userController.authenticateUser(ID_STRING, null, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserSecretBlank() {
+        assertEquals(ERROR, userController.authenticateUser(ID_STRING, BLANK, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).authenticateUser(SECRET);
+        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
     @Test
@@ -265,8 +361,27 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         assertEquals(PROFILE, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
+    }
+
+    @Test
+    public void testGetProfileParticipant() {
+        List<Integer> experimentIds = new ArrayList<>();
+        experimentIds.add(ID);
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(participantService.getExperimentIdsForParticipant(userDTO.getId())).thenReturn(experimentIds);
+        assertEquals(PROFILE, userController.getProfile(USERNAME, model, httpServletRequest));
+        verify(userService).getUser(USERNAME);
+        verify(participantService).getExperimentIdsForParticipant(userDTO.getId());
+        verify(authentication).getName();
+        verify(model).addAttribute(USER_DTO, userDTO);
+        verify(model).addAttribute("experiments", experimentIds);
     }
 
     @Test
@@ -277,6 +392,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         assertEquals(ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication).getName();
         verify(model, never()).addAttribute(USER_DTO, userDTO);
     }
@@ -289,6 +405,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         assertEquals(PROFILE, userController.getProfile(null, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication, times(2)).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
     }
@@ -301,6 +418,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         assertEquals(PROFILE, userController.getProfile(BLANK, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication, times(2)).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
     }
@@ -313,6 +431,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         assertEquals(ERROR, userController.getProfile(null, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
         verify(authentication, times(2)).getName();
         verify(httpServletRequest).getSession(false);
         verify(model, never()).addAttribute(USER_DTO, userDTO);
@@ -474,12 +593,13 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testUpdateUserChangeEmail() throws MessagingException {
+    public void testUpdateUserChangeEmail() {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         assertEquals(EMAIL_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
@@ -489,21 +609,19 @@ public class UserControllerTest {
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
-        verify(mailService).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(), anyString());
+        verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(localeResolver).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
     }
 
     @Test
-    public void testUpdateUserChangeEmailMessaging() throws MessagingException {
+    public void testUpdateUserChangeEmailFalse() {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
-        doThrow(MessagingException.class).when(mailService).sendTemplateMessage(anyString(), any(), any(), any(),
-                anyString(), any(), anyString());
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -512,14 +630,12 @@ public class UserControllerTest {
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
-        verify(mailService, times(3)).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
         verify(localeResolver).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
     }
 
     @Test
-    public void testUpdateUserChangeEmailTokenNotFound() throws MessagingException {
+    public void testUpdateUserChangeEmailTokenNotFound() {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -534,8 +650,7 @@ public class UserControllerTest {
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
-        verify(mailService, never()).sendTemplateMessage(anyString(), any(), any(), any(), anyString(), any(),
-                anyString());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(localeResolver).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
     }
@@ -758,5 +873,54 @@ public class UserControllerTest {
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).isLastAdmin();
         verify(userService, never()).deleteUser(ID);
+    }
+
+    @Test
+    public void testChangeActiveStatusDeactivate() {
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(PROFILE_REDIRECT + userDTO.getUsername(), userController.changeActiveStatus(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusActivate() {
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setActive(false);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(PROFILE_REDIRECT + userDTO.getUsername(), userController.changeActiveStatus(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusUserAdmin() {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(ERROR, userController.changeActiveStatus(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusNotFound() {
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.changeActiveStatus(ID_STRING));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusIdInvalid() {
+        assertEquals(ERROR, userController.changeActiveStatus(BLANK));
+        verify(userService, never()).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    public void testChangeActiveStatusIdNull() {
+        assertEquals(ERROR, userController.changeActiveStatus(null));
+        verify(userService, never()).getUserById(ID);
+        verify(userService, never()).updateUser(userDTO);
     }
 }

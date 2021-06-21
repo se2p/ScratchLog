@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.application.service;
 
+import fim.unipassau.de.scratch1984.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,33 @@ public class MailService {
     }
 
     /**
+     * Sends the given email template to the given addresses. If the {@link MailService} fails to send the message
+     * three consecutive times, it stops.
+     *
+     * @param to The recipient of the email.
+     * @param subject The subject of this email.
+     * @param templateModel The template model containing additional properties.
+     * @param template The name of the mail template to use.
+     * @return {@code true} if the email was sent successfully, or {@code false} otherwise.
+     */
+    public boolean sendEmail(final String to, final String subject, final Map<String, Object> templateModel,
+                              final String template) {
+        int tries = 0;
+
+        while (tries < Constants.MAX_EMAIL_TRIES) {
+            try {
+                sendTemplateMessage(to, null, null, null, subject, templateModel, template);
+                return true;
+            } catch (MessagingException e) {
+                tries++;
+                logger.error("Failed to send message to address " + to + " on try #" + tries + "!", e);
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Sends a new template message to the given addresses with the content specified in the given template. If the
      * email could not be sent, a {@link MessagingException} is thrown instead.
      *
@@ -88,7 +116,7 @@ public class MailService {
      * @param htmlBody The html representation of the mail template.
      * @throws MessagingException If the email could not be sent.
      */
-    public void sendHtmlMessage(final String to, final String cc, final String bcc, final String replyTo,
+    private void sendHtmlMessage(final String to, final String cc, final String bcc, final String replyTo,
                                  final String subject, final String htmlBody) throws MessagingException {
         logger.debug("Sending email to " + to + " with subject " + subject);
         MimeMessage message = emailSender.createMimeMessage();

@@ -5,6 +5,8 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
+import fim.unipassau.de.scratch1984.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -41,6 +43,9 @@ public class ExperimentServiceTest {
     @Mock
     private ExperimentRepository experimentRepository;
 
+    @Mock
+    private ExperimentDataRepository experimentDataRepository;
+
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
     private static final String BLANK = "    ";
@@ -48,6 +53,7 @@ public class ExperimentServiceTest {
     private static final int INVALID_ID = 2;
     private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "Some info text", false);
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, "Some info text", false);
+    private final ExperimentData experimentData = new ExperimentData(ID, 5, 3, 2);
     private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
     private Page<Experiment> experimentPage;
 
@@ -277,6 +283,35 @@ public class ExperimentServiceTest {
         when(experimentRepository.count()).thenReturn(Long.MAX_VALUE);
         assertEquals(214748364, experimentService.getLastPage());
         verify(experimentRepository).count();
+    }
+
+    @Test
+    public void testGetLastParticipantPage() {
+        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
+        assertEquals(0, experimentService.getLastParticipantPage(ID));
+        verify(experimentDataRepository).findByExperiment(ID);
+    }
+
+    @Test
+    public void testGetLastParticipantPage3() {
+        experimentData.setParticipants(40);
+        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
+        assertEquals(3, experimentService.getLastParticipantPage(ID));
+        verify(experimentDataRepository).findByExperiment(ID);
+    }
+
+    @Test
+    public void testGetLastParticipantPage4() {
+        experimentData.setParticipants(41);
+        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
+        assertEquals(4, experimentService.getLastParticipantPage(ID));
+        verify(experimentDataRepository).findByExperiment(ID);
+    }
+
+    @Test
+    public void testGetLastParticipantPageNull() {
+        assertEquals(0, experimentService.getLastParticipantPage(ID));
+        verify(experimentDataRepository).findByExperiment(ID);
     }
 
     @Test

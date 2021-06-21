@@ -15,6 +15,9 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+        <div class="row" th:if="${error != null}">
+            <div class="col-12 alert alert-danger" th:text="${error}"></div>
+        </div>
         <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
             <a class="btn btn-primary" th:text="#{edit}" th:href="@{/experiment/edit(id=${experimentDTO.id})}"></a>
             <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
@@ -23,7 +26,7 @@
         <div class="row">
             <div class="col-12 mb-5" th:text="${experimentDTO.description}"></div>
         </div>
-        <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
+        <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
             <div>
                 <span class="form-label me-2 fs-5" th:text="#{status}"></span>
                 <i th:class="${experimentDTO.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"></i>
@@ -39,6 +42,77 @@
                th:style="${experimentDTO.active ? '' : 'display:none'}"
                th:href="@{/experiment/status(id=${experimentDTO.id}, stat=close)}"></a>
         </div>
+        <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
+            <div class="col-7">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{username}"></th>
+                        <th class="text-center" scope="col" th:text="#{started}"></th>
+                        <th class="text-center" scope="col" th:text="#{finished}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${participants.isEmpty()}">
+                    <tr>
+                        <td colspan="4" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${participants.isEmpty()}">
+                    <tr th:each="participant : ${participants}">
+                        <th scope="row">
+                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                               th:text="${participant.user.id}"></a>
+                        </th>
+                        <td>
+                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                               th:text="${participant.user.username}"></a>
+                        </td>
+                        <td class="text-center">
+                            <i th:class="${participant.start != null ? 'fa fa-check text-success'
+                            : 'fa fa-times text-danger'}"></i>
+                        </td>
+                        <td class="text-center">
+                            <i th:class="${participant.end != null ? 'fa fa-check text-success'
+                            : 'fa fa-times text-danger'}"></i>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="text-center">
+                    <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
+                       th:href="@{/experiment/first(id=${experimentDTO.id})}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
+                       th:href="@{/experiment/previous(id=${experimentDTO.id}, page=${page})}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                    <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
+                       th:href="@{/experiment/next(id=${experimentDTO.id}, page=${page})}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
+                       th:href="@{/experiment/last(id=${experimentDTO.id})}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-5 text-end" th:if="${experimentDTO.active}">
+                <div class="mb-3">
+                    <input id="add" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
+                </div>
+                <div class="mb-3">
+                    <a class="btn btn-primary" th:href="@{/participant/add(id=${experimentDTO.id})}">
+                        <span th:text="#{add_new_participant}"></span>
+                    </a>
+                </div>
+                <div class="mb-3">
+                    <input id="deleteParticipant" type="submit" class="btn btn-danger"
+                           th:value="#{delete_participant}"/>
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-12" th:utext="${experimentDTO.info}"></div>
         </div>
@@ -52,28 +126,63 @@
         <h2 th:text="#{delete_experiment}"></h2>
         <div class="mb-3" th:text="#{delete_experiment_warn}"></div>
         <div class="d-flex justify-content-between">
-            <input id="abort" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <input id="abortDelete" class="btn btn-secondary" type="submit" th:value="#{abort}">
             <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/delete(id=${experimentDTO.id})}"></a>
         </div>
     </div>
 </div>
 
-<!-- Script to open and close the delete modal. -->
-<script>
-    let deleteModal = document.getElementById("openDelete");
-    let deleteButton = document.getElementById("delete");
-    let abort = document.getElementById("abort");
-    deleteButton.onclick = function() {
-        let content = document.getElementById("content");
-        deleteModal.style.display = "block";
-        content.style.filter = "blur(4px)";
-    }
-    abort.onclick = function () {
-        let content = document.getElementById("content");
-        deleteModal.style.display = "none";
-        content.style.filter = "none";
-    }
-</script>
+<!-- The popup dialog to add an existing participant to the experiment. -->
+<div id="openAdd" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{add_participant}"></h2>
+        <div class="mb-3" th:text="#{add_participant_info}"></div>
+        <form th:action="@{/experiment/search}">
+            <div class="mb-3 form-group position-relative">
+                <input id="experimentId" type="hidden" th:name="id" th:value="${experimentDTO.id}">
+                <div class="input-group">
+                    <input class="form-control" type="text" th:name="participant" id="participantInput"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                </div>
+                <div id="results"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a id="abortAdd" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input class="btn btn-primary" type="submit" th:value="#{add}"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- The popup dialog to delete an experiment participant. -->
+<div id="openDeleteParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{delete_participant}"></h2>
+        <div class="mb-3" th:text="#{delete_participant_info}"></div>
+        <form th:action="@{/participant/delete}">
+            <div class="mb-3 form-group position-relative">
+                <input id="deleteId" type="hidden" th:name="id" th:value="${experimentDTO.id}">
+                <div class="input-group">
+                    <input class="form-control" type="text" th:name="participant" id="deleteParticipantInput"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                </div>
+                <div id="deleteResults"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a id="abortDeleteParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input class="btn btn-primary" type="submit" th:value="#{delete}"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:src="@{/webjars/jquery/3.5.1/jquery.min.js}"></script>
+
+<!-- Script to open and close the delete and add modals. -->
+<script type="text/javascript" src="/static/js/experimentModals.js"></script>
+
+<!-- Script to fetch the participant suggestions. -->
+<script type="text/javascript" src="/static/js/participantSuggestions.js"></script>
 
 <!-- Footer -->
 <div th:insert="footer :: footer"></div>

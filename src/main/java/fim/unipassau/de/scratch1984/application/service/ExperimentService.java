@@ -4,6 +4,8 @@ import fim.unipassau.de.scratch1984.application.exception.IncompleteDataExceptio
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
+import fim.unipassau.de.scratch1984.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -34,13 +36,21 @@ public class ExperimentService {
     private final ExperimentRepository experimentRepository;
 
     /**
+     * The experiment data repository to use for database queries related to participant numbers.
+     */
+    private final ExperimentDataRepository experimentDataRepository;
+
+    /**
      * Constructs an experiment service with the given dependencies.
      *
      * @param experimentRepository The experiment repository to use.
+     * @param experimentDataRepository The experiment data repository to use.
      */
     @Autowired
-    public ExperimentService(final ExperimentRepository experimentRepository) {
+    public ExperimentService(final ExperimentRepository experimentRepository,
+                             final ExperimentDataRepository experimentDataRepository) {
         this.experimentRepository = experimentRepository;
+        this.experimentDataRepository = experimentDataRepository;
     }
 
     /**
@@ -139,10 +149,9 @@ public class ExperimentService {
         int currentPage = pageable.getPageNumber();
 
         if (pageSize != Constants.PAGE_SIZE) {
-            logger.error("Cannot return experiment page with invalid page size of" + pageSize + " or current page of "
-                    + currentPage + "!");
-            throw new IllegalArgumentException("Cannot return experiment page with invalid page size of" + pageSize
-                    + " or current page of " + currentPage + "!");
+            logger.error("Cannot return experiment page with invalid page size of " + pageSize + "!");
+            throw new IllegalArgumentException("Cannot return experiment page with invalid page size of " + pageSize
+                    + "!");
         }
 
         Page<Experiment> experiments = experimentRepository.findAll(PageRequest.of(currentPage, pageSize,
@@ -179,13 +188,24 @@ public class ExperimentService {
     @Transactional
     public int getLastPage() {
         int rows = countExperimentRows();
+        return computeLastPage(rows);
+    }
 
-        if (rows <= Constants.PAGE_SIZE) {
+    /**
+     * Returns the number of the last page for the participant pagination for the experiment with the given id.
+     *
+     * @param id The experiment id to search for.
+     * @return The last page value.
+     */
+    @Transactional
+    public int getLastParticipantPage(final int id) {
+        ExperimentData experimentData = experimentDataRepository.findByExperiment(id);
+
+        if (experimentData == null) {
             return 0;
-        } else if (rows % Constants.PAGE_SIZE == 0) {
-            return rows / Constants.PAGE_SIZE - 1;
         } else {
-            return rows / Constants.PAGE_SIZE;
+            int participants = experimentData.getParticipants();
+            return computeLastPage(participants);
         }
     }
 
@@ -202,6 +222,7 @@ public class ExperimentService {
             logger.error("Could not update the status for non-existent experiment with id " + id + "!");
             throw new NotFoundException("Could not update the status for non-existent experiment with id " + id + "!");
         }
+
         experimentRepository.updateStatusById(id, status);
         Experiment experiment = experimentRepository.findById(id);
         return createExperimentDTO(experiment);
@@ -222,6 +243,22 @@ public class ExperimentService {
         }
 
         return (int) rows;
+    }
+
+    /**
+     * Returns the number of the last page for the given amount of elements.
+     *
+     * @param elements The number of elements.
+     * @return The last page.
+     */
+    private int computeLastPage(final int elements) {
+        if (elements <= Constants.PAGE_SIZE) {
+            return 0;
+        } else if (elements % Constants.PAGE_SIZE == 0) {
+            return elements / Constants.PAGE_SIZE - 1;
+        } else {
+            return elements / Constants.PAGE_SIZE;
+        }
     }
 
     /**

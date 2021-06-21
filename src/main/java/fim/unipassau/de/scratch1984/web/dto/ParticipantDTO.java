@@ -29,6 +29,23 @@ public class ParticipantDTO {
     private LocalDateTime end;
 
     /**
+     * Default constructor for the participant dto.
+     */
+    public ParticipantDTO() {
+    }
+
+    /**
+     * Constructs a new participant dto with the given attributes.
+     *
+     * @param user The participating user's id.
+     * @param experiment The id of the experiment in which the user is participating.
+     */
+    public ParticipantDTO(final int user, final int experiment) {
+        this.user = user;
+        this.experiment = experiment;
+    }
+
+    /**
      * Returns user's ID.
      *
      * @return The user ID.

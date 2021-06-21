@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
@@ -32,11 +33,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -59,6 +61,11 @@ public class UserController {
      * The user service to use for user management.
      */
     private final UserService userService;
+
+    /**
+     * The participant service to use for participant management.
+     */
+    private final ParticipantService participantService;
 
     /**
      * The mail service to use for sending emails.
@@ -109,20 +116,70 @@ public class UserController {
      * Constructs a new user controller with the given dependencies.
      *
      * @param userService The {@link UserService} to use.
+     * @param participantService The {@link ParticipantService} to use.
      * @param mailService The {@link MailService} to use.
      * @param tokenService The {@link TokenService} to use.
      * @param authenticationProvider The {@link CustomAuthenticationProvider} to use.
      * @param localeResolver The locale resolver to use.
      */
     @Autowired
-    public UserController(final UserService userService, final MailService mailService, final TokenService tokenService,
+    public UserController(final UserService userService, final ParticipantService participantService,
+                          final MailService mailService, final TokenService tokenService,
                           final CustomAuthenticationProvider authenticationProvider,
                           final LocaleResolver localeResolver) {
         this.userService = userService;
+        this.participantService = participantService;
         this.mailService = mailService;
         this.tokenService = tokenService;
         this.authenticationProvider = authenticationProvider;
         this.localeResolver = localeResolver;
+    }
+
+    /**
+     * Tries to authenticate the participant with the given secret. On a successful authentication, the participant is
+     * redirected to the corresponding experiment page. If an error occurred during authentication, the user is
+     * redirected to the error page instead.
+     *
+     * @param id The id of the experiment in which the user is participating.
+     * @param secret The user's secret.
+     * @param httpServletRequest The servlet request.
+     * @param httpServletResponse The servlet response.
+     * @return The experiment page on success, or the error page, otherwise.
+     */
+    @GetMapping("/authenticate")
+    public String authenticateUser(@RequestParam("id") final String id, @RequestParam("secret") final String secret,
+                                   final HttpServletRequest httpServletRequest,
+                                   final HttpServletResponse httpServletResponse) {
+        if (id == null || id.trim().isBlank() || secret == null || secret.trim().isBlank()) {
+            logger.error("Cannot authenticate participant with id or secret null or blank!");
+            return ERROR;
+        }
+
+        int experimentId = parseId(id);
+        UserDTO authenticated;
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.debug("Cannot authenticate user with invalid experiment id " + id + "!");
+            return ERROR;
+        }
+
+        try {
+            authenticated = userService.authenticateUser(secret);
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        if (!userService.existsParticipant(authenticated.getId(), experimentId)) {
+            logger.error("No participation entry could be found for the user with username "
+                    + authenticated.getUsername() + " and experiment with id " + id + "!");
+            return ERROR;
+        }
+
+        clearSecurityContext(httpServletRequest);
+        updateSecurityContext(authenticated, httpServletRequest);
+        localeResolver.setLocale(httpServletRequest, httpServletResponse,
+                getLocaleFromLanguage(authenticated.getLanguage()));
+        return "redirect:/experiment?id=" + experimentId;
     }
 
     /**
@@ -228,27 +285,33 @@ public class UserController {
             return ERROR;
         }
 
+        UserDTO userDTO;
+        List<Integer> experimentIds = new ArrayList<>();
+
         if (username == null || username.trim().isBlank()) {
             try {
-                UserDTO userDTO = userService.getUser(authentication.getName());
-                model.addAttribute("userDTO", userDTO);
-                model.addAttribute("language",
-                        resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
-                return PROFILE;
+                userDTO = userService.getUser(authentication.getName());
             } catch (NotFoundException e) {
                 clearSecurityContext(httpServletRequest);
                 return ERROR;
             }
+        } else {
+            try {
+                userDTO = userService.getUser(username);
+            } catch (NotFoundException e) {
+                return ERROR;
+            }
         }
 
-        try {
-            UserDTO userDTO = userService.getUser(username);
-            model.addAttribute("userDTO", userDTO);
-            model.addAttribute("language", resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
-            return PROFILE;
-        } catch (NotFoundException e) {
-            return ERROR;
+        if (userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+            experimentIds = participantService.getExperimentIdsForParticipant(userDTO.getId());
         }
+
+        model.addAttribute("experiments", experimentIds);
+        model.addAttribute("userDTO", userDTO);
+        model.addAttribute("language",
+                resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
+        return PROFILE;
     }
 
     /**
@@ -383,7 +446,7 @@ public class UserController {
             return ERROR;
         }
 
-        int userId = parseUserId(id);
+        int userId = parseId(id);
 
         if (userId < Constants.MIN_ID) {
             logger.debug("Cannot delete user with invalid id " + id + "!");
@@ -398,6 +461,52 @@ public class UserController {
 
         userService.deleteUser(userDTO.getId());
         return "redirect:/?success=true";
+    }
+
+    /**
+     * Activates or deactivates the user account of the participant with the given id. If the account is being
+     * deactivated, the participant's secret is set to null to prevent the user from participating in any experiments.
+     * If the operation was successful, the user is redirected to the profile page. If anything went wrong, the user is
+     * redirected to the error page instead.
+     *
+     * @param id The participant's id.
+     * @return The participant's profile page on success, or the error page, otherwise.
+     */
+    @GetMapping("/active")
+    @Secured("ROLE_ADMIN")
+    public String changeActiveStatus(@RequestParam("id") final String id) {
+        if (id == null) {
+            logger.debug("Cannot change active status of user with id null!");
+            return ERROR;
+        }
+
+        int userId = parseId(id);
+
+        if (userId < Constants.MIN_ID) {
+            logger.debug("Cannot change active status of user with invalid id " + id + "!");
+            return ERROR;
+        }
+
+        try {
+            UserDTO userDTO = userService.getUserById(userId);
+
+            if (userDTO.getRole().equals(UserDTO.Role.ADMIN)) {
+                logger.error("Cannot deactivate an administrator profile!");
+                return ERROR;
+            }
+
+            if (userDTO.isActive()) {
+                userDTO.setActive(false);
+                userDTO.setSecret(null);
+            } else {
+                userDTO.setActive(true);
+            }
+
+            userService.updateUser(userDTO);
+            return "redirect:/users/profile?name=" + userDTO.getUsername();
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
     }
 
     /**
@@ -500,39 +609,8 @@ public class UserController {
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put("baseUrl", baseUrl);
         templateModel.put("token", tokenUrl);
-        return sendEmail(email, null, null, null, resourceBundle.getString("change_email_subject"),
-                templateModel, "change-email.html");
-    }
-
-    /**
-     * Sends the given email template to the given addresses. If the {@link MailService} fails to send the message
-     * three consecutive times, it stops.
-     *
-     * @param to The recipient of the email.
-     * @param cc The address to which a copy of this email should be send.
-     * @param bcc The address to which a blind copy of this email should be send.
-     * @param replyTo The reply to address.
-     * @param subject The subject of this email.
-     * @param templateModel The template model containing additional properties.
-     * @param template The name of the mail template to use.
-     * @return {@code true} if the email was sent successfully, or {@code false} otherwise.
-     */
-    private boolean sendEmail(final String to, final String cc, final String bcc, final String replyTo,
-                           final String subject, final Map<String, Object> templateModel,
-                           final String template) {
-        int tries = 0;
-
-        while (tries < Constants.MAX_EMAIL_TRIES) {
-            try {
-                mailService.sendTemplateMessage(to, cc, bcc, replyTo, subject, templateModel, template);
-                return true;
-            } catch (MessagingException e) {
-                tries++;
-                logger.error("Failed to send message to address " + to + " on try #" + tries + "!", e);
-            }
-        }
-
-        return false;
+        return mailService.sendEmail(email, resourceBundle.getString("change_email_subject"), templateModel,
+                "change-email.html");
     }
 
     /**
@@ -617,7 +695,7 @@ public class UserController {
      * @param id The id in its string representation.
      * @return The corresponding int value, or -1.
      */
-    private int parseUserId(final String id) {
+    private int parseId(final String id) {
         try {
             return Integer.parseInt(id);
         } catch (NumberFormatException e) {
