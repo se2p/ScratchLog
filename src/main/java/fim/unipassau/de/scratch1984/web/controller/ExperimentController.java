@@ -33,6 +33,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -254,18 +255,21 @@ public class ExperimentController {
     }
 
     /**
-     * Changes the experiment status to the given request parameter value. If the passed id or status values are
-     * invalid, or no corresponding experiment exists in the database, the user is redirected to the error page instead.
+     * Changes the experiment status to the given request parameter value. If the experiment is being reopened, new
+     * invitation mails are send out to all participants who haven't yet started the experiment and who are not
+     * currently participating in a different one. If the passed id or status values are invalid, or no corresponding
+     * experiment exists in the database, the user is redirected to the error page instead.
      *
      * @param id The id of the experiment.
      * @param status The new status of the experiment.
      * @param model The model to hold the information.
+     * @param httpServletRequest The {@link HttpServletRequest}.
      * @return The experiment page.
      */
     @GetMapping("/status")
     @Secured("ROLE_ADMIN")
     public String changeExperimentStatus(@RequestParam("stat") final String status, @RequestParam("id") final String id,
-                                         final Model model) {
+                                         final Model model, final HttpServletRequest httpServletRequest) {
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID || status == null) {
@@ -277,6 +281,18 @@ public class ExperimentController {
 
             if (status.equals("open")) {
                 experimentDTO = experimentService.changeExperimentStatus(true, experimentId);
+                List<UserDTO> userDTOS = userService.reactivateUserAccounts(experimentId);
+
+                for (UserDTO userDTO : userDTOS) {
+                    Map<String, Object> templateModel = getTemplateModel(id, userDTO.getSecret(), httpServletRequest);
+                    ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
+                            getLocaleFromLanguage(userDTO.getLanguage()));
+
+                    if (!mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
+                            templateModel, "participant-email")) {
+                        logger.error("Could not send invitation mail to user with email " + userDTO.getEmail() + ".");
+                    }
+                }
             } else if (status.equals("close")) {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
                 participantService.deactivateParticipantAccounts(experimentId);
@@ -364,12 +380,7 @@ public class ExperimentController {
             return ERROR;
         }
 
-        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(httpServletRequest).replacePath(null).build()
-                .toUriString();
-        String experimentUrl = baseUrl + "/users/authenticate?id=" + id + "&secret=" + secret;
-        Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", baseUrl);
-        templateModel.put("secret", experimentUrl);
+        Map<String, Object> templateModel = getTemplateModel(id, secret, httpServletRequest);
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
@@ -506,6 +517,17 @@ public class ExperimentController {
         }
 
         return EXPERIMENT;
+    }
+
+    private Map<String, Object> getTemplateModel(final String id, final String secret,
+                                                 final HttpServletRequest httpServletRequest) {
+        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(httpServletRequest).replacePath(null).build()
+                .toUriString();
+        String experimentUrl = baseUrl + "/users/authenticate?id=" + id + "&secret=" + secret;
+        Map<String, Object> templateModel = new HashMap<>();
+        templateModel.put("baseUrl", baseUrl);
+        templateModel.put("secret", experimentUrl);
+        return templateModel;
     }
 
     /**

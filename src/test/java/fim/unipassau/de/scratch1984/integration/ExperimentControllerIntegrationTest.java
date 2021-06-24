@@ -438,7 +438,10 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testChangeExperimentStatusOpen() throws Exception {
         experimentDTO.setActive(true);
+        List<UserDTO> userDTOS = new ArrayList<>();
+        userDTOS.add(participant);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
+        when(userService.reactivateUserAccounts(ID)).thenReturn(userDTOS);
         when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/status")
@@ -461,6 +464,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).changeExperimentStatus(true, ID);
+        verify(userService).reactivateUserAccounts(ID);
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
     }

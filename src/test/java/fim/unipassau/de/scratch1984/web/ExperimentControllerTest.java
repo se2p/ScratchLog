@@ -113,6 +113,7 @@ public class ExperimentControllerTest {
     private final UserDTO participant = new UserDTO(PARTICIPANTS, "participant@part.de", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "user", null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
+    private final List<UserDTO> userDTOS = new ArrayList<>();
 
     @BeforeEach
     public void setup() {
@@ -126,6 +127,8 @@ public class ExperimentControllerTest {
         experimentDTO.setDescription(DESCRIPTION);
         experimentDTO.setInfo(INFO);
         securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
+        userDTOS.add(participant);
+        userDTOS.add(userDTO);
     }
 
     @AfterEach
@@ -407,10 +410,14 @@ public class ExperimentControllerTest {
     @Test
     public void testChangeExperimentStatusOpen() {
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
+        when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
+        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true).thenReturn(false);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        String returnString = experimentController.changeExperimentStatus("open", ID_STRING, model);
+        String returnString = experimentController.changeExperimentStatus("open", ID_STRING, model, httpServletRequest);
         assertEquals(EXPERIMENT, returnString);
         verify(experimentService).changeExperimentStatus(true, ID);
+        verify(userService).reactivateUserAccounts(ID);
+        verify(mailService, times(2)).sendEmail(anyString(), anyString(), any(), anyString());
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
@@ -421,7 +428,8 @@ public class ExperimentControllerTest {
     public void testChangeExperimentStatusClose() {
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model);
+        String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model,
+                httpServletRequest);
         assertEquals(EXPERIMENT, returnString);
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
@@ -436,7 +444,8 @@ public class ExperimentControllerTest {
         experimentDTO.setInfo(null);
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model);
+        String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model,
+                httpServletRequest);
         assertEquals(EXPERIMENT, returnString);
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
@@ -448,7 +457,8 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusInvalid() {
-        String returnString = experimentController.changeExperimentStatus("blabla", ID_STRING, model);
+        String returnString = experimentController.changeExperimentStatus("blabla", ID_STRING, model,
+                httpServletRequest);
         assertEquals(ERROR, returnString);
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
@@ -457,7 +467,7 @@ public class ExperimentControllerTest {
     @Test
     public void testChangeExperimentStatusOpenNotFound() {
         when(experimentService.changeExperimentStatus(true, ID)).thenThrow(NotFoundException.class);
-        String returnString = experimentController.changeExperimentStatus("open", ID_STRING, model);
+        String returnString = experimentController.changeExperimentStatus("open", ID_STRING, model, httpServletRequest);
         assertEquals(ERROR, returnString);
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
@@ -465,7 +475,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusStatusNull() {
-        String returnString = experimentController.changeExperimentStatus(null, ID_STRING, model);
+        String returnString = experimentController.changeExperimentStatus(null, ID_STRING, model, httpServletRequest);
         assertEquals(ERROR, returnString);
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
@@ -473,7 +483,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusIdNull() {
-        String returnString = experimentController.changeExperimentStatus("open", null, model);
+        String returnString = experimentController.changeExperimentStatus("open", null, model, httpServletRequest);
         assertEquals(ERROR, returnString);
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);

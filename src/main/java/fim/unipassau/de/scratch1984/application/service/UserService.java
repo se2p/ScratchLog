@@ -3,11 +3,13 @@ package fim.unipassau.de.scratch1984.application.service;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -311,6 +314,59 @@ public class UserService {
         User found = user.get();
         found.setEmail(email);
         userRepository.save(found);
+    }
+
+    /**
+     * Reactivates the accounts of participants who have not started an experiment when it is being reopened. If the
+     * participant is not currently participating in a different experiment, their account is activated and a secret
+     * generated. The list of the updated and reactivated users is then passed to the controller to send out new
+     * invitation mails. If no experiment with the corresponding id could be found, a {@link NotFoundException} is
+     * thrown instead.
+     *
+     * @param experimentId The experiment id to search for.
+     * @return A list of {@link UserDTO}s.
+     */
+    @Transactional
+    public List<UserDTO> reactivateUserAccounts(final int experimentId) {
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot search for user with invalid id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot search for user with invalid id " + experimentId + "!");
+        }
+
+        Experiment experiment = experimentRepository.getOne(experimentId);
+        List<Participant> participants;
+        List<UserDTO> userDTOS = new ArrayList<>();
+
+        try {
+            participants = participantRepository.findAllByExperimentAndStart(experiment, null);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find experiment with id " + experimentId + "!", e);
+            throw new NotFoundException("Could not find experiment with id " + experimentId + "!", e);
+        }
+
+        for (Participant participant : participants) {
+            User user = participant.getUser();
+
+            if (user.getId() == null) {
+                logger.error("Could not find corresponding user for participant entry for experiment with id "
+                        + experimentId + "!");
+                throw new IllegalStateException("Could not find corresponding user for participant entry for experiment"
+                        + " with id " + experimentId + "!");
+            }
+
+            if (user.getSecret() != null) {
+                logger.info("The user with username " + user.getUsername() + " is already participating in a different "
+                        + "experiment, so their account cannot be reactivated for experiment with id " + experimentId
+                        + ".");
+            } else {
+                user.setActive(true);
+                user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
+                userRepository.save(user);
+                userDTOS.add(createUserDTO(user));
+            }
+        }
+
+        return userDTOS;
     }
 
     /**
