@@ -35,12 +35,10 @@
                 <span class="text-muted" th:style="${experimentDTO.active ? 'display:none' : ''}"
                       th:text="#{closed}"></span>
             </div>
-            <a id="open" class="btn btn-primary" type="submit" th:text="#{open}"
-               th:style="${experimentDTO.active ? 'display:none' : ''}"
+            <a id="open" class="btn btn-primary" type="submit" th:text="#{open}" th:unless="${experimentDTO.active}"
                th:href="@{/experiment/status(id=${experimentDTO.id}, stat=open)}"></a>
-            <a id="close" class="btn btn-primary" type="submit" th:text="#{close}"
-               th:style="${experimentDTO.active ? '' : 'display:none'}"
-               th:href="@{/experiment/status(id=${experimentDTO.id}, stat=close)}"></a>
+            <input th:if="${experimentDTO.active}" id="close" class="btn btn-secondary" type="submit"
+                   th:value="#{close}">
         </div>
         <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
             <div class="col-7">
@@ -128,6 +126,19 @@
         <div class="d-flex justify-content-between">
             <input id="abortDelete" class="btn btn-secondary" type="submit" th:value="#{abort}">
             <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/delete(id=${experimentDTO.id})}"></a>
+        </div>
+    </div>
+</div>
+
+<!-- The popup dialog to stop the experiment. -->
+<div id="openStop" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{close_experiment}"></h2>
+        <div class="mb-3" th:text="#{close_experiment_warn}"></div>
+        <div class="d-flex justify-content-between">
+            <input id="abortStop" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <a class="btn btn-danger" th:text="#{close}" th:href="@{/experiment/status(id=${experimentDTO.id},
+            stat=close)}"></a>
         </div>
     </div>
 </div>

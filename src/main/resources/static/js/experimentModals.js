@@ -2,6 +2,10 @@ let deleteModal = document.getElementById("openDelete");
 let deleteButton = document.getElementById("delete");
 let abortDelete = document.getElementById("abortDelete");
 
+let stopModal = document.getElementById("openStop");
+let stopButton = document.getElementById("close");
+let abortStop = document.getElementById("abortStop");
+
 let addModal = document.getElementById("openAdd");
 let addButton = document.getElementById("add");
 let abortAdd = document.getElementById("abortAdd");
@@ -21,8 +25,23 @@ deleteButton.onclick = function() {
 /**
  * Configures the abort delete button in the delete experiment modal to close the modal when the button is clicked.
  */
-abortDelete.onclick = function () {
+abortDelete.onclick = function() {
     closeModal(deleteModal);
+}
+
+/**
+ * Configures the stop experiment button on the experiment page to open the stop experiment modal when the button is
+ * clicked.
+ */
+stopButton.onclick = function() {
+    openModal(stopModal);
+}
+
+/**
+ * Configures the abort stop button in the stop experiment modal to close the modal when the button is clicked.
+ */
+abortStop.onclick = function() {
+    closeModal(stopModal);
 }
 
 /**
