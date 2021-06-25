@@ -36,6 +36,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -87,6 +88,7 @@ public class UserControllerIntegrationTest {
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
+    private static final String PASSWORD_PAGE = "password";
     private static final String USER_DTO = "userDTO";
     private static final String NAME = "name";
     private static final String ID_STRING = "1";
@@ -774,5 +776,159 @@ public class UserControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testGetPasswordResetForm() throws Exception {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        mvc.perform(get("/users/forgot")
+                .param("id", ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(model().attribute(USER_DTO, is(userDTO)))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PASSWORD_PAGE));
+        verify(userService).getUserById(ID);
+    }
+
+    @Test
+    public void testGetPasswordResetFormNoAdmin() throws Exception {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        mvc.perform(get("/users/forgot")
+                .param("id", ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserById(ID);
+    }
+
+    @Test
+    public void testGetPasswordResetFormNotFound() throws Exception {
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/users/forgot")
+                .param("id", ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserById(ID);
+    }
+
+    @Test
+    public void testGetPasswordResetFormInvalidId() throws Exception {
+        mvc.perform(get("/users/forgot")
+                .param("id", "0")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).getUserById(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testResetPassword() throws Exception {
+        userDTO.setNewPassword(VALID_PASSWORD);
+        userDTO.setConfirmPassword(VALID_PASSWORD);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        when(userService.encodePassword(VALID_PASSWORD)).thenReturn(VALID_PASSWORD);
+        mvc.perform(post("/users/forgot")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(PROFILE_REDIRECT + USERNAME));
+        verify(userService).getUserById(ID);
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(userService).encodePassword(VALID_PASSWORD);
+        verify(userService).saveUser(oldDTO);
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testResetPasswordPasswordsNotMatching() throws Exception {
+        userDTO.setNewPassword(VALID_PASSWORD);
+        userDTO.setConfirmPassword(VALID_PASSWORD);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(post("/users/forgot")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PASSWORD_PAGE));
+        verify(userService).getUserById(ID);
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(userService, never()).encodePassword(anyString());
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testResetPasswordAdminNotFound() throws Exception {
+        userDTO.setNewPassword(VALID_PASSWORD);
+        userDTO.setConfirmPassword(VALID_PASSWORD);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
+        mvc.perform(post("/users/forgot")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserById(ID);
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    public void testResetPasswordUserNotAdmin() throws Exception {
+        userDTO.setNewPassword(VALID_PASSWORD);
+        userDTO.setConfirmPassword(VALID_PASSWORD);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        mvc.perform(post("/users/forgot")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    public void testResetPasswordUserNotFound() throws Exception {
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(post("/users/forgot")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserById(ID);
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(userService, never()).saveUser(any());
     }
 }

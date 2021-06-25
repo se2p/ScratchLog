@@ -113,6 +113,11 @@ public class UserController {
     private static final String PROFILE_EDIT = "profile-edit";
 
     /**
+     * String corresponding to the password page.
+     */
+    private static final String PASSWORD = "password";
+
+    /**
      * Constructs a new user controller with the given dependencies.
      *
      * @param userService The {@link UserService} to use.
@@ -510,6 +515,106 @@ public class UserController {
     }
 
     /**
+     * Retrieves the password page to (re)set the password of the user with the given id. If the user could not be
+     * found or the passed id is invalid, the user is redirected to the error page instead.
+     *
+     * @param id The id of the user whose password is to be reset.
+     * @param model The user dto containing the old user information.
+     * @param httpServletRequest The servlet request.
+     * @return The password page on success, or the error page otherwise.
+     */
+    @GetMapping("/forgot")
+    @Secured("ROLE_ADMIN")
+    public String getPasswordResetForm(@RequestParam("id") final String id, final Model model,
+                                       final HttpServletRequest httpServletRequest) {
+        if (id == null) {
+            logger.debug("Cannot reset password for user with id null!");
+            return ERROR;
+        }
+
+        int userId = parseId(id);
+
+        if (userId < Constants.MIN_ID) {
+            logger.debug("Cannot reset password for user with invalid id " + id + "!");
+            return ERROR;
+        }
+
+        try {
+            UserDTO userDTO = userService.getUserById(userId);
+            if (httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+                model.addAttribute("userDTO", userDTO);
+                return PASSWORD;
+            }
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        return ERROR;
+    }
+
+    /**
+     * Changes the current password of the given user to the specified new password, if it meets the requirements.
+     *
+     * @param userDTO The {@link UserDTO} containing the password inputs.
+     * @param bindingResult The binding result for returning information on invalid user input.
+     * @param httpServletRequest The servlet request.
+     * @return The user profile page on success, or the error page otherwise.
+     */
+    @PostMapping("/forgot")
+    @Secured("ROLE_ADMIN")
+    public String resetPassword(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult,
+                                final HttpServletRequest httpServletRequest) {
+        if (userDTO.getPassword() == null || userDTO.getNewPassword() == null || userDTO.getConfirmPassword() == null) {
+            logger.error("The new passwords should never be null, but only empty strings!");
+            return ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        UserDTO findOldUser;
+
+        try {
+            findOldUser = userService.getUserById(userDTO.getId());
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
+        if (httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication.getName() == null) {
+                logger.error("Cannot reset the password for user " + userDTO.getId() + " with authentication with name "
+                        + "null!");
+                return ERROR;
+            }
+
+            UserDTO admin;
+
+            try {
+                admin = userService.getUser(authentication.getName());
+            } catch (NotFoundException e) {
+                return ERROR;
+            }
+
+            if (userDTO.getNewPassword().trim().isBlank()) {
+                bindingResult.addError(createFieldError("userDTO", "newPassword", "empty_string", resourceBundle));
+            }
+
+            validateUpdatePassword(userDTO, admin, bindingResult, resourceBundle);
+
+            if (bindingResult.hasErrors()) {
+                return PASSWORD;
+            }
+
+            findOldUser.setPassword(userService.encodePassword(userDTO.getNewPassword()));
+            userService.saveUser(findOldUser);
+            return "redirect:/users/profile?name=" + findOldUser.getUsername();
+        }
+
+        return ERROR;
+    }
+
+    /**
      * Validates the username passed in the {@link UserDTO} on updating the given user.
      *
      * @param userDTO The user dto containing the new user information.
@@ -559,11 +664,11 @@ public class UserController {
      * Validates the passwords passed in the {@link UserDTO} on updating the given user.
      *
      * @param userDTO The user dto containing the new user information.
-     * @param findOldUser The user dto containing the old user information.
+     * @param matchPassword The user dto containing the current password the input password should match.
      * @param bindingResult The binding result for returning information on invalid user input.
      * @param resourceBundle The resource bundle for error translation.
      */
-    private void validateUpdatePassword(final UserDTO userDTO, final UserDTO findOldUser,
+    private void validateUpdatePassword(final UserDTO userDTO, final UserDTO matchPassword,
                                      final BindingResult bindingResult, final ResourceBundle resourceBundle) {
         if (!userDTO.getNewPassword().trim().isBlank() || !userDTO.getConfirmPassword().trim().isBlank()) {
             String passwordValidation = PasswordValidator.validate(userDTO.getNewPassword(),
@@ -575,7 +680,7 @@ public class UserController {
 
             if (userDTO.getPassword().trim().isBlank()) {
                 bindingResult.addError(createFieldError("userDTO", "password", "enter_password", resourceBundle));
-            } else if (!userService.matchesPassword(userDTO.getPassword(), findOldUser.getPassword())) {
+            } else if (!userService.matchesPassword(userDTO.getPassword(), matchPassword.getPassword())) {
                 bindingResult.addError(createFieldError("userDTO", "password", "invalid_password",
                         resourceBundle));
             }

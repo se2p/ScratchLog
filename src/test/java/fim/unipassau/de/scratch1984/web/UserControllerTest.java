@@ -110,9 +110,11 @@ public class UserControllerTest {
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
+    private static final String PASSWORD_PAGE = "password";
     private static final String USER_DTO = "userDTO";
     private static final String ID_STRING = "1";
     private static final String SECRET = "secret";
+    private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final int ID = 1;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
             PASSWORD, SECRET);
@@ -922,5 +924,208 @@ public class UserControllerTest {
         assertEquals(ERROR, userController.changeActiveStatus(null));
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
+    }
+
+    @Test
+    public void testGetPasswordResetForm() {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
+        assertEquals(PASSWORD_PAGE, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+    }
+
+    @Test
+    public void testGetPasswordResetFormNoAdmin() {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+    }
+
+    @Test
+    public void testGetPasswordResetFormUserNotFound() {
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+    }
+
+    @Test
+    public void testGetPasswordResetFormInvalidId() {
+        assertEquals(ERROR, userController.getPasswordResetForm("-1", model, httpServletRequest));
+        verify(userService, never()).getUserById(anyInt());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+    }
+
+    @Test
+    public void testGetPasswordResetFormIdNull() {
+        assertEquals(ERROR, userController.getPasswordResetForm(null, model, httpServletRequest));
+        verify(userService, never()).getUserById(anyInt());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+    }
+
+    @Test
+    public void testResetPassword() {
+        userDTO.setNewPassword(VALID_PASSWORD);
+        userDTO.setConfirmPassword(VALID_PASSWORD);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        when(userService.encodePassword(VALID_PASSWORD)).thenReturn(VALID_PASSWORD);
+        assertEquals(PROFILE_REDIRECT + USERNAME, userController.resetPassword(userDTO, bindingResult,
+                httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(userService).encodePassword(VALID_PASSWORD);
+    }
+
+    @Test
+    public void testResetPasswordPasswordInvalid() {
+        userDTO.setNewPassword(VALID_PASSWORD);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        when(bindingResult.hasErrors()).thenReturn(true);
+        assertEquals(PASSWORD_PAGE, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(bindingResult).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
+    }
+
+    @Test
+    public void testResetPasswordNewPasswordBlank() {
+        userDTO.setNewPassword(BLANK);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(bindingResult.hasErrors()).thenReturn(true);
+        assertEquals(PASSWORD_PAGE, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(bindingResult).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
+    }
+
+    @Test
+    public void testResetPasswordAdminNotFound() {
+        userDTO.setNewPassword(VALID_PASSWORD);
+        userDTO.setConfirmPassword(VALID_PASSWORD);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(bindingResult, never()).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
+    }
+
+    @Test
+    public void testResetPasswordAuthenticationNameNull() {
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+        verify(authentication).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(bindingResult, never()).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
+    }
+
+    @Test
+    public void testResetPasswordUserNotAdmin() {
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(bindingResult, never()).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
+    }
+
+    @Test
+    public void testResetPasswordUserNotFound() {
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(bindingResult, never()).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
+    }
+
+    @Test
+    public void testResetPasswordConfirmPasswordNull() {
+        userDTO.setConfirmPassword(null);
+        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        verify(userService, never()).getUserById(ID);
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(bindingResult, never()).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
+    }
+
+    @Test
+    public void testResetPasswordNewPasswordNull() {
+        userDTO.setNewPassword(null);
+        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        verify(userService, never()).getUserById(ID);
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(bindingResult, never()).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
+    }
+
+    @Test
+    public void testResetPasswordPasswordNull() {
+        userDTO.setPassword(null);
+        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        verify(userService, never()).getUserById(ID);
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(bindingResult, never()).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
     }
 }
