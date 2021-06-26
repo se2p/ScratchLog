@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -69,11 +70,51 @@ public class ParticipantService {
     }
 
     /**
+     * Retrieves the participant information for the given experiment id and the given user id from the database. If no
+     * corresponding user, experiment or participant can be found, a {@link NotFoundException} is thrown instead.
+     *
+     * @param experimentId The experiment id.
+     * @param userId The user id.
+     * @return The {@link ParticipantDTO} containing the participant information.
+     */
+    @Transactional
+    public ParticipantDTO getParticipant(final int experimentId, final int userId) {
+        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
+            logger.error("Cannot search for participant with invalid experiment id " + experimentId
+                    + " or invalid user id " + userId + "!");
+            throw new IllegalArgumentException("Cannot search for participant with invalid experiment id "
+                    + experimentId + " or invalid user id " + userId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+
+            if (participant == null) {
+                logger.error("Could not find any participant entry for user with id " + userId + " for experiment with "
+                        + "id " + experimentId + "!");
+                throw new NotFoundException("Could not find any participant entry for user with id " + userId
+                        + " for experiment with id " + experimentId + "!");
+            }
+
+            return createParticipantDTO(participant);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+                    + " in the database!", e);
+            throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
+                    + experimentId + " in the database!", e);
+        }
+    }
+
+    /**
      * Creates a new participation for the given user and experiment in the database.
      *
      * @param userId The user id.
      * @param experimentId The experiment id.
      */
+    @Transactional
     public void saveParticipant(final int userId, final int experimentId) {
         User user = userRepository.getOne(userId);
         Experiment experiment = experimentRepository.getOne(experimentId);
@@ -97,6 +138,27 @@ public class ParticipantService {
      * @return {@code true} if the information was persisted, or {@code false} if not.
      */
     public boolean updateParticipant(final ParticipantDTO participantDTO) {
+        if (participantDTO.getExperiment() < Constants.MIN_ID || participantDTO.getUser() < Constants.MIN_ID) {
+            logger.error("Cannot search for participant with invalid experiment id " + participantDTO.getExperiment()
+                    + " or invalid user id " + participantDTO.getUser() + "!");
+            throw new IllegalArgumentException("Cannot search for participant with invalid experiment id "
+                    + participantDTO.getExperiment() + " or invalid user id " + participantDTO.getUser() + "!");
+        }
+
+        User user = userRepository.getOne(participantDTO.getUser());
+        Experiment experiment = experimentRepository.getOne(participantDTO.getExperiment());
+
+        try {
+            participantRepository.save(createParticipant(participantDTO, user, experiment));
+            return true;
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the user with id " + participantDTO.getUser() + " or experiment with id "
+                    + participantDTO.getExperiment() + " when trying to update a participant!", e);
+        } catch (ConstraintViolationException e) {
+            logger.error("No participant entry could be found for user with id " + participantDTO.getUser()
+                    + " for experiment with id " + participantDTO.getExperiment() + "!", e);
+        }
+
         return false;
     }
 
@@ -232,13 +294,32 @@ public class ParticipantService {
     }
 
     /**
-     * Creates a {@link Participant} with the given information of the {@link ParticipantDTO}.
+     * Creates a {@link Participant} with the given information of the {@link ParticipantDTO}, the {@link User}, and the
+     * {@link Experiment}.
      *
      * @param participantDTO The dto containing the information.
+     * @param user The corresponding user.
+     * @param experiment The corresponding experiment.
      * @return The new participant containing the information passed in the DTO.
      */
-    private Participant createParticipant(final ParticipantDTO participantDTO) {
-        return null;
+    private Participant createParticipant(final ParticipantDTO participantDTO, final User user,
+                                          final Experiment experiment) {
+        Participant participant = new Participant();
+
+        if (user != null) {
+            participant.setUser(user);
+        }
+        if (experiment != null) {
+            participant.setExperiment(experiment);
+        }
+        if (participantDTO.getStart() != null) {
+            participant.setStart(Timestamp.valueOf(participantDTO.getStart()));
+        }
+        if (participantDTO.getEnd() != null) {
+            participant.setEnd(Timestamp.valueOf(participantDTO.getEnd()));
+        }
+
+        return participant;
     }
 
     /**

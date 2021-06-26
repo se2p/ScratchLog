@@ -12,6 +12,7 @@ import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
 import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
+import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,8 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -282,6 +286,79 @@ public class ParticipantController {
         }
 
         return REDIRECT_EXPERIMENT + experimentId;
+    }
+
+    /**
+     * Starts the experiment with the given id for the currently authenticated user, if they are registered as
+     * participants and have not yet started the experiment. If these requirements are not met, no corresponding
+     * participant could be found, or the user is an administrator, they are redirected to the error page instead.
+     *
+     * @param id The experiment id.
+     * @param httpServletRequest The servlet request.
+     * @return Opens the scratch GUI on success, or redirects to the error page otherwise.
+     */
+    @GetMapping("/start")
+    @Secured("ROLE_PARTICIPANT")
+    public String startExperiment(@RequestParam("id") final String id, final HttpServletRequest httpServletRequest) {
+        if (id == null) {
+            logger.error("Cannot start experiment with invalid id null!");
+            return ERROR;
+        }
+
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot start experiment with invalid id " + id + "!");
+            return ERROR;
+        }
+
+        if (httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+            logger.error("An administrator tried to participate in the experiment with id " + id + "!");
+            return ERROR;
+        } else {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication.getName() == null) {
+                logger.error("Cannot start the experiment for a user with authentication with name null!");
+                return ERROR;
+            }
+
+            try {
+                UserDTO userDTO = userService.getUser(authentication.getName());
+                ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+                ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userDTO.getId());
+
+                if (!experimentDTO.isActive()) {
+                    logger.error("Cannot start experiment with id " + experimentId + " for user with id "
+                            + userDTO.getId() + " since the experiment is closed!");
+                    return ERROR;
+                }
+                if (!userDTO.isActive() || userDTO.getSecret() == null) {
+                    logger.error("Cannot start experiment for user with id " + userDTO.getId() + " since their account "
+                            + "is inactive or their secret null!");
+                    return ERROR;
+                }
+                if (participantDTO.getStart() != null || participantDTO.getEnd() != null) {
+                    logger.error("The user with id " + userDTO.getId() + " tried to start the experiment with id "
+                            + experimentId + " even though they already started it once!");
+                    return ERROR;
+                }
+
+                participantDTO.setStart(LocalDateTime.now());
+
+                if (participantService.updateParticipant(participantDTO)) {
+                    return "redirect:http://localhost:8601?uid=" + participantDTO.getUser() + "&expid="
+                            + participantDTO.getExperiment();
+                } else {
+                    logger.error("Failed to update the starting time of participant with user id "
+                            + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment()
+                            + "!");
+                    return ERROR;
+                }
+            } catch (NotFoundException e) {
+                return ERROR;
+            }
+        }
     }
 
     /**

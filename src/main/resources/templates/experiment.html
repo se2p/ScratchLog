@@ -111,8 +111,12 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div class="row mb-5">
             <div class="col-12" th:utext="${experimentDTO.info}"></div>
+        </div>
+        <div class="text-center" th:if="${participant != null}">
+            <a class="btn btn-primary" target="_blank" th:href="@{/participant/start(id=${experimentDTO.id})}"
+               th:text="#{start_experiment}"></a>
         </div>
     </div>
     <div class="col-2"></div>
