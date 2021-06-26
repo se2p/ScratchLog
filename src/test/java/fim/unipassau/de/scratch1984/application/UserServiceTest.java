@@ -3,6 +3,8 @@ package fim.unipassau.de.scratch1984.application;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
@@ -32,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -60,16 +63,34 @@ public class UserServiceTest {
     private static final String ADMIN = "ADMIN";
     private static final String SECRET = "secret";
     private static final int ID = 1;
-    private final User user = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, SECRET);
+    private final Experiment experiment = new Experiment(ID, "title", "description", "info", true);
+    private final User user1 = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, SECRET);
+    private final User user2 = new User("participant1", "part1@part.de", "PARTICIPANT", "ENGLISH",
+            PASSWORD, SECRET);
+    private final User user3 = new User("participant2", "part2@part.de", "PARTICIPANT", "ENGLISH",
+            PASSWORD, null);
+    private final User user4 = new User("participant3", "part3@part.de", "PARTICIPANT", "ENGLISH",
+            PASSWORD, null);
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
             PASSWORD, SECRET);
+    private final Participant participant1 = new Participant(user2, experiment, null, null);
+    private final Participant participant2 = new Participant(user3, experiment, null, null);
+    private final Participant participant3 = new Participant(user4, experiment, null, null);
     private List<User> admins;
+    private List<Participant> participants;
 
     @BeforeEach
     public void setup() {
         admins = new ArrayList<>();
-        admins.add(user);
-        user.setId(ID);
+        participants = new ArrayList<>();
+        user2.setId(2);
+        user3.setId(3);
+        user4.setId(4);
+        admins.add(user1);
+        participants.add(participant1);
+        participants.add(participant2);
+        participants.add(participant3);
+        user1.setId(ID);
         userDTO.setId(ID);
         userDTO.setUsername(USERNAME);
         userDTO.setPassword(PASSWORD);
@@ -161,24 +182,24 @@ public class UserServiceTest {
 
     @Test
     public void testSaveUser() {
-        when(userRepository.save(any())).thenReturn(user);
+        when(userRepository.save(any())).thenReturn(user1);
         UserDTO saved = userService.saveUser(userDTO);
         assertAll(
-                () -> assertEquals(user.getId(), saved.getId()),
-                () -> assertEquals(user.getUsername(), saved.getUsername()),
-                () -> assertEquals(user.getEmail(), saved.getEmail()),
-                () -> assertEquals(user.getPassword(), saved.getPassword()),
-                () -> assertEquals(user.getSecret(), saved.getSecret()),
-                () -> assertEquals(user.getRole(), saved.getRole().toString()),
-                () -> assertEquals(user.getLanguage(), saved.getLanguage().toString())
+                () -> assertEquals(user1.getId(), saved.getId()),
+                () -> assertEquals(user1.getUsername(), saved.getUsername()),
+                () -> assertEquals(user1.getEmail(), saved.getEmail()),
+                () -> assertEquals(user1.getPassword(), saved.getPassword()),
+                () -> assertEquals(user1.getSecret(), saved.getSecret()),
+                () -> assertEquals(user1.getRole(), saved.getRole().toString()),
+                () -> assertEquals(user1.getLanguage(), saved.getLanguage().toString())
         );
         verify(userRepository).save(any());
     }
 
     @Test
     public void testSaveUserIdNull() {
-        user.setId(null);
-        when(userRepository.save(any())).thenReturn(user);
+        user1.setId(null);
+        when(userRepository.save(any())).thenReturn(user1);
         assertThrows(StoreException.class,
                 () -> userService.saveUser(userDTO)
         );
@@ -205,15 +226,15 @@ public class UserServiceTest {
 
     @Test
     public void testGetUser() {
-        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
         UserDTO userDTO = userService.getUser(USERNAME);
         assertAll(
-                () -> assertEquals(userDTO.getUsername(), user.getUsername()),
-                () -> assertEquals(userDTO.getEmail(), user.getEmail()),
-                () -> assertEquals(userDTO.getRole(), UserDTO.Role.valueOf(user.getRole())),
-                () -> assertEquals(userDTO.getLanguage(), UserDTO.Language.valueOf(user.getLanguage())),
-                () -> assertEquals(userDTO.getPassword(), user.getPassword()),
-                () -> assertEquals(userDTO.getSecret(), user.getSecret())
+                () -> assertEquals(userDTO.getUsername(), user1.getUsername()),
+                () -> assertEquals(userDTO.getEmail(), user1.getEmail()),
+                () -> assertEquals(userDTO.getRole(), UserDTO.Role.valueOf(user1.getRole())),
+                () -> assertEquals(userDTO.getLanguage(), UserDTO.Language.valueOf(user1.getLanguage())),
+                () -> assertEquals(userDTO.getPassword(), user1.getPassword()),
+                () -> assertEquals(userDTO.getSecret(), user1.getSecret())
         );
         verify(userRepository).findUserByUsername(USERNAME);
     }
@@ -244,7 +265,7 @@ public class UserServiceTest {
 
     @Test
     public void testGetUserById() {
-        when(userRepository.findById(ID)).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findById(ID)).thenReturn(java.util.Optional.of(user1));
         UserDTO found = userService.getUserById(ID);
         assertAll(
                 () -> assertEquals(USERNAME, found.getUsername()),
@@ -274,12 +295,12 @@ public class UserServiceTest {
 
     @Test
     public void testGetUserByUsernameOrEmail() {
-        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(user);
+        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(user1);
         UserDTO found = userService.getUserByUsernameOrEmail(USERNAME);
         assertAll(
-                () -> assertEquals(user.getId(), found.getId()),
-                () -> assertEquals(user.getUsername(), found.getUsername()),
-                () -> assertEquals(user.getEmail(), found.getEmail())
+                () -> assertEquals(user1.getId(), found.getId()),
+                () -> assertEquals(user1.getUsername(), found.getUsername()),
+                () -> assertEquals(user1.getEmail(), found.getEmail())
         );
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
     }
@@ -308,7 +329,7 @@ public class UserServiceTest {
 
     @Test
     public void testLoginUser() {
-        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         UserDTO loginUser = userService.loginUser(userDTO);
         assertAll(
@@ -321,7 +342,7 @@ public class UserServiceTest {
 
     @Test
     public void testLoginUserPasswordNotMatching() {
-        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
         assertThrows(NotFoundException.class,
                 () -> userService.loginUser(userDTO)
         );
@@ -332,7 +353,7 @@ public class UserServiceTest {
     @Test
     public void testLoginUserPasswordNull() {
         userDTO.setPassword(null);
-        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
         assertThrows(NotFoundException.class,
                 () -> userService.loginUser(userDTO)
         );
@@ -351,21 +372,21 @@ public class UserServiceTest {
 
     @Test
     public void testAuthenticateUser() {
-        when(userRepository.findUserBySecret(SECRET)).thenReturn(user);
-        when(userRepository.save(user)).thenReturn(user);
+        when(userRepository.findUserBySecret(SECRET)).thenReturn(user1);
+        when(userRepository.save(user1)).thenReturn(user1);
         UserDTO authenticated = userService.authenticateUser(SECRET);
         assertAll(
-                () -> assertEquals(user.getId(), authenticated.getId()),
-                () -> assertEquals(user.getUsername(), authenticated.getUsername()),
-                () -> assertEquals(user.getEmail(), authenticated.getEmail()),
-                () -> assertEquals(user.getPassword(), authenticated.getPassword()),
-                () -> assertEquals(user.getSecret(), authenticated.getSecret()),
-                () -> assertEquals(user.getRole(), authenticated.getRole().toString()),
-                () -> assertEquals(user.getLanguage(), authenticated.getLanguage().toString()),
+                () -> assertEquals(user1.getId(), authenticated.getId()),
+                () -> assertEquals(user1.getUsername(), authenticated.getUsername()),
+                () -> assertEquals(user1.getEmail(), authenticated.getEmail()),
+                () -> assertEquals(user1.getPassword(), authenticated.getPassword()),
+                () -> assertEquals(user1.getSecret(), authenticated.getSecret()),
+                () -> assertEquals(user1.getRole(), authenticated.getRole().toString()),
+                () -> assertEquals(user1.getLanguage(), authenticated.getLanguage().toString()),
                 () -> assertTrue(authenticated.isActive())
         );
         verify(userRepository).findUserBySecret(SECRET);
-        verify(userRepository).save(user);
+        verify(userRepository).save(user1);
     }
 
     @Test
@@ -374,7 +395,7 @@ public class UserServiceTest {
                 () -> userService.authenticateUser(SECRET)
         );
         verify(userRepository).findUserBySecret(SECRET);
-        verify(userRepository, never()).save(user);
+        verify(userRepository, never()).save(user1);
     }
 
     @Test
@@ -383,7 +404,7 @@ public class UserServiceTest {
                 () -> userService.authenticateUser(null)
         );
         verify(userRepository, never()).findUserBySecret(anyString());
-        verify(userRepository, never()).save(user);
+        verify(userRepository, never()).save(user1);
     }
 
     @Test
@@ -392,12 +413,12 @@ public class UserServiceTest {
                 () -> userService.authenticateUser(BLANK)
         );
         verify(userRepository, never()).findUserBySecret(anyString());
-        verify(userRepository, never()).save(user);
+        verify(userRepository, never()).save(user1);
     }
 
     @Test
     public void testUpdateUser() {
-        when(userRepository.save(any())).thenReturn(user);
+        when(userRepository.save(any())).thenReturn(user1);
         UserDTO saved = userService.updateUser(userDTO);
         assertAll(
                 () -> assertEquals(userDTO.getId(), saved.getId()),
@@ -433,7 +454,7 @@ public class UserServiceTest {
 
     @Test
     public void testUpdateEmail() {
-        when(userRepository.findById(ID)).thenReturn(java.util.Optional.of(user));
+        when(userRepository.findById(ID)).thenReturn(java.util.Optional.of(user1));
         assertDoesNotThrow(() -> userService.updateEmail(ID, EMAIL));
         verify(userRepository).save(any());
     }
@@ -468,6 +489,69 @@ public class UserServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> userService.updateEmail(0, EMAIL)
         );
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testReactivateUserAccount() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findAllByExperimentAndStart(experiment, null)).thenReturn(participants);
+        List<UserDTO> userDTOS = userService.reactivateUserAccounts(ID);
+        assertAll(
+                () -> assertEquals(2, userDTOS.size()),
+                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 3)),
+                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 4)),
+                () -> assertTrue(userDTOS.stream().allMatch(UserDTO::isActive)),
+                () -> assertTrue(userDTOS.stream().allMatch(u -> u.getSecret() != null))
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findAllByExperimentAndStart(experiment, null);
+        verify(userRepository, times(2)).save(any());
+    }
+
+    @Test
+    public void testReactivateUserAccountsUserIdNull() {
+        user3.setId(null);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findAllByExperimentAndStart(experiment, null)).thenReturn(participants);
+        assertThrows(IllegalStateException.class,
+                () -> userService.reactivateUserAccounts(ID)
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findAllByExperimentAndStart(experiment, null);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testReactivateUserAccountsEmptyList() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        List<UserDTO> userDTOS = userService.reactivateUserAccounts(ID);
+        assertTrue(userDTOS.isEmpty());
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findAllByExperimentAndStart(experiment, null);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testReactivateUserAccountsNotFound() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findAllByExperimentAndStart(experiment,
+                null)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> userService.reactivateUserAccounts(ID)
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findAllByExperimentAndStart(experiment, null);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testReactivateUserAccountsInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.reactivateUserAccounts(0)
+        );
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).findAllByExperimentAndStart(any(), any());
         verify(userRepository, never()).save(any());
     }
 
@@ -511,8 +595,8 @@ public class UserServiceTest {
 
     @Test
     public void testFindLastId() {
-        when(userRepository.findFirstByOrderByIdDesc()).thenReturn(user);
-        assertEquals(user.getId(), userService.findLastId());
+        when(userRepository.findFirstByOrderByIdDesc()).thenReturn(user1);
+        assertEquals(user1.getId(), userService.findLastId());
         verify(userRepository).findFirstByOrderByIdDesc();
     }
 
