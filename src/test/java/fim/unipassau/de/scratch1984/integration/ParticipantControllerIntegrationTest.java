@@ -71,15 +71,19 @@ public class ParticipantControllerIntegrationTest {
     private static final String PARTICIPANT = "participant";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String REDIRECT_GUI = "redirect:http://localhost:8601?uid=";
+    private static final String REDIRECT_FINISH = "redirect:/finish";
     private static final String EXP_ID = "&expid=";
     private static final String EMAIL = "participant@participant.de";
     private static final String BLANK = "   ";
     private static final String ID_STRING = "1";
     private static final String EXPERIMENT = "experiment";
     private static final String USER_DTO = "userDTO";
+    private static final String EXPERIMENT_DTO = "experimentDTO";
     private static final String INFO = "info";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String ID_PARAM = "id";
+    private static final String USER_PARAM = "user";
+    private static final String EXPERIMENT_PARAM = "experiment";
     private static final int ID = 1;
     private static final int LAST_ID = ID + 1;
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
@@ -112,7 +116,7 @@ public class ParticipantControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.findLastId()).thenReturn(ID);
         mvc.perform(get("/participant/add")
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -129,7 +133,7 @@ public class ParticipantControllerIntegrationTest {
     public void testGetParticipantFormNotFound() throws Exception {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/participant/add")
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -145,7 +149,7 @@ public class ParticipantControllerIntegrationTest {
         experimentDTO.setActive(false);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/participant/add")
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -159,7 +163,7 @@ public class ParticipantControllerIntegrationTest {
     @Test
     public void testGetParticipantFormExperimentIdInvalid() throws Exception {
         mvc.perform(get("/participant/add")
-                .param("id", "0")
+                .param(ID_PARAM, "0")
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -176,7 +180,7 @@ public class ParticipantControllerIntegrationTest {
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -193,7 +197,7 @@ public class ParticipantControllerIntegrationTest {
         when(userService.saveUser(userDTO)).thenReturn(userDTO);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -211,7 +215,7 @@ public class ParticipantControllerIntegrationTest {
         doThrow(NotFoundException.class).when(participantService).saveParticipant(userDTO.getId(), ID);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -229,7 +233,7 @@ public class ParticipantControllerIntegrationTest {
         when(userService.existsEmail(EMAIL)).thenReturn(true);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -247,7 +251,7 @@ public class ParticipantControllerIntegrationTest {
         userDTO.setUsername(BLANK);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -265,7 +269,7 @@ public class ParticipantControllerIntegrationTest {
         userDTO.setEmail(PARTICIPANT);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
-                .param("id", ID_STRING)
+                .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -282,7 +286,7 @@ public class ParticipantControllerIntegrationTest {
     public void testAddParticipantExperimentIdInvalid() throws Exception {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
-                .param("id", "-1")
+                .param(ID_PARAM, "-1")
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -352,8 +356,8 @@ public class ParticipantControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("page", 1))
                 .andExpect(model().attribute("lastPage", ID + 1))
-                .andExpect(model().attribute("experimentDTO", experimentDTO))
-                .andExpect(model().attribute("error", notNullValue()))
+                .andExpect(model().attribute(EXPERIMENT_DTO, experimentDTO))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
@@ -536,5 +540,116 @@ public class ParticipantControllerIntegrationTest {
         verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).updateParticipant(any());
+    }
+
+    @Test
+    public void testStopExperiment() throws Exception {
+        participantDTO.setStart(LocalDateTime.now());
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        when(participantService.updateParticipant(participantDTO)).thenReturn(true);
+        mvc.perform(get("/participant/stop")
+                .param(USER_PARAM, ID_STRING)
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_FINISH));
+        verify(userService).getUserById(ID);
+        verify(participantService).getParticipant(ID, ID);
+        verify(participantService).updateParticipant(participantDTO);
+        verify(userService).saveUser(userDTO);
+    }
+
+    @Test
+    public void testStopExperimentParticipantNotUpdated() throws Exception {
+        participantDTO.setStart(LocalDateTime.now());
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        mvc.perform(get("/participant/stop")
+                .param(USER_PARAM, ID_STRING)
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserById(ID);
+        verify(participantService).getParticipant(ID, ID);
+        verify(participantService).updateParticipant(participantDTO);
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    public void testStopExperimentUserNotFound() throws Exception {
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/participant/stop")
+                .param(USER_PARAM, ID_STRING)
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUserById(ID);
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    @WithMockUser(username = PARTICIPANT, roles = {"ADMIN"})
+    public void testStopExperimentUserAdmin() throws Exception {
+        mvc.perform(get("/participant/stop")
+                .param(USER_PARAM, ID_STRING)
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).getUserById(anyInt());
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    public void testStopExperimentUserIdInvalid() throws Exception {
+        mvc.perform(get("/participant/stop")
+                .param(USER_PARAM, BLANK)
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).getUserById(anyInt());
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    public void testStopExperimentExperimentIdInvalid() throws Exception {
+        mvc.perform(get("/participant/stop")
+                .param(USER_PARAM, ID_STRING)
+                .param(EXPERIMENT_PARAM, PARTICIPANT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).getUserById(anyInt());
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).saveUser(any());
     }
 }

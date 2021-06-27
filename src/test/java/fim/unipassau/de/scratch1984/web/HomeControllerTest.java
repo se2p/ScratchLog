@@ -44,6 +44,7 @@ public class HomeControllerTest {
     private static final String ADMIN = "ROLE_ADMIN";
     private static final String INDEX = "index";
     private static final String LOGIN = "login";
+    private static final String FINISH = "experiment-finish";
     private static final String ERROR = "redirect:/error";
     private static final String CURRENT = "3";
     private static final String LAST = "4";
@@ -56,8 +57,7 @@ public class HomeControllerTest {
         when(httpServletRequest.isUserInRole(ADMIN)).thenReturn(true);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
         when(experimentService.getLastPage()).thenReturn(1);
-        String returnString = homeController.getIndexPage(httpServletRequest, model);
-        assertEquals(INDEX, returnString);
+        assertEquals(INDEX, homeController.getIndexPage(httpServletRequest, model));
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperimentPage(any(PageRequest.class));
         verify(experimentService).getLastPage();
@@ -66,8 +66,7 @@ public class HomeControllerTest {
 
     @Test
     public void testGetIndexPageNoAdmin() {
-        String returnString = homeController.getIndexPage(httpServletRequest, model);
-        assertEquals(INDEX, returnString);
+        assertEquals(INDEX, homeController.getIndexPage(httpServletRequest, model));
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(experimentService, never()).getLastPage();
@@ -78,8 +77,7 @@ public class HomeControllerTest {
     public void testGetNextPage() {
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        String returnString = homeController.getNextPage(CURRENT, model);
-        assertEquals(INDEX, returnString);
+        assertEquals(INDEX, homeController.getNextPage(CURRENT, model));
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
         verify(model, times(3)).addAttribute(anyString(), any());
@@ -88,8 +86,7 @@ public class HomeControllerTest {
     @Test
     public void testGetNextPageInvalidCurrent() {
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
-        String returnString = homeController.getNextPage(BLANK, model);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, homeController.getNextPage(BLANK, model));
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
@@ -98,8 +95,7 @@ public class HomeControllerTest {
     @Test
     public void testGetNextPageInvalidCurrentEqualLast() {
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
-        String returnString = homeController.getNextPage(LAST, model);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, homeController.getNextPage(LAST, model));
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
@@ -107,8 +103,7 @@ public class HomeControllerTest {
 
     @Test
     public void testGetNextPageInvalidCurrentNull() {
-        String returnString = homeController.getNextPage(null, model);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, homeController.getNextPage(null, model));
         verify(experimentService, never()).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
@@ -118,8 +113,7 @@ public class HomeControllerTest {
     public void testGetPrevious() {
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        String returnString = homeController.getPreviousPage(CURRENT, model);
-        assertEquals(INDEX, returnString);
+        assertEquals(INDEX, homeController.getPreviousPage(CURRENT, model));
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
         verify(model, times(3)).addAttribute(anyString(), any());
@@ -128,8 +122,7 @@ public class HomeControllerTest {
     @Test
     public void testGetPreviousCurrent0() {
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
-        String returnString = homeController.getPreviousPage("0", model);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, homeController.getPreviousPage("0", model));
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
@@ -138,8 +131,7 @@ public class HomeControllerTest {
     @Test
     public void testGetPreviousLastSmallerCurrent() {
         when(experimentService.getLastPage()).thenReturn(1);
-        String returnString = homeController.getPreviousPage(CURRENT, model);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, homeController.getPreviousPage(CURRENT, model));
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
@@ -147,8 +139,7 @@ public class HomeControllerTest {
 
     @Test
     public void testGetPreviousCurrentNull() {
-        String returnString = homeController.getPreviousPage(null, model);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, homeController.getPreviousPage(null, model));
         verify(experimentService, never()).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
@@ -158,8 +149,7 @@ public class HomeControllerTest {
     public void testGetFirstPage() {
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        String returnString = homeController.getFirstPage(model);
-        assertEquals(INDEX, returnString);
+        assertEquals(INDEX, homeController.getFirstPage(model));
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
         verify(model, times(3)).addAttribute(anyString(), any());
@@ -169,8 +159,7 @@ public class HomeControllerTest {
     public void testGetLastPage() {
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        String returnString = homeController.getLastPage(model);
-        assertEquals(INDEX, returnString);
+        assertEquals(INDEX, homeController.getLastPage(model));
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
         verify(model, times(3)).addAttribute(anyString(), any());
@@ -178,8 +167,12 @@ public class HomeControllerTest {
 
     @Test
     public void testGetLoginPage() {
-        String returnString = homeController.getLoginPage(new UserDTO());
-        assertEquals(LOGIN, returnString);
+        assertEquals(LOGIN, homeController.getLoginPage(new UserDTO()));
+    }
+
+    @Test
+    public void testGetExperimentFinishPage() {
+        assertEquals(FINISH, homeController.getExperimentFinishPage());
     }
 
     private List<Experiment> getExperiments(int number) {

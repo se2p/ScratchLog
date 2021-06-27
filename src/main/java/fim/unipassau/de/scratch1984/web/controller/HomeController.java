@@ -192,6 +192,16 @@ public class HomeController {
     }
 
     /**
+     * Loads the experiment finish page.
+     *
+     * @return The experiment finish page.
+     */
+    @GetMapping("/finish")
+    public String getExperimentFinishPage() {
+        return "experiment-finish";
+    }
+
+    /**
      * Returns the corresponding int value of the given page, or -1, if the page is not a number.
      *
      * @param pageValue The page value in its string representation.

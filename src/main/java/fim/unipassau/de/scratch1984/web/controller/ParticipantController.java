@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Locale;
@@ -358,6 +359,86 @@ public class ParticipantController {
             } catch (NotFoundException e) {
                 return ERROR;
             }
+        }
+    }
+
+    /**
+     * Stops the experiment with the given id for the user with the given id, if a corresponding participant relation
+     * exists
+     * participants and have not yet started the experiment. If these requirements are not met, no corresponding
+     * participant could be found, or the user is an administrator, they are redirected to the error page instead.
+     *
+     * @param experiment The experiment id.
+     * @param user The user id.
+     * @param httpServletRequest The servlet request.
+     * @return Redirects to the finish page on success, or to the error page otherwise.
+     */
+    @GetMapping("/stop")
+    public String stopExperiment(@RequestParam("experiment") final String experiment,
+                                 @RequestParam("user") final String user, final HttpServletRequest httpServletRequest) {
+        if (experiment == null || user == null) {
+            logger.error("Cannot stop experiment with invalid user or experiment id null!");
+            return ERROR;
+        }
+
+        int experimentId = parseId(experiment);
+        int userId = parseId(user);
+
+        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
+            logger.error("Cannot stop experiment with invalid user id " + user + " or experiment id " + experiment
+                    + " !");
+            return ERROR;
+        }
+
+        if (httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+            logger.error("An administrator tried to finish the experiment with id " + experiment + " for user" + user
+                    + "!");
+            return ERROR;
+        }
+
+        try {
+            UserDTO userDTO = userService.getUserById(userId);
+            ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userDTO.getId());
+
+            if (participantDTO.getStart() == null || participantDTO.getEnd() != null) {
+                logger.error("Cannot end experiment for participant with id " + participantDTO.getUser()
+                        + " and experiment " + participantDTO.getExperiment() + " with invalid starting time "
+                        + participantDTO.getStart() + " or finishing time " + participantDTO.getEnd() + "!");
+                clearSecurityContext(httpServletRequest);
+                return ERROR;
+            }
+
+            participantDTO.setEnd(LocalDateTime.now());
+            userDTO.setActive(false);
+            userDTO.setSecret(null);
+
+            if (participantService.updateParticipant(participantDTO)) {
+                userService.saveUser(userDTO);
+                clearSecurityContext(httpServletRequest);
+                return "redirect:/finish";
+            } else {
+                logger.error("Failed to update the finishing time of participant with user id "
+                        + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment() + "!");
+                clearSecurityContext(httpServletRequest);
+                return ERROR;
+            }
+        } catch (NotFoundException e) {
+            clearSecurityContext(httpServletRequest);
+            return ERROR;
+        }
+    }
+
+    /**
+     * Clears the current security context and invalidates the http session on user login and logout.
+     *
+     * @param httpServletRequest The {@link HttpServletRequest} request containing the current user session.
+     */
+    private void clearSecurityContext(final HttpServletRequest httpServletRequest) {
+        SecurityContextHolder.clearContext();
+        HttpSession session = httpServletRequest.getSession(false);
+
+        if (session != null) {
+            session.invalidate();
         }
     }
 
