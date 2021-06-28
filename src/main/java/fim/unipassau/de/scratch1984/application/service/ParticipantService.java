@@ -137,6 +137,7 @@ public class ParticipantService {
      * @param participantDTO The dto containing the updated participation information.
      * @return {@code true} if the information was persisted, or {@code false} if not.
      */
+    @Transactional
     public boolean updateParticipant(final ParticipantDTO participantDTO) {
         if (participantDTO.getExperiment() < Constants.MIN_ID || participantDTO.getUser() < Constants.MIN_ID) {
             logger.error("Cannot search for participant with invalid experiment id " + participantDTO.getExperiment()

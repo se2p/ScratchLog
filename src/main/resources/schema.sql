@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `block_event` (
                                `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                `event_type` varchar(255) NOT NULL,
                                `event` varchar(255) NOT NULL,
-                               `spritename` varchar(255) NOT NULL,
+                               `spritename` varchar(255) DEFAULT NULL,
                                `metadata` varchar(255) DEFAULT NULL,
                                `xml` text,
                                `json` text,

@@ -140,6 +140,39 @@ public class ResourceEventDTO {
     private LibraryResource libraryResource;
 
     /**
+     * Default constructor for the block event dto.
+     */
+    public ResourceEventDTO() {
+    }
+
+    /**
+     * Constructs a new resource event dto with the given attributes.
+     *
+     * @param user The id of the user who caused the event.
+     * @param experiment The id of the experiment during which the event occurred.
+     * @param date The time at which the event occurred.
+     * @param eventType The type of event.
+     * @param event The specific event.
+     * @param name The name of the resource.
+     * @param md5 The md5 hash of the resource.
+     * @param filetype The filetype of the resource.
+     * @param libraryResource Whether or not the resource is external.
+     */
+    public ResourceEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
+                            final ResourceEventType eventType, final ResourceEvent event, final String name,
+                            final String md5, final String filetype, final LibraryResource libraryResource) {
+        this.user = user;
+        this.experiment = experiment;
+        this.date = date;
+        this.eventType = eventType;
+        this.event = event;
+        this.name = name;
+        this.md5 = md5;
+        this.filetype = filetype;
+        this.libraryResource = libraryResource;
+    }
+
+    /**
      * Returns the ID of the event.
      *
      * @return The event ID.

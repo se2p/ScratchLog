@@ -25,6 +25,7 @@ npm install
 - edit `application.properties` in the `resources`folder
 - change `@CrossOrigin(origin = "<url>")` in the `EventRestController` to the application URL
 - change `baseURL` property in scratch-vm logging
+- change `window.location.href` in `handleFinishExperiment()` in scratch-gui
 
 ## Build and Deployment
 

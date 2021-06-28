@@ -45,6 +45,32 @@ public class FileDTO {
     private byte[] content;
 
     /**
+     * Default constructor for the file dto.
+     */
+    public FileDTO() {
+    }
+
+    /**
+     * Constructs a new block event dto with the given attributes.
+     *
+     * @param user The id of the user who uploaded the file.
+     * @param experiment The id of the experiment during which the file was uploaded.
+     * @param date The time at which the file was uploaded.
+     * @param name The name of the file.
+     * @param filetype The filetype.
+     * @param content The file content.
+     */
+    public FileDTO(final Integer user, final Integer experiment, final LocalDateTime date, final String name,
+                   final String filetype, final byte[] content) {
+        this.user = user;
+        this.experiment = experiment;
+        this.date = date;
+        this.name = name;
+        this.filetype = filetype;
+        this.content = content;
+    }
+
+    /**
      * Returns the ID of the file.
      *
      * @return The file ID.
