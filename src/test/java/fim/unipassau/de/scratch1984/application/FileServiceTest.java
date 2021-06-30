@@ -7,8 +7,10 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.FileRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.Sb3ZipRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
+import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,8 +47,12 @@ public class FileServiceTest {
     @Mock
     private ExperimentRepository experimentRepository;
 
+    @Mock
+    private Sb3ZipRepository sb3ZipRepository;
+
     private static final int ID = 1;
     private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "png", new byte[]{1, 2, 3, 4});
+    private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip", new byte[]{1, 2, 3, 4});
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", true);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
@@ -110,5 +116,61 @@ public class FileServiceTest {
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment);
         verify(fileRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveSb3Zip() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> fileService.saveSb3Zip(sb3ZipDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository).save(any());
+    }
+
+    @Test
+    public void testSaveSb3ZipConstraintViolation() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(sb3ZipRepository.save(any())).thenThrow(ConstraintViolationException.class);
+        assertDoesNotThrow(
+                () -> fileService.saveSb3Zip(sb3ZipDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository).save(any());
+    }
+
+    @Test
+    public void testSaveSb3ZipEntityNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        assertDoesNotThrow(
+                () -> fileService.saveSb3Zip(sb3ZipDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveSb3ZipParticpantNull() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        assertDoesNotThrow(
+                () -> fileService.saveSb3Zip(sb3ZipDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository, never()).save(any());
     }
 }

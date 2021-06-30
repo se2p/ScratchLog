@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -31,6 +32,7 @@ public class EventRestControllerTest {
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
+    private final JSONObject sb3ZipObject = new JSONObject();
 
     @BeforeEach
     public void setup() throws JSONException {
@@ -58,136 +60,213 @@ public class EventRestControllerTest {
         fileEventObject.put("type", "audio/x-wav");
         fileEventObject.put("file", "blub");
         fileEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        sb3ZipObject.put("user", 3);
+        sb3ZipObject.put("experiment", 39);
+        sb3ZipObject.put("name", "sb3zip.sb3");
+        sb3ZipObject.put("time", "2021-06-28T12:36:37.601Z");
+        sb3ZipObject.put("zip", "blub");
     }
 
     @Test
     public void testStoreBlockEvent() {
-        eventRestController.storeBlockEvent(blockEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+        );
         verify(eventService).saveBlockEvent(any());
     }
 
     @Test
     public void testStoreBlockEventJsonBlank() throws JSONException {
         blockEventObject.put("json", "");
-        eventRestController.storeBlockEvent(blockEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+        );
         verify(eventService).saveBlockEvent(any());
     }
 
     @Test
     public void testStoreBlockEventXmlBlank() throws JSONException {
         blockEventObject.put("xml", "");
-        eventRestController.storeBlockEvent(blockEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+        );
         verify(eventService).saveBlockEvent(any());
     }
 
     @Test
     public void testStoreBlockEventMetadataBlank() throws JSONException {
         blockEventObject.put("metadata", "");
-        eventRestController.storeBlockEvent(blockEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+        );
         verify(eventService).saveBlockEvent(any());
     }
 
     @Test
     public void testStoreBlockEventSpritenameBlank() throws JSONException {
         blockEventObject.put("spritename", "");
-        eventRestController.storeBlockEvent(blockEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+        );
         verify(eventService).saveBlockEvent(any());
     }
 
     @Test
     public void testStoreBlockEventJSON() throws JSONException {
         blockEventObject.put("user", "user");
-        eventRestController.storeBlockEvent(blockEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+        );
         verify(eventService, never()).saveBlockEvent(any());
     }
 
     @Test
     public void testStoreBlockEventIllegalArgument() throws JSONException {
         blockEventObject.put("event", "");
-        eventRestController.storeBlockEvent(blockEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+        );
         verify(eventService, never()).saveBlockEvent(any());
     }
 
     @Test
     public void testStoreBlockEventDateTimeParse() throws JSONException {
         blockEventObject.put("time", "0");
-        eventRestController.storeBlockEvent(blockEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+        );
         verify(eventService, never()).saveBlockEvent(any());
     }
 
     @Test
     public void testStoreResourceEvent() {
-        eventRestController.storeResourceEvent(resourceEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
+        );
         verify(eventService).saveResourceEvent(any());
     }
 
     @Test
     public void testStoreResourceEventDataFormatBlank() throws JSONException {
         resourceEventObject.put("dataFormat", "");
-        eventRestController.storeResourceEvent(resourceEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
+        );
         verify(eventService).saveResourceEvent(any());
     }
 
     @Test
     public void testStoreResourceEventMd5Blank() throws JSONException {
-        resourceEventObject.remove("md5");
         resourceEventObject.put("md5", "");
-        eventRestController.storeResourceEvent(resourceEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
+        );
         verify(eventService).saveResourceEvent(any());
     }
 
     @Test
     public void testStoreResourceEventNameBlank() throws JSONException {
         resourceEventObject.put("name", "");
-        eventRestController.storeResourceEvent(resourceEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
+        );
         verify(eventService).saveResourceEvent(any());
     }
 
     @Test
     public void testStoreResourceEventJSON() throws JSONException {
         resourceEventObject.put("user", "unicorn");
-        eventRestController.storeResourceEvent(resourceEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
+        );
         verify(eventService, never()).saveResourceEvent(any());
     }
 
     @Test
     public void testStoreResourceEventIllegalArgument() throws JSONException {
         resourceEventObject.put("event", "unicorn");
-        eventRestController.storeResourceEvent(resourceEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
+        );
         verify(eventService, never()).saveResourceEvent(any());
     }
 
     @Test
     public void testStoreResourceEventDateTimeParse() throws JSONException {
         resourceEventObject.put("time", "0");
-        eventRestController.storeResourceEvent(resourceEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
+        );
         verify(eventService, never()).saveResourceEvent(any());
     }
 
     @Test
     public void testStoreFile() {
-        eventRestController.storeFileEvent(fileEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeFileEvent(fileEventObject.toString())
+        );
         verify(fileService).saveFile(any());
     }
 
     @Test
     public void testStoreFileJSON() throws JSONException {
         fileEventObject.put("user", "theGordon");
-        eventRestController.storeFileEvent(fileEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeFileEvent(fileEventObject.toString())
+        );
         verify(fileService, never()).saveFile(any());
     }
 
     @Test
     public void testStoreFileIllegalArgument() throws JSONException {
         fileEventObject.put("file", "%");
-        eventRestController.storeFileEvent(fileEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeFileEvent(fileEventObject.toString())
+        );
         verify(fileService, never()).saveFile(any());
     }
 
     @Test
     public void testStoreFileDateTimeParse() throws JSONException {
         fileEventObject.put("time", "%");
-        eventRestController.storeFileEvent(fileEventObject.toString());
+        assertDoesNotThrow(
+                () -> eventRestController.storeFileEvent(fileEventObject.toString())
+        );
         verify(fileService, never()).saveFile(any());
+    }
+
+    @Test
+    public void testStoreZipFile() {
+        assertDoesNotThrow(
+                () -> eventRestController.storeZipFile(sb3ZipObject.toString())
+        );
+        verify(fileService).saveSb3Zip(any());
+    }
+
+    @Test
+    public void testSToreZipFileJSON() {
+        sb3ZipObject.put("user", "theGordon");
+        assertDoesNotThrow(
+                () -> eventRestController.storeZipFile(sb3ZipObject.toString())
+        );
+        verify(fileService, never()).saveSb3Zip(any());
+    }
+
+    @Test
+    public void testSToreZipFileIllegalArgument() {
+        sb3ZipObject.put("zip", "%");
+        assertDoesNotThrow(
+                () -> eventRestController.storeZipFile(sb3ZipObject.toString())
+        );
+        verify(fileService, never()).saveSb3Zip(any());
+    }
+
+    @Test
+    public void testSToreZipFileDateTimeParse() {
+        sb3ZipObject.put("time", "%");
+        assertDoesNotThrow(
+                () -> eventRestController.storeZipFile(sb3ZipObject.toString())
+        );
+        verify(fileService, never()).saveSb3Zip(any());
     }
 }

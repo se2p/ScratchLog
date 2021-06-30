@@ -10,7 +10,6 @@ import org.springframework.data.repository.query.Param;
  */
 public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer> {
 
-    //TODO pagination and offset?
     /**
      * Returns all xml data saved for the given user in the given experiment, if any exist.
      *

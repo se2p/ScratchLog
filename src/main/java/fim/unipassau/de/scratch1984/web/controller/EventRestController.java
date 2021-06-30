@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -103,6 +104,22 @@ public class EventRestController {
         }
 
         fileService.saveFile(fileDTO);
+    }
+
+    /**
+     * Saves the sb3 project zip data passed in the request body.
+     *
+     * @param data The string containing the project data.
+     */
+    @PostMapping("/zip")
+    public void storeZipFile(@RequestBody final String data) {
+        Sb3ZipDTO sb3ZipDTO = createSb3ZipDTO(data);
+
+        if (sb3ZipDTO == null) {
+            return;
+        }
+
+        fileService.saveSb3Zip(sb3ZipDTO);
     }
 
     /**
@@ -208,6 +225,31 @@ public class EventRestController {
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
             logger.error("The file data sent to the server was incomplete!", e);
+            return null;
+        }
+
+        return dto;
+    }
+
+    /**
+     * Creates a {@link Sb3ZipDTO} with the given data.
+     *
+     * @param data The data passed in the request body.
+     * @return The new sb3 zip DTO containing the information.
+     */
+    private Sb3ZipDTO createSb3ZipDTO(final String data) {
+        Sb3ZipDTO dto = new Sb3ZipDTO();
+
+        try {
+            JSONObject object = new JSONObject(data);
+            dto.setUser(object.getInt("user"));
+            dto.setExperiment(object.getInt("experiment"));
+            dto.setName(object.getString("name"));
+            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            dto.setContent(Base64.getDecoder().decode(object.getString("zip")));
+        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
+                | JSONException e) {
+            logger.error("The sb3 zip file data sent to the server was incomplete!", e);
             return null;
         }
 

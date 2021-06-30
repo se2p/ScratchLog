@@ -47,6 +47,7 @@ public class EventRestControllerIntegrationTest {
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
+    private final JSONObject sb3ZipObject = new JSONObject();
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -77,6 +78,11 @@ public class EventRestControllerIntegrationTest {
         fileEventObject.put("type", "audio/x-wav");
         fileEventObject.put("file", "blub");
         fileEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        sb3ZipObject.put("user", 3);
+        sb3ZipObject.put("experiment", 39);
+        sb3ZipObject.put("name", "sb3zip.sb3");
+        sb3ZipObject.put("time", "2021-06-28T12:36:37.601Z");
+        sb3ZipObject.put("zip", "blub");
     }
 
     @AfterEach
@@ -235,5 +241,56 @@ public class EventRestControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
         verify(fileService, never()).saveFile(any());
+    }
+
+    @Test
+    public void testStoreZipFile() throws Exception {
+        mvc.perform(post("/store/zip")
+                .content(sb3ZipObject.toString())
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(fileService).saveSb3Zip(any());
+    }
+
+    @Test
+    public void testStoreZipFileJSON() throws Exception {
+        sb3ZipObject.put("user", "unicorn");
+        mvc.perform(post("/store/zip")
+                .content(sb3ZipObject.toString())
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(fileService, never()).saveSb3Zip(any());
+    }
+
+    @Test
+    public void testStoreZipFileIllegalArgument() throws Exception {
+        sb3ZipObject.put("zip", "%");
+        mvc.perform(post("/store/zip")
+                .content(sb3ZipObject.toString())
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(fileService, never()).saveSb3Zip(any());
+    }
+
+    @Test
+    public void testStoreZipFileDateTimeParse() throws Exception {
+        sb3ZipObject.put("time", "%");
+        mvc.perform(post("/store/zip")
+                .content(sb3ZipObject.toString())
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(fileService, never()).saveSb3Zip(any());
     }
 }
