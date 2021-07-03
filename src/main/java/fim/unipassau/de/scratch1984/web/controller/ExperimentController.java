@@ -10,6 +10,7 @@ import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
+import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,17 +123,29 @@ public class ExperimentController {
             return ERROR;
         }
 
+        boolean participant = false;
+
         if (!httpServletRequest.isUserInRole("ROLE_ADMIN")) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
 
-                if (!userService.existsParticipant(userDTO.getId(), experimentId) || !userDTO.isActive()) {
-                    logger.debug("No participation entry found for the user " + authentication.getName()
-                            + " for the experiment with id " + experimentId + " or the user account is not activated!");
+                if (!userDTO.isActive() || userDTO.getSecret() == null) {
+                    logger.debug("Cannot display experiment page for user with id " + userDTO.getId() + " since their "
+                            + "account is inactive or their secret null!");
                     return ERROR;
                 }
+
+                ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userDTO.getId());
+
+                if (participantDTO.getStart() != null || participantDTO.getEnd() != null) {
+                    logger.debug("Cannot display experiment page for user with id " + userDTO.getId() + " since they "
+                            + "already started or finished the experiment!");
+                    return ERROR;
+                }
+
+                participant = true;
             } catch (NotFoundException e) {
                 logger.error("Can't find user with username " + authentication.getName() + " in the database!", e);
                 return ERROR;
@@ -141,6 +154,16 @@ public class ExperimentController {
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+
+            if (!experimentDTO.isActive() && participant) {
+                logger.error("Cannot display experiment page of experiment with id " + experimentId + " for "
+                        + "participants as the experiment is closed!");
+                return ERROR;
+            }
+            if (participant) {
+                model.addAttribute("participant", true);
+            }
+
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
         } catch (NotFoundException e) {

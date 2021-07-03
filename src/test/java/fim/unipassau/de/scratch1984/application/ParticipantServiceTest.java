@@ -10,6 +10,8 @@ import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,9 +32,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,9 +66,80 @@ public class ParticipantServiceTest {
     private static final int ID = 1;
     private final User user = new User(USERNAME, EMAIL, PARTICIPANT, "ENGLISH", PASSWORD, SECRET);
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", true);
+    private final Participant participant = new Participant(user, experiment, null, null);
+    private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final List<Participant> participantList = getParticipants(5);
     private final Page<Participant> participants = new PageImpl<>(participantList);
     private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
+
+    @BeforeEach
+    public void setup() {
+        participantDTO.setUser(ID);
+        participantDTO.setExperiment(ID);
+        user.setId(ID);
+    }
+
+    @Test
+    public void testGetParticipant() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        ParticipantDTO participantDTO = participantService.getParticipant(ID, ID);
+        assertAll(
+                () -> assertEquals(ID, participantDTO.getExperiment()),
+                () -> assertEquals(ID, participantDTO.getUser()),
+                () -> assertNull(participantDTO.getStart()),
+                () -> assertNull(participantDTO.getEnd())
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testGetParticipantNull() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        assertThrows(NotFoundException.class,
+                () -> participantService.getParticipant(ID, ID)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testGetParticipantEntityNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> participantService.getParticipant(ID, ID)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testGetParticipantInvalidUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.getParticipant(ID, 0)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testGetParticipantInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.getParticipant(-1, ID)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
+    }
 
     @Test
     public void testSaveParticipant() {
@@ -95,6 +171,60 @@ public class ParticipantServiceTest {
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).save(any());
+    }
+
+    @Test
+    public void testUpdateParticipant() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        assertTrue(participantService.updateParticipant(participantDTO));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).save(any());
+    }
+
+    @Test
+    public void testUpdateParticipantEntityNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.save(any())).thenThrow(EntityNotFoundException.class);
+        assertFalse(participantService.updateParticipant(participantDTO));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).save(any());
+    }
+
+    @Test
+    public void testUpdateParticipantConstraintViolation() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.save(any())).thenThrow(ConstraintViolationException.class);
+        assertFalse(participantService.updateParticipant(participantDTO));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).save(any());
+    }
+
+    @Test
+    public void testUpdateParticipantInvalidUserId() {
+        participantDTO.setUser(-1);
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.updateParticipant(participantDTO)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUpdateParticipantInvalidExperimentId() {
+        participantDTO.setExperiment(0);
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.updateParticipant(participantDTO)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).save(any());
     }
 
     @Test

@@ -11,6 +11,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
+import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -111,6 +112,7 @@ public class ExperimentControllerIntegrationTest {
     private final UserDTO participant = new UserDTO(PARTICIPANT, "participant@part.de", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "user", null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
+    private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -125,6 +127,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
         experimentDTO.setActive(false);
+        participantDTO.setStart(null);
     }
 
     @AfterEach
@@ -178,8 +181,9 @@ public class ExperimentControllerIntegrationTest {
     @Test
     @WithMockUser(username = "user", roles = {"PARTICIPANT"})
     public void testGetExperimentParticipant() throws Exception {
+        experimentDTO.setActive(true);
         when(userService.getUser(anyString())).thenReturn(userDTO);
-        when(userService.existsParticipant(ID, ID)).thenReturn(true);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment")
@@ -189,6 +193,7 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute("participant", is(true)))
                 .andExpect(model().attribute(PARTICIPANTS, is(participants)))
                 .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
                         hasProperty("id", is(ID)),
@@ -198,7 +203,7 @@ public class ExperimentControllerIntegrationTest {
                 )))
                 .andExpect(view().name(EXPERIMENT));
         verify(userService).getUser(anyString());
-        verify(userService).existsParticipant(ID, ID);
+        verify(participantService).getParticipant(ID, ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
@@ -224,6 +229,7 @@ public class ExperimentControllerIntegrationTest {
     @WithMockUser(username = "user", roles = {"PARTICIPANT"})
     public void testGetExperimentNoParticipant() throws Exception {
         when(userService.getUser(anyString())).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -233,7 +239,7 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(userService).getUser(anyString());
-        verify(userService).existsParticipant(ID, ID);
+        verify(participantService).getParticipant(ID, ID);
         verify(experimentService, never()).getExperiment(ID);
     }
 
@@ -242,7 +248,6 @@ public class ExperimentControllerIntegrationTest {
     public void testGetExperimentParticipantInactive() throws Exception {
         userDTO.setActive(false);
         when(userService.getUser(anyString())).thenReturn(userDTO);
-        when(userService.existsParticipant(ID, ID)).thenReturn(true);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -252,8 +257,27 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(userService).getUser(anyString());
-        verify(userService).existsParticipant(ID, ID);
-        verify(experimentService, never()).getExperiment(ID);
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(experimentService, never()).getExperiment(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"PARTICIPANT"})
+    public void testGetExperimentParticipantStarted() throws Exception {
+        participantDTO.setStart(LocalDateTime.now());
+        when(userService.getUser(anyString())).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        mvc.perform(get("/experiment")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUser(anyString());
+        verify(participantService).getParticipant(ID, ID);
+        verify(experimentService, never()).getExperiment(anyInt());
     }
 
     @Test

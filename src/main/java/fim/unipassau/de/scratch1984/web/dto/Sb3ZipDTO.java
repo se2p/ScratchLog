@@ -5,27 +5,27 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * A DTO representing a file uploaded during an experiment.
+ * A DTO representing an sb3 zip file uploaded during an experiment.
  */
-public class FileDTO {
+public class Sb3ZipDTO {
 
     /**
-     * The unique ID of the file.
+     * The unique ID of the zip file.
      */
     private Integer id;
 
     /**
-     * The ID of the user who uploaded the file.
+     * The ID of the user for whom the zip file was created.
      */
     private Integer user;
 
     /**
-     * The ID of the experiment during which the file was uploaded.
+     * The ID of the experiment during which the zip file was created.
      */
     private Integer experiment;
 
     /**
-     * The local date time at which the file was uploaded in the Scratch GUI.
+     * The local date time at which the zip file was created by the Scratch VM.
      */
     private LocalDateTime date;
 
@@ -35,43 +35,36 @@ public class FileDTO {
     private String name;
 
     /**
-     * The filetype.
-     */
-    private String filetype;
-
-    /**
      * The file content itself.
      */
     private byte[] content;
 
     /**
-     * Default constructor for the file dto.
+     * Default constructor for the sb3 zip dto.
      */
-    public FileDTO() {
+    public Sb3ZipDTO() {
     }
 
     /**
-     * Constructs a new file dto with the given attributes.
+     * Constructs a new sb3 zip dto with the given attributes.
      *
-     * @param user The id of the user who uploaded the file.
-     * @param experiment The id of the experiment during which the file was uploaded.
-     * @param date The time at which the file was uploaded.
-     * @param name The name of the file.
-     * @param filetype The filetype.
-     * @param content The file content.
+     * @param user The id of the user for whom the zip file was created.
+     * @param experiment The id of the experiment during which the zip file was created.
+     * @param date The time at which the zip file was created.
+     * @param name The name of the zip file.
+     * @param content The zip file content.
      */
-    public FileDTO(final Integer user, final Integer experiment, final LocalDateTime date, final String name,
-                   final String filetype, final byte[] content) {
+    public Sb3ZipDTO(final Integer user, final Integer experiment, final LocalDateTime date, final String name,
+                     final byte[] content) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
         this.name = name;
-        this.filetype = filetype;
         this.content = content;
     }
 
     /**
-     * Returns the ID of the file.
+     * Returns the ID of the zip file.
      *
      * @return The file ID.
      */
@@ -80,7 +73,7 @@ public class FileDTO {
     }
 
     /**
-     * Sets the ID of the file.
+     * Sets the ID of the zip file.
      *
      * @param id The file ID to be set.
      */
@@ -89,7 +82,7 @@ public class FileDTO {
     }
 
     /**
-     * Returns the ID of the user who added the file.
+     * Returns the ID of the user for whom the zip file was created.
      *
      * @return The user's ID.
      */
@@ -107,7 +100,7 @@ public class FileDTO {
     }
 
     /**
-     * Returns the ID of the experiment during which the file was added.
+     * Returns the ID of the experiment during which the zip file was created.
      *
      * @return The experiment ID.
      */
@@ -134,7 +127,7 @@ public class FileDTO {
     }
 
     /**
-     * Sets the upload time of the file.
+     * Sets the upload time of the zip file.
      *
      * @param date The date and time to be set.
      */
@@ -143,7 +136,7 @@ public class FileDTO {
     }
 
     /**
-     * Returns the name of the file.
+     * Returns the name of the zip file.
      *
      * @return The file name.
      */
@@ -152,7 +145,7 @@ public class FileDTO {
     }
 
     /**
-     * Sets the name of the file.
+     * Sets the name of the zip file.
      *
      * @param name The file name to be set.
      */
@@ -161,25 +154,7 @@ public class FileDTO {
     }
 
     /**
-     * Returns the type of the file.
-     *
-     * @return The filetype.
-     */
-    public String getFiletype() {
-        return filetype;
-    }
-
-    /**
-     * Sets the type of the file.
-     *
-     * @param filetype The filetype to be set.
-     */
-    public void setFiletype(final String filetype) {
-        this.filetype = filetype;
-    }
-
-    /**
-     * Returns the content of the file.
+     * Returns the content of the zip file.
      *
      * @return The file content.
      */
@@ -188,7 +163,7 @@ public class FileDTO {
     }
 
     /**
-     * Sets the content of the file.
+     * Sets the content of the zip file.
      *
      * @param content The file content to be set.
      */
@@ -197,10 +172,10 @@ public class FileDTO {
     }
 
     /**
-     * Indicates whether some {@code other} file DTO is semantically equal to this file DTO.
+     * Indicates whether some {@code other} sb3 zip DTO is semantically equal to this sb3 zip DTO.
      *
-     * @param other The object to compare this file DTO to.
-     * @return {@code true} iff {@code other} is a semantically equivalent file DTO.
+     * @param other The object to compare this sb3 zip DTO to.
+     * @return {@code true} iff {@code other} is a semantically equivalent sb3 zip DTO.
      */
     @Override
     public boolean equals(final Object other) {
@@ -212,15 +187,15 @@ public class FileDTO {
             return false;
         }
 
-        FileDTO fileDTO = (FileDTO) other;
-        return id.equals(fileDTO.id);
+        Sb3ZipDTO sb3ZipDTO = (Sb3ZipDTO) other;
+        return id.equals(sb3ZipDTO.id);
     }
 
     /**
-     * Calculates a hash code for this file DTO for hashing purposes, and to fulfill the {@link Object#equals(Object)}
-     * contract.
+     * Calculates a hash code for this sb3 zip DTO for hashing purposes, and to fulfill the
+     * {@link Object#equals(Object)} contract.
      *
-     * @return The hash code value of the file DTO.
+     * @return The hash code value of the sb3 zip DTO.
      */
     @Override
     public int hashCode() {
@@ -228,19 +203,18 @@ public class FileDTO {
     }
 
     /**
-     * Converts the file DTO into a human-readable string representation.
+     * Converts the sb3 zip DTO into a human-readable string representation.
      *
-     * @return A human-readable string representation of the file DTO.
+     * @return A human-readable string representation of the sb3 zip DTO.
      */
     @Override
     public String toString() {
-        return "FileDTO{"
+        return "Sb3ZipDTO{"
                 + "id=" + id
                 + ", user=" + user
                 + ", experiment=" + experiment
                 + ", date=" + date
                 + ", name='" + name + '\''
-                + ", filetype='" + filetype + '\''
                 + ", content=" + Arrays.toString(content)
                 + '}';
     }

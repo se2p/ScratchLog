@@ -205,6 +205,39 @@ public class BlockEventDTO {
     private String code;
 
     /**
+     * Default constructor for the block event dto.
+     */
+    public BlockEventDTO() {
+    }
+
+    /**
+     * Constructs a new block event dto with the given attributes.
+     *
+     * @param user The id of the user who caused the event.
+     * @param experiment The id of the experiment during which the event occurred.
+     * @param date The time at which the event occurred.
+     * @param eventType The type of event.
+     * @param event The specific event.
+     * @param sprite The name of the sprite.
+     * @param metadata The metadata.
+     * @param xml The current xml.
+     * @param code The current json code.
+     */
+    public BlockEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
+                         final BlockEventType eventType, final BlockEvent event, final String sprite,
+                         final String metadata, final String xml, final String code) {
+        this.user = user;
+        this.experiment = experiment;
+        this.date = date;
+        this.eventType = eventType;
+        this.event = event;
+        this.sprite = sprite;
+        this.metadata = metadata;
+        this.xml = xml;
+        this.code = code;
+    }
+
+    /**
      * Returns the ID of the event.
      *
      * @return The event ID.

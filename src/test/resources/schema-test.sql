@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `block_event` (
     `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `event_type` varchar(255) NOT NULL,
     `event` varchar(255) NOT NULL,
-    `spritename` varchar(255) NOT NULL,
+    `spritename` varchar(255) DEFAULT NULL,
     `metadata` varchar(255) DEFAULT NULL,
     `xml` text,
     `json` text,
@@ -109,6 +109,20 @@ CREATE TABLE IF NOT EXISTS `token` (
     `user_id` int NOT NULL,
     PRIMARY KEY (`value`),
     CONSTRAINT `token_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+);
+
+-- scratch1984.sb3_zip definition
+
+CREATE TABLE IF NOT EXISTS `sb3_zip` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `experiment_id` int NOT NULL,
+    `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `name` varchar(255) NOT NULL,
+    `content` longblob NOT NULL,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `sb3_zip_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `sb3_zip_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 );
 
 /**************************
