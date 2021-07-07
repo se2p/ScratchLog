@@ -47,6 +47,19 @@
                         </div>
                         <div class="form-text" th:text="#{description_max}"></div>
                     </div>
+                    <div class="mb-3 form-group position-relative">
+                        <label class="form-label" for="postscript" th:text="#{postscript}"></label>
+                        <div class="input-group">
+                            <textarea name="postscript" id="postscript" type="text" rows="3"
+                                      th:placeholder="#{postscript_placeholder}"
+                                      th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_AREA}"
+                                      th:field="*{postscript}" th:class="${#fields.hasErrors('postscript')
+                                      ? 'form-control is-invalid' : 'form-control'}"></textarea>
+                        </div>
+                        <div class="validation" th:if="${#fields.hasErrors('postscript')}" th:errors="*{postscript}">
+                        </div>
+                        <div class="form-text" th:text="#{postscript_max}"></div>
+                    </div>
                     <div class="mb-5 form-group position-relative">
                         <label class="form-label" for="info" th:text="#{info}"></label>
                         <textarea name="info" id="info" type="text" rows="10" th:placeholder="#{info_placeholder}"

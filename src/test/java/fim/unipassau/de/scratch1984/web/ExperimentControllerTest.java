@@ -92,6 +92,7 @@ public class ExperimentControllerTest {
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
     private static final String INFO = "Some info text";
+    private static final String POSTSCRIPT = "Some postscript";
     private static final String ERROR = "redirect:/error";
     private static final String EXPERIMENT = "experiment";
     private static final String EXPERIMENT_EDIT = "experiment-edit";
@@ -108,7 +109,7 @@ public class ExperimentControllerTest {
     private static final String LAST = "4";
     private static final int LAST_PAGE = 3;
     private static final int ID = 1;
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, false);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, "admin", "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANTS, "participant@part.de", UserDTO.Role.PARTICIPANT,
@@ -128,6 +129,7 @@ public class ExperimentControllerTest {
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
+        experimentDTO.setPostscript(POSTSCRIPT);
         experimentDTO.setInfo(INFO);
         securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
         userDTOS.add(participant);
@@ -458,8 +460,17 @@ public class ExperimentControllerTest {
     public void testEditExperimentInfoTooLong() {
         experimentDTO.setInfo(createLongString(60000).toString());
         when(bindingResult.hasErrors()).thenReturn(true);
-        String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
-        assertEquals(EXPERIMENT_EDIT, returnString);
+        assertEquals(EXPERIMENT_EDIT, experimentController.editExperiment(experimentDTO, bindingResult));
+        verify(bindingResult).addError(any());
+        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
+        verify(experimentService, never()).saveExperiment(any());
+    }
+
+    @Test
+    public void testEditExperimentPostscriptTooLong() {
+        experimentDTO.setPostscript(createLongString(1001).toString());
+        when(bindingResult.hasErrors()).thenReturn(true);
+        assertEquals(EXPERIMENT_EDIT, experimentController.editExperiment(experimentDTO, bindingResult));
         verify(bindingResult).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService, never()).saveExperiment(any());

@@ -81,6 +81,7 @@ public class ExperimentControllerIntegrationTest {
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
     private static final String INFO = "Some info text";
+    private static final String POSTSCRIPT = "Some postscript";
     private static final String INFO_PARSED = "<p>Some info text</p>\n";
     private static final String ERROR = "redirect:/error";
     private static final String EXPERIMENT = "experiment";
@@ -106,7 +107,7 @@ public class ExperimentControllerIntegrationTest {
     private static final int PREVIOUS = 2;
     private static final int NEXT = 4;
     private static final int ID = 1;
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, false);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false);
     private final UserDTO userDTO = new UserDTO("user", "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, "admin", "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANT, "participant@part.de", UserDTO.Role.PARTICIPANT,
@@ -126,6 +127,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
+        experimentDTO.setPostscript(POSTSCRIPT);
         experimentDTO.setActive(false);
         participantDTO.setStart(null);
     }
@@ -155,7 +157,9 @@ public class ExperimentControllerIntegrationTest {
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
-                        hasProperty("info", is(INFO_PARSED))
+                        hasProperty("postscript", is(POSTSCRIPT)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(false))
                 )))
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
@@ -199,7 +203,9 @@ public class ExperimentControllerIntegrationTest {
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
-                        hasProperty("info", is(INFO_PARSED))
+                        hasProperty("postscript", is(POSTSCRIPT)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(true))
                 )))
                 .andExpect(view().name(EXPERIMENT));
         verify(userService).getUser(anyString());
@@ -319,7 +325,9 @@ public class ExperimentControllerIntegrationTest {
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
-                        hasProperty("info", is(INFO))
+                        hasProperty("postscript", is(POSTSCRIPT)),
+                        hasProperty("info", is(INFO)),
+                        hasProperty("active", is(false))
                 )))
                 .andExpect(view().name(EXPERIMENT_EDIT));
         verify(experimentService).getExperiment(ID);
@@ -482,6 +490,7 @@ public class ExperimentControllerIntegrationTest {
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("postscript", is(POSTSCRIPT)),
                         hasProperty("info", is(INFO_PARSED)),
                         hasProperty("active", is(true))
                 )))
@@ -513,6 +522,7 @@ public class ExperimentControllerIntegrationTest {
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("postscript", is(POSTSCRIPT)),
                         hasProperty("info", is(INFO_PARSED)),
                         hasProperty("active", is(false))
                 )))
@@ -666,6 +676,7 @@ public class ExperimentControllerIntegrationTest {
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("postscript", is(POSTSCRIPT)),
                         hasProperty("info", is(INFO_PARSED)),
                         hasProperty("active", is(false))
                 )))
@@ -746,6 +757,7 @@ public class ExperimentControllerIntegrationTest {
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("postscript", is(POSTSCRIPT)),
                         hasProperty("info", is(INFO_PARSED)),
                         hasProperty("active", is(false))
                 )))
@@ -823,6 +835,7 @@ public class ExperimentControllerIntegrationTest {
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("postscript", is(POSTSCRIPT)),
                         hasProperty("info", is(INFO_PARSED)),
                         hasProperty("active", is(false))
                 )))
@@ -867,6 +880,7 @@ public class ExperimentControllerIntegrationTest {
                         hasProperty("id", is(ID)),
                         hasProperty("title", is(TITLE)),
                         hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("postscript", is(POSTSCRIPT)),
                         hasProperty("info", is(INFO_PARSED)),
                         hasProperty("active", is(false))
                 )))

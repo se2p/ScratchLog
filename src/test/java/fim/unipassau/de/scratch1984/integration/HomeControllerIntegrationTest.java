@@ -1,9 +1,11 @@
 package fim.unipassau.de.scratch1984.integration;
 
+import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.HomeController;
+import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -50,6 +54,7 @@ public class HomeControllerIntegrationTest {
     private ExperimentService experimentService;
 
     private static final String INDEX = "index";
+    private static final String FINISH = "experiment-finish";
     private static final String ERROR = "redirect:/error";
     private static final String CURRENT = "3";
     private static final String LAST = "4";
@@ -58,8 +63,14 @@ public class HomeControllerIntegrationTest {
     private static final String PAGE_PARAM = "page";
     private static final String LAST_PAGE = "lastPage";
     private static final String EXPERIMENTS = "experiments";
+    private static final String ID_STRING = "1";
+    private static final String THANKS = "thanks";
+    private static final String ID_PARAM = "id";
     private final int pageNum = 3;
     private final int lastPage = 3;
+    private static final int ID = 1;
+    private static final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "My Experiment", "description",
+            "info", "postscript", true);
     private final Page<Experiment> experimentPage = new PageImpl<>(getExperiments(5));
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
@@ -250,10 +261,54 @@ public class HomeControllerIntegrationTest {
         verify(experimentService).getExperimentPage(any(PageRequest.class));
     }
 
+    @Test
+    public void testGetExperimentFinishPage() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        mvc.perform(get("/finish")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(THANKS, is(experimentDTO.getPostscript())))
+                .andExpect(view().name(FINISH));
+        verify(experimentService).getExperiment(ID);
+    }
+
+    @Test
+    public void testGetExperimentFinishPageNotFound() throws Exception {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/finish")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(model().attribute(THANKS, nullValue()))
+                .andExpect(view().name(ERROR));
+        verify(experimentService).getExperiment(ID);
+    }
+
+    @Test
+    public void testGetExperimentFinishPageInvalidId() throws Exception {
+        mvc.perform(get("/finish")
+                .param(ID_PARAM, INVALID_NUMBER)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(model().attribute(THANKS, nullValue()))
+                .andExpect(view().name(ERROR));
+        verify(experimentService, never()).getExperiment(anyInt());
+    }
+
     private List<Experiment> getExperiments(int number) {
         List<Experiment> experiments = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            experiments.add(new Experiment(i, "Experiment " + i, "Description for experiment " + i, "", false));
+            experiments.add(new Experiment(i, "Experiment " + i, "Description for experiment " + i, "", "", false));
         }
         return experiments;
     }

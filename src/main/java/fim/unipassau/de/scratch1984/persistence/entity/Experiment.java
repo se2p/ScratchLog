@@ -39,6 +39,12 @@ public class Experiment {
     private String info;
 
     /**
+     * The text shown after the user has finished the experiment.
+     */
+    @Column(name = "postscript")
+    private String postscript;
+
+    /**
      * Boolean indicating whether the experiment is running or not.
      */
     @Column(name = "active")
@@ -57,14 +63,16 @@ public class Experiment {
      * @param title The experiment title.
      * @param description The experiment description.
      * @param info The experiment information text.
+     * @param postscript The postscript text.
      * @param active Whether the experiment is currently running or not.
      */
     public Experiment(final Integer id, final String title, final String description, final String info,
-                      final boolean active) {
+                      final String postscript, final boolean active) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.info = info;
+        this.postscript = postscript;
         this.active = active;
     }
 
@@ -138,6 +146,24 @@ public class Experiment {
      */
     public void setInfo(final String info) {
         this.info = info;
+    }
+
+    /**
+     * Returns the postscript of the experiment.
+     *
+     * @return The postscript text.
+     */
+    public String getPostscript() {
+        return postscript;
+    }
+
+    /**
+     * Sets the text shown after the user has finished the experiment.
+     *
+     * @param postscript The postscript to be set.
+     */
+    public void setPostscript(final String postscript) {
+        this.postscript = postscript;
     }
 
     /**

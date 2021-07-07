@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,7 @@ public class SearchService {
      * @param id The experiment id.
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
+    @Transactional
     public List<String[]> getUserSuggestions(final String query, final int id) {
         List<User> users = userRepository.findParticipantSuggestions(query, id);
         return addUserInfo(users);
@@ -65,6 +67,7 @@ public class SearchService {
      * @param id The experiment id.
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
+    @Transactional
     public List<String[]> getUserDeleteSuggestions(final String query, final int id) {
         List<User> users = userRepository.findDeleteParticipantSuggestions(query, id);
         return addUserInfo(users);
