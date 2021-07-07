@@ -71,7 +71,7 @@ public class ParticipantControllerIntegrationTest {
     private static final String PARTICIPANT = "participant";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String REDIRECT_GUI = "redirect:http://localhost:8601?uid=";
-    private static final String REDIRECT_FINISH = "redirect:/finish";
+    private static final String REDIRECT_FINISH = "redirect:/finish?id=";
     private static final String EXP_ID = "&expid=";
     private static final String EMAIL = "participant@participant.de";
     private static final String BLANK = "   ";
@@ -80,6 +80,7 @@ public class ParticipantControllerIntegrationTest {
     private static final String USER_DTO = "userDTO";
     private static final String EXPERIMENT_DTO = "experimentDTO";
     private static final String INFO = "info";
+    private static final String POSTSCRIPT = "postscript";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String ID_PARAM = "id";
     private static final String USER_PARAM = "user";
@@ -88,7 +89,7 @@ public class ParticipantControllerIntegrationTest {
     private static final int LAST_ID = ID + 1;
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, true);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
@@ -556,7 +557,7 @@ public class ParticipantControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT_FINISH));
+                .andExpect(view().name(REDIRECT_FINISH + ID));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).updateParticipant(participantDTO);

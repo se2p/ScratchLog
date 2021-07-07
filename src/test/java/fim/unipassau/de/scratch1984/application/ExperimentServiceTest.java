@@ -51,8 +51,8 @@ public class ExperimentServiceTest {
     private static final String BLANK = "    ";
     private static final int ID = 1;
     private static final int INVALID_ID = 2;
-    private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "Some info text", false);
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, "Some info text", false);
+    private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "Some info text", "Some postscript", false);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, "Some info text", "Some postscript", false);
     private final ExperimentData experimentData = new ExperimentData(ID, 5, 3, 2);
     private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
     private Page<Experiment> experimentPage;
@@ -360,7 +360,7 @@ public class ExperimentServiceTest {
     private List<Experiment> getExperiments(int number) {
         List<Experiment> experiments = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            experiments.add(new Experiment(i, "Experiment " + i, "Description for experiment " + i, "", false));
+            experiments.add(new Experiment(i, "Experiment " + i, "Description for experiment " + i, "", "", false));
         }
         return experiments;
     }

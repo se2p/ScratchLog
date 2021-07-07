@@ -63,7 +63,7 @@ public class UserServiceTest {
     private static final String ADMIN = "ADMIN";
     private static final String SECRET = "secret";
     private static final int ID = 1;
-    private final Experiment experiment = new Experiment(ID, "title", "description", "info", true);
+    private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true);
     private final User user1 = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, SECRET);
     private final User user2 = new User("participant1", "part1@part.de", "PARTICIPANT", "ENGLISH",
             PASSWORD, SECRET);

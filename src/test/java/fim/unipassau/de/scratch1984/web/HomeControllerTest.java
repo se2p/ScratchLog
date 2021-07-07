@@ -1,9 +1,12 @@
 package fim.unipassau.de.scratch1984.web;
 
+import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.web.controller.HomeController;
+import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,13 +16,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.ui.Model;
+import org.springframework.web.servlet.LocaleResolver;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -41,6 +47,12 @@ public class HomeControllerTest {
     @Mock
     private HttpServletRequest httpServletRequest;
 
+    @Mock
+    private ResourceBundle resourceBundle;
+
+    @Mock
+    private LocaleResolver localeResolver;
+
     private static final String ADMIN = "ROLE_ADMIN";
     private static final String INDEX = "index";
     private static final String LOGIN = "login";
@@ -49,8 +61,18 @@ public class HomeControllerTest {
     private static final String CURRENT = "3";
     private static final String LAST = "4";
     private static final String BLANK = "   ";
+    private static final String ID_STRING = "1";
+    private static final String THANKS = "thanks";
     private static final int LAST_PAGE = 3;
+    private static final int ID = 1;
+    private static final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "My Experiment", "description",
+            "info", "postscript", true);
     private final Page<Experiment> experimentPage = new PageImpl<>(getExperiments(5));
+
+    @BeforeEach
+    public void setup() {
+        experimentDTO.setPostscript("postscript");
+    }
 
     @Test
     public void testGetIndexPage() {
@@ -172,13 +194,47 @@ public class HomeControllerTest {
 
     @Test
     public void testGetExperimentFinishPage() {
-        assertEquals(FINISH, homeController.getExperimentFinishPage());
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(FINISH, homeController.getExperimentFinishPage(ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(model).addAttribute(THANKS, experimentDTO.getPostscript());
+    }
+
+    @Test
+    public void testGetExperimentFinishPagePostscriptNull() {
+        experimentDTO.setPostscript(null);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(FINISH, homeController.getExperimentFinishPage(ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(model).addAttribute(anyString(), anyString());
+    }
+
+    @Test
+    public void testGetExperimentFinishPageNotFound() {
+        when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, homeController.getExperimentFinishPage(ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(model, never()).addAttribute(anyString(), anyString());
+    }
+
+    @Test
+    public void testGetExperimentFinishPageExperimentIdInvalid() {
+        assertEquals(ERROR, homeController.getExperimentFinishPage(BLANK, model));
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(model, never()).addAttribute(anyString(), anyString());
+    }
+
+    @Test
+    public void testGetExperimentFinishPageExperimentIdNull() {
+        assertEquals(ERROR, homeController.getExperimentFinishPage(null, model));
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(model, never()).addAttribute(anyString(), anyString());
     }
 
     private List<Experiment> getExperiments(int number) {
         List<Experiment> experiments = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            experiments.add(new Experiment(i, "Experiment " + i, "Description for experiment " + i, "", false));
+            experiments.add(new Experiment(i, "Experiment " + i, "Description for experiment " + i, "", "", false));
         }
         return experiments;
     }

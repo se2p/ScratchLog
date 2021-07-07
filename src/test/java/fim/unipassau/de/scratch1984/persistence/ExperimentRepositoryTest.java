@@ -27,9 +27,12 @@ public class ExperimentRepositoryTest {
     @Autowired
     private ExperimentRepository repository;
 
-    private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info", false);
-    private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info", true);
-    private Experiment experiment3 = new Experiment(null, "Experiment 3", "Description for experiment 3", "Some info", false);
+    private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
+            "Some postscript", false);
+    private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
+            "Some postscript", true);
+    private Experiment experiment3 = new Experiment(null, "Experiment 3", "Description for experiment 3", "Some info",
+            "Some postscript", false);
 
     @BeforeEach
     public void setup() {

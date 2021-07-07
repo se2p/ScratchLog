@@ -51,8 +51,8 @@ public class UserRepositoryTest {
     private User user14 = new User("part6", "part12@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user15 = new User("part7", "part13@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user16 = new User("part8", "part14@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", true);
-    private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", true);
+    private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", "", true);
+    private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", "", true);
     private Participant participant1 = new Participant(user3, experiment1, null, null);
     private Participant participant2 = new Participant(user12, experiment1, null, null);
     private Participant participant3 = new Participant(user13, experiment1, null, null);

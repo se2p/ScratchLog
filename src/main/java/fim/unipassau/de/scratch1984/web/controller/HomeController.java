@@ -1,12 +1,15 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
+import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.annotation.Secured;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ResourceBundle;
 
 /**
  * The controller for the homepage of the project.
@@ -90,7 +94,7 @@ public class HomeController {
             return ERROR;
         }
 
-        int current = parsePageValue(currentPage);
+        int current = parseStringValue(currentPage);
         int last = experimentService.getLastPage() + 1;
 
         if (current <= -1 || current >= last) {
@@ -122,7 +126,7 @@ public class HomeController {
             return ERROR;
         }
 
-        int current = parsePageValue(currentPage);
+        int current = parseStringValue(currentPage);
         int last = experimentService.getLastPage() + 1;
 
         if (current <= 1 || last < current) {
@@ -192,24 +196,48 @@ public class HomeController {
     }
 
     /**
-     * Loads the experiment finish page.
+     * Loads the experiment finish page for the experiment with the current id.
      *
+     * @param id The experiment id.
+     * @param model The model used to store the message to be displayed on the page.
      * @return The experiment finish page.
      */
     @GetMapping("/finish")
-    public String getExperimentFinishPage() {
+    public String getExperimentFinishPage(@RequestParam("id") final String id, final Model model) {
+        if (id == null) {
+            logger.error("Cannot load experiment finish page of experiment with id null!");
+            return ERROR;
+        }
+
+        int experimentId = parseStringValue(id);
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot load experiment finish page for invalid id " + experimentId + "!");
+            return ERROR;
+        }
+
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            model.addAttribute("thanks", experimentDTO.getPostscript() != null ? experimentDTO.getPostscript()
+                    : resourceBundle.getString("thanks"));
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+
         return "experiment-finish";
     }
 
     /**
-     * Returns the corresponding int value of the given page, or -1, if the page is not a number.
+     * Returns the corresponding int value of the given string, or -1, if the value is not a number.
      *
-     * @param pageValue The page value in its string representation.
+     * @param value The value in its string representation.
      * @return The corresponding int value, or -1.
      */
-    private int parsePageValue(final String pageValue) {
+    private int parseStringValue(final String value) {
         try {
-            return Integer.parseInt(pageValue);
+            return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return -1;
         }

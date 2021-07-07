@@ -279,6 +279,9 @@ public class ExperimentService {
         if (experimentDTO.getDescription() != null) {
             experiment.setDescription(experimentDTO.getDescription());
         }
+        if (experimentDTO.getPostscript() != null && !experimentDTO.getPostscript().trim().isBlank()) {
+            experiment.setPostscript(experimentDTO.getPostscript());
+        }
         if (experimentDTO.getInfo() != null) {
             experiment.setInfo(experimentDTO.getInfo());
         }
@@ -304,6 +307,9 @@ public class ExperimentService {
         }
         if (experiment.getDescription() != null) {
             experimentDTO.setDescription(experiment.getDescription());
+        }
+        if (experiment.getPostscript() != null) {
+            experimentDTO.setPostscript(experiment.getPostscript());
         }
         if (experiment.getInfo() != null) {
             experimentDTO.setInfo((experiment.getInfo()));

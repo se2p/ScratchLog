@@ -237,6 +237,11 @@ public class ExperimentController {
         if (experimentDTO.getInfo().length() > Constants.LARGE_AREA) {
             bindingResult.addError(createFieldError("info", "long_string", resourceBundle));
         }
+        if (experimentDTO.getPostscript() != null && !experimentDTO.getPostscript().trim().isBlank()) {
+            if (experimentDTO.getPostscript().length() > Constants.SMALL_AREA) {
+                bindingResult.addError(createFieldError("postscript", "long_string", resourceBundle));
+            }
+        }
         if (experimentDTO.getId() == null) {
             if (experimentService.existsExperiment(experimentDTO.getTitle())) {
                 logger.error("Experiment with same title exists!");
@@ -542,6 +547,15 @@ public class ExperimentController {
         return EXPERIMENT;
     }
 
+    /**
+     * Creates a {@link Map} containing the base URL of the application and the link to the experiment with the given id
+     * and the generated secret for the user that are going to be used in the experiment invitation email template.
+     *
+     * @param id The id of the experiment.
+     * @param secret The user's secret.
+     * @param httpServletRequest The servlet request.
+     * @return The map containing the base URL and the experiment URL.
+     */
     private Map<String, Object> getTemplateModel(final String id, final String secret,
                                                  final HttpServletRequest httpServletRequest) {
         String baseUrl = ServletUriComponentsBuilder.fromRequestUri(httpServletRequest).replacePath(null).build()

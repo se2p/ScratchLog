@@ -415,7 +415,7 @@ public class ParticipantController {
             if (participantService.updateParticipant(participantDTO)) {
                 userService.saveUser(userDTO);
                 clearSecurityContext(httpServletRequest);
-                return "redirect:/finish";
+                return "redirect:/finish?id=" + experimentId;
             } else {
                 logger.error("Failed to update the finishing time of participant with user id "
                         + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment() + "!");

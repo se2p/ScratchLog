@@ -61,7 +61,7 @@ public class EventServiceTest {
             ResourceEventDTO.ResourceEventType.ADD, ResourceEventDTO.ResourceEvent.ADD_SOUND, "name", "hash",
             "filetype", ResourceEventDTO.LibraryResource.TRUE);
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
-    private final Experiment experiment = new Experiment(ID, "title", "description", "info", true);
+    private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
 
     @BeforeEach

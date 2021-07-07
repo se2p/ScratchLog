@@ -28,6 +28,11 @@ public class ExperimentDTO {
     private String info;
 
     /**
+     * The text shown after the user has finished the experiment.
+     */
+    private String postscript;
+
+    /**
      * Boolean indicating whether the experiment is running or not.
      */
     private boolean active;
@@ -45,14 +50,16 @@ public class ExperimentDTO {
      * @param title The experiment title.
      * @param description The experiment description.
      * @param info The experiment information text.
+     * @param postscript The postscript text.
      * @param active Whether the experiment is currently running or not.
      */
     public ExperimentDTO(final Integer id, final String title, final String description, final String info,
-                         final boolean active) {
+                         final String postscript, final boolean active) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.info = info;
+        this.postscript = postscript;
         this.active = active;
     }
 
@@ -129,6 +136,24 @@ public class ExperimentDTO {
     }
 
     /**
+     * Returns the postscript of the experiment.
+     *
+     * @return The postscript text.
+     */
+    public String getPostscript() {
+        return postscript;
+    }
+
+    /**
+     * Sets the text shown after the user has finished the experiment.
+     *
+     * @param postscript The postscript to be set.
+     */
+    public void setPostscript(final String postscript) {
+        this.postscript = postscript;
+    }
+
+    /**
      * Returns whether the experiment is currently running.
      *
      * @return The experiment status.
@@ -188,6 +213,7 @@ public class ExperimentDTO {
                 + "id=" + id
                 + ", title='" + title + '\''
                 + ", description='" + description + '\''
+                + ", postscript='" + postscript + '\''
                 + ", info='" + info + '\''
                 + '}';
     }

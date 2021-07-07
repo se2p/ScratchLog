@@ -82,20 +82,21 @@ public class ParticipantControllerTest {
     private static final String EXPERIMENT = "experiment";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String REDIRECT_GUI = "redirect:http://localhost:8601?uid=";
-    private static final String REDIRECT_FINISH = "redirect:/finish";
+    private static final String REDIRECT_FINISH = "redirect:/finish?id=";
     private static final String EXP_ID = "&expid=";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String EMAIL = "participant@participant.de";
     private static final String BLANK = "   ";
     private static final String ID_STRING = "1";
     private static final String INFO = "info";
+    private static final String POSTSCRIPT = "postscript";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String LONG_INPUT = "looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong"
             + "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiinput";
     private static final int ID = 1;
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, true);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
 
     @BeforeEach
@@ -648,7 +649,7 @@ public class ParticipantControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
-        assertEquals(REDIRECT_FINISH, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        assertEquals(REDIRECT_FINISH + ID, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).updateParticipant(participantDTO);
