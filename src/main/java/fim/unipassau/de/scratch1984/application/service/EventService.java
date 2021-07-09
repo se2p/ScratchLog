@@ -12,11 +12,10 @@ import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
-import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
-import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -159,39 +159,44 @@ public class EventService {
     }
 
     /**
-     * Returns the block event counts for the given user during the given experiment.
+     * Returns the block event counts for the user with the given id during the experiment with the given id.
      *
-     * @param userDTO The user to search for.
-     * @param experimentDTO The experiment to search for.
+     * @param user The user id to search for.
+     * @param experiment The experiment id to search for.
      * @return A list of event count DTOs with the block event counts.
      */
     @Transactional
-    public List<EventCountDTO> getBlockEventCounts(final UserDTO userDTO, final ExperimentDTO experimentDTO) {
-        return null;
+    public List<EventCountDTO> getBlockEventCounts(final int user, final int experiment) {
+        if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
+            logger.error("Cannot retrieve block event count for user with invalid id " + user + " or experiment with "
+                    + "invalid id " + experiment + "!");
+            throw new IllegalArgumentException("Cannot retrieve block event count for user with invalid id " + user
+                    + " or experiment with invalid id " + experiment + "!");
+        }
+
+        List<EventCount> blockEvents = eventCountRepository.findAllBlockEventsByUserAndExperiment(user, experiment);
+        return createEventCountDTOList(blockEvents);
     }
 
     /**
-     * Returns the click event counts for the given user during the given experiment.
+     * Returns the resource event counts for the user with the given id during the experiment with the given id.
      *
-     * @param userDTO The user to search for.
-     * @param experimentDTO The experiment to search for.
-     * @return A list of event count DTOs with the click event counts.
-     */
-    @Transactional
-    public List<EventCountDTO> getClickEventCounts(final UserDTO userDTO, final ExperimentDTO experimentDTO) {
-        return null;
-    }
-
-    /**
-     * Returns the resource event counts for the given user during the given experiment.
-     *
-     * @param userDTO The user to search for.
-     * @param experimentDTO The experiment to search for.
+     * @param user The user id to search for.
+     * @param experiment The experiment id to search for.
      * @return A list of event count DTOs with the resource event counts.
      */
     @Transactional
-    public List<EventCountDTO> getResourceEventCounts(final UserDTO userDTO, final ExperimentDTO experimentDTO) {
-        return null;
+    public List<EventCountDTO> getResourceEventCounts(final int user, final int experiment) {
+        if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
+            logger.error("Cannot retrieve resource event count for user with invalid id " + user + " or experiment with"
+                    + " invalid id " + experiment + "!");
+            throw new IllegalArgumentException("Cannot retrieve resource event count for user with invalid id " + user
+                    + " or experiment with invalid id " + experiment + "!");
+        }
+
+        List<EventCount> resourceEvents = eventCountRepository.findAllResourceEventsByUserIdAndExperimentId(user,
+                experiment);
+        return createEventCountDTOList(resourceEvents);
     }
 
     /**
@@ -313,7 +318,20 @@ public class EventService {
      * @return The new event count DTO containing the information passed in the entity.
      */
     private EventCountDTO createEventCountDTO(final EventCount eventCount) {
-        return null;
+        EventCountDTO eventCountDTO = new EventCountDTO();
+
+        if (eventCount.getUser() != null) {
+            eventCountDTO.setUser(eventCount.getUser());
+        }
+        if (eventCount.getExperiment() != null) {
+            eventCountDTO.setExperiment(eventCount.getExperiment());
+        }
+        if (eventCount.getEvent() != null) {
+            eventCountDTO.setEvent(eventCount.getEvent());
+        }
+
+        eventCountDTO.setCount(eventCount.getCount());
+        return eventCountDTO;
     }
 
     /**
@@ -323,7 +341,14 @@ public class EventService {
      * @return The new list containing the information passed in the event count objects.
      */
     private List<EventCountDTO> createEventCountDTOList(final List<EventCount> eventCounts) {
-        return null;
+        List<EventCountDTO> eventCountDTOS = new ArrayList<>();
+
+        for (EventCount eventCount : eventCounts) {
+            EventCountDTO eventCountDTO = createEventCountDTO(eventCount);
+            eventCountDTOS.add(eventCountDTO);
+        }
+
+        return eventCountDTOS;
     }
 
 }

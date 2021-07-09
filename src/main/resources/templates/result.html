@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Result</title>
+    <link rel="stylesheet" href="/static/design/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/design/all.min.css"/>
+    <link rel="stylesheet" href="/static/design/style.css">
+</head>
+<body>
+<!-- Navigation bar -->
+<div th:insert="header :: header"></div>
+
+<!-- Page content -->
+<div class="row" id="content">
+    <div class="col-2"></div>
+    <div class="col-8">
+        <h2 class="mb-5" th:text="#{results}"></h2>
+        <div class="row mb-3">
+            <h4 th:text="#{files}"></h4>
+            <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${files.isEmpty()}">
+                <li class="list-group-item" th:text="#{table_empty}"></li>
+            </ul>
+            <ul class="list-group list-group-horizontal mx-3" th:unless="${files.isEmpty()}">
+                <li class="list-group-item" th:each="file : ${files}">
+                    <a class="no_decoration" th:href="@{/result/file(id=${file.id})}" th:text="${file.name}"></a>
+                </li>
+            </ul>
+        </div>
+        <div class="row mb-5">
+            <h4 th:text="#{zips}"></h4>
+            <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${zips.isEmpty()}">
+                <li class="list-group-item" th:text="#{table_empty}"></li>
+            </ul>
+            <ul class="list-group list-group-horizontal mx-3" th:unless="${zips.isEmpty()}">
+                <li class="list-group-item" th:each="zip : ${zips}">
+                    <a class="no_decoration" th:href="@{/result/zip(id=${zip})}" th:text="${zip}"></a>
+                </li>
+            </ul>
+            <div class="text-muted mt-3" th:text="#{download_info}"></div>
+        </div>
+        <div class="row mb-5">
+            <div class="col-6">
+                <h4 class="mb-3" th:text="#{block_events}"></h4>
+                <table class="table">
+                    <thead class="table-primary">
+                    <tr>
+                        <th scope="col" th:text="#{event}"></th>
+                        <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${blockEvents.isEmpty()}">
+                    <tr>
+                        <td colspan="2" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${blockEvents.isEmpty()}">
+                    <tr th:each="blockEvent : ${blockEvents}">
+                        <td th:text="${blockEvent.event}"></td>
+                        <td class="text-center" th:text="${blockEvent.count}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-6">
+                <h4 class="mb-3" th:text="#{resource_events}"></h4>
+                <table class="table">
+                    <thead class="table-primary">
+                    <tr>
+                        <th scope="col" th:text="#{event}"></th>
+                        <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${resourceEvents.isEmpty()}">
+                    <tr>
+                        <td colspan="2" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${resourceEvents.isEmpty()}">
+                    <tr th:each="resourceEvent : ${resourceEvents}">
+                        <td th:text="${resourceEvent.event}"></td>
+                        <td class="text-center" th:text="${resourceEvent.count}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-2"></div>
+</div>
+
+<!-- Footer -->
+<div th:insert="footer :: footer"></div>
+</body>
+</html>

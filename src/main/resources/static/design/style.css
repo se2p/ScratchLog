@@ -117,6 +117,12 @@ body {
     margin: 1%;
 }
 
+.no_decoration_margin,
+.no_decoration_margin:hover {
+    text-decoration: none;
+    color: black;
+}
+
 .navbar-brand {
     margin: 1%;
 }

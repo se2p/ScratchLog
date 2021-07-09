@@ -21,21 +21,9 @@ public interface EventCountRepository extends JpaRepository<EventCount, EventCou
      * @return A list of event counts that is empty if no entry could be found.
      */
     @Query(nativeQuery = true, value = "SELECT * FROM user_num_block_events AS n WHERE n.user = :uId AND "
-            + "n.experiment = :expId;")
-    List<EventCount> findBlockEventsByUserIdAndExperimentId(@Param("uId") Integer user,
-                                                            @Param("expId") Integer experiment);
-
-    /**
-     * Returns all click count data for the given user during the given experiment, if any exist.
-     *
-     * @param user The user to search for.
-     * @param experiment The experiment to search for.
-     * @return A list of event counts that is empty if no entry could be found.
-     */
-    @Query(nativeQuery = true, value = "SELECT * FROM user_num_click_events AS n WHERE n.user = :uId AND "
-            + "n.experiment = :expId;")
-    List<EventCount> findClickEventsByUserIdAndExperimentId(@Param("uId") Integer user,
-                                                            @Param("expId") Integer experiment);
+            + "n.experiment = :expId")
+    List<EventCount> findAllBlockEventsByUserAndExperiment(@Param("uId") Integer user,
+                                                           @Param("expId") Integer experiment);
 
     /**
      * Returns all resource count data for the given user during the given experiment, if any exist.
@@ -45,8 +33,8 @@ public interface EventCountRepository extends JpaRepository<EventCount, EventCou
      * @return A list of event counts that is empty if no entry could be found.
      */
     @Query(nativeQuery = true, value = "SELECT * FROM user_num_resource_events AS n WHERE n.user = :uId AND "
-            + "n.experiment = :expId;")
-    List<EventCount> findResourceEventsByUserIdAndExperimentId(@Param("uId") Integer user,
-                                                               @Param("expId") Integer experiment);
+            + "n.experiment = :expId")
+    List<EventCount> findAllResourceEventsByUserIdAndExperimentId(@Param("uId") Integer user,
+                                                                  @Param("expId") Integer experiment);
 
 }

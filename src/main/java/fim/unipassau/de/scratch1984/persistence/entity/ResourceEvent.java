@@ -81,6 +81,39 @@ public class ResourceEvent {
     private Integer libraryResource;
 
     /**
+     * Default constructor for the resource event entity.
+     */
+    public ResourceEvent() {
+    }
+
+    /**
+     * Constructs a new resource event with the given attributes.
+     *
+     * @param user The user who caused the event.
+     * @param experiment The experiment during which the event occurred.
+     * @param date The time at which the event occurred.
+     * @param eventType The event type.
+     * @param event The specific event.
+     * @param resourceName The name of the resource.
+     * @param hash The md5 hash value of the resource.
+     * @param resourceType The filetype of the resource.
+     * @param libraryResource Whether the resource is from the Scratch library or not.
+     */
+    public ResourceEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
+                         final String event, final String resourceName, final String hash, final String resourceType,
+                         final Integer libraryResource) {
+        this.user = user;
+        this.experiment = experiment;
+        this.date = date;
+        this.eventType = eventType;
+        this.event = event;
+        this.resourceName = resourceName;
+        this.hash = hash;
+        this.resourceType = resourceType;
+        this.libraryResource = libraryResource;
+    }
+
+    /**
      * Returns the ID of the event.
      *
      * @return The event ID.

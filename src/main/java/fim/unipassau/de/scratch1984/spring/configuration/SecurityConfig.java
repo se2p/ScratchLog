@@ -47,7 +47,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/login", "/finish").not().authenticated()
                 .antMatchers("/experiment/*", "/users/edit", "/users/delete", "/users/update",
-                        "/users/forgot").hasRole("ADMIN")
+                        "/users/forgot", "/result").hasRole("ADMIN")
                 .antMatchers("/users", "/logout", "/experiment").hasRole("PARTICIPANT")
                 .and().formLogin().loginPage("/login").usernameParameter("username")
                 .defaultSuccessUrl("/index", true)

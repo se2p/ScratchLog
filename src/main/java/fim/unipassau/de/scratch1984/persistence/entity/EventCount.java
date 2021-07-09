@@ -35,8 +35,30 @@ public class EventCount {
     /**
      * The event for which its occurrences have been counted.
      */
+    @Id
     @Column(name = "event")
     private String event;
+
+    /**
+     * Default constructor for the event count entity.
+     */
+    public EventCount() {
+    }
+
+    /**
+     * Constructs a new event count entity with the given attributes.
+     *
+     * @param user The id of the user who caused the event.
+     * @param experiment The id of the experiment during which the event occurred.
+     * @param count The number of times the given event occurred.
+     * @param event The specific event.
+     */
+    public EventCount(final Integer user, final Integer experiment, final int count, final String event) {
+        this.user = user;
+        this.experiment = experiment;
+        this.count = count;
+        this.event = event;
+    }
 
     /**
      * Returns the ID of the user to whom this data belongs.

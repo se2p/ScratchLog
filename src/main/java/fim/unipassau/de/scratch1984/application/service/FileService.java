@@ -1,15 +1,18 @@
 package fim.unipassau.de.scratch1984.application.service;
 
+import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.File;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.Sb3Zip;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.FileRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.Sb3ZipRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
 import org.slf4j.Logger;
@@ -21,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * A service providing methods related to file persistence and retrieval.
@@ -141,18 +146,117 @@ public class FileService {
     }
 
     /**
-     * Returns the file with the specified ID. If no such file exists, returns {@code null}.
+     * Returns the file names and ids of all {@link File}s the user with the given id uploaded during the experiment
+     * with the given id. If no corresponding user or experiment can be found, a {@link NotFoundException} is thrown
+     * instead.
      *
-     * @param id The file ID to search for.
-     * @return The file, if it exists, or {@code null} if no file with that ID exists.
+     * @param userId The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @return A {@link List} containing the file ids and names.
      */
     @Transactional
-    public byte[] getFileContent(final Integer id) {
-        return null;
+    public List<FileProjection> getFiles(final int userId, final int experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot get file ids and names for user with invalid id " + userId + " or experiment with "
+                    + "invalid id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot get file ids and names for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            return fileRepository.findFilesByUserAndExperiment(user, experiment);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not retrieve the file names and ids since the  user with id " + userId
+                    + " or experiment with id " + experimentId + " could not be found!", e);
+            throw new NotFoundException("Could not retrieve the file names and ids since the  user with id " + userId
+                    + " or experiment with id " + experimentId + " could not be found!", e);
+        }
     }
 
     /**
-     * Creates a {@link File} with the given information of the {@link FileDTO}, , the {@link User}, and the
+     * Returns the zip file ids of all {@link Sb3Zip}s that were created for the user with the given id during the
+     * experiment with the given id. If no corresponding user or experiment can be found, a {@link NotFoundException} is
+     * thrown instead.
+     *
+     * @param userId The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @return A {@link List} containing the file ids and names.
+     */
+    @Transactional
+    public List<Integer> getZipIds(final int userId, final int experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot get zip file ids for user with invalid id " + userId + " or experiment with invalid "
+                    + "id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot get zip file ids for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            return sb3ZipRepository.findAllIdsByUserAndExperiment(user, experiment);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not retrieve the zip file ids since the  user with id " + userId
+                    + " or experiment with id " + experimentId + " could not be found!", e);
+            throw new NotFoundException("Could not retrieve the zip file ids since the  user with id " + userId
+                    + " or experiment with id " + experimentId + " could not be found!", e);
+        }
+    }
+
+    /**
+     * Returns a {@link FileDTO} with the specified ID. If no such file exists, a {@link NotFoundException} is thrown
+     * instead.
+     *
+     * @param id The file ID to search for.
+     * @return The file, if it exists.
+     */
+    @Transactional
+    public FileDTO findFile(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot search for file with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot search for file with invalid id " + id + "!");
+        }
+
+        Optional<File> file = fileRepository.findById(id);
+
+        if (file.isEmpty()) {
+            logger.error("Could not find file with id " + id + "!");
+            throw new NotFoundException("Could not find file with id " + id + "!");
+        }
+
+        return createFileDTO(file.get());
+    }
+
+    /**
+     * Returns a {@link Sb3ZipDTO} with the specified ID. If no such file exists, a {@link NotFoundException} is thrown
+     * instead.
+     *
+     * @param id The zip file ID to search for.
+     * @return The zip file, if it exists.
+     */
+    @Transactional
+    public Sb3ZipDTO findZip(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot search for zip file with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot search for zip file with invalid id " + id + "!");
+        }
+
+        Optional<Sb3Zip> zip = sb3ZipRepository.findById(id);
+
+        if (zip.isEmpty()) {
+            logger.error("Could not find zip file with id " + id + "!");
+            throw new NotFoundException("Could not find zip file with id " + id + "!");
+        }
+
+        return createSb3ZipDTO(zip.get());
+    }
+
+    /**
+     * Creates a {@link File} with the given information of the {@link FileDTO}, the {@link User}, and the
      * {@link Experiment}.
      *
      * @param fileDTO The dto containing the information.
@@ -189,7 +293,41 @@ public class FileService {
     }
 
     /**
-     * Creates a {@link Sb3Zip} with the given information of the {@link Sb3ZipDTO}, , the {@link User}, and the
+     * Creates a {@link FileDTO} with the given information of the {@link File}.
+     *
+     * @param file The file containing the information.
+     * @return The new file dto containing the information passed in the file.
+     */
+    private FileDTO createFileDTO(final File file) {
+        FileDTO fileDTO = new FileDTO();
+
+        if (file.getUser() != null) {
+            fileDTO.setUser(file.getUser().getId());
+        }
+        if (file.getExperiment() != null) {
+            fileDTO.setExperiment(file.getExperiment().getId());
+        }
+        if (file.getId() != null) {
+            fileDTO.setId(file.getId());
+        }
+        if (file.getFiletype() != null) {
+            fileDTO.setFiletype(file.getFiletype());
+        }
+        if (file.getDate() != null) {
+            fileDTO.setDate(file.getDate().toLocalDateTime());
+        }
+        if (file.getName() != null) {
+            fileDTO.setName(file.getName());
+        }
+        if (file.getContent() != null) {
+            fileDTO.setContent(file.getContent());
+        }
+
+        return fileDTO;
+    }
+
+    /**
+     * Creates a {@link Sb3Zip} with the given information of the {@link Sb3ZipDTO}, the {@link User}, and the
      * {@link Experiment}.
      *
      * @param sb3ZipDTO The dto containing the information.
@@ -220,6 +358,37 @@ public class FileService {
         }
 
         return sb3Zip;
+    }
+
+    /**
+     * Creates a {@link Sb3ZipDTO} with the given information of the {@link Sb3Zip}.
+     *
+     * @param sb3Zip The zip file containing the information.
+     * @return The new zip dto file.
+     */
+    private Sb3ZipDTO createSb3ZipDTO(final Sb3Zip sb3Zip) {
+        Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO();
+
+        if (sb3Zip.getUser() != null) {
+            sb3ZipDTO.setUser(sb3Zip.getUser().getId());
+        }
+        if (sb3Zip.getExperiment() != null) {
+            sb3ZipDTO.setExperiment(sb3Zip.getExperiment().getId());
+        }
+        if (sb3Zip.getId() != null) {
+            sb3ZipDTO.setId(sb3Zip.getId());
+        }
+        if (sb3Zip.getName() != null) {
+            sb3ZipDTO.setName(sb3Zip.getName());
+        }
+        if (sb3Zip.getDate() != null) {
+            sb3ZipDTO.setDate(sb3Zip.getDate().toLocalDateTime());
+        }
+        if (sb3Zip.getContent() != null) {
+            sb3ZipDTO.setContent(sb3Zip.getContent());
+        }
+
+        return sb3ZipDTO;
     }
 
 }

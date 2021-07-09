@@ -28,6 +28,27 @@ public class EventCountDTO {
     private String event;
 
     /**
+     * Default constructor for the event count dto.
+     */
+    public EventCountDTO() {
+    }
+
+    /**
+     * Constructs a new event count dto with the given attributes.
+     *
+     * @param user The id of the user who caused the event.
+     * @param experiment The id of the experiment during which the event occurred.
+     * @param count The number of times the given event occurred.
+     * @param event The specific event.
+     */
+    public EventCountDTO(final Integer user, final Integer experiment, final int count, final String event) {
+        this.user = user;
+        this.experiment = experiment;
+        this.count = count;
+        this.event = event;
+    }
+
+    /**
      * Returns the ID of the user to whom this data belongs.
      *
      * @return The user ID.

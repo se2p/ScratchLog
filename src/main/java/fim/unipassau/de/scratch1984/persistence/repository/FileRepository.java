@@ -3,9 +3,11 @@ package fim.unipassau.de.scratch1984.persistence.repository;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.File;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A repository providing functionality for retrieving file data.
@@ -13,20 +15,20 @@ import java.util.List;
 public interface FileRepository extends JpaRepository<File, Integer> {
 
     /**
-     * Returns all files uploaded by the given user during the given experiment, if any exist.
+     * Returns the ids and names of all files uploaded by the given user during the given experiment, if any exist.
      *
      * @param user The user to search for.
      * @param experiment The experiment to search for.
      * @return A list of files that is empty if no entry could be found.
      */
-    List<File> findFilesByUserAndExperiment(User user, Experiment experiment);
+    List<FileProjection> findFilesByUserAndExperiment(User user, Experiment experiment);
 
     /**
      * Returns the file with the given id, if any such file exists.
      *
      * @param id The file id to search for.
-     * @return A content of the file.
+     * @return An {@link Optional} file.
      */
-    File findFileById(int id);
+    Optional<File> findById(int id);
 
 }
