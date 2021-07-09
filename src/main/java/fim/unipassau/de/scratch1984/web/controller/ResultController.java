@@ -21,7 +21,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * The controller for result management.
@@ -117,6 +121,8 @@ public class ResultController {
             model.addAttribute("resourceEvents", resourceEvents);
             model.addAttribute("files", files);
             model.addAttribute("zips", zipIds);
+            model.addAttribute("user", userId);
+            model.addAttribute("experiment", experimentId);
             return RESULT;
         } catch (NotFoundException e) {
             return ERROR;
@@ -182,6 +188,61 @@ public class ResultController {
                     + sb3ZipDTO.getName() + "\"").body(sb3ZipDTO.getContent());
         } catch (NotFoundException e) {
             return ERROR;
+        }
+    }
+
+    /**
+     * Retrieves all zip files created for the given user during the given experiment and makes them available for
+     * download, in a zip file. If the ids are invalid, no files could be found, or an {@link IOException} occurred,
+     * nothing happens.
+     *
+     * @param experiment The experiment id to search for.
+     * @param user The user id to search for.
+     * @param httpServletResponse The servlet response returning the files.
+     */
+    @GetMapping("/zips")
+    @Secured("ROLE_ADMIN")
+    public void downloadAllZips(@RequestParam("experiment") final String experiment,
+                                @RequestParam("user") final String user,
+                                final HttpServletResponse httpServletResponse) {
+        if (user == null || experiment == null) {
+            logger.error("Cannot download zip files for user with id null or experiment with id null!");
+            httpServletResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        int userId = parseId(user);
+        int experimentId = parseId(experiment);
+
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot download zip files for user with invalid id " + userId + " or experiment with invalid "
+                    + "id " + experimentId + "!");
+            httpServletResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        try {
+            List<Sb3ZipDTO> sb3ZipDTOS = fileService.getZipFiles(userId, experimentId);
+            httpServletResponse.setContentType("application/zip");
+            httpServletResponse.setHeader("Content-Disposition", "attachment;filename=projects_user" + userId
+                    + "_experiment" + experimentId + ".zip");
+            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+            ZipOutputStream zos = new ZipOutputStream(httpServletResponse.getOutputStream());
+
+            for (Sb3ZipDTO sb3ZipDTO : sb3ZipDTOS) {
+                ZipEntry entry = new ZipEntry(sb3ZipDTO.getName() + sb3ZipDTO.getId());
+                entry.setSize(sb3ZipDTO.getContent().length);
+                zos.putNextEntry(entry);
+                zos.write(sb3ZipDTO.getContent());
+                zos.closeEntry();
+            }
+
+            zos.finish();
+        } catch (NotFoundException e) {
+            httpServletResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } catch (IOException e) {
+            logger.error("Could not download zip files due to IOException!", e);
+            httpServletResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 

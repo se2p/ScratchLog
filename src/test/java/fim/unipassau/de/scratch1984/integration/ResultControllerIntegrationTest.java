@@ -74,6 +74,7 @@ public class ResultControllerIntegrationTest {
     private final List<EventCountDTO> resourceEvents = getEventCounts(2, "RENAME");
     private final List<FileProjection> files = getFileProjections(7);
     private final List<Integer> zips = Arrays.asList(1, 4, 10, 18);
+    private final List<Sb3ZipDTO> sb3ZipDTOs = getSb3ZipDTOs(6);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -96,6 +97,8 @@ public class ResultControllerIntegrationTest {
                 .andExpect(model().attribute("resourceEvents", is(resourceEvents)))
                 .andExpect(model().attribute("files", is(files)))
                 .andExpect(model().attribute("zips", is(zips)))
+                .andExpect(model().attribute("user", is(ID)))
+                .andExpect(model().attribute("experiment", is(ID)))
                 .andExpect(status().isOk())
                 .andExpect(view().name(RESULT));
         verify(userService).existsParticipant(ID, ID);
@@ -175,7 +178,7 @@ public class ResultControllerIntegrationTest {
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
-                .contentType(MediaType.ALL))
+                .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", is("attachment; filename=\""
                         + fileDTO.getName() + "\"")))
@@ -191,7 +194,7 @@ public class ResultControllerIntegrationTest {
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
-                .contentType(MediaType.ALL))
+                .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(fileService).findFile(ID);
@@ -204,7 +207,7 @@ public class ResultControllerIntegrationTest {
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
-                .contentType(MediaType.ALL))
+                .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(fileService, never()).findFile(anyInt());
@@ -218,7 +221,7 @@ public class ResultControllerIntegrationTest {
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
-                .contentType(MediaType.ALL))
+                .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", is("attachment; filename=\""
                         + sb3ZipDTO.getName() + "\"")))
@@ -234,7 +237,7 @@ public class ResultControllerIntegrationTest {
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
-                .contentType(MediaType.ALL))
+                .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(fileService).findZip(ID);
@@ -247,10 +250,51 @@ public class ResultControllerIntegrationTest {
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
-                .contentType(MediaType.ALL))
+                .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(fileService, never()).findZip(anyInt());
+    }
+
+    @Test
+    public void testDownloadAllZips() throws Exception {
+        when(fileService.getZipFiles(ID, ID)).thenReturn(sb3ZipDTOs);
+        mvc.perform(get("/result/zips")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(fileService).getZipFiles(ID, ID);
+    }
+
+    @Test
+    public void testDownloadAllZipsNotFound() throws Exception {
+        when(fileService.getZipFiles(ID, ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/result/zips")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isNotFound());
+        verify(fileService).getZipFiles(ID, ID);
+    }
+
+    @Test
+    public void testDownloadAllZipsInvalidId() throws Exception {
+        mvc.perform(get("/result/zips")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, "0")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
     }
 
     private List<EventCountDTO> getEventCounts(int number, String event) {
@@ -278,5 +322,15 @@ public class ResultControllerIntegrationTest {
             });
         }
         return fileProjections;
+    }
+
+    private List<Sb3ZipDTO> getSb3ZipDTOs(int number) {
+        List<Sb3ZipDTO> sb3ZipDTOs = new ArrayList<>();
+
+        for (int i = 0; i < number; i++) {
+            sb3ZipDTOs.add(new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip" + i, new byte[]{1, 2, 3}));
+        }
+
+        return sb3ZipDTOs;
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -256,6 +257,46 @@ public class FileService {
     }
 
     /**
+     * Returns a list of all {@link Sb3ZipDTO}s that were created for the user with the given id during the experiment
+     * with the given id. If no corresponding user, experiment or zip files could be found, a {@link NotFoundException}
+     * is thrown instead.
+     *
+     * @param userId The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @return A list of zip files.
+     */
+    @Transactional
+    public List<Sb3ZipDTO> getZipFiles(final int userId, final int experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot download zip files for user with invalid id " + userId + " or experiment with invalid "
+                    + "id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot download zip files for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            List<Sb3Zip> sb3Zips = sb3ZipRepository.findAllByUserAndExperiment(user, experiment);
+
+            if (sb3Zips.isEmpty()) {
+                logger.error("Could not find any zip files for user with id " + userId + " for experiment with id "
+                        + experimentId + "!");
+                throw new NotFoundException("Could not find any zip files for user with id " + userId
+                        + " for experiment with id " + experimentId + "!");
+            }
+
+            return createSb3ZipDTOList(sb3Zips);
+        } catch (EntityNotFoundException e) {
+            logger.error("Cannot download zip files as no user with id " + userId + " or no experiment with id "
+                    + experimentId + " could be found in the database!", e);
+            throw new NotFoundException("Cannot download zip files as no user with id " + userId
+                    + " or no experiment with id " + experimentId + " could be found in the database!", e);
+        }
+    }
+
+    /**
      * Creates a {@link File} with the given information of the {@link FileDTO}, the {@link User}, and the
      * {@link Experiment}.
      *
@@ -324,6 +365,22 @@ public class FileService {
         }
 
         return fileDTO;
+    }
+
+    /**
+     * Creates a list of {@link Sb3ZipDTO}s form the given {@link Sb3Zip} list.
+     *
+     * @param sb3Zips A list of zip files.
+     * @return A list of zip file dtos.
+     */
+    private List<Sb3ZipDTO> createSb3ZipDTOList(final List<Sb3Zip> sb3Zips) {
+        List<Sb3ZipDTO> sb3ZipDTOS = new ArrayList<>();
+
+        for (Sb3Zip sb3Zip : sb3Zips) {
+            sb3ZipDTOS.add(createSb3ZipDTO(sb3Zip));
+        }
+
+        return sb3ZipDTOS;
     }
 
     /**

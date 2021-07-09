@@ -18,12 +18,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -51,6 +58,9 @@ public class ResultControllerTest {
     @Mock
     private Model model;
 
+    @Mock
+    private HttpServletResponse httpServletResponse;
+
     private static final String RESULT = "result";
     private static final String ERROR = "redirect:/error";
     private static final String ID_STRING = "1";
@@ -62,6 +72,7 @@ public class ResultControllerTest {
     private final List<EventCountDTO> resourceEvents = getEventCounts(2, "RENAME");
     private final List<FileProjection> files = getFileProjections(7);
     private final List<Integer> zips = Arrays.asList(1, 4, 10, 18);
+    private final List<Sb3ZipDTO> sb3ZipDTOs = getSb3ZipDTOs(6);
 
     @Test
     public void testGetResult() {
@@ -76,7 +87,7 @@ public class ResultControllerTest {
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
-        verify(model, times(4)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -211,6 +222,98 @@ public class ResultControllerTest {
         verify(fileService, never()).findFile(anyInt());
     }
 
+    @Test
+    public void testDownloadAllZips() throws IOException {
+        when(fileService.getZipFiles(ID, ID)).thenReturn(sb3ZipDTOs);
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        assertDoesNotThrow(
+                () -> resultController.downloadAllZips(ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(fileService).getZipFiles(ID, ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testDownloadAllZipsIO() throws IOException {
+        when(fileService.getZipFiles(ID, ID)).thenReturn(sb3ZipDTOs);
+        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
+        assertDoesNotThrow(
+                () -> resultController.downloadAllZips(ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(fileService).getZipFiles(ID, ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    public void testDownloadAllZipsNotFound() throws IOException {
+        when(fileService.getZipFiles(ID, ID)).thenThrow(NotFoundException.class);
+        assertDoesNotThrow(
+                () -> resultController.downloadAllZips(ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(fileService).getZipFiles(ID, ID);
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
+    }
+
+    @Test
+    public void testDownloadAllZipsInvalidExperimentId() throws IOException {
+        assertDoesNotThrow(
+                () -> resultController.downloadAllZips("0", ID_STRING, httpServletResponse)
+        );
+        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void testDownloadAllZipsInvalidUserId() throws IOException {
+        assertDoesNotThrow(
+                () -> resultController.downloadAllZips(ID_STRING, "-1", httpServletResponse)
+        );
+        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void testDownloadAllZipsUserIdNull() throws IOException {
+        assertDoesNotThrow(
+                () -> resultController.downloadAllZips(ID_STRING, null, httpServletResponse)
+        );
+        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void testDownloadAllZipsExperimentIdNull() throws IOException {
+        assertDoesNotThrow(
+                () -> resultController.downloadAllZips(null, ID_STRING, httpServletResponse)
+        );
+        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
     private List<EventCountDTO> getEventCounts(int number, String event) {
         List<EventCountDTO> eventCountDTOS = new ArrayList<>();
         for (int i = 0; i < number; i++) {
@@ -236,5 +339,15 @@ public class ResultControllerTest {
             });
         }
         return fileProjections;
+    }
+
+    private List<Sb3ZipDTO> getSb3ZipDTOs(int number) {
+        List<Sb3ZipDTO> sb3ZipDTOs = new ArrayList<>();
+
+        for (int i = 0; i < number; i++) {
+            sb3ZipDTOs.add(new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip" + i, new byte[]{1, 2, 3}));
+        }
+
+        return sb3ZipDTOs;
     }
 }

@@ -73,10 +73,12 @@ public class FileServiceTest {
             new byte[]{1, 2, 3, 4});
     private final List<FileProjection> fileProjections = getFileProjections(5);
     private final List<Integer> zips = Arrays.asList(1, 4, 10, 18);
+    private final List<Sb3Zip> sb3Zips = getSb3ZipFiles(3);
 
     @BeforeEach
     public void setup() {
         user.setId(ID);
+        experiment.setId(ID);
     }
 
     @Test
@@ -340,6 +342,71 @@ public class FileServiceTest {
         verify(sb3ZipRepository, never()).findById(anyInt());
     }
 
+    @Test
+    public void testGetZipFiles() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(sb3ZipRepository.findAllByUserAndExperiment(user, experiment)).thenReturn(sb3Zips);
+        List<Sb3ZipDTO> sb3ZipDTOs = fileService.getZipFiles(ID, ID);
+        assertAll(
+                () -> assertEquals(3, sb3ZipDTOs.size()),
+                () -> assertEquals(ID, sb3ZipDTOs.get(0).getUser()),
+                () -> assertEquals(ID, sb3ZipDTOs.get(0).getExperiment()),
+                () -> assertEquals(4, sb3ZipDTOs.get(0).getContent().length),
+                () -> assertEquals("file0", sb3ZipDTOs.get(0).getName()),
+                () -> assertEquals("file1", sb3ZipDTOs.get(1).getName()),
+                () -> assertEquals("file2", sb3ZipDTOs.get(2).getName())
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(sb3ZipRepository).findAllByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testGetZipFilesEmpty() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        assertThrows(NotFoundException.class,
+                () -> fileService.getZipFiles(ID, ID)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(sb3ZipRepository).findAllByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testGetZipFilesEntityNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(sb3ZipRepository.findAllByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> fileService.getZipFiles(ID, ID)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(sb3ZipRepository).findAllByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testGetZipFilesInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> fileService.getZipFiles(ID, 0)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(sb3ZipRepository, never()).findAllByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testGetZipFilesInvalidUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> fileService.getZipFiles(-1, ID)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(sb3ZipRepository, never()).findAllByUserAndExperiment(any(), any());
+    }
+
     private List<FileProjection> getFileProjections(int number) {
         List<FileProjection> fileProjections = new ArrayList<>();
         for (int i = 0; i < number; i++) {
@@ -357,5 +424,14 @@ public class FileServiceTest {
             });
         }
         return fileProjections;
+    }
+
+    private List<Sb3Zip> getSb3ZipFiles(int number) {
+        List<Sb3Zip> sb3Zips = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            sb3Zips.add(new Sb3Zip(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "file" + i,
+                    new byte[] {1, 2, 3, 4}));
+        }
+        return sb3Zips;
     }
 }
