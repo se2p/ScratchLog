@@ -33,7 +33,8 @@
             </div>
             <div class="col-5 text-end" th:if="${zips.size() > 1}">
                 <a class="btn btn-primary" th:href="@{/result/zips(user=${user}, experiment=${experiment})}">
-                    <span th:text="#{download_all}"></span>
+                    <i class="fas fa-download fa-inverse"></i>
+                    <span th:text="#{all_files}"></span>
                 </a>
             </div>
         </div>
@@ -92,6 +93,25 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+        <div class="row mb-5">
+            <div class="col-7">
+                <h4 th:text="#{code}"></h4>
+            </div>
+            <div class="col-5 text-end" th:if="${xml.size() > 0}">
+                <div class="mb-3">
+                    <a class="btn btn-primary" th:href="@{/result/xmls(user=${user}, experiment=${experiment})}">
+                        <i class="fas fa-download fa-inverse"></i>
+                        <span th:text="#{all_xml}"></span>
+                    </a>
+                </div>
+                <div class="mb-3">
+                    <a class="btn btn-primary" th:href="@{/result/jsons(user=${user}, experiment=${experiment})}">
+                        <i class="fas fa-download fa-inverse"></i>
+                        <span th:text="#{all_json}"></span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>

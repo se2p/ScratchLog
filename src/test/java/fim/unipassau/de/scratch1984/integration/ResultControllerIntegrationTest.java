@@ -4,6 +4,8 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.ResultController;
@@ -75,6 +77,8 @@ public class ResultControllerIntegrationTest {
     private final List<FileProjection> files = getFileProjections(7);
     private final List<Integer> zips = Arrays.asList(1, 4, 10, 18);
     private final List<Sb3ZipDTO> sb3ZipDTOs = getSb3ZipDTOs(6);
+    private final List<BlockEventXMLProjection> xmlProjections = new ArrayList<>();
+    private final List<BlockEventJSONProjection> jsonProjections = new ArrayList<>();
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -295,6 +299,88 @@ public class ResultControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
         verify(fileService, never()).getZipFiles(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDownloadAllXmlFiles() throws Exception {
+        when(eventService.getXMLForUser(ID, ID)).thenReturn(xmlProjections);
+        mvc.perform(get("/result/xmls")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(eventService).getXMLForUser(ID, ID);
+    }
+
+    @Test
+    public void testDownloadAllXmlFilesNotFound() throws Exception {
+        when(eventService.getXMLForUser(ID, ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/result/xmls")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isNotFound());
+        verify(eventService).getXMLForUser(ID, ID);
+    }
+
+    @Test
+    public void testDownloadAllXmlFilesInvalidId() throws Exception {
+        mvc.perform(get("/result/xmls")
+                .param(EXPERIMENT_PARAM, "-1")
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(eventService, never()).getXMLForUser(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDownloadAllJsonFiles() throws Exception {
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        mvc.perform(get("/result/jsons")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(eventService).getJsonForUser(ID, ID);
+    }
+
+    @Test
+    public void testDownloadAllJsonFilesNotFound() throws Exception {
+        when(eventService.getJsonForUser(ID, ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/result/jsons")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isNotFound());
+        verify(eventService).getJsonForUser(ID, ID);
+    }
+
+    @Test
+    public void testDownloadAllJsonFilesInvalidId() throws Exception {
+        mvc.perform(get("/result/jsons")
+                .param(EXPERIMENT_PARAM, "id")
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
     }
 
     private List<EventCountDTO> getEventCounts(int number, String event) {

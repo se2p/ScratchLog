@@ -1,9 +1,12 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
+import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
@@ -23,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -117,10 +122,13 @@ public class ResultController {
             List<EventCountDTO> resourceEvents = eventService.getResourceEventCounts(userId, experimentId);
             List<FileProjection> files = fileService.getFiles(userId, experimentId);
             List<Integer> zipIds = fileService.getZipIds(userId, experimentId);
+            List<String> xml = new ArrayList<>();
+            xml.add("xml");
             model.addAttribute("blockEvents", blockEvents);
             model.addAttribute("resourceEvents", resourceEvents);
             model.addAttribute("files", files);
             model.addAttribute("zips", zipIds);
+            model.addAttribute("xml", xml);
             model.addAttribute("user", userId);
             model.addAttribute("experiment", experimentId);
             return RESULT;
@@ -193,8 +201,8 @@ public class ResultController {
 
     /**
      * Retrieves all zip files created for the given user during the given experiment and makes them available for
-     * download, in a zip file. If the ids are invalid, no files could be found, or an {@link IOException} occurred,
-     * nothing happens.
+     * download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown instead. If an
+     * {@link IOException} occurs, an {@link RuntimeException} is thrown.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
@@ -207,8 +215,8 @@ public class ResultController {
                                 final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
             logger.error("Cannot download zip files for user with id null or experiment with id null!");
-            httpServletResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
+            throw new IncompleteDataException("Cannot download zip files for user with id null or experiment with id "
+                    + "null!");
         }
 
         int userId = parseId(user);
@@ -217,20 +225,16 @@ public class ResultController {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot download zip files for user with invalid id " + userId + " or experiment with invalid "
                     + "id " + experimentId + "!");
-            httpServletResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
+            throw new IncompleteDataException("Cannot download zip files for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
         }
 
         try {
             List<Sb3ZipDTO> sb3ZipDTOS = fileService.getZipFiles(userId, experimentId);
-            httpServletResponse.setContentType("application/zip");
-            httpServletResponse.setHeader("Content-Disposition", "attachment;filename=projects_user" + userId
-                    + "_experiment" + experimentId + ".zip");
-            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
-            ZipOutputStream zos = new ZipOutputStream(httpServletResponse.getOutputStream());
+            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "projects");
 
             for (Sb3ZipDTO sb3ZipDTO : sb3ZipDTOS) {
-                ZipEntry entry = new ZipEntry(sb3ZipDTO.getName() + sb3ZipDTO.getId());
+                ZipEntry entry = new ZipEntry(sb3ZipDTO.getId() + sb3ZipDTO.getName());
                 entry.setSize(sb3ZipDTO.getContent().length);
                 zos.putNextEntry(entry);
                 zos.write(sb3ZipDTO.getContent());
@@ -238,12 +242,127 @@ public class ResultController {
             }
 
             zos.finish();
-        } catch (NotFoundException e) {
-            httpServletResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
             logger.error("Could not download zip files due to IOException!", e);
-            httpServletResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            throw new RuntimeException("Could not download zip files due to IOException!");
         }
+    }
+
+    /**
+     * Retrieves all the xml codes that were saved for the given user during the given experiment and makes them
+     * available for download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown
+     * instead. If an {@link IOException} occurs, an {@link RuntimeException} is thrown.
+     *
+     * @param experiment The experiment id to search for.
+     * @param user The user id to search for.
+     * @param httpServletResponse The servlet response returning the files.
+     */
+    @GetMapping("/xmls")
+    @Secured("ROLE_ADMIN")
+    public void downloadAllXmlFiles(@RequestParam("experiment") final String experiment,
+                                    @RequestParam("user") final String user,
+                                    final HttpServletResponse httpServletResponse) {
+        if (user == null || experiment == null) {
+            logger.error("Cannot download xml files for user with id null or experiment with id null!");
+            throw new IncompleteDataException("Cannot download xml files for user with id null or experiment with id "
+                    + "null!");
+        }
+
+        int userId = parseId(user);
+        int experimentId = parseId(experiment);
+
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot download xml files for user with invalid id " + userId + " or experiment with invalid "
+                    + "id " + experimentId + "!");
+            throw new IncompleteDataException("Cannot download xml files for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        try {
+            List<BlockEventXMLProjection> xml = eventService.getXMLForUser(userId, experimentId);
+            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "xml");
+
+            for (BlockEventXMLProjection projection : xml) {
+                ZipEntry entry = new ZipEntry("xml" + projection.getId() + ".xml");
+                entry.setSize(projection.getXml().length());
+                zos.putNextEntry(entry);
+                zos.write(projection.getXml().getBytes(StandardCharsets.UTF_8));
+                zos.closeEntry();
+            }
+
+            zos.finish();
+        } catch (IOException e) {
+            logger.error("Could not download xml files due to IOException!", e);
+            throw new RuntimeException("Could not download xml files due to IOException!");
+        }
+    }
+
+    /**
+     * Retrieves all the json strings that were saved for the given user during the given experiment and makes them
+     * available for download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown
+     * instead. If an {@link IOException} occurs, an {@link RuntimeException} is thrown.
+     *
+     * @param experiment The experiment id to search for.
+     * @param user The user id to search for.
+     * @param httpServletResponse The servlet response returning the files.
+     */
+    @GetMapping("/jsons")
+    @Secured("ROLE_ADMIN")
+    public void downloadAllJsonFiles(@RequestParam("experiment") final String experiment,
+                                     @RequestParam("user") final String user,
+                                     final HttpServletResponse httpServletResponse) {
+        if (user == null || experiment == null) {
+            logger.error("Cannot download json files for user with id null or experiment with id null!");
+            throw new IncompleteDataException("Cannot download json files for user with id null or experiment with id "
+                    + "null!");
+        }
+
+        int userId = parseId(user);
+        int experimentId = parseId(experiment);
+
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot download json files for user with invalid id " + userId + " or experiment with "
+                    + "invalid id " + experimentId + "!");
+            throw new IncompleteDataException("Cannot download json files for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        try {
+            List<BlockEventJSONProjection> json = eventService.getJsonForUser(userId, experimentId);
+            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json");
+
+            for (BlockEventJSONProjection projection : json) {
+                ZipEntry entry = new ZipEntry("json" + projection.getId() + ".json");
+                entry.setSize(projection.getCode().length());
+                zos.putNextEntry(entry);
+                zos.write(projection.getCode().getBytes(StandardCharsets.UTF_8));
+                zos.closeEntry();
+            }
+
+            zos.finish();
+        } catch (IOException e) {
+            logger.error("Could not download json files due to IOException!", e);
+            throw new RuntimeException("Could not download json files due to IOException!");
+        }
+    }
+
+    /**
+     * Returns a {@link ZipOutputStream} from the given {@link HttpServletResponse} output stream and sets the content
+     * type, header and status of the servlet response accordingly.
+     *
+     * @param httpServletResponse The servlet response.
+     * @param userId The user id to use to name the zip file.
+     * @param experimentId The experiment id to use to name the zip file.
+     * @param filetype The filetype to use to name the zip file.
+     * @return The zip output stream.
+     */
+    private ZipOutputStream getZipOutputStream(final HttpServletResponse httpServletResponse, final int userId,
+                                               final int experimentId, final String filetype) throws IOException {
+        httpServletResponse.setContentType("application/zip");
+        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + filetype + "_user" + userId
+                + "_experiment" + experimentId + ".zip");
+        httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+        return new ZipOutputStream(httpServletResponse.getOutputStream());
     }
 
     /**

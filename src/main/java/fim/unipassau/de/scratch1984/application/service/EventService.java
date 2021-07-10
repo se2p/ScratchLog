@@ -1,11 +1,14 @@
 package fim.unipassau.de.scratch1984.application.service;
 
+import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.persistence.entity.BlockEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.ResourceEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.BlockEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
@@ -200,27 +203,83 @@ public class EventService {
     }
 
     /**
-     * Retrieves all JSON data saved for the user with the given ID during the experiment with the given ID.
+     * Retrieves all JSON data and corresponding block event ids saved for the user with the given ID during the
+     * experiment with the given ID.
      *
      * @param userId The user ID.
      * @param experimentId The experiment ID.
-     * @return The String array holding the data.
+     * @return The list holding the data.
      */
     @Transactional
-    public String[] getJsonForUser(final Integer userId, final Integer experimentId) {
-        return null;
+    public List<BlockEventJSONProjection> getJsonForUser(final Integer userId, final Integer experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot retrieve json data for user with invalid id " + userId + " or experiment with invalid "
+                    + "id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot retrieve json data for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            List<BlockEventJSONProjection> json = blockEventRepository.findAllByCodeIsNotNullAndUserAndExperiment(user,
+                    experiment);
+
+            if (json.isEmpty()) {
+                logger.error("Could not find any json data for user with id " + user + " for experiment with id "
+                        + experimentId + "!");
+                throw new NotFoundException("Could not find any json data for user with id " + user + " for experiment "
+                        + "with id " + experimentId + "!");
+            }
+
+            return json;
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+                    + " when trying to download the json files!", e);
+            throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
+                    + experimentId + " when trying to download the json files!", e);
+        }
     }
 
     /**
-     * Retrieves all xml data saved for the user with the given ID during the experiment with the given ID.
+     * Retrieves all xml data and corresponding block event ids saved for the user with the given ID during the
+     * experiment with the given ID.
      *
      * @param userId The user ID.
      * @param experimentId The experiment ID.
-     * @return The String array holding the data.
+     * @return The list holding the data.
      */
     @Transactional
-    public String[] getXMLForUser(final Integer userId, final Integer experimentId) {
-        return null;
+    public List<BlockEventXMLProjection> getXMLForUser(final Integer userId, final Integer experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot retrieve xml data for user with invalid id " + userId + " or experiment with invalid "
+                    + "id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot retrieve xml data for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            List<BlockEventXMLProjection> xml = blockEventRepository.findAllByXmlIsNotNullAndUserAndExperiment(user,
+                    experiment);
+
+            if (xml.isEmpty()) {
+                logger.error("Could not find any xml data for user with id " + user + " for experiment with id "
+                        + experimentId + "!");
+                throw new NotFoundException("Could not find any xml data for user with id " + user + " for experiment "
+                        + "with id " + experimentId + "!");
+            }
+
+            return xml;
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+                    + " when trying to download the xml files!", e);
+            throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
+                    + experimentId + " when trying to download the xml files!", e);
+        }
     }
 
     /**
