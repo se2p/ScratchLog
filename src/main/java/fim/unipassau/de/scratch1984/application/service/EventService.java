@@ -2,14 +2,17 @@ package fim.unipassau.de.scratch1984.application.service;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.persistence.entity.BlockEvent;
+import fim.unipassau.de.scratch1984.persistence.entity.CodesData;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.ResourceEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.BlockEventRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.CodesDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
@@ -17,11 +20,16 @@ import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventReposito
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +54,11 @@ public class EventService {
      * The event count repository to use for event count queries.
      */
     private final EventCountRepository eventCountRepository;
+
+    /**
+     * The codes data repository to use for codes count queries.
+     */
+    private final CodesDataRepository codesDataRepository;
 
     /**
      * The block event repository to use for block event queries.
@@ -75,21 +88,24 @@ public class EventService {
     /**
      * Constructs an event service with the given dependencies.
      *
-     * @param eventCountRepository The event count repository to use.
-     * @param blockEventRepository The block event repository to use.
-     * @param resourceEventRepository The resource event repository to use.
-     * @param participantRepository The participant repository to use.
-     * @param userRepository The user repository to use.
-     * @param experimentRepository THe experiment repository to use.
+     * @param eventCountRepository The {@link EventCountRepository} to use.
+     * @param codesDataRepository The {@link CodesDataRepository} to use.
+     * @param blockEventRepository The {@link BlockEventRepository} to use.
+     * @param resourceEventRepository The {@link ResourceEventRepository} to use.
+     * @param participantRepository The {@link ParticipantRepository} to use.
+     * @param userRepository The {@link UserRepository} to use.
+     * @param experimentRepository The {@link ExperimentRepository} to use.
      */
     @Autowired
     public EventService(final EventCountRepository eventCountRepository,
+                        final CodesDataRepository codesDataRepository,
                         final BlockEventRepository blockEventRepository,
                         final ResourceEventRepository resourceEventRepository,
                         final ParticipantRepository participantRepository,
                         final UserRepository userRepository,
                         final ExperimentRepository experimentRepository) {
         this.eventCountRepository = eventCountRepository;
+        this.codesDataRepository = codesDataRepository;
         this.blockEventRepository = blockEventRepository;
         this.resourceEventRepository = resourceEventRepository;
         this.participantRepository = participantRepository;
@@ -211,7 +227,7 @@ public class EventService {
      * @return The list holding the data.
      */
     @Transactional
-    public List<BlockEventJSONProjection> getJsonForUser(final Integer userId, final Integer experimentId) {
+    public List<BlockEventJSONProjection> getJsonForUser(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot retrieve json data for user with invalid id " + userId + " or experiment with invalid "
                     + "id " + experimentId + "!");
@@ -251,7 +267,7 @@ public class EventService {
      * @return The list holding the data.
      */
     @Transactional
-    public List<BlockEventXMLProjection> getXMLForUser(final Integer userId, final Integer experimentId) {
+    public List<BlockEventXMLProjection> getXMLForUser(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot retrieve xml data for user with invalid id " + userId + " or experiment with invalid "
                     + "id " + experimentId + "!");
@@ -280,6 +296,90 @@ public class EventService {
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " when trying to download the xml files!", e);
         }
+    }
+
+    /**
+     * Retrieves a page of {@link BlockEventProjection}s for the user with the given ID during the experiment with the
+     * given ID. If the given parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no
+     * corresponding user or experiment could be found, a {@link NotFoundException} is thrown.
+     *
+     * @param userId The user ID.
+     * @param experimentId The experiment ID.
+     * @param pageable The pageable containing the page size and page number.
+     * @return The page of block event projections.
+     */
+    @Transactional
+    public Page<BlockEventProjection> getCodesForUser(final int userId, final int experimentId,
+                                                      final Pageable pageable) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot retrieve codes data for user with invalid id " + userId + " or experiment with invalid"
+                    + " id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot retrieve codes data for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        int pageSize = pageable.getPageSize();
+        int currentPage = pageable.getPageNumber();
+
+        if (pageSize != Constants.PAGE_SIZE) {
+            logger.error("Cannot return block event projection page with invalid page size of " + pageSize + "!");
+            throw new IllegalArgumentException("Cannot return block event projection page with invalid page size of "
+                    + pageSize + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            return blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(user, experiment,
+                    PageRequest.of(currentPage, pageSize, Sort.by("date").ascending()));
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find block event projections for user with id " + userId + " or experiment with id "
+                    + experimentId + "!", e);
+            throw new NotFoundException("Could not find block event projections for user with id " + userId
+                    + " or experiment with id " + experimentId + "!", e);
+        }
+    }
+
+    /**
+     * Retrieves the codes data for the user with the given ID during the experiment with the given ID. If the ids are
+     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     *
+     * @param user The user ID.
+     * @param experiment The experiment ID.
+     * @return The {@link CodesData}, or {@code null}, if no corresponding data could be found.
+     */
+    @Transactional
+    public CodesDataDTO getCodesData(final int user, final int experiment) {
+        if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
+            logger.error("Cannot retrieve codes data for user with invalid id " + user + " or experiment with invalid "
+                    + "id " + experiment + "!");
+            throw new IllegalArgumentException("Cannot retrieve codes data for user with invalid id " + user
+                    + " or experiment with invalid id " + experiment + "!");
+        }
+
+        CodesData codesData = codesDataRepository.findByUserAndExperiment(user, experiment);
+        return createCodesDataDTO(codesData);
+    }
+
+    /**
+     * Creates a {@link CodesDataDTO} with the given information of the {@link CodesData}.
+     *
+     * @param codesData The entity containing the information.
+     * @return The new codes data dto containing the information passed in the entity.
+     */
+    private CodesDataDTO createCodesDataDTO(final CodesData codesData) {
+        CodesDataDTO codesDataDTO = new CodesDataDTO();
+
+        if (codesData.getUser() != null) {
+            codesDataDTO.setUser(codesData.getUser());
+        }
+        if (codesData.getExperiment() != null) {
+            codesDataDTO.setExperiment(codesData.getExperiment());
+        }
+        codesDataDTO.setCount(codesData.getCount());
+
+        return codesDataDTO;
     }
 
     /**

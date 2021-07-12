@@ -6,9 +6,11 @@ import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.web.controller.ResultController;
+import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
@@ -17,6 +19,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
@@ -66,10 +71,12 @@ public class ResultControllerTest {
     private static final String RESULT = "result";
     private static final String ERROR = "redirect:/error";
     private static final String ID_STRING = "1";
+    private static final String PAGE = "0";
     private static final int ID = 1;
     private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "type",
             new byte[]{1, 2, 3});
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "file", new byte[]{1, 2, 3});
+    private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
     private final List<EventCountDTO> resourceEvents = getEventCounts(2, "RENAME");
     private final List<FileProjection> files = getFileProjections(7);
@@ -77,6 +84,7 @@ public class ResultControllerTest {
     private final List<Sb3ZipDTO> sb3ZipDTOs = getSb3ZipDTOs(6);
     private final List<BlockEventXMLProjection> xmlProjections = getXmlProjections(3);
     private final List<BlockEventJSONProjection> jsonProjections = getJsonProjections(4);
+    private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(2));
 
     @Test
     public void testGetResult() {
@@ -85,13 +93,33 @@ public class ResultControllerTest {
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
-        assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model));
+        when(eventService.getCodesData(ID, ID)).thenReturn(codesDataDTO);
+        assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
-        verify(model, times(7)).addAttribute(anyString(), any());
+        verify(eventService).getCodesData(ID, ID);
+        verify(model, times(8)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetResultCodesDataZero() {
+        when(userService.existsParticipant(ID, ID)).thenReturn(true);
+        when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
+        when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
+        when(fileService.getFiles(ID, ID)).thenReturn(files);
+        when(fileService.getZipIds(ID, ID)).thenReturn(zips);
+        when(eventService.getCodesData(ID, ID)).thenReturn(new CodesDataDTO());
+        assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
+        verify(userService).existsParticipant(ID, ID);
+        verify(eventService).getBlockEventCounts(ID, ID);
+        verify(eventService).getResourceEventCounts(ID, ID);
+        verify(fileService).getFiles(ID, ID);
+        verify(fileService).getZipIds(ID, ID);
+        verify(eventService).getCodesData(ID, ID);
+        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -100,7 +128,7 @@ public class ResultControllerTest {
         when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, resultController.getResult(ID_STRING, ID_STRING, model));
+        assertEquals(ERROR, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
         verify(eventService).getResourceEventCounts(ID, ID);
@@ -111,7 +139,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetResultNoParticipant() {
-        assertEquals(ERROR, resultController.getResult(ID_STRING, ID_STRING, model));
+        assertEquals(ERROR, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
@@ -122,7 +150,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetResultInvalidExperimentId() {
-        assertEquals(ERROR, resultController.getResult("0", ID_STRING, model));
+        assertEquals(ERROR, resultController.getResult("0", ID_STRING, model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
@@ -133,7 +161,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetResultInvalidUserId() {
-        assertEquals(ERROR, resultController.getResult(ID_STRING, "  ", model));
+        assertEquals(ERROR, resultController.getResult(ID_STRING, "  ", model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
@@ -144,7 +172,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetResultExperimentIdNull() {
-        assertEquals(ERROR, resultController.getResult(null, ID_STRING, model));
+        assertEquals(ERROR, resultController.getResult(null, ID_STRING, model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
@@ -155,7 +183,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetResultUserIdNull() {
-        assertEquals(ERROR, resultController.getResult(ID_STRING, null, model));
+        assertEquals(ERROR, resultController.getResult(ID_STRING, null, model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
@@ -487,6 +515,71 @@ public class ResultControllerTest {
         verify(httpServletResponse, never()).setStatus(anyInt());
     }
 
+    @Test
+    public void testGetCodes() {
+        when(eventService.getCodesForUser(anyInt(), anyInt(),
+                any(PageRequest.class))).thenReturn(blockEventProjections);
+        List<BlockEventProjection> projections = resultController.getCodes(ID_STRING, ID_STRING, PAGE);
+        assertAll(
+                () -> assertEquals(2, projections.size()),
+                () -> assertEquals(0, projections.get(0).getId()),
+                () -> assertEquals("xml0", projections.get(0).getXml()),
+                () -> assertEquals("code0", projections.get(0).getCode()),
+                () -> assertEquals(1, projections.get(1).getId()),
+                () -> assertEquals("xml1", projections.get(1).getXml()),
+                () -> assertEquals("code1", projections.get(1).getCode())
+        );
+        verify(eventService).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesInvalidPage() {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.getCodes(ID_STRING, ID_STRING, "-1")
+        );
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesInvalidExperimentId() {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.getCodes(ID_STRING, PAGE, PAGE)
+        );
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesInvalidUserId() {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.getCodes("-1", ID_STRING, PAGE)
+        );
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesPageNull() {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.getCodes(ID_STRING, ID_STRING, null)
+        );
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesExperimentNull() {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.getCodes(ID_STRING, null, PAGE)
+        );
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesUserNull() {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.getCodes(null, ID_STRING, PAGE)
+        );
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
     private List<EventCountDTO> getEventCounts(int number, String event) {
         List<EventCountDTO> eventCountDTOS = new ArrayList<>();
         for (int i = 0; i < number; i++) {
@@ -556,6 +649,30 @@ public class ResultControllerTest {
                 @Override
                 public String getCode() {
                     return "json" + id;
+                }
+            });
+        }
+        return projections;
+    }
+
+    private List<BlockEventProjection> getBlockEventProjections(int number) {
+        List<BlockEventProjection> projections = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            final int id = i;
+            projections.add(new BlockEventProjection() {
+                @Override
+                public Integer getId() {
+                    return id;
+                }
+
+                @Override
+                public String getXml() {
+                    return "xml" + id;
+                }
+
+                @Override
+                public String getCode() {
+                    return "code" + id;
                 }
             });
         }

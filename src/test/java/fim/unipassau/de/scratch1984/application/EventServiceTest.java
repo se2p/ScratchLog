@@ -2,19 +2,24 @@ package fim.unipassau.de.scratch1984.application;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
+import fim.unipassau.de.scratch1984.persistence.entity.CodesData;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.BlockEventRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.CodesDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +28,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
@@ -65,6 +73,9 @@ public class EventServiceTest {
     @Mock
     private ExperimentRepository experimentRepository;
 
+    @Mock
+    private CodesDataRepository codesDataRepository;
+
     private static final int ID = 1;
     private final BlockEventDTO blockEventDTO = new BlockEventDTO(1, 1, LocalDateTime.now(),
             BlockEventDTO.BlockEventType.CHANGE, BlockEventDTO.BlockEvent.CHANGE, "sprite", "meta", "xml", "json");
@@ -74,10 +85,13 @@ public class EventServiceTest {
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
+    private final CodesData codesData = new CodesData(ID, ID, 15);
     private final List<EventCount> blockEvents = getEventCounts(8, "CREATE");
     private final List<EventCount> resourceEvents = getEventCounts(3, "RENAME");
     private final List<BlockEventXMLProjection> xmlProjections = getXmlProjections(2);
     private final List<BlockEventJSONProjection> jsonProjections = getJsonProjections(2);
+    private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(5));
+    private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
 
     @BeforeEach
     public void setup() {
@@ -415,6 +429,95 @@ public class EventServiceTest {
         verify(blockEventRepository, never()).findAllByXmlIsNotNullAndUserAndExperiment(any(), any());
     }
 
+    @Test
+    public void testGetCodesForUser() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
+                any(PageRequest.class))).thenReturn(blockEventProjections);
+        Page<BlockEventProjection> page = eventService.getCodesForUser(ID, ID, pageRequest);
+        assertAll(
+                () -> assertEquals(blockEventProjections.getTotalElements(), page.getTotalElements()),
+                () -> assertEquals(blockEventProjections.stream().findFirst(), page.stream().findFirst()),
+                () -> assertEquals(blockEventProjections.getSize(), page.getSize())
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesForUserEntityNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
+                any(PageRequest.class))).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> eventService.getCodesForUser(ID, ID, pageRequest)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesForUserInvalidPageSize() {
+        PageRequest invalid = PageRequest.of(0, Constants.PAGE_SIZE + 2);
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.getCodesForUser(ID, ID, invalid)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(blockEventRepository, never()).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
+                any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesForUserInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.getCodesForUser(ID, 0, pageRequest)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(blockEventRepository, never()).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
+                any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesForUserInvalidUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.getCodesForUser(-1, ID, pageRequest)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(blockEventRepository, never()).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
+                any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesData() {
+        when(codesDataRepository.findByUserAndExperiment(ID, ID)).thenReturn(codesData);
+        CodesDataDTO codesDataDTO = eventService.getCodesData(ID, ID);
+        assertAll(
+                () -> assertEquals(codesData.getUser(), codesDataDTO.getUser()),
+                () -> assertEquals(codesData.getExperiment(), codesDataDTO.getExperiment()),
+                () -> assertEquals(codesData.getCount(), codesDataDTO.getCount())
+        );
+        verify(codesDataRepository).findByUserAndExperiment(ID, ID);
+    }
+
+    @Test
+    public void testGetCodesDataInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class, () -> eventService.getCodesData(ID, -1));
+        verify(codesDataRepository, never()).findByUserAndExperiment(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testGetCodesDataInvalidUserId() {
+        assertThrows(IllegalArgumentException.class, () -> eventService.getCodesData(0, ID));
+        verify(codesDataRepository, never()).findByUserAndExperiment(anyInt(), anyInt());
+    }
+
     private List<EventCount> getEventCounts(int number, String event) {
         List<EventCount> eventCounts = new ArrayList<>();
         for (int i = 0; i < number; i++) {
@@ -455,6 +558,30 @@ public class EventServiceTest {
                 @Override
                 public String getCode() {
                     return "json" + id;
+                }
+            });
+        }
+        return projections;
+    }
+
+    private List<BlockEventProjection> getBlockEventProjections(int number) {
+        List<BlockEventProjection> projections = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            final int id = i;
+            projections.add(new BlockEventProjection() {
+                @Override
+                public Integer getId() {
+                    return id;
+                }
+
+                @Override
+                public String getXml() {
+                    return "xml" + id;
+                }
+
+                @Override
+                public String getCode() {
+                    return "code" + id;
                 }
             });
         }

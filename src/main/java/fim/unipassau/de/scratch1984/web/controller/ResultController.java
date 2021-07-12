@@ -6,15 +6,18 @@ import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -23,11 +26,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -96,11 +100,11 @@ public class ResultController {
      */
     @GetMapping("")
     @Secured("ROLE_ADMIN")
-    public String getResult(@RequestParam("experiment") final String experiment,
-                            @RequestParam("user") final String user, final Model model) {
+    public ModelAndView getResult(@RequestParam("experiment") final String experiment,
+                                  @RequestParam("user") final String user, final Model model) {
         if (user == null || experiment == null) {
             logger.error("Cannot return result page for user with id null or experiment with id null!");
-            return ERROR;
+            return new ModelAndView(ERROR);
         }
 
         int userId = parseId(user);
@@ -109,12 +113,12 @@ public class ResultController {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot return result page for user with invalid id " + userId + " or experiment with invalid "
                     + "id " + experimentId + "!");
-            return ERROR;
+            return new ModelAndView(ERROR);
         }
         if (!userService.existsParticipant(userId, experimentId)) {
             logger.error("Could not find participant entry for user with id " + userId + " for experiment with id "
                     + experimentId);
-            return ERROR;
+            return new ModelAndView(ERROR);
         }
 
         try {
@@ -122,18 +126,19 @@ public class ResultController {
             List<EventCountDTO> resourceEvents = eventService.getResourceEventCounts(userId, experimentId);
             List<FileProjection> files = fileService.getFiles(userId, experimentId);
             List<Integer> zipIds = fileService.getZipIds(userId, experimentId);
-            List<String> xml = new ArrayList<>();
-            xml.add("xml");
+            CodesDataDTO codesDataDTO = eventService.getCodesData(userId, experimentId);
+
+            model.addAttribute("codeCount", Math.max(codesDataDTO.getCount(), 0));
+            model.addAttribute("pageSize", Constants.PAGE_SIZE);
             model.addAttribute("blockEvents", blockEvents);
             model.addAttribute("resourceEvents", resourceEvents);
             model.addAttribute("files", files);
             model.addAttribute("zips", zipIds);
-            model.addAttribute("xml", xml);
             model.addAttribute("user", userId);
             model.addAttribute("experiment", experimentId);
-            return RESULT;
+            return new ModelAndView(RESULT);
         } catch (NotFoundException e) {
-            return ERROR;
+            return new ModelAndView(ERROR);
         }
     }
 
@@ -344,6 +349,47 @@ public class ResultController {
             logger.error("Could not download json files due to IOException!", e);
             throw new RuntimeException("Could not download json files due to IOException!");
         }
+    }
+
+    /**
+     * Loads a list of {@link BlockEventProjection} with for the given page number, user and experiment from the
+     * database. If the parameters are invalid an {@link IncompleteDataException} is thrown instead.
+     *
+     * @param experiment The experiment id to search for.
+     * @param user The user id to search for.
+     * @param page The current page number.
+     * @return The list of block event projections.
+     */
+    @GetMapping("/codes")
+    @Secured("ROLE_ADMIN")
+    @ResponseBody
+    public List<BlockEventProjection> getCodes(@RequestParam("experiment") final String experiment,
+                                               @RequestParam("user") final String user,
+                                               @RequestParam("page") final String page) {
+        if (user == null || experiment == null || page == null) {
+            logger.error("Cannot get codes for user with id null or experiment with id null or page null!");
+            throw new IncompleteDataException("Cannot get codes for user with id null or experiment with id null or "
+                    + "page null!");
+        }
+
+        int userId = parseId(user);
+        int experimentId = parseId(experiment);
+        int currentPage = parseId(page);
+
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot get codes for user with invalid id " + userId + " or experiment with invalid id "
+                    + experimentId + "or invalid page number" + page + "!");
+            throw new IncompleteDataException("Cannot get codes for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "or invalid page number" + page + "!");
+        }
+
+        if (currentPage < 0) {
+            logger.error("Cannot get codes for invalid page number " + currentPage + "!");
+            throw new IncompleteDataException("Cannot get codes for invalid page number " + currentPage + "!");
+        }
+
+        return eventService.getCodesForUser(userId, experimentId, PageRequest.of(currentPage,
+                Constants.PAGE_SIZE)).getContent();
     }
 
     /**

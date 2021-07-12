@@ -5,10 +5,12 @@ import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.ResultController;
+import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
@@ -18,6 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -33,6 +38,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -68,10 +74,13 @@ public class ResultControllerIntegrationTest {
     private static final String EXPERIMENT_PARAM = "experiment";
     private static final String USER_PARAM = "user";
     private static final String ID_PARAM = "id";
+    private static final String PAGE_PARAM = "page";
+    private static final String PAGE = "0";
     private static final int ID = 1;
     private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "type",
             new byte[]{1, 2, 3});
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "file", new byte[]{1, 2, 3});
+    private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
     private final List<EventCountDTO> resourceEvents = getEventCounts(2, "RENAME");
     private final List<FileProjection> files = getFileProjections(7);
@@ -79,6 +88,7 @@ public class ResultControllerIntegrationTest {
     private final List<Sb3ZipDTO> sb3ZipDTOs = getSb3ZipDTOs(6);
     private final List<BlockEventXMLProjection> xmlProjections = new ArrayList<>();
     private final List<BlockEventJSONProjection> jsonProjections = new ArrayList<>();
+    private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(2));
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -90,6 +100,7 @@ public class ResultControllerIntegrationTest {
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
+        when(eventService.getCodesData(ID, ID)).thenReturn(codesDataDTO);
         mvc.perform(get("/result")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -103,6 +114,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(model().attribute("zips", is(zips)))
                 .andExpect(model().attribute("user", is(ID)))
                 .andExpect(model().attribute("experiment", is(ID)))
+                .andExpect(model().attribute("codeCount", is(codesDataDTO.getCount())))
                 .andExpect(status().isOk())
                 .andExpect(view().name(RESULT));
         verify(userService).existsParticipant(ID, ID);
@@ -110,6 +122,39 @@ public class ResultControllerIntegrationTest {
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
+        verify(eventService).getCodesData(ID, ID);
+    }
+
+    @Test
+    public void testGetResultCodesDataZero() throws Exception {
+        when(userService.existsParticipant(ID, ID)).thenReturn(true);
+        when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
+        when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
+        when(fileService.getFiles(ID, ID)).thenReturn(files);
+        when(fileService.getZipIds(ID, ID)).thenReturn(zips);
+        when(eventService.getCodesData(ID, ID)).thenReturn(new CodesDataDTO());
+        mvc.perform(get("/result")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(model().attribute("blockEvents", is(blockEvents)))
+                .andExpect(model().attribute("resourceEvents", is(resourceEvents)))
+                .andExpect(model().attribute("files", is(files)))
+                .andExpect(model().attribute("zips", is(zips)))
+                .andExpect(model().attribute("user", is(ID)))
+                .andExpect(model().attribute("experiment", is(ID)))
+                .andExpect(model().attribute("codeCount", is(0)))
+                .andExpect(status().isOk())
+                .andExpect(view().name(RESULT));
+        verify(userService).existsParticipant(ID, ID);
+        verify(eventService).getBlockEventCounts(ID, ID);
+        verify(eventService).getResourceEventCounts(ID, ID);
+        verify(fileService).getFiles(ID, ID);
+        verify(fileService).getZipIds(ID, ID);
+        verify(eventService).getCodesData(ID, ID);
     }
 
     @Test
@@ -383,6 +428,63 @@ public class ResultControllerIntegrationTest {
         verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
     }
 
+    @Test
+    public void testGetCodes() throws Exception {
+        when(eventService.getCodesForUser(anyInt(), anyInt(), any(PageRequest.class))).thenReturn(blockEventProjections);
+        mvc.perform(get("/result/codes")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(PAGE_PARAM, PAGE)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(eventService).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesInvalidPage() throws Exception {
+        mvc.perform(get("/result/codes")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(PAGE_PARAM, "-3")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesInvalidExperimentId() throws Exception {
+        mvc.perform(get("/result/codes")
+                .param(EXPERIMENT_PARAM, "-1")
+                .param(USER_PARAM, ID_STRING)
+                .param(PAGE_PARAM, PAGE)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesInvalidUserId() throws Exception {
+        mvc.perform(get("/result/codes")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, PAGE)
+                .param(PAGE_PARAM, PAGE)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
     private List<EventCountDTO> getEventCounts(int number, String event) {
         List<EventCountDTO> eventCountDTOS = new ArrayList<>();
         for (int i = 0; i < number; i++) {
@@ -418,5 +520,29 @@ public class ResultControllerIntegrationTest {
         }
 
         return sb3ZipDTOs;
+    }
+
+    private List<BlockEventProjection> getBlockEventProjections(int number) {
+        List<BlockEventProjection> projections = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            final int id = i;
+            projections.add(new BlockEventProjection() {
+                @Override
+                public Integer getId() {
+                    return id;
+                }
+
+                @Override
+                public String getXml() {
+                    return "xml" + id;
+                }
+
+                @Override
+                public String getCode() {
+                    return "code" + id;
+                }
+            });
+        }
+        return projections;
     }
 }

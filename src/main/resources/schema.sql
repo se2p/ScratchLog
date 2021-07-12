@@ -189,7 +189,7 @@ group by
 
 -- scratch1984.user_num_codes source
 
-CREATE OR REPLACE VIEW `user_num_codes` (`user`, `experiment`, `count`) AS
+CREATE OR REPLACE VIEW `codes_data` (`user`, `experiment`, `count`) AS
 select
     `b`.`user_id` AS `user_id`,
     `b`.`experiment_id` AS `experiment_id`,

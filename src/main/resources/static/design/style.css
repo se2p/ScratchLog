@@ -205,3 +205,8 @@ code {
     border-radius: 6px;
     background-color: #999999;
 }
+
+#blocklyArea {
+    width: 63vw;
+    height: 63vh;
+}
