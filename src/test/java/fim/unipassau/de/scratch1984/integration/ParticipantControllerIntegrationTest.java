@@ -5,6 +5,8 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.ParticipantController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -18,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -28,6 +32,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
@@ -345,9 +351,11 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testDeleteParticipantNotParticipantEntry() throws Exception {
+        List<Participant> list = new ArrayList<>();
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(experimentService.getLastParticipantPage(ID)).thenReturn(ID);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(new PageImpl<>(list));
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
                 .param(PARTICIPANT, PARTICIPANT)
@@ -365,6 +373,7 @@ public class ParticipantControllerIntegrationTest {
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
         verify(experimentService).getLastParticipantPage(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
     }
