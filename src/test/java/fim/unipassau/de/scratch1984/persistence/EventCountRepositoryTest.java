@@ -96,6 +96,12 @@ public class EventCountRepositoryTest {
     }
 
     @Test
+    public void testFindAllBlockEventsByExperiment() {
+        List<EventCount> eventCounts = eventCountRepository.findAllBlockEventsByExperiment(experiment1.getId());
+       assertEquals(3, eventCounts.size());
+    }
+
+    @Test
     public void testFindAllResourceEventsByUserIdAndExperimentId() {
         List<EventCount> eventCounts = eventCountRepository.findAllResourceEventsByUserIdAndExperimentId(user1.getId(),
                 experiment1.getId());
@@ -113,5 +119,11 @@ public class EventCountRepositoryTest {
         List<EventCount> eventCounts = eventCountRepository.findAllResourceEventsByUserIdAndExperimentId(user2.getId(),
                 experiment2.getId());
         assertTrue(eventCounts.isEmpty());
+    }
+
+    @Test
+    public void testFindAllResourceEventsByExperiment() {
+        List<EventCount> eventCounts = eventCountRepository.findAllResourceEventsByExperiment(experiment1.getId());
+        assertEquals(3, eventCounts.size());
     }
 }

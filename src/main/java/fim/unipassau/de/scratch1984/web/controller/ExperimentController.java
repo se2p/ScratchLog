@@ -1,6 +1,9 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
+import com.opencsv.CSVWriter;
+import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
@@ -33,6 +36,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -72,6 +77,11 @@ public class ExperimentController {
     private final MailService mailService;
 
     /**
+     * The event service to use for event management.
+     */
+    private final EventService eventService;
+
+    /**
      * String corresponding to the experiment page.
      */
     private static final String EXPERIMENT = "experiment";
@@ -93,14 +103,17 @@ public class ExperimentController {
      * @param userService The user service to use.
      * @param participantService The participant service to use.
      * @param mailService The mail service to use.
+     * @param eventService The event service to use.
      */
     @Autowired
     public ExperimentController(final ExperimentService experimentService, final UserService userService,
-                                final ParticipantService participantService, final MailService mailService) {
+                                final ParticipantService participantService, final MailService mailService,
+                                final EventService eventService) {
         this.experimentService = experimentService;
         this.userService = userService;
         this.participantService = participantService;
         this.mailService = mailService;
+        this.eventService = eventService;
     }
 
     /**
@@ -545,6 +558,56 @@ public class ExperimentController {
         }
 
         return EXPERIMENT;
+    }
+
+    /**
+     * Retrieves all block event, resource event, block and resource event counts, codes and experiment data for the
+     * given experiment and makes them available for download in a csv file. If the id is invalid an
+     * {@link IncompleteDataException} is thrown instead. If an {@link IOException} occurs, a {@link RuntimeException}
+     * is thrown.
+     *
+     * @param id The experiment id to search for.
+     * @param httpServletResponse The servlet response returning the files.
+     */
+    @GetMapping("/csv")
+    @Secured("ROLE_ADMIN")
+    public void downloadCSVFile(@RequestParam("id") final String id, final HttpServletResponse httpServletResponse) {
+        if (id == null) {
+            logger.error("Cannot download CSV file for experiment with id null!");
+            throw new IncompleteDataException("Cannot download CSV file for experiment with id null!");
+        }
+
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot download CSV file for experiment with invalid id " + id + "!");
+            throw new IncompleteDataException("Cannot download CSV file for experiment with invalid id " + id + "!");
+        }
+
+        try {
+            httpServletResponse.setContentType("text/csv");
+            httpServletResponse.setHeader("Content-Disposition", "attachment;filename=experiment_" + experimentId
+                    + ".csv");
+            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+            CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
+
+            List<String[]> blockEvents = eventService.getBlockEventData(experimentId);
+            List<String[]> resourceEvents = eventService.getResourceEventData(experimentId);
+            List<String[]> blockEventCounts = eventService.getBlockEventCount(experimentId);
+            List<String[]> resourceEventCounts = eventService.getResourceEventCount(experimentId);
+            List<String[]> codesData = eventService.getCodesDataForExperiment(experimentId);
+            List<String[]> experimentData = experimentService.getExperimentData(experimentId);
+
+            csvWriter.writeAll(blockEvents);
+            csvWriter.writeAll(resourceEvents);
+            csvWriter.writeAll(blockEventCounts);
+            csvWriter.writeAll(resourceEventCounts);
+            csvWriter.writeAll(codesData);
+            csvWriter.writeAll(experimentData);
+        } catch (IOException e) {
+            logger.error("Could not download csv file due to IOException!", e);
+            throw new RuntimeException("Could not download csv file due to IOException!");
+        }
     }
 
     /**

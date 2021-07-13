@@ -49,4 +49,12 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
     Page<BlockEventProjection> findAllByUserAndExperimentAndXmlIsNotNull(User user, Experiment experiment,
                                                                          Pageable pageable);
 
+    /**
+     * Returns all {@link BlockEvent}s that occurred during the given experiment.
+     *
+     * @param experiment The experiment to search for.
+     * @return A {@link List} of all block events.
+     */
+    List<BlockEvent> findAllByExperiment(Experiment experiment);
+
 }

@@ -19,6 +19,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A service providing methods related to experiments.
  */
@@ -226,6 +229,36 @@ public class ExperimentService {
         experimentRepository.updateStatusById(id, status);
         Experiment experiment = experimentRepository.findById(id);
         return createExperimentDTO(experiment);
+    }
+
+    /**
+     * Retrieves the experiment data for the experiment with the given ID as a list of string arrays. If the id is
+     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     *
+     * @param id The experiment ID.
+     * @return The list of string arrays.
+     */
+    @Transactional
+    public List<String[]> getExperimentData(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot retrieve experiment data for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve experiment data for experiment with invalid id " + id
+                    + "!");
+        }
+
+        ExperimentData experimentData = experimentDataRepository.findByExperiment(id);
+        List<String[]> list = new ArrayList<>();
+        String[] header = {"experiment", "participants", "started", "finished"};
+        list.add(header);
+
+        if (experimentData != null) {
+            String[] data = {experimentData.getExperiment().toString(),
+                    String.valueOf(experimentData.getParticipants()), String.valueOf(experimentData.getStarted()),
+                    String.valueOf(experimentData.getFinished())};
+            list.add(data);
+        }
+
+        return list;
     }
 
     /**

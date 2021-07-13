@@ -123,6 +123,12 @@
                 </div>
             </div>
         </div>
+        <div class="text-center">
+            <a class="btn btn-primary" th:href="@{/experiment/csv(id=${experimentDTO.id})}">
+                <i class="fas fa-download fa-inverse"></i>
+                <span th:text="#{csv}"></span>
+            </a>
+        </div>
         <div class="row mb-5">
             <div class="col-12" th:utext="${experimentDTO.info}"></div>
         </div>

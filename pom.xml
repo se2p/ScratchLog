@@ -24,6 +24,7 @@
         <json.version>20190722</json.version>
         <commonmark.version>0.16.1</commonmark.version>
         <font-awesome.version>5.15.2</font-awesome.version>
+        <opencsv.version>5.5</opencsv.version>
         <junit.version>5.7.0</junit.version>
         <junitplatform.version>1.7.0</junitplatform.version>
         <mockito.version>3.6.28</mockito.version>
@@ -131,6 +132,13 @@
             <groupId>com.atlassian.commonmark</groupId>
             <artifactId>commonmark</artifactId>
             <version>${commonmark.version}</version>
+        </dependency>
+
+        <!-- CSV Files -->
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>${opencsv.version}</version>
         </dependency>
 
         <!-- JUnit 5 -->

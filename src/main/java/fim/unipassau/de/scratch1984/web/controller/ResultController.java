@@ -207,7 +207,7 @@ public class ResultController {
     /**
      * Retrieves all zip files created for the given user during the given experiment and makes them available for
      * download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown instead. If an
-     * {@link IOException} occurs, an {@link RuntimeException} is thrown.
+     * {@link IOException} occurs, a {@link RuntimeException} is thrown.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
@@ -256,7 +256,7 @@ public class ResultController {
     /**
      * Retrieves all the xml codes that were saved for the given user during the given experiment and makes them
      * available for download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown
-     * instead. If an {@link IOException} occurs, an {@link RuntimeException} is thrown.
+     * instead. If an {@link IOException} occurs, a {@link RuntimeException} is thrown.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
@@ -305,7 +305,7 @@ public class ResultController {
     /**
      * Retrieves all the json strings that were saved for the given user during the given experiment and makes them
      * available for download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown
-     * instead. If an {@link IOException} occurs, an {@link RuntimeException} is thrown.
+     * instead. If an {@link IOException} occurs, a {@link RuntimeException} is thrown.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.

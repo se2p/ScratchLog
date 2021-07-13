@@ -2,10 +2,12 @@ package fim.unipassau.de.scratch1984.application;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
+import fim.unipassau.de.scratch1984.persistence.entity.BlockEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.CodesData;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.persistence.entity.ResourceEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
@@ -37,6 +39,7 @@ import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -86,10 +89,18 @@ public class EventServiceTest {
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
     private final CodesData codesData = new CodesData(ID, ID, 15);
+    private final String[] blockEventDataHeader = {"id", "user", "experiment", "date", "eventType", "event",
+            "spritename", "metadata", "xml", "json"};
+    private final String[] resourceEventDataHeader = {"id", "user", "experiment", "date", "eventType", "event", "name",
+            "md5", "filetype", "library"};
+    private final String[] eventCountDataHeader = {"user", "experiment", "count", "event"};
+    private final String[] codesDataHeader = {"user", "experiment", "count"};
     private final List<EventCount> blockEvents = getEventCounts(8, "CREATE");
     private final List<EventCount> resourceEvents = getEventCounts(3, "RENAME");
     private final List<BlockEventXMLProjection> xmlProjections = getXmlProjections(2);
     private final List<BlockEventJSONProjection> jsonProjections = getJsonProjections(2);
+    private final List<BlockEvent> blockEventData = getBlockEvents(3);
+    private final List<ResourceEvent> resourceEventData = getResourceEvents(2);
     private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(5));
     private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
 
@@ -518,6 +529,131 @@ public class EventServiceTest {
         verify(codesDataRepository, never()).findByUserAndExperiment(anyInt(), anyInt());
     }
 
+    @Test
+    public void testGetBlockEventData() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(blockEventRepository.findAllByExperiment(experiment)).thenReturn(blockEventData);
+        List<String[]> data = eventService.getBlockEventData(ID);
+        assertAll(
+                () -> assertEquals(4, data.size()),
+                () -> assertEquals(Arrays.toString(blockEventDataHeader), Arrays.toString(data.get(0)))
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findAllByExperiment(experiment);
+    }
+
+    @Test
+    public void testGetBlockEventDataEntityNotFound() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(blockEventRepository.findAllByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> eventService.getBlockEventData(ID)
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findAllByExperiment(experiment);
+    }
+
+    @Test
+    public void testGetBlockEventDataInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.getBlockEventData(0)
+        );
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(blockEventRepository, never()).findAllByExperiment(any());
+    }
+
+    @Test
+    public void testGetResourceEventData() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(resourceEventRepository.findAllByExperiment(experiment)).thenReturn(resourceEventData);
+        List<String[]> data = eventService.getResourceEventData(ID);
+        assertAll(
+                () -> assertEquals(3, data.size()),
+                () -> assertEquals(Arrays.toString(resourceEventDataHeader), Arrays.toString(data.get(0)))
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(resourceEventRepository).findAllByExperiment(experiment);
+    }
+
+    @Test
+    public void testGetResourceEventDataEntityNotFound() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(resourceEventRepository.findAllByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> eventService.getResourceEventData(ID)
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(resourceEventRepository).findAllByExperiment(experiment);
+    }
+
+    @Test
+    public void testGetResourceEventDataEntityInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.getResourceEventData(-1)
+        );
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(resourceEventRepository, never()).findAllByExperiment(any());
+    }
+
+    @Test
+    public void testGetBlockEventCount() {
+        when(eventCountRepository.findAllBlockEventsByExperiment(ID)).thenReturn(blockEvents);
+        List<String[]> data = eventService.getBlockEventCount(ID);
+        assertAll(
+                () -> assertEquals(9, data.size()),
+                () -> assertEquals(Arrays.toString(eventCountDataHeader), Arrays.toString(data.get(0)))
+        );
+        verify(eventCountRepository).findAllBlockEventsByExperiment(ID);
+    }
+
+    @Test
+    public void testGetBlockEventCountInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.getBlockEventCount(0)
+        );
+        verify(eventCountRepository, never()).findAllBlockEventsByExperiment(anyInt());
+    }
+
+    @Test
+    public void testGetResourceEventCount() {
+        when(eventCountRepository.findAllResourceEventsByExperiment(ID)).thenReturn(resourceEvents);
+        List<String[]> data = eventService.getResourceEventCount(ID);
+        assertAll(
+                () -> assertEquals(4, data.size()),
+                () -> assertEquals(Arrays.toString(eventCountDataHeader), Arrays.toString(data.get(0)))
+        );
+        verify(eventCountRepository).findAllResourceEventsByExperiment(ID);
+    }
+
+    @Test
+    public void testGetResourceEventCountInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.getResourceEventCount(-5)
+        );
+        verify(eventCountRepository, never()).findAllResourceEventsByExperiment(anyInt());
+    }
+
+    @Test
+    public void testGetCodesDataForExperiment() {
+        List<CodesData> codesDataList = new ArrayList<>();
+        codesDataList.add(codesData);
+        when(codesDataRepository.findAllByExperiment(ID)).thenReturn(codesDataList);
+        List<String[]> data = eventService.getCodesDataForExperiment(ID);
+        assertAll(
+                () -> assertEquals(2, data.size()),
+                () -> assertEquals(Arrays.toString(codesDataHeader), Arrays.toString(data.get(0)))
+        );
+        verify(codesDataRepository).findAllByExperiment(ID);
+    }
+
+    @Test
+    public void testGetCodesDataForExperimentInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.getCodesDataForExperiment(0)
+        );
+        verify(codesDataRepository, never()).findAllByExperiment(anyInt());
+    }
+
     private List<EventCount> getEventCounts(int number, String event) {
         List<EventCount> eventCounts = new ArrayList<>();
         for (int i = 0; i < number; i++) {
@@ -586,5 +722,27 @@ public class EventServiceTest {
             });
         }
         return projections;
+    }
+
+    private List<BlockEvent> getBlockEvents(int number) {
+        List<BlockEvent> events = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            BlockEvent blockEvent = new BlockEvent(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "eventType",
+                    "event" + i, "sprite", "meta", "xml" + i, "json" + i);
+            blockEvent.setId(i);
+            events.add(blockEvent);
+        }
+        return events;
+    }
+
+    private List<ResourceEvent> getResourceEvents(int number) {
+        List<ResourceEvent> events = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            ResourceEvent resourceEvent = new ResourceEvent(user, experiment, Timestamp.valueOf(LocalDateTime.now()),
+                    "eventType", "event", "name", "hash", "type", i == 0 ? 1 : null);
+            resourceEvent.setId(i);
+            events.add(resourceEvent);
+        }
+        return events;
     }
 }

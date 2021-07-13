@@ -1,6 +1,8 @@
 package fim.unipassau.de.scratch1984.web;
 
+import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
@@ -31,14 +33,20 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.LocaleResolver;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -68,6 +76,9 @@ public class ExperimentControllerTest {
     private MailService mailService;
 
     @Mock
+    private EventService eventService;
+
+    @Mock
     private Model model;
 
     @Mock
@@ -81,6 +92,9 @@ public class ExperimentControllerTest {
 
     @Mock
     private HttpServletRequest httpServletRequest;
+
+    @Mock
+    private HttpServletResponse httpServletResponse;
 
     @Mock
     private SecurityContext securityContext;
@@ -905,6 +919,69 @@ public class ExperimentControllerTest {
         verify(experimentService, never()).getLastParticipantPage(ID);
         verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDownloadCSVFile() throws IOException {
+        when(eventService.getBlockEventData(ID)).thenReturn(new ArrayList<>());
+        when(eventService.getResourceEventData(ID)).thenReturn(new ArrayList<>());
+        when(eventService.getBlockEventCount(ID)).thenReturn(new ArrayList<>());
+        when(eventService.getResourceEventCount(ID)).thenReturn(new ArrayList<>());
+        when(eventService.getCodesDataForExperiment(ID)).thenReturn(new ArrayList<>());
+        when(experimentService.getExperimentData(ID)).thenReturn(new ArrayList<>());
+        assertDoesNotThrow(
+                () -> experimentController.downloadCSVFile(ID_STRING, httpServletResponse)
+        );
+        verify(eventService).getBlockEventData(ID);
+        verify(eventService).getResourceEventData(ID);
+        verify(eventService).getBlockEventCount(ID);
+        verify(eventService).getResourceEventCount(ID);
+        verify(eventService).getCodesDataForExperiment(ID);
+        verify(experimentService).getExperimentData(ID);
+        verify(httpServletResponse).getWriter();
+    }
+
+    @Test
+    public void testDownloadCSVFileIO() throws IOException {
+        when(httpServletResponse.getWriter()).thenThrow(IOException.class);
+        assertThrows(RuntimeException.class,
+                () -> experimentController.downloadCSVFile(ID_STRING, httpServletResponse)
+        );
+        verify(eventService, never()).getBlockEventData(anyInt());
+        verify(eventService, never()).getResourceEventData(anyInt());
+        verify(eventService, never()).getBlockEventCount(anyInt());
+        verify(eventService, never()).getResourceEventCount(anyInt());
+        verify(eventService, never()).getCodesDataForExperiment(anyInt());
+        verify(experimentService, never()).getExperimentData(anyInt());
+        verify(httpServletResponse).getWriter();
+    }
+
+    @Test
+    public void testDownloadCSVFileInvalidId() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> experimentController.downloadCSVFile(BLANK, httpServletResponse)
+        );
+        verify(eventService, never()).getBlockEventData(anyInt());
+        verify(eventService, never()).getResourceEventData(anyInt());
+        verify(eventService, never()).getBlockEventCount(anyInt());
+        verify(eventService, never()).getResourceEventCount(anyInt());
+        verify(eventService, never()).getCodesDataForExperiment(anyInt());
+        verify(experimentService, never()).getExperimentData(anyInt());
+        verify(httpServletResponse, never()).getWriter();
+    }
+
+    @Test
+    public void testDownloadCSVFileIdNull() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> experimentController.downloadCSVFile(null, httpServletResponse)
+        );
+        verify(eventService, never()).getBlockEventData(anyInt());
+        verify(eventService, never()).getResourceEventData(anyInt());
+        verify(eventService, never()).getBlockEventCount(anyInt());
+        verify(eventService, never()).getResourceEventCount(anyInt());
+        verify(eventService, never()).getCodesDataForExperiment(anyInt());
+        verify(experimentService, never()).getExperimentData(anyInt());
+        verify(httpServletResponse, never()).getWriter();
     }
 
     private StringBuilder createLongString(int length) {

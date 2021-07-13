@@ -363,6 +363,116 @@ public class EventService {
     }
 
     /**
+     * Retrieves all block event data for the experiment with the given ID as a list of string arrays. If the id is
+     * invalid, an {@link IllegalArgumentException} is thrown instead. If no corresponding experiment could be found, a
+     * {@link NotFoundException} is thrown.
+     *
+     * @param id The experiment ID.
+     * @return The list of string arrays.
+     */
+    @Transactional
+    public List<String[]> getBlockEventData(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot retrieve block event data for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve block event data for experiment with invalid id " + id
+                    + "!");
+        }
+
+        Experiment experiment = experimentRepository.getOne(id);
+
+        try {
+            List<BlockEvent> blockEvents = blockEventRepository.findAllByExperiment(experiment);
+            return createBlockEventList(blockEvents);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find experiment with id " + id + " in the database!", e);
+            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
+        }
+    }
+
+    /**
+     * Retrieves all resource event data for the experiment with the given ID as a list of string arrays. If the id is
+     * invalid, an {@link IllegalArgumentException} is thrown instead. If no corresponding experiment could be found, a
+     * {@link NotFoundException} is thrown.
+     *
+     * @param id The experiment ID.
+     * @return The list of string arrays.
+     */
+    @Transactional
+    public List<String[]> getResourceEventData(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot retrieve resource event data for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve resource event data for experiment with invalid id "
+                    + id + "!");
+        }
+
+        Experiment experiment = experimentRepository.getOne(id);
+
+        try {
+            List<ResourceEvent> resourceEvents = resourceEventRepository.findAllByExperiment(experiment);
+            return createResourceEventList(resourceEvents);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find experiment with id " + id + " in the database!", e);
+            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
+        }
+    }
+
+    /**
+     * Retrieves all block event counts for the experiment with the given ID as a list of string arrays. If the id is
+     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     *
+     * @param id The experiment ID.
+     * @return The list of string arrays.
+     */
+    @Transactional
+    public List<String[]> getBlockEventCount(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot retrieve block event count data for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve block event count data for experiment with invalid id "
+                    + id + "!");
+        }
+
+        List<EventCount> eventCounts = eventCountRepository.findAllBlockEventsByExperiment(id);
+        return createEventCountList(eventCounts);
+    }
+
+    /**
+     * Retrieves all resource event counts for the experiment with the given ID as a list of string arrays. If the id is
+     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     *
+     * @param id The experiment ID.
+     * @return The list of string arrays.
+     */
+    @Transactional
+    public List<String[]> getResourceEventCount(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot retrieve resource event count data for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve resource event count data for experiment with invalid "
+                    + "id " + id + "!");
+        }
+
+        List<EventCount> eventCounts = eventCountRepository.findAllResourceEventsByExperiment(id);
+        return createEventCountList(eventCounts);
+    }
+
+    /**
+     * Retrieves all codes data for the experiment with the given ID as a list of string arrays. If the id is invalid,
+     * an {@link IllegalArgumentException} is thrown instead.
+     *
+     * @param id The experiment ID.
+     * @return The list of string arrays.
+     */
+    @Transactional
+    public List<String[]> getCodesDataForExperiment(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot retrieve codes data for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve codes data for experiment with invalid id " + id + "!");
+        }
+
+        List<CodesData> codesData = codesDataRepository.findAllByExperiment(id);
+        return createCodesDataList(codesData);
+    }
+
+    /**
      * Creates a {@link CodesDataDTO} with the given information of the {@link CodesData}.
      *
      * @param codesData The entity containing the information.
@@ -508,6 +618,93 @@ public class EventService {
         }
 
         return eventCountDTOS;
+    }
+
+    /**
+     * Creates a list of String arrays holding the information passed in the {@link BlockEvent} list.
+     *
+     * @param blockEvents The block events.
+     * @return The new list containing the information passed in the block event objects.
+     */
+    private List<String[]> createBlockEventList(final List<BlockEvent> blockEvents) {
+        List<String[]> events = new ArrayList<>();
+        String[] header = {"id", "user", "experiment", "date", "eventType", "event", "spritename", "metadata", "xml",
+                "json"};
+        events.add(header);
+
+        for (BlockEvent blockEvent : blockEvents) {
+            String[] data = {blockEvent.getId().toString(), blockEvent.getUser().getId().toString(),
+                    blockEvent.getExperiment().getId().toString(), blockEvent.getDate().toString(),
+                    blockEvent.getEventType(), blockEvent.getEvent(), blockEvent.getSprite(), blockEvent.getMetadata(),
+                    blockEvent.getXml(), blockEvent.getCode()};
+            events.add(data);
+        }
+
+        return events;
+    }
+
+    /**
+     * Creates a list of String arrays holding the information passed in the {@link ResourceEvent} list.
+     *
+     * @param resourceEvents The resource events.
+     * @return The new list containing the information passed in the resource event objects.
+     */
+    private List<String[]> createResourceEventList(final List<ResourceEvent> resourceEvents) {
+        List<String[]> events = new ArrayList<>();
+        String[] header = {"id", "user", "experiment", "date", "eventType", "event", "name", "md5", "filetype",
+                "library"};
+        events.add(header);
+
+        for (ResourceEvent resourceEvent : resourceEvents) {
+            String[] data = {resourceEvent.getId().toString(), resourceEvent.getUser().getId().toString(),
+                    resourceEvent.getExperiment().getId().toString(), resourceEvent.getDate().toString(),
+                    resourceEvent.getEventType(), resourceEvent.getEvent(), resourceEvent.getResourceName(),
+                    resourceEvent.getHash(), resourceEvent.getResourceType(), resourceEvent.getLibraryResource() == null
+                    ? "null" : resourceEvent.getLibraryResource().toString()};
+            events.add(data);
+        }
+
+        return events;
+    }
+
+    /**
+     * Creates a list of String arrays holding the information passed in the {@link EventCount} list.
+     *
+     * @param eventCounts The event counts.
+     * @return The new list containing the information passed in the event count objects.
+     */
+    private List<String[]> createEventCountList(final List<EventCount> eventCounts) {
+        List<String[]> events = new ArrayList<>();
+        String[] header = {"user", "experiment", "count", "event"};
+        events.add(header);
+
+        for (EventCount eventCount : eventCounts) {
+            String[] data = {eventCount.getUser().toString(), eventCount.getExperiment().toString(),
+                    String.valueOf(eventCount.getCount()), eventCount.getEvent()};
+            events.add(data);
+        }
+
+        return events;
+    }
+
+    /**
+     * Creates a list of String arrays holding the information passed in the {@link CodesData} list.
+     *
+     * @param codesData The codes data.
+     * @return The new list containing the information passed in the codes data objects.
+     */
+    private List<String[]> createCodesDataList(final List<CodesData> codesData) {
+        List<String[]> events = new ArrayList<>();
+        String[] header = {"user", "experiment", "count"};
+        events.add(header);
+
+        for (CodesData codes : codesData) {
+            String[] data = {codes.getUser().toString(), codes.getExperiment().toString(),
+                    String.valueOf(codes.getCount())};
+            events.add(data);
+        }
+
+        return events;
     }
 
 }
