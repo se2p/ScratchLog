@@ -123,7 +123,7 @@
                 </div>
             </div>
         </div>
-        <div class="text-center" th:unless="${participants.isEmpty()}">
+        <div class="text-center" th:unless="${participants.isEmpty()}" sec:authorize="hasRole('ADMIN')">
             <a class="btn btn-primary" th:href="@{/experiment/csv(id=${experimentDTO.id})}">
                 <i class="fas fa-download fa-inverse"></i>
                 <span th:text="#{csv}"></span>
