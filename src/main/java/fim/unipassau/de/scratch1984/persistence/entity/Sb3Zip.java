@@ -59,6 +59,30 @@ public class Sb3Zip {
     private byte[] content;
 
     /**
+     * Default constructor for the zip file entity.
+     */
+    public Sb3Zip() {
+    }
+
+    /**
+     * Constructs a new zip file with the given attributes.
+     *
+     * @param user The user for whom the zip file was created.
+     * @param experiment The experiment during which the zip file was created.
+     * @param date The timestamp at which the file was created.
+     * @param name The name of the zip.
+     * @param content The content.
+     */
+    public Sb3Zip(final User user, final Experiment experiment, final Timestamp date, final String name,
+                  final byte[] content) {
+        this.user = user;
+        this.experiment = experiment;
+        this.date = date;
+        this.name = name;
+        this.content = content;
+    }
+
+    /**
      * Returns the ID of the zip file.
      *
      * @return The file ID.

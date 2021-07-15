@@ -186,3 +186,18 @@ where
     (`p`.`experiment_id` = `e`.`id`)
 group by
     `p`.`experiment_id`;
+
+-- scratch1984.user_num_codes source
+
+CREATE OR REPLACE VIEW `codes_data` (`user`, `experiment`, `count`) AS
+select
+    `b`.`user_id` AS `user_id`,
+    `b`.`experiment_id` AS `experiment_id`,
+    count(`b`.`xml`) AS `COUNT(b.xml)`
+from
+    `block_event` `b`
+where
+    (`b`.`xml` is not null)
+group by
+    `b`.`user_id`,
+    `b`.`experiment_id`;

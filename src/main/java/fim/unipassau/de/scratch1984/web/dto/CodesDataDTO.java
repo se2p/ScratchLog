@@ -3,9 +3,9 @@ package fim.unipassau.de.scratch1984.web.dto;
 import java.util.Objects;
 
 /**
- * A DTO representing the number of times a user executed a specific event during an experiment.
+ * A DTO representing the number of times an xml code has been saved for a user during an experiment.
  */
-public class EventCountDTO {
+public class CodesDataDTO {
 
     /**
      * The ID of the user to whom the data belongs.
@@ -23,29 +23,22 @@ public class EventCountDTO {
     private int count;
 
     /**
-     * The event for which its occurrences have been counted.
+     * Default constructor for the codes data dto.
      */
-    private String event;
-
-    /**
-     * Default constructor for the event count dto.
-     */
-    public EventCountDTO() {
+    public CodesDataDTO() {
     }
 
     /**
-     * Constructs a new event count dto with the given attributes.
+     * Constructs a new codes data dto with the given attributes.
      *
-     * @param user The id of the user who caused the event.
-     * @param experiment The id of the experiment during which the event occurred.
-     * @param count The number of times the given event occurred.
-     * @param event The specific event.
+     * @param user The id of the user for whom the code was saved.
+     * @param experiment The id of the experiment during which the code was saved.
+     * @param count The number of times an xml code was saved.
      */
-    public EventCountDTO(final int user, final int experiment, final int count, final String event) {
+    public CodesDataDTO(final int user, final int experiment, final int count) {
         this.user = user;
         this.experiment = experiment;
         this.count = count;
-        this.event = event;
     }
 
     /**
@@ -103,28 +96,10 @@ public class EventCountDTO {
     }
 
     /**
-     * Returns the event for which the occurrences have been counted.
+     * Indicates whether some {@code other} codes data DTO is semantically equal to this codes data DTO.
      *
-     * @return The event.
-     */
-    public String getEvent() {
-        return event;
-    }
-
-    /**
-     * Sets the event.
-     *
-     * @param event The event to be set.
-     */
-    public void setEvent(final String event) {
-        this.event = event;
-    }
-
-    /**
-     * Indicates whether some {@code other} event count DTO is semantically equal to this event count DTO.
-     *
-     * @param other The object to compare this event count DTO to.
-     * @return {@code true} iff {@code other} is a semantically equivalent event count DTO.
+     * @param other The object to compare this codes data DTO to.
+     * @return {@code true} iff {@code other} is a semantically equivalent codes data DTO.
      */
     @Override
     public boolean equals(final Object other) {
@@ -136,15 +111,15 @@ public class EventCountDTO {
             return false;
         }
 
-        EventCountDTO that = (EventCountDTO) other;
+        CodesDataDTO that = (CodesDataDTO) other;
         return user.equals(that.user) && experiment.equals(that.experiment);
     }
 
     /**
-     * Calculates a hash code for this event count DTO for hashing purposes, and to fulfill the
+     * Calculates a hash code for this codes data DTO for hashing purposes, and to fulfill the
      * {@link Object#equals(Object)} contract.
      *
-     * @return The hash code value of the event count DTO.
+     * @return The hash code value of the codes data DTO.
      */
     @Override
     public int hashCode() {
@@ -152,17 +127,16 @@ public class EventCountDTO {
     }
 
     /**
-     * Converts the event count DTO into a human-readable string representation.
+     * Converts the codes data DTO into a human-readable string representation.
      *
-     * @return A human-readable string representation of the event count DTO.
+     * @return A human-readable string representation of the codes data DTO.
      */
     @Override
     public String toString() {
-        return "EventCountDTO{"
+        return "CodesDataDTO{"
                 + "user=" + user
                 + ", experiment=" + experiment
                 + ", count=" + count
-                + ", event='" + event + '\''
                 + '}';
     }
 

@@ -117,6 +117,12 @@ body {
     margin: 1%;
 }
 
+.no_decoration_margin,
+.no_decoration_margin:hover {
+    text-decoration: none;
+    color: black;
+}
+
 .navbar-brand {
     margin: 1%;
 }
@@ -198,4 +204,9 @@ code {
     font-size: 105% !important;
     border-radius: 6px;
     background-color: #999999;
+}
+
+#blocklyArea {
+    width: 63vw;
+    height: 63vh;
 }

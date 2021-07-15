@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Result</title>
+    <link rel="stylesheet" href="/static/design/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/design/all.min.css"/>
+    <link rel="stylesheet" href="/static/design/style.css">
+
+    <script type="text/javascript" th:src="@{/static/node_modules/blockly/blockly_compressed.js}"></script>
+    <script type="text/javascript" th:src="@{/static/node_modules/blockly/blocks_compressed.js}"></script>
+    <script type="application/json" th:src="@{/static/node_modules/blockly/msg/js/en.js}"></script>
+    <script type="application/json" th:src="@{/static/node_modules/blockly/msg/messages.js}"></script>
+    <script type="text/javascript" th:src="@{/static/node_modules/scratch-blocks/blockly_compressed_vertical.js}"></script>
+    <script type="text/javascript" th:src="@{/static/node_modules/scratch-blocks/blocks_compressed_vertical.js}"></script>
+    <script type="text/javascript" th:src="@{/static/node_modules/scratch-blocks/blocks_compressed.js}"></script>
+    <script type="text/javascript" th:src="@{/static/node_modules/scratch-blocks/msg/messages.js}"></script>
+</head>
+<body>
+<!-- Navigation bar -->
+<div th:insert="header :: header"></div>
+
+<!-- Page content -->
+<div class="row" id="content">
+    <div class="col-2"></div>
+    <div class="col-8">
+        <h2 class="mb-5" th:text="#{results}"></h2>
+        <div class="row mb-3">
+            <h4 th:text="#{files}"></h4>
+            <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${files.isEmpty()}">
+                <li class="list-group-item" th:text="#{table_empty}"></li>
+            </ul>
+            <ul class="list-group list-group-horizontal mx-3" th:unless="${files.isEmpty()}">
+                <li class="list-group-item" th:each="file : ${files}">
+                    <a class="no_decoration" th:href="@{/result/file(id=${file.id})}" th:text="${file.name}"></a>
+                </li>
+            </ul>
+        </div>
+        <div class="row">
+            <div class="col-7">
+                <h4 th:text="#{zips}"></h4>
+            </div>
+            <div class="col-5 text-end" th:if="${zips.size() > 1}">
+                <a class="btn btn-primary" th:href="@{/result/zips(user=${user}, experiment=${experiment})}">
+                    <i class="fas fa-download fa-inverse"></i>
+                    <span th:text="#{all_files}"></span>
+                </a>
+            </div>
+        </div>
+        <div class="row mb-5">
+            <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${zips.isEmpty()}">
+                <li class="list-group-item" th:text="#{table_empty}"></li>
+            </ul>
+            <ul class="list-group list-group-horizontal mx-3" th:unless="${zips.isEmpty()}">
+                <li class="list-group-item" th:each="zip : ${zips}">
+                    <a class="no_decoration" th:href="@{/result/zip(id=${zip})}" th:text="${zip}"></a>
+                </li>
+            </ul>
+            <div class="text-muted mt-3" th:text="#{download_info}"></div>
+        </div>
+        <div class="row mb-5">
+            <div class="col-6">
+                <h4 class="mb-3" th:text="#{block_events}"></h4>
+                <table class="table">
+                    <thead class="table-primary">
+                    <tr>
+                        <th scope="col" th:text="#{event}"></th>
+                        <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${blockEvents.isEmpty()}">
+                    <tr>
+                        <td colspan="2" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${blockEvents.isEmpty()}">
+                    <tr th:each="blockEvent : ${blockEvents}">
+                        <td th:text="${blockEvent.event}"></td>
+                        <td class="text-center" th:text="${blockEvent.count}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-6">
+                <h4 class="mb-3" th:text="#{resource_events}"></h4>
+                <table class="table">
+                    <thead class="table-primary">
+                    <tr>
+                        <th scope="col" th:text="#{event}"></th>
+                        <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${resourceEvents.isEmpty()}">
+                    <tr>
+                        <td colspan="2" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${resourceEvents.isEmpty()}">
+                    <tr th:each="resourceEvent : ${resourceEvents}">
+                        <td th:text="${resourceEvent.event}"></td>
+                        <td class="text-center" th:text="${resourceEvent.count}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-7">
+                <h4 th:text="#{code}"></h4>
+            </div>
+            <div class="col-5 text-end" th:if="${codeCount > 0}">
+                <div class="mb-3">
+                    <a class="btn btn-primary" th:href="@{/result/xmls(user=${user}, experiment=${experiment})}">
+                        <i class="fas fa-download fa-inverse"></i>
+                        <span th:text="#{all_xml}"></span>
+                    </a>
+                </div>
+                <div class="mb-3">
+                    <a class="btn btn-primary" th:href="@{/result/jsons(user=${user}, experiment=${experiment})}">
+                        <i class="fas fa-download fa-inverse"></i>
+                        <span th:text="#{all_json}"></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="row my-5" th:if="${codeCount > 0}">
+            <div id="blocklyArea">
+                <div id="blocklyDiv" style="position: relative"></div>
+                <xml id="toolbox" style="display: none"></xml>
+            </div>
+        </div>
+        <div class="row" th:unless="${codeCount > 0}">
+            <ul class="list-group list-group-horizontal text-muted mx-3">
+                <li class="list-group-item" th:text="#{table_empty}"></li>
+            </ul>
+        </div>
+        <div class="text-center" th:if="${codeCount > 0}">
+            <span class="btn btn-outline-dark" id="first">
+                <i class="fas fa-angle-double-left"></i>
+            </span>
+            <span class="btn btn-outline-dark" id="prev">
+                <i class="fas fa-angle-left"></i>
+            </span>
+            <span class="text-muted">
+                <span th:text="#{elements}"></span>
+                <span th:text="${codeCount}"></span>
+            </span>
+            <span class="btn btn-outline-dark" id="next">
+                <i class="fas fa-angle-right"></i>
+            </span>
+            <span class="btn btn-outline-dark" id="last">
+                <i class="fas fa-angle-double-right"></i>
+            </span>
+            <br class="mb-3">
+            <span class="btn btn-primary" id="xml">
+                <i class="fas fa-download fa-inverse"></i>
+                <span>XML</span>
+            </span>
+            <span class="btn btn-primary" id="json">
+                <i class="fas fa-download fa-inverse"></i>
+                <span>JSON</span>
+            </span>
+        </div>
+    </div>
+    <div class="col-2"></div>
+</div>
+
+<!-- Let Thymeleaf initialize user, experiment and total variables used for displaying the xml code. -->
+<script>
+    var user = [[${user}]];
+    var experiment = [[${experiment}]];
+    var total = [[${codeCount}]];
+    var pageSize = [[${pageSize}]];
+</script>
+
+<!-- Footer -->
+<div th:insert="footer :: footer"></div>
+
+<!-- Script to render the blockly area. -->
+<script type="text/javascript" src="/static/js/blockly.js"></script>
+<script th:src="@{/webjars/jquery/3.5.1/jquery.min.js}"></script>
+</body>
+</html>

@@ -4,13 +4,15 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.Table;
 
 /**
- * An entity representing the number of times a user executed a specific event during an experiment.
+ * An entity representing the number of xml codes generated for a user during an experiment.
  */
 @Entity
-@IdClass(EventCountId.class)
-public class EventCount {
+@Table(name = "codes_data")
+@IdClass(CodesDataId.class)
+public class CodesData {
 
     /**
      * The ID of the user to whom the data belongs.
@@ -20,44 +22,35 @@ public class EventCount {
     private Integer user;
 
     /**
-     * The ID of the experiment in which the counted events occurred.
+     * The ID of the experiment for which the xml code was saved.
      */
     @Id
     @Column(name = "experiment")
     private Integer experiment;
 
     /**
-     * The number of times the event occurred.
+     * The number of times the an xml code was generated.
      */
     @Column(name = "count")
     private int count;
 
     /**
-     * The event for which its occurrences have been counted.
+     * Default constructor for the codes data entity.
      */
-    @Id
-    @Column(name = "event")
-    private String event;
-
-    /**
-     * Default constructor for the event count entity.
-     */
-    public EventCount() {
+    public CodesData() {
     }
 
     /**
-     * Constructs a new event count entity with the given attributes.
+     * Constructs a new codes data entity with the given attributes.
      *
-     * @param user The id of the user who caused the event.
-     * @param experiment The id of the experiment during which the event occurred.
-     * @param count The number of times the given event occurred.
-     * @param event The specific event.
+     * @param user The id of the user for whom the code was saved.
+     * @param experiment The id of the experiment during which the code was saved.
+     * @param count The number of times an xml code was saved.
      */
-    public EventCount(final int user, final int experiment, final int count, final String event) {
+    public CodesData(final Integer user, final Integer experiment, final int count) {
         this.user = user;
         this.experiment = experiment;
         this.count = count;
-        this.event = event;
     }
 
     /**
@@ -112,24 +105,6 @@ public class EventCount {
      */
     public void setCount(final int count) {
         this.count = count;
-    }
-
-    /**
-     * Returns the event for which the occurrences have been counted.
-     *
-     * @return The event.
-     */
-    public String getEvent() {
-        return event;
-    }
-
-    /**
-     * Sets the event.
-     *
-     * @param event The event to be set.
-     */
-    public void setEvent(final String event) {
-        this.event = event;
     }
 
 }

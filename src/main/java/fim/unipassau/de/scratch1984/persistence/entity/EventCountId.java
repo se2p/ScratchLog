@@ -19,20 +19,27 @@ public class EventCountId implements Serializable {
     private Integer experiment;
 
     /**
+     * The event for which its occurrences have been counted.
+     */
+    private String event;
+
+    /**
      * Default constructor for the ID.
      */
     public EventCountId() {
     }
 
     /**
-     * Constructs a new event count ID with the given user and experiment IDs.
+     * Constructs a new event count ID with the given user and experiment IDs as well as the given event.
      *
      * @param user The user ID.
      * @param experiment The experiment ID.
+     * @param event The event.
      */
-    public EventCountId(final Integer user, final Integer experiment) {
+    public EventCountId(final Integer user, final Integer experiment, final String event) {
         this.user = user;
         this.experiment = experiment;
+        this.event = event;
     }
 
     /**
@@ -51,7 +58,7 @@ public class EventCountId implements Serializable {
         }
 
         EventCountId that = (EventCountId) other;
-        return user.equals(that.user) && experiment.equals(that.experiment);
+        return user.equals(that.user) && experiment.equals(that.experiment) && event.equals(that.event);
     }
 
     /**
@@ -62,7 +69,7 @@ public class EventCountId implements Serializable {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(user, experiment);
+        return Objects.hash(user, experiment, event);
     }
 
 }

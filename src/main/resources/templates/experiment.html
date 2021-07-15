@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Experiment</title>
     <link rel="stylesheet" href="/static/design/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/design/all.css"/>
+    <link rel="stylesheet" href="/static/design/all.min.css"/>
     <link rel="stylesheet" href="/static/design/style.css">
 </head>
 <body>
@@ -49,6 +49,7 @@
                         <th scope="col" th:text="#{username}"></th>
                         <th class="text-center" scope="col" th:text="#{started}"></th>
                         <th class="text-center" scope="col" th:text="#{finished}"></th>
+                        <th class="text-center" scope="col" th:text="#{results}"></th>
                     </tr>
                     </thead>
                     <tbody th:if="${participants.isEmpty()}">
@@ -73,6 +74,17 @@
                         <td class="text-center">
                             <i th:class="${participant.end != null ? 'fa fa-check text-success'
                             : 'fa fa-times text-danger'}"></i>
+                        </td>
+                        <td class="text-center">
+                            <span th:if="${participant.start == null}">
+                                <i class="fa fa-times text-danger"></i>
+                            </span>
+                            <span th:unless="${participant.start == null}">
+                                <a class="no_decoration"
+                                   th:href="@{/result(experiment=${experimentDTO.id}, user=${participant.user.id})}">
+                                    <i class="far fa-chart-bar" aria-hidden="true"></i>
+                                </a>
+                            </span>
                         </td>
                     </tr>
                     </tbody>
@@ -110,6 +122,12 @@
                            th:value="#{delete_participant}"/>
                 </div>
             </div>
+        </div>
+        <div class="text-center" th:unless="${participants.isEmpty()}" sec:authorize="hasRole('ADMIN')">
+            <a class="btn btn-primary" th:href="@{/experiment/csv(id=${experimentDTO.id})}">
+                <i class="fas fa-download fa-inverse"></i>
+                <span th:text="#{csv}"></span>
+            </a>
         </div>
         <div class="row mb-5">
             <div class="col-12" th:utext="${experimentDTO.info}"></div>

@@ -82,6 +82,39 @@ public class BlockEvent {
     private String code;
 
     /**
+     * Default constructor for the block event entity.
+     */
+    public BlockEvent() {
+    }
+
+    /**
+     * Constructs a new block event with the given attributes.
+     *
+     * @param user The user who caused the event.
+     * @param experiment The experiment during which the event occurred.
+     * @param date The time at which the event occurred.
+     * @param eventType The event type.
+     * @param event The specific event.
+     * @param sprite The name of the sprite.
+     * @param metadata The metadata.
+     * @param xml The current xml.
+     * @param code The current json.
+     */
+    public BlockEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
+                      final String event, final String sprite, final String metadata, final String xml,
+                      final String code) {
+        this.user = user;
+        this.experiment = experiment;
+        this.date = date;
+        this.eventType = eventType;
+        this.event = event;
+        this.sprite = sprite;
+        this.metadata = metadata;
+        this.xml = xml;
+        this.code = code;
+    }
+
+    /**
      * Returns the ID of the event.
      *
      * @return The event ID.

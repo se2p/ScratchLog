@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
@@ -77,6 +78,9 @@ public class ExperimentControllerIntegrationTest {
 
     @MockBean
     private MailService mailService;
+
+    @MockBean
+    private EventService eventService;
 
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
@@ -905,6 +909,46 @@ public class ExperimentControllerIntegrationTest {
         verify(experimentService).getExperiment(ID);
         verify(experimentService, never()).getLastParticipantPage(ID);
         verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testDownloadCSVFile() throws Exception {
+        when(eventService.getBlockEventData(ID)).thenReturn(new ArrayList<>());
+        when(eventService.getResourceEventData(ID)).thenReturn(new ArrayList<>());
+        when(eventService.getBlockEventCount(ID)).thenReturn(new ArrayList<>());
+        when(eventService.getResourceEventCount(ID)).thenReturn(new ArrayList<>());
+        when(eventService.getCodesDataForExperiment(ID)).thenReturn(new ArrayList<>());
+        when(experimentService.getExperimentData(ID)).thenReturn(new ArrayList<>());
+        mvc.perform(get("/experiment/csv")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(eventService).getBlockEventData(ID);
+        verify(eventService).getResourceEventData(ID);
+        verify(eventService).getBlockEventCount(ID);
+        verify(eventService).getResourceEventCount(ID);
+        verify(eventService).getCodesDataForExperiment(ID);
+        verify(experimentService).getExperimentData(ID);
+    }
+
+    @Test
+    public void testDownloadCSVFileInvalidId() throws Exception {
+        mvc.perform(get("/experiment/csv")
+                .param(ID_PARAM, "0")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(eventService, never()).getBlockEventData(anyInt());
+        verify(eventService, never()).getResourceEventData(anyInt());
+        verify(eventService, never()).getBlockEventCount(anyInt());
+        verify(eventService, never()).getResourceEventCount(anyInt());
+        verify(eventService, never()).getCodesDataForExperiment(anyInt());
+        verify(experimentService, never()).getExperimentData(anyInt());
     }
 
     private List<Participant> getParticipants(int number) {
