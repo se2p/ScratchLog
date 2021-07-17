@@ -348,7 +348,7 @@ public class ParticipantController {
                 participantDTO.setStart(LocalDateTime.now());
 
                 if (participantService.updateParticipant(participantDTO)) {
-                    return "redirect:http://localhost:8601?uid=" + participantDTO.getUser() + "&expid="
+                    return "redirect:" + Constants.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
                             + participantDTO.getExperiment();
                 } else {
                     logger.error("Failed to update the starting time of participant with user id "

@@ -13,6 +13,11 @@ public final class Constants {
     }
 
     /**
+     * The base URL of the Scratch GUI instance.
+     */
+    public static final String GUI_URL = "http://localhost:8601";
+
+    /**
      * The minimum length of usernames.
      */
     public static final int USERNAME_MIN = 4;

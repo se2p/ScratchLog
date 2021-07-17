@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
@@ -26,7 +27,7 @@ import java.util.Base64;
 /**
  * The REST controller receiving all the logging requests sent by the Scratch GUI and VM.
  */
-@CrossOrigin(origins = "http://localhost:8601")
+@CrossOrigin(origins = Constants.GUI_URL)
 @RestController
 @RequestMapping(value = "/store")
 public class EventRestController {

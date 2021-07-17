@@ -359,6 +359,11 @@ public class EventService {
         }
 
         CodesData codesData = codesDataRepository.findByUserAndExperiment(user, experiment);
+
+        if (codesData == null) {
+            return new CodesDataDTO();
+        }
+
         return createCodesDataDTO(codesData);
     }
 
