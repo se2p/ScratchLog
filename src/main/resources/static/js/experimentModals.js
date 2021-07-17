@@ -14,6 +14,10 @@ let deleteParticipantModal = document.getElementById("openDeleteParticipant");
 let deleteParticipantButton = document.getElementById("deleteParticipant");
 let abortDeleteParticipant = document.getElementById("abortDeleteParticipant");
 
+let deleteSb3Modal = document.getElementById("openDeleteSb3");
+let deleteSb3Button = document.getElementById("deleteSb3");
+let abortDeleteSb3 = document.getElementById("abortSb3Delete");
+
 /**
  * Configures the delete experiment button on the experiment page to open the delete experiment modal when the button is
  * clicked.
@@ -72,6 +76,21 @@ deleteParticipantButton.onclick = function() {
  */
 abortDeleteParticipant.onclick = function() {
     closeModal(deleteParticipantModal);
+}
+
+/**
+ * Configures the delete sb3 file button on the experiment page to open the delete sb3 modal when the button is clicked.
+ */
+deleteSb3Button.onclick = function() {
+    openModal(deleteSb3Modal);
+}
+
+/**
+ * Configures the abort button in the delete sb3 modal to close the modal when the button is clicked.
+ */
+
+abortDeleteSb3.onclick = function() {
+    closeModal(deleteSb3Modal);
 }
 
 /**

@@ -1,7 +1,10 @@
 package fim.unipassau.de.scratch1984.web;
 
+import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.web.controller.EventRestController;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -12,10 +15,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class EventRestControllerTest {
@@ -29,10 +42,29 @@ public class EventRestControllerTest {
     @Mock
     private FileService fileService;
 
+    @Mock
+    private ExperimentService experimentService;
+
+    @Mock
+    private HttpServletResponse httpServletResponse;
+
+    private static final String ID_STRING = "1";
+    private static final int ID = 1;
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
     private final JSONObject sb3ZipObject = new JSONObject();
+    private final ExperimentProjection experimentProjection = new ExperimentProjection() {
+        @Override
+        public Integer getId() {
+            return 1;
+        }
+
+        @Override
+        public byte[] getProject() {
+            return new byte[]{1, 2, 3};
+        }
+    };
 
     @BeforeEach
     public void setup() throws JSONException {
@@ -268,5 +300,103 @@ public class EventRestControllerTest {
                 () -> eventRestController.storeZipFile(sb3ZipObject.toString())
         );
         verify(fileService, never()).saveSb3Zip(any());
+    }
+
+    @Test
+    public void testRetrieveSb3File() throws IOException {
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveSb3File(ID_STRING, httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+        verify(httpServletResponse, never()).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    public void testRetrieveSb3FileIO() throws IOException {
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveSb3File(ID_STRING, httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    public void testRetrieveSb3FileProjectNull() throws IOException {
+        when(experimentService.getSb3File(ID)).thenReturn(new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return null;
+            }
+
+            @Override
+            public byte[] getProject() {
+                return null;
+            }
+        });
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveSb3File(ID_STRING, httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
+    }
+
+    @Test
+    public void testRetrieveSb3FileNotFound() throws IOException {
+        when(experimentService.getSb3File(ID)).thenThrow(NotFoundException.class);
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveSb3File(ID_STRING, httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
+    }
+
+    @Test
+    public void testRetrieveSb3FileNotFoundInvalidId() throws IOException {
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveSb3File("0", httpServletResponse)
+        );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void testRetrieveSb3FileNotFoundIdNull() throws IOException {
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveSb3File(null, httpServletResponse)
+        );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 }

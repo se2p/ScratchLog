@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS `experiment` (
     `postscript` text,
     `infotext` text,
     `active` bit(1) NOT NULL DEFAULT 0,
+    `project` longblob NULL DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `title` (`title`)
 );

@@ -31,10 +31,9 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.LocaleResolver;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -102,6 +101,9 @@ public class ExperimentControllerTest {
     @Mock
     private Authentication authentication;
 
+    @Mock
+    private MultipartFile file;
+
     private MockedStatic<SecurityContextHolder> securityContextHolder;
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
@@ -110,7 +112,7 @@ public class ExperimentControllerTest {
     private static final String ERROR = "redirect:/error";
     private static final String EXPERIMENT = "experiment";
     private static final String EXPERIMENT_EDIT = "experiment-edit";
-    private static final String SAVED_EXPERIMENT = "redirect:/experiment?id=";
+    private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String SUCCESS = "redirect:/?success=true";
     private static final String BLANK = "    ";
     private static final String EXPERIMENT_DTO = "experimentDTO";
@@ -121,8 +123,12 @@ public class ExperimentControllerTest {
     private static final String PARTICIPANTS = "participants";
     private static final String CURRENT = "3";
     private static final String LAST = "4";
+    private static final String FILETYPE = "application/octet-stream";
+    private static final String FILENAME = "project.sb3";
+    private static final String ERROR_ATTRIBUTE = "error";
     private static final int LAST_PAGE = 3;
     private static final int ID = 1;
+    private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, "admin", "secret1");
@@ -168,8 +174,27 @@ public class ExperimentControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(experimentService).hasProjectFile(ID);
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute(PARTICIPANTS, participants);
+    }
+
+    @Test
+    public void testGetExperimentProjectFile() {
+        when(httpServletRequest.isUserInRole(ADMIN)).thenReturn(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(experimentService.hasProjectFile(ID)).thenReturn(true);
+        String returnString = experimentController.getExperiment(ID_STRING, model, httpServletRequest);
+        assertEquals(EXPERIMENT, returnString);
+        verify(httpServletRequest).isUserInRole(ADMIN);
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService).getLastParticipantPage(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(experimentService).hasProjectFile(ID);
+        verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+        verify(model).addAttribute(PARTICIPANTS, participants);
+        verify(model).addAttribute("project", true);
     }
 
     @Test
@@ -200,6 +225,7 @@ public class ExperimentControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(experimentService).hasProjectFile(ID);
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute("participant", true);
         verify(model).addAttribute(PARTICIPANTS, participants);
@@ -220,6 +246,7 @@ public class ExperimentControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(experimentService, never()).hasProjectFile(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -384,7 +411,7 @@ public class ExperimentControllerTest {
     public void testEditExperiment() {
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
-        assertEquals(SAVED_EXPERIMENT + ID, returnString);
+        assertEquals(REDIRECT_EXPERIMENT + ID, returnString);
         verify(bindingResult, never()).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService).saveExperiment(experimentDTO);
@@ -406,7 +433,7 @@ public class ExperimentControllerTest {
         experimentDTO.setId(null);
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
-        assertEquals(SAVED_EXPERIMENT + experimentDTO.getId(), returnString);
+        assertEquals(REDIRECT_EXPERIMENT + experimentDTO.getId(), returnString);
         verify(bindingResult, never()).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle());
         verify(experimentService).saveExperiment(experimentDTO);
@@ -593,7 +620,7 @@ public class ExperimentControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        assertEquals(SAVED_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
                 httpServletRequest));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
@@ -982,6 +1009,177 @@ public class ExperimentControllerTest {
         verify(eventService, never()).getCodesDataForExperiment(anyInt());
         verify(experimentService, never()).getExperimentData(anyInt());
         verify(httpServletResponse, never()).getWriter();
+    }
+
+    @Test
+    public void testUploadProjectFile() throws IOException {
+        when(file.getContentType()).thenReturn(FILETYPE);
+        when(file.getOriginalFilename()).thenReturn(FILENAME);
+        when(file.getBytes()).thenReturn(CONTENT);
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.uploadProjectFile(file, ID_STRING, model));
+        verify(experimentService).uploadSb3Project(ID, CONTENT);
+        verify(file).isEmpty();
+        verify(file, times(2)).getOriginalFilename();
+        verify(file, times(2)).getContentType();
+        verify(file).getBytes();
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileIO() throws IOException {
+        when(file.getContentType()).thenReturn(FILETYPE);
+        when(file.getOriginalFilename()).thenReturn(FILENAME);
+        when(file.getBytes()).thenThrow(IOException.class);
+        assertEquals(ERROR, experimentController.uploadProjectFile(file, ID_STRING, model));
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+        verify(file).isEmpty();
+        verify(file, times(2)).getOriginalFilename();
+        verify(file, times(2)).getContentType();
+        verify(file).getBytes();
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileNotFound() throws IOException {
+        when(file.getContentType()).thenReturn(FILETYPE);
+        when(file.getOriginalFilename()).thenReturn(FILENAME);
+        when(file.getBytes()).thenReturn(CONTENT);
+        doThrow(NotFoundException.class).when(experimentService).uploadSb3Project(ID, CONTENT);
+        assertEquals(ERROR, experimentController.uploadProjectFile(file, ID_STRING, model));
+        verify(experimentService).uploadSb3Project(ID, CONTENT);
+        verify(file).isEmpty();
+        verify(file, times(2)).getOriginalFilename();
+        verify(file, times(2)).getContentType();
+        verify(file).getBytes();
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileFilenameInvalid() throws IOException {
+        when(file.getContentType()).thenReturn(FILETYPE);
+        when(file.getOriginalFilename()).thenReturn("name");
+        when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(EXPERIMENT, experimentController.uploadProjectFile(file, ID_STRING, model));
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+        verify(file).isEmpty();
+        verify(file, times(3)).getOriginalFilename();
+        verify(file, times(2)).getContentType();
+        verify(file, never()).getBytes();
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileFilenameNull() throws IOException {
+        when(file.getContentType()).thenReturn(FILETYPE);
+        when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(EXPERIMENT, experimentController.uploadProjectFile(file, ID_STRING, model));
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+        verify(file).isEmpty();
+        verify(file, times(2)).getOriginalFilename();
+        verify(file, times(2)).getContentType();
+        verify(file, never()).getBytes();
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileContentTypeInvalid() throws IOException {
+        when(file.getContentType()).thenReturn("type");
+        when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(EXPERIMENT, experimentController.uploadProjectFile(file, ID_STRING, model));
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+        verify(file).isEmpty();
+        verify(file, never()).getOriginalFilename();
+        verify(file, times(3)).getContentType();
+        verify(file, never()).getBytes();
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileContentTypeNull() throws IOException {
+        when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(EXPERIMENT, experimentController.uploadProjectFile(file, ID_STRING, model));
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+        verify(file).isEmpty();
+        verify(file, never()).getOriginalFilename();
+        verify(file, times(2)).getContentType();
+        verify(file, never()).getBytes();
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileEmpty() throws IOException {
+        when(file.isEmpty()).thenReturn(true);
+        when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(EXPERIMENT, experimentController.uploadProjectFile(file, ID_STRING, model));
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+        verify(file).isEmpty();
+        verify(file, never()).getOriginalFilename();
+        verify(file, never()).getContentType();
+        verify(file, never()).getBytes();
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileInvalidId() throws IOException {
+        assertEquals(ERROR, experimentController.uploadProjectFile(file, BLANK, model));
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+        verify(file, never()).isEmpty();
+        verify(file, never()).getOriginalFilename();
+        verify(file, never()).getContentType();
+        verify(file, never()).getBytes();
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileIdNull() throws IOException {
+        assertEquals(ERROR, experimentController.uploadProjectFile(file, null, model));
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+        verify(file, never()).isEmpty();
+        verify(file, never()).getOriginalFilename();
+        verify(file, never()).getContentType();
+        verify(file, never()).getBytes();
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileFileNull() throws IOException {
+        assertEquals(ERROR, experimentController.uploadProjectFile(null, ID_STRING, model));
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+        verify(file, never()).isEmpty();
+        verify(file, never()).getOriginalFilename();
+        verify(file, never()).getContentType();
+        verify(file, never()).getBytes();
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteProjectFile() {
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.deleteProjectFile(ID_STRING));
+        verify(experimentService).deleteSb3Project(ID);
+    }
+
+    @Test
+    public void testDeleteProjectFileNotFound() {
+        doThrow(NotFoundException.class).when(experimentService).deleteSb3Project(ID);
+        assertEquals(ERROR, experimentController.deleteProjectFile(ID_STRING));
+        verify(experimentService).deleteSb3Project(ID);
+    }
+
+    @Test
+    public void testDeleteProjectFileInvalidId() {
+        assertEquals(ERROR, experimentController.deleteProjectFile("0"));
+        verify(experimentService, never()).deleteSb3Project(anyInt());
+    }
+
+    @Test
+    public void testDeleteProjectFileIdNull() {
+        assertEquals(ERROR, experimentController.deleteProjectFile(null));
+        verify(experimentService, never()).deleteSb3Project(anyInt());
     }
 
     private StringBuilder createLongString(int length) {

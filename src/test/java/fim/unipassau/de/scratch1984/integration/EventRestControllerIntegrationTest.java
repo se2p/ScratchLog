@@ -1,7 +1,10 @@
 package fim.unipassau.de.scratch1984.integration;
 
+import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.EventRestController;
 import org.json.JSONException;
@@ -23,9 +26,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -44,10 +50,27 @@ public class EventRestControllerIntegrationTest {
     @MockBean
     private FileService fileService;
 
+    @MockBean
+    private ExperimentService experimentService;
+
+    private static final String ID_PARAM = "id";
+    private static final String ID_STRING = "1";
+    private static final int ID = 1;
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
     private final JSONObject sb3ZipObject = new JSONObject();
+    private final ExperimentProjection experimentProjection = new ExperimentProjection() {
+        @Override
+        public Integer getId() {
+            return 1;
+        }
+
+        @Override
+        public byte[] getProject() {
+            return new byte[]{1, 2, 3};
+        }
+    };
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -292,5 +315,66 @@ public class EventRestControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
         verify(fileService, never()).saveSb3Zip(any());
+    }
+
+    @Test
+    public void testRetrieveSb3File() throws Exception {
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        mvc.perform(get("/store/sb3")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(experimentService).getSb3File(ID);
+    }
+
+    @Test
+    public void testRetrieveSb3FileProjectionNull() throws Exception {
+        when(experimentService.getSb3File(ID)).thenReturn(new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return null;
+            }
+
+            @Override
+            public byte[] getProject() {
+                return null;
+            }
+        });
+        mvc.perform(get("/store/sb3")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+        verify(experimentService).getSb3File(ID);
+    }
+
+    @Test
+    public void testRetrieveSb3FileNotFound() throws Exception {
+        when(experimentService.getSb3File(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/store/sb3")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+        verify(experimentService).getSb3File(ID);
+    }
+
+    @Test
+    public void testRetrieveSb3FileInvalidId() throws Exception {
+        mvc.perform(get("/store/sb3")
+                .param(ID_PARAM, "0")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+        verify(experimentService, never()).getSb3File(anyInt());
     }
 }

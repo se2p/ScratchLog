@@ -18,6 +18,11 @@ public final class Constants {
     public static final String GUI_URL = "http://localhost:8601";
 
     /**
+     * The filetype of an sb3 zip.
+     */
+    public static final String SB3 = "sb3";
+
+    /**
      * The minimum length of usernames.
      */
     public static final int USERNAME_MIN = 4;

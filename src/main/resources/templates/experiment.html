@@ -27,13 +27,28 @@
             <div class="col-12 mb-5" th:text="${experimentDTO.description}"></div>
         </div>
         <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
+            <a class="btn btn-primary" th:unless="${participants.isEmpty()}"
+               th:href="@{/experiment/csv(id=${experimentDTO.id})}">
+                <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download CSV file"></i>
+                <span th:text="#{csv}"></span>
+                <span class="sr-only" th:text="#{download}"></span>
+            </a>
+            <form method="post" th:action="@{/experiment/upload}" enctype="multipart/form-data"
+                  th:if="${project == null}">
+                <input type="hidden" name="id" th:value="${experimentDTO.id}"/>
+                <input type="file" name="file"/>
+                <input class="btn btn-primary" type="submit" th:value="#{upload}"/>
+            </form>
+            <input id="deleteSb3" class="btn btn-danger" type="submit" th:value="#{delete_sb3}"
+                   th:unless="${project == null}"/>
+        </div>
+        <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
             <div>
                 <span class="form-label me-2 fs-5" th:text="#{status}"></span>
-                <i th:class="${experimentDTO.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"></i>
-                <span class="text-muted" th:style="${experimentDTO.active ? '' : 'display:none'}"
-                      th:text="#{opened}"></span>
-                <span class="text-muted" th:style="${experimentDTO.active ? 'display:none' : ''}"
-                      th:text="#{closed}"></span>
+                <i aria-hidden="true" th:class="${experimentDTO.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
+                   title="Experiment status"></i>
+                <span class="text-muted" th:if="${experimentDTO.active}" th:text="#{opened}"></span>
+                <span class="text-muted" th:unless="${experimentDTO.active}" th:text="#{closed}"></span>
             </div>
             <a id="open" class="btn btn-primary" type="submit" th:text="#{open}" th:unless="${experimentDTO.active}"
                th:href="@{/experiment/status(id=${experimentDTO.id}, stat=open)}"></a>
@@ -54,7 +69,7 @@
                     </thead>
                     <tbody th:if="${participants.isEmpty()}">
                     <tr>
-                        <td colspan="4" th:text="#{table_empty}"></td>
+                        <td colspan="5" th:text="#{table_empty}"></td>
                     </tr>
                     </tbody>
                     <tbody th:unless="${participants.isEmpty()}">
@@ -68,21 +83,34 @@
                                th:text="${participant.user.username}"></a>
                         </td>
                         <td class="text-center">
-                            <i th:class="${participant.start != null ? 'fa fa-check text-success'
-                            : 'fa fa-times text-danger'}"></i>
+                            <i aria-hidden="true" th:class="${participant.start != null ? 'fa fa-check text-success'
+                            : 'fa fa-times text-danger'}" title="Experiment started status"></i>
+                            <span class="sr-only" th:if="${participant.start == null}">
+                                <span th:text="#{not_started}"></span>
+                            </span>
+                            <span class="sr-only" th:unless="${participant.start == null}">
+                                <span th:text="#{started}"></span>
+                            </span>
                         </td>
                         <td class="text-center">
-                            <i th:class="${participant.end != null ? 'fa fa-check text-success'
-                            : 'fa fa-times text-danger'}"></i>
+                            <i aria-hidden="true" th:class="${participant.end != null ? 'fa fa-check text-success'
+                            : 'fa fa-times text-danger'}" title="Experiment finished status"></i>
+                            <span class="sr-only" th:if="${participant.end == null}">
+                                <span th:text="#{not_finished}"></span>
+                            </span>
+                            <span class="sr-only" th:unless="${participant.end == null}">
+                                <span th:text="#{finished}"></span>
+                            </span>
                         </td>
                         <td class="text-center">
                             <span th:if="${participant.start == null}">
-                                <i class="fa fa-times text-danger"></i>
+                                <i aria-hidden="true" class="fa fa-times text-danger" title="No statistics"></i>
+                                <span class="sr-only" th:text="#{table_empty}"></span>
                             </span>
                             <span th:unless="${participant.start == null}">
-                                <a class="no_decoration"
+                                <a class="no_decoration" aria-label="Go to result page for this user"
                                    th:href="@{/result(experiment=${experimentDTO.id}, user=${participant.user.id})}">
-                                    <i class="far fa-chart-bar" aria-hidden="true"></i>
+                                    <i aria-hidden="true" class="far fa-chart-bar"></i>
                                 </a>
                             </span>
                         </td>
@@ -91,20 +119,24 @@
                 </table>
                 <div class="text-center">
                     <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                       th:href="@{/experiment/first(id=${experimentDTO.id})}">
-                        <i class="fas fa-angle-double-left"></i>
+                       th:href="@{/experiment/first(id=${experimentDTO.id})}"
+                       aria-label="Show the first participant page">
+                        <i aria-hidden="true" class="fas fa-angle-double-left"></i>
                     </a>
                     <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                       th:href="@{/experiment/previous(id=${experimentDTO.id}, page=${page})}">
-                        <i class="fas fa-angle-left"></i>
+                       th:href="@{/experiment/previous(id=${experimentDTO.id}, page=${page})}"
+                       aria-label="Show the previous participant page">
+                        <i aria-hidden="true" class="fas fa-angle-left"></i>
                     </a>
                     <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
-                       th:href="@{/experiment/next(id=${experimentDTO.id}, page=${page})}">
-                        <i class="fas fa-angle-right"></i>
+                       th:href="@{/experiment/next(id=${experimentDTO.id}, page=${page})}"
+                       aria-label="Show the next participant page">
+                        <i aria-hidden="true" class="fas fa-angle-right"></i>
                     </a>
                     <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
-                       th:href="@{/experiment/last(id=${experimentDTO.id})}">
-                        <i class="fas fa-angle-double-right"></i>
+                       th:href="@{/experiment/last(id=${experimentDTO.id})}"
+                       aria-label="Show the last participant page">
+                        <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                     </a>
                 </div>
             </div>
@@ -122,12 +154,6 @@
                            th:value="#{delete_participant}"/>
                 </div>
             </div>
-        </div>
-        <div class="text-center" th:unless="${participants.isEmpty()}" sec:authorize="hasRole('ADMIN')">
-            <a class="btn btn-primary" th:href="@{/experiment/csv(id=${experimentDTO.id})}">
-                <i class="fas fa-download fa-inverse"></i>
-                <span th:text="#{csv}"></span>
-            </a>
         </div>
         <div class="row mb-5">
             <div class="col-12" th:utext="${experimentDTO.info}"></div>
@@ -206,6 +232,18 @@
                 <input class="btn btn-primary" type="submit" th:value="#{delete}"/>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- The popup dialog to delete the current sb3 file. -->
+<div id="openDeleteSb3" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{delete_sb3}"></h2>
+        <div class="mb-3" th:text="#{delete_sb3_warn}"></div>
+        <div class="d-flex justify-content-between">
+            <input id="abortSb3Delete" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/sb3(id=${experimentDTO.id})}"></a>
+        </div>
     </div>
 </div>
 

@@ -1,12 +1,15 @@
 package fim.unipassau.de.scratch1984.persistence.repository;
 
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
 
 /**
  * A repository providing functionality for retrieving experiment data.
@@ -30,6 +33,14 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
     boolean existsById(int id);
 
     /**
+     * Checks, whether an experiment with the given id and project not null exists in the database.
+     *
+     * @param id The id to search for.
+     * @return {@code true} iff such an experiment exists.
+     */
+    boolean existsByIdAndProjectIsNotNull(int id);
+
+    /**
      * Returns the experiment identified by the given title, if one exists.
      *
      * @param title The title to search for.
@@ -44,6 +55,14 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * @return The experiment data or {@code null}, if no entry could be found.
      */
     Experiment findById(int id);
+
+    /**
+     * Returns the experiment projection identified by the given id, if one exists.
+     *
+     * @param id The id to search for.
+     * @return An {@link Optional} containing the data, if it exists.
+     */
+    Optional<ExperimentProjection> findExperimentById(int id);
 
     /**
      * Returns a page of experiments corresponding to the parameters set in the pageable.

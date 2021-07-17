@@ -1,7 +1,10 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
+import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
@@ -13,11 +16,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -48,15 +56,23 @@ public class EventRestController {
     private final FileService fileService;
 
     /**
+     * The experiment service to use for retrieving sb3 files.
+     */
+    private final ExperimentService experimentService;
+
+    /**
      * Constructs an event rest controller with the given dependencies.
      *
      * @param eventService The event service to use.
      * @param fileService The file service to use.
+     * @param experimentService The experiment service to use.
      */
     @Autowired
-    public EventRestController(final EventService eventService, final FileService fileService) {
+    public EventRestController(final EventService eventService, final FileService fileService,
+                               final ExperimentService experimentService) {
         this.eventService = eventService;
         this.fileService = fileService;
+        this.experimentService = experimentService;
     }
 
     /**
@@ -121,6 +137,55 @@ public class EventRestController {
         }
 
         fileService.saveSb3Zip(sb3ZipDTO);
+    }
+
+    /**
+     * Retrieves the sb3 file stored for the experiment with the given id, if it exists. If the passed id is invalid, no
+     * experiment could be found or no file was stored for the experiment, the {@link HttpServletResponse} returns an
+     * error status code instead.
+     *
+     * @param id The experiment id.
+     * @param response The servlet response.
+     */
+    @GetMapping("/sb3")
+    public void retrieveSb3File(@RequestParam("id") final String id, final HttpServletResponse response) {
+        if (id == null) {
+            logger.error("Cannot retrieve sb3 file for experiment with id null!");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        int experimentId = parseNumber(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot retrieve sb3 file for experiment with invalid id " + experimentId + "!");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        try {
+            ExperimentProjection projection = experimentService.getSb3File(experimentId);
+
+            if (projection.getProject() == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            response.setContentType("application/zip");
+            response.setContentLength(projection.getProject().length);
+            response.setHeader("Content-Disposition", "attachment;filename=\"" + "sb3zip_eid_" + experimentId
+                    + "\"");
+            response.setStatus(HttpServletResponse.SC_OK);
+            ServletOutputStream op = response.getOutputStream();
+            op.write(projection.getProject());
+            op.flush();
+        } catch (NotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } catch (IOException e) {
+            logger.error("Could not retrieve sb3 file for experiment with id " + experimentId + " due to IOException!",
+                    e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -255,6 +320,20 @@ public class EventRestController {
         }
 
         return dto;
+    }
+
+    /**
+     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
+     *
+     * @param id The id in its string representation.
+     * @return The corresponding int value, or -1.
+     */
+    private int parseNumber(final String id) {
+        try {
+            return Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
 }

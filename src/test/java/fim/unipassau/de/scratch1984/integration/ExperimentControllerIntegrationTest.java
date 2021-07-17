@@ -27,12 +27,15 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -47,12 +50,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -66,6 +71,9 @@ public class ExperimentControllerIntegrationTest {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private WebApplicationContext webApplicationContext;
 
     @MockBean
     private ExperimentService experimentService;
@@ -90,7 +98,7 @@ public class ExperimentControllerIntegrationTest {
     private static final String ERROR = "redirect:/error";
     private static final String EXPERIMENT = "experiment";
     private static final String EXPERIMENT_EDIT = "experiment-edit";
-    private static final String SAVED_EXPERIMENT = "redirect:/experiment?id=";
+    private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String SUCCESS = "redirect:/?success=true";
     private static final String BLANK = "    ";
     private static final String EXPERIMENT_DTO = "experimentDTO";
@@ -99,6 +107,7 @@ public class ExperimentControllerIntegrationTest {
     private static final String ID_PARAM = "id";
     private static final String STATUS_PARAM = "stat";
     private static final String PAGE_PARAM = "page";
+    private static final String FILE_PARAM = "file";
     private static final String PARTICIPANTS = "participants";
     private static final String PARTICIPANT = "participant";
     private static final String PAGE = "page";
@@ -106,11 +115,14 @@ public class ExperimentControllerIntegrationTest {
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String CURRENT = "3";
     private static final String LAST = "4";
+    private static final String FILETYPE = "application/octet-stream";
+    private static final String FILENAME = "project.sb3";
     private static final int FIRST_PAGE = 1;
     private static final int LAST_PAGE = 3;
     private static final int PREVIOUS = 2;
     private static final int NEXT = 4;
     private static final int ID = 1;
+    private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false);
     private final UserDTO userDTO = new UserDTO("user", "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, "admin", "secret1");
@@ -118,6 +130,9 @@ public class ExperimentControllerIntegrationTest {
             UserDTO.Language.ENGLISH, "user", null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
+    private final MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILETYPE, CONTENT);
+    private final MockMultipartFile wrongFiletype = new MockMultipartFile("file", FILENAME, "type", CONTENT);
+    private final MockMultipartFile wrongFilename = new MockMultipartFile("file", "name", FILETYPE, CONTENT);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -169,6 +184,40 @@ public class ExperimentControllerIntegrationTest {
         verify(experimentService).getExperiment(ID);
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(experimentService).hasProjectFile(ID);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"ADMIN"})
+    public void testGetExperimentHasProject() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(experimentService.hasProjectFile(ID)).thenReturn(true);
+        mvc.perform(get("/experiment")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("project", is(true)))
+                .andExpect(model().attribute(PARTICIPANTS, is(participants)))
+                .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
+                .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
+                        hasProperty("id", is(ID)),
+                        hasProperty("title", is(TITLE)),
+                        hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("postscript", is(POSTSCRIPT)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(false))
+                )))
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService).getLastParticipantPage(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(experimentService).hasProjectFile(ID);
     }
 
     @Test
@@ -374,7 +423,7 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(SAVED_EXPERIMENT + ID));
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
         verify(experimentService).existsExperiment(TITLE, ID);
         verify(experimentService).saveExperiment(experimentDTO);
     }
@@ -406,7 +455,7 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(SAVED_EXPERIMENT + null));
+                .andExpect(view().name(REDIRECT_EXPERIMENT + null));
         verify(experimentService).existsExperiment(TITLE);
         verify(experimentService).saveExperiment(experimentDTO);
     }
@@ -581,7 +630,7 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(SAVED_EXPERIMENT + ID));
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(userService).updateUser(participant);
@@ -949,6 +998,131 @@ public class ExperimentControllerIntegrationTest {
         verify(eventService, never()).getResourceEventCount(anyInt());
         verify(eventService, never()).getCodesDataForExperiment(anyInt());
         verify(experimentService, never()).getExperimentData(anyInt());
+    }
+
+    @Test
+    public void testUploadProjectFile() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc.perform(multipart("/experiment/upload")
+                .file(file)
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
+        verify(experimentService).uploadSb3Project(ID, file.getBytes());
+    }
+
+    @Test
+    public void testUploadProjectFileNotFound() throws Exception {
+        doThrow(NotFoundException.class).when(experimentService).uploadSb3Project(ID, CONTENT);
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc.perform(multipart("/experiment/upload")
+                .file(file)
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService).uploadSb3Project(ID, file.getBytes());
+    }
+
+    @Test
+    public void testUploadProjectFileWrongName() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc.perform(multipart("/experiment/upload")
+                .file(wrongFilename)
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService).getLastParticipantPage(ID);
+        verify(experimentService).hasProjectFile(ID);
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileWrongType() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc.perform(multipart("/experiment/upload")
+                .file(wrongFiletype)
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService).getLastParticipantPage(ID);
+        verify(experimentService).hasProjectFile(ID);
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+    }
+
+    @Test
+    public void testUploadProjectFileInvalidId() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc.perform(multipart("/experiment/upload")
+                .file(file)
+                .param(ID_PARAM, BLANK)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
+    }
+
+    @Test
+    public void testDeleteProjectFile() throws Exception {
+        mvc.perform(get("/experiment/sb3")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
+        verify(experimentService).deleteSb3Project(ID);
+    }
+
+    @Test
+    public void testDeleteProjectFileNotFound() throws Exception {
+        doThrow(NotFoundException.class).when(experimentService).deleteSb3Project(ID);
+        mvc.perform(get("/experiment/sb3")
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService).deleteSb3Project(ID);
+    }
+
+    @Test
+    public void testDeleteProjectFileInvalidId() throws Exception {
+        mvc.perform(get("/experiment/sb3")
+                .param(ID_PARAM, "0")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService, never()).deleteSb3Project(anyInt());
     }
 
     private List<Participant> getParticipants(int number) {

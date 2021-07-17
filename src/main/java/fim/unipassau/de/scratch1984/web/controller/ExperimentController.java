@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
@@ -85,6 +86,11 @@ public class ExperimentController {
      * String corresponding to the experiment page.
      */
     private static final String EXPERIMENT = "experiment";
+
+    /**
+     * String corresponding to redirecting to the experiment page.
+     */
+    private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
 
     /**
      * String corresponding to the experiment edit page.
@@ -273,7 +279,7 @@ public class ExperimentController {
 
         ExperimentDTO saved = experimentService.saveExperiment(experimentDTO);
 
-        return "redirect:/experiment?id=" + saved.getId();
+        return REDIRECT_EXPERIMENT + saved.getId();
     }
 
     /**
@@ -427,7 +433,7 @@ public class ExperimentController {
 
         if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
-            return "redirect:/experiment?id=" + id;
+            return REDIRECT_EXPERIMENT + id;
         } else {
             return ERROR;
         }
@@ -611,6 +617,94 @@ public class ExperimentController {
     }
 
     /**
+     * Saves the content of the given sb3 file to the database for the experiment with the given id. If the file does
+     * not meet the requirements, the user returns to the experiment page where an error message is displayed. If the
+     * parameters are invalid, no corresponding experiment could be found, or an {@link IOException} occurred, the user
+     * is redirected to the error page instead.
+     *
+     * @param id The experiment id to search for.
+     * @param file The sb3 file to be uploaded.
+     * @param model The model used to return error messages.
+     * @return The experiment page on success, or if the file was invalid, or the error page otherwise.
+     */
+    @PostMapping("/upload")
+    @Secured("ROLE_ADMIN")
+    public String uploadProjectFile(@RequestParam("file") final MultipartFile file,
+                                    @RequestParam("id") final String id, final Model model) {
+        if (id == null || file == null) {
+            logger.error("Cannot upload file for experiment with id null or with file null!");
+            return ERROR;
+        }
+
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot upload project file for experiment with invalid id " + id + "!");
+            return ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+
+        if (file.isEmpty()) {
+            logger.error("Cannot upload empty file for experiment with id " + id + "!");
+            model.addAttribute("error", resourceBundle.getString("file_empty"));
+        } else if (file.getContentType() == null || !file.getContentType().equals("application/octet-stream")) {
+            logger.error("Cannot upload file with invalid content type " + file.getContentType() + "!");
+            model.addAttribute("error", resourceBundle.getString("file_type"));
+        } else if (file.getOriginalFilename() == null || !file.getOriginalFilename().endsWith(Constants.SB3)) {
+            logger.error("Cannot upload file with invalid filename " + file.getOriginalFilename() + "!");
+            model.addAttribute("error", resourceBundle.getString("file_name"));
+        }
+
+        if (model.getAttribute("error") != null) {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        }
+
+        try {
+            experimentService.uploadSb3Project(experimentId, file.getBytes());
+            return REDIRECT_EXPERIMENT + experimentId;
+        } catch (NotFoundException e) {
+            return ERROR;
+        } catch (IOException e) {
+            logger.error("Could not upload file due to IOException", e);
+            return ERROR;
+        }
+    }
+
+    /**
+     * Deletes the sb3 file currently saved for the experiment with the given id. If the id is invalid, or no
+     * corresponding experiment could be found, the user is redirected to the error page instead.
+     *
+     * @param id The experiment id to search for.
+     * @return The experiment page on success, or the error page otherwise.
+     */
+    @GetMapping("/sb3")
+    @Secured("ROLE_ADMIN")
+    public String deleteProjectFile(@RequestParam("id") final String id) {
+        if (id == null) {
+            logger.error("Cannot delete file for experiment with id null!");
+            return ERROR;
+        }
+
+        int experimentId = parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot delete project file for experiment with invalid id " + id + "!");
+            return ERROR;
+        }
+
+        try {
+            experimentService.deleteSb3Project(experimentId);
+            return REDIRECT_EXPERIMENT + experimentId;
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+    }
+
+    /**
      * Creates a {@link Map} containing the base URL of the application and the link to the experiment with the given id
      * and the generated secret for the user that are going to be used in the experiment invitation email template.
      *
@@ -652,6 +746,11 @@ public class ExperimentController {
 
         Page<Participant> participants = participantService.getParticipantPage(experimentDTO.getId(),
                 PageRequest.of(page, Constants.PAGE_SIZE));
+
+        if (experimentService.hasProjectFile(experimentDTO.getId())) {
+            model.addAttribute("project", true);
+        }
+
         model.addAttribute("page", page + 1);
         model.addAttribute("lastPage", last);
         model.addAttribute("experimentDTO", experimentDTO);

@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -20,11 +21,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,17 +57,30 @@ public class ExperimentServiceTest {
     private static final int ID = 1;
     private static final int INVALID_ID = 2;
     private static final String[] HEADER = {"experiment", "participants", "started", "finished"};
+    private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "Some info text", "Some postscript", false);
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, "Some info text", "Some postscript", false);
     private final ExperimentData experimentData = new ExperimentData(ID, 5, 3, 2);
     private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
     private Page<Experiment> experimentPage;
+    private final ExperimentProjection projection = new ExperimentProjection() {
+        @Override
+        public Integer getId() {
+            return ID;
+        }
+
+        @Override
+        public byte[] getProject() {
+            return CONTENT;
+        }
+    };
 
     @BeforeEach
     public void setup() {
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
         experiment.setActive(false);
+        experiment.setProject(null);
     }
 
     @Test
@@ -121,6 +138,25 @@ public class ExperimentServiceTest {
     public void testExistsExperimentWithIdInvalid() {
         assertFalse(experimentService.existsExperiment(TITLE, 0));
         verify(experimentRepository, never()).findByTitle(TITLE);
+    }
+
+    @Test
+    public void testHasProjectFile() {
+        when(experimentRepository.existsByIdAndProjectIsNotNull(ID)).thenReturn(true);
+        assertTrue(experimentService.hasProjectFile(ID));
+        verify(experimentRepository).existsByIdAndProjectIsNotNull(ID);
+    }
+
+    @Test
+    public void testHasProjectFileFalse() {
+        assertFalse(experimentService.hasProjectFile(ID));
+        verify(experimentRepository).existsByIdAndProjectIsNotNull(ID);
+    }
+
+    @Test
+    public void testHasProjectFileInvalidId() {
+        assertFalse(experimentService.hasProjectFile(0));
+        verify(experimentRepository, never()).existsByIdAndProjectIsNotNull(anyInt());
     }
 
     @Test
@@ -390,6 +426,99 @@ public class ExperimentServiceTest {
                 () -> experimentService.getExperimentData(0)
         );
         verify(experimentDataRepository, never()).findByExperiment(anyInt());
+    }
+
+    @Test
+    public void testUploadSb3Project() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        assertDoesNotThrow(() -> experimentService.uploadSb3Project(ID, CONTENT));
+        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).save(any());
+    }
+
+    @Test
+    public void testUploadSb3ProjectEntityNotFound() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.save(any())).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> experimentService.uploadSb3Project(ID, CONTENT)
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).save(any());
+    }
+
+    @Test
+    public void testUploadSb3ProjectInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.uploadSb3Project(0, CONTENT)
+        );
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).save(any());
+    }
+
+    @Test
+    public void testUploadSb3ProjectIdNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.uploadSb3Project(ID, null)
+        );
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).save(any());
+    }
+
+    @Test
+    public void testDeleteSb3Project() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        assertDoesNotThrow(() -> experimentService.deleteSb3Project(ID));
+        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).save(any());
+    }
+
+    @Test
+    public void testDeleteSb3ProjectEntityNotFound() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.save(any())).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> experimentService.deleteSb3Project(ID)
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).save(any());
+    }
+
+    @Test
+    public void testDeleteSb3ProjectInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.deleteSb3Project(-1)
+        );
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).save(any());
+    }
+
+    @Test
+    public void testGetSb3File() {
+        when(experimentRepository.findExperimentById(ID)).thenReturn(java.util.Optional.of(projection));
+        ExperimentProjection experimentProjection = experimentService.getSb3File(ID);
+        assertAll(
+                () -> assertEquals(ID, experimentProjection.getId()),
+                () -> assertEquals(CONTENT, experimentProjection.getProject())
+        );
+        verify(experimentRepository).findExperimentById(ID);
+    }
+
+    @Test
+    public void testGetSb3FileEmpty() {
+        when(experimentRepository.findExperimentById(ID)).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class,
+                () -> experimentService.getSb3File(ID)
+        );
+        verify(experimentRepository).findExperimentById(ID);
+    }
+
+    @Test
+    public void testGetSb3FileInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.getSb3File(0)
+        );
+        verify(experimentRepository, never()).findExperimentById(ID);
     }
 
     private List<Experiment> getExperiments(int number) {
