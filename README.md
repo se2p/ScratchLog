@@ -28,7 +28,9 @@ to do the necessary configuration described below.
 To get the project up and running, you need to adapt the following configurations to your system:
 - Edit the `application.properties` file in the `resources`folder to configure the database connection and mail sending.
 - Change the `GUI_URL` string in the `Constants` class to the URL of the instrumented Scratch GUI.
-- Change the `baseURL` property in the instrumented `scratch-vm` project in `logging.js` to the application URL.
+- Change the `baseURL` property in the instrumented `scratch-vm` project in `logging.js` to `<applicationURL>/store`.
+- Change the URL called in the `fetch()` method called in `start()` in the `virtual-machine.js` to to
+  `<applicationURL>/store/sb3?id=`.
 - Change the `window.location.href` in the `handleFinishExperiment()` method in `menu-bar.jsx` in the instrumented
   `scratch-gui` to the application URL.
 - The instrumented `scratch-gui` and `scratch-vm` need to be linked via the `npm link` setting, as described
