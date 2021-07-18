@@ -41,8 +41,9 @@
                 <h4 th:text="#{zips}"></h4>
             </div>
             <div class="col-5 text-end" th:if="${zips.size() > 1}">
-                <a class="btn btn-primary" th:href="@{/result/zips(user=${user}, experiment=${experiment})}">
-                    <i class="fas fa-download fa-inverse"></i>
+                <a class="btn btn-primary" th:href="@{/result/zips(user=${user}, experiment=${experiment})}"
+                   aria-label="Download all participant zip files">
+                    <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
                     <span th:text="#{all_files}"></span>
                 </a>
             </div>
@@ -110,14 +111,16 @@
             </div>
             <div class="col-5 text-end" th:if="${codeCount > 0}">
                 <div class="mb-3">
-                    <a class="btn btn-primary" th:href="@{/result/xmls(user=${user}, experiment=${experiment})}">
-                        <i class="fas fa-download fa-inverse"></i>
+                    <a class="btn btn-primary" th:href="@{/result/xmls(user=${user}, experiment=${experiment})}"
+                       aria-label="Download all participant xml files">
+                        <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
                         <span th:text="#{all_xml}"></span>
                     </a>
                 </div>
                 <div class="mb-3">
-                    <a class="btn btn-primary" th:href="@{/result/jsons(user=${user}, experiment=${experiment})}">
-                        <i class="fas fa-download fa-inverse"></i>
+                    <a class="btn btn-primary" th:href="@{/result/jsons(user=${user}, experiment=${experiment})}"
+                       aria-label="Download all participant json files">
+                        <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
                         <span th:text="#{all_json}"></span>
                     </a>
                 </div>
@@ -136,28 +139,34 @@
         </div>
         <div class="text-center" th:if="${codeCount > 0}">
             <span class="btn btn-outline-dark" id="first">
-                <i class="fas fa-angle-double-left"></i>
+                <i aria-hidden="true" class="fas fa-angle-double-left" title="Show the first participant code"></i>
+                <span class="sr-only" th:text="#{first}"></span>
             </span>
             <span class="btn btn-outline-dark" id="prev">
-                <i class="fas fa-angle-left"></i>
+                <i aria-hidden="true" class="fas fa-angle-left" title="Show the previous participant code"></i>
+                <span class="sr-only" th:text="#{previous}"></span>
             </span>
             <span class="text-muted">
                 <span th:text="#{elements}"></span>
                 <span th:text="${codeCount}"></span>
             </span>
             <span class="btn btn-outline-dark" id="next">
-                <i class="fas fa-angle-right"></i>
+                <i aria-hidden="true" class="fas fa-angle-right" title="Show the next participant code"></i>
+                <span class="sr-only" th:text="#{next}"></span>
             </span>
             <span class="btn btn-outline-dark" id="last">
-                <i class="fas fa-angle-double-right"></i>
+                <i aria-hidden="true" class="fas fa-angle-double-right" title="Show the last participant code"></i>
+                <span class="sr-only" th:text="#{last}"></span>
             </span>
             <br class="mb-3">
             <span class="btn btn-primary" id="xml">
-                <i class="fas fa-download fa-inverse"></i>
+                <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download current xml file"></i>
+                <span class="sr-only" th:text="#{download}"></span>
                 <span>XML</span>
             </span>
             <span class="btn btn-primary" id="json">
-                <i class="fas fa-download fa-inverse"></i>
+                <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download current json file"></i>
+                <span class="sr-only" th:text="#{download}"></span>
                 <span>JSON</span>
             </span>
         </div>

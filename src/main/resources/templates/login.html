@@ -24,7 +24,10 @@
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="username" th:text="#{username}"></label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fa fa-user"></i></span>
+                        <span class="input-group-text">
+                            <i aria-hidden="true" class="fa fa-user" title="Enter username"></i>
+                            <span class="sr-only" th:text="#{username}"></span>
+                        </span>
                         <input name="username" id="username" type="text" th:placeholder="#{username}"
                                th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                                th:field="*{username}" th:class="${#fields.hasErrors('username')
@@ -36,7 +39,10 @@
                 <div class="col-12 mb-5 form-group position-relative">
                     <label class="form-label" for="password" th:text="#{password}"></label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fa fa-key"></i></span>
+                        <span class="input-group-text">
+                            <i aria-hidden="true" class="fa fa-key" title="Enter password"></i>
+                            <span class="sr-only" th:text="#{password}"></span>
+                        </span>
                         <input name="password" id="password" type="password" th:placeholder="#{password}"
                                th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                                th:field="*{password}" th:class="${#fields.hasErrors('password')
