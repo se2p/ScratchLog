@@ -126,8 +126,12 @@ public class ExperimentService {
         }
 
         Experiment experiment = createExperiment(experimentDTO);
-        Optional<Experiment> exists = experimentRepository.findById(experimentDTO.getId());
-        exists.ifPresent(value -> experiment.setProject(value.getProject()));
+
+        if (experimentDTO.getId() != null) {
+            Optional<Experiment> exists = experimentRepository.findById(experimentDTO.getId());
+            exists.ifPresent(value -> experiment.setProject(value.getProject()));
+        }
+
         Experiment saved = experimentRepository.save(experiment);
 
         if (saved.getId() == null) {

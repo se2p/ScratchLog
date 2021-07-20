@@ -77,6 +77,7 @@ public class ExperimentServiceTest {
 
     @BeforeEach
     public void setup() {
+        experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
         experiment.setActive(false);
@@ -157,6 +158,22 @@ public class ExperimentServiceTest {
     public void testHasProjectFileInvalidId() {
         assertFalse(experimentService.hasProjectFile(0));
         verify(experimentRepository, never()).existsByIdAndProjectIsNotNull(anyInt());
+    }
+
+    @Test
+    public void testSaveExperimentIdNull() {
+        experimentDTO.setId(null);
+        when(experimentRepository.save(any())).thenReturn(experiment);
+        ExperimentDTO saved = experimentService.saveExperiment(experimentDTO);
+        assertAll(
+                () -> assertEquals(ID, saved.getId()),
+                () -> assertEquals(experimentDTO.getTitle(), saved.getTitle()),
+                () -> assertEquals(experimentDTO.getDescription(), saved.getDescription()),
+                () -> assertEquals(experimentDTO.getInfo(), saved.getInfo()),
+                () -> assertFalse(experimentDTO.isActive())
+        );
+        verify(experimentRepository).save(any());
+        verify(experimentRepository, never()).findById(anyInt());
     }
 
     @Test
