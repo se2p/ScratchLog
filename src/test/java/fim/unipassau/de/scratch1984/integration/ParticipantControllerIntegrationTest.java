@@ -5,7 +5,6 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
-import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.ParticipantController;
@@ -89,10 +88,13 @@ public class ParticipantControllerIntegrationTest {
     private static final String POSTSCRIPT = "postscript";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String ID_PARAM = "id";
+    private static final String EXP_ID_PARAM = "expId";
     private static final String USER_PARAM = "user";
     private static final String EXPERIMENT_PARAM = "experiment";
     private static final int ID = 1;
     private static final int LAST_ID = ID + 1;
+    private final UserDTO newUser = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
+            UserDTO.Language.ENGLISH, "password", "secret");
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true);
@@ -183,53 +185,53 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testAddParticipant() throws Exception {
-        when(userService.saveUser(userDTO)).thenReturn(userDTO);
+        when(userService.saveUser(newUser)).thenReturn(userDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/participant/add")
-                .flashAttr(USER_DTO, userDTO)
-                .param(ID_PARAM, ID_STRING)
+                .flashAttr(USER_DTO, newUser)
+                .param(EXP_ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
-        verify(userService).saveUser(userDTO);
+        verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
     public void testAddParticipantMessagingError() throws Exception {
-        when(userService.saveUser(userDTO)).thenReturn(userDTO);
+        when(userService.saveUser(newUser)).thenReturn(userDTO);
         mvc.perform(post("/participant/add")
-                .flashAttr(USER_DTO, userDTO)
-                .param(ID_PARAM, ID_STRING)
+                .flashAttr(USER_DTO, newUser)
+                .param(EXP_ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(userService).saveUser(userDTO);
+        verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
     public void testAddParticipantNotFound() throws Exception {
-        when(userService.saveUser(userDTO)).thenReturn(userDTO);
+        when(userService.saveUser(newUser)).thenReturn(userDTO);
         doThrow(NotFoundException.class).when(participantService).saveParticipant(userDTO.getId(), ID);
         mvc.perform(post("/participant/add")
-                .flashAttr(USER_DTO, userDTO)
-                .param(ID_PARAM, ID_STRING)
+                .flashAttr(USER_DTO, newUser)
+                .param(EXP_ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(userService).saveUser(userDTO);
+        verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
@@ -239,8 +241,8 @@ public class ParticipantControllerIntegrationTest {
         when(userService.existsUser(PARTICIPANT)).thenReturn(true);
         when(userService.existsEmail(EMAIL)).thenReturn(true);
         mvc.perform(post("/participant/add")
-                .flashAttr(USER_DTO, userDTO)
-                .param(ID_PARAM, ID_STRING)
+                .flashAttr(USER_DTO, newUser)
+                .param(EXP_ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -248,17 +250,17 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENT, is(ID)))
                 .andExpect(view().name(PARTICIPANT));
-        verify(userService, never()).saveUser(userDTO);
-        verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
+        verify(userService, never()).saveUser(any());
+        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
     public void testAddParticipantInvalidUsername() throws Exception {
-        userDTO.setUsername(BLANK);
+        newUser.setUsername(BLANK);
         mvc.perform(post("/participant/add")
-                .flashAttr(USER_DTO, userDTO)
-                .param(ID_PARAM, ID_STRING)
+                .flashAttr(USER_DTO, newUser)
+                .param(EXP_ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -266,17 +268,17 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENT, is(ID)))
                 .andExpect(view().name(PARTICIPANT));
-        verify(userService, never()).saveUser(userDTO);
-        verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
+        verify(userService, never()).saveUser(any());
+        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
     public void testAddParticipantInvalidEmail() throws Exception {
-        userDTO.setEmail(PARTICIPANT);
+        newUser.setEmail(PARTICIPANT);
         mvc.perform(post("/participant/add")
-                .flashAttr(USER_DTO, userDTO)
-                .param(ID_PARAM, ID_STRING)
+                .flashAttr(USER_DTO, newUser)
+                .param(EXP_ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
@@ -284,24 +286,40 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENT, is(ID)))
                 .andExpect(view().name(PARTICIPANT));
-        verify(userService, never()).saveUser(userDTO);
-        verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
+        verify(userService, never()).saveUser(any());
+        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 
     @Test
     public void testAddParticipantExperimentIdInvalid() throws Exception {
         mvc.perform(post("/participant/add")
-                .flashAttr(USER_DTO, userDTO)
-                .param(ID_PARAM, "-1")
+                .flashAttr(USER_DTO, newUser)
+                .param(EXP_ID_PARAM, "-1")
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(userService, never()).saveUser(userDTO);
-        verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
+        verify(userService, never()).saveUser(any());
+        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+    }
+
+    @Test
+    public void testAddParticipantUserIdNotNull() throws Exception {
+        mvc.perform(post("/participant/add")
+                .flashAttr(USER_DTO, userDTO)
+                .param(EXP_ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).saveUser(any());
+        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
     }
 

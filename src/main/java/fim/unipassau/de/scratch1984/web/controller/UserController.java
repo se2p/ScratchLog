@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.LocaleResolver;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -708,11 +707,9 @@ public class UserController {
             return false;
         }
 
-        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(httpServletRequest).replacePath(null).build()
-                .toUriString();
-        String tokenUrl = baseUrl + "/token?value=" + tokenDTO.getValue();
+        String tokenUrl = Constants.BASE_URL + "/token?value=" + tokenDTO.getValue();
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", baseUrl);
+        templateModel.put("baseUrl", Constants.BASE_URL);
         templateModel.put("token", tokenUrl);
         return mailService.sendEmail(email, resourceBundle.getString("change_email_subject"), templateModel,
                 "change-email.html");

@@ -13,6 +13,11 @@ public final class Constants {
     }
 
     /**
+     * The base URL under which the application is deployed.
+     */
+    public static final String BASE_URL = "http://localhost:8090";
+
+    /**
      * The base URL of the Scratch GUI instance.
      */
     public static final String GUI_URL = "http://localhost:8601";

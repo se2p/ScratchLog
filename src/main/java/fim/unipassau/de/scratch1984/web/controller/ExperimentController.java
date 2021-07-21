@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -715,11 +714,9 @@ public class ExperimentController {
      */
     private Map<String, Object> getTemplateModel(final String id, final String secret,
                                                  final HttpServletRequest httpServletRequest) {
-        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(httpServletRequest).replacePath(null).build()
-                .toUriString();
-        String experimentUrl = baseUrl + "/users/authenticate?id=" + id + "&secret=" + secret;
+        String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + id + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", baseUrl);
+        templateModel.put("baseUrl", Constants.BASE_URL);
         templateModel.put("secret", experimentUrl);
         return templateModel;
     }
