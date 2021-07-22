@@ -50,7 +50,8 @@ do:
 - The `application.properties` file contains a section where you can configure the context path. Uncomment the two lines
 and change the `server.servlet.context-path` accordingly.
 - Include your changed context path (e.g. `/scratch1984`) in the url patterns of the ajax requests in
-  `participantSuggestions.js` (*getUserSuggestions()*, *getUserDeleteSuggestions()*) and `blockly.js` (*getXML()*).
+  `participantSuggestions.js` (*getUserSuggestions()*, *getUserDeleteSuggestions()*) and `blockly.js` (*getXML()*) as
+  well as in the `workspace.options.pathToMedia` in the `blockly.js` (*renderBlockly()*).
 
 ## Build and Deployment
 
