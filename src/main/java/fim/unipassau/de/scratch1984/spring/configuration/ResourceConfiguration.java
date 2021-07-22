@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.spring.configuration;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -30,6 +31,16 @@ public class ResourceConfiguration implements WebMvcConfigurer {
     @Override
     public void addViewControllers(final ViewControllerRegistry registry) {
         registry.addViewController("/login").setViewName("forward:/login.html");
+    }
+
+    /**
+     * Configures the {@link CorsRegistry} to accept cross-origin requests from the specified URL.
+     *
+     * @param registry The registry storing the necessary information.
+     */
+    @Override
+    public void addCorsMappings(final CorsRegistry registry) {
+        registry.addMapping("/store/*").allowedMethods("GET", "POST").allowedOrigins("http://localhost:8090");
     }
 
 }

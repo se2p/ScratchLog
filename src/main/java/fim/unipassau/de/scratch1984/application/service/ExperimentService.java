@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -19,8 +20,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A service providing methods related to experiments.
@@ -91,6 +94,21 @@ public class ExperimentService {
     }
 
     /**
+     * Checks, whether any experiment with the given id exists in the database whose project.
+     *
+     * @param id The id to search for.
+     * @return {@code true} if such an experiment exists, or {@code false} if not.
+     */
+    @Transactional
+    public boolean hasProjectFile(final int id) {
+        if (id < Constants.MIN_ID) {
+            return false;
+        }
+
+        return experimentRepository.existsByIdAndProjectIsNotNull(id);
+    }
+
+    /**
      * Creates a new experiment or updates an existing one with the given parameters in the database. If the information
      * could not be persisted correctly, a {@link StoreException} is thrown instead.
      *
@@ -107,14 +125,21 @@ public class ExperimentService {
             throw new IncompleteDataException("Cannot save experiment with empty description!");
         }
 
-        Experiment experiment = experimentRepository.save(createExperiment(experimentDTO));
+        Experiment experiment = createExperiment(experimentDTO);
 
-        if (experiment.getId() == null) {
+        if (experimentDTO.getId() != null) {
+            Optional<Experiment> exists = experimentRepository.findById(experimentDTO.getId());
+            exists.ifPresent(value -> experiment.setProject(value.getProject()));
+        }
+
+        Experiment saved = experimentRepository.save(experiment);
+
+        if (saved.getId() == null) {
             logger.error("Failed to store experiment with title " + experimentDTO.getTitle());
             throw new StoreException("Failed to store experiment with title " + experimentDTO.getTitle());
         }
 
-        return createExperimentDTO(experiment);
+        return createExperimentDTO(saved);
     }
 
     /**
@@ -259,6 +284,86 @@ public class ExperimentService {
         }
 
         return list;
+    }
+
+    /**
+     * Uploads the given byte array representing an sb3 project that is to be loaded when starting an experiment with
+     * the given id. If the parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no
+     * experiment with the corresponding id could be found, a {@link NotFoundException} is thrown.
+     *
+     * @param id The experiment ID.
+     * @param project The sb3 project to upload.
+     */
+    @Transactional
+    public void uploadSb3Project(final int id, final byte[] project) {
+        if (project == null) {
+            logger.error("Cannot upload sb3 project null!");
+            throw new IllegalArgumentException("Cannot upload sb3 project null!");
+        } else if (id < Constants.MIN_ID) {
+            logger.error("Cannot upload sb3 project for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot upload sb3 project for experiment with invalid id " + id + "!");
+        }
+
+        try {
+            Experiment experiment = experimentRepository.getOne(id);
+            experiment.setProject(project);
+            experimentRepository.save(experiment);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find experiment with id " + id + " when trying to upload an sb3 project!", e);
+            throw new NotFoundException("Could not find experiment with id " + id + " when trying to upload an sb3 "
+                    + "project!", e);
+        }
+    }
+
+    /**
+     * Deletes the current sb3 project for the experiment with the given id. If the parameters are invalid, an
+     * {@link IllegalArgumentException} is thrown instead. If no experiment with the corresponding id could be found, a
+     * {@link NotFoundException} is thrown.
+     *
+     * @param id The experiment ID.
+     */
+    @Transactional
+    public void deleteSb3Project(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot delete sb3 project for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot delete sb3 project for experiment with invalid id " + id + "!");
+        }
+
+        try {
+            Experiment experiment = experimentRepository.getOne(id);
+            experiment.setProject(null);
+            experimentRepository.save(experiment);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find experiment with id " + id + " when trying to delete an sb3 project!", e);
+            throw new NotFoundException("Could not find experiment with id " + id + " when trying to delete an sb3 "
+                    + "project!", e);
+        }
+    }
+
+    /**
+     * Retrieves an {@link ExperimentProjection} containing the experiment id and the current sb3 file from the
+     * database. If no experiment with the corresponding id could be found, a {@link NotFoundException} is thrown.
+     *
+     * @param id The experiment ID.
+     * @return The experiment projection.
+     */
+    @Transactional
+    public ExperimentProjection getSb3File(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot retrieve sb3 project for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve sb3 project for experiment with invalid id " + id
+                    + "!");
+        }
+
+        Optional<ExperimentProjection> projection = experimentRepository.findExperimentById(id);
+
+        if (projection.isEmpty()) {
+            logger.error("Could not find experiment with " + id + " when trying to retrieve its sb3 file!");
+            throw new NotFoundException("Could not find experiment with " + id + " when trying to retrieve its sb3 "
+                    + "file!");
+        }
+
+        return projection.get();
     }
 
     /**

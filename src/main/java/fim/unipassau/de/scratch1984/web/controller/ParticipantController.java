@@ -32,7 +32,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -155,7 +154,7 @@ public class ParticipantController {
 
     /**
      * Creates a new user with the given values and adds a participant relation for the given experiment. If the
-     * creation was successful, the an email is sent to the specified email address of the new user containing a link
+     * creation was successful, an email is sent to the specified email address of the new user containing a link
      * to participate in the experiment, and the experiment page is returned. If anything went wrong during the process,
      * the user is redirected to the error page instead.
      *
@@ -168,11 +167,16 @@ public class ParticipantController {
      */
     @PostMapping("/add")
     @Secured("ROLE_ADMIN")
-    public String addParticipant(@RequestParam(value = "id") final String experimentId,
+    public String addParticipant(@RequestParam(value = "expId") final String experimentId,
                                  @ModelAttribute("userDTO") final UserDTO userDTO, final Model model,
                                  final BindingResult bindingResult, final HttpServletRequest httpServletRequest) {
         if (userDTO.getUsername() == null || userDTO.getEmail() == null || experimentId == null) {
             logger.error("The new username, email and experiment id cannot be null!");
+            return ERROR;
+        }
+
+        if (userDTO.getId() != null) {
+            logger.error("Cannot create new user if the id is not null!");
             return ERROR;
         }
 
@@ -204,11 +208,9 @@ public class ParticipantController {
             return ERROR;
         }
 
-        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(httpServletRequest).replacePath(null).build()
-                .toUriString();
-        String experimentUrl = baseUrl + "/users/authenticate?id=" + id + "&secret=" + secret;
+        String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + id + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", baseUrl);
+        templateModel.put("baseUrl", Constants.BASE_URL);
         templateModel.put("secret", experimentUrl);
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
@@ -348,7 +350,7 @@ public class ParticipantController {
                 participantDTO.setStart(LocalDateTime.now());
 
                 if (participantService.updateParticipant(participantDTO)) {
-                    return "redirect:http://localhost:8601?uid=" + participantDTO.getUser() + "&expid="
+                    return "redirect:" + Constants.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
                             + participantDTO.getExperiment();
                 } else {
                     logger.error("Failed to update the starting time of participant with user id "

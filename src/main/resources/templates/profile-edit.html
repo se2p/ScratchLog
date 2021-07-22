@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Profile - Edit</title>
-    <link rel="stylesheet" href="/static/design/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/design/all.min.css"/>
-    <link rel="stylesheet" href="/static/design/style.css">
+    <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/style.css}">
 </head>
 <body>
 <!-- Navigation bar -->
@@ -24,7 +24,10 @@
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="username" th:text="#{username}"></label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fa fa-user"></i></span>
+                    <span aria-hidden="true" class="input-group-text" title="Username">
+                        <i class="fa fa-user"></i>
+                        <span class="sr-only" th:text="#{username}"></span>
+                    </span>
                     <input name="username" id="username" type="text" th:placeholder="#{username}"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                            th:field="*{username}" th:class="${#fields.hasErrors('username')
@@ -36,7 +39,10 @@
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="email" th:text="#{email}"></label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fa fa-envelope"></i></span>
+                    <span class="input-group-text">
+                        <i aria-hidden="true" class="fa fa-envelope" title="Email address"></i>
+                        <span class="sr-only" th:text="#{email}"></span>
+                    </span>
                     <input name="email" id="email" type="text" th:placeholder="#{email}"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
                            th:field="*{email}" th:class="${#fields.hasErrors('email')
@@ -47,7 +53,10 @@
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="language" th:text="#{language}"></label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fa fa-flag"></i></span>
+                    <span class="input-group-text">
+                        <i aria-hidden="true" class="fa fa-flag" title="Preferred language"></i>
+                        <span class="sr-only" th:text="#{language}"></span>
+                    </span>
                     <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
                         <option th:each="lang : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Language).values()}"
                                 th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
@@ -57,7 +66,10 @@
             <div class="mb-3 form-group position-relative" th:unless="${userDTO.password == null}">
                 <label class="form-label" for="password" th:text="#{password}"></label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fa fa-key"></i></span>
+                    <span class="input-group-text">
+                        <i aria-hidden="true" class="fa fa-key" title="Current password"></i>
+                        <span class="sr-only" th:text="#{password}"></span>
+                    </span>
                     <input name="password" id="password" type="password" th:placeholder="#{password}"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                            th:field="*{password}" th:class="${#fields.hasErrors('password')
@@ -73,7 +85,10 @@
             <div class="mb-3 form-group position-relative" th:unless="${userDTO.password == null}">
                 <label class="form-label" for="new_password" th:text="#{password_new}"></label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fa fa-certificate"></i></span>
+                    <span class="input-group-text">
+                        <i aria-hidden="true" class="fa fa-certificate" title="Enter new password"></i>
+                        <span class="sr-only" th:text="#{password_new}"></span>
+                    </span>
                     <input name="password" id="new_password" type="password" th:placeholder="#{password_new}"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                            th:field="*{newPassword}" th:class="${#fields.hasErrors('newPassword')
@@ -85,7 +100,10 @@
             <div class="mb-5 form-group position-relative" th:unless="${userDTO.password == null}">
                 <label class="form-label" for="confirm_password" th:text="#{password_confirm}"></label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fa fa-certificate"></i></span>
+                    <span class="input-group-text">
+                        <i aria-hidden="true" class="fa fa-certificate" title="Reenter new password"></i>
+                        <span class="sr-only" th:text="#{password_confirm}"></span>
+                    </span>
                     <input name="password" id="confirm_password" type="password" th:placeholder="#{password_confirm}"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                            th:field="*{confirmPassword}" th:class="${#fields.hasErrors('confirmPassword')

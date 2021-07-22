@@ -51,6 +51,11 @@ public class Experiment {
     private boolean active;
 
     /**
+     * The sb3 project to load on experiment start.
+     */
+    private byte[] project;
+
+    /**
      * Default constructor for the experiment entity.
      */
     public Experiment() {
@@ -182,6 +187,24 @@ public class Experiment {
      */
     public void setActive(final boolean active) {
         this.active = active;
+    }
+
+    /**
+     * Returns the current sb3 project.
+     *
+     * @return The sb3 project.
+     */
+    public byte[] getProject() {
+        return project;
+    }
+
+    /**
+     * Sets the current sb3 project.
+     *
+     * @param project The project.
+     */
+    public void setProject(final byte[] project) {
+        this.project = project;
     }
 
 }

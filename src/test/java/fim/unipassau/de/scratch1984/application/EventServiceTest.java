@@ -45,6 +45,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -513,6 +514,17 @@ public class EventServiceTest {
                 () -> assertEquals(codesData.getUser(), codesDataDTO.getUser()),
                 () -> assertEquals(codesData.getExperiment(), codesDataDTO.getExperiment()),
                 () -> assertEquals(codesData.getCount(), codesDataDTO.getCount())
+        );
+        verify(codesDataRepository).findByUserAndExperiment(ID, ID);
+    }
+
+    @Test
+    public void testGetCodesDataNull() {
+        CodesDataDTO codesDataDTO = eventService.getCodesData(ID, ID);
+        assertAll(
+                () -> assertNull(codesDataDTO.getUser()),
+                () -> assertNull(codesDataDTO.getExperiment()),
+                () -> assertEquals(0, codesDataDTO.getCount())
         );
         verify(codesDataRepository).findByUserAndExperiment(ID, ID);
     }

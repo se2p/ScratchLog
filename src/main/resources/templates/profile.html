@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Profile</title>
-    <link rel="stylesheet" href="/static/design/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/design/all.min.css"/>
-    <link rel="stylesheet" href="/static/design/style.css">
+    <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/style.css}">
 </head>
 <body>
 <!-- Navigation bar -->
@@ -34,11 +34,11 @@
         </div>
         <div class="row mb-3" th:unless="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
             <div class="col-9" th:if="${userDTO.active}">
-                <i class="fa fa-lock-open fa-2x"></i>
+                <i aria-hidden="true" class="fa fa-lock-open fa-2x" title="Participant profile inactive"></i>
                 <span class="text-muted ms-1" th:text="#{activated}"></span>
             </div>
             <div class="col-9" th:unless="${userDTO.active}">
-                <i class="fa fa-lock fa-2x"></i>
+                <i aria-hidden="true" class="fa fa-lock fa-2x" title="Participant profile active"></i>
                 <span class="text-muted ms-1" th:text="#{inactive}"></span>
             </div>
             <div class="col-3 text-end" sec:authorize="hasRole('ADMIN')">
@@ -66,7 +66,8 @@
                 <p class="card-text">
                 <div class="row mx-4 mb-3">
                     <div class="col-3">
-                        <i class="fa fa-user-circle fa-3x" aria-hidden="true"></i>
+                        <i aria-hidden="true" class="fa fa-user-circle fa-3x" title="Username"></i>
+                        <span class="sr-only" th:text="#{username}"></span>
                     </div>
                     <div class="col-9">
                         <div class="fs-5" th:text="${userDTO.username}"></div>
@@ -75,7 +76,8 @@
                 </div>
                 <div class="row mx-4 mb-3">
                     <div class="col-3">
-                        <i class="fa fa-envelope fa-3x" aria-hidden="true"></i>
+                        <i aria-hidden="true" class="fa fa-envelope fa-3x" title="Email address"></i>
+                        <span class="sr-only" th:text="#{email}"></span>
                     </div>
                     <div class="col-9">
                         <div th:if="${userDTO.email != null}">
@@ -89,7 +91,8 @@
                 </div>
                 <div class="row mx-4 mb-3">
                     <div class="col-3">
-                        <i class="fa fa-flag fa-3x" aria-hidden="true"></i>
+                        <i aria-hidden="true" class="fa fa-flag fa-3x" title="Preferred language"></i>
+                        <span class="sr-only" th:text="#{language}"></span>
                     </div>
                     <div class="col-9">
                         <div class="fs-5" th:text="${language}"></div>

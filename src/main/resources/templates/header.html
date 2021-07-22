@@ -12,13 +12,13 @@
         <div class="col-4">
             <ul class="navbar-nav">
                 <li class="navbar-brand" id="brand">
-                    <a class="navbar-brand" href="/">Scratch 1984</a>
+                    <a class="navbar-brand" th:href="@{/}">Scratch 1984</a>
                 </li>
                 <li class="nav-item active my-auto">
-                    <a class="nav-link" href="/">Home</a>
+                    <a class="nav-link" th:href="@{/}">Home</a>
                 </li>
                 <li class="nav-item my-auto" sec:authorize="hasRole('ADMIN')">
-                    <a id="experiment" class="nav-link" href="/experiment/create" th:text="#{new_experiment}"></a>
+                    <a id="experiment" class="nav-link" th:href="@{/experiment/create}" th:text="#{new_experiment}"></a>
                 </li>
             </ul>
         </div>
@@ -27,8 +27,8 @@
                 <div class="input-group" sec:authorize="hasRole('ADMIN')">
                     <input class="form-control form-text mt-0" id="username" type="text" th:placeholder="#{search}"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
-                    <a class="input-group-text btn btn-outline-primary">
-                        <i class="fa fa-search"></i>
+                    <a class="input-group-text btn btn-outline-primary" aria-label="Search for users or experiments">
+                        <i aria-hidden="true" class="fa fa-search"></i>
                     </a>
                 </div>
             </form>
@@ -36,7 +36,7 @@
         <div class="col-4">
             <ul class="navbar-nav float-end">
                 <li class="nav-item active" sec:authorize="isAnonymous()">
-                    <a id="login" class="btn btn-link" href="/login">Login</a>
+                    <a id="login" class="btn btn-link" th:href="@{/login}">Login</a>
                 </li>
                 <li class="nav-item active" sec:authorize="hasRole('ADMIN')">
                     <a class="btn btn-link" th:href="@{/users/profile}">

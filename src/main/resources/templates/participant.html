@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Add Participant</title>
-    <link rel="stylesheet" href="/static/design/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/design/all.min.css"/>
-    <link rel="stylesheet" href="/static/design/style.css">
+    <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/style.css}">
 </head>
 <body>
 <!-- Navigation bar -->
@@ -22,12 +22,15 @@
         <div class="row">
             <div class="col-12 mb-5" th:text="#{participant_info}"></div>
         </div>
-        <form th:action="@{/participant/add(id=${experiment})}" th:object="${userDTO}" th:name="userDTO" method="post">
+        <form th:action="@{/participant/add(expId=${experiment})}" th:object="${userDTO}" th:name="userDTO" method="post">
             <div class="row mx-5">
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="username" th:text="#{username}"></label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fa fa-user"></i></span>
+                        <span class="input-group-text">
+                            <i aria-hidden="true" class="fa fa-user" title="Enter username"></i>
+                            <span class="sr-only" th:text="#{username}"></span>
+                        </span>
                         <input name="username" id="username" type="text" th:placeholder="#{username}"
                                th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
                                th:field="*{username}" th:class="${#fields.hasErrors('username')
@@ -39,7 +42,10 @@
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="email" th:text="#{email}"></label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fa fa-envelope"></i></span>
+                        <span class="input-group-text">
+                            <i aria-hidden="true" class="fa fa-envelope" title="Enter email"></i>
+                            <span class="sr-only" th:text="#{email}"></span>
+                        </span>
                         <input name="email" id="email" th:placeholder="#{email}"
                                th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
                                th:field="*{email}" th:class="${#fields.hasErrors('email')
@@ -51,7 +57,10 @@
                 <div class="mb-3 form-group position-relative">
                     <label class="form-label" for="language" th:text="#{language}"></label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="fa fa-flag"></i></span>
+                        <span class="input-group-text">
+                            <i aria-hidden="true" class="fa fa-flag" title="Choose language"></i>
+                            <span class="sr-only" th:text="#{language}"></span>
+                        </span>
                         <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
                             <option th:each="lang : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Language).values()}"
                                     th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>

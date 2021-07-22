@@ -25,6 +25,7 @@
         <commonmark.version>0.16.1</commonmark.version>
         <font-awesome.version>5.15.2</font-awesome.version>
         <opencsv.version>5.5</opencsv.version>
+        <jaxb.version>2.3.3</jaxb.version>
         <junit.version>5.7.0</junit.version>
         <junitplatform.version>1.7.0</junitplatform.version>
         <mockito.version>3.6.28</mockito.version>
@@ -139,6 +140,20 @@
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>${opencsv.version}</version>
+        </dependency>
+
+        <!-- API, java.xml.bind module no longer contained in JDK since Java 11 -->
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>${jaxb.version}</version>
+        </dependency>
+
+        <!-- Runtime, com.sun.xml.bind module no longer contained in JDK since Java 11 -->
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${jaxb.version}</version>
         </dependency>
 
         <!-- JUnit 5 -->

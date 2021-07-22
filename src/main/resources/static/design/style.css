@@ -210,3 +210,8 @@ code {
     width: 63vw;
     height: 63vh;
 }
+
+/* Used for <span>-attributes that convey the meaning of Font Awesome icons for screen readers. */
+.sr-only {
+    visibility: hidden;
+}
