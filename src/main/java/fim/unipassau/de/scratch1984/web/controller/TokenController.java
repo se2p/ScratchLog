@@ -3,16 +3,25 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
+import java.util.ResourceBundle;
 
 /**
  * The controller for token management.
@@ -42,6 +51,11 @@ public class TokenController {
     private static final String ERROR = "redirect:/error";
 
     /**
+     * String corresponding to the register page.
+     */
+    private static final String REGISTER = "register";
+
+    /**
      * Constructs a new token controller with the given dependencies.
      *
      * @param tokenService The {@link TokenService} to use.
@@ -60,10 +74,11 @@ public class TokenController {
      * token could be found or update actions performed, the user is redirected to the error page instead.
      *
      * @param token The token value to search for.
+     * @param model The {@link Model} used to store information..
      * @return The index page to display status messages, or the error page.
      */
     @GetMapping()
-    public String validateToken(@RequestParam("value") final String token) {
+    public String validateToken(@RequestParam("value") final String token, final Model model) {
         TokenDTO tokenDTO;
 
         try {
@@ -86,9 +101,77 @@ public class TokenController {
             } catch (NotFoundException e) {
                 return ERROR;
             }
+        } else if (tokenDTO.getType() == TokenDTO.Type.REGISTER) {
+            UserDTO userDTO = userService.getUserById(tokenDTO.getUser());
+            model.addAttribute("userDTO", userDTO);
+            model.addAttribute("token", tokenDTO.getValue());
+            return REGISTER;
         }
 
         return "redirect:/?success=true";
+    }
+
+    /**
+     * Completes the user registration by validating the password input and retrieving the token with the given value.
+     * Once the new password has been set and the user account has been activated, the token is deleted from the
+     * database. If the passed parameters are invalid or no corresponding user or token could be found, the user is
+     * redirected to the error page instead. If the password input was invalid, the register page is returned to display
+     * a corresponding error message.
+     *
+     * @param userDTO The {@link UserDTO} containing the user information.
+     * @param token The token value to search for.
+     * @param bindingResult The {@link BindingResult} for returning information on invalid user input.
+     * @param model The {@link Model} used to store information.
+     * @return The index page on success, or the error page.
+     */
+    @PostMapping("/register")
+    public String registerUser(@ModelAttribute("userDTO") final UserDTO userDTO,
+                               @RequestParam("value") final String token, final BindingResult bindingResult,
+                               final Model model) {
+        if (userDTO == null || userDTO.getId() == null || userDTO.getPassword() == null
+                || userDTO.getConfirmPassword() == null) {
+            logger.error("Cannot register user with id null, or passwords null!");
+            return ERROR;
+        } else if (token == null || token.trim().isBlank()) {
+            logger.error("Cannot register user with token null or blank!");
+            return ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        String passwordValidation = PasswordValidator.validate(userDTO.getPassword(), userDTO.getConfirmPassword());
+
+        if (passwordValidation != null) {
+            bindingResult.addError(createFieldError("userDTO", "password", passwordValidation, resourceBundle));
+            model.addAttribute("token", token);
+            return REGISTER;
+        }
+
+        try {
+            TokenDTO tokenDTO = tokenService.findToken(token);
+            UserDTO user = userService.getUserById(userDTO.getId());
+            user.setPassword(userService.encodePassword(userDTO.getPassword()));
+            user.setActive(true);
+            userService.saveUser(user);
+            tokenService.deleteToken(tokenDTO.getValue());
+            return "redirect:/?success=true";
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
+    }
+
+    /**
+     * Creates a new field error with the given parameters.
+     *
+     * @param objectName The name of the object.
+     * @param field The field to which the error applies.
+     * @param error The error message string.
+     * @param resourceBundle The resource bundle to retrieve the error message in the current language.
+     * @return The new field error.
+     */
+    private FieldError createFieldError(final String objectName, final String field, final String error,
+                                        final ResourceBundle resourceBundle) {
+        return new FieldError(objectName, field, resourceBundle.getString(error));
     }
 
 }

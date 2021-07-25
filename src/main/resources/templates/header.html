@@ -20,6 +20,9 @@
                 <li class="nav-item my-auto" sec:authorize="hasRole('ADMIN')">
                     <a id="experiment" class="nav-link" th:href="@{/experiment/create}" th:text="#{new_experiment}"></a>
                 </li>
+                <li class="nav-item my-auto" sec:authorize="hasRole('ADMIN')">
+                    <a id="user" class="nav-link" th:href="@{/users/add}" th:text="#{new_user}"></a>
+                </li>
             </ul>
         </div>
         <div class="mx-auto col-4">

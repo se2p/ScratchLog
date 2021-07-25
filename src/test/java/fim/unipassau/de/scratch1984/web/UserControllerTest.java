@@ -110,6 +110,7 @@ public class UserControllerTest {
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
+    private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
     private static final String USER_DTO = "userDTO";
     private static final String ID_STRING = "1";
@@ -353,6 +354,148 @@ public class UserControllerTest {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         assertEquals(ERROR, userController.logoutUser(httpServletRequest));
         verify(userService, never()).existsUser(anyString());
+    }
+
+    @Test
+    public void testGetAddUser() {
+        assertEquals(USER, userController.getAddUser(userDTO));
+    }
+
+    @Test
+    public void testAddUser() {
+        userDTO.setId(null);
+        when(userService.saveUser(userDTO)).thenReturn(oldDTO);
+        when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
+        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
+        assertEquals(REDIRECT_SUCCESS, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(userService).existsEmail(userDTO.getEmail());
+        verify(userService).existsUser(userDTO.getUsername());
+        verify(userService).saveUser(userDTO);
+        verify(tokenService).generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId());
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserMailNotSent() {
+        userDTO.setId(null);
+        when(userService.saveUser(userDTO)).thenReturn(oldDTO);
+        when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
+        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(userService).existsEmail(userDTO.getEmail());
+        verify(userService).existsUser(userDTO.getUsername());
+        verify(userService).saveUser(userDTO);
+        verify(tokenService).generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId());
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserExistsUser() {
+        userDTO.setId(null);
+        when(userService.existsUser(userDTO.getUsername())).thenReturn(true);
+        when(bindingResult.hasErrors()).thenReturn(true);
+        assertEquals(USER, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult).addError(any());
+        verify(userService).existsEmail(userDTO.getEmail());
+        verify(userService).existsUser(userDTO.getUsername());
+        verify(userService, never()).saveUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserInvalidUsername() {
+        userDTO.setId(null);
+        userDTO.setUsername(BLANK);
+        when(bindingResult.hasErrors()).thenReturn(true);
+        assertEquals(USER, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult).addError(any());
+        verify(userService).existsEmail(userDTO.getEmail());
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserEmailExists() {
+        userDTO.setId(null);
+        when(userService.existsEmail(userDTO.getEmail())).thenReturn(true);
+        when(bindingResult.hasErrors()).thenReturn(true);
+        assertEquals(USER, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult).addError(any());
+        verify(userService).existsEmail(userDTO.getEmail());
+        verify(userService).existsUser(userDTO.getUsername());
+        verify(userService, never()).saveUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserEmailInvalid() {
+        userDTO.setId(null);
+        userDTO.setPassword(VALID_PASSWORD);
+        userDTO.setConfirmPassword(VALID_PASSWORD);
+        userDTO.setEmail(USERNAME);
+        when(bindingResult.hasErrors()).thenReturn(true);
+        assertEquals(USER, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult).addError(any());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService).existsUser(userDTO.getUsername());
+        verify(userService, never()).saveUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserEmailNull() {
+        userDTO.setId(null);
+        userDTO.setEmail(null);
+        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserRoleNull() {
+        userDTO.setId(null);
+        userDTO.setRole(null);
+        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserLanguageNull() {
+        userDTO.setId(null);
+        userDTO.setLanguage(null);
+        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserIdNotNull() {
+        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test

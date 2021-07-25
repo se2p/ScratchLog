@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>User - Add</title>
+    <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/style.css}">
+</head>
+<body>
+<!-- Navigation bar -->
+<div th:insert="header :: header"></div>
+
+<!-- Page content -->
+<div class="row" id="content">
+    <div class="col-2"></div>
+    <div class="col-8">
+        <h2 class="mb-5" th:text="#{add_user}"></h2>
+        <div class="row">
+            <div class="col-12 mb-5" th:text="#{user_info}"></div>
+        </div>
+        <form th:action="@{/users/add}" th:object="${userDTO}" th:name="userDTO" method="post">
+            <div class="mb-3 form-group position-relative">
+                <label class="form-label" for="username" th:text="#{username}"></label>
+                <div class="input-group">
+                    <span aria-hidden="true" class="input-group-text" title="Username">
+                        <i class="fa fa-user"></i>
+                        <span class="sr-only" th:text="#{username}"></span>
+                    </span>
+                    <input name="username" id="username" type="text" th:placeholder="#{username}"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                           th:field="*{username}" th:class="${#fields.hasErrors('username')
+                                   ? 'form-control is-invalid' : 'form-control'}" required/>
+                </div>
+                <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                <div class="form-text" th:text="#{username_max}"></div>
+            </div>
+            <div class="mb-3 form-group position-relative">
+                <label class="form-label" for="email" th:text="#{email}"></label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i aria-hidden="true" class="fa fa-envelope" title="Email address"></i>
+                        <span class="sr-only" th:text="#{email}"></span>
+                    </span>
+                    <input name="email" id="email" type="text" th:placeholder="#{email}"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
+                           th:field="*{email}" th:class="${#fields.hasErrors('email')
+                                   ? 'form-control is-invalid' : 'form-control'}" required/>
+                </div>
+                <div class="validation" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+            </div>
+            <div class="mb-3 form-group position-relative">
+                <label class="form-label" for="language" th:text="#{language}"></label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i aria-hidden="true" class="fa fa-flag" title="Preferred language"></i>
+                        <span class="sr-only" th:text="#{language}"></span>
+                    </span>
+                    <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
+                        <option th:each="lang : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Language).values()}"
+                                th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3 form-group position-relative">
+                <label class="form-label" for="role" th:text="#{role}"></label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i aria-hidden="true" class="fas fa-id-card" title="Role"></i>
+                        <span class="sr-only" th:text="#{role}"></span>
+                    </span>
+                    <select id="role" class="form-select" th:aria-label="#{role}" th:field="*{role}">
+                        <option th:each="userRole : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).values()}"
+                                th:value="${userRole}" th:text="#{${userRole.toString().toLowerCase()}}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="text-center">
+                <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
+            </div>
+        </form>
+    </div>
+    <div class="col-2"></div>
+</div>
+
+<!-- Footer -->
+<div th:insert="footer :: footer"></div>
+</body>
+</html>

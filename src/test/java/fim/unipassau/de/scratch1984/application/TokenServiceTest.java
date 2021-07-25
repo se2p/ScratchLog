@@ -18,13 +18,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.persistence.EntityNotFoundException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,18 +46,26 @@ public class TokenServiceTest {
     private TokenRepository tokenRepository;
 
     private static final String CHANGE_EMAIL = "CHANGE_EMAIL";
+    private static final String REGISTER = "REGISTER";
     private static final String VALUE = "value";
     private static final String EMAIL = "admin@admin.com";
     private static final String BLANK = "   ";
     private static final int ID = 1;
     private final User user = new User();
+    private final Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
     private final Token token = new Token(CHANGE_EMAIL, Timestamp.valueOf(LocalDateTime.now()), EMAIL, user);
+    private final Token registerToken1 = new Token(REGISTER, timestamp, null, user);
+    private final Token registerToken2 = new Token(REGISTER, timestamp, null, user);
+    private final List<Token> registerTokens = new ArrayList<>();
 
     @BeforeEach
     public void setup() {
         user.setId(1);
         token.setValue(VALUE);
         token.setType(CHANGE_EMAIL);
+        registerToken1.setUser(user);
+        registerTokens.add(registerToken1);
+        registerTokens.add(registerToken2);
     }
 
     @Test
@@ -213,5 +226,39 @@ public class TokenServiceTest {
                 () -> tokenService.deleteExpiredTokens(null)
         );
         verify(tokenRepository, never()).deleteAllByDateBefore(any());
+    }
+
+    @Test
+    public void testDeleteExpiredAccounts() {
+        LocalDateTime dateTime = LocalDateTime.now();
+        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
+                REGISTER)).thenReturn(registerTokens);
+        assertDoesNotThrow(
+                () -> tokenService.deleteExpiredAccounts(dateTime)
+        );
+        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), REGISTER);
+        verify(userRepository, times(2)).deleteById(ID);
+    }
+
+    @Test
+    public void testDeleteExpiredAccountsUserNull() {
+        registerToken1.setUser(null);
+        LocalDateTime dateTime = LocalDateTime.now();
+        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
+                REGISTER)).thenReturn(registerTokens);
+        assertThrows(IllegalStateException.class,
+                () -> tokenService.deleteExpiredAccounts(dateTime)
+        );
+        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), REGISTER);
+        verify(userRepository, never()).deleteById(anyInt());
+    }
+
+    @Test
+    public void testDeleteExpiredAccountsDateTimeNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> tokenService.deleteExpiredAccounts(null)
+        );
+        verify(tokenRepository, never()).findAllByDateBeforeAndType(any(), anyString());
+        verify(userRepository, never()).deleteById(anyInt());
     }
 }

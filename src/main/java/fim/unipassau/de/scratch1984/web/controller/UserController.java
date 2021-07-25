@@ -117,6 +117,11 @@ public class UserController {
     private static final String PASSWORD = "password";
 
     /**
+     * String corresponding to the add user page.
+     */
+    private static final String USER = "user";
+
+    /**
      * Constructs a new user controller with the given dependencies.
      *
      * @param userService The {@link UserService} to use.
@@ -264,6 +269,71 @@ public class UserController {
 
         clearSecurityContext(httpServletRequest);
         return INDEX;
+    }
+
+    /**
+     * Returns the user page for adding a new user.
+     *
+     * @param userDTO The {@link UserDTO} used to save the new user data.
+     * @return The user page.
+     */
+    @GetMapping("/add")
+    @Secured("ROLE_ADMIN")
+    public String getAddUser(final UserDTO userDTO) {
+        return USER;
+    }
+
+    /**
+     * Adds a new user with values passed in the given user dto to the database and creates a registration token for the
+     * new user. Finally, an email is sent to the new user asking them to complete their registration. If the parameters
+     * passed are invalid, or no email could be sent, the user is redirected to the error page instead. If the given
+     * username or email do not match the requirements or exist already, the user returns to the add user page where
+     * corresponding error messages are displayed.
+     *
+     * @param userDTO The {@link UserDTO} used to save the new user data.
+     * @param bindingResult The binding result for returning information on invalid user input.
+     * @return The user page.
+     */
+    @PostMapping("/add")
+    @Secured("ROLE_ADMIN")
+    public String addUser(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult) {
+        if (userDTO.getId() != null) {
+            logger.error("Cannot add new user with id not null!");
+            return ERROR;
+        } else if (userDTO.getLanguage() == null || userDTO.getRole() == null || userDTO.getEmail() == null) {
+            logger.error("Cannot add new user with language, role, or email null!");
+            return ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        String emailValidation = EmailValidator.validate(userDTO.getEmail());
+        String usernameValidation = UsernameValidator.validate(userDTO.getUsername());
+
+        if (emailValidation != null) {
+            bindingResult.addError(createFieldError("userDTO", "email", emailValidation, resourceBundle));
+        } else if (userService.existsEmail(userDTO.getEmail())) {
+            bindingResult.addError(createFieldError("userDTO", "email", "email_exists", resourceBundle));
+        }
+
+        if (usernameValidation != null) {
+            bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
+        } else if (userService.existsUser(userDTO.getUsername())) {
+            bindingResult.addError(createFieldError("userDTO", "username", "username_exists", resourceBundle));
+        }
+
+        if (bindingResult.hasErrors()) {
+            return USER;
+        }
+
+        UserDTO saved = userService.saveUser(userDTO);
+        TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.REGISTER, null, saved.getId());
+
+        if (sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "register", "register-email.html", resourceBundle)) {
+            return "redirect:/?success=true";
+        } else {
+            return ERROR;
+        }
     }
 
     /**
@@ -707,12 +777,26 @@ public class UserController {
             return false;
         }
 
-        String tokenUrl = Constants.BASE_URL + "/token?value=" + tokenDTO.getValue();
+        return sendEmail(email, tokenDTO.getValue(), "change_email_subject", "change-email.html", resourceBundle);
+    }
+
+    /**
+     * Sends an email is with the given subject and template to the given email address.
+     *
+     * @param email The email address.
+     * @param value The token value to identify the user.
+     * @param subject The email subject.
+     * @param template The email template to be sent.
+     * @param resourceBundle The resource bundle for message translation.
+     * @return {@code true} if the email was sent, or {@code false} otherwise.
+     */
+    private boolean sendEmail(final String email, final String value, final String subject, final String template,
+                              final ResourceBundle resourceBundle) {
+        String tokenUrl = Constants.BASE_URL + "/token?value=" + value;
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put("baseUrl", Constants.BASE_URL);
         templateModel.put("token", tokenUrl);
-        return mailService.sendEmail(email, resourceBundle.getString("change_email_subject"), templateModel,
-                "change-email.html");
+        return mailService.sendEmail(email, resourceBundle.getString(subject), templateModel, template);
     }
 
     /**

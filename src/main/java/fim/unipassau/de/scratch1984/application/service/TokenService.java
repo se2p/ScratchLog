@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * A service providing methods related to tokens.
@@ -159,6 +160,32 @@ public class TokenService {
         }
 
         tokenRepository.deleteAllByDateBefore(Timestamp.valueOf(localDateTime));
+    }
+
+    /**
+     * Deletes the user accounts whose registration tokens have expired.
+     *
+     * @param localDateTime The current {@link LocalDateTime}.
+     */
+    @Transactional
+    public void deleteExpiredAccounts(final LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            logger.error("Cannot delete expired accounts with timestamp null!");
+            throw new IllegalArgumentException("Cannot delete expired tokens with timestamp null!");
+        }
+
+        List<Token> expiredRegistrations = tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(localDateTime),
+                TokenDTO.Type.REGISTER.toString());
+
+        for (Token token : expiredRegistrations) {
+            if (token.getUser() == null) {
+                logger.error("Cannot delete expired user account from token " + token.getValue() + " with user null!");
+                throw new IllegalStateException("Cannot delete expired user account from token " + token.getValue()
+                        + " with user null!");
+            }
+
+            userRepository.deleteById(token.getUser().getId());
+        }
     }
 
     /**

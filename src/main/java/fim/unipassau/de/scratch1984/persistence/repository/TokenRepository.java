@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.Token;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 public interface TokenRepository extends JpaRepository<Token, String> {
 
@@ -21,5 +22,14 @@ public interface TokenRepository extends JpaRepository<Token, String> {
      * @param date The current date timestamp.
      */
     void deleteAllByDateBefore(Timestamp date);
+
+    /**
+     * Returns a list of all tokens with an expiration date prior to the given value and with the given type.
+     *
+     * @param date The expiration date to match.
+     * @param type The token type to search for.
+     * @return A list of tokens matching the specified criteria.
+     */
+    List<Token> findAllByDateBeforeAndType(Timestamp date, String type);
 
 }
