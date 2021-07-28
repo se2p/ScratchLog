@@ -48,7 +48,7 @@ public class TokenControllerTest {
     private static final String ERROR = "redirect:/error";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
     private static final String REDIRECT_ERROR = "redirect:/?error=true";
-    private static final String REGISTER = "register";
+    private static final String PASSWORD_SET = "password-set";
     private static final String VALUE = "value";
     private static final String EMAIL = "admin@admin.com";
     private static final String VALID_PASSWORD = "V4l1d_P4ssw0rd!";
@@ -57,6 +57,7 @@ public class TokenControllerTest {
     private static final int ID = 1;
     private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), EMAIL, ID);
     private final TokenDTO registerToken = new TokenDTO(TokenDTO.Type.REGISTER, LocalDateTime.now(), null, ID);
+    private final TokenDTO forgotToken = new TokenDTO(TokenDTO.Type.FORGOT_PASSWORD, LocalDateTime.now(), null, ID);
     private final UserDTO userDTO = new UserDTO("admin", "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, "admin", "secret1");
 
@@ -69,6 +70,7 @@ public class TokenControllerTest {
         tokenDTO.setExpirationDate(expirationDate);
         registerToken.setValue(VALUE);
         registerToken.setExpirationDate(expirationDate);
+        forgotToken.setExpirationDate(expirationDate);
         userDTO.setId(ID);
         userDTO.setPassword(VALID_PASSWORD);
         userDTO.setConfirmPassword(null);
@@ -87,7 +89,17 @@ public class TokenControllerTest {
     public void testValidateTokenRegister() {
         when(tokenService.findToken(VALUE)).thenReturn(registerToken);
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(REGISTER, tokenController.validateToken(VALUE, model));
+        assertEquals(PASSWORD_SET, tokenController.validateToken(VALUE, model));
+        verify(tokenService).findToken(VALUE);
+        verify(userService).getUserById(ID);
+        verify(model, times(2)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testValidateTokenForgotPassword() {
+        when(tokenService.findToken(VALUE)).thenReturn(forgotToken);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(PASSWORD_SET, tokenController.validateToken(VALUE, model));
         verify(tokenService).findToken(VALUE);
         verify(userService).getUserById(ID);
         verify(model, times(2)).addAttribute(anyString(), any());
@@ -170,7 +182,7 @@ public class TokenControllerTest {
     public void testRegisterUserPasswordsNotMatching() {
         userDTO.setPassword(VALID_PASSWORD);
         userDTO.setConfirmPassword("bla");
-        assertEquals(REGISTER, tokenController.registerUser(userDTO, VALUE, bindingResult, model));
+        assertEquals(PASSWORD_SET, tokenController.registerUser(userDTO, VALUE, bindingResult, model));
         verify(bindingResult).addError(any());
         verify(model).addAttribute(TOKEN, VALUE);
         verify(tokenService, never()).findToken(anyString());

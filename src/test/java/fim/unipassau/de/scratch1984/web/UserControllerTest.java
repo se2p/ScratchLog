@@ -95,6 +95,8 @@ public class UserControllerTest {
     private static final String USERNAME = "admin";
     private static final String NEW_USERNAME = "admin1";
     private static final String LONG_USERNAME = "VeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongUsername";
+    private static final String LONG_EMAIL = "Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+            + "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongEmail";
     private static final String BLANK = "   ";
     private static final String PASSWORD = "adminPassword";
     private static final String VALID_PASSWORD = "V4l1d_P4ssw0rd!";
@@ -112,6 +114,7 @@ public class UserControllerTest {
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
+    private static final String PASSWORD_RESET = "password-reset";
     private static final String USER_DTO = "userDTO";
     private static final String ID_STRING = "1";
     private static final String SECRET = "secret";
@@ -496,6 +499,121 @@ public class UserControllerTest {
         verify(userService, never()).saveUser(any());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPasswordReset() {
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
+        when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
+        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
+        assertEquals(REDIRECT_SUCCESS, userController.passwordReset(userDTO, model));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).getUserByEmail(userDTO.getEmail());
+        verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPasswordResetMailNotSent() {
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
+        when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
+        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).getUserByEmail(userDTO.getEmail());
+        verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPasswordResetUsersNotEqual() {
+        oldDTO.setId(ID + 1);
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(oldDTO);
+        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).getUserByEmail(userDTO.getEmail());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPasswordResetEmailNotFound() {
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(userService.getUserByEmail(userDTO.getEmail())).thenThrow(NotFoundException.class);
+        assertEquals(PASSWORD_RESET, userController.passwordReset(userDTO, model));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).getUserByEmail(userDTO.getEmail());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testPasswordResetLongUsername() {
+        userDTO.setUsername(LONG_USERNAME);
+        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserByEmail(anyString());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testPasswordResetLongEmail() {
+        userDTO.setEmail(LONG_EMAIL);
+        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserByEmail(anyString());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testPasswordResetEmailBlank() {
+        userDTO.setEmail(BLANK);
+        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserByEmail(anyString());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testPasswordResetUsernameBlank() {
+        userDTO.setUsername(BLANK);
+        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserByEmail(anyString());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testPasswordResetEmailNull() {
+        userDTO.setEmail(null);
+        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserByEmail(anyString());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testPasswordResetUsernameNull() {
+        userDTO.setUsername(null);
+        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserByEmail(anyString());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1120,7 +1238,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
         when(userService.encodePassword(VALID_PASSWORD)).thenReturn(VALID_PASSWORD);
-        assertEquals(PROFILE_REDIRECT + USERNAME, userController.resetPassword(userDTO, bindingResult,
+        assertEquals(PROFILE_REDIRECT + USERNAME, userController.passwordReset(userDTO, bindingResult,
                 httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
@@ -1141,7 +1259,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PASSWORD_PAGE, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        assertEquals(PASSWORD_PAGE, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
@@ -1161,7 +1279,7 @@ public class UserControllerTest {
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PASSWORD_PAGE, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        assertEquals(PASSWORD_PAGE, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
@@ -1181,7 +1299,7 @@ public class UserControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
@@ -1197,7 +1315,7 @@ public class UserControllerTest {
         when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication).getName();
@@ -1210,7 +1328,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordUserNotAdmin() {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
-        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, never()).getName();
@@ -1223,7 +1341,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordUserNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(authentication, never()).getName();
@@ -1236,7 +1354,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordConfirmPasswordNull() {
         userDTO.setConfirmPassword(null);
-        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService, never()).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(authentication, never()).getName();
@@ -1249,7 +1367,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordNewPasswordNull() {
         userDTO.setNewPassword(null);
-        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService, never()).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(authentication, never()).getName();
@@ -1262,7 +1380,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordPasswordNull() {
         userDTO.setPassword(null);
-        assertEquals(ERROR, userController.resetPassword(userDTO, bindingResult, httpServletRequest));
+        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService, never()).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(authentication, never()).getName();

@@ -56,6 +56,7 @@ public class HomeControllerTest {
     private static final String ADMIN = "ROLE_ADMIN";
     private static final String INDEX = "index";
     private static final String LOGIN = "login";
+    private static final String PASSWORD_RESET = "password-reset";
     private static final String FINISH = "experiment-finish";
     private static final String ERROR = "redirect:/error";
     private static final String CURRENT = "3";
@@ -229,6 +230,11 @@ public class HomeControllerTest {
         assertEquals(ERROR, homeController.getExperimentFinishPage(null, model));
         verify(experimentService, never()).getExperiment(anyInt());
         verify(model, never()).addAttribute(anyString(), anyString());
+    }
+
+    @Test
+    public void testGetResetPage() {
+        assertEquals(PASSWORD_RESET, homeController.getResetPage(new UserDTO()));
     }
 
     private List<Experiment> getExperiments(int number) {

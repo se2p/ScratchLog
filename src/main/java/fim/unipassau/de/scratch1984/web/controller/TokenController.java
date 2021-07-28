@@ -53,7 +53,7 @@ public class TokenController {
     /**
      * String corresponding to the register page.
      */
-    private static final String REGISTER = "register";
+    private static final String PASSWORD_SET = "password-set";
 
     /**
      * Constructs a new token controller with the given dependencies.
@@ -101,11 +101,12 @@ public class TokenController {
             } catch (NotFoundException e) {
                 return ERROR;
             }
-        } else if (tokenDTO.getType() == TokenDTO.Type.REGISTER) {
+        } else if (tokenDTO.getType() == TokenDTO.Type.REGISTER || tokenDTO.getType()
+                == TokenDTO.Type.FORGOT_PASSWORD) {
             UserDTO userDTO = userService.getUserById(tokenDTO.getUser());
             model.addAttribute("userDTO", userDTO);
             model.addAttribute("token", tokenDTO.getValue());
-            return REGISTER;
+            return PASSWORD_SET;
         }
 
         return "redirect:/?success=true";
@@ -124,7 +125,7 @@ public class TokenController {
      * @param model The {@link Model} used to store information.
      * @return The index page on success, or the error page.
      */
-    @PostMapping("/register")
+    @PostMapping("/password")
     public String registerUser(@ModelAttribute("userDTO") final UserDTO userDTO,
                                @RequestParam("value") final String token, final BindingResult bindingResult,
                                final Model model) {
@@ -144,7 +145,7 @@ public class TokenController {
         if (passwordValidation != null) {
             bindingResult.addError(createFieldError("userDTO", "password", passwordValidation, resourceBundle));
             model.addAttribute("token", token);
-            return REGISTER;
+            return PASSWORD_SET;
         }
 
         try {

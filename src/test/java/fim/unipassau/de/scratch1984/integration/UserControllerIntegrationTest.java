@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -90,6 +91,7 @@ public class UserControllerIntegrationTest {
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
+    private static final String PASSWORD_RESET = "password-reset";
     private static final String USER_DTO = "userDTO";
     private static final String NAME = "name";
     private static final String ID_STRING = "1";
@@ -355,6 +357,78 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).existsUser(anyString());
         verify(userService).existsEmail(userDTO.getEmail());
         verify(userService, never()).saveUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPasswordReset() throws Exception {
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
+        when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
+        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
+        mvc.perform(post("/users/reset")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_SUCCESS));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).getUserByEmail(userDTO.getEmail());
+        verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPasswordResetMailNotSent() throws Exception {
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
+        when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
+        mvc.perform(post("/users/reset")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).getUserByEmail(userDTO.getEmail());
+        verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPasswordResetUsersNotEqual() throws Exception {
+        oldDTO.setId(ID + 1);
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(oldDTO);
+        mvc.perform(post("/users/reset")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).getUserByEmail(userDTO.getEmail());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testPasswordResetUsernameNotFound() throws Exception {
+        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
+        mvc.perform(post("/users/reset")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(model().attribute("error", notNullValue()))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PASSWORD_RESET));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
