@@ -63,6 +63,14 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findById(int id);
 
     /**
+     * Returns the user with the given email, if one exists.
+     *
+     * @param email The email to search for.
+     * @return The user data or {@code null}, if no user could be found.
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
      * Returns a list of users with the given role, or an empty list, if no such user exists.
      *
      * @param role The user role to search for.

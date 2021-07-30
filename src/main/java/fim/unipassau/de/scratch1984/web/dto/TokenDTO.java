@@ -26,27 +26,6 @@ public class TokenDTO {
     }
 
     /**
-     * Default constructor for the token dto.
-     */
-    public TokenDTO() {
-    }
-
-    /**
-     * Constructs a new token dto with the given attributes.
-     *
-     * @param type The type of the token.
-     * @param expirationDate The expiration date of the token.
-     * @param metadata Optional metadata for the token.
-     * @param user The id of the user for whom this token is to be created.
-     */
-    public TokenDTO(final Type type, final LocalDateTime expirationDate, final String metadata, final Integer user) {
-        this.type = type;
-        this.expirationDate = expirationDate;
-        this.metadata = metadata;
-        this.user = user;
-    }
-
-    /**
      * The unique value of the token.
      */
     private String value;
@@ -70,6 +49,27 @@ public class TokenDTO {
      * The id of the user to whom this token belongs.
      */
     private Integer user;
+
+    /**
+     * Default constructor for the token dto.
+     */
+    public TokenDTO() {
+    }
+
+    /**
+     * Constructs a new token dto with the given attributes.
+     *
+     * @param type The type of the token.
+     * @param expirationDate The expiration date of the token.
+     * @param metadata Optional metadata for the token.
+     * @param user The id of the user for whom this token is to be created.
+     */
+    public TokenDTO(final Type type, final LocalDateTime expirationDate, final String metadata, final Integer user) {
+        this.type = type;
+        this.expirationDate = expirationDate;
+        this.metadata = metadata;
+        this.user = user;
+    }
 
     /**
      * Returns the value of the token.

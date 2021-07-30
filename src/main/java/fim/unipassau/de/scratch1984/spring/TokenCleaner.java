@@ -41,7 +41,9 @@ public class TokenCleaner {
     @Scheduled(fixedRate = CLEANER_INTERVAL)
     public void cleanOldTokens() {
         logger.debug("Starting scheduled task to delete expired tokens.");
-        tokenService.deleteExpiredTokens(LocalDateTime.now());
+        LocalDateTime time = LocalDateTime.now();
+        tokenService.deleteExpiredAccounts(time);
+        tokenService.deleteExpiredTokens(time);
     }
 
 }

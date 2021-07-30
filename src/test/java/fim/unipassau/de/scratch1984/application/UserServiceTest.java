@@ -294,6 +294,44 @@ public class UserServiceTest {
     }
 
     @Test
+    public void testGetUserByEmail() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(java.util.Optional.of(user1));
+        UserDTO found = userService.getUserByEmail(EMAIL);
+        assertAll(
+                () -> assertEquals(USERNAME, found.getUsername()),
+                () -> assertEquals(EMAIL, found.getEmail()),
+                () -> assertEquals(PASSWORD, found.getPassword()),
+                () -> assertEquals(UserDTO.Role.ADMIN, found.getRole()),
+                () -> assertEquals(UserDTO.Language.ENGLISH, found.getLanguage())
+        );
+        verify(userRepository).findByEmail(EMAIL);
+    }
+
+    @Test
+    public void testGetUserByEmailEmpty() {
+        assertThrows(NotFoundException.class,
+                () -> userService.getUserByEmail(EMAIL)
+        );
+        verify(userRepository).findByEmail(EMAIL);
+    }
+
+    @Test
+    public void testGetUserByEmailBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.getUserByEmail(BLANK)
+        );
+        verify(userRepository, never()).findByEmail(anyString());
+    }
+
+    @Test
+    public void testGetUserByEmailNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.getUserByEmail(null)
+        );
+        verify(userRepository, never()).findByEmail(anyString());
+    }
+
+    @Test
     public void testGetUserByUsernameOrEmail() {
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(user1);
         UserDTO found = userService.getUserByUsernameOrEmail(USERNAME);

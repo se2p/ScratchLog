@@ -195,6 +195,29 @@ public class UserService {
     }
 
     /**
+     * Returns the user with the specified email. If no such user exists, a {@link NotFoundException} is thrown instead.
+     *
+     * @param email The email to search for.
+     * @return The user, if they exist.
+     */
+    @Transactional
+    public UserDTO getUserByEmail(final String email) {
+        if (email == null || email.trim().isBlank()) {
+            logger.error("Cannot find user with email null or blank!");
+            throw new IllegalArgumentException("Cannot find user with email null or blank!");
+        }
+
+        Optional<User> user = userRepository.findByEmail(email);
+
+        if (user.isEmpty()) {
+            logger.error("Could not find user with email " + email + ".");
+            throw new NotFoundException("Could not find user with email " + email + ".");
+        }
+
+        return createUserDTO(user.get());
+    }
+
+    /**
      * Returns the {@link UserDTO} whose username or email address matches the specified search string. If no such user
      * exists, {@code null} is returned instead.
      *

@@ -230,6 +230,17 @@ public class HomeController {
     }
 
     /**
+     * Loads the password reset page to reset a user password.
+     *
+     * @param userDTO The {@link UserDTO} user for resetting the password.
+     * @return The password reset page.
+     */
+    @GetMapping("/reset")
+    public String getResetPage(final UserDTO userDTO) {
+        return "password-reset";
+    }
+
+    /**
      * Returns the corresponding int value of the given string, or -1, if the value is not a number.
      *
      * @param value The value in its string representation.

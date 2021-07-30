@@ -117,6 +117,16 @@ public class UserController {
     private static final String PASSWORD = "password";
 
     /**
+     * String corresponding to the add user page.
+     */
+    private static final String USER = "user";
+
+    /**
+     * String corresponding to the password reset page.
+     */
+    private static final String PASSWORD_RESET = "password-reset";
+
+    /**
      * Constructs a new user controller with the given dependencies.
      *
      * @param userService The {@link UserService} to use.
@@ -264,6 +274,117 @@ public class UserController {
 
         clearSecurityContext(httpServletRequest);
         return INDEX;
+    }
+
+    /**
+     * Returns the user page for adding a new user.
+     *
+     * @param userDTO The {@link UserDTO} used to save the new user data.
+     * @return The user page.
+     */
+    @GetMapping("/add")
+    @Secured("ROLE_ADMIN")
+    public String getAddUser(final UserDTO userDTO) {
+        return USER;
+    }
+
+    /**
+     * Adds a new user with values passed in the given user dto to the database and creates a registration token for the
+     * new user. Finally, an email is sent to the new user asking them to complete their registration. If the parameters
+     * passed are invalid, or no email could be sent, the user is redirected to the error page instead. If the given
+     * username or email do not match the requirements or exist already, the user returns to the add user page where
+     * corresponding error messages are displayed.
+     *
+     * @param userDTO The {@link UserDTO} used to save the new user data.
+     * @param bindingResult The binding result for returning information on invalid user input.
+     * @return The index page on success, or the error page or user page otherwise.
+     */
+    @PostMapping("/add")
+    @Secured("ROLE_ADMIN")
+    public String addUser(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult) {
+        if (userDTO.getId() != null) {
+            logger.error("Cannot add new user with id not null!");
+            return ERROR;
+        } else if (userDTO.getLanguage() == null || userDTO.getRole() == null || userDTO.getEmail() == null) {
+            logger.error("Cannot add new user with language, role, or email null!");
+            return ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        String emailValidation = EmailValidator.validate(userDTO.getEmail());
+        String usernameValidation = UsernameValidator.validate(userDTO.getUsername());
+
+        if (emailValidation != null) {
+            bindingResult.addError(createFieldError("userDTO", "email", emailValidation, resourceBundle));
+        } else if (userService.existsEmail(userDTO.getEmail())) {
+            bindingResult.addError(createFieldError("userDTO", "email", "email_exists", resourceBundle));
+        }
+
+        if (usernameValidation != null) {
+            bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
+        } else if (userService.existsUser(userDTO.getUsername())) {
+            bindingResult.addError(createFieldError("userDTO", "username", "username_exists", resourceBundle));
+        }
+
+        if (bindingResult.hasErrors()) {
+            return USER;
+        }
+
+        UserDTO saved = userService.saveUser(userDTO);
+        TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.REGISTER, null, saved.getId());
+
+        if (sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
+                resourceBundle)) {
+            return "redirect:/?success=true";
+        } else {
+            return ERROR;
+        }
+    }
+
+    /**
+     * Generates a password reset token for the given user and sends an email to complete the password reset. If the
+     * passed parameters are invalid, the user is redirected to the error page instead. If no user with matching
+     * username and email could be found, the user returns to the password reset page where an error message is
+     * displayed.
+     *
+     * @param userDTO The {@link UserDTO} used to save the new user data.
+     * @param model The {@link Model} used to store the error message.
+     * @return The index page on success, or the error page or password reset page otherwise.
+     */
+    @PostMapping("/reset")
+    public String passwordReset(@ModelAttribute("userDTO") final UserDTO userDTO, final Model model) {
+        if (userDTO.getUsername() == null || userDTO.getEmail() == null || userDTO.getUsername().trim().isBlank()
+                || userDTO.getEmail().trim().isBlank()) {
+            logger.error("Cannot reset password for user with username or email null or blank!");
+            return ERROR;
+        } else if (userDTO.getUsername().length() > Constants.SMALL_FIELD
+                || userDTO.getEmail().length() > Constants.LARGE_FIELD) {
+            logger.error("Cannot reset password for user with with user with input username or email too long!");
+            return ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+
+        try {
+            UserDTO findUsername = userService.getUser(userDTO.getUsername());
+            UserDTO findEmail = userService.getUserByEmail(userDTO.getEmail());
+
+            if (findEmail.equals(findUsername)) {
+                TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, findEmail.getId());
+
+                if (sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
+                        resourceBundle)) {
+                    return "redirect:/?success=true";
+                }
+            }
+
+            return ERROR;
+        } catch (NotFoundException e) {
+            model.addAttribute("error", resourceBundle.getString("user_not_found"));
+            return PASSWORD_RESET;
+        }
     }
 
     /**
@@ -561,7 +682,7 @@ public class UserController {
      */
     @PostMapping("/forgot")
     @Secured("ROLE_ADMIN")
-    public String resetPassword(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult,
+    public String passwordReset(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult,
                                 final HttpServletRequest httpServletRequest) {
         if (userDTO.getPassword() == null || userDTO.getNewPassword() == null || userDTO.getConfirmPassword() == null) {
             logger.error("The new passwords should never be null, but only empty strings!");
@@ -707,12 +828,26 @@ public class UserController {
             return false;
         }
 
-        String tokenUrl = Constants.BASE_URL + "/token?value=" + tokenDTO.getValue();
+        return sendEmail(email, tokenDTO.getValue(), "change_email_subject", "change-email.html", resourceBundle);
+    }
+
+    /**
+     * Sends an email is with the given subject and template to the given email address.
+     *
+     * @param email The email address.
+     * @param value The token value to identify the user.
+     * @param subject The email subject.
+     * @param template The email template to be sent.
+     * @param resourceBundle The resource bundle for message translation.
+     * @return {@code true} if the email was sent, or {@code false} otherwise.
+     */
+    private boolean sendEmail(final String email, final String value, final String subject, final String template,
+                              final ResourceBundle resourceBundle) {
+        String tokenUrl = Constants.BASE_URL + "/token?value=" + value;
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put("baseUrl", Constants.BASE_URL);
         templateModel.put("token", tokenUrl);
-        return mailService.sendEmail(email, resourceBundle.getString("change_email_subject"), templateModel,
-                "change-email.html");
+        return mailService.sendEmail(email, resourceBundle.getString(subject), templateModel, template);
     }
 
     /**
