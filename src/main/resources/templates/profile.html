@@ -21,9 +21,11 @@
         <div class="row" th:style="${param.lastAdmin != null ? 'display:block' : 'display:none'}">
             <div class="col-12 alert alert-danger" th:text="#{delete_last_admin}"></div>
         </div>
-        <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
-            <a class="btn btn-primary" th:text="#{edit}" th:href="@{/users/edit(name=${userDTO.username})}"></a>
-            <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
+        <div class="d-flex justify-content-between mb-3">
+            <a class="btn btn-primary" th:text="#{edit}" th:href="@{/users/edit(name=${userDTO.username})}"
+               sec:authorize="hasRole('PARTICIPANT')"></a>
+            <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}"
+                   sec:authorize="hasRole('ADMIN')">
         </div>
         <h2 class="mb-3">
             <span th:text="#{profile_of}"></span>
@@ -49,7 +51,8 @@
             </div>
         </div>
         <div class="row mb-5"
-             th:if="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).PARTICIPANT}">
+             th:if="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).PARTICIPANT}"
+             sec:authorize="hasRole('ADMIN')">
             <h4 th:text="#{experiments}"></h4>
             <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${experiments.isEmpty()}">
                 <li class="list-group-item" th:text="#{table_empty}"></li>

@@ -434,6 +434,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testGetProfile() throws Exception {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/profile")
@@ -452,6 +453,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testGetProfileParticipant() throws Exception {
         List<Integer> experimentIds = new ArrayList<>();
         experimentIds.add(ID);
@@ -475,6 +477,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testGetProfileNotFound() throws Exception {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         mvc.perform(get("/users/profile")
@@ -507,6 +510,44 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
+    public void testGetProfileUserParticipant() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(get("/users/profile")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(USER_DTO, allOf(
+                        hasProperty("id", is(userDTO.getId())),
+                        hasProperty("username", is(USERNAME))
+                )))
+                .andExpect(view().name(PROFILE));
+        verify(userService).getUser(USERNAME);
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
+    public void testGetProfileUserParticipantUsernameNotNull() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(get("/users/profile")
+                .param(NAME, USERNAME + 1)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(USER_DTO, allOf(
+                        hasProperty("id", is(userDTO.getId())),
+                        hasProperty("username", is(USERNAME))
+                )))
+                .andExpect(view().name(PROFILE));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testGetEditProfileForm() throws Exception {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/edit")
@@ -525,6 +566,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testGetEditProfileFormNotFound() throws Exception {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         mvc.perform(get("/users/edit")
@@ -589,6 +631,44 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
+    public void testGetEditProfileFormUserParticipant() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(get("/users/edit")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(USER_DTO, allOf(
+                        hasProperty("id", is(userDTO.getId())),
+                        hasProperty("username", is(USERNAME)),
+                        hasProperty("email", is(EMAIL))
+                )))
+                .andExpect(view().name(PROFILE_EDIT));
+        verify(userService).getUser(USERNAME);
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
+    public void testGetEditProfileFormUserParticipantUsernameNotNull() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(get("/users/edit")
+                .param(NAME, USERNAME + 1)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(USER_DTO, allOf(
+                        hasProperty("id", is(userDTO.getId())),
+                        hasProperty("username", is(USERNAME)),
+                        hasProperty("email", is(EMAIL))
+                )))
+                .andExpect(view().name(PROFILE_EDIT));
+        verify(userService).getUser(USERNAME);
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testUpdateUser() throws Exception {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
@@ -628,6 +708,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangePassword() throws Exception {
         userDTO.setNewPassword(VALID_PASSWORD);
         userDTO.setConfirmPassword(VALID_PASSWORD);
@@ -651,6 +732,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangeEmail() throws Exception {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
@@ -675,6 +757,38 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
+    public void testUpdateUserParticipantChangeEmailUpdatePassword() throws Exception {
+        userDTO.setUsername(null);
+        userDTO.setPassword(PASSWORD);
+        userDTO.setNewPassword(VALID_PASSWORD);
+        userDTO.setConfirmPassword(VALID_PASSWORD);
+        userDTO.setEmail(NEW_EMAIL);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        when(userService.encodePassword(VALID_PASSWORD)).thenReturn(VALID_PASSWORD);
+        mvc.perform(post("/users/update")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(EMAIL_REDIRECT + USERNAME));
+        verify(userService, never()).existsUser(anyString());
+        verify(userService).existsEmail(anyString());
+        verify(userService).matchesPassword(anyString(), anyString());
+        verify(userService).encodePassword(anyString());
+        verify(authenticationProvider).authenticate(any());
+        verify(userService).updateUser(oldDTO);
+        verify(mailService).sendEmail(anyString(), any(), any(), anyString());
+        verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+    }
+
+    @Test
+    @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangeEmailNotSent() throws Exception {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
@@ -698,6 +812,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserNewEmailExistsUsernameExistsPasswordsNotMatching() throws Exception {
         userDTO.setNewPassword(VALID_PASSWORD);
         userDTO.setConfirmPassword(VALID_PASSWORD);
@@ -723,6 +838,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangePasswordInvalidNoInputPassword() throws Exception {
         userDTO.setPassword("");
         userDTO.setNewPassword(PASSWORD);
@@ -745,6 +861,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangeEmailInvalid() throws Exception {
         userDTO.setEmail(PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
@@ -765,6 +882,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangeUsernameInvalid() throws Exception {
         userDTO.setUsername("");
         when(userService.getUserById(ID)).thenReturn(oldDTO);
@@ -785,6 +903,7 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserNewEmailBlank() throws Exception {
         userDTO.setEmail("");
         when(userService.getUserById(ID)).thenReturn(oldDTO);
@@ -807,6 +926,48 @@ public class UserControllerIntegrationTest {
     @Test
     public void testUpdateUserNotFound() throws Exception {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(post("/users/update")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).updateUser(any());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
+    public void testUpdateUserParticipantUsernameNotNull() throws Exception {
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        mvc.perform(post("/users/update")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).updateUser(any());
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
+    public void testUpdateUserParticipantUsersNotEqual() throws Exception {
+        userDTO.setUsername(null);
+        oldDTO.setId(ID + 1);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)

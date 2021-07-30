@@ -258,7 +258,7 @@ public class UserController {
      * @return The index page on success, or the error page otherwise.
      */
     @PostMapping("/logout")
-    @Secured("ROLE_ADMIN")
+    @Secured("ROLE_PARTICIPANT")
     public String logoutUser(final HttpServletRequest httpServletRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -398,7 +398,7 @@ public class UserController {
      * @return The profile page on success, or the error page otherwise.
      */
     @GetMapping("/profile")
-    @Secured("ROLE_ADMIN")
+    @Secured("ROLE_PARTICIPANT")
     public String getProfile(@RequestParam(value = "name", required = false) final String username, final Model model,
                              final HttpServletRequest httpServletRequest) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -413,7 +413,7 @@ public class UserController {
         UserDTO userDTO;
         List<Integer> experimentIds = new ArrayList<>();
 
-        if (username == null || username.trim().isBlank()) {
+        if (username == null || username.trim().isBlank() || !httpServletRequest.isUserInRole("ROLE_ADMIN")) {
             try {
                 userDTO = userService.getUser(authentication.getName());
             } catch (NotFoundException e) {
@@ -450,7 +450,7 @@ public class UserController {
      * @return The profile edit page on success, or the error page otherwise.
      */
     @GetMapping("/edit")
-    @Secured("ROLE_ADMIN")
+    @Secured("ROLE_PARTICIPANT")
     public String getEditProfileForm(@RequestParam(value = "name", required = false) final String username,
                                      final Model model, final HttpServletRequest httpServletRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -460,7 +460,7 @@ public class UserController {
             return ERROR;
         }
 
-        if (username == null || username.trim().isBlank()) {
+        if (username == null || username.trim().isBlank() || !httpServletRequest.isUserInRole("ROLE_ADMIN")) {
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
                 model.addAttribute("userDTO", userDTO);
@@ -493,13 +493,12 @@ public class UserController {
      * @return The profile edit page, if the input is invalid, or the profile page on success.
      */
     @PostMapping("/update")
-    @Secured("ROLE_ADMIN")
+    @Secured("ROLE_PARTICIPANT")
     public String updateUser(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult,
                              final HttpServletRequest httpServletRequest,
                              final HttpServletResponse httpServletResponse) {
-        if (userDTO.getUsername() == null || userDTO.getEmail() == null || userDTO.getNewPassword() == null
-                || userDTO.getConfirmPassword() == null || userDTO.getPassword() == null) {
-            logger.error("The new username, email and passwords should never be null, but only empty strings!");
+        if (userDTO.getEmail() == null) {
+            logger.error("The new email should never be null, but only an empty string!");
             return ERROR;
         }
 
@@ -513,9 +512,26 @@ public class UserController {
             return ERROR;
         }
 
-        validateUpdateUsername(userDTO, findOldUser, bindingResult, resourceBundle);
+        if (!httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+            if (!findOldUser.equals(userDTO)) {
+                logger.error("Participant with id " + userDTO.getId() + " tried to edit the profile of user with id "
+                        + findOldUser.getId() + "!");
+                return ERROR;
+            } else if (userDTO.getUsername() != null) {
+                logger.error("Participant with id " + userDTO.getId() + " tried to change their username!");
+                return ERROR;
+            }
+        }
+
+        if (httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+            validateUpdateUsername(userDTO, findOldUser, bindingResult, resourceBundle);
+        }
+
         validateUpdateEmail(userDTO, findOldUser, bindingResult, resourceBundle);
-        validateUpdatePassword(userDTO, findOldUser, bindingResult, resourceBundle);
+
+        if (userDTO.getNewPassword() != null || userDTO.getConfirmPassword() != null) {
+            validateUpdatePassword(userDTO, findOldUser, bindingResult, resourceBundle);
+        }
 
         if (bindingResult.hasErrors()) {
             return PROFILE_EDIT;
@@ -523,7 +539,7 @@ public class UserController {
 
         String username = findOldUser.getUsername();
 
-        if (!findOldUser.getUsername().equals(userDTO.getUsername())) {
+        if (!username.equals(userDTO.getUsername()) && httpServletRequest.isUserInRole("ROLE_ADMIN")) {
             findOldUser.setUsername(userDTO.getUsername());
         }
 
@@ -533,7 +549,7 @@ public class UserController {
             sent = updateEmail(userDTO.getEmail(), userDTO.getId(), httpServletRequest, resourceBundle);
         }
 
-        if (!userDTO.getNewPassword().trim().isBlank()) {
+        if (userDTO.getNewPassword() != null && !userDTO.getNewPassword().trim().isBlank()) {
             findOldUser.setPassword(userService.encodePassword(userDTO.getNewPassword()));
         }
 
@@ -543,10 +559,10 @@ public class UserController {
 
         if (username.equals(authentication.getName())) {
             clearSecurityContext(httpServletRequest);
-            updateSecurityContext(userDTO, httpServletRequest);
+            updateSecurityContext(updated, httpServletRequest);
+            localeResolver.setLocale(httpServletRequest, httpServletResponse,
+                    getLocaleFromLanguage(updated.getLanguage()));
         }
-
-        localeResolver.setLocale(httpServletRequest, httpServletResponse, getLocaleFromLanguage(userDTO.getLanguage()));
 
         if (sent) {
             return "redirect:/users/profile?update=true&name=" + updated.getUsername();
@@ -798,7 +814,7 @@ public class UserController {
                 bindingResult.addError(createFieldError("userDTO", "newPassword", passwordValidation, resourceBundle));
             }
 
-            if (userDTO.getPassword().trim().isBlank()) {
+            if (userDTO.getPassword() == null || userDTO.getPassword().trim().isBlank()) {
                 bindingResult.addError(createFieldError("userDTO", "password", "enter_password", resourceBundle));
             } else if (!userService.matchesPassword(userDTO.getPassword(), matchPassword.getPassword())) {
                 bindingResult.addError(createFieldError("userDTO", "password", "invalid_password",
