@@ -28,12 +28,13 @@
         <div class="mx-auto col-4">
             <form action="#" method="post">
                 <div class="input-group" sec:authorize="hasRole('ADMIN')">
-                    <input class="form-control form-text mt-0" id="username" type="text" th:placeholder="#{search}"
+                    <input class="form-control form-text mt-0" id="search" type="text" th:placeholder="#{search}"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
                     <a class="input-group-text btn btn-outline-primary" aria-label="Search for users or experiments">
                         <i aria-hidden="true" class="fa fa-search"></i>
                     </a>
                 </div>
+                <div id="searchResults"></div>
             </form>
         </div>
         <div class="col-4">
@@ -54,6 +55,10 @@
             </ul>
         </div>
     </nav>
+
+    <script th:src="@{/webjars/jquery/3.5.1/jquery.min.js}"></script>
+    <!-- Script to fetch the search suggestions. -->
+    <script type="text/javascript" th:src="@{/js/searchSuggestions.js}"></script>
 </div>
 </body>
 </html>

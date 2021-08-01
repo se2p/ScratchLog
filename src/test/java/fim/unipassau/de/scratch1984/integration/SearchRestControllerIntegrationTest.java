@@ -49,6 +49,7 @@ public class SearchRestControllerIntegrationTest {
     private static final String ID_PARAM = "id";
     private static final int ID = 1;
     private List<String[]> userData;
+    private List<String[]> experimentData;
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -56,6 +57,39 @@ public class SearchRestControllerIntegrationTest {
     @BeforeEach
     public void setup() {
         addUserData(5);
+        addExperimentData(3);
+        experimentData.addAll(userData);
+    }
+
+    @Test
+    public void testGetSearchSuggestions() throws Exception {
+        when(searchService.getSearchSuggestions(QUERY)).thenReturn(experimentData);
+        mvc.perform(get("/search/suggestions")
+                .param(QUERY_PARAM, QUERY)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0].[0]").value("experiment0"))
+                .andExpect(jsonPath("$.[0].[1]").value("description0"))
+                .andExpect(jsonPath("$.[3].[0]").value("participant0"))
+                .andExpect(jsonPath("$.[3].[1]").value("participant0@participant.de"))
+                .andExpect(jsonPath("$.length()").value(8));
+        verify(searchService).getSearchSuggestions(QUERY);
+    }
+
+    @Test
+    public void testGetSearchSuggestionsQueryBlank() throws Exception {
+        mvc.perform(get("/search/suggestions")
+                .param(QUERY_PARAM, BLANK)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        verify(searchService, never()).getSearchSuggestions(anyString());
     }
 
     @Test
@@ -154,6 +188,14 @@ public class SearchRestControllerIntegrationTest {
             String user = "participant" + i;
             String[] userInfo = new String[]{user, user + "@participant.de"};
             userData.add(userInfo);
+        }
+    }
+
+    private void addExperimentData(int number) {
+        experimentData = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            String[] userInfo = new String[]{"experiment" + i, "description" + i};
+            experimentData.add(userInfo);
         }
     }
 }

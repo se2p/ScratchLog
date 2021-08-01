@@ -42,6 +42,22 @@ public class SearchRestController {
     }
 
     /**
+     * Retrieves a list of up to five usernames and emails where one of the two contains the search query string or up
+     * to five experiment ids and titles where the title contains the query string.
+     *
+     * @param query The username, email, or title to search for.
+     * @return A list of matching suggestions, or an empty list, if no entries could be found.
+     */
+    @GetMapping("/suggestions")
+    public List<String[]> getSearchSuggestions(@RequestParam("query") final String query) {
+        if (query == null || query.trim().isBlank()) {
+            return new ArrayList<>();
+        }
+
+        return searchService.getSearchSuggestions(query);
+    }
+
+    /**
      * Retrieves a list of up to five usernames and emails where one of the two contain the search query string and who
      * are not already participating in the experiment with the given id.
      *

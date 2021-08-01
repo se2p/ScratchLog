@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.application.service;
 
-import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import org.slf4j.Logger;
@@ -46,6 +47,22 @@ public class SearchService {
     }
 
     /**
+     * Retrieves a list of up to five usernames and emails where one of the two contains the search query string or up
+     * to five experiment ids and titles where the title contains the query string.
+     *
+     * @param query The username, email, or title to search for.
+     * @return A list of matching suggestions, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<String[]> getSearchSuggestions(final String query) {
+        List<UserProjection> users = userRepository.findUserSuggestions(query);
+        List<ExperimentSearchProjection> experiments = experimentRepository.findExperimentSuggestions(query);
+        List<String[]> suggestions = addExperimentInfo(experiments);
+        suggestions.addAll(addUserInfo(users));
+        return suggestions;
+    }
+
+    /**
      * Retrieves a list of up to five usernames and emails where one of the two contain the search query string and
      * where the corresponding user is not already participating in the experiment with the given id.
      *
@@ -55,7 +72,7 @@ public class SearchService {
      */
     @Transactional
     public List<String[]> getUserSuggestions(final String query, final int id) {
-        List<User> users = userRepository.findParticipantSuggestions(query, id);
+        List<UserProjection> users = userRepository.findParticipantSuggestions(query, id);
         return addUserInfo(users);
     }
 
@@ -69,29 +86,50 @@ public class SearchService {
      */
     @Transactional
     public List<String[]> getUserDeleteSuggestions(final String query, final int id) {
-        List<User> users = userRepository.findDeleteParticipantSuggestions(query, id);
+        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(query, id);
         return addUserInfo(users);
     }
 
     /**
      * Returns a list of all usernames and emails of the users in the given list.
      *
-     * @param users The list of users.
+     * @param users The list of {@link UserProjection}s.
      * @return A list of usernames and emails, or an empty list.
      */
-    private List<String[]> addUserInfo(final List<User> users) {
+    private List<String[]> addUserInfo(final List<UserProjection> users) {
         List<String[]> userInfo = new ArrayList<>();
 
         if (users.isEmpty()) {
             return userInfo;
         }
 
-        for (User user : users) {
+        for (UserProjection user : users) {
             String[] addInfo = new String[] {user.getUsername(), user.getEmail()};
             userInfo.add(addInfo);
         }
 
         return userInfo;
+    }
+
+    /**
+     * Returns a list of all experiment ids and titles of the experiments in the given list.
+     *
+     * @param experiments The list of {@link ExperimentSearchProjection}s.
+     * @return A list of experiment ids and titles, or an empty list.
+     */
+    private List<String[]> addExperimentInfo(final List<ExperimentSearchProjection> experiments) {
+        List<String[]> experimentInfo = new ArrayList<>();
+
+        if (experiments.isEmpty()) {
+            return experimentInfo;
+        }
+
+        for (ExperimentSearchProjection experiment : experiments) {
+            String[] addInfo = new String[] {String.valueOf(experiment.getId()), experiment.getTitle()};
+            experimentInfo.add(addInfo);
+        }
+
+        return experimentInfo;
     }
 
 }

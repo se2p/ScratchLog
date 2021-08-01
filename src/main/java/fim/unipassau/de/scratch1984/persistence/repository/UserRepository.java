@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence.repository;
 
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -88,6 +89,16 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findFirst5ByUsernameOrEmailContainsIgnoreCase(String username, String email);
 
     /**
+     * Returns a list of the first five users whose email or username contain the given query value.
+     *
+     * @param query The username or email to search for.
+     * @return A list of {@link UserProjection}s.
+     */
+    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+            + "OR u.email LIKE CONCAT('%', :query, '%')) LIMIT 5;")
+    List<UserProjection> findUserSuggestions(@Param("query") String query);
+
+    /**
      * Returns a list of the first five users whose email or username contain the given query value and who are not
      * already participating in an experiment.
      *
@@ -98,7 +109,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.secret IS NULL AND u.role = 'PARTICIPANT' "
             + "AND u.id NOT IN (SELECT p.user_id FROM participant AS p WHERE p.experiment_id = :id) LIMIT 5;")
-    List<User> findParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
+    List<UserProjection> findParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
 
     /**
      * Returns a list of the first five users whose email or username contain the given query value who are
@@ -111,7 +122,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.id IN (SELECT p.user_id FROM participant AS p WHERE "
             + "p.experiment_id = :id) LIMIT 5;")
-    List<User> findDeleteParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
+    List<UserProjection> findDeleteParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
 
     /**
      * Returns the user with the highest user id currently existing in the database.

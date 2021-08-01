@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.persistence;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ public class UserRepositoryTest {
     private static final String ADMIN1 = "admin1";
     private static final String USERNAME_SEARCH = "user";
     private static final String EMAIL_SEARCH = "test";
+    private static final String USER_SEARCH = "2";
     private User user1 = new User(ADMIN1, "admin1@test.de", ROLE_ADMIN, LANGUAGE, "admin1", "secret1");
     private User user2 = new User("admin2", "admin2@test.com", ROLE_ADMIN, LANGUAGE, "admin2", "secret2");
     private User user3 = new User("user1", "part1@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
@@ -111,38 +113,56 @@ public class UserRepositoryTest {
     }
 
     @Test
+    public void testFindUserSuggestions() {
+        List<UserProjection> users = userRepository.findUserSuggestions(USER_SEARCH);
+        assertAll(
+                () -> assertEquals(4, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user2.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user10.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user14.getUsername())))
+        );
+    }
+
+    @Test
+    public void testFindUserSuggestionsEmpty() {
+        List<UserProjection> users = userRepository.findUserSuggestions(LANGUAGE);
+        assertTrue(users.isEmpty());
+    }
+
+    @Test
     public void testFindParticipantSuggestionsUsername() {
-        List<User> users = userRepository.findParticipantSuggestions(USERNAME_SEARCH, experiment1.getId());
+        List<UserProjection> users = userRepository.findParticipantSuggestions(USERNAME_SEARCH, experiment1.getId());
         assertAll(
                 () -> assertEquals(3, users.size()),
-                () -> assertTrue(users.contains(user5)),
-                () -> assertTrue(users.contains(user7)),
-                () -> assertTrue(users.contains(user8)),
-                () -> assertFalse(users.contains(user6)),
-                () -> assertFalse(users.contains(user4)),
-                () -> assertFalse(users.contains(user3))
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user5.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user7.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user8.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user6.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername())))
         );
     }
 
     @Test
     public void testFindParticipantSuggestionsEmail() {
-        List<User> users = userRepository.findParticipantSuggestions(EMAIL_SEARCH, experiment1.getId());
+        List<UserProjection> users = userRepository.findParticipantSuggestions(EMAIL_SEARCH, experiment1.getId());
         assertAll(
                 () -> assertEquals(5, users.size()),
-                () -> assertTrue(users.contains(user5)),
-                () -> assertTrue(users.contains(user7)),
-                () -> assertTrue(users.contains(user8)),
-                () -> assertTrue(users.contains(user9)),
-                () -> assertTrue(users.contains(user10)),
-                () -> assertFalse(users.contains(user6)),
-                () -> assertFalse(users.contains(user4)),
-                () -> assertFalse(users.contains(user3))
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user5.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user7.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user8.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user9.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user10.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user6.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername())))
         );
     }
 
     @Test
     public void testFindParticipantSuggestionsEmpty() {
-        List<User> users = userRepository.findParticipantSuggestions(ADMIN1, experiment1.getId());
+        List<UserProjection> users = userRepository.findParticipantSuggestions(ADMIN1, experiment1.getId());
         assertTrue(users.isEmpty());
     }
 
@@ -150,30 +170,30 @@ public class UserRepositoryTest {
     public void testFindDeleteParticipantSuggestions() {
         Participant participant = new Participant(user4, experiment1, null, null);
         entityManager.persist(participant);
-        List<User> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment1.getId());
+        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment1.getId());
         assertAll(
                 () -> assertEquals(5, users.size()),
-                () -> assertTrue(users.contains(user3)),
-                () -> assertTrue(users.contains(user4)),
-                () -> assertTrue(users.contains(user12)),
-                () -> assertTrue(users.contains(user13)),
-                () -> assertTrue(users.contains(user14)),
-                () -> assertFalse(users.contains(user16))
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user12.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user13.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user14.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user16.getUsername())))
         );
     }
 
     @Test
     public void testFindDeleteParticipantSuggestionsOne() {
-        List<User> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment2.getId());
+        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment2.getId());
         assertAll(
                 () -> assertEquals(1, users.size()),
-                () -> assertTrue(users.contains(user16))
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user16.getUsername())))
         );
     }
 
     @Test
     public void testFindDeleteParticipantSuggestionsEmpty() {
-        List<User> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, 100);
+        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, 100);
         assertTrue(users.isEmpty());
     }
 

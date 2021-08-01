@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence;
 
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,11 +30,19 @@ public class ExperimentRepositoryTest {
     @Autowired
     private ExperimentRepository repository;
 
+    private static final String SHORT_QUERY = "Exp";
+    private static final String TITLE_QUERY = "Experiment";
     private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
             "Some postscript", false);
     private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
             "Some postscript", true);
     private Experiment experiment3 = new Experiment(null, "Experiment 3", "Description for experiment 3", "Some info",
+            "Some postscript", false);
+    private Experiment experiment4 = new Experiment(null, "Experiment 4", "Description for experiment 1", "Some info",
+            "Some postscript", false);
+    private Experiment experiment5 = new Experiment(null, "Exp 5", "Description for experiment 2", "Some info",
+            "Some postscript", false);
+    private Experiment experiment6 = new Experiment(null, "Exp 6", "Description for experiment 3", "Some info",
             "Some postscript", false);
 
     @BeforeEach
@@ -39,6 +50,9 @@ public class ExperimentRepositoryTest {
         experiment1 = entityManager.persist(experiment1);
         experiment2 = entityManager.persist(experiment2);
         experiment3 = entityManager.persist(experiment3);
+        experiment4 = entityManager.persist(experiment4);
+        experiment5 = entityManager.persist(experiment5);
+        experiment6 = entityManager.persist(experiment6);
     }
 
     @Test
@@ -62,7 +76,49 @@ public class ExperimentRepositoryTest {
         Page<Experiment> inactive = repository.findAllByActive(false, pageable);
         assertAll(
                 () -> assertEquals(1, active.getNumberOfElements()),
-                () -> assertEquals(2, inactive.getNumberOfElements())
+                () -> assertEquals(5, inactive.getNumberOfElements())
         );
+    }
+
+    @Test
+    public void testFindExperimentSuggestions() {
+        List<ExperimentSearchProjection> experiments = repository.findExperimentSuggestions(SHORT_QUERY);
+        assertAll(
+                () -> assertEquals(5, experiments.size()),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment1.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment2.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment3.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment4.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment5.getTitle())))
+        );
+    }
+
+    @Test
+    public void testFindExperimentSuggestionsLessThan5() {
+        List<ExperimentSearchProjection> experiments = repository.findExperimentSuggestions(TITLE_QUERY);
+        assertAll(
+                () -> assertEquals(4, experiments.size()),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment1.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment2.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment3.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment4.getTitle()))),
+                () -> assertFalse(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment5.getTitle())))
+        );
+    }
+
+    @Test
+    public void testFindExperimentSuggestionsNoResults() {
+        List<ExperimentSearchProjection> experiments = repository.findExperimentSuggestions("description");
+        assertTrue(experiments.isEmpty());
     }
 }

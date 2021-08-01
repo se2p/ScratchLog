@@ -12,7 +12,7 @@ public final class UsernameValidator {
     /**
      * The RegEx to use when validating a username.
      */
-    private static final Pattern REGEX = Pattern.compile("^(.+[a-zA-Z0-9_])$");
+    private static final Pattern REGEX = Pattern.compile("^(.+[a-zA-Z0-9_])[a-zA-Z](.+[a-zA-Z0-9_])$");
 
     /**
      * Validates the given {@code username} and returns the appropriate error message string if the input does not meet
