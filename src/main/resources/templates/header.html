@@ -41,12 +41,12 @@
                 <li class="nav-item active" sec:authorize="isAnonymous()">
                     <a id="login" class="btn btn-link" th:href="@{/login}">Login</a>
                 </li>
-                <li class="nav-item active" sec:authorize="hasRole('ADMIN')">
+                <li class="nav-item active" sec:authorize="hasRole('PARTICIPANT')">
                     <a class="btn btn-link" th:href="@{/users/profile}">
                         <span th:text="#{profile}"></span>
                     </a>
                 </li>
-                <li class="nav-item active" sec:authorize="hasRole('ADMIN')">
+                <li class="nav-item active" sec:authorize="hasRole('PARTICIPANT')">
                     <form th:action="@{/users/logout}" method="post">
                         <input class="btn btn-link" type="submit" th:value="Logout">
                     </form>

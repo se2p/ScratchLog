@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <title>Profile - Edit</title>
@@ -18,10 +18,10 @@
         <h2 class="mb-5" th:text="#{edit_profile}"></h2>
         <form th:action="@{/users/update}" th:object="${userDTO}" th:name="userDTO" method="post">
             <input type="hidden" th:field="*{id}">
-            <div class="text-end" th:if="${userDTO.password == null}">
+            <div class="text-end" th:if="${userDTO.password == null}" sec:authorize="hasRole('ADMIN')">
                 <a class="btn btn-secondary" th:text="#{set_password}" th:href="@{/users/forgot(id=${userDTO.id})}"></a>
             </div>
-            <div class="mb-3 form-group position-relative">
+            <div class="mb-3 form-group position-relative" sec:authorize="hasRole('ADMIN')">
                 <label class="form-label" for="username" th:text="#{username}"></label>
                 <div class="input-group">
                     <span aria-hidden="true" class="input-group-text" title="Username">
@@ -78,7 +78,8 @@
                 <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 <div class="d-flex justify-content-between">
                     <div class="form-text" th:text="#{password_info}"></div>
-                    <a class="link-secondary" th:text="#{forgot_password}" th:href="@{/users/forgot(id=${userDTO.id})}">
+                    <a class="link-secondary" th:text="#{forgot_password}" th:href="@{/users/forgot(id=${userDTO.id})}"
+                       sec:authorize="hasRole('ADMIN')">
                     </a>
                 </div>
             </div>

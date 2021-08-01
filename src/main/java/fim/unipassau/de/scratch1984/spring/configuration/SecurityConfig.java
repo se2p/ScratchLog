@@ -47,9 +47,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/login", "/finish", "/token/password", "/reset",
                         "/users/reset").not().authenticated()
-                .antMatchers("/experiment/*", "/users/edit", "/users/delete", "/users/update",
-                        "/users/forgot", "/users/add", "/result").hasRole("ADMIN")
-                .antMatchers("/users", "/logout", "/experiment").hasRole("PARTICIPANT")
+                .antMatchers("/experiment/*", "/users/add", "/users/delete", "/users/forgot", "/users/add",
+                        "/result").hasRole("ADMIN")
+                .antMatchers("/experiment", "/users/profile", "/users/logout", "/users/edit",
+                        "/users/update").hasRole("PARTICIPANT")
                 .and().formLogin().loginPage("/login").usernameParameter("username")
                 .defaultSuccessUrl("/index", true)
                 .and().headers().frameOptions().sameOrigin();
