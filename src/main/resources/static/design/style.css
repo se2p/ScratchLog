@@ -37,6 +37,10 @@
     #content {
         top: 60px;
     }
+
+    #searchResults {
+        top: 50px;
+    }
 }
 
 /* Hides the brand name in the navigation bar on smaller screens. */
@@ -51,6 +55,10 @@
 
     #content {
         top: 80px;
+    }
+
+    #searchResults {
+        top: 70px;
     }
 }
 
@@ -115,6 +123,10 @@ body {
     text-decoration: none;
     color: black;
     margin: 1%;
+}
+
+.no_decoration:hover {
+    cursor: pointer;
 }
 
 .no_decoration_margin,
@@ -209,6 +221,11 @@ code {
 #blocklyArea {
     width: 63vw;
     height: 63vh;
+}
+
+#searchResults {
+    position: absolute;
+    width: 33%;
 }
 
 /* Used for <span>-attributes that convey the meaning of Font Awesome icons for screen readers. */

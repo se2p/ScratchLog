@@ -34,10 +34,33 @@ public class SearchRestControllerTest {
     private static final String BLANK = "   ";
     private static final int ID = 1;
     private List<String[]> userData;
+    private List<String[]> experimentData;
 
     @BeforeEach
     public void setup() {
         addUserData(5);
+        addExperimentData(3);
+        experimentData.addAll(userData);
+    }
+
+    @Test
+    public void testGetSearchSuggestions() {
+        when(searchService.getSearchSuggestions(QUERY)).thenReturn(experimentData);
+        List<String[]> data = searchRestController.getSearchSuggestions(QUERY);
+        assertEquals(8, data.size());
+        verify(searchService).getSearchSuggestions(QUERY);
+    }
+
+    @Test
+    public void testGetSearchSuggestionsQueryBlank() {
+        assertTrue(searchRestController.getSearchSuggestions(BLANK).isEmpty());
+        verify(searchService, never()).getSearchSuggestions(anyString());
+    }
+
+    @Test
+    public void testGetSearchSuggestionsQueryNull() {
+        assertTrue(searchRestController.getSearchSuggestions(null).isEmpty());
+        verify(searchService, never()).getSearchSuggestions(anyString());
     }
 
     @Test
@@ -98,6 +121,14 @@ public class SearchRestControllerTest {
             String user = "participant" + i;
             String[] userInfo = new String[]{user, user + "@participant.de"};
             userData.add(userInfo);
+        }
+    }
+
+    private void addExperimentData(int number) {
+        experimentData = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            String[] userInfo = new String[]{"experiment" + i, "description" + i};
+            experimentData.add(userInfo);
         }
     }
 }

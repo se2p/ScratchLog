@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.persistence.repository;
 
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -97,5 +99,36 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
     @Modifying
     @Query("UPDATE Experiment e SET e.active = :change WHERE e.id = :id")
     void updateStatusById(@Param("id") int id, @Param("change") boolean change);
+
+    /**
+     * Returns a list of the first five experiments whose title contains the given query value.
+     *
+     * @param query The title to search for.
+     * @return A list of {@link ExperimentSearchProjection}s.
+     */
+    @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
+            + " LIMIT 5;")
+    List<ExperimentSearchProjection> findExperimentSuggestions(@Param("query") String query);
+
+    /**
+     * Returns a list of at most as many experiments as the given limit whose title contains the given query value.
+     *
+     * @param query The title to search for.
+     * @param limit The maximum amount of results to be returned.
+     * @return A list of {@link ExperimentSearchProjection}s.
+     */
+    @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
+            + " LIMIT :limit")
+    List<ExperimentSearchProjection> findExperimentResults(@Param("query") String query, @Param("limit") int limit);
+
+    /**
+     * Returns the number of experiments whose title contains the given query value.
+     *
+     * @param query The title to search for.
+     * @return The number of experiment results.
+     */
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM experiment AS e WHERE e.title LIKE"
+            + " CONCAT('%', :query, '%')")
+    int getExperimentResultsCount(@Param("query") String query);
 
 }

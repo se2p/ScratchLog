@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Search</title>
+    <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/style.css}">
+</head>
+<body>
+<!-- Navigation bar -->
+<div th:insert="header :: header"></div>
+
+<!-- Page content -->
+<div class="row" id="content">
+    <div class="col-2"></div>
+    <div class="col-8">
+        <h2 class="mb-3" th:text="#{search_results}"></h2>
+        <div class="row">
+            <div class="col-12 mb-3" th:text="#{search_info}"></div>
+        </div>
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                <button class="nav-link active" id="nav-user-tab" data-bs-toggle="tab" data-bs-target="#nav-user"
+                        type="button" role="tab" aria-controls="nav-user" aria-selected="true" th:text="#{search_user}">
+                </button>
+                <button class="nav-link" id="nav-experiment-tab" data-bs-toggle="tab" data-bs-target="#nav-experiment"
+                        type="button" role="tab" aria-controls="nav-experiment" aria-selected="false"
+                        th:text="#{search_experiment}"></button>
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-user" role="tabpanel" aria-labelledby="nav-user-tab">
+                <table class="table table-hover mt-2">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{username}"></th>
+                        <th scope="col" th:text="#{email}"></th>
+                        <th scope="col" th:text="#{role}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${users.isEmpty()}">
+                    <tr>
+                        <td colspan="4" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${users.isEmpty()}">
+                    <tr th:each="user : ${users}">
+                        <th scope="row">
+                            <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
+                               th:text="${user.id}"></a>
+                        </th>
+                        <td>
+                            <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
+                               th:text="${user.username}"></a>
+                        </td>
+                        <td>
+                            <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
+                               th:text="${user.email}"></a>
+                        </td>
+                        <td>
+                            <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
+                               th:text="${user.role}"></a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="text-center mb-2">
+                    <span th:text="#{elements}"></span>
+                    <span th:text="${userCount}"></span>
+                </div>
+                <div class="text-center" th:if="${userCount > limit}">
+                    <a class="btn btn-outline-dark" th:href="@{/search/result(query=${query}, page=${page})}"
+                       aria-label="Show more user results">
+                        <i aria-hidden="true" class="fas fa-angle-down"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-experiment" role="tabpanel" aria-labelledby="nav-experiment-tab">
+                <table class="table table-hover mt-2">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{title}"></th>
+                        <th scope="col" th:text="#{description}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${experiments.isEmpty()}">
+                    <tr>
+                        <td colspan="3" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${experiments.isEmpty()}">
+                    <tr th:each="experiment : ${experiments}">
+                        <th scope="row">
+                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                               th:text="${experiment.id}"></a>
+                        </th>
+                        <td>
+                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                               th:text="${experiment.title}"></a>
+                        </td>
+                        <td>
+                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                               th:text="${experiment.description}"></a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="text-center mb-2">
+                    <span th:text="#{elements}"></span>
+                    <span th:text="${experimentCount}"></span>
+                </div>
+                <div class="text-center" th:if="${experimentCount > limit}">
+                    <a class="btn btn-outline-dark" th:href="@{/search/result(query=${query}, page=${page})}"
+                       aria-label="Show more experiment results">
+                        <i aria-hidden="true" class="fas fa-angle-down"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-2"></div>
+</div>
+
+<!-- Bootstrap js used for the tabs. -->
+<script type="text/javascript" th:src="@{/js/bootstrap.js}"></script>
+
+<!-- Footer -->
+<div th:insert="footer :: footer"></div>
+</body>
+</html>
