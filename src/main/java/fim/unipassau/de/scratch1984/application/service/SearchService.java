@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProje
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,84 @@ public class SearchService {
     public SearchService(final UserRepository userRepository, final ExperimentRepository experimentRepository) {
         this.userRepository = userRepository;
         this.experimentRepository = experimentRepository;
+    }
+
+    /**
+     * Retrieves a list of up to as many user projections as specified in the given limit where the username or email
+     * contains the search query string.
+     *
+     * @param query The username or email to search for.
+     * @param limit The maximum amount of results to return.
+     * @return A list of matching {@link UserProjection}s, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<UserProjection> getUserList(final String query, final int limit) {
+        if (query == null || query.trim().isBlank()) {
+            logger.error("Cannot search for users with invalid query string null or blank!");
+            throw new IllegalArgumentException("Cannot search for users with invalid query string null or blank!");
+        } else if (limit < Constants.PAGE_SIZE) {
+            logger.error("Cannot search for users with invalid search result limit " + limit);
+            throw new IllegalArgumentException("Cannot search for users with invalid search result limit " + limit);
+        }
+
+        return userRepository.findUserResults(query, limit);
+    }
+
+    /**
+     * Retrieves a list of up to as many experiment search suggestions as specified in the given limit where the title
+     * matches the query string.
+     *
+     * @param query The title to search for.
+     * @param limit The maximum amount of results to return.
+     * @return A list of matching {@link ExperimentSearchProjection}s, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<ExperimentSearchProjection> getExperimentList(final String query, final int limit) {
+        if (query == null || query.trim().isBlank()) {
+            logger.error("Cannot search for experiments with invalid query string null or blank!");
+            throw new IllegalArgumentException("Cannot search for experiments with invalid query string null or "
+                    + "blank!");
+        } else if (limit < Constants.PAGE_SIZE) {
+            logger.error("Cannot search for experiments with invalid search result limit " + limit);
+            throw new IllegalArgumentException("Cannot search for experiments with invalid search result limit "
+                    + limit);
+        }
+
+        return experimentRepository.findExperimentResults(query, limit);
+    }
+
+    /**
+     * Returns the number of users whose username or email contain the search query string.
+     *
+     * @param query The username or email to search for.
+     * @return The number of matching user results.
+     */
+    @Transactional
+    public int getUserCount(final String query) {
+        if (query == null || query.trim().isBlank()) {
+            logger.error("Cannot get the number of user results with invalid query string null or blank!");
+            throw new IllegalArgumentException("Cannot get the number of user results with invalid query string null or"
+                    + " blank!");
+        }
+
+        return userRepository.getUserResultsCount(query);
+    }
+
+    /**
+     * Returns the number of experiments whose title contains the search query string.
+     *
+     * @param query The title to search for.
+     * @return The number of matching experiment results.
+     */
+    @Transactional
+    public int getExperimentCount(final String query) {
+        if (query == null || query.trim().isBlank()) {
+            logger.error("Cannot get the number of experiment results with invalid query string null or blank!");
+            throw new IllegalArgumentException("Cannot get the number of experiment results with invalid query string "
+                    + "null or blank!");
+        }
+
+        return experimentRepository.getExperimentResultsCount(query);
     }
 
     /**

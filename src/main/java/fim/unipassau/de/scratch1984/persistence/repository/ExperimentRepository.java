@@ -110,4 +110,25 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
             + " LIMIT 5;")
     List<ExperimentSearchProjection> findExperimentSuggestions(@Param("query") String query);
 
+    /**
+     * Returns a list of at most as many experiments as the given limit whose title contains the given query value.
+     *
+     * @param query The title to search for.
+     * @param limit The maximum amount of results to be returned.
+     * @return A list of {@link ExperimentSearchProjection}s.
+     */
+    @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
+            + " LIMIT :limit")
+    List<ExperimentSearchProjection> findExperimentResults(@Param("query") String query, @Param("limit") int limit);
+
+    /**
+     * Returns the number of experiments whose title contains the given query value.
+     *
+     * @param query The title to search for.
+     * @return The number of experiment results.
+     */
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM experiment AS e WHERE e.title LIKE"
+            + " CONCAT('%', :query, '%')")
+    int getExperimentResultsCount(@Param("query") String query);
+
 }

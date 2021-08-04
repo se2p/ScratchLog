@@ -26,13 +26,14 @@
             </ul>
         </div>
         <div class="mx-auto col-4">
-            <form action="#" method="post">
+            <form th:action="@{/search/result}" method="get">
                 <div class="input-group" sec:authorize="hasRole('ADMIN')">
-                    <input class="form-control form-text mt-0" id="search" type="text" th:placeholder="#{search}"
+                    <input class="form-control form-text mt-0" id="search" th:name="query" th:placeholder="#{search}"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
-                    <a class="input-group-text btn btn-outline-primary" aria-label="Search for users or experiments">
+                    <button class="input-group-text btn btn-outline-primary" type="submit"
+                            aria-label="Search for users or experiments" th:href="@{/search}">
                         <i aria-hidden="true" class="fa fa-search"></i>
-                    </a>
+                    </button>
                 </div>
                 <div id="searchResults"></div>
             </form>

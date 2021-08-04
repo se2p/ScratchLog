@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.persistence;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,8 @@ public class ExperimentRepositoryTest {
 
     private static final String SHORT_QUERY = "Exp";
     private static final String TITLE_QUERY = "Experiment";
+    private static final String NO_RESULTS = "description";
+    private static final int LIMIT = 5;
     private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
             "Some postscript", false);
     private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
@@ -118,7 +121,66 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentSuggestionsNoResults() {
-        List<ExperimentSearchProjection> experiments = repository.findExperimentSuggestions("description");
+        List<ExperimentSearchProjection> experiments = repository.findExperimentSuggestions(NO_RESULTS);
         assertTrue(experiments.isEmpty());
+    }
+
+    @Test
+    public void testFindExperimentResults() {
+        List<ExperimentSearchProjection> experiments = repository.findExperimentResults(SHORT_QUERY, LIMIT);
+        assertAll(
+                () -> assertEquals(5, experiments.size()),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment1.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment2.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment3.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment4.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment5.getTitle())))
+        );
+    }
+
+    @Test
+    public void testFindExperimentResultsAll() {
+        List<ExperimentSearchProjection> experiments = repository.findExperimentResults(SHORT_QUERY,
+                Constants.PAGE_SIZE);
+        assertAll(
+                () -> assertEquals(6, experiments.size()),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment1.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment2.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment3.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment4.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment5.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment6.getTitle())))
+        );
+    }
+
+    @Test
+    public void testFindExperimentResultsNoResults() {
+        assertTrue(repository.findExperimentSuggestions(NO_RESULTS).isEmpty());
+    }
+
+    @Test
+    public void testGetExperimentResultCount() {
+        assertEquals(6, repository.getExperimentResultsCount(SHORT_QUERY));
+    }
+
+    @Test
+    public void testGetExperimentResultCount4() {
+        assertEquals(4, repository.getExperimentResultsCount(TITLE_QUERY));
+    }
+
+    @Test
+    public void testGetExperimentResultCountZero() {
+        assertEquals(0, repository.getExperimentResultsCount(NO_RESULTS));
     }
 }

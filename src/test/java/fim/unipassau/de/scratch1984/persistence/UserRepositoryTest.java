@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ public class UserRepositoryTest {
     private static final String USERNAME_SEARCH = "user";
     private static final String EMAIL_SEARCH = "test";
     private static final String USER_SEARCH = "2";
+    private static final String QUERY = "a";
     private User user1 = new User(ADMIN1, "admin1@test.de", ROLE_ADMIN, LANGUAGE, "admin1", "secret1");
     private User user2 = new User("admin2", "admin2@test.com", ROLE_ADMIN, LANGUAGE, "admin2", "secret2");
     private User user3 = new User("user1", "part1@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
@@ -128,6 +130,64 @@ public class UserRepositoryTest {
     public void testFindUserSuggestionsEmpty() {
         List<UserProjection> users = userRepository.findUserSuggestions(LANGUAGE);
         assertTrue(users.isEmpty());
+    }
+
+    @Test
+    public void testFindUserResults() {
+        List<UserProjection> users = userRepository.findUserResults(QUERY, Constants.PAGE_SIZE);
+        assertAll(
+                () -> assertEquals(10, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user1.getUsername())))
+        );
+    }
+
+    @Test
+    public void testFindUserResultsAll() {
+        List<UserProjection> users = userRepository.findUserResults(QUERY, 20);
+        assertAll(
+                () -> assertEquals(16, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user1.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user2.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user5.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user6.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user7.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user8.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user9.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user10.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user11.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user12.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user13.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user14.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user15.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user16.getUsername())))
+        );
+    }
+
+    @Test
+    public void testFindUserResultsEmpty() {
+        assertTrue(userRepository.findUserResults(LANGUAGE, Constants.PAGE_SIZE).isEmpty());
+    }
+
+    @Test
+    public void testGetUserResultCount() {
+        assertEquals(16, userRepository.getUserResultsCount(QUERY));
+    }
+
+    @Test
+    public void testGetUserResultCountUser() {
+        assertEquals(6, userRepository.getUserResultsCount(USERNAME_SEARCH));
+    }
+
+    @Test
+    public void testGetUserResultCountAdmin() {
+        assertEquals(1, userRepository.getUserResultsCount(ADMIN1));
+    }
+
+    @Test
+    public void testGetUserResultCountZero() {
+        assertEquals(0, userRepository.getUserResultsCount(LANGUAGE));
     }
 
     @Test

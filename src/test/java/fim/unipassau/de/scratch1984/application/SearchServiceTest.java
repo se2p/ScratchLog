@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProje
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,7 +17,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,9 +49,131 @@ public class SearchServiceTest {
     private static final String TITLE2 = "experiment2";
     private static final String QUERY = "user";
     private static final String SUGGESTION_QUERY = "r";
+    private static final String BLANK = "  ";
     private static final int ID = 1;
+    private static final int LIMIT = Constants.PAGE_SIZE;
+    private static final int COUNT = 25;
     private final List<UserProjection> users = addUserSuggestions();
     private final List<ExperimentSearchProjection> experiments = addExperimentSuggestions();
+
+    @Test
+    public void testGetUserList() {
+        when(userRepository.findUserResults(QUERY, LIMIT)).thenReturn(users);
+        List<UserProjection> userProjections = searchService.getUserList(QUERY, LIMIT);
+        assertAll(
+                () -> assertEquals(3, userProjections.size()),
+                () -> assertTrue(userProjections.stream().anyMatch(user -> user.getId() == ID)),
+                () -> assertTrue(userProjections.stream().anyMatch(user -> user.getId() == ID + 1)),
+                () -> assertTrue(userProjections.stream().anyMatch(user -> user.getId() == ID + 2))
+        );
+        verify(userRepository).findUserResults(QUERY, LIMIT);
+    }
+
+    @Test
+    public void testGetUserListLimitInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getUserList(QUERY, 9)
+        );
+        verify(userRepository, never()).findUserResults(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetUserListQueryBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getUserList(BLANK, LIMIT)
+        );
+        verify(userRepository, never()).findUserResults(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetExperimentList() {
+        when(experimentRepository.findExperimentResults(QUERY, LIMIT)).thenReturn(experiments);
+        List<ExperimentSearchProjection> experimentList = searchService.getExperimentList(QUERY, LIMIT);
+        assertAll(
+                () -> assertEquals(2, experimentList.size()),
+                () -> assertTrue(experimentList.stream().anyMatch(experiment -> experiment.getId() == ID)),
+                () -> assertTrue(experimentList.stream().anyMatch(experiment -> experiment.getId() == ID + 1))
+        );
+        verify(experimentRepository).findExperimentResults(QUERY, LIMIT);
+    }
+
+    @Test
+    public void testGetExperimentListLimitInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getExperimentList(QUERY, 0)
+        );
+        verify(experimentRepository, never()).findExperimentResults(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetExperimentListQueryBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getExperimentList(BLANK, LIMIT)
+        );
+        verify(experimentRepository, never()).findExperimentResults(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetExperimentListQueryNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getExperimentList(null, LIMIT)
+        );
+        verify(experimentRepository, never()).findExperimentResults(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetUserCount() {
+        when(userRepository.getUserResultsCount(QUERY)).thenReturn(COUNT);
+        assertEquals(COUNT, searchService.getUserCount(QUERY));
+        verify(userRepository).getUserResultsCount(QUERY);
+    }
+
+    @Test
+    public void testGetUserCountQueryBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getUserCount(BLANK)
+        );
+        verify(userRepository, never()).getUserResultsCount(anyString());
+    }
+
+    @Test
+    public void testGetUserCountQueryNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getUserCount(null)
+        );
+        verify(userRepository, never()).getUserResultsCount(anyString());
+    }
+
+    @Test
+    public void testGetExperimentCount() {
+        when(experimentRepository.getExperimentResultsCount(QUERY)).thenReturn(COUNT);
+        assertEquals(COUNT, searchService.getExperimentCount(QUERY));
+        verify(experimentRepository).getExperimentResultsCount(QUERY);
+    }
+
+    @Test
+    public void testGetExperimentCountQueryBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getExperimentCount(BLANK)
+        );
+        verify(experimentRepository, never()).getExperimentResultsCount(anyString());
+    }
+
+    @Test
+    public void testGetExperimentCountQueryNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getExperimentCount(null)
+        );
+        verify(experimentRepository, never()).getExperimentResultsCount(anyString());
+    }
+
+    @Test
+    public void testGetUserListQueryNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getUserList(null, LIMIT)
+        );
+        verify(userRepository, never()).findUserResults(anyString(), anyInt());
+    }
 
     @Test
     public void testGetSearchSuggestions() {

@@ -27,7 +27,7 @@ public class SearchRestController {
     private static final Logger logger = LoggerFactory.getLogger(SearchRestController.class);
 
     /**
-     * The user service to use for user management.
+     * The search service to use for search query management.
      */
     private final SearchService searchService;
 
@@ -49,6 +49,7 @@ public class SearchRestController {
      * @return A list of matching suggestions, or an empty list, if no entries could be found.
      */
     @GetMapping("/suggestions")
+    @Secured("ROLE_ADMIN")
     public List<String[]> getSearchSuggestions(@RequestParam("query") final String query) {
         if (query == null || query.trim().isBlank()) {
             return new ArrayList<>();

@@ -223,12 +223,12 @@ code {
     height: 63vh;
 }
 
-/* Used for <span>-attributes that convey the meaning of Font Awesome icons for screen readers. */
-.sr-only {
-    visibility: hidden;
-}
-
 #searchResults {
     position: absolute;
     width: 33%;
+}
+
+/* Used for <span>-attributes that convey the meaning of Font Awesome icons for screen readers. */
+.sr-only {
+    visibility: hidden;
 }
