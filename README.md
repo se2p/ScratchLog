@@ -28,8 +28,8 @@ to do the necessary configuration described below.
 To get the project up and running, you need to adapt the following configurations to your system:
 - Edit the `application.properties` file in the `resources` folder to configure the database connection and mail
   sending.
-- Change the URL specified in the `ResourceConfiguration` class in the *addCorsMappings()* method to root context path
-  of the application.
+- Change the URL specified in the `ResourceConfiguration` class in the *addCorsMappings()* method to the root context
+  path of the application.
 - Change the *BASE_URL* string in the `Constants` class to the application URL.
 - Change the *GUI_URL* string in the `Constants` class to the URL of the instrumented Scratch GUI.
 - Change the *baseURL* property in the instrumented `scratch-vm` project in `logging.js` to `<applicationURL>/store`.
@@ -42,7 +42,8 @@ To get the project up and running, you need to adapt the following configuration
 
 The `schema.sql` file in `main/resources` contains the necessary database schema. On application startup, a first
 administrator is added automatically, if no other administrator could be found in the database. The login credentials
-are specified in the `UserInitialization` class.
+are specified in the `UserInitialization` class. You should change these credentials immediately after you have logged
+in.
 
 If you plan to deploy the project under a different context path than the root context path, e.g.
 `scratch.fim.uni-passau.de/scratch1984` instead of `scratch.fim.uni-passau.de`, there are a few more things you have to
