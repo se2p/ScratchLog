@@ -96,6 +96,9 @@ public class EventServiceTest {
             "md5", "filetype", "library"};
     private final String[] eventCountDataHeader = {"user", "experiment", "count", "event"};
     private final String[] codesDataHeader = {"user", "experiment", "count"};
+    private final BlockEvent blockEvent = new BlockEvent(user, experiment, Timestamp.valueOf(LocalDateTime.now()),
+            "CREATE", "CREATE", "sprite", "", "xml", "json");
+    private static final String JSON = "json";
     private final List<EventCount> blockEvents = getEventCounts(8, "CREATE");
     private final List<EventCount> resourceEvents = getEventCounts(3, "RENAME");
     private final List<BlockEventXMLProjection> xmlProjections = getXmlProjections(2);
@@ -109,6 +112,7 @@ public class EventServiceTest {
     public void setup() {
         user.setId(ID);
         resourceEventDTO.setLibraryResource(ResourceEventDTO.LibraryResource.TRUE);
+        blockEvent.setCode(JSON);
     }
 
     @Test
@@ -251,6 +255,40 @@ public class EventServiceTest {
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment);
         verify(resourceEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testFindJsonById() {
+        when(blockEventRepository.findById(ID)).thenReturn(java.util.Optional.of(blockEvent));
+        assertEquals(JSON, eventService.findJsonById(ID));
+        verify(blockEventRepository).findById(ID);
+    }
+
+    @Test
+    public void testFindJsonByIdJsonNull() {
+        blockEvent.setCode(null);
+        when(blockEventRepository.findById(ID)).thenReturn(java.util.Optional.of(blockEvent));
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.findJsonById(ID)
+        );
+        verify(blockEventRepository).findById(ID);
+    }
+
+    @Test
+    public void testFindJsonByIdEmpty() {
+        when(blockEventRepository.findById(ID)).thenReturn(java.util.Optional.empty());
+        assertThrows(NotFoundException.class,
+                () -> eventService.findJsonById(ID)
+        );
+        verify(blockEventRepository).findById(ID);
+    }
+
+    @Test
+    public void testFindJsonByIdInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.findJsonById(0)
+        );
+        verify(blockEventRepository, never()).findById(anyInt());
     }
 
     @Test

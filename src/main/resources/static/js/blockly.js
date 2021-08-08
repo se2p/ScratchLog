@@ -6,6 +6,7 @@ var blocklyCode = '';
 
 let xmlButton = document.getElementById("xml");
 let jsonButton = document.getElementById("json");
+let sb3Button = document.getElementById("sb3");
 
 let first = document.getElementById("first");
 let prev = document.getElementById("prev");
@@ -113,6 +114,14 @@ jsonButton.addEventListener("click", function () {
     });
     json.href = window.URL.createObjectURL(file);
     json.click();
+});
+
+/**
+ * Sets the href attribute of the sb3 button in preparation for the sb3 file download.
+ */
+sb3Button.addEventListener("click", function () {
+    sb3Button.href = "/result/generate?user=" + user + "&experiment=" + experiment + "&json=" + xml[pos].id;
+    sb3Button.click();
 });
 
 /**

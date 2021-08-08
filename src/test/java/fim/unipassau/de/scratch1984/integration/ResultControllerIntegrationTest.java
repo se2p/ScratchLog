@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
@@ -61,6 +62,9 @@ public class ResultControllerIntegrationTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private ExperimentService experimentService;
 
     @MockBean
     private EventService eventService;
