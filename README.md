@@ -52,8 +52,9 @@ do:
 and change the `server.servlet.context-path` accordingly.
 - Include your changed context path (e.g. `/scratch1984`) in the url patterns of the ajax requests in
   `participantSuggestions.js` (*getUserSuggestions()*, *getUserDeleteSuggestions()*), `searchSuggestions.js`
-  (*getSuggestions()*) and `blockly.js` (*getXML()*) as well as in the `workspace.options.pathToMedia` in`blockly.js`
-  (*renderBlockly()*) and in the `location.href` in `searchSuggestions.js` (*setHref()*).
+  (*getSuggestions()*) and `blockly.js` (*getXML()*) as well as in the `workspace.options.pathToMedia` and the
+  `sb3Button.href` in`blockly.js` (*renderBlockly()*, *sb3Button.addEventListener()*) and in the `location.href` in
+  `searchSuggestions.js` (*setHref()*).
 
 ## Build and Deployment
 
