@@ -213,10 +213,10 @@ public class ResultController {
         int jsonId = parseId(json);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID || jsonId < Constants.MIN_ID) {
-            logger.error("Cannot generate zip file for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "or json with invalid id " + jsonId + "!");
-            throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "or json with invalid id " + jsonId + "!");
+            logger.error("Cannot generate zip file for user with invalid id " + user + " or experiment with invalid "
+                    + "id " + experiment + "or json with invalid id " + json + "!");
+            throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + user
+                    + " or experiment with invalid id " + experiment + "or json with invalid id " + json + "!");
         }
 
         ExperimentProjection projection = experimentService.getSb3File(experimentId);

@@ -3,11 +3,13 @@ package fim.unipassau.de.scratch1984.web;
 import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.web.controller.ResultController;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
@@ -29,7 +31,10 @@ import org.springframework.ui.Model;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +62,9 @@ public class ResultControllerTest {
     private UserService userService;
 
     @Mock
+    private ExperimentService experimentService;
+
+    @Mock
     private EventService eventService;
 
     @Mock
@@ -72,9 +80,12 @@ public class ResultControllerTest {
     private static final String ERROR = "redirect:/error";
     private static final String ID_STRING = "1";
     private static final String PAGE = "0";
+    private static final String JSON = "json";
     private static final int ID = 1;
     private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "type",
             new byte[]{1, 2, 3});
+    private final FileDTO zip = new FileDTO(ID, ID, LocalDateTime.now(), "file.zip", "wav",
+            new byte[]{1, 2, 3, 4});
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "file", new byte[]{1, 2, 3});
     private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
@@ -85,6 +96,18 @@ public class ResultControllerTest {
     private final List<BlockEventXMLProjection> xmlProjections = getXmlProjections(3);
     private final List<BlockEventJSONProjection> jsonProjections = getJsonProjections(4);
     private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(2));
+    private final List<FileDTO> fileDTOS = new ArrayList<>();
+    ExperimentProjection experimentProjection = new ExperimentProjection() {
+        @Override
+        public Integer getId() {
+            return ID;
+        }
+
+        @Override
+        public byte[] getProject() {
+            return null;
+        }
+    };
 
     @Test
     public void testGetResult() {
@@ -221,6 +244,216 @@ public class ResultControllerTest {
     public void testDownloadFileIdNull() {
         assertEquals(ERROR, resultController.downloadFile(null));
         verify(fileService, never()).findFile(anyInt());
+    }
+
+    @Test
+    public void testGenerateZipFile() throws IOException {
+        URL sb3 = getClass().getClassLoader().getResource("Scratch-Projekt.sb3");
+        File file = new File(sb3.getFile());
+        byte[] b = new byte[(int) file.length()];
+        FileInputStream fileInputStream = new FileInputStream(file);
+        fileInputStream.read(b);
+        fileInputStream.close();
+        fileDTOS.add(fileDTO);
+        fileDTOS.add(zip);
+        ExperimentProjection projection = new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return ID;
+            }
+
+            @Override
+            public byte[] getProject() {
+                return b;
+            }
+        };
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        when(experimentService.getSb3File(ID)).thenReturn(projection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
+        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        assertDoesNotThrow(
+                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).findJsonById(ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testGenerateZipFileZipFileContent() throws IOException {
+        URL zipFile = getClass().getClassLoader().getResource("Taylor-b.zip");
+        File file = new File(zipFile.getFile());
+        byte[] b = new byte[(int) file.length()];
+        FileInputStream fileInputStream = new FileInputStream(file);
+        fileInputStream.read(b);
+        fileInputStream.close();
+        zip.setContent(b);
+        fileDTOS.add(fileDTO);
+        fileDTOS.add(zip);
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
+        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        assertDoesNotThrow(
+                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).findJsonById(ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testGenerateZipFileProjectNull() throws IOException {
+        fileDTOS.add(fileDTO);
+        fileDTOS.add(zip);
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
+        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        assertDoesNotThrow(
+                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).findJsonById(ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testGenerateZipFilesIO() throws IOException {
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
+        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
+        assertThrows(RuntimeException.class,
+                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).findJsonById(ID);
+        verify(httpServletResponse).getOutputStream();
+    }
+
+    @Test
+    public void testGenerateZipFilesInvalidJsonId() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.generateZipFile(ID_STRING, ID_STRING, "0", httpServletResponse)
+        );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+    }
+
+    @Test
+    public void testGenerateZipFilesInvalidUserId() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.generateZipFile(ID_STRING, "-1", ID_STRING, httpServletResponse)
+        );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+    }
+
+    @Test
+    public void testGenerateZipFilesInvalidExperimentId() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.generateZipFile("ID_STRING", ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+    }
+
+    @Test
+    public void testGenerateZipFilesJsonNull() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.generateZipFile(ID_STRING, ID_STRING, null, httpServletResponse)
+        );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+    }
+
+    @Test
+    public void testGenerateZipFilesUserNull() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.generateZipFile(ID_STRING, null, ID_STRING, httpServletResponse)
+        );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+    }
+
+    @Test
+    public void testGenerateZipFilesExperimentNull() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.generateZipFile(null, ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
     }
 
     @Test
