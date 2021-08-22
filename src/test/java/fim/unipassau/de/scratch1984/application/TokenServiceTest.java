@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -47,6 +48,7 @@ public class TokenServiceTest {
 
     private static final String CHANGE_EMAIL = "CHANGE_EMAIL";
     private static final String REGISTER = "REGISTER";
+    private static final String DEACTIVATED = "DEACTIVATED";
     private static final String VALUE = "value";
     private static final String EMAIL = "admin@admin.com";
     private static final String BLANK = "   ";
@@ -60,7 +62,9 @@ public class TokenServiceTest {
 
     @BeforeEach
     public void setup() {
-        user.setId(1);
+        user.setId(ID);
+        user.setAttempts(3);
+        user.setActive(false);
         token.setValue(VALUE);
         token.setType(CHANGE_EMAIL);
         registerToken1.setUser(user);
@@ -108,6 +112,22 @@ public class TokenServiceTest {
         assertAll(
                 () -> assertEquals(VALUE, tokenDTO.getValue()),
                 () -> assertEquals(TokenDTO.Type.FORGOT_PASSWORD, tokenDTO.getType()),
+                () -> assertEquals(EMAIL, tokenDTO.getMetadata()),
+                () -> assertEquals(ID, tokenDTO.getUser())
+        );
+        verify(userRepository).getOne(ID);
+        verify(tokenRepository).save(any());
+    }
+
+    @Test
+    public void testGenerateReactivateToken() {
+        token.setType(TokenDTO.Type.DEACTIVATED.toString());
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(tokenRepository.save(any())).thenReturn(token);
+        TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.DEACTIVATED, null, ID);
+        assertAll(
+                () -> assertEquals(VALUE, tokenDTO.getValue()),
+                () -> assertEquals(TokenDTO.Type.DEACTIVATED, tokenDTO.getType()),
                 () -> assertEquals(EMAIL, tokenDTO.getMetadata()),
                 () -> assertEquals(ID, tokenDTO.getUser())
         );
@@ -260,5 +280,74 @@ public class TokenServiceTest {
         );
         verify(tokenRepository, never()).findAllByDateBeforeAndType(any(), anyString());
         verify(userRepository, never()).deleteById(anyInt());
+    }
+
+    @Test
+    public void testReactivateUserAccounts() {
+        LocalDateTime dateTime = LocalDateTime.now();
+        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
+                DEACTIVATED)).thenReturn(registerTokens);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        tokenService.reactivateUserAccounts(dateTime);
+        assertAll(
+                () -> assertTrue(user.isActive()),
+                () -> assertEquals(0, user.getAttempts())
+        );
+        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), DEACTIVATED);
+        verify(userRepository, times(2)).getOne(ID);
+        verify(userRepository, times(2)).save(user);
+    }
+
+    @Test
+    public void testReactivateUserAccountsEntityNotFound() {
+        LocalDateTime dateTime = LocalDateTime.now();
+        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
+                DEACTIVATED)).thenReturn(registerTokens);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(userRepository.save(user)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> tokenService.reactivateUserAccounts(dateTime)
+        );
+        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), DEACTIVATED);
+        verify(userRepository).getOne(ID);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void testReactivateUserAccountsIdNull() {
+        user.setId(null);
+        LocalDateTime dateTime = LocalDateTime.now();
+        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
+                DEACTIVATED)).thenReturn(registerTokens);
+        assertThrows(IllegalStateException.class,
+                () -> tokenService.reactivateUserAccounts(dateTime)
+        );
+        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), DEACTIVATED);
+        verify(userRepository, never()).getOne(anyInt());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testReactivateUserAccountsUserNull() {
+        registerToken1.setUser(null);
+        LocalDateTime dateTime = LocalDateTime.now();
+        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
+                DEACTIVATED)).thenReturn(registerTokens);
+        assertThrows(IllegalStateException.class,
+                () -> tokenService.reactivateUserAccounts(dateTime)
+        );
+        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), DEACTIVATED);
+        verify(userRepository, never()).getOne(anyInt());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testReactivateUserAccountsTimeNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> tokenService.reactivateUserAccounts(null)
+        );
+        verify(tokenRepository, never()).findAllByDateBeforeAndType(any(), anyString());
+        verify(userRepository, never()).getOne(anyInt());
+        verify(userRepository, never()).save(any());
     }
 }

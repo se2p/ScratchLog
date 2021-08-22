@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `user` (
     `language` varchar(255) NOT NULL DEFAULT 'ENGLISH',
     `password` varchar(255) NULL DEFAULT NULL,
     `secret` varchar(255) NULL DEFAULT NULL,
-    `reset_password` bit(1) NOT NULL DEFAULT 0,
+    `attempts` int NOT NULL DEFAULT 0,
     `active` bit(1) NOT NULL DEFAULT 0,
     `email` varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`),

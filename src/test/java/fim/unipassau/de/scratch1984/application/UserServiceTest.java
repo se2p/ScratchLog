@@ -91,6 +91,7 @@ public class UserServiceTest {
         participants.add(participant2);
         participants.add(participant3);
         user1.setId(ID);
+        user1.setAttempts(0);
         userDTO.setId(ID);
         userDTO.setUsername(USERNAME);
         userDTO.setPassword(PASSWORD);
@@ -367,24 +368,27 @@ public class UserServiceTest {
 
     @Test
     public void testLoginUser() {
+        user1.setAttempts(2);
         when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
-        UserDTO loginUser = userService.loginUser(userDTO);
         assertAll(
-                () -> assertEquals(userDTO.getUsername(), loginUser.getUsername()),
-                () -> assertEquals(userDTO.getPassword(), loginUser.getPassword())
+                () -> assertTrue(userService.loginUser(userDTO)),
+                () -> assertEquals(0, user1.getAttempts())
         );
         verify(userRepository).findUserByUsername(USERNAME);
         verify(passwordEncoder).matches(anyString(), anyString());
+        verify(userRepository).save(user1);
     }
 
     @Test
     public void testLoginUserPasswordNotMatching() {
         when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
-        assertThrows(NotFoundException.class,
-                () -> userService.loginUser(userDTO)
+        assertAll(
+                () -> assertFalse(userService.loginUser(userDTO)),
+                () -> assertEquals(1, user1.getAttempts())
         );
         verify(userRepository).findUserByUsername(USERNAME);
+        verify(userRepository).save(user1);
         verify(passwordEncoder).matches(anyString(), anyString());
     }
 
@@ -392,10 +396,12 @@ public class UserServiceTest {
     public void testLoginUserPasswordNull() {
         userDTO.setPassword(null);
         when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
-        assertThrows(NotFoundException.class,
-                () -> userService.loginUser(userDTO)
+        assertAll(
+                () -> assertFalse(userService.loginUser(userDTO)),
+                () -> assertEquals(1, user1.getAttempts())
         );
         verify(userRepository).findUserByUsername(USERNAME);
+        verify(userRepository).save(user1);
         verify(passwordEncoder, never()).matches(anyString(), anyString());
     }
 
@@ -405,6 +411,7 @@ public class UserServiceTest {
                 () -> userService.loginUser(userDTO)
         );
         verify(userRepository).findUserByUsername(USERNAME);
+        verify(userRepository, never()).save(any());
         verify(passwordEncoder, never()).matches(anyString(), anyString());
     }
 
@@ -467,7 +474,7 @@ public class UserServiceTest {
                 () -> assertEquals(userDTO.getPassword(), saved.getPassword()),
                 () -> assertEquals(userDTO.getSecret(), saved.getSecret()),
                 () -> assertFalse(saved.isActive()),
-                () -> assertFalse(saved.isReset())
+                () -> assertEquals(0, saved.getAttempts())
         );
         verify(userRepository).save(any());
     }

@@ -22,7 +22,12 @@ public class TokenDTO {
         /**
          * A token for changing the e-mail address.
          */
-        CHANGE_EMAIL
+        CHANGE_EMAIL,
+
+        /**
+         * A token for a temporarily deactivated user account.
+         */
+        DEACTIVATED
     }
 
     /**

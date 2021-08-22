@@ -83,9 +83,9 @@ public class UserDTO {
     private String secret;
 
     /**
-     * Boolean indicating whether the user is trying to reset their password.
+     * The number of current login attempts for the user.
      */
-    private boolean reset;
+    private int attempts;
 
     /**
      * Boolean indicating whether the user is active and thus able to use certain functions of the application.
@@ -281,21 +281,21 @@ public class UserDTO {
     }
 
     /**
-     * Returns whether the user is trying to reset their password.
+     * Returns the number of login attempts for the user.
      *
-     * @return {@code true} iff a password reset has been requested.
+     * @return The number of attempts.
      */
-    public boolean isReset() {
-        return reset;
+    public int getAttempts() {
+        return attempts;
     }
 
     /**
-     * Sets whether this user has requested to reset their password.
+     * Sets the number of login attempts for the user.
      *
-     * @param reset The user's reset status to be set.
+     * @param attempts The number of login attempts to be set.
      */
-    public void setReset(final boolean reset) {
-        this.reset = reset;
+    public void setAttempts(final int attempts) {
+        this.attempts = attempts;
     }
 
     /**
@@ -361,7 +361,7 @@ public class UserDTO {
                 + ", role=" + role
                 + ", language='" + language + '\''
                 + ", secret='" + secret + '\''
-                + ", reset=" + reset
+                + ", attempts=" + attempts
                 + ", active=" + active
                 + '}';
     }

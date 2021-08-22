@@ -51,6 +51,11 @@ public class TokenService {
     private static final int PASSWORD_TOKEN_EXPIRES = 1;
 
     /**
+     * The time in hours until a deactivated token expires.
+     */
+    private static final int DEACTIVATED_TOKEN_EXPIRES = 1;
+
+    /**
      * The time in days until a registration token expires.
      */
     private static final int REGISTER_TOKEN_EXPIRES = 1;
@@ -171,7 +176,7 @@ public class TokenService {
     public void deleteExpiredAccounts(final LocalDateTime localDateTime) {
         if (localDateTime == null) {
             logger.error("Cannot delete expired accounts with timestamp null!");
-            throw new IllegalArgumentException("Cannot delete expired tokens with timestamp null!");
+            throw new IllegalArgumentException("Cannot delete expired accounts with timestamp null!");
         }
 
         List<Token> expiredRegistrations = tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(localDateTime),
@@ -189,6 +194,41 @@ public class TokenService {
     }
 
     /**
+     * Reactivates the user accounts whose deactivated tokens have expired.
+     *
+     * @param localDateTime The current {@link LocalDateTime}.
+     */
+    @Transactional
+    public void reactivateUserAccounts(final LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            logger.error("Cannot reactivate user accounts with timestamp null!");
+            throw new IllegalArgumentException("Cannot reactivate user accounts with timestamp null!");
+        }
+
+        List<Token> deactivatedAccounts = tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(localDateTime),
+                TokenDTO.Type.DEACTIVATED.toString());
+
+        for (Token token : deactivatedAccounts) {
+            if (token.getUser() == null || token.getUser().getId() == null) {
+                logger.error("Cannot reactivate user account from token " + token.getValue() + " with user null!");
+                throw new IllegalStateException("Cannot reactivate user from token " + token.getValue()
+                        + " with user null!");
+            }
+
+            User user = userRepository.getOne(token.getUser().getId());
+
+            try {
+                user.setAttempts(0);
+                user.setActive(true);
+                userRepository.save(user);
+            } catch (EntityNotFoundException e) {
+                logger.error("Cannot reactivate user account for user with id " + user.getId() + "!", e);
+                throw new NotFoundException("Cannot reactivate user account for user with id " + user.getId() + "!", e);
+            }
+        }
+    }
+
+    /**
      * Returns the {@link LocalDateTime} expiration date for a token with the given type.
      *
      * @param type The {@link fim.unipassau.de.scratch1984.web.dto.TokenDTO.Type}.
@@ -201,6 +241,8 @@ public class TokenService {
             return dateTime.plusHours(EMAIL_TOKEN_EXPIRES);
         } else if (type == TokenDTO.Type.FORGOT_PASSWORD) {
             return dateTime.plusHours(PASSWORD_TOKEN_EXPIRES);
+        } else if (type == TokenDTO.Type.DEACTIVATED) {
+            return dateTime.plusHours(DEACTIVATED_TOKEN_EXPIRES);
         } else {
             return dateTime.plusDays(REGISTER_TOKEN_EXPIRES);
         }
