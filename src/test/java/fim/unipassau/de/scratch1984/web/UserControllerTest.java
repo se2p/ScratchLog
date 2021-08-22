@@ -7,6 +7,7 @@ import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.web.controller.UserController;
+import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
@@ -36,6 +37,7 @@ import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -112,6 +114,7 @@ public class UserControllerTest {
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
+    private static final String INVALID = "redirect:/users/profile?invalid=true&name=";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
     private static final String PASSWORD_RESET = "password-reset";
@@ -125,6 +128,7 @@ public class UserControllerTest {
     private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
             PASSWORD, SECRET);
     private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
+    private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
 
     @BeforeEach
     public void setup() {
@@ -141,6 +145,7 @@ public class UserControllerTest {
         userDTO.setConfirmPassword("");
         userDTO.setActive(true);
         userDTO.setSecret(SECRET);
+        passwordDTO.setPassword(PASSWORD);
         securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
     }
 
@@ -1132,55 +1137,192 @@ public class UserControllerTest {
 
     @Test
     public void testDeleteUser() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(ID_STRING));
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
         verify(userService).isLastAdmin();
         verify(userService).deleteUser(ID);
+        verify(httpServletRequest).getSession(false);
+    }
+
+    @Test
+    public void testDeleteUserNotEqual() {
+        oldDTO.setId(ID + 1);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService).getUserById(ID);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(userService).isLastAdmin();
+        verify(userService).deleteUser(ID + 1);
+        verify(httpServletRequest, never()).getSession(anyBoolean());
     }
 
     @Test
     public void testDeleteUserParticipant() {
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
-        when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(ID_STRING));
+        oldDTO.setId(ID + 1);
+        oldDTO.setRole(UserDTO.Role.PARTICIPANT);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
         verify(userService, never()).isLastAdmin();
-        verify(userService).deleteUser(ID);
+        verify(userService).deleteUser(ID + 1);
+        verify(httpServletRequest, never()).getSession(anyBoolean());
     }
 
     @Test
     public void testDeleteUserLastAdmin() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
         when(userService.isLastAdmin()).thenReturn(true);
-        assertEquals(LAST_ADMIN, userController.deleteUser(ID_STRING));
+        assertEquals(LAST_ADMIN, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
         verify(userService).isLastAdmin();
-        verify(userService, never()).deleteUser(ID);
+        verify(userService, never()).deleteUser(anyInt());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
+    }
+
+    @Test
+    public void testDeleteUserPasswordNotMatching() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(INVALID + USERNAME, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService).getUserById(ID);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(anyInt());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
+    }
+
+    @Test
+    public void testDeleteUserPasswordTooLong() {
+        passwordDTO.setPassword(LONG_USERNAME);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        assertEquals(INVALID + USERNAME, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService).getUserById(ID);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(anyInt());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
+    }
+
+    @Test
+    public void testDeleteUserNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).getUserById(anyInt());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(anyInt());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
+    }
+
+    @Test
+    public void testDeleteUserAuthenticationNameNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        assertEquals(ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        verify(authentication).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserById(anyInt());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(anyInt());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
     }
 
     @Test
     public void testDeleteUserInvalidId() {
-        assertEquals(ERROR, userController.deleteUser("0"));
-        verify(userService, never()).getUserById(ID);
+        assertEquals(ERROR, userController.deleteUser(passwordDTO, "0", httpServletRequest));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserById(anyInt());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(userService, never()).isLastAdmin();
-        verify(userService, never()).deleteUser(ID);
+        verify(userService, never()).deleteUser(anyInt());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
     }
 
     @Test
     public void testDeleteUserNumberFormat() {
-        assertEquals(ERROR, userController.deleteUser(BLANK));
-        verify(userService, never()).getUserById(ID);
+        assertEquals(ERROR, userController.deleteUser(passwordDTO, BLANK, httpServletRequest));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserById(anyInt());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(userService, never()).isLastAdmin();
-        verify(userService, never()).deleteUser(ID);
+        verify(userService, never()).deleteUser(anyInt());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
     }
 
     @Test
     public void testDeleteUserIdNull() {
-        assertEquals(ERROR, userController.deleteUser(null));
-        verify(userService, never()).getUserById(ID);
+        assertEquals(ERROR, userController.deleteUser(passwordDTO, null, httpServletRequest));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserById(anyInt());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(userService, never()).isLastAdmin();
-        verify(userService, never()).deleteUser(ID);
+        verify(userService, never()).deleteUser(anyInt());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
+    }
+
+    @Test
+    public void testDeleteUserPasswordNull() {
+        passwordDTO.setPassword(null);
+        assertEquals(ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserById(anyInt());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(anyInt());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
     }
 
     @Test

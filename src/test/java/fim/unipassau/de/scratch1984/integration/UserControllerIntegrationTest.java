@@ -8,6 +8,7 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.UserController;
+import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
@@ -89,12 +90,15 @@ public class UserControllerIntegrationTest {
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
+    private static final String INVALID = "redirect:/users/profile?invalid=true&name=";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
     private static final String PASSWORD_RESET = "password-reset";
     private static final String USER_DTO = "userDTO";
+    private static final String PASSWORD_DTO = "passwordDTO";
     private static final String NAME = "name";
     private static final String ID_STRING = "1";
+    private static final String ID_PARAM = "id";
     private static final String SECRET = "secret";
     private static final int ID = 1;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
@@ -102,6 +106,7 @@ public class UserControllerIntegrationTest {
     private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH, PASSWORD,
             SECRET);
     private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
+    private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -113,6 +118,7 @@ public class UserControllerIntegrationTest {
         oldDTO.setPassword(PASSWORD);
         oldDTO.setUsername(USERNAME);
         oldDTO.setEmail(EMAIL);
+        oldDTO.setRole(UserDTO.Role.ADMIN);
         userDTO.setId(ID);
         userDTO.setActive(true);
         userDTO.setPassword(PASSWORD);
@@ -122,6 +128,7 @@ public class UserControllerIntegrationTest {
         userDTO.setRole(UserDTO.Role.ADMIN);
         userDTO.setNewPassword("");
         userDTO.setConfirmPassword("");
+        passwordDTO.setPassword(PASSWORD);
     }
 
     @AfterEach
@@ -443,6 +450,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(USER_DTO, allOf(
                         hasProperty("id", is(userDTO.getId())),
                         hasProperty("username", is(USERNAME))
@@ -466,6 +474,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute("experiments", is(experimentIds)))
                 .andExpect(model().attribute(USER_DTO, allOf(
                         hasProperty("id", is(userDTO.getId())),
@@ -500,6 +509,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(USER_DTO, allOf(
                         hasProperty("id", is(userDTO.getId())),
                         hasProperty("username", is(USERNAME))
@@ -518,6 +528,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(USER_DTO, allOf(
                         hasProperty("id", is(userDTO.getId())),
                         hasProperty("username", is(USERNAME))
@@ -537,6 +548,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(USER_DTO, allOf(
                         hasProperty("id", is(userDTO.getId())),
                         hasProperty("username", is(USERNAME))
@@ -985,49 +997,126 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testDeleteUser() throws Exception {
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
-        when(userService.getUserById(ID)).thenReturn(userDTO);
-        mvc.perform(get("/users/delete")
-                .param("id", ID_STRING)
+        oldDTO.setId(ID + 1);
+        oldDTO.setRole(UserDTO.Role.PARTICIPANT);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        mvc.perform(post("/users/delete")
+                .param(ID_PARAM, ID_STRING)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SUCCESS));
+        verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
         verify(userService, never()).isLastAdmin();
+        verify(userService).deleteUser(ID + 1);
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testDeleteUserAdmin() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        mvc.perform(post("/users/delete")
+                .param(ID_PARAM, ID_STRING)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_SUCCESS));
+        verify(userService).getUser(USERNAME);
+        verify(userService).getUserById(ID);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(userService).isLastAdmin();
         verify(userService).deleteUser(ID);
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testDeleteUserLastAdmin() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
         when(userService.isLastAdmin()).thenReturn(true);
-        mvc.perform(get("/users/delete")
-                .param("id", ID_STRING)
+        mvc.perform(post("/users/delete")
+                .param(ID_PARAM, ID_STRING)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(LAST_ADMIN));
+        verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
         verify(userService).isLastAdmin();
-        verify(userService, never()).deleteUser(ID);
+        verify(userService, never()).deleteUser(anyInt());
     }
 
     @Test
-    public void testDeleteUserInvalidId() throws Exception {
-        mvc.perform(get("/users/delete")
-                .param("id", "-1")
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testDeleteUserInvalidPassword() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        mvc.perform(post("/users/delete")
+                .param(ID_PARAM, ID_STRING)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(INVALID + USERNAME));
+        verify(userService).getUser(USERNAME);
+        verify(userService).getUserById(ID);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testDeleteUserNotFound() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(post("/users/delete")
+                .param(ID_PARAM, ID_STRING)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(userService, never()).getUserById(ID);
+        verify(userService).getUser(USERNAME);
+        verify(userService).getUserById(ID);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(userService, never()).isLastAdmin();
-        verify(userService, never()).deleteUser(ID);
+        verify(userService, never()).deleteUser(anyInt());
+    }
+
+    @Test
+    public void testDeleteUserInvalidId() throws Exception {
+        mvc.perform(post("/users/delete")
+                .param(ID_PARAM, USERNAME)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserById(anyInt());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).isLastAdmin();
+        verify(userService, never()).deleteUser(anyInt());
     }
 
     @Test
