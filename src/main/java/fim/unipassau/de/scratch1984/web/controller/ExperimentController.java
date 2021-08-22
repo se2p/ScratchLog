@@ -14,6 +14,7 @@ import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
+import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -284,20 +285,45 @@ public class ExperimentController {
     /**
      * Deletes the experiment with the given id from the database and redirects to the index page on success.
      *
+     * @param passwordDTO The {@link PasswordDTO} containing the input password.
      * @param id The id of the experiment.
      * @return The index page.
      */
-    @GetMapping("/delete")
+    @PostMapping("/delete")
     @Secured("ROLE_ADMIN")
-    public String deleteExperiment(@RequestParam("id") final String id) {
+    public String deleteExperiment(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
+                                   @RequestParam("id") final String id) {
+        if (id == null || passwordDTO.getPassword() == null) {
+            logger.error("Cannot delete experiment with id null or input password null!");
+            return ERROR;
+        }
+
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             return ERROR;
         }
 
-        experimentService.deleteExperiment(experimentId);
-        return "redirect:/?success=true";
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication.getName() == null) {
+            logger.error("An unauthenticated user tried to delete experiment with id " + experimentId + "!");
+            return ERROR;
+        }
+
+        try {
+            UserDTO currentUser = userService.getUser(authentication.getName());
+
+            if ((passwordDTO.getPassword().length() > Constants.SMALL_FIELD)
+                    || (!userService.matchesPassword(passwordDTO.getPassword(), currentUser.getPassword()))) {
+                return "redirect:/experiment?invalid=true&id=" + experimentId;
+            }
+
+            experimentService.deleteExperiment(experimentId);
+            return "redirect:/?success=true";
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
     }
 
     /**
@@ -751,6 +777,7 @@ public class ExperimentController {
         model.addAttribute("page", page + 1);
         model.addAttribute("lastPage", last);
         model.addAttribute("experimentDTO", experimentDTO);
+        model.addAttribute("passwordDTO", new PasswordDTO());
         model.addAttribute("participants", participants);
         return true;
     }

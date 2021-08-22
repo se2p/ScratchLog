@@ -13,6 +13,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
+import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -113,6 +114,7 @@ public class ExperimentControllerTest {
     private static final String EXPERIMENT = "experiment";
     private static final String EXPERIMENT_EDIT = "experiment-edit";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
+    private static final String INVALID = "redirect:/experiment?invalid=true&id=";
     private static final String SUCCESS = "redirect:/?success=true";
     private static final String BLANK = "    ";
     private static final String EXPERIMENT_DTO = "experimentDTO";
@@ -120,6 +122,8 @@ public class ExperimentControllerTest {
     private static final String INVALID_ID = "-1";
     private static final String ADMIN = "ROLE_ADMIN";
     private static final String USERNAME = "admin";
+    private static final String PASSWORD = "password";
+    private static final String LONG_PASSWORD = "VeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongPassword";
     private static final String PARTICIPANTS = "participants";
     private static final String CURRENT = "3";
     private static final String LAST = "4";
@@ -131,12 +135,13 @@ public class ExperimentControllerTest {
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, "admin", "secret1");
+            UserDTO.Language.ENGLISH, PASSWORD, "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANTS, "participant@part.de", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "user", null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final List<UserDTO> userDTOS = new ArrayList<>();
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
+    private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
 
     @BeforeEach
     public void setup() {
@@ -156,6 +161,7 @@ public class ExperimentControllerTest {
         userDTOS.add(userDTO);
         participantDTO.setStart(null);
         participantDTO.setEnd(null);
+        passwordDTO.setPassword(PASSWORD);
     }
 
     @AfterEach
@@ -519,16 +525,95 @@ public class ExperimentControllerTest {
 
     @Test
     public void testDeleteExperiment() {
-        String returnString = experimentController.deleteExperiment(ID_STRING);
-        assertEquals(SUCCESS, returnString);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        assertEquals(SUCCESS, experimentController.deleteExperiment(passwordDTO, ID_STRING));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
         verify(experimentService).deleteExperiment(ID);
     }
 
     @Test
+    public void testDeleteExperimentPasswordNotMatching() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        assertEquals(INVALID + ID, experimentController.deleteExperiment(passwordDTO, ID_STRING));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testDeleteExperimentPasswordTooLong() {
+        passwordDTO.setPassword(LONG_PASSWORD);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        assertEquals(INVALID + ID, experimentController.deleteExperiment(passwordDTO, ID_STRING));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testDeleteExperimentNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
+        assertEquals(ERROR, experimentController.deleteExperiment(passwordDTO, ID_STRING));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testDeleteExperimentAuthenticationNameNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        assertEquals(ERROR, experimentController.deleteExperiment(passwordDTO, ID_STRING));
+        verify(authentication).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
     public void testDeleteExperimentInvalidId() {
-        String returnString = experimentController.deleteExperiment(INVALID_ID);
-        assertEquals(ERROR, returnString);
-        verify(experimentService, never()).deleteExperiment(ID);
+        assertEquals(ERROR, experimentController.deleteExperiment(passwordDTO, INVALID_ID));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testDeleteExperimentPasswordNull() {
+        passwordDTO.setPassword(null);
+        assertEquals(ERROR, experimentController.deleteExperiment(passwordDTO, INVALID_ID));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testDeleteExperimentIdNull() {
+        assertEquals(ERROR, experimentController.deleteExperiment(passwordDTO, null));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(experimentService, never()).deleteExperiment(anyInt());
     }
 
     @Test
@@ -672,7 +757,7 @@ public class ExperimentControllerTest {
         verify(userService, never()).updateUser(participant);
         verify(participantService, never()).saveParticipant(participant.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -687,7 +772,7 @@ public class ExperimentControllerTest {
         verify(userService, never()).updateUser(participant);
         verify(participantService, never()).saveParticipant(participant.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -702,7 +787,7 @@ public class ExperimentControllerTest {
         verify(userService, never()).updateUser(participant);
         verify(participantService, never()).saveParticipant(participant.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -716,7 +801,7 @@ public class ExperimentControllerTest {
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -728,7 +813,7 @@ public class ExperimentControllerTest {
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -740,7 +825,7 @@ public class ExperimentControllerTest {
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -775,7 +860,7 @@ public class ExperimentControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(model, times(4)).addAttribute(anyString(), any());
+        verify(model, times(5)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -835,7 +920,7 @@ public class ExperimentControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(model, times(4)).addAttribute(anyString(), any());
+        verify(model, times(5)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -895,7 +980,7 @@ public class ExperimentControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(model, times(4)).addAttribute(anyString(), any());
+        verify(model, times(5)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -926,7 +1011,7 @@ public class ExperimentControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(experimentService, times(2)).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(model, times(4)).addAttribute(anyString(), any());
+        verify(model, times(5)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1066,7 +1151,7 @@ public class ExperimentControllerTest {
         verify(file, times(3)).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1080,7 +1165,7 @@ public class ExperimentControllerTest {
         verify(file, times(2)).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1094,7 +1179,7 @@ public class ExperimentControllerTest {
         verify(file, never()).getOriginalFilename();
         verify(file, times(3)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1107,7 +1192,7 @@ public class ExperimentControllerTest {
         verify(file, never()).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1121,7 +1206,7 @@ public class ExperimentControllerTest {
         verify(file, never()).getOriginalFilename();
         verify(file, never()).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
