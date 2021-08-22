@@ -3,11 +3,13 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
@@ -30,10 +32,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -52,6 +57,11 @@ public class ResultController {
      * The user service to use for user management.
      */
     private final UserService userService;
+
+    /**
+     * The experiment service to use for experiment management.
+     */
+    private final ExperimentService experimentService;
 
     /**
      * The event service to use for event management.
@@ -77,13 +87,15 @@ public class ResultController {
      * Constructs a new result controller with the given dependencies.
      *
      * @param userService The {@link UserService} to use.
+     * @param experimentService The {@link ExperimentService} to use.
      * @param eventService The {@link EventService} to use.
      * @param fileService The {@link FileService} to use.
      */
     @Autowired
-    public ResultController(final UserService userService, final EventService eventService,
-                            final FileService fileService) {
+    public ResultController(final UserService userService, final ExperimentService experimentService,
+                            final EventService eventService, final FileService fileService) {
         this.userService = userService;
+        this.experimentService = experimentService;
         this.eventService = eventService;
         this.fileService = fileService;
     }
@@ -170,6 +182,107 @@ public class ResultController {
                     + fileDTO.getName() + "\"").body(fileDTO.getContent());
         } catch (NotFoundException e) {
             return ERROR;
+        }
+    }
+
+    /**
+     * Generates an sb3 file for the user and experiment with the given id with the project.json corresponding to the
+     * json string saved during the block event with the given id and makes the file available for download. Apart
+     * from the saved json string, all costumes and sounds present in the experiment project file are added to the sb3
+     * file as well as all files saved for the user during the experiment. If the passed parameters are invalid, an
+     * {@link IncompleteDataException} is thrown instead. If an IOException occurs during the creation of the sb3 file,
+     * a {@link RuntimeException} is thrown.
+     *
+     * @param experiment The id of the experiment.
+     * @param user The id of the user.
+     * @param json The block event id to search for.
+     * @param httpServletResponse The servlet response.
+     */
+    @GetMapping("/generate")
+    @Secured("ROLE_ADMIN")
+    public void generateZipFile(@RequestParam("experiment") final String experiment,
+                                @RequestParam("user") final String user, @RequestParam("json") final String json,
+                                final HttpServletResponse httpServletResponse) {
+        if (json == null || experiment == null || user == null) {
+            logger.error("Cannot generate zip file with JSON, experiment or user null!");
+            throw new IncompleteDataException("Cannot generate zip file with JSON, experiment or user null!");
+        }
+
+        int userId = parseId(user);
+        int experimentId = parseId(experiment);
+        int jsonId = parseId(json);
+
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID || jsonId < Constants.MIN_ID) {
+            logger.error("Cannot generate zip file for user with invalid id " + user + " or experiment with invalid "
+                    + "id " + experiment + "or json with invalid id " + json + "!");
+            throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + user
+                    + " or experiment with invalid id " + experiment + "or json with invalid id " + json + "!");
+        }
+
+        ExperimentProjection projection = experimentService.getSb3File(experimentId);
+        List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
+        byte[] code = eventService.findJsonById(jsonId).getBytes(StandardCharsets.UTF_8);
+
+        try {
+            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "sb3");
+
+            if (projection.getProject() != null) {
+                InputStream file = new ByteArrayInputStream(projection.getProject());
+                ZipInputStream zin = new ZipInputStream(file);
+                ZipEntry ze;
+
+                while ((ze = zin.getNextEntry()) != null) {
+                    if (!ze.getName().equals("project.json")) {
+                        zos.putNextEntry(ze);
+                        int current;
+                        while ((current = zin.read()) >= 0) {
+                            zos.write(current);
+                        }
+                        zos.closeEntry();
+                    }
+                }
+
+                zin.close();
+                file.close();
+            }
+
+            for (FileDTO fileDTO : fileDTOS) {
+                if (fileDTO.getName().endsWith("zip")) {
+                    InputStream file = new ByteArrayInputStream(fileDTO.getContent());
+                    ZipInputStream zin = new ZipInputStream(file);
+                    ZipEntry ze = zin.getNextEntry();
+
+                    if (ze != null) {
+                        ZipEntry entry = new ZipEntry(fileDTO.getName().replace("zip", fileDTO.getFiletype()));
+                        entry.setSize(ze.getSize());
+                        zos.putNextEntry(entry);
+                        int current;
+                        while ((current = zin.read()) >= 0) {
+                            zos.write(current);
+                        }
+                        zos.closeEntry();
+                    }
+
+                    zin.close();
+                    file.close();
+                } else {
+                    ZipEntry entry = new ZipEntry(fileDTO.getId() + fileDTO.getName());
+                    entry.setSize(fileDTO.getContent().length);
+                    zos.putNextEntry(entry);
+                    zos.write(fileDTO.getContent());
+                    zos.closeEntry();
+                }
+            }
+
+            ZipEntry entry = new ZipEntry("project.json");
+            entry.setSize(code.length);
+            zos.putNextEntry(entry);
+            zos.write(code);
+            zos.closeEntry();
+            zos.finish();
+        } catch (IOException e) {
+            logger.error("Could not generate zip file due to IOException!", e);
+            throw new RuntimeException("Could not generate zip file due to IOException!");
         }
     }
 
@@ -404,9 +517,10 @@ public class ResultController {
      */
     private ZipOutputStream getZipOutputStream(final HttpServletResponse httpServletResponse, final int userId,
                                                final int experimentId, final String filetype) throws IOException {
+        String fileEnding = filetype.equals("sb3") ? ".sb3" : ".zip";
         httpServletResponse.setContentType("application/zip");
         httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + filetype + "_user" + userId
-                + "_experiment" + experimentId + ".zip");
+                + "_experiment" + experimentId + fileEnding);
         httpServletResponse.setStatus(HttpServletResponse.SC_OK);
         return new ZipOutputStream(httpServletResponse.getOutputStream());
     }

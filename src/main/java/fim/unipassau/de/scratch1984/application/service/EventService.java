@@ -38,6 +38,7 @@ import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A service providing methods related to event logging and retrieving event count results.
@@ -175,6 +176,33 @@ public class EventService {
                     + " for experiment with id " + resourceEventDTO.getExperiment() + " since the resource event "
                     + "violates the resource event table constraints!", e);
         }
+    }
+
+    /**
+     * Returns the json code of the block event with the given id. If no corresponding block event can be found, a
+     * {@link NotFoundException} is thrown instead.
+     *
+     * @param id The block event id to search for.
+     * @return The json string.
+     */
+    @Transactional
+    public String findJsonById(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot find block event with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot find block event with invalid id " + id + "!");
+        }
+
+        Optional<BlockEvent> projection = blockEventRepository.findById(id);
+
+        if (projection.isEmpty()) {
+            logger.error("Could not find block event with id " + id + "!");
+            throw new NotFoundException("Could not find block event with id " + id + "!");
+        } else if (projection.get().getCode() == null) {
+            logger.error("No json string could be found for the block event with id " + id + "!");
+            throw new IllegalArgumentException("No json string could be found for the block event with id " + id + "!");
+        }
+
+        return projection.get().getCode();
     }
 
     /**

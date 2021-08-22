@@ -178,6 +178,36 @@ public class FileService {
     }
 
     /**
+     * Returns all files the user with the given id uploaded during the experiment with the given id. If no
+     * corresponding user or experiment can be found, a {@link NotFoundException} is thrown instead.
+     *
+     * @param userId The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @return A {@link List} containing the files.
+     */
+    public List<FileDTO> getFileDTOs(final int userId, final int experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot get files for user with invalid id " + userId + " or experiment with invalid id "
+                    + experimentId + "!");
+            throw new IllegalArgumentException("Cannot get files for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            List<File> files = fileRepository.findAllByUserAndExperiment(user, experiment);
+            return createFileDTOList(files);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not retrieve the files since the user with id " + userId + " or experiment with id "
+                    + experimentId + " could not be found!", e);
+            throw new NotFoundException("Could not retrieve the files since the  user with id " + userId
+                    + " or experiment with id " + experimentId + " could not be found!", e);
+        }
+    }
+
+    /**
      * Returns the zip file ids of all {@link Sb3Zip}s that were created for the user with the given id during the
      * experiment with the given id. If no corresponding user or experiment can be found, a {@link NotFoundException} is
      * thrown instead.
@@ -294,6 +324,22 @@ public class FileService {
             throw new NotFoundException("Cannot download zip files as no user with id " + userId
                     + " or no experiment with id " + experimentId + " could be found in the database!", e);
         }
+    }
+
+    /**
+     * Creates a list of {@link FileDTO}s form the given {@link File} list.
+     *
+     * @param files A list of files.
+     * @return A list of file dtos.
+     */
+    private List<FileDTO> createFileDTOList(final List<File> files) {
+        List<FileDTO> fileDTOS = new ArrayList<>();
+
+        for (File file : files) {
+            fileDTOS.add(createFileDTO(file));
+        }
+
+        return fileDTOS;
     }
 
     /**

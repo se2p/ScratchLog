@@ -2,11 +2,13 @@ package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.ResultController;
@@ -31,6 +33,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,6 +68,9 @@ public class ResultControllerIntegrationTest {
     private UserService userService;
 
     @MockBean
+    private ExperimentService experimentService;
+
+    @MockBean
     private EventService eventService;
 
     @MockBean
@@ -76,9 +84,12 @@ public class ResultControllerIntegrationTest {
     private static final String ID_PARAM = "id";
     private static final String PAGE_PARAM = "page";
     private static final String PAGE = "0";
+    private static final String JSON = "json";
     private static final int ID = 1;
     private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "type",
             new byte[]{1, 2, 3});
+    private final FileDTO zip = new FileDTO(ID, ID, LocalDateTime.now(), "file.zip", "wav",
+            new byte[]{1, 2, 3, 4});
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "file", new byte[]{1, 2, 3});
     private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
@@ -89,6 +100,17 @@ public class ResultControllerIntegrationTest {
     private final List<BlockEventXMLProjection> xmlProjections = new ArrayList<>();
     private final List<BlockEventJSONProjection> jsonProjections = new ArrayList<>();
     private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(2));
+    ExperimentProjection experimentProjection = new ExperimentProjection() {
+        @Override
+        public Integer getId() {
+            return ID;
+        }
+
+        @Override
+        public byte[] getProject() {
+            return null;
+        }
+    };
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -260,6 +282,146 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(fileService, never()).findFile(anyInt());
+    }
+
+    @Test
+    public void testGenerateZipFile() throws Exception {
+        URL zipUrl = getClass().getClassLoader().getResource("Taylor-b.zip");
+        URL sb3 = getClass().getClassLoader().getResource("Scratch-Projekt.sb3");
+        File sb3File = new File(sb3.getFile());
+        File zipFile = new File(zipUrl.getFile());
+        byte[] sb3Bytes = new byte[(int) sb3File.length()];
+        byte[] zipBytes = new byte[(int) zipFile.length()];
+        FileInputStream sb3InputStream = new FileInputStream(sb3File);
+        FileInputStream zipInputStream = new FileInputStream(zipFile);
+        sb3InputStream.read(sb3Bytes);
+        sb3InputStream.close();
+        zipInputStream.read(zipBytes);
+        zipInputStream.close();
+        zip.setContent(zipBytes);
+        List<FileDTO> fileDTOS = new ArrayList<>();
+        fileDTOS.add(fileDTO);
+        fileDTOS.add(zip);
+        ExperimentProjection projection = new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return ID;
+            }
+
+            @Override
+            public byte[] getProject() {
+                return sb3Bytes;
+            }
+        };
+        when(experimentService.getSb3File(ID)).thenReturn(projection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
+        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        mvc.perform(get("/result/generate")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(JSON, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).findJsonById(ID);
+    }
+
+    @Test
+    public void testGenerateZipFileProjectNull() throws Exception {
+        URL zipUrl = getClass().getClassLoader().getResource("Taylor-b.zip");
+        File zipFile = new File(zipUrl.getFile());
+        byte[] zipBytes = new byte[(int) zipFile.length()];
+        FileInputStream zipInputStream = new FileInputStream(zipFile);
+        zipInputStream.read(zipBytes);
+        zipInputStream.close();
+        zip.setContent(zipBytes);
+        List<FileDTO> fileDTOS = new ArrayList<>();
+        fileDTOS.add(fileDTO);
+        fileDTOS.add(zip);
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
+        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        mvc.perform(get("/result/generate")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(JSON, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).findJsonById(ID);
+    }
+
+    @Test
+    public void testGenerateZipFileNotFound() throws Exception {
+        when(experimentService.getSb3File(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/result/generate")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(JSON, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isNotFound());
+        verify(experimentService).getSb3File(ID);
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
+    }
+
+    @Test
+    public void testGenerateZipFileInvalidJsonId() throws Exception {
+        mvc.perform(get("/result/generate")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(JSON, "  ")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
+    }
+
+    @Test
+    public void testGenerateZipFileInvalidExperimentId() throws Exception {
+        mvc.perform(get("/result/generate")
+                .param(EXPERIMENT_PARAM, "0")
+                .param(USER_PARAM, ID_STRING)
+                .param(JSON, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
+    }
+
+    @Test
+    public void testGenerateZipFileInvalidUserId() throws Exception {
+        mvc.perform(get("/result/generate")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, "-1")
+                .param(JSON, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
     }
 
     @Test

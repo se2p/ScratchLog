@@ -72,6 +72,7 @@ public class FileServiceTest {
     private final Sb3Zip sb3Zip = new Sb3Zip(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "zip",
             new byte[]{1, 2, 3, 4});
     private final List<FileProjection> fileProjections = getFileProjections(5);
+    private final List<File> files = getFiles(2);
     private final List<Integer> zips = Arrays.asList(1, 4, 10, 18);
     private final List<Sb3Zip> sb3Zips = getSb3ZipFiles(3);
 
@@ -235,6 +236,59 @@ public class FileServiceTest {
         verify(userRepository, never()).getOne(anyInt());
         verify(experimentRepository, never()).getOne(anyInt());
         verify(fileRepository, never()).findFilesByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testGetFileDTOs() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(fileRepository.findAllByUserAndExperiment(user, experiment)).thenReturn(files);
+        List<FileDTO> fileDTOS = fileService.getFileDTOs(ID, ID);
+        FileDTO fileDTO1 = fileDTOS.get(0);
+        FileDTO fileDTO2 = fileDTOS.get(1);
+        assertAll(
+                () -> assertEquals(2, fileDTOS.size()),
+                () -> assertEquals(ID, fileDTO1.getId()),
+                () -> assertEquals("name0", fileDTO1.getName()),
+                () -> assertEquals(ID + 1, fileDTO2.getId()),
+                () -> assertEquals("name1", fileDTO2.getName())
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(fileRepository).findAllByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testGetFileDTOsEntityNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(fileRepository.findAllByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> fileService.getFileDTOs(ID, ID)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(fileRepository).findAllByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testGetFileDTOsInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> fileService.getFileDTOs(ID, 0)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(fileRepository, never()).findAllByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testGetFileDTOsInvalidUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> fileService.getFileDTOs(-1, ID)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(fileRepository, never()).findAllByUserAndExperiment(any(), any());
     }
 
     @Test
@@ -424,6 +478,17 @@ public class FileServiceTest {
             });
         }
         return fileProjections;
+    }
+
+    private List<File> getFiles(int number) {
+        List<File> files = new ArrayList<>();
+        Timestamp time = Timestamp.valueOf(LocalDateTime.now());
+        for (int i = 0; i < number; i++) {
+            File file = new File(user, experiment, time, "name" + i, "type", new byte[]{1, 2, 3, 4});
+            file.setId(i + 1);
+            files.add(file);
+        }
+        return files;
     }
 
     private List<Sb3Zip> getSb3ZipFiles(int number) {
