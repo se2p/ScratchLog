@@ -248,9 +248,9 @@ public class UserController {
 
             if (userService.loginUser(userDTO)) {
                 clearSecurityContext(httpServletRequest);
-                updateSecurityContext(userDTO, httpServletRequest);
+                updateSecurityContext(findUser, httpServletRequest);
                 localeResolver.setLocale(httpServletRequest, httpServletResponse,
-                        getLocaleFromLanguage(userDTO.getLanguage()));
+                        getLocaleFromLanguage(findUser.getLanguage()));
                 return INDEX;
             } else {
                 model.addAttribute("error", resourceBundle.getString("authentication_error"));
