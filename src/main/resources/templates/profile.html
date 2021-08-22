@@ -15,10 +15,13 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
-        <div class="row" th:style="${param.update != null ? 'display:block' : 'display:none'}">
+        <div class="row" th:if="${param.invalid != null}">
+            <div class="col-12 alert alert-danger" th:text="#{invalid_password}"></div>
+        </div>
+        <div class="row" th:if="${param.update != null}">
             <div class="col-12 alert alert-warning" th:text="#{change_email_verify}"></div>
         </div>
-        <div class="row" th:style="${param.lastAdmin != null ? 'display:block' : 'display:none'}">
+        <div class="row" th:if="${param.lastAdmin != null}">
             <div class="col-12 alert alert-danger" th:text="#{delete_last_admin}"></div>
         </div>
         <div class="d-flex justify-content-between mb-3">
@@ -114,10 +117,27 @@
     <div class="modal-content">
         <h2 th:text="#{delete_user}"></h2>
         <div class="mb-3" th:text="#{delete_user_warn}"></div>
-        <div class="d-flex justify-content-between">
-            <input id="abort" class="btn btn-secondary" type="submit" th:value="#{abort}">
-            <a class="btn btn-danger" th:text="#{delete}" th:href="@{/users/delete(id=${userDTO.id})}"></a>
-        </div>
+        <form th:action="@{/users/delete}" th:object="${passwordDTO}" th:name="passwordDTO" method="post">
+            <input type="hidden" name="id" th:value="${userDTO.id}"/>
+            <div class="col-12 mb-5 form-group position-relative">
+                <label class="form-label" for="password" th:text="#{password}"></label>
+                <div class="input-group">
+                        <span class="input-group-text">
+                            <i aria-hidden="true" class="fa fa-key" title="Enter password"></i>
+                            <span class="sr-only" th:text="#{password}"></span>
+                        </span>
+                    <input th:name="password" id="password" type="password" th:placeholder="#{password}"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                           th:field="*{password}" th:class="${#fields.hasErrors('password')
+                               ? 'form-control is-invalid' : 'form-control'}" required/>
+                </div>
+                <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a id="abort" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input class="btn btn-danger" type="submit" th:value="#{delete}">
+            </div>
+        </form>
     </div>
 </div>
 

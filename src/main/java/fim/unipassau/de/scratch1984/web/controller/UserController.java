@@ -10,6 +10,7 @@ import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
+import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
@@ -434,6 +435,7 @@ public class UserController {
 
         model.addAttribute("experiments", experimentIds);
         model.addAttribute("userDTO", userDTO);
+        model.addAttribute("passwordDTO", new PasswordDTO());
         model.addAttribute("language",
                 resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
         return PROFILE;
@@ -576,32 +578,55 @@ public class UserController {
      * found, the user is redirected to the error page. If the user is trying to delete the last administrator, they
      * see an error message instead.
      *
+     * @param passwordDTO The {@link PasswordDTO} containing the input password.
      * @param id The id of the user to be deleted.
+     * @param httpServletRequest The servlet request.
      * @return The index page on success, or the profile or error page.
      */
-    @GetMapping("/delete")
+    @PostMapping("/delete")
     @Secured("ROLE_ADMIN")
-    public String deleteUser(@RequestParam("id") final String id) {
-        if (id == null) {
-            logger.debug("Cannot delete user with id null!");
+    public String deleteUser(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
+                             @RequestParam("id") final String id, final HttpServletRequest httpServletRequest) {
+        if (id == null || passwordDTO.getPassword() == null) {
+            logger.error("Cannot delete user with id null or input password null!");
             return ERROR;
         }
 
         int userId = parseId(id);
 
         if (userId < Constants.MIN_ID) {
-            logger.debug("Cannot delete user with invalid id " + id + "!");
+            logger.error("Cannot delete user with invalid id " + id + "!");
             return ERROR;
         }
 
-        UserDTO userDTO = userService.getUserById(userId);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (userDTO.getRole().equals(UserDTO.Role.ADMIN) && userService.isLastAdmin()) {
-            return "redirect:/users/profile?lastAdmin=true";
+        if (authentication.getName() == null) {
+            logger.error("User with authentication name null tried to delete user with id " + userId + "!");
+            return ERROR;
         }
 
-        userService.deleteUser(userDTO.getId());
-        return "redirect:/?success=true";
+        try {
+            UserDTO currentUser = userService.getUser(authentication.getName());
+            UserDTO userDTO = userService.getUserById(userId);
+
+            if ((passwordDTO.getPassword().length() > Constants.SMALL_FIELD)
+                    || (!userService.matchesPassword(passwordDTO.getPassword(), currentUser.getPassword()))) {
+                return "redirect:/users/profile?invalid=true&name=" + userDTO.getUsername();
+            } else if (userDTO.getRole().equals(UserDTO.Role.ADMIN) && userService.isLastAdmin()) {
+                return "redirect:/users/profile?lastAdmin=true";
+            }
+
+            userService.deleteUser(userDTO.getId());
+
+            if (currentUser.equals(userDTO)) {
+                clearSecurityContext(httpServletRequest);
+            }
+
+            return "redirect:/?success=true";
+        } catch (NotFoundException e) {
+            return ERROR;
+        }
     }
 
     /**

@@ -13,6 +13,7 @@ import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
+import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -99,9 +100,11 @@ public class ExperimentControllerIntegrationTest {
     private static final String EXPERIMENT = "experiment";
     private static final String EXPERIMENT_EDIT = "experiment-edit";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
+    private static final String INVALID = "redirect:/experiment?invalid=true&id=";
     private static final String SUCCESS = "redirect:/?success=true";
     private static final String BLANK = "    ";
     private static final String EXPERIMENT_DTO = "experimentDTO";
+    private static final String PASSWORD_DTO = "passwordDTO";
     private static final String ID_STRING = "1";
     private static final String INVALID_ID = "-1";
     private static final String ID_PARAM = "id";
@@ -117,6 +120,9 @@ public class ExperimentControllerIntegrationTest {
     private static final String LAST = "4";
     private static final String FILETYPE = "application/octet-stream";
     private static final String FILENAME = "project.sb3";
+    private static final String USERNAME = "user";
+    private static final String PASSWORD = "password";
+    private static final String LONG_PASSWORD = "VeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongPassword";
     private static final int FIRST_PAGE = 1;
     private static final int LAST_PAGE = 3;
     private static final int PREVIOUS = 2;
@@ -124,12 +130,13 @@ public class ExperimentControllerIntegrationTest {
     private static final int ID = 1;
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false);
-    private final UserDTO userDTO = new UserDTO("user", "admin1@admin.de", UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, "admin", "secret1");
+    private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
+            UserDTO.Language.ENGLISH, PASSWORD, "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANT, "participant@part.de", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "user", null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
+    private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILETYPE, CONTENT);
     private final MockMultipartFile wrongFiletype = new MockMultipartFile("file", FILENAME, "type", CONTENT);
     private final MockMultipartFile wrongFilename = new MockMultipartFile("file", "name", FILETYPE, CONTENT);
@@ -149,6 +156,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setPostscript(POSTSCRIPT);
         experimentDTO.setActive(false);
         participantDTO.setStart(null);
+        passwordDTO.setPassword(PASSWORD);
     }
 
     @AfterEach
@@ -169,6 +177,7 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, is(participants)))
                 .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
@@ -202,6 +211,7 @@ public class ExperimentControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("project", is(true)))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, is(participants)))
                 .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
@@ -250,6 +260,7 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute("participant", is(true)))
                 .andExpect(model().attribute(PARTICIPANTS, is(participants)))
                 .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
@@ -495,28 +506,92 @@ public class ExperimentControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testDeleteExperiment() throws Exception {
-        mvc.perform(get("/experiment/delete")
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        mvc.perform(post("/experiment/delete")
                 .param(ID_PARAM, ID_STRING)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(SUCCESS));
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
         verify(experimentService).deleteExperiment(ID);
     }
 
     @Test
-    public void testDeleteExperimentInvalidId() throws Exception {
-        mvc.perform(get("/experiment/delete")
-                .param(ID_PARAM, BLANK)
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testDeleteExperimentPasswordNotMatching() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(post("/experiment/delete")
+                .param(ID_PARAM, ID_STRING)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(INVALID + ID));
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testDeleteExperimentPasswordTooLong() throws Exception {
+        passwordDTO.setPassword(LONG_PASSWORD);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(post("/experiment/delete")
+                .param(ID_PARAM, ID_STRING)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(INVALID + ID));
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
+    public void testDeleteExperimentNotFound() throws Exception {
+        when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
+        mvc.perform(post("/experiment/delete")
+                .param(ID_PARAM, ID_STRING)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testDeleteExperimentInvalidId() throws Exception {
+        mvc.perform(post("/experiment/delete")
+                .param(ID_PARAM, BLANK)
+                .flashAttr(PASSWORD_DTO, passwordDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(experimentService, never()).deleteExperiment(anyInt());
     }
 
@@ -536,6 +611,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
@@ -568,6 +644,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
@@ -651,6 +728,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute(PAGE, FIRST_PAGE))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
@@ -677,6 +755,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute(PAGE, FIRST_PAGE))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
@@ -722,6 +801,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute(PAGE, is(NEXT)))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
@@ -803,6 +883,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute(PAGE, is(PREVIOUS)))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
@@ -881,6 +962,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
@@ -926,6 +1008,7 @@ public class ExperimentControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
                 .andExpect(model().attribute(PARTICIPANTS, participants))
                 .andExpect(model().attribute(PAGE, is(LAST_PAGE + 1)))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
