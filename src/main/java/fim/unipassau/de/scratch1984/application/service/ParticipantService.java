@@ -233,12 +233,12 @@ public class ParticipantService {
                 throw new IllegalStateException("No user entry could be found for user with id "
                         + participant.getUser().getId() + " corresponding to the participant entry for experiment with "
                         + "id " + experimentId + "!");
+            } else if (!simultaneousParticipation(user.get().getId())) {
+                User found = user.get();
+                found.setActive(false);
+                found.setSecret(null);
+                userRepository.save(found);
             }
-
-            User found = user.get();
-            found.setActive(false);
-            found.setSecret(null);
-            userRepository.save(found);
         }
     }
 
@@ -292,6 +292,31 @@ public class ParticipantService {
 
         ParticipantId participantId = new ParticipantId(userId, experimentId);
         participantRepository.deleteById(participantId);
+    }
+
+    /**
+     * Checks whether the user with the given id is participating in another experiment they have not yet completed.
+     *
+     * @param userId The user id to search for.
+     * @return {@code true}, if the user is participating in another experiment, or false otherwise.
+     */
+    @Transactional
+    public boolean simultaneousParticipation(final int userId) {
+        if (userId < Constants.MIN_ID) {
+            logger.error("Cannot search for experiment participation for user with invalid id " + userId + "!");
+            throw new IllegalArgumentException("Cannot search for experiment participation for user with invalid id "
+                    + userId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+
+        try {
+            List<Participant> participation = participantRepository.findAllByEndIsNullAndUser(user);
+            return participation.size() > 1;
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find participation entries for user with id " + userId + "!", e);
+            throw new NotFoundException("Could not find participation entries for user with id " + userId + "!", e);
+        }
     }
 
     /**

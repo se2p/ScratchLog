@@ -381,16 +381,13 @@ public class UserService {
                         + " with id " + experimentId + "!");
             }
 
-            if (user.getSecret() != null) {
-                logger.info("The user with username " + user.getUsername() + " is already participating in a different "
-                        + "experiment, so their account cannot be reactivated for experiment with id " + experimentId
-                        + ".");
-            } else {
-                user.setActive(true);
+            if (user.getSecret() == null) {
                 user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
-                userRepository.save(user);
-                userDTOS.add(createUserDTO(user));
             }
+
+            user.setActive(true);
+            userRepository.save(user);
+            userDTOS.add(createUserDTO(user));
         }
 
         return userDTOS;

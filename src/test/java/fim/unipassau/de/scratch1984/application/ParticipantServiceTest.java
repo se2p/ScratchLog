@@ -278,6 +278,19 @@ public class ParticipantServiceTest {
     }
 
     @Test
+    public void testDeactivateParticipantAccountsSimultaneousParticipation() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findAllByExperiment(experiment)).thenReturn(participantList);
+        when(userRepository.findById(any(Integer.class))).thenReturn(java.util.Optional.of(user));
+        when(participantRepository.findAllByEndIsNullAndUser(any())).thenReturn(participantList);
+        assertDoesNotThrow(() -> participantService.deactivateParticipantAccounts(ID));
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findAllByExperiment(experiment);
+        verify(userRepository, times(5)).findById(any(Integer.class));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     public void testDeactivateParticipantAccountsIllegalState() {
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperiment(experiment)).thenReturn(participantList);
@@ -371,6 +384,46 @@ public class ParticipantServiceTest {
                 () -> participantService.deleteParticipant(ID, -1)
         );
         verify(participantRepository, never()).deleteById(any());
+    }
+
+    @Test
+    public void testSimultaneousParticipation() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(participantRepository.findAllByEndIsNullAndUser(user)).thenReturn(participantList);
+        assertTrue(participantService.simultaneousParticipation(ID));
+        verify(userRepository).getOne(ID);
+        verify(participantRepository).findAllByEndIsNullAndUser(user);
+    }
+
+    @Test
+    public void testSimultaneousParticipationFalse() {
+        List<Participant> oneParticipation = new ArrayList<>();
+        oneParticipation.add(new Participant());
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(participantRepository.findAllByEndIsNullAndUser(user)).thenReturn(oneParticipation);
+        assertFalse(participantService.simultaneousParticipation(ID));
+        verify(userRepository).getOne(ID);
+        verify(participantRepository).findAllByEndIsNullAndUser(user);
+    }
+
+    @Test
+    public void testSimultaneousParticipationNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(participantRepository.findAllByEndIsNullAndUser(user)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> participantService.simultaneousParticipation(ID)
+        );
+        verify(userRepository).getOne(ID);
+        verify(participantRepository).findAllByEndIsNullAndUser(user);
+    }
+
+    @Test
+    public void testSimultaneousParticipationInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.simultaneousParticipation(0)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).findAllByEndIsNullAndUser(any());
     }
 
     private List<Participant> getParticipants(int number) {

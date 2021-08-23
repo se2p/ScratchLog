@@ -320,7 +320,25 @@ public class ParticipantControllerTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(participantService).simultaneousParticipation(ID);
         verify(userService).updateUser(userDTO);
+        verify(participantService).deleteParticipant(userDTO.getId(), ID);
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantSimultaneousParticipation() {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(participantService.simultaneousParticipation(ID)).thenReturn(true);
+        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.deleteParticipant(PARTICIPANT, ID_STRING,
+                model));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(participantService).simultaneousParticipation(ID);
+        verify(userService, never()).updateUser(any());
         verify(participantService).deleteParticipant(userDTO.getId(), ID);
         verify(model, never()).addAttribute(anyString(), any());
     }
@@ -335,6 +353,7 @@ public class ParticipantControllerTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(participantService).simultaneousParticipation(ID);
         verify(userService).updateUser(userDTO);
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
@@ -352,6 +371,7 @@ public class ParticipantControllerTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, times(5)).addAttribute(anyString(), any());
@@ -366,6 +386,7 @@ public class ParticipantControllerTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, times(5)).addAttribute(anyString(), any());
@@ -381,6 +402,7 @@ public class ParticipantControllerTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, times(5)).addAttribute(anyString(), any());
@@ -393,6 +415,7 @@ public class ParticipantControllerTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, times(5)).addAttribute(anyString(), any());
@@ -405,6 +428,7 @@ public class ParticipantControllerTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
@@ -416,6 +440,7 @@ public class ParticipantControllerTest {
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
@@ -427,6 +452,7 @@ public class ParticipantControllerTest {
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
@@ -438,6 +464,7 @@ public class ParticipantControllerTest {
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
@@ -449,6 +476,7 @@ public class ParticipantControllerTest {
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
@@ -460,6 +488,7 @@ public class ParticipantControllerTest {
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
@@ -664,8 +693,25 @@ public class ParticipantControllerTest {
         assertEquals(REDIRECT_FINISH + ID, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
+        verify(participantService).simultaneousParticipation(ID);
         verify(participantService).updateParticipant(participantDTO);
         verify(userService).saveUser(userDTO);
+        verify(httpServletRequest).getSession(false);
+    }
+
+    @Test
+    public void testStopExperimentSimultaneousParticipation() {
+        participantDTO.setStart(LocalDateTime.now());
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        when(participantService.simultaneousParticipation(ID)).thenReturn(true);
+        when(participantService.updateParticipant(participantDTO)).thenReturn(true);
+        assertEquals(REDIRECT_FINISH + ID, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(participantService).getParticipant(ID, ID);
+        verify(participantService).simultaneousParticipation(ID);
+        verify(participantService).updateParticipant(participantDTO);
+        verify(userService, never()).saveUser(any());
         verify(httpServletRequest).getSession(false);
     }
 
@@ -677,6 +723,7 @@ public class ParticipantControllerTest {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
+        verify(participantService).simultaneousParticipation(ID);
         verify(participantService).updateParticipant(participantDTO);
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest).getSession(false);
@@ -691,6 +738,7 @@ public class ParticipantControllerTest {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest).getSession(false);
@@ -703,6 +751,7 @@ public class ParticipantControllerTest {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest).getSession(false);
@@ -715,6 +764,7 @@ public class ParticipantControllerTest {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest).getSession(false);
@@ -726,6 +776,7 @@ public class ParticipantControllerTest {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest, never()).getSession(anyBoolean());
@@ -736,6 +787,7 @@ public class ParticipantControllerTest {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, "0", httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest, never()).getSession(anyBoolean());
@@ -746,6 +798,7 @@ public class ParticipantControllerTest {
         assertEquals(ERROR, participantController.stopExperiment("-1", ID_STRING, httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest, never()).getSession(anyBoolean());
@@ -756,6 +809,7 @@ public class ParticipantControllerTest {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, null, httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest, never()).getSession(anyBoolean());
@@ -766,6 +820,7 @@ public class ParticipantControllerTest {
         assertEquals(ERROR, participantController.stopExperiment(null, ID_STRING, httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest, never()).getSession(anyBoolean());

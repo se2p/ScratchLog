@@ -341,7 +341,32 @@ public class ParticipantControllerIntegrationTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(participantService).simultaneousParticipation(ID);
         verify(userService).updateUser(userDTO);
+        verify(participantService).deleteParticipant(userDTO.getId(), ID);
+    }
+
+    @Test
+    public void testDeleteParticipantSimultaneousParticipation() throws Exception {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(participantService.simultaneousParticipation(ID)).thenReturn(true);
+        when(userService.updateUser(userDTO)).thenReturn(userDTO);
+        mvc.perform(get("/participant/delete")
+                .param(ID_PARAM, ID_STRING)
+                .param(PARTICIPANT, PARTICIPANT)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(participantService).simultaneousParticipation(ID);
+        verify(userService, never()).updateUser(any());
         verify(participantService).deleteParticipant(userDTO.getId(), ID);
     }
 
@@ -363,6 +388,7 @@ public class ParticipantControllerIntegrationTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(participantService).simultaneousParticipation(ID);
         verify(userService).updateUser(userDTO);
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
     }
@@ -392,6 +418,7 @@ public class ParticipantControllerIntegrationTest {
         verify(userService).existsParticipant(userDTO.getId(), ID);
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
     }
@@ -413,6 +440,7 @@ public class ParticipantControllerIntegrationTest {
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(experimentService, never()).getLastParticipantPage(anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
     }
@@ -432,6 +460,7 @@ public class ParticipantControllerIntegrationTest {
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(experimentService, never()).getLastParticipantPage(anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
     }
@@ -587,8 +616,32 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(REDIRECT_FINISH + ID));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
+        verify(participantService).simultaneousParticipation(ID);
         verify(participantService).updateParticipant(participantDTO);
         verify(userService).saveUser(userDTO);
+    }
+
+    @Test
+    public void testStopExperimentSimultaneousParticipation() throws Exception {
+        participantDTO.setStart(LocalDateTime.now());
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        when(participantService.simultaneousParticipation(ID)).thenReturn(true);
+        when(participantService.updateParticipant(participantDTO)).thenReturn(true);
+        mvc.perform(get("/participant/stop")
+                .param(USER_PARAM, ID_STRING)
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_FINISH + ID));
+        verify(userService).getUserById(ID);
+        verify(participantService).getParticipant(ID, ID);
+        verify(participantService).simultaneousParticipation(ID);
+        verify(participantService).updateParticipant(participantDTO);
+        verify(userService, never()).saveUser(any());
     }
 
     @Test
@@ -607,6 +660,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
+        verify(participantService).simultaneousParticipation(ID);
         verify(participantService).updateParticipant(participantDTO);
         verify(userService, never()).saveUser(any());
     }
@@ -625,6 +679,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService).getUserById(ID);
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
     }
@@ -643,6 +698,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
     }
@@ -660,6 +716,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
     }
@@ -677,6 +734,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
     }

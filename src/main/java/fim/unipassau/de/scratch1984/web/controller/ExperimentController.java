@@ -430,8 +430,6 @@ public class ExperimentController {
             model.addAttribute("error", resourceBundle.getString("user_not_participant"));
         } else if (userService.existsParticipant(userDTO.getId(), experimentId)) {
             model.addAttribute("error", resourceBundle.getString("participant_entry"));
-        } else if (userDTO.getSecret() != null) {
-            model.addAttribute("error", resourceBundle.getString("user_participating"));
         } else if (!experimentDTO.isActive()) {
             model.addAttribute("error", resourceBundle.getString("experiment_closed"));
         }
@@ -441,10 +439,10 @@ public class ExperimentController {
             return EXPERIMENT;
         }
 
-        String secret;
+        String secret = userDTO.getSecret() == null ? Secrets.generateRandomBytes(Constants.SECRET_LENGTH)
+                : userDTO.getSecret();
 
         try {
-            secret = Secrets.generateRandomBytes(Constants.SECRET_LENGTH);
             userDTO.setSecret(secret);
             UserDTO saved = userService.updateUser(userDTO);
             participantService.saveParticipant(saved.getId(), experimentId);

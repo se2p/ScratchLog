@@ -128,8 +128,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @return A list of users.
      */
     @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
-            + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.secret IS NULL AND u.role = 'PARTICIPANT' "
-            + "AND u.id NOT IN (SELECT p.user_id FROM participant AS p WHERE p.experiment_id = :id) LIMIT 5;")
+            + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.role = 'PARTICIPANT' AND u.id NOT IN "
+            + "(SELECT p.user_id FROM participant AS p WHERE p.experiment_id = :id) LIMIT 5;")
     List<UserProjection> findParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
 
     /**
