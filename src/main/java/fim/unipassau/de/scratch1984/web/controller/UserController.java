@@ -230,25 +230,37 @@ public class UserController {
         }
 
         try {
-            UserDTO authenticated = userService.loginUser(userDTO);
+            UserDTO findUser = userService.getUser(userDTO.getUsername());
 
-            if (!authenticated.isActive()) {
+            if (!findUser.isActive()) {
                 logger.debug("Tried to log in inactive user with username " + userDTO.getUsername() + ".");
                 model.addAttribute("error", resourceBundle.getString("activate_first"));
                 return LOGIN;
+            } else if (findUser.getAttempts() >= Constants.MAX_LOGIN_ATTEMPTS) {
+                findUser.setActive(false);
+                userService.updateUser(findUser);
+                tokenService.generateToken(TokenDTO.Type.DEACTIVATED, "", findUser.getId());
+                logger.info("Deactivated account of user with username " + userDTO.getUsername()
+                        + " due to exceeding the maximum number of login attempts!");
+                model.addAttribute("error", resourceBundle.getString("account_deactivated"));
+                return LOGIN;
             }
 
-            clearSecurityContext(httpServletRequest);
-            updateSecurityContext(userDTO, httpServletRequest);
-            localeResolver.setLocale(httpServletRequest, httpServletResponse,
-                    getLocaleFromLanguage(userDTO.getLanguage()));
+            if (userService.loginUser(userDTO)) {
+                clearSecurityContext(httpServletRequest);
+                updateSecurityContext(findUser, httpServletRequest);
+                localeResolver.setLocale(httpServletRequest, httpServletResponse,
+                        getLocaleFromLanguage(findUser.getLanguage()));
+                return INDEX;
+            } else {
+                model.addAttribute("error", resourceBundle.getString("authentication_error"));
+                return LOGIN;
+            }
         } catch (NotFoundException e) {
             logger.error("Failed to log in user with username " + userDTO.getUsername() + ".", e);
             model.addAttribute("error", resourceBundle.getString("authentication_error"));
             return LOGIN;
         }
-
-        return INDEX;
     }
 
     /**

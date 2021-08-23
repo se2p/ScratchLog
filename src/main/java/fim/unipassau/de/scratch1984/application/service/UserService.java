@@ -249,15 +249,19 @@ public class UserService {
      * @return A new {@link UserDTO} containing the user's information stored in the database.
      */
     @Transactional
-    public UserDTO loginUser(final UserDTO userDTO) {
+    public boolean loginUser(final UserDTO userDTO) {
         User user = userRepository.findUserByUsername(userDTO.getUsername());
 
         if (user != null) {
             if ((userDTO.getPassword() != null) && (matchesPassword(userDTO.getPassword(), user.getPassword()))) {
-                return createUserDTO(user);
+                user.setAttempts(0);
+                userRepository.save(user);
+                return true;
             } else {
-                logger.error("Failed to log in user with username " + userDTO.getUsername() + ".");
-                throw new NotFoundException("Incorrect username or password!");
+                int attempts = user.getAttempts() + 1;
+                user.setAttempts(attempts);
+                userRepository.save(user);
+                return false;
             }
         }
 
@@ -495,7 +499,7 @@ public class UserService {
         }
 
         user.setActive(userDTO.isActive());
-        user.setReset(userDTO.isReset());
+        user.setAttempts(userDTO.getAttempts());
 
         return user;
     }
@@ -531,7 +535,7 @@ public class UserService {
             userDTO.setSecret(user.getSecret());
         }
 
-        userDTO.setReset(user.isReset());
+        userDTO.setAttempts(user.getAttempts());
         userDTO.setActive(user.isActive());
 
         return userDTO;

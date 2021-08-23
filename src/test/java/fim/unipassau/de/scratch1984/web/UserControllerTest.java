@@ -145,6 +145,7 @@ public class UserControllerTest {
         userDTO.setConfirmPassword("");
         userDTO.setActive(true);
         userDTO.setSecret(SECRET);
+        userDTO.setAttempts(0);
         passwordDTO.setPassword(PASSWORD);
         securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
     }
@@ -244,12 +245,16 @@ public class UserControllerTest {
     @Test
     public void testLoginUser() {
         userDTO.setActive(true);
-        when(userService.loginUser(userDTO)).thenReturn(userDTO);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.loginUser(userDTO)).thenReturn(true);
         when(httpServletRequest.getSession(false)).thenReturn(null);
         when(httpServletRequest.getSession(true)).thenReturn(session);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         assertEquals(REDIRECT, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
                 bindingResult));
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(authenticationProvider).authenticate(any());
         verify(userService).loginUser(userDTO);
         verify(model, never()).addAttribute(anyString(), anyString());
@@ -257,12 +262,46 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testLoginUserInactive() {
-        userDTO.setActive(false);
-        when(userService.loginUser(userDTO)).thenReturn(userDTO);
+    public void testLoginUserFalse() {
+        userDTO.setActive(true);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
         assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
                 bindingResult));
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(authenticationProvider, never()).authenticate(any());
         verify(userService).loginUser(userDTO);
+        verify(model).addAttribute(anyString(), anyString());
+        verify(bindingResult, never()).addError(any());
+    }
+
+    @Test
+    public void testLoginUserMaxAttempts() {
+        userDTO.setActive(true);
+        userDTO.setAttempts(3);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
+        verify(userService).getUser(USERNAME);
+        verify(userService).updateUser(userDTO);
+        verify(tokenService).generateToken(TokenDTO.Type.DEACTIVATED, "", userDTO.getId());
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService, never()).loginUser(any());
+        verify(model).addAttribute(anyString(), anyString());
+        verify(bindingResult, never()).addError(any());
+    }
+
+    @Test
+    public void testLoginUserInactive() {
+        userDTO.setActive(false);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService, never()).loginUser(any());
         verify(authenticationProvider, never()).authenticate(any());
         verify(model).addAttribute(anyString(), anyString());
         verify(bindingResult, never()).addError(any());
@@ -270,10 +309,13 @@ public class UserControllerTest {
 
     @Test
     public void testLoginUserNotFound() {
-        when(userService.loginUser(userDTO)).thenThrow(NotFoundException.class);
+        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
         assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
                 bindingResult));
-        verify(userService).loginUser(userDTO);
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService, never()).loginUser(any());
         verify(authenticationProvider, never()).authenticate(any());
         verify(model).addAttribute(anyString(), anyString());
         verify(bindingResult, never()).addError(any());
@@ -285,6 +327,9 @@ public class UserControllerTest {
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
                 bindingResult));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(userService, never()).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model, never()).addAttribute(anyString(), anyString());
@@ -297,6 +342,9 @@ public class UserControllerTest {
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
                 bindingResult));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(userService, never()).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model, never()).addAttribute(anyString(), anyString());
@@ -309,6 +357,9 @@ public class UserControllerTest {
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
                 bindingResult));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(userService, never()).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model, never()).addAttribute(anyString(), anyString());
@@ -322,6 +373,9 @@ public class UserControllerTest {
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
                 bindingResult));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(userService, never()).loginUser(userDTO);
         verify(authenticationProvider, never()).authenticate(any());
         verify(model, never()).addAttribute(anyString(), anyString());

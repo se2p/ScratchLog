@@ -96,6 +96,7 @@ public class UserControllerIntegrationTest {
     private static final String PASSWORD_RESET = "password-reset";
     private static final String USER_DTO = "userDTO";
     private static final String PASSWORD_DTO = "passwordDTO";
+    private static final String ERROR_ATTRIBUTE = "error";
     private static final String NAME = "name";
     private static final String ID_STRING = "1";
     private static final String ID_PARAM = "id";
@@ -128,6 +129,7 @@ public class UserControllerIntegrationTest {
         userDTO.setRole(UserDTO.Role.ADMIN);
         userDTO.setNewPassword("");
         userDTO.setConfirmPassword("");
+        userDTO.setAttempts(0);
         passwordDTO.setPassword(PASSWORD);
     }
 
@@ -200,7 +202,8 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testLoginUser() throws Exception {
-        when(userService.loginUser(any())).thenReturn(userDTO);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.loginUser(userDTO)).thenReturn(true);
         mvc.perform(post("/users/login")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -209,26 +212,33 @@ public class UserControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT));
-        verify(userService).loginUser(any());
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService).loginUser(userDTO);
     }
 
     @Test
-    public void testLoginUserInactive() throws Exception {
-        userDTO.setActive(false);
-        when(userService.loginUser(any())).thenReturn(userDTO);
+    public void testLoginUserFalse() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(post("/users/login")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
                 .andExpect(status().isOk())
                 .andExpect(view().name(LOGIN));
-        verify(userService).loginUser(any());
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService).loginUser(userDTO);
     }
 
     @Test
     public void testLoginUserNotFound() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.loginUser(any())).thenThrow(NotFoundException.class);
         mvc.perform(post("/users/login")
                 .flashAttr(USER_DTO, userDTO)
@@ -236,9 +246,50 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
                 .andExpect(status().isOk())
                 .andExpect(view().name(LOGIN));
-        verify(userService).loginUser(any());
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService).loginUser(userDTO);
+    }
+
+    @Test
+    public void testLoginUserMaxAttempts() throws Exception {
+        userDTO.setAttempts(4);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(post("/users/login")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
+                .andExpect(status().isOk())
+                .andExpect(view().name(LOGIN));
+        verify(userService).getUser(USERNAME);
+        verify(userService).updateUser(userDTO);
+        verify(tokenService).generateToken(TokenDTO.Type.DEACTIVATED, "", userDTO.getId());
+        verify(userService, never()).loginUser(any());
+    }
+
+    @Test
+    public void testLoginUserInactive() throws Exception {
+        userDTO.setActive(false);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(post("/users/login")
+                .flashAttr(USER_DTO, userDTO)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(view().name(LOGIN));
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService, never()).loginUser(any());
     }
 
     @Test
@@ -253,6 +304,9 @@ public class UserControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(LOGIN));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(userService, never()).loginUser(any());
     }
 

@@ -43,6 +43,7 @@ public class TokenCleaner {
         logger.debug("Starting scheduled task to delete expired tokens.");
         LocalDateTime time = LocalDateTime.now();
         tokenService.deleteExpiredAccounts(time);
+        tokenService.reactivateUserAccounts(time);
         tokenService.deleteExpiredTokens(time);
     }
 
