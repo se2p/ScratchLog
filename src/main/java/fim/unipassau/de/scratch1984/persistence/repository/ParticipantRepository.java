@@ -68,4 +68,13 @@ public interface ParticipantRepository extends JpaRepository<Participant, Partic
      */
     List<Participant> findAllByUser(User user);
 
+    /**
+     * Returns a list of all participant relations for the given user where the experiment has not been finished, if any
+     * entries exist.
+     *
+     * @param user The user to search for.
+     * @return The participation list.
+     */
+    List<Participant> findAllByEndIsNullAndUser(User user);
+
 }

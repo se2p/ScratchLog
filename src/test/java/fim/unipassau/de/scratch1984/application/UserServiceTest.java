@@ -543,7 +543,8 @@ public class UserServiceTest {
         when(participantRepository.findAllByExperimentAndStart(experiment, null)).thenReturn(participants);
         List<UserDTO> userDTOS = userService.reactivateUserAccounts(ID);
         assertAll(
-                () -> assertEquals(2, userDTOS.size()),
+                () -> assertEquals(3, userDTOS.size()),
+                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 2)),
                 () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 3)),
                 () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 4)),
                 () -> assertTrue(userDTOS.stream().allMatch(UserDTO::isActive)),
@@ -551,12 +552,12 @@ public class UserServiceTest {
         );
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findAllByExperimentAndStart(experiment, null);
-        verify(userRepository, times(2)).save(any());
+        verify(userRepository, times(3)).save(any());
     }
 
     @Test
     public void testReactivateUserAccountsUserIdNull() {
-        user3.setId(null);
+        user2.setId(null);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperimentAndStart(experiment, null)).thenReturn(participants);
         assertThrows(IllegalStateException.class,

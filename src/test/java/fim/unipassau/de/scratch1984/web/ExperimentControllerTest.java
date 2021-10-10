@@ -701,6 +701,24 @@ public class ExperimentControllerTest {
     @Test
     public void testSearchForUser() {
         experimentDTO.setActive(true);
+        participant.setSecret("secret");
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
+        when(userService.updateUser(participant)).thenReturn(participant);
+        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
+                httpServletRequest));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
+        verify(userService).updateUser(participant);
+        verify(participantService).saveParticipant(participant.getId(), ID);
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(any(), any());
+    }
+
+    @Test
+    public void testSearchForUserSecretNull() {
+        experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);

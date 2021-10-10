@@ -280,10 +280,13 @@ public class ParticipantController {
         }
 
         try {
-            userDTO.setSecret(null);
-            userDTO.setActive(false);
-            UserDTO saved = userService.updateUser(userDTO);
-            participantService.deleteParticipant(saved.getId(), experimentId);
+            if (!participantService.simultaneousParticipation(userDTO.getId())) {
+                userDTO.setSecret(null);
+                userDTO.setActive(false);
+                userService.updateUser(userDTO);
+            }
+
+            participantService.deleteParticipant(userDTO.getId(), experimentId);
         } catch (NotFoundException e) {
             return ERROR;
         }
@@ -335,13 +338,11 @@ public class ParticipantController {
                     logger.error("Cannot start experiment with id " + experimentId + " for user with id "
                             + userDTO.getId() + " since the experiment is closed!");
                     return ERROR;
-                }
-                if (!userDTO.isActive() || userDTO.getSecret() == null) {
+                } else if (!userDTO.isActive() || userDTO.getSecret() == null) {
                     logger.error("Cannot start experiment for user with id " + userDTO.getId() + " since their account "
                             + "is inactive or their secret null!");
                     return ERROR;
-                }
-                if (participantDTO.getStart() != null || participantDTO.getEnd() != null) {
+                } else if (participantDTO.getStart() != null || participantDTO.getEnd() != null) {
                     logger.error("The user with id " + userDTO.getId() + " tried to start the experiment with id "
                             + experimentId + " even though they already started it once!");
                     return ERROR;
@@ -366,9 +367,8 @@ public class ParticipantController {
 
     /**
      * Stops the experiment with the given id for the user with the given id, if a corresponding participant relation
-     * exists
-     * participants and have not yet started the experiment. If these requirements are not met, no corresponding
-     * participant could be found, or the user is an administrator, they are redirected to the error page instead.
+     * exists. If these requirements are not met, no corresponding participant could be found, or the user is an
+     * administrator, they are redirected to the error page instead.
      *
      * @param experiment The experiment id.
      * @param user The user id.
@@ -411,13 +411,17 @@ public class ParticipantController {
             }
 
             participantDTO.setEnd(LocalDateTime.now());
-            userDTO.setActive(false);
-            userDTO.setSecret(null);
 
-            if (participantService.updateParticipant(participantDTO)) {
-                userService.saveUser(userDTO);
+            if (participantService.simultaneousParticipation(userId)
+                    && participantService.updateParticipant(participantDTO)) {
                 clearSecurityContext(httpServletRequest);
                 return "redirect:/finish?id=" + experimentId;
+            } else if (participantService.updateParticipant(participantDTO)) {
+                    userDTO.setActive(false);
+                    userDTO.setSecret(null);
+                    userService.saveUser(userDTO);
+                    clearSecurityContext(httpServletRequest);
+                    return "redirect:/finish?id=" + experimentId;
             } else {
                 logger.error("Failed to update the finishing time of participant with user id "
                         + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment() + "!");

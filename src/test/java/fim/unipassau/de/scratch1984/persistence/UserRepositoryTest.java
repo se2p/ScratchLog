@@ -194,12 +194,12 @@ public class UserRepositoryTest {
     public void testFindParticipantSuggestionsUsername() {
         List<UserProjection> users = userRepository.findParticipantSuggestions(USERNAME_SEARCH, experiment1.getId());
         assertAll(
-                () -> assertEquals(3, users.size()),
+                () -> assertEquals(4, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user5.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user7.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user8.getUsername()))),
                 () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user6.getUsername()))),
-                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
                 () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername())))
         );
     }
@@ -209,13 +209,12 @@ public class UserRepositoryTest {
         List<UserProjection> users = userRepository.findParticipantSuggestions(EMAIL_SEARCH, experiment1.getId());
         assertAll(
                 () -> assertEquals(5, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user5.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user7.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user8.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user9.getUsername()))),
-                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user10.getUsername()))),
                 () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user6.getUsername()))),
-                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
                 () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername())))
         );
     }

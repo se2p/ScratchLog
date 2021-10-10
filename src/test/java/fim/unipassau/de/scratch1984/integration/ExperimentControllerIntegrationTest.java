@@ -695,6 +695,30 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testSearchForUser() throws Exception {
         experimentDTO.setActive(true);
+        participant.setSecret("secret");
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
+        when(userService.updateUser(participant)).thenReturn(participant);
+        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
+        mvc.perform(get("/experiment/search")
+                .param(PARTICIPANT, PARTICIPANT)
+                .param(ID_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(userService).updateUser(participant);
+        verify(participantService).saveParticipant(participant.getId(), ID);
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testSearchForUserSecretNull() throws Exception {
+        experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
