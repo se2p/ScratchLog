@@ -72,7 +72,7 @@
                 </div>
                 <div class="text-center" th:if="${userCount > limit}">
                     <a class="btn btn-outline-dark" th:href="@{/search/result(query=${query}, page=${page})}"
-                       aria-label="Show more user results">
+                       th:aria-label="#{search_result_label}">
                         <i aria-hidden="true" class="fas fa-angle-down"></i>
                     </a>
                 </div>
@@ -114,7 +114,7 @@
                 </div>
                 <div class="text-center" th:if="${experimentCount > limit}">
                     <a class="btn btn-outline-dark" th:href="@{/search/result(query=${query}, page=${page})}"
-                       aria-label="Show more experiment results">
+                       th:aria-label="#{search_result_label}">
                         <i aria-hidden="true" class="fas fa-angle-down"></i>
                     </a>
                 </div>
@@ -123,9 +123,6 @@
     </div>
     <div class="col-2"></div>
 </div>
-
-<!-- Bootstrap js used for the tabs. -->
-<script type="text/javascript" th:src="@{/js/bootstrap.js}"></script>
 
 <!-- Footer -->
 <div th:insert="footer :: footer"></div>

@@ -10,18 +10,29 @@
     <!-- The navigation bar containing navigation elements. -->
     <nav id="header" class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="col-4">
-            <ul class="navbar-nav">
+            <ul class="navbar-nav flex-row">
                 <li class="navbar-brand" id="brand">
-                    <a class="navbar-brand" th:href="@{/}">Scratch 1984</a>
+                    <a class="navbar-brand" th:text="${T(fim.unipassau.de.scratch1984.util.Constants).PROJECT_NAME}"
+                       th:href="@{/}"></a>
                 </li>
-                <li class="nav-item active my-auto">
-                    <a class="nav-link" th:href="@{/}">Home</a>
+                <li class="nav-item active my-auto ms-2">
+                    <a class="nav-link" th:aria-label="#{home_label}" th:href="@{/}">
+                        <i aria-hidden="true" class="fas fa-home fa-lg"></i>
+                    </a>
                 </li>
-                <li class="nav-item my-auto" sec:authorize="hasRole('ADMIN')">
-                    <a id="experiment" class="nav-link" th:href="@{/experiment/create}" th:text="#{new_experiment}"></a>
-                </li>
-                <li class="nav-item my-auto" sec:authorize="hasRole('ADMIN')">
-                    <a id="user" class="nav-link" th:href="@{/users/add}" th:text="#{new_user}"></a>
+                <li class="nav-item my-auto dropdown ms-2" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" id="addMenu"
+                       data-bs-toggle="dropdown" aria-expanded="false" th:aria-label="#{add_label}">
+                        <i aria-hidden="true" class="fa fa-plus fa-lg"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="addMenu">
+                        <li>
+                            <a class="dropdown-item" th:href="@{/experiment/create}" th:text="#{new_experiment}"></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/users/add}" th:text="#{new_user}"></a>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </div>
@@ -31,7 +42,7 @@
                     <input class="form-control form-text mt-0" id="search" th:name="query" th:placeholder="#{search}"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
                     <button class="input-group-text btn btn-outline-primary" type="submit"
-                            aria-label="Search for users or experiments" th:href="@{/search}">
+                            th:aria-label="#{search_label}" th:href="@{/search}">
                         <i aria-hidden="true" class="fa fa-search"></i>
                     </button>
                 </div>
@@ -39,19 +50,21 @@
             </form>
         </div>
         <div class="col-4">
-            <ul class="navbar-nav float-end">
+            <ul class="navbar-nav float-end flex-row">
                 <li class="nav-item active" sec:authorize="isAnonymous()">
-                    <a id="login" class="btn btn-link" th:href="@{/login}">Login</a>
-                </li>
-                <li class="nav-item active" sec:authorize="hasRole('PARTICIPANT')">
-                    <a class="btn btn-link" th:href="@{/users/profile}">
-                        <span th:text="#{profile}"></span>
+                    <a id="login" class="btn btn-link" th:aria-label="#{login_label}" th:href="@{/login}">
+                        <i aria-hidden="true" class="fas fa-sign-in-alt fa-lg"></i>
                     </a>
                 </li>
                 <li class="nav-item active" sec:authorize="hasRole('PARTICIPANT')">
-                    <form th:action="@{/users/logout}" method="post">
-                        <input class="btn btn-link" type="submit" th:value="Logout">
-                    </form>
+                    <a class="btn btn-link" th:aria-label="#{user_label}" th:href="@{/users/profile}">
+                        <i aria-hidden="true" class="fas fa-user fa-lg"></i>
+                    </a>
+                </li>
+                <li class="nav-item active" sec:authorize="hasRole('PARTICIPANT')">
+                    <a id="logout" class="btn btn-link" th:aria-label="#{logout_label}" th:href="@{/users/logout}">
+                        <i aria-hidden="true" class="fas fa-sign-out-alt fa-lg"></i>
+                    </a>
                 </li>
             </ul>
         </div>
@@ -60,6 +73,8 @@
     <script th:src="@{/webjars/jquery/3.5.1/jquery.min.js}"></script>
     <!-- Script to fetch the search suggestions. -->
     <script type="text/javascript" th:src="@{/js/searchSuggestions.js}"></script>
+    <!-- Bootstrap js for the dropdown menu -->
+    <script type="text/javascript" th:src="@{/js/bootstrap.js}"></script>
 </div>
 </body>
 </html>

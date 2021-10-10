@@ -111,7 +111,7 @@
                                 <span class="sr-only" th:text="#{table_empty}"></span>
                             </span>
                             <span th:unless="${participant.start == null}">
-                                <a class="no_decoration" aria-label="Go to result page for this user"
+                                <a class="no_decoration" th:aria-label="#{result_label}"
                                    th:href="@{/result(experiment=${experimentDTO.id}, user=${participant.user.id})}">
                                     <i aria-hidden="true" class="far fa-chart-bar"></i>
                                 </a>
@@ -122,23 +122,22 @@
                 </table>
                 <div class="text-center">
                     <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                       th:href="@{/experiment/first(id=${experimentDTO.id})}"
-                       aria-label="Show the first participant page">
+                       th:href="@{/experiment/first(id=${experimentDTO.id})}" th:aria-label="#{first_page_label}">
                         <i aria-hidden="true" class="fas fa-angle-double-left"></i>
                     </a>
                     <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
                        th:href="@{/experiment/previous(id=${experimentDTO.id}, page=${page})}"
-                       aria-label="Show the previous participant page">
+                       th:aria-label="#{previous_page_label}">
                         <i aria-hidden="true" class="fas fa-angle-left"></i>
                     </a>
                     <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
                        th:href="@{/experiment/next(id=${experimentDTO.id}, page=${page})}"
-                       aria-label="Show the next participant page">
+                       th:aria-label="#{next_page_label}">
                         <i aria-hidden="true" class="fas fa-angle-right"></i>
                     </a>
                     <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
                        th:href="@{/experiment/last(id=${experimentDTO.id})}"
-                       aria-label="Show the last participant page">
+                       th:aria-label="#{last_page_label}">
                         <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                     </a>
                 </div>

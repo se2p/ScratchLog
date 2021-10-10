@@ -13,6 +13,11 @@ public final class Constants {
     }
 
     /**
+     * The project name to be displayed in the header and the index page.
+     */
+    public static final String PROJECT_NAME = "Scratch1984";
+
+    /**
      * The base URL under which the application is deployed.
      */
     public static final String BASE_URL = "http://localhost:8090";

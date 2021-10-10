@@ -313,7 +313,7 @@ public class UserControllerIntegrationTest {
     @Test
     public void testLogoutUser() throws Exception {
         when(userService.existsUser(anyString())).thenReturn(true);
-        mvc.perform(post("/users/logout")
+        mvc.perform(get("/users/logout")
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -325,7 +325,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testLogoutUserNonExistent() throws Exception {
-        mvc.perform(post("/users/logout")
+        mvc.perform(get("/users/logout")
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))

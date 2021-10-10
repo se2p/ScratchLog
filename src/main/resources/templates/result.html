@@ -42,7 +42,7 @@
             </div>
             <div class="col-5 text-end" th:if="${zips.size() > 1}">
                 <a class="btn btn-primary" th:href="@{/result/zips(user=${user}, experiment=${experiment})}"
-                   aria-label="Download all participant zip files">
+                   th:aria-label="#{zip_label}">
                     <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
                     <span th:text="#{all_files}"></span>
                 </a>
@@ -112,14 +112,14 @@
             <div class="col-5 text-end" th:if="${codeCount > 0}">
                 <div class="mb-3">
                     <a class="btn btn-primary" th:href="@{/result/xmls(user=${user}, experiment=${experiment})}"
-                       aria-label="Download all participant xml files">
+                       th:aria-label="#{xml_label}">
                         <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
                         <span th:text="#{all_xml}"></span>
                     </a>
                 </div>
                 <div class="mb-3">
                     <a class="btn btn-primary" th:href="@{/result/jsons(user=${user}, experiment=${experiment})}"
-                       aria-label="Download all participant json files">
+                       th:aria-label="#{json_label}">
                         <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
                         <span th:text="#{all_json}"></span>
                     </a>
