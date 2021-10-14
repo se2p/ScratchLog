@@ -270,7 +270,7 @@ public class UserController {
      * @param httpServletRequest The {@link HttpServletRequest} containing the user session.
      * @return The index page on success, or the error page otherwise.
      */
-    @PostMapping("/logout")
+    @GetMapping("/logout")
     @Secured("ROLE_PARTICIPANT")
     public String logoutUser(final HttpServletRequest httpServletRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Scratch 1984</title>
+    <title th:text="${T(fim.unipassau.de.scratch1984.util.Constants).PROJECT_NAME}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
     <link rel="stylesheet" th:href="@{/design/style.css}">
@@ -22,7 +22,7 @@
             <div class="col-12 alert alert-danger" th:text="#{error}"></div>
         </div>
         <div sec:authorize="!hasRole('ADMIN')">
-            <h2 class="mb-5">Scratch 1984</h2>
+            <h2 class="mb-5" th:text="${T(fim.unipassau.de.scratch1984.util.Constants).PROJECT_NAME}"></h2>
             <div class="mx-5" th:text="#{project_info}"></div>
         </div>
         <div sec:authorize="hasRole('ADMIN')">
@@ -60,20 +60,20 @@
                 </tbody>
             </table>
             <div class="text-center">
-                <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                      th:href="@{/first}" aria-label="Show the first participant page">
+                <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}" th:href="@{/first}"
+                   th:aria-label="#{first_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-left"></i>
                 </a>
                 <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                      th:href="@{/previous(page=${page})}" aria-label="Show the previous participant page">
+                      th:href="@{/previous(page=${page})}" th:aria-label="#{previous_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-left"></i>
                 </a>
                 <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
-                      th:href="@{/next(page=${page})}" aria-label="Show the next participant page">
+                      th:href="@{/next(page=${page})}" th:aria-label="#{next_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-right"></i>
                 </a>
-                <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
-                      th:href="@{/last}" aria-label="Show the last participant page">
+                <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}" th:href="@{/last}"
+                   th:aria-label="#{last_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                 </a>
             </div>

@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Experiment Participation</title>
+    <title th:text="#{participant_email_title}"></title>
 
     <style>
         #header, #footer {
@@ -32,7 +32,7 @@
 <body>
 <!-- The header for email templates -->
 <nav id="header">
-    <a th:href="${baseUrl}">Scratch 1984</a>
+    <a th:href="${baseUrl}" th:text="${T(fim.unipassau.de.scratch1984.util.Constants).PROJECT_NAME}"></a>
 </nav>
 
 <!-- Page content -->
