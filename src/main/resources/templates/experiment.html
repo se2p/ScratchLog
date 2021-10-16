@@ -15,20 +15,32 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+
+        <!-- The error message shown at the top of the page when entering an invalid password. -->
         <div class="row" th:if="${param.invalid != null}">
             <div class="col-12 alert alert-danger" th:text="#{invalid_password}"></div>
         </div>
+
+        <!-- The error message shown at the top of the page when a different error occurs. -->
         <div class="row" th:if="${error != null}">
             <div class="col-12 alert alert-danger" th:text="${error}"></div>
         </div>
+
+        <!-- The buttons for editing and deleting the experiment. -->
         <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
             <a class="btn btn-primary" th:text="#{edit}" th:href="@{/experiment/edit(id=${experimentDTO.id})}"></a>
             <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
         </div>
+
+        <!-- The experiment title. -->
         <h2 class="mb-3" th:text="${experimentDTO.title}"></h2>
+
+        <!-- The experiment description. -->
         <div class="row">
             <div class="col-12 mb-5" th:text="${experimentDTO.description}"></div>
         </div>
+
+        <!-- The download button for the experiment csv file and upload button for an initial sb3 template. -->
         <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
             <a class="btn btn-primary" th:unless="${participants.isEmpty()}"
                th:href="@{/experiment/csv(id=${experimentDTO.id})}">
@@ -45,6 +57,8 @@
             <input id="deleteSb3" class="btn btn-danger" type="submit" th:value="#{delete_sb3}"
                    th:unless="${project == null}"/>
         </div>
+
+        <!-- The experiment status and the button to start or stop the experiment. -->
         <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
             <div>
                 <span class="form-label me-2 fs-5" th:text="#{status}"></span>
@@ -58,8 +72,11 @@
             <input th:if="${experimentDTO.active}" id="close" class="btn btn-secondary" type="submit"
                    th:value="#{close}">
         </div>
+
+        <!-- The table of participants in the experiment and the buttons for adding and removing participants. -->
         <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
             <div class="col-7">
+                <!-- The table containing the participant information. -->
                 <table class="table table-hover">
                     <thead>
                     <tr>
@@ -120,6 +137,7 @@
                     </tr>
                     </tbody>
                 </table>
+                <!-- The navigation elements below the table. -->
                 <div class="text-center">
                     <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
                        th:href="@{/experiment/first(id=${experimentDTO.id})}" th:aria-label="#{first_page_label}">
@@ -142,6 +160,7 @@
                     </a>
                 </div>
             </div>
+            <!-- The buttons for participant management. -->
             <div class="col-5 text-end" th:if="${experimentDTO.active}">
                 <div class="mb-3">
                     <input id="add" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
@@ -157,9 +176,13 @@
                 </div>
             </div>
         </div>
+
+        <!-- The experiment information. -->
         <div class="row mb-5">
             <div class="col-12" th:utext="${experimentDTO.info}"></div>
         </div>
+
+        <!-- The button to start the experiment. -->
         <div class="text-center" th:if="${participant != null}">
             <a class="btn btn-primary" target="_blank" th:href="@{/participant/start(id=${experimentDTO.id})}"
                th:text="#{start_experiment}"></a>

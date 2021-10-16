@@ -11,15 +11,18 @@
     <nav id="header" class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="col-4">
             <ul class="navbar-nav flex-row">
+                <!-- The application name displayed in the header. -->
                 <li class="navbar-brand" id="brand">
                     <a class="navbar-brand" th:text="${T(fim.unipassau.de.scratch1984.util.Constants).PROJECT_NAME}"
                        th:href="@{/}"></a>
                 </li>
+                <!-- The home icon. -->
                 <li class="nav-item active my-auto ms-2">
                     <a class="nav-link" th:aria-label="#{home_label}" th:href="@{/}">
                         <i aria-hidden="true" class="fas fa-home fa-lg"></i>
                     </a>
                 </li>
+                <!-- The dropdown menu to add new users or experiments. -->
                 <li class="nav-item my-auto dropdown ms-2" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" role="button" id="addMenu"
                        data-bs-toggle="dropdown" aria-expanded="false" th:aria-label="#{add_label}">
@@ -37,6 +40,7 @@
             </ul>
         </div>
         <div class="mx-auto col-4">
+            <!-- The search bar. -->
             <form th:action="@{/search/result}" method="get">
                 <div class="input-group" sec:authorize="hasRole('ADMIN')">
                     <input class="form-control form-text mt-0" id="search" th:name="query" th:placeholder="#{search}"
@@ -51,16 +55,19 @@
         </div>
         <div class="col-4">
             <ul class="navbar-nav float-end flex-row">
+                <!-- The login icon. -->
                 <li class="nav-item active" sec:authorize="isAnonymous()">
                     <a id="login" class="btn btn-link" th:aria-label="#{login_label}" th:href="@{/login}">
                         <i aria-hidden="true" class="fas fa-sign-in-alt fa-lg"></i>
                     </a>
                 </li>
+                <!-- The profile icon. -->
                 <li class="nav-item active" sec:authorize="hasRole('PARTICIPANT')">
                     <a class="btn btn-link" th:aria-label="#{user_label}" th:href="@{/users/profile}">
                         <i aria-hidden="true" class="fas fa-user fa-lg"></i>
                     </a>
                 </li>
+                <!-- The logout icon. -->
                 <li class="nav-item active" sec:authorize="hasRole('PARTICIPANT')">
                     <a id="logout" class="btn btn-link" th:aria-label="#{logout_label}" th:href="@{/users/logout}">
                         <i aria-hidden="true" class="fas fa-sign-out-alt fa-lg"></i>

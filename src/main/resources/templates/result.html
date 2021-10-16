@@ -26,7 +26,11 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+
+        <!-- The result page heading. -->
         <h2 class="mb-5" th:text="#{results}"></h2>
+
+        <!-- The uploaded files section to download files the participant uploaded during the experiment. -->
         <div class="row mb-3">
             <h4 th:text="#{files}"></h4>
             <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${files.isEmpty()}">
@@ -38,6 +42,8 @@
                 </li>
             </ul>
         </div>
+
+        <!-- The project files heading with the corresponding download all button. -->
         <div class="row">
             <div class="col-7">
                 <h4 th:text="#{zips}"></h4>
@@ -50,6 +56,8 @@
                 </a>
             </div>
         </div>
+
+        <!-- The sb3 project files section to download files saved for the participant during the experiment. -->
         <div class="row mb-5">
             <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${zips.isEmpty()}">
                 <li class="list-group-item" th:text="#{table_empty}"></li>
@@ -61,6 +69,8 @@
             </ul>
             <div class="text-muted mt-3" th:text="#{download_info}"></div>
         </div>
+
+        <!-- The block and resource events tables. -->
         <div class="row mb-5">
             <div class="col-6">
                 <h4 class="mb-3" th:text="#{block_events}"></h4>
@@ -107,12 +117,13 @@
                 </table>
             </div>
         </div>
+
+        <!-- The download sb3 files heading and the corresponding button. -->
         <div class="row mb-3">
             <div class="col-7">
                 <h4 th:text="#{download_files}"></h4>
             </div>
             <div class="col-5 text-end" th:if="${codeCount > 0}">
-                <!-- TODO: need mapping -->
                 <a class="btn btn-primary" th:href="@{/result/sb3s(user=${user}, experiment=${experiment})}"
                    th:aria-label="#{sb3_label}">
                     <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
@@ -120,14 +131,18 @@
                 </a>
             </div>
         </div>
+
         <div class="mb-5" th:unless="${codeCount > 0}">
             <span class="text-muted mb-3" th:text="#{table_empty}"></span>
         </div>
+
+        <!-- The download sb3 files section. -->
         <div class="mb-5" th:if="${codeCount > 0}">
             <span class="text-muted" th:if="${codeCount > 0}">
                 <span th:text="#{codes}"></span>
                 <span th:text="${codeCount}"></span>
             </span>
+            <!-- The accordion for downloading sb3 files in a certain interval. -->
             <div class="accordion mt-3" id="accordionFiles">
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="rangeHeading">
@@ -136,6 +151,7 @@
                                 th:text="#{files_range}">
                         </button>
                     </h2>
+                    <!-- The content for downloading all sb3 files in a certain interval. -->
                     <div id="range" class="accordion-collapse collapse" aria-labelledby="rangeHeading"
                          data-bs-parent="#accordionFiles">
                         <div class="accordion-body">
@@ -173,6 +189,7 @@
                                 th:text="#{files_steps}">
                         </button>
                     </h2>
+                    <!-- The content for downloading sb3 files at certain time intervals. -->
                     <div id="steps" class="accordion-collapse collapse" aria-labelledby="stepHeading"
                          data-bs-parent="#accordionFiles">
                         <div class="accordion-body">
@@ -212,6 +229,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- The participant code heading with the buttons to download all xml or json codes. -->
         <div class="row">
             <div class="col-7">
                 <h4 th:text="#{code}"></h4>
@@ -233,17 +252,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- The blockly area rendering the participant code. -->
         <div class="row my-5" th:if="${codeCount > 0}">
             <div id="blocklyArea">
                 <div id="blocklyDiv" style="position: relative"></div>
                 <xml id="toolbox" style="display: none"></xml>
             </div>
         </div>
+
         <div class="row" th:unless="${codeCount > 0}">
             <ul class="list-group list-group-horizontal text-muted mx-3">
                 <li class="list-group-item" th:text="#{table_empty}"></li>
             </ul>
         </div>
+
+        <!-- The navigation elements to go back and forth between code snippets and the buttons to download the
+        currently displayed code as xml, json or in a sb3 file. -->
         <div class="text-center" th:if="${codeCount > 0}">
             <span class="btn btn-outline-dark" id="first">
                 <i aria-hidden="true" class="fas fa-angle-double-left" title="Show the first participant code"></i>

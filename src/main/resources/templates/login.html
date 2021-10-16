@@ -15,12 +15,19 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+
+        <!-- The error message shown at the top of the page when an error occurs. -->
         <div class="row" th:style="${error != null ? 'display:block' : 'display:none'}">
             <div class="col-12 alert alert-danger" th:text="${error}"></div>
         </div>
+
+        <!-- The login page heading. -->
         <h2 class="mb-5">Login</h2>
+
+        <!-- The login form. -->
         <form th:action="@{/users/login}" th:object="${userDTO}" th:name="userDTO" method="post">
             <div class="row mx-5">
+                <!-- The input group for the username. -->
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="username" th:text="#{username}"></label>
                     <div class="input-group">
@@ -35,7 +42,7 @@
                     </div>
                     <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                 </div>
-
+                <!-- The input group for the password. -->
                 <div class="col-12 mb-5 form-group position-relative">
                     <label class="form-label" for="password" th:text="#{password}"></label>
                     <div class="input-group">
@@ -50,7 +57,7 @@
                     </div>
                     <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 </div>
-
+                <!-- The submit button. -->
                 <div class="d-flex justify-content-between">
                     <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
                     <a class="btn btn-secondary" th:text="#{forgot_password}" th:href="@{/reset}"></a>
