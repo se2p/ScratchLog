@@ -5,8 +5,10 @@
     <title th:text="#{result_title}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/nouislider.css}">
     <link rel="stylesheet" th:href="@{/design/style.css}">
 
+    <script type="text/javascript" th:src="@{/js/nouislider.js}"></script>
     <script type="text/javascript" th:src="@{/node_modules/blockly/blockly_compressed.js}"></script>
     <script type="text/javascript" th:src="@{/node_modules/blockly/blocks_compressed.js}"></script>
     <script type="application/json" th:src="@{/node_modules/blockly/msg/js/en.js}"></script>
@@ -103,6 +105,111 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-7">
+                <h4 th:text="#{download_files}"></h4>
+            </div>
+            <div class="col-5 text-end" th:if="${codeCount > 0}">
+                <!-- TODO: need mapping -->
+                <a class="btn btn-primary" th:href="@{/result/sb3s(user=${user}, experiment=${experiment})}"
+                   th:aria-label="#{sb3_label}">
+                    <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                    <span th:text="#{all_sb3}"></span>
+                </a>
+            </div>
+        </div>
+        <div class="mb-5" th:unless="${codeCount > 0}">
+            <span class="text-muted mb-3" th:text="#{table_empty}"></span>
+        </div>
+        <div class="mb-5" th:if="${codeCount > 0}">
+            <span class="text-muted" th:if="${codeCount > 0}">
+                <span th:text="#{codes}"></span>
+                <span th:text="${codeCount}"></span>
+            </span>
+            <div class="accordion mt-3" id="accordionFiles">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="rangeHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#range" aria-expanded="false" aria-controls="range"
+                                th:text="#{files_range}">
+                        </button>
+                    </h2>
+                    <div id="range" class="accordion-collapse collapse" aria-labelledby="rangeHeading"
+                         data-bs-parent="#accordionFiles">
+                        <div class="accordion-body">
+                            <p th:text="#{files_range_info}"></p>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" value="" id="rangeLastFileCheck">
+                                <label class="form-check-label" for="rangeLastFileCheck" th:text="#{last_file}"></label>
+                            </div>
+                            <div id="slider"></div>
+                            <div class="d-flex justify-content-between mt-3">
+                                <div>
+                                    <span th:text="#{from}"></span>
+                                    <span id="from"></span>
+                                </div>
+                                <div>
+                                    <span th:text="#{to}"></span>
+                                    <span id="to"></span>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <a class="btn btn-primary" id="downloadRange">
+                                    <i aria-hidden="true" class="fas fa-download fa-inverse"
+                                       title="Download sb3 file"></i>
+                                    <span class="sr-only" th:text="#{download}"></span>
+                                    <span>Sb3</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="stepHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#steps" aria-expanded="false" aria-controls="steps"
+                                th:text="#{files_steps}">
+                        </button>
+                    </h2>
+                    <div id="steps" class="accordion-collapse collapse" aria-labelledby="stepHeading"
+                         data-bs-parent="#accordionFiles">
+                        <div class="accordion-body">
+                            <p th:text="#{files_steps_info}"></p>
+                            <ul class="list-group list-group-horizontal justify-content-center">
+                                <li class="list-group-item" th:if="${codeCount > 1}">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=1)}">1</a>
+                                </li>
+                                <li class="list-group-item" th:if="${codeCount > 2}">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=2)}">2</a>
+                                </li>
+                                <li class="list-group-item" th:if="${codeCount > 3}">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=3)}">3</a>
+                                </li>
+                                <li class="list-group-item" th:if="${codeCount > 5}">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=5)}">5</a>
+                                </li>
+                                <li class="list-group-item" th:if="${codeCount > 10}">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=10)}">10</a>
+                                </li>
+                                <li class="list-group-item" th:if="${codeCount > 15}">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=15)}">15</a>
+                                </li>
+                                <li class="list-group-item" th:if="${codeCount > 30}">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=30)}">30</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="row">

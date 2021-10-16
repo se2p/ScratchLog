@@ -7,11 +7,19 @@ var blocklyCode = '';
 let xmlButton = document.getElementById("xml");
 let jsonButton = document.getElementById("json");
 let sb3Button = document.getElementById("sb3");
+let downloadRangeButton = document.getElementById("downloadRange");
 
 let first = document.getElementById("first");
 let prev = document.getElementById("prev");
 let next = document.getElementById("next");
 let last = document.getElementById("last");
+
+let slider = document.getElementById("slider");
+let sliderValues = [
+    document.getElementById("from"),
+    document.getElementById("to")
+];
+let rangeLastFile = document.getElementById("rangeLastFileCheck");
 
 let count = 0;
 let pos = 0;
@@ -240,3 +248,17 @@ function getXML() {
         }
     });
 }
+
+noUiSlider.create(slider, {
+    start: [1, total],
+    connect: true,
+    step: 1,
+    range: {
+        'min': 1,
+        'max': total
+    }
+});
+
+slider.noUiSlider.on('update', function (values, handle) {
+    sliderValues[handle].innerHTML = values[handle];
+});

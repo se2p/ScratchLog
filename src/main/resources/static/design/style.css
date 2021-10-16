@@ -204,6 +204,24 @@ code {
     width: 33%;
 }
 
+#slider {
+    height: 20px;
+}
+
+#slider .noUi-connect {
+    background: #f3f3f3;
+}
+
+#slider .noUi-handle {
+    height: 36px;
+    width: 36px;
+    top: -10px;
+    right: -18px;
+    border-radius: 18px;
+    background: #0d6efd;
+    border: 5px;
+}
+
 /* Used for <span>-attributes that convey the meaning of Font Awesome icons for screen readers. */
 .sr-only {
     visibility: hidden;
