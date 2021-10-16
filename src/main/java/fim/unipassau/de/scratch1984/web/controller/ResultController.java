@@ -227,58 +227,14 @@ public class ResultController {
             ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "sb3");
 
             if (projection.getProject() != null) {
-                InputStream file = new ByteArrayInputStream(projection.getProject());
-                ZipInputStream zin = new ZipInputStream(file);
-                ZipEntry ze;
-
-                while ((ze = zin.getNextEntry()) != null) {
-                    if (!ze.getName().equals("project.json")) {
-                        zos.putNextEntry(ze);
-                        int current;
-                        while ((current = zin.read()) >= 0) {
-                            zos.write(current);
-                        }
-                        zos.closeEntry();
-                    }
-                }
-
-                zin.close();
-                file.close();
+                writeInitialProjectData(zos, projection.getProject());
             }
 
             for (FileDTO fileDTO : fileDTOS) {
-                if (fileDTO.getName().endsWith("zip")) {
-                    InputStream file = new ByteArrayInputStream(fileDTO.getContent());
-                    ZipInputStream zin = new ZipInputStream(file);
-                    ZipEntry ze = zin.getNextEntry();
-
-                    if (ze != null) {
-                        ZipEntry entry = new ZipEntry(fileDTO.getName().replace("zip", fileDTO.getFiletype()));
-                        entry.setSize(ze.getSize());
-                        zos.putNextEntry(entry);
-                        int current;
-                        while ((current = zin.read()) >= 0) {
-                            zos.write(current);
-                        }
-                        zos.closeEntry();
-                    }
-
-                    zin.close();
-                    file.close();
-                } else {
-                    ZipEntry entry = new ZipEntry(fileDTO.getId() + fileDTO.getName());
-                    entry.setSize(fileDTO.getContent().length);
-                    zos.putNextEntry(entry);
-                    zos.write(fileDTO.getContent());
-                    zos.closeEntry();
-                }
+                writeSavedFileData(zos, fileDTO);
             }
 
-            ZipEntry entry = new ZipEntry("project.json");
-            entry.setSize(code.length);
-            zos.putNextEntry(entry);
-            zos.write(code);
-            zos.closeEntry();
+            writeJsonData(zos, code);
             zos.finish();
         } catch (IOException e) {
             logger.error("Could not generate zip file due to IOException!", e);
@@ -523,6 +479,85 @@ public class ResultController {
                 + "_experiment" + experimentId + fileEnding);
         httpServletResponse.setStatus(HttpServletResponse.SC_OK);
         return new ZipOutputStream(httpServletResponse.getOutputStream());
+    }
+
+    /**
+     * Writes the content of the given byte[] representing the initial sb3 project loaded on experiment start to the
+     * given {@link ZipOutputStream}.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param project The initial sb3 project.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeInitialProjectData(final ZipOutputStream zos, final byte[] project) throws IOException {
+        InputStream file = new ByteArrayInputStream(project);
+        ZipInputStream zin = new ZipInputStream(file);
+        ZipEntry ze;
+
+        while ((ze = zin.getNextEntry()) != null) {
+            if (!ze.getName().equals("project.json")) {
+                zos.putNextEntry(ze);
+                int current;
+                while ((current = zin.read()) >= 0) {
+                    zos.write(current);
+                }
+                zos.closeEntry();
+            }
+        }
+
+        zin.close();
+        file.close();
+    }
+
+    /**
+     * Writes the content of the given {@link FileDTO} representing a file the participant uploaded during the
+     * experiment to the given {@link ZipOutputStream}.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param fileDTO The {@link FileDTO} containing the file data.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeSavedFileData(final ZipOutputStream zos, final FileDTO fileDTO) throws IOException {
+        if (fileDTO.getName().endsWith("zip")) {
+            InputStream file = new ByteArrayInputStream(fileDTO.getContent());
+            ZipInputStream zin = new ZipInputStream(file);
+            ZipEntry ze = zin.getNextEntry();
+
+            if (ze != null) {
+                ZipEntry entry = new ZipEntry(fileDTO.getName().replace("zip", fileDTO.getFiletype()));
+                entry.setSize(ze.getSize());
+                zos.putNextEntry(entry);
+                int current;
+                while ((current = zin.read()) >= 0) {
+                    zos.write(current);
+                }
+                zos.closeEntry();
+            }
+
+            zin.close();
+            file.close();
+        } else {
+            ZipEntry entry = new ZipEntry(fileDTO.getId() + fileDTO.getName());
+            entry.setSize(fileDTO.getContent().length);
+            zos.putNextEntry(entry);
+            zos.write(fileDTO.getContent());
+            zos.closeEntry();
+        }
+    }
+
+    /**
+     * Writes the content of the given json data to the given {@link ZipOutputStream}.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param code The byte[] containing the json data.
+     * @throws IOException if the content could not be written correctly.
+     */
+    private void writeJsonData(final ZipOutputStream zos, final byte[] code) throws IOException {
+        ZipEntry entry = new ZipEntry("project.json");
+        entry.setSize(code.length);
+        zos.putNextEntry(entry);
+        zos.write(code);
+        zos.closeEntry();
     }
 
     /**
