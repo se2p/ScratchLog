@@ -438,9 +438,9 @@ public class FileServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> fileService.findFinalProject(ID, 0)
         );
-        verify(userRepository, never()).getOne(ID);
-        verify(experimentRepository, never()).getOne(ID);
-        verify(sb3ZipRepository, never()).findFirstByUserAndExperiment(user, experiment);
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(sb3ZipRepository, never()).findFirstByUserAndExperiment(any(), any());
     }
 
     @Test
@@ -448,9 +448,9 @@ public class FileServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> fileService.findFinalProject(-1, ID)
         );
-        verify(userRepository, never()).getOne(ID);
-        verify(experimentRepository, never()).getOne(ID);
-        verify(sb3ZipRepository, never()).findFirstByUserAndExperiment(user, experiment);
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(sb3ZipRepository, never()).findFirstByUserAndExperiment(any(), any());
     }
 
     @Test

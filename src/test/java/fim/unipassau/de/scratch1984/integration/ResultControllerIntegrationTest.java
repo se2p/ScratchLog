@@ -40,6 +40,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
@@ -645,6 +646,109 @@ public class ResultControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
         verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testDownloadSb3Files() throws Exception {
+        URL zipUrl = getClass().getClassLoader().getResource("Taylor-b.zip");
+        URL sb3 = getClass().getClassLoader().getResource("Scratch-Projekt.sb3");
+        File sb3File = new File(sb3.getFile());
+        File zipFile = new File(zipUrl.getFile());
+        byte[] sb3Bytes = new byte[(int) sb3File.length()];
+        byte[] zipBytes = new byte[(int) zipFile.length()];
+        FileInputStream sb3InputStream = new FileInputStream(sb3File);
+        FileInputStream zipInputStream = new FileInputStream(zipFile);
+        sb3InputStream.read(sb3Bytes);
+        sb3InputStream.close();
+        zipInputStream.read(zipBytes);
+        zipInputStream.close();
+        zip.setContent(zipBytes);
+        List<FileDTO> fileDTOS = new ArrayList<>();
+        fileDTOS.add(fileDTO);
+        fileDTOS.add(zip);
+        ExperimentProjection projection = new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return ID;
+            }
+
+            @Override
+            public byte[] getProject() {
+                return sb3Bytes;
+            }
+        };
+        when(experimentService.getSb3File(ID)).thenReturn(projection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
+        mvc.perform(get("/result/sb3s")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        is("attachment;filename=zip_user1_experiment1.zip")));
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).getJsonForUser(ID, ID);
+        verify(fileService).findFinalProject(ID, ID);
+    }
+
+    @Test
+    public void testDownloadSb3FilesNoInitialAndFinalProjects() throws Exception {
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.empty());
+        mvc.perform(get("/result/sb3s")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        is("attachment;filename=zip_user1_experiment1.zip")));
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).getJsonForUser(ID, ID);
+        verify(fileService).findFinalProject(ID, ID);
+    }
+
+    @Test
+    public void testDownloadSb3FilesInvalidUserId() throws Exception {
+        mvc.perform(get("/result/sb3s")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, "ID_STRING")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDownloadSb3FilesInvalidExperimentId() throws Exception {
+        mvc.perform(get("/result/sb3s")
+                .param(EXPERIMENT_PARAM, "0")
+                .param(USER_PARAM, ID_STRING)
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
     }
 
     private List<EventCountDTO> getEventCounts(int number, String event) {
