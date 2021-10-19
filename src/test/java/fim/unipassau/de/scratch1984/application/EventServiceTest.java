@@ -745,6 +745,11 @@ public class EventServiceTest {
                 public String getCode() {
                     return "json" + id;
                 }
+
+                @Override
+                public Timestamp getDate() {
+                    return Timestamp.valueOf(LocalDateTime.now());
+                }
             });
         }
         return projections;

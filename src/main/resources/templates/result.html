@@ -194,32 +194,33 @@
                          data-bs-parent="#accordionFiles">
                         <div class="accordion-body">
                             <p th:text="#{files_steps_info}"></p>
-                            <ul class="list-group list-group-horizontal justify-content-center">
-                                <li class="list-group-item" th:if="${codeCount > 1}">
+                            <ul class="list-group list-group-horizontal justify-content-center"
+                                th:if="${codeCount > 1}">
+                                <li class="list-group-item">
                                     <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=1)}">1</a>
                                 </li>
-                                <li class="list-group-item" th:if="${codeCount > 2}">
+                                <li class="list-group-item">
                                     <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=2)}">2</a>
                                 </li>
-                                <li class="list-group-item" th:if="${codeCount > 3}">
+                                <li class="list-group-item">
                                     <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=3)}">3</a>
                                 </li>
-                                <li class="list-group-item" th:if="${codeCount > 5}">
+                                <li class="list-group-item">
                                     <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=5)}">5</a>
                                 </li>
-                                <li class="list-group-item" th:if="${codeCount > 10}">
+                                <li class="list-group-item">
                                     <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=10)}">10</a>
                                 </li>
-                                <li class="list-group-item" th:if="${codeCount > 15}">
+                                <li class="list-group-item">
                                     <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=15)}">15</a>
                                 </li>
-                                <li class="list-group-item" th:if="${codeCount > 30}">
+                                <li class="list-group-item">
                                     <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=30)}">30</a>
                                 </li>

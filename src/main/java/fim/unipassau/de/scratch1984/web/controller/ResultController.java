@@ -38,6 +38,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
@@ -465,8 +467,9 @@ public class ResultController {
     }
 
     /**
-     * Generates sb3 files for all the json codes saved for the given user during the given experiment and makes them
-     * available for download in a zip file. Every json code is put in a zip file as a project.json file together with
+     * Generates sb3 files the desired json codes saved for the given user during the given experiment and makes them
+     * available for download in a zip file. The json files loaded from the database are filtered according to the
+     * specified step parameter, if present. Every json code is put in a zip file as a project.json file together with
      * all costumes and sounds present in the experiment project file as well as all files saved for the user during the
      * experiment that were not saved as zip files, meaning they are not resources that can be loaded from the Scratch
      * library. The resulting sb3 zip file is then written into another zip file made available for download containing
@@ -475,13 +478,16 @@ public class ResultController {
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
+     * @param step The step interval in minutes.
      * @param httpServletResponse The servlet response returning the files.
      */
     @GetMapping("/sb3s")
     @Secured("ROLE_ADMIN")
     public void downloadSb3Files(@RequestParam("experiment") final String experiment,
                                  @RequestParam("user") final String user,
+                                 @RequestParam(value = "step", required = false) final String step,
                                  final HttpServletResponse httpServletResponse) {
+        //TODO: update tests
         if (experiment == null || user == null) {
             logger.error("Cannot generate zip file with experiment or user null!");
             throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
@@ -489,12 +495,22 @@ public class ResultController {
 
         int userId = parseId(user);
         int experimentId = parseId(experiment);
+        int steps = 0;
+
+        if (step != null) {
+            steps = parseId(step);
+
+            if (steps < 1) {
+                logger.error("Cannot generate zip file for invalid step interval " + step + "!");
+                throw new IncompleteDataException("Cannot generate zip file for invalid step interval " + step + "!");
+            }
+        }
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot generate zip file for user with invalid id " + user + " or experiment with invalid "
-                    + "id " + experiment + " !");
+                    + "id " + experiment + "!");
             throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + user
-                    + " or experiment with invalid id " + experiment + " !");
+                    + " or experiment with invalid id " + experiment + "!");
         }
 
         ExperimentProjection projection = experimentService.getSb3File(experimentId);
@@ -502,10 +518,17 @@ public class ResultController {
         List<BlockEventJSONProjection> jsons = eventService.getJsonForUser(userId, experimentId);
         Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
 
+        if (steps > 0) {
+            Timestamp lastTimestamp = finalProject.isPresent() ? Timestamp.valueOf(finalProject.get().getDate())
+                    : jsons.get(jsons.size() - 1).getDate();
+            jsons = filterProjectionsByStep(jsons, steps, lastTimestamp);
+        }
+
         try {
             ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip");
 
-            for (BlockEventJSONProjection json : jsons) {
+            for (int i = 0; i < jsons.size(); i++) {
+                BlockEventJSONProjection json = jsons.get(i);
                 ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
                 ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip));
 
@@ -522,7 +545,7 @@ public class ResultController {
 
                 innerZos.flush();
                 innerZos.close();
-                ZipEntry createdZip = new ZipEntry("project_" + json.getId() + ".sb3");
+                ZipEntry createdZip = new ZipEntry("project_" + json.getId() + "_" + i + ".sb3");
                 zos.putNextEntry(createdZip);
                 zos.write(innerZip.toByteArray());
                 zos.closeEntry();
@@ -670,6 +693,53 @@ public class ResultController {
         zos.putNextEntry(entry);
         zos.write(code);
         zos.closeEntry();
+    }
+
+    /**
+     * Filters the passed {@link BlockEventJSONProjection}s according to the passed steps in minutes. Starting with the
+     * first json, steps minutes are added to its timestamp. The remaining json files are traversed until one with a
+     * timestamp after the calculated one is found. Its predecessor is added to filtered list and the calculated time
+     * increased by one more step. The same json file might be added multiple times if the next calculated timestamp
+     * is more than one time step apart from the timestamp of the next json file.
+     *
+     * @param projections A list of {@link BlockEventJSONProjection} containing the relevant block event data.
+     * @param step The time steps the files should be apart in minutes.
+     * @param lastProjectStamp The timestamp of the last file the final project state saved.
+     * @return The filtered {@link BlockEventJSONProjection}s.
+     */
+    private List<BlockEventJSONProjection> filterProjectionsByStep(final List<BlockEventJSONProjection> projections,
+                                                                   final int step, final Timestamp lastProjectStamp) {
+        List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
+        filteredProjections.add(projections.get(0));
+        int lastProjectionPosition = projections.size() - 1;
+
+        if (projections.size() > 1) {
+            long stepsInMillis = (long) step * Constants.MINUTES_TO_MILLIS;
+            long currentTime = projections.get(0).getDate().getTime() + stepsInMillis;
+            Timestamp nextProjection = new Timestamp(currentTime);
+
+            for (int i = 1; i < projections.size(); i++) {
+                BlockEventJSONProjection projection = projections.get(i);
+                while (projection.getDate().after(nextProjection)) {
+                    filteredProjections.add(projections.get(i - 1));
+                    currentTime += stepsInMillis;
+                    nextProjection = new Timestamp(currentTime);
+                }
+            }
+            int compare = lastProjectStamp.compareTo(projections.get(lastProjectionPosition).getDate());
+
+            if (compare <= 0) {
+                filteredProjections.add(projections.get(lastProjectionPosition));
+            }
+
+            while (lastProjectStamp.after(nextProjection)) {
+                filteredProjections.add(projections.get(lastProjectionPosition));
+                currentTime += stepsInMillis;
+                nextProjection = new Timestamp(currentTime);
+            }
+        }
+
+        return filteredProjections;
     }
 
     /**

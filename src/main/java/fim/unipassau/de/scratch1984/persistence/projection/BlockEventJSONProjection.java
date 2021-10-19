@@ -1,8 +1,10 @@
 package fim.unipassau.de.scratch1984.persistence.projection;
 
+import java.sql.Timestamp;
+
 /**
  * Projection interface for the {@link fim.unipassau.de.scratch1984.persistence.entity.BlockEvent} class to return only
- * the block event id and the json code.
+ * the block event id, timestamp and the json code.
  */
 public interface BlockEventJSONProjection {
 
@@ -19,5 +21,12 @@ public interface BlockEventJSONProjection {
      * @return The json code.
      */
     String getCode();
+
+    /**
+     * Returns the timestamp of the block event.
+     *
+     * @return The timestamp.
+     */
+    Timestamp getDate();
 
 }
