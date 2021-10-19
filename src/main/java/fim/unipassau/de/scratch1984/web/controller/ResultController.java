@@ -487,7 +487,6 @@ public class ResultController {
                                  @RequestParam("user") final String user,
                                  @RequestParam(value = "step", required = false) final String step,
                                  final HttpServletResponse httpServletResponse) {
-        //TODO: update tests
         if (experiment == null || user == null) {
             logger.error("Cannot generate zip file with experiment or user null!");
             throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
