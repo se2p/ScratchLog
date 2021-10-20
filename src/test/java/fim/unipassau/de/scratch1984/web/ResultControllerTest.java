@@ -1131,7 +1131,7 @@ public class ResultControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, ID_STRING, "5", "true",
                         httpServletResponse)
         );
@@ -1144,7 +1144,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartStopStartBiggerEnd() throws IOException {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, "2", ID_STRING, "true",
                         httpServletResponse)
         );
@@ -1157,7 +1157,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartStopStartInvalidStart() throws IOException {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, "abc", "3", "true",
                         httpServletResponse)
         );
@@ -1170,7 +1170,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartStopStartInvalidEnd() throws IOException {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, ID_STRING, "0", "true",
                         httpServletResponse)
         );
@@ -1269,7 +1269,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartAndStepNotNull() throws IOException {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, ID_STRING, ID_STRING, "3", "false",
                         httpServletResponse)
         );
@@ -1310,6 +1310,19 @@ public class ResultControllerTest {
     public void testDownloadSb3FilesStartNull() throws IOException {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, "3", "false",
+                        httpServletResponse)
+        );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+    }
+
+    @Test
+    public void testDownloadSb3FilesStartAndEndNull() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, "false",
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt());

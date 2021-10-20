@@ -505,7 +505,7 @@ public class ResultController {
                     + "parameters start, end and include are specified!");
         } else if (start != null && step != null) {
             logger.error("Cannot generate zip file if both step and start, end and include parameters are specified!");
-            throw new IllegalArgumentException("Cannot generate zip file if both step and start, end and include "
+            throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
                     + "parameters are specified!");
         }
 
@@ -531,12 +531,12 @@ public class ResultController {
             if (startPosition < 1 || endPosition < 1) {
                 logger.error("Cannot generate zip file for invalid start position " + start
                         + " or invalid end position " + end + "!");
-                throw new IllegalArgumentException("Cannot generate zip file for invalid start position " + start
+                throw new IncompleteDataException("Cannot generate zip file for invalid start position " + start
                         + " or invalid end position " + end + "!");
             } else if (startPosition > endPosition) {
                 logger.error("Cannot generate zip file for start position " + start + " bigger than end position "
                         + end + "!");
-                throw new IllegalArgumentException("Cannot generate zip file for start position " + start
+                throw new IncompleteDataException("Cannot generate zip file for start position " + start
                         + " bigger than end position " + end + "!");
             }
         }
@@ -561,7 +561,7 @@ public class ResultController {
             if (endPosition > jsons.size()) {
                 logger.error("Cannot generate zip file with invalid end position " + endPosition + " bigger than the "
                         + "amount of saved json strings " + jsons.size() + "!");
-                throw new IllegalArgumentException("Cannot generate zip file with invalid end position " + endPosition
+                throw new IncompleteDataException("Cannot generate zip file with invalid end position " + endPosition
                         + " bigger than the amount of saved json strings " + jsons.size() + "!");
             }
 

@@ -86,6 +86,9 @@ public class ResultControllerIntegrationTest {
     private static final String ID_PARAM = "id";
     private static final String PAGE_PARAM = "page";
     private static final String STEP_PARAM = "step";
+    private static final String START_PARAM = "start";
+    private static final String END_PARAM = "end";
+    private static final String INCLUDE_PARAM = "include";
     private static final String PAGE = "0";
     private static final String JSON = "json";
     private static final int ID = 1;
@@ -745,6 +748,31 @@ public class ResultControllerIntegrationTest {
     }
 
     @Test
+    public void testDownloadSb3FilesStartStop() throws Exception {
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
+        mvc.perform(get("/result/sb3s")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(START_PARAM, ID_STRING)
+                .param(END_PARAM, "2")
+                .param(INCLUDE_PARAM, "false")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        is("attachment;filename=zip_user1_experiment1.zip")));
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).getJsonForUser(ID, ID);
+        verify(fileService).findFinalProject(ID, ID);
+    }
+
+    @Test
     public void testDownloadSb3FilesInvalidUserId() throws Exception {
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
@@ -782,6 +810,48 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(STEP_PARAM, "bla")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDownloadSb3FilesInvalidEndPosition() throws Exception {
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
+        mvc.perform(get("/result/sb3s")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(START_PARAM, ID_STRING)
+                .param(END_PARAM, "5")
+                .param(INCLUDE_PARAM, "false")
+                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                .param(csrfToken.getParameterName(), csrfToken.getToken())
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).getJsonForUser(ID, ID);
+        verify(fileService).findFinalProject(ID, ID);
+    }
+
+    @Test
+    public void testDownloadSb3FilesInvalidStartPosition() throws Exception {
+        mvc.perform(get("/result/sb3s")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(START_PARAM, "3")
+                .param(END_PARAM, "2")
+                .param(INCLUDE_PARAM, "false")
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
