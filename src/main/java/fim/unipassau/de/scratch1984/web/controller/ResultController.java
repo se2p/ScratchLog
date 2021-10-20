@@ -469,16 +469,20 @@ public class ResultController {
     /**
      * Generates sb3 files the desired json codes saved for the given user during the given experiment and makes them
      * available for download in a zip file. The json files loaded from the database are filtered according to the
-     * specified step parameter, if present. Every json code is put in a zip file as a project.json file together with
-     * all costumes and sounds present in the experiment project file as well as all files saved for the user during the
-     * experiment that were not saved as zip files, meaning they are not resources that can be loaded from the Scratch
-     * library. The resulting sb3 zip file is then written into another zip file made available for download containing
-     * all the created sb3 files. If the passed ids are invalid an {@link IncompleteDataException} is thrown instead.
-     * If an {@link IOException} occurs, a {@link RuntimeException} is thrown.
+     * specified step parameter, or the specified start, end and include parameters, if present. Every json code is put
+     * in a zip file as a project.json file together with all costumes and sounds present in the experiment project file
+     * as well as all files saved for the user during the experiment that were not saved as zip files, meaning they are
+     * not resources that can be loaded from the Scratch library. The resulting sb3 zip file is then written into
+     * another zip file made available for download containing all the created sb3 files. If the passed ids are invalid
+     * an {@link IncompleteDataException} is thrown instead. If an {@link IOException} occurs, a
+     * {@link RuntimeException} is thrown.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
      * @param step The step interval in minutes.
+     * @param start The start of the interval in which all json files should be downloaded.
+     * @param end The end of the interval in which all json files should be downloaded.
+     * @param include Whether the final project should be included.
      * @param httpServletResponse The servlet response returning the files.
      */
     @GetMapping("/sb3s")
@@ -486,15 +490,31 @@ public class ResultController {
     public void downloadSb3Files(@RequestParam("experiment") final String experiment,
                                  @RequestParam("user") final String user,
                                  @RequestParam(value = "step", required = false) final String step,
+                                 @RequestParam(value = "start", required = false) final String start,
+                                 @RequestParam(value = "end", required = false) final String end,
+                                 @RequestParam(value = "include", required = false) final String include,
                                  final HttpServletResponse httpServletResponse) {
         if (experiment == null || user == null) {
             logger.error("Cannot generate zip file with experiment or user null!");
             throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
+        } else if ((start != null || end != null || include != null)
+                && (start == null || end == null || include == null)) {
+            logger.error("Cannot generate zip file in a set interval if not all of the needed parameters start, end "
+                    + "and include are specified!");
+            throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
+                    + "parameters start, end and include are specified!");
+        } else if (start != null && step != null) {
+            logger.error("Cannot generate zip file if both step and start, end and include parameters are specified!");
+            throw new IllegalArgumentException("Cannot generate zip file if both step and start, end and include "
+                    + "parameters are specified!");
         }
 
         int userId = parseId(user);
         int experimentId = parseId(experiment);
         int steps = 0;
+        int startPosition = 0;
+        int endPosition = 0;
+        boolean includeFinalProject = true;
 
         if (step != null) {
             steps = parseId(step);
@@ -502,6 +522,22 @@ public class ResultController {
             if (steps < 1) {
                 logger.error("Cannot generate zip file for invalid step interval " + step + "!");
                 throw new IncompleteDataException("Cannot generate zip file for invalid step interval " + step + "!");
+            }
+        } else if (start != null) {
+            startPosition = parseId(start);
+            endPosition = parseId(end);
+            includeFinalProject = !include.equals("false");
+
+            if (startPosition < 1 || endPosition < 1) {
+                logger.error("Cannot generate zip file for invalid start position " + start
+                        + " or invalid end position " + end + "!");
+                throw new IllegalArgumentException("Cannot generate zip file for invalid start position " + start
+                        + " or invalid end position " + end + "!");
+            } else if (startPosition > endPosition) {
+                logger.error("Cannot generate zip file for start position " + start + " bigger than end position "
+                        + end + "!");
+                throw new IllegalArgumentException("Cannot generate zip file for start position " + start
+                        + " bigger than end position " + end + "!");
             }
         }
 
@@ -521,6 +557,15 @@ public class ResultController {
             Timestamp lastTimestamp = finalProject.isPresent() ? Timestamp.valueOf(finalProject.get().getDate())
                     : jsons.get(jsons.size() - 1).getDate();
             jsons = filterProjectionsByStep(jsons, steps, lastTimestamp);
+        } else if (startPosition > 0) {
+            if (endPosition > jsons.size()) {
+                logger.error("Cannot generate zip file with invalid end position " + endPosition + " bigger than the "
+                        + "amount of saved json strings " + jsons.size() + "!");
+                throw new IllegalArgumentException("Cannot generate zip file with invalid end position " + endPosition
+                        + " bigger than the amount of saved json strings " + jsons.size() + "!");
+            }
+
+            jsons = jsons.subList(startPosition - 1, endPosition);
         }
 
         try {
@@ -550,7 +595,7 @@ public class ResultController {
                 zos.closeEntry();
             }
 
-            if (finalProject.isPresent()) {
+            if (finalProject.isPresent() && includeFinalProject) {
                 writeFinalProjectData(zos, finalProject.get());
             }
 
@@ -725,6 +770,7 @@ public class ResultController {
                     nextProjection = new Timestamp(currentTime);
                 }
             }
+
             int compare = lastProjectStamp.compareTo(projections.get(lastProjectionPosition).getDate());
 
             if (compare <= 0) {
