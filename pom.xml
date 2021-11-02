@@ -258,6 +258,7 @@
                 <configuration>
                     <excludes>
                         <exclude>fim.unipassau.de.scratch1984.Scratch1984ApplicationTests</exclude>
+                        <exclude>**/selenium/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>

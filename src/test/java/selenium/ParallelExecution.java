@@ -41,12 +41,14 @@ public class ParallelExecution {
                     scratchTest.setUp(driver, wait, baseUrl);
                     scratchTest.openScratchGUI();
                     Thread.sleep(2000 * (5 - idPosition));
-                    scratchTest.dragFlackClickEvent();
-                    scratchTest.dragGoToXY();
-                    scratchTest.dragShow();
-                    scratchTest.dragForever();
-                    scratchTest.dragPointTowards();
-                    scratchTest.dragGoTo();
+                    for (int j = 0; j < 1; j++) {
+                        scratchTest.dragFlackClickEvent();
+                        scratchTest.dragGoToXY();
+                        scratchTest.dragShow();
+                        scratchTest.dragForever();
+                        scratchTest.dragPointTowards();
+                        scratchTest.dragGoTo();
+                    }
                 } catch (Throwable t) {
                     t.printStackTrace();
                 } finally {
