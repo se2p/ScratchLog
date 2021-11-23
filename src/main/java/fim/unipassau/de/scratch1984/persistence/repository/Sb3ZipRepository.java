@@ -24,6 +24,15 @@ public interface Sb3ZipRepository extends JpaRepository<Sb3Zip, Integer> {
     Optional<Sb3Zip> findById(int id);
 
     /**
+     * Returns the final project file for the given user and experiment, if any such file exists.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @return An {@link Optional} zip file.
+     */
+    Optional<Sb3Zip> findFirstByUserAndExperiment(User user, Experiment experiment);
+
+    /**
      * Returns a list of ids of all zip files for the given user created during the given experiment, if any exist.
      *
      * @param user The user to search for.

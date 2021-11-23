@@ -35,7 +35,8 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
      * @param experiment The experiment to search for.
      * @return The json data and corresponding ids or an empty list, if no entry could be found.
      */
-    List<BlockEventJSONProjection> findAllByCodeIsNotNullAndUserAndExperiment(User user, Experiment experiment);
+    List<BlockEventJSONProjection> findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(User user,
+                                                                                            Experiment experiment);
 
     /**
      * Returns a page of {@link BlockEventProjection}s for the given user and experiment corresponding to the parameters

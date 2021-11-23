@@ -351,7 +351,7 @@ public class EventServiceTest {
     public void testGetJsonForUser() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperiment(user,
+        when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
                 experiment)).thenReturn(jsonProjections);
         List<BlockEventJSONProjection> projections = eventService.getJsonForUser(ID, ID);
         assertAll(
@@ -364,21 +364,21 @@ public class EventServiceTest {
         );
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
-        verify(blockEventRepository).findAllByCodeIsNotNullAndUserAndExperiment(user, experiment);
+        verify(blockEventRepository).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
     }
 
     @Test
     public void testGetJsonForUserEntityNotFound() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperiment(user,
+        when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
                 experiment)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> eventService.getJsonForUser(ID, ID)
         );
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
-        verify(blockEventRepository).findAllByCodeIsNotNullAndUserAndExperiment(user, experiment);
+        verify(blockEventRepository).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
     }
 
     @Test
@@ -390,7 +390,7 @@ public class EventServiceTest {
         );
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
-        verify(blockEventRepository).findAllByCodeIsNotNullAndUserAndExperiment(user, experiment);
+        verify(blockEventRepository).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
     }
 
     @Test
@@ -400,7 +400,7 @@ public class EventServiceTest {
         );
         verify(userRepository, never()).getOne(anyInt());
         verify(experimentRepository, never()).getOne(anyInt());
-        verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperiment(any(), any());
+        verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
     }
 
     @Test
@@ -410,7 +410,7 @@ public class EventServiceTest {
         );
         verify(userRepository, never()).getOne(anyInt());
         verify(experimentRepository, never()).getOne(anyInt());
-        verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperiment(any(), any());
+        verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
     }
 
     @Test
@@ -744,6 +744,11 @@ public class EventServiceTest {
                 @Override
                 public String getCode() {
                     return "json" + id;
+                }
+
+                @Override
+                public Timestamp getDate() {
+                    return Timestamp.valueOf(LocalDateTime.now());
                 }
             });
         }

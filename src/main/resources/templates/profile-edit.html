@@ -15,12 +15,18 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+
+        <!-- The profile edit page heading. -->
         <h2 class="mb-5" th:text="#{edit_profile}"></h2>
+
+        <!-- The form for editing a profile. -->
         <form th:action="@{/users/update}" th:object="${userDTO}" th:name="userDTO" method="post">
             <input type="hidden" th:field="*{id}">
+            <!-- The set password button. -->
             <div class="text-end" th:if="${userDTO.password == null}" sec:authorize="hasRole('ADMIN')">
                 <a class="btn btn-secondary" th:text="#{set_password}" th:href="@{/users/forgot(id=${userDTO.id})}"></a>
             </div>
+            <!-- The input group for the username. -->
             <div class="mb-3 form-group position-relative" sec:authorize="hasRole('ADMIN')">
                 <label class="form-label" for="username" th:text="#{username}"></label>
                 <div class="input-group">
@@ -36,6 +42,7 @@
                 <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                 <div class="form-text" th:text="#{username_max}"></div>
             </div>
+            <!-- The input group for the email. -->
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="email" th:text="#{email}"></label>
                 <div class="input-group">
@@ -50,6 +57,7 @@
                 </div>
                 <div class="validation" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
             </div>
+            <!-- The input group for the language. -->
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="language" th:text="#{language}"></label>
                 <div class="input-group">
@@ -63,6 +71,7 @@
                     </select>
                 </div>
             </div>
+            <!-- The input group for the current password. -->
             <div class="mb-3 form-group position-relative" th:unless="${userDTO.password == null}">
                 <label class="form-label" for="password" th:text="#{password}"></label>
                 <div class="input-group">
@@ -83,6 +92,7 @@
                     </a>
                 </div>
             </div>
+            <!-- The input group for the new password. -->
             <div class="mb-3 form-group position-relative" th:unless="${userDTO.password == null}">
                 <label class="form-label" for="new_password" th:text="#{password_new}"></label>
                 <div class="input-group">
@@ -98,6 +108,7 @@
                 <div class="validation" th:if="${#fields.hasErrors('newPassword')}" th:errors="*{newPassword}"></div>
                 <div class="form-text" th:text="#{password_max}"></div>
             </div>
+            <!-- The input group for the password repetition. -->
             <div class="mb-5 form-group position-relative" th:unless="${userDTO.password == null}">
                 <label class="form-label" for="confirm_password" th:text="#{password_confirm}"></label>
                 <div class="input-group">
@@ -114,6 +125,7 @@
                      th:errors="*{confirmPassword}"></div>
                 <div class="form-text" th:text="#{password_match}"></div>
             </div>
+            <!-- The submit button. -->
             <div class="text-center">
                 <input class="btn btn-primary" type="submit" th:value="#{save}"/>
             </div>

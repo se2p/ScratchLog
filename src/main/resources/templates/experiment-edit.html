@@ -16,13 +16,17 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+
+        <!-- The edit experiment heading. -->
         <h2 class="mb-5" th:text="#{edit_experiment}"></h2>
         <div class="d-flex p-2 justify-content-center align-items-center container">
             <div class="row vw-90">
+                <!-- The form for editing or creating an experiment. -->
                 <form th:action="@{/experiment/update}" th:object="${experimentDTO}" th:name="experimentDTO"
                       method="post">
                     <input type="hidden" th:field="*{id}">
                     <input type="hidden" th:field="*{active}">
+                    <!-- The input group for the experiment title. -->
                     <div class="mb-3 form-group position-relative">
                         <label class="form-label" for="title" th:text="#{title}"></label>
                         <div class="input-group">
@@ -34,6 +38,7 @@
                         <div class="validation" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
                         <div class="form-text" th:text="#{title_max}"></div>
                     </div>
+                    <!-- The input group for the experiment description. -->
                     <div class="mb-3 form-group position-relative">
                         <label class="form-label" for="description" th:text="#{description}"></label>
                         <div class="input-group">
@@ -47,6 +52,7 @@
                         </div>
                         <div class="form-text" th:text="#{description_max}"></div>
                     </div>
+                    <!-- The input group for the experiment postscript. -->
                     <div class="mb-3 form-group position-relative">
                         <label class="form-label" for="postscript" th:text="#{postscript}"></label>
                         <div class="input-group">
@@ -60,6 +66,7 @@
                         </div>
                         <div class="form-text" th:text="#{postscript_max}"></div>
                     </div>
+                    <!-- The input group for the experiment information. -->
                     <div class="mb-5 form-group position-relative">
                         <label class="form-label" for="info" th:text="#{info}"></label>
                         <textarea name="info" id="info" type="text" rows="10" th:placeholder="#{info_placeholder}"
@@ -70,6 +77,7 @@
                         </div>
                         <div class="form-text" th:text="#{markdown}"></div>
                     </div>
+                    <!-- The submit button. -->
                     <div class="text-center">
                         <input class="btn btn-primary" type="submit" th:value="#{save}"/>
                     </div>

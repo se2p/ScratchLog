@@ -287,6 +287,46 @@ public class FileService {
     }
 
     /**
+     * Returns the final project {@link Sb3ZipDTO} for the user with the given id during the experiment with the given
+     * id. If no such file exists, an empty {@link Optional} dto is returned instead. If no corresponding user or
+     * experiment could be found, a {@link NotFoundException} is thrown instead.
+     *
+     * @param userId The user ID to search for.
+     * @param experimentId The experiment ID to search for.
+     * @return The zip file, if it exists, or an empty optional.
+     */
+    @Transactional
+    public Optional<Sb3ZipDTO> findFinalProject(final int userId, final int experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot search for final project for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot search for final project for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            Optional<Sb3Zip> finalProject = sb3ZipRepository.findFirstByUserAndExperiment(user,
+                    experiment);
+
+            if (finalProject.isEmpty()) {
+                logger.info("Could not find final project file for user with id " + userId + " for experiment with id "
+                        + experimentId + "!");
+                return Optional.empty();
+            }
+
+            return Optional.of(createSb3ZipDTO(finalProject.get()));
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not retrieve the final project file since the  user with id " + userId
+                    + " or experiment with id " + experimentId + " could not be found!", e);
+            throw new NotFoundException("Could not retrieve the final project file since the  user with id " + userId
+                    + " or experiment with id " + experimentId + " could not be found!", e);
+        }
+    }
+
+    /**
      * Returns a list of all {@link Sb3ZipDTO}s that were created for the user with the given id during the experiment
      * with the given id. If no corresponding user, experiment or zip files could be found, a {@link NotFoundException}
      * is thrown instead.

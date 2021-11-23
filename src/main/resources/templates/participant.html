@@ -15,15 +15,24 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+
+        <!-- The error message shown at the top of the page when an error occurs. -->
         <div class="row" th:style="${error != null ? 'display:block' : 'display:none'}">
             <div class="col-12 alert alert-danger" th:text="${error}"></div>
         </div>
+
+        <!-- The add participant heading. -->
         <h2 class="mb-3" th:text="#{add_participant}"></h2>
+
+        <!-- The information shown when adding a participant. -->
         <div class="row">
             <div class="col-12 mb-5" th:text="#{participant_info}"></div>
         </div>
+
+        <!-- The form to add a new participant. -->
         <form th:action="@{/participant/add(expId=${experiment})}" th:object="${userDTO}" th:name="userDTO" method="post">
             <div class="row mx-5">
+                <!-- The input group for the username. -->
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="username" th:text="#{username}"></label>
                     <div class="input-group">
@@ -38,7 +47,7 @@
                     </div>
                     <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                 </div>
-
+                <!-- The input group for the email. -->
                 <div class="col-12 mb-3 form-group position-relative">
                     <label class="form-label" for="email" th:text="#{email}"></label>
                     <div class="input-group">
@@ -53,7 +62,7 @@
                     </div>
                     <div class="validation" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
                 </div>
-
+                <!-- The selection menu for the language. -->
                 <div class="mb-3 form-group position-relative">
                     <label class="form-label" for="language" th:text="#{language}"></label>
                     <div class="input-group">
@@ -67,7 +76,7 @@
                         </select>
                     </div>
                 </div>
-
+                <!-- The submit button. -->
                 <div class="text-center">
                     <input class="btn btn-primary" type="submit" th:value="#{save}"/>
                 </div>

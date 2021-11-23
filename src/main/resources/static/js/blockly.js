@@ -7,11 +7,19 @@ var blocklyCode = '';
 let xmlButton = document.getElementById("xml");
 let jsonButton = document.getElementById("json");
 let sb3Button = document.getElementById("sb3");
+let downloadRangeButton = document.getElementById("downloadRange");
 
 let first = document.getElementById("first");
 let prev = document.getElementById("prev");
 let next = document.getElementById("next");
 let last = document.getElementById("last");
+
+let slider = document.getElementById("slider");
+let sliderValues = [
+    document.getElementById("from"),
+    document.getElementById("to")
+];
+let rangeLastFile = document.getElementById("rangeLastFileCheck");
 
 let count = 0;
 let pos = 0;
@@ -117,11 +125,24 @@ jsonButton.addEventListener("click", function () {
 });
 
 /**
- * Sets the href attribute of the sb3 button in preparation for the sb3 file download.
+ * Sets the href attribute of the sb3 button in preparation for the sb3 file download and clicks the button.
  */
 sb3Button.addEventListener("click", function () {
     sb3Button.href = "/result/generate?user=" + user + "&experiment=" + experiment + "&json=" + xml[pos].id;
     sb3Button.click();
+});
+
+/**
+ * Sets the href attribute of the download button to download sb3 files for json codes in the selected range and clicks
+ * the button.
+ */
+downloadRangeButton.addEventListener("click", function () {
+    let include = rangeLastFile.checked;
+    let start = sliderValues[0].innerHTML.substring(0, sliderValues[0].innerHTML.indexOf("."));
+    let end = sliderValues[1].innerHTML.substring(0, sliderValues[1].innerHTML.indexOf("."));
+    downloadRangeButton.href = "/result/sb3s?user=" + user + "&experiment=" + experiment + "&start=" + start + "&end="
+        + end + "&include=" + include;
+    downloadRangeButton.click();
 });
 
 /**
@@ -240,3 +261,24 @@ function getXML() {
         }
     });
 }
+
+/**
+ * Creates the slider used to specify the interval of sb3 files to be downloaded. The maximum is set to amount of json
+ * strings that could be found in the database.
+ */
+noUiSlider.create(slider, {
+    start: [1, total],
+    connect: true,
+    step: 1,
+    range: {
+        'min': 1,
+        'max': total
+    }
+});
+
+/**
+ * Updates the values displayed below the slider on user interaction.
+ */
+slider.noUiSlider.on('update', function (values, handle) {
+    sliderValues[handle].innerHTML = values[handle];
+});

@@ -267,8 +267,8 @@ public class EventService {
         Experiment experiment = experimentRepository.getOne(experimentId);
 
         try {
-            List<BlockEventJSONProjection> json = blockEventRepository.findAllByCodeIsNotNullAndUserAndExperiment(user,
-                    experiment);
+            List<BlockEventJSONProjection> json =
+                    blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
 
             if (json.isEmpty()) {
                 logger.error("Could not find any json data for user with id " + user + " for experiment with id "

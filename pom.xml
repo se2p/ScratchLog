@@ -29,6 +29,7 @@
         <junit.version>5.7.0</junit.version>
         <junitplatform.version>1.7.0</junitplatform.version>
         <mockito.version>3.6.28</mockito.version>
+        <selenium.version>4.0.0</selenium.version>
         <javax.validation.version>2.0.1.Final</javax.validation.version>
         <mysql.version>8.0.24</mysql.version>
         <h2.version>1.4.200</h2.version>
@@ -190,6 +191,26 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Selenium 4 -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-firefox-driver</artifactId>
+            <version>${selenium.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-chrome-driver</artifactId>
+            <version>${selenium.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-support</artifactId>
+            <version>${selenium.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- H2 database for in-memory testing -->
         <dependency>
             <groupId>com.h2database</groupId>
@@ -243,6 +264,7 @@
                 <configuration>
                     <excludes>
                         <exclude>fim.unipassau.de.scratch1984.Scratch1984ApplicationTests</exclude>
+                        <exclude>**/selenium/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>

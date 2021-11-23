@@ -5,8 +5,10 @@
     <title th:text="#{result_title}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/nouislider.css}">
     <link rel="stylesheet" th:href="@{/design/style.css}">
 
+    <script type="text/javascript" th:src="@{/js/nouislider.js}"></script>
     <script type="text/javascript" th:src="@{/node_modules/blockly/blockly_compressed.js}"></script>
     <script type="text/javascript" th:src="@{/node_modules/blockly/blocks_compressed.js}"></script>
     <script type="application/json" th:src="@{/node_modules/blockly/msg/js/en.js}"></script>
@@ -24,7 +26,11 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+
+        <!-- The result page heading. -->
         <h2 class="mb-5" th:text="#{results}"></h2>
+
+        <!-- The uploaded files section to download files the participant uploaded during the experiment. -->
         <div class="row mb-3">
             <h4 th:text="#{files}"></h4>
             <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${files.isEmpty()}">
@@ -36,6 +42,8 @@
                 </li>
             </ul>
         </div>
+
+        <!-- The project files heading with the corresponding download all button. -->
         <div class="row">
             <div class="col-7">
                 <h4 th:text="#{zips}"></h4>
@@ -48,6 +56,8 @@
                 </a>
             </div>
         </div>
+
+        <!-- The sb3 project files section to download files saved for the participant during the experiment. -->
         <div class="row mb-5">
             <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${zips.isEmpty()}">
                 <li class="list-group-item" th:text="#{table_empty}"></li>
@@ -59,6 +69,8 @@
             </ul>
             <div class="text-muted mt-3" th:text="#{download_info}"></div>
         </div>
+
+        <!-- The block and resource events tables. -->
         <div class="row mb-5">
             <div class="col-6">
                 <h4 class="mb-3" th:text="#{block_events}"></h4>
@@ -105,6 +117,121 @@
                 </table>
             </div>
         </div>
+
+        <!-- The download sb3 files heading and the corresponding button. -->
+        <div class="row mb-3">
+            <div class="col-7">
+                <h4 th:text="#{download_files}"></h4>
+            </div>
+            <div class="col-5 text-end" th:if="${codeCount > 0}">
+                <a class="btn btn-primary" th:href="@{/result/sb3s(user=${user}, experiment=${experiment})}"
+                   th:aria-label="#{sb3_label}">
+                    <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                    <span th:text="#{all_sb3}"></span>
+                </a>
+            </div>
+        </div>
+
+        <div class="mb-5" th:unless="${codeCount > 0}">
+            <span class="text-muted mb-3" th:text="#{table_empty}"></span>
+        </div>
+
+        <!-- The download sb3 files section. -->
+        <div class="mb-5" th:if="${codeCount > 0}">
+            <span class="text-muted" th:if="${codeCount > 0}">
+                <span th:text="#{codes}"></span>
+                <span th:text="${codeCount}"></span>
+            </span>
+            <!-- The accordion for downloading sb3 files in a certain interval. -->
+            <div class="accordion mt-3" id="accordionFiles">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="rangeHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#range" aria-expanded="false" aria-controls="range"
+                                th:text="#{files_range}">
+                        </button>
+                    </h2>
+                    <!-- The content for downloading all sb3 files in a certain interval. -->
+                    <div id="range" class="accordion-collapse collapse" aria-labelledby="rangeHeading"
+                         data-bs-parent="#accordionFiles">
+                        <div class="accordion-body">
+                            <p th:text="#{files_range_info}"></p>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" value="" id="rangeLastFileCheck">
+                                <label class="form-check-label" for="rangeLastFileCheck" th:text="#{last_file}"></label>
+                            </div>
+                            <div id="slider"></div>
+                            <div class="d-flex justify-content-between mt-3">
+                                <div>
+                                    <span th:text="#{from}"></span>
+                                    <span id="from"></span>
+                                </div>
+                                <div>
+                                    <span th:text="#{to}"></span>
+                                    <span id="to"></span>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <a class="btn btn-primary" id="downloadRange">
+                                    <i aria-hidden="true" class="fas fa-download fa-inverse"
+                                       title="Download sb3 file"></i>
+                                    <span class="sr-only" th:text="#{download}"></span>
+                                    <span>Sb3</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="stepHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#steps" aria-expanded="false" aria-controls="steps"
+                                th:text="#{files_steps}">
+                        </button>
+                    </h2>
+                    <!-- The content for downloading sb3 files at certain time intervals. -->
+                    <div id="steps" class="accordion-collapse collapse" aria-labelledby="stepHeading"
+                         data-bs-parent="#accordionFiles">
+                        <div class="accordion-body">
+                            <p th:text="#{files_steps_info}"></p>
+                            <ul class="list-group list-group-horizontal justify-content-center"
+                                th:if="${codeCount > 1}">
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=1)}">1</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=2)}">2</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=3)}">3</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=5)}">5</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=10)}">10</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=15)}">15</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    experiment=${experiment}, step=30)}">30</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The participant code heading with the buttons to download all xml or json codes. -->
         <div class="row">
             <div class="col-7">
                 <h4 th:text="#{code}"></h4>
@@ -126,17 +253,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- The blockly area rendering the participant code. -->
         <div class="row my-5" th:if="${codeCount > 0}">
             <div id="blocklyArea">
                 <div id="blocklyDiv" style="position: relative"></div>
                 <xml id="toolbox" style="display: none"></xml>
             </div>
         </div>
+
         <div class="row" th:unless="${codeCount > 0}">
             <ul class="list-group list-group-horizontal text-muted mx-3">
                 <li class="list-group-item" th:text="#{table_empty}"></li>
             </ul>
         </div>
+
+        <!-- The navigation elements to go back and forth between code snippets and the buttons to download the
+        currently displayed code as xml, json or in a sb3 file. -->
         <div class="text-center" th:if="${codeCount > 0}">
             <span class="btn btn-outline-dark" id="first">
                 <i aria-hidden="true" class="fas fa-angle-double-left" title="Show the first participant code"></i>

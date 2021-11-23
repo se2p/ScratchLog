@@ -29,11 +29,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
@@ -394,6 +396,61 @@ public class FileServiceTest {
                 () -> fileService.findZip(0)
         );
         verify(sb3ZipRepository, never()).findById(anyInt());
+    }
+
+    @Test
+    public void testFindFinalProject() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(sb3ZipRepository.findFirstByUserAndExperiment(user, experiment)).thenReturn(java.util.Optional.of(sb3Zip));
+        assertTrue(fileService.findFinalProject(ID, ID).isPresent());
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(sb3ZipRepository).findFirstByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testFindFinalProjectEmpty() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(sb3ZipRepository.findFirstByUserAndExperiment(user, experiment)).thenReturn(Optional.empty());
+        assertTrue(fileService.findFinalProject(ID, ID).isEmpty());
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(sb3ZipRepository).findFirstByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testFindFinalProjectEntityNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(sb3ZipRepository.findFirstByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> fileService.findFinalProject(ID, ID)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(sb3ZipRepository).findFirstByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testFindFinalProjectInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> fileService.findFinalProject(ID, 0)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(sb3ZipRepository, never()).findFirstByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testFindFinalProjectInvalidUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> fileService.findFinalProject(-1, ID)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(sb3ZipRepository, never()).findFirstByUserAndExperiment(any(), any());
     }
 
     @Test

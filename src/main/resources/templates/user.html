@@ -15,11 +15,18 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+
+        <!-- The add user page heading. -->
         <h2 class="mb-5" th:text="#{add_user}"></h2>
+
+        <!-- The information shown on the add user page. -->
         <div class="row">
             <div class="col-12 mb-5" th:text="#{user_info}"></div>
         </div>
+
+        <!-- The form for adding new users. -->
         <form th:action="@{/users/add}" th:object="${userDTO}" th:name="userDTO" method="post">
+            <!-- The input group for the username. -->
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="username" th:text="#{username}"></label>
                 <div class="input-group">
@@ -35,6 +42,7 @@
                 <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                 <div class="form-text" th:text="#{username_max}"></div>
             </div>
+            <!-- The input group for the email. -->
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="email" th:text="#{email}"></label>
                 <div class="input-group">
@@ -49,6 +57,7 @@
                 </div>
                 <div class="validation" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
             </div>
+            <!-- The selection menu for the language. -->
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="language" th:text="#{language}"></label>
                 <div class="input-group">
@@ -62,6 +71,7 @@
                     </select>
                 </div>
             </div>
+            <!-- The selection menu for the role. -->
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="role" th:text="#{role}"></label>
                 <div class="input-group">
@@ -75,6 +85,7 @@
                     </select>
                 </div>
             </div>
+            <!-- The submit button. -->
             <div class="text-center">
                 <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
             </div>
