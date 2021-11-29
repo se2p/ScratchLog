@@ -46,6 +46,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -148,6 +149,7 @@ public class ExperimentControllerIntegrationTest {
     public void setup() {
         userDTO.setId(ID);
         userDTO.setActive(true);
+        userDTO.setSecret("secret1");
         participant.setId(ID + 1);
         participant.setSecret(null);
         experimentDTO.setId(ID);
@@ -261,7 +263,43 @@ public class ExperimentControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
-                .andExpect(model().attribute("participant", is(true)))
+                .andExpect(model().attribute("participant", is(participantDTO)))
+                .andExpect(model().attribute("secret", nullValue()))
+                .andExpect(model().attribute(PARTICIPANTS, is(participants)))
+                .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
+                        hasProperty("id", is(ID)),
+                        hasProperty("title", is(TITLE)),
+                        hasProperty("description", is(DESCRIPTION)),
+                        hasProperty("postscript", is(POSTSCRIPT)),
+                        hasProperty("info", is(INFO_PARSED)),
+                        hasProperty("active", is(true))
+                )))
+                .andExpect(view().name(EXPERIMENT));
+        verify(userService).getUser(anyString());
+        verify(participantService).getParticipant(ID, ID);
+        verify(experimentService).getExperiment(ID);
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = {"PARTICIPANT"})
+    public void testGetExperimentParticipantSecretNull() throws Exception {
+        experimentDTO.setActive(true);
+        userDTO.setSecret(null);
+        when(userService.getUser(anyString())).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mvc.perform(get("/experiment")
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
+                .andExpect(model().attribute("participant", is(participantDTO)))
+                .andExpect(model().attribute("secret", is(false)))
                 .andExpect(model().attribute(PARTICIPANTS, is(participants)))
                 .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
                         hasProperty("id", is(ID)),
@@ -328,25 +366,6 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService).getUser(anyString());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
-        verify(experimentService, never()).getExperiment(anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "user", roles = {"PARTICIPANT"})
-    public void testGetExperimentParticipantStarted() throws Exception {
-        participantDTO.setStart(LocalDateTime.now());
-        when(userService.getUser(anyString())).thenReturn(userDTO);
-        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        mvc.perform(get("/experiment")
-                .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
-        verify(userService).getUser(anyString());
-        verify(participantService).getParticipant(ID, ID);
         verify(experimentService, never()).getExperiment(anyInt());
     }
 
