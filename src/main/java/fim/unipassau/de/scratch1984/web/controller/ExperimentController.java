@@ -124,8 +124,8 @@ public class ExperimentController {
 
     /**
      * Returns the experiment page displaying the information available for the experiment with the given id. If the
-     * request parameter passed is invalid, no entry can be found in the database, or the user does not have sufficient
-     * rights to see the page, the user is redirected to the error page instead.
+     * request parameter passed is invalid, no entry can be found in the database, the user profile is inactive, or no
+     * participant entry could be found for a participant, the user is redirected to the error page instead.
      *
      * @param id The id of the experiment.
      * @param model The model to hold the information.
