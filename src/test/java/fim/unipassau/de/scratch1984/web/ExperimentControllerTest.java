@@ -233,27 +233,34 @@ public class ExperimentControllerTest {
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(experimentService).hasProjectFile(ID);
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
-        verify(model).addAttribute("participant", true);
+        verify(model).addAttribute("participant", participantDTO);
+        verify(model, never()).addAttribute("secret", false);
         verify(model).addAttribute(PARTICIPANTS, participants);
     }
 
     @Test
-    public void testGetExperimentParticipantExperimentInactive() {
+    public void testGetExperimentParticipantSecretNull() {
+        userDTO.setSecret(null);
+        experimentDTO.setActive(true);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, experimentController.getExperiment(ID_STRING, model, httpServletRequest));
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        assertEquals(EXPERIMENT, experimentController.getExperiment(ID_STRING, model, httpServletRequest));
         verify(securityContext).getAuthentication();
         verify(authentication).getName();
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(experimentService, never()).hasProjectFile(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
+        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(experimentService).hasProjectFile(ID);
+        verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+        verify(model).addAttribute("participant", participantDTO);
+        verify(model).addAttribute("secret", false);
+        verify(model).addAttribute(PARTICIPANTS, participants);
     }
 
     @Test
@@ -300,56 +307,6 @@ public class ExperimentControllerTest {
         verify(authentication).getName();
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(participantService, never()).getParticipant(ID, ID);
-        verify(experimentService, never()).getExperiment(ID);
-        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
-    }
-
-    @Test
-    public void testGetExperimentParticipantSecretNull() {
-        userDTO.setSecret(null);
-        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(USERNAME);
-        when(userService.getUser(USERNAME)).thenReturn(userDTO);
-        assertEquals(ERROR, experimentController.getExperiment(ID_STRING, model, httpServletRequest));
-        verify(securityContext).getAuthentication();
-        verify(authentication).getName();
-        verify(httpServletRequest).isUserInRole(ADMIN);
-        verify(participantService, never()).getParticipant(ID, ID);
-        verify(experimentService, never()).getExperiment(ID);
-        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
-    }
-
-    @Test
-    public void testGetExperimentParticipantFinished() {
-        participantDTO.setEnd(LocalDateTime.now());
-        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(USERNAME);
-        when(userService.getUser(USERNAME)).thenReturn(userDTO);
-        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, experimentController.getExperiment(ID_STRING, model, httpServletRequest));
-        verify(securityContext).getAuthentication();
-        verify(authentication).getName();
-        verify(httpServletRequest).isUserInRole(ADMIN);
-        verify(participantService).getParticipant(ID, ID);
-        verify(experimentService, never()).getExperiment(ID);
-        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
-    }
-
-    @Test
-    public void testGetExperimentParticipantStarted() {
-        participantDTO.setStart(LocalDateTime.now());
-        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(USERNAME);
-        when(userService.getUser(USERNAME)).thenReturn(userDTO);
-        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, experimentController.getExperiment(ID_STRING, model, httpServletRequest));
-        verify(securityContext).getAuthentication();
-        verify(authentication).getName();
-        verify(httpServletRequest).isUserInRole(ADMIN);
-        verify(participantService).getParticipant(ID, ID);
         verify(experimentService, never()).getExperiment(ID);
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }

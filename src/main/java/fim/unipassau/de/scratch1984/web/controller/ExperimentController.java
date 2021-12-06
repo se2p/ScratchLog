@@ -124,8 +124,8 @@ public class ExperimentController {
 
     /**
      * Returns the experiment page displaying the information available for the experiment with the given id. If the
-     * request parameter passed is invalid, no entry can be found in the database, or the user does not have sufficient
-     * rights to see the page, the user is redirected to the error page instead.
+     * request parameter passed is invalid, no entry can be found in the database, the user profile is inactive, or no
+     * participant entry could be found for a participant, the user is redirected to the error page instead.
      *
      * @param id The id of the experiment.
      * @param model The model to hold the information.
@@ -142,29 +142,22 @@ public class ExperimentController {
             return ERROR;
         }
 
-        boolean participant = false;
-
         if (!httpServletRequest.isUserInRole("ROLE_ADMIN")) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
 
-                if (!userDTO.isActive() || userDTO.getSecret() == null) {
+                if (!userDTO.isActive()) {
                     logger.debug("Cannot display experiment page for user with id " + userDTO.getId() + " since their "
-                            + "account is inactive or their secret null!");
+                            + "account is inactive!");
                     return ERROR;
+                } else if (userDTO.getSecret() == null) {
+                    model.addAttribute("secret", false);
                 }
 
                 ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userDTO.getId());
-
-                if (participantDTO.getStart() != null || participantDTO.getEnd() != null) {
-                    logger.debug("Cannot display experiment page for user with id " + userDTO.getId() + " since they "
-                            + "already started or finished the experiment!");
-                    return ERROR;
-                }
-
-                participant = true;
+                model.addAttribute("participant", participantDTO);
             } catch (NotFoundException e) {
                 logger.error("Can't find user with username " + authentication.getName() + " in the database!", e);
                 return ERROR;
@@ -173,16 +166,6 @@ public class ExperimentController {
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-
-            if (!experimentDTO.isActive() && participant) {
-                logger.error("Cannot display experiment page of experiment with id " + experimentId + " for "
-                        + "participants as the experiment is closed!");
-                return ERROR;
-            }
-            if (participant) {
-                model.addAttribute("participant", true);
-            }
-
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
         } catch (NotFoundException e) {
