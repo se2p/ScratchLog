@@ -58,4 +58,15 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
      */
     List<BlockEvent> findAllByExperiment(Experiment experiment);
 
+    /**
+     * Returns a {@link BlockEventJSONProjection} containing the last non-null JSON code that was saved for the given
+     * user during the given experiment.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @return The {@link BlockEventJSONProjection}.
+     */
+    BlockEventJSONProjection findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(User user,
+                                                                                         Experiment experiment);
+
 }

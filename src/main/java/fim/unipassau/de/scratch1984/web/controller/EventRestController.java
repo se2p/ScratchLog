@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -184,6 +185,58 @@ public class EventRestController {
         } catch (IOException e) {
             logger.error("Could not retrieve sb3 file for experiment with id " + experimentId + " due to IOException!",
                     e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Retrieves the last json code saved for the given user during the given experiment from the database, if it
+     * exists. If the passed ids are invalid, no corresponding user or participant or no json code could be found, the
+     * {@link HttpServletResponse} returns an error status code instead.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @param response The servlet response.
+     */
+    @GetMapping("/json")
+    public void retrieveLastJson(@RequestParam("user") final String user,
+                                  @RequestParam("experiment") final String experiment,
+                                  final HttpServletResponse response) {
+        if (user == null || experiment == null) {
+            logger.error("Cannot retrieve the last json file for experiment or user with id null!");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        int userId = parseNumber(user);
+        int experimentId = parseNumber(experiment);
+
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot retrieve the last json file for experiment with invalid id " + experiment
+                    + " or user with invalid id " + user + "!");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        try {
+            String json = eventService.findFirstJSON(userId, experimentId);
+
+            if (json == null) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.setStatus(HttpServletResponse.SC_OK);
+            ServletOutputStream op = response.getOutputStream();
+            op.write(json.getBytes(StandardCharsets.UTF_8));
+            op.flush();
+        } catch (NotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } catch (IOException e) {
+            logger.error("Could not retrieve the last saved json code for user with id " + userId
+                    + " during experiment with id " + experimentId + " due to IOException!", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
