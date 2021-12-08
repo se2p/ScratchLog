@@ -78,6 +78,7 @@ public class ParticipantControllerIntegrationTest {
     private static final String REDIRECT_GUI = "redirect:http://localhost:8601?uid=";
     private static final String REDIRECT_FINISH = "redirect:/finish?id=";
     private static final String EXP_ID = "&expid=";
+    private static final String RESTART = "&restart=true";
     private static final String EMAIL = "participant@participant.de";
     private static final String BLANK = "   ";
     private static final String ID_STRING = "1";
@@ -519,6 +520,27 @@ public class ParticipantControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_GUI + ID + EXP_ID + ID + RESTART));
+        verify(userService).getUser(PARTICIPANT);
+        verify(experimentService).getExperiment(ID);
+        verify(participantService).getParticipant(ID, ID);
+        verify(participantService, never()).updateParticipant(any());
+    }
+
+    @Test
+    @WithMockUser(username = PARTICIPANT, roles = {"PARTICIPANT"})
+    public void testStartExperimentParticipantFinished() throws Exception {
+        participantDTO.setEnd(LocalDateTime.now());
+        when(userService.getUser(PARTICIPANT)).thenReturn(userDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        mvc.perform(get("/participant/start")
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(userService).getUser(PARTICIPANT);

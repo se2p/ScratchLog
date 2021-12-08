@@ -206,6 +206,51 @@ public class EventService {
     }
 
     /**
+     * Returns the latest saved json code for the user with the given id during the experiment with the given id, if it
+     * exists and a participant entry could be found for the user. If no corresponding user or experiment could be
+     * found, a {@link NotFoundException} is thrown instead.
+     *
+     * @param userId The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @return The json code, or {@code null}.
+     */
+    @Transactional
+    public String findFirstJSON(final int userId, final int experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot retrieve the last saved json code for user with invalid id " + userId
+                    + " or experiment with invalid id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot retrieve the last saved json code for user with invalid id "
+                    + userId + " or experiment with invalid id " + experimentId + "!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            BlockEventJSONProjection projection =
+                    blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
+            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+
+            if (participant == null) {
+                logger.error("No corresponding participant entry could be found for user with id " + userId
+                        + " and experiment with id " + experimentId + " when trying to load the last json code!");
+                return null;
+            } else if (projection == null) {
+                logger.info("No json code saved for user with id " + userId + " for experiment with id "
+                        + experimentId + ".");
+                return null;
+            }
+
+            return projection.getCode();
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+                    + " when trying to retrieve the last json file!", e);
+            throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
+                    + experimentId + " when trying to retrieve the last json file!", e);
+        }
+    }
+
+    /**
      * Returns the block event counts for the user with the given id during the experiment with the given id.
      *
      * @param user The user id to search for.

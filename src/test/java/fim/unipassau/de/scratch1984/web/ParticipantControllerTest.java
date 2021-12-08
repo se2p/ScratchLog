@@ -84,6 +84,7 @@ public class ParticipantControllerTest {
     private static final String REDIRECT_GUI = "redirect:http://localhost:8601?uid=";
     private static final String REDIRECT_FINISH = "redirect:/finish?id=";
     private static final String EXP_ID = "&expid=";
+    private static final String RESTART = "&restart=true";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String EMAIL = "participant@participant.de";
     private static final String BLANK = "   ";
@@ -531,15 +532,16 @@ public class ParticipantControllerTest {
     }
 
     @Test
-    public void testStartExperimentParticipantFinished() {
-        participantDTO.setEnd(LocalDateTime.now());
+    public void testStartExperimentParticipantStarted() {
+        participantDTO.setStart(LocalDateTime.now());
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(PARTICIPANT);
         when(userService.getUser(PARTICIPANT)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.startExperiment(ID_STRING, httpServletRequest));
+        assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + RESTART,
+                participantController.startExperiment(ID_STRING, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -549,8 +551,8 @@ public class ParticipantControllerTest {
     }
 
     @Test
-    public void testStartExperimentParticipantStarted() {
-        participantDTO.setStart(LocalDateTime.now());
+    public void testStartExperimentParticipantFinished() {
+        participantDTO.setEnd(LocalDateTime.now());
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(PARTICIPANT);

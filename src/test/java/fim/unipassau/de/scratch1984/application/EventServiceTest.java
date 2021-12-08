@@ -107,6 +107,22 @@ public class EventServiceTest {
     private final List<ResourceEvent> resourceEventData = getResourceEvents(2);
     private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(5));
     private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
+    private BlockEventJSONProjection projection = new BlockEventJSONProjection() {
+        @Override
+        public Integer getId() {
+            return 1;
+        }
+
+        @Override
+        public String getCode() {
+            return "json";
+        }
+
+        @Override
+        public Timestamp getDate() {
+            return Timestamp.valueOf(LocalDateTime.now());
+        }
+    };
 
     @BeforeEach
     public void setup() {
@@ -289,6 +305,82 @@ public class EventServiceTest {
                 () -> eventService.findJsonById(0)
         );
         verify(blockEventRepository, never()).findById(anyInt());
+    }
+
+    @Test
+    public void testFindFirstJSON() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment))
+                .thenReturn(projection);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertEquals(projection.getCode(), eventService.findFirstJSON(ID, ID));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testFindFirstJSONProjectionNull() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertNull(eventService.findFirstJSON(ID, ID));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testFindFirstJSONParticipantNull() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment))
+                .thenReturn(projection);
+        assertNull(eventService.findFirstJSON(ID, ID));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testFindFirstJSONEntityNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment))
+                .thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> eventService.findFirstJSON(ID, ID)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
+        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testFindFirstJSONInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.findFirstJSON(ID, 0)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(blockEventRepository, never()).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(any(), any());
+        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testFindFirstJSONInvalidUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> eventService.findFirstJSON(-1, ID)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(blockEventRepository, never()).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(any(), any());
+        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
     }
 
     @Test

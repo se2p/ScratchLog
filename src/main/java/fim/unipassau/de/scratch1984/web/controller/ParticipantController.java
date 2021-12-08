@@ -296,7 +296,7 @@ public class ParticipantController {
 
     /**
      * Starts the experiment with the given id for the currently authenticated user, if they are registered as
-     * participants and have not yet started the experiment. If these requirements are not met, no corresponding
+     * participants and have not yet finished the experiment. If these requirements are not met, no corresponding
      * participant could be found, or the user is an administrator, they are redirected to the error page instead.
      *
      * @param id The experiment id.
@@ -342,22 +342,27 @@ public class ParticipantController {
                     logger.error("Cannot start experiment for user with id " + userDTO.getId() + " since their account "
                             + "is inactive or their secret null!");
                     return ERROR;
-                } else if (participantDTO.getStart() != null || participantDTO.getEnd() != null) {
+                } else if (participantDTO.getEnd() != null) {
                     logger.error("The user with id " + userDTO.getId() + " tried to start the experiment with id "
-                            + experimentId + " even though they already started it once!");
+                            + experimentId + " even though they have already finished it!");
                     return ERROR;
                 }
 
-                participantDTO.setStart(LocalDateTime.now());
+                if (participantDTO.getStart() == null) {
+                    participantDTO.setStart(LocalDateTime.now());
 
-                if (participantService.updateParticipant(participantDTO)) {
-                    return "redirect:" + Constants.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
-                            + participantDTO.getExperiment();
+                    if (participantService.updateParticipant(participantDTO)) {
+                        return "redirect:" + Constants.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
+                                + participantDTO.getExperiment();
+                    } else {
+                        logger.error("Failed to update the starting time of participant with user id "
+                                + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment()
+                                + "!");
+                        return ERROR;
+                    }
                 } else {
-                    logger.error("Failed to update the starting time of participant with user id "
-                            + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment()
-                            + "!");
-                    return ERROR;
+                    return "redirect:" + Constants.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
+                            + participantDTO.getExperiment() + "&restart=true";
                 }
             } catch (NotFoundException e) {
                 return ERROR;

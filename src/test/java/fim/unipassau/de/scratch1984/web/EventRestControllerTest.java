@@ -20,7 +20,6 @@ import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,6 +48,7 @@ public class EventRestControllerTest {
     private HttpServletResponse httpServletResponse;
 
     private static final String ID_STRING = "1";
+    private static final String JSON = "json";
     private static final int ID = 1;
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
@@ -397,6 +397,122 @@ public class EventRestControllerTest {
         verify(experimentService, never()).getSb3File(anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void testRetrieveLastJson() throws IOException {
+        when(eventService.findFirstJSON(ID, ID)).thenReturn(JSON);
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveLastJson(ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(eventService).findFirstJSON(ID, ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/json");
+        verify(httpServletResponse).setCharacterEncoding("UTF-8");
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testRetrieveLastJsonJsonNull() throws IOException {
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveLastJson(ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(eventService).findFirstJSON(ID, ID);
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse, never()).setCharacterEncoding(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
+    }
+
+    @Test
+    public void testRetrieveLastJsonNotFound() throws IOException {
+        when(eventService.findFirstJSON(ID, ID)).thenThrow(NotFoundException.class);
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveLastJson(ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(eventService).findFirstJSON(ID, ID);
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse, never()).setCharacterEncoding(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
+    }
+
+    @Test
+    public void testRetrieveLastJsonIO() throws IOException {
+        when(eventService.findFirstJSON(ID, ID)).thenReturn(JSON);
+        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveLastJson(ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(eventService).findFirstJSON(ID, ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/json");
+        verify(httpServletResponse).setCharacterEncoding("UTF-8");
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    public void testRetrieveLastJsonInvalidExperimentId() throws IOException {
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveLastJson(ID_STRING, JSON, httpServletResponse)
+        );
+        verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse, never()).setCharacterEncoding(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void testRetrieveLastJsonInvalidUserId() throws IOException {
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveLastJson("0", ID_STRING, httpServletResponse)
+        );
+        verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse, never()).setCharacterEncoding(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void testRetrieveLastJsonExperimentNull() throws IOException {
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveLastJson(ID_STRING, null, httpServletResponse)
+        );
+        verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse, never()).setCharacterEncoding(anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    public void testRetrieveLastJsonUserNull() throws IOException {
+        assertDoesNotThrow(
+                () -> eventRestController.retrieveLastJson(null, ID_STRING, httpServletResponse)
+        );
+        verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+        verify(httpServletResponse, never()).setContentType(anyString());
+        verify(httpServletResponse, never()).setCharacterEncoding(anyString());
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 }
