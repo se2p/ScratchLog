@@ -17,7 +17,7 @@ $(document).ready(function () {
 function getSuggestions() {
     let request = $.ajax({
         dataType: "json",
-        url: "/search/suggestions",
+        url: contextPath + "/search/suggestions",
         delay: 250,
         data: {query: $('#search').val()}
     });
@@ -44,8 +44,8 @@ function setHref(value) {
     let regex=/^[0-9]+$/;
 
     if (value.match(regex)) {
-        location.href = "/experiment?id=" + value;
+        location.href = contextPath + "/experiment?id=" + value;
     } else {
-        location.href = "/users/profile?name=" + value;
+        location.href = contextPath + "/users/profile?name=" + value;
     }
 }

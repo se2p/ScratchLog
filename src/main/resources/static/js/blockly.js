@@ -57,7 +57,8 @@ var renderBlockly = function () {
             readOnly: true,
             scrollbars:  true
         });
-    this.workspace.options.pathToMedia = window.location.origin + "/static/node_modules/scratch-blocks/media/";
+    this.workspace.options.pathToMedia = window.location.origin + contextPath
+        + "/static/node_modules/scratch-blocks/media/";
     if(blocklyCode) {
         var xml = Blockly.Xml.textToDom(blocklyCode);
         Blockly.Xml.domToWorkspace(xml, this.workspace);
@@ -128,7 +129,8 @@ jsonButton.addEventListener("click", function () {
  * Sets the href attribute of the sb3 button in preparation for the sb3 file download and clicks the button.
  */
 sb3Button.addEventListener("click", function () {
-    sb3Button.href = "/result/generate?user=" + user + "&experiment=" + experiment + "&json=" + xml[pos].id;
+    sb3Button.href = contextPath + "/result/generate?user=" + user + "&experiment=" + experiment + "&json="
+        + xml[pos].id;
     sb3Button.click();
 });
 
@@ -140,8 +142,8 @@ downloadRangeButton.addEventListener("click", function () {
     let include = rangeLastFile.checked;
     let start = sliderValues[0].innerHTML.substring(0, sliderValues[0].innerHTML.indexOf("."));
     let end = sliderValues[1].innerHTML.substring(0, sliderValues[1].innerHTML.indexOf("."));
-    downloadRangeButton.href = "/result/sb3s?user=" + user + "&experiment=" + experiment + "&start=" + start + "&end="
-        + end + "&include=" + include;
+    downloadRangeButton.href = contextPath + "/result/sb3s?user=" + user + "&experiment=" + experiment + "&start="
+        + start + "&end=" + end + "&include=" + include;
     downloadRangeButton.click();
 });
 
@@ -247,7 +249,7 @@ last.addEventListener("click", function () {
 function getXML() {
     $.ajax({
         type: "GET",
-        url: "/result/codes",
+        url: contextPath + "/result/codes",
         data: {
             experiment: experiment,
             user: user,

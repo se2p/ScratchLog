@@ -28,6 +28,11 @@ public final class Constants {
     public static final String GUI_URL = "http://localhost:8601";
 
     /**
+     * The context path of the application, if applicable.
+     */
+    public static final String CONTEXT_PATH = "";
+
+    /**
      * The filetype of an sb3 zip.
      */
     public static final String SB3 = "sb3";
