@@ -28,12 +28,9 @@ to do the necessary configuration described below.
 To get the project up and running, you need to adapt the following configurations to your system:
 - Edit the `application.properties` file in the `resources` folder to configure the database connection and mail
   sending.
-- Change the URL specified in the `ResourceConfiguration` class in the *addCorsMappings()* method to the root context
-  path of the application.
 - Change the *BASE_URL* string in the `Constants` class to the application URL.
 - Change the *GUI_URL* string in the `Constants` class to the URL of the instrumented Scratch GUI.
-- Change the *baseURL* property in the instrumented `scratch-vm` project in `logging.js` to `<applicationURL>/store`.
-- Change the URL called in the *fetch()* method called in *start()* in the `virtual-machine.js` to to
+- Change the *logging._baseUrl* in *start()* in the `virtual-machine.js` to
   `<applicationURL>/store/sb3?id=`.
 - Change the `window.location.href` in the *handleFinishExperiment()* method in `menu-bar.jsx` in the instrumented
   `scratch-gui` to the application URL.
@@ -50,11 +47,7 @@ If you plan to deploy the project under a different context path than the root c
 do:
 - The `application.properties` file contains a section where you can configure the context path. Uncomment the two lines
 and change the `server.servlet.context-path` accordingly.
-- Include your changed context path (e.g. `/scratch1984`) in the url patterns of the ajax requests in
-  `participantSuggestions.js` (*getUserSuggestions()*, *getUserDeleteSuggestions()*), `searchSuggestions.js`
-  (*getSuggestions()*) and `blockly.js` (*getXML()*) as well as in the `workspace.options.pathToMedia` and the
-  `sb3Button.href` in`blockly.js` (*renderBlockly()*, *sb3Button.addEventListener()*) and in the `location.href` in
-  `searchSuggestions.js` (*setHref()*).
+- Change the *CONTEXT_PATH* string in the `Constants` class to the specified context path.
 
 ## Build and Deployment
 
