@@ -30,8 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -684,28 +683,28 @@ public class UserControllerTest {
         when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
         assertEquals(PROFILE, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
-        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
+        verify(participantService, never()).getExperimentInfoForParticipant(anyInt());
         verify(authentication).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
     }
 
     @Test
     public void testGetProfileParticipant() {
-        List<Integer> experimentIds = new ArrayList<>();
-        experimentIds.add(ID);
+        HashMap<Integer, String> experiments = new HashMap<>();
+        experiments.put(ID, "Title");
         userDTO.setRole(UserDTO.Role.PARTICIPANT);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
-        when(participantService.getExperimentIdsForParticipant(userDTO.getId())).thenReturn(experimentIds);
+        when(participantService.getExperimentInfoForParticipant(userDTO.getId())).thenReturn(experiments);
         when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
         assertEquals(PROFILE, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
-        verify(participantService).getExperimentIdsForParticipant(userDTO.getId());
+        verify(participantService).getExperimentInfoForParticipant(userDTO.getId());
         verify(authentication).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
-        verify(model).addAttribute("experiments", experimentIds);
+        verify(model).addAttribute("experiments", experiments);
     }
 
     @Test
@@ -717,7 +716,7 @@ public class UserControllerTest {
         when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
         assertEquals(ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
-        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
+        verify(participantService, never()).getExperimentInfoForParticipant(anyInt());
         verify(authentication).getName();
         verify(model, never()).addAttribute(USER_DTO, userDTO);
     }
@@ -730,7 +729,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         assertEquals(PROFILE, userController.getProfile(null, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
-        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
+        verify(participantService, never()).getExperimentInfoForParticipant(anyInt());
         verify(authentication, times(2)).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
     }
@@ -743,7 +742,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         assertEquals(PROFILE, userController.getProfile(BLANK, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
-        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
+        verify(participantService, never()).getExperimentInfoForParticipant(anyInt());
         verify(authentication, times(2)).getName();
         verify(model).addAttribute(USER_DTO, userDTO);
     }
@@ -756,7 +755,7 @@ public class UserControllerTest {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         assertEquals(ERROR, userController.getProfile(null, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
-        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
+        verify(participantService, never()).getExperimentInfoForParticipant(anyInt());
         verify(authentication, times(2)).getName();
         verify(httpServletRequest).getSession(false);
         verify(model, never()).addAttribute(USER_DTO, userDTO);

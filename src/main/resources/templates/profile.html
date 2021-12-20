@@ -78,8 +78,8 @@
             </ul>
             <ul class="list-group mx-3 w-auto" th:unless="${experiments.isEmpty()}">
                 <li class="list-group-item" th:each="experiment : ${experiments}">
-                    <a class="text-dark" th:href="@{/experiment(id=${experiment})}">
-                        <span th:text="${experiment}"></span>
+                    <a class="text-dark d-flex justify-content-between" th:href="@{/experiment(id=${experiment.key})}">
+                        <span class="me-1" th:text="${experiment.value}"></span>
                         <i aria-hidden="true" class="fas fa-external-link-alt ms-1" title="Go to experiment"></i>
                         <span class="sr-only" th:text="#{experiment_label}"></span>
                     </a>

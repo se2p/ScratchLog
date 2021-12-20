@@ -29,8 +29,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
@@ -511,17 +510,17 @@ public class UserControllerIntegrationTest {
                 )))
                 .andExpect(view().name(PROFILE));
         verify(userService).getUser(USERNAME);
-        verify(participantService, never()).getExperimentIdsForParticipant(userDTO.getId());
+        verify(participantService, never()).getExperimentInfoForParticipant(userDTO.getId());
     }
 
     @Test
     @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testGetProfileParticipant() throws Exception {
-        List<Integer> experimentIds = new ArrayList<>();
-        experimentIds.add(ID);
+        HashMap<Integer, String> experiments = new HashMap<>();
+        experiments.put(ID, "Title");
         userDTO.setRole(UserDTO.Role.PARTICIPANT);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
-        when(participantService.getExperimentIdsForParticipant(userDTO.getId())).thenReturn(experimentIds);
+        when(participantService.getExperimentInfoForParticipant(userDTO.getId())).thenReturn(experiments);
         mvc.perform(get("/users/profile")
                 .param(NAME, USERNAME)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -529,14 +528,14 @@ public class UserControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
-                .andExpect(model().attribute("experiments", is(experimentIds)))
+                .andExpect(model().attribute("experiments", is(experiments)))
                 .andExpect(model().attribute(USER_DTO, allOf(
                         hasProperty("id", is(userDTO.getId())),
                         hasProperty("username", is(USERNAME))
                 )))
                 .andExpect(view().name(PROFILE));
         verify(userService).getUser(USERNAME);
-        verify(participantService).getExperimentIdsForParticipant(userDTO.getId());
+        verify(participantService).getExperimentInfoForParticipant(userDTO.getId());
     }
 
     @Test
@@ -551,7 +550,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(userService).getUser(USERNAME);
-        verify(participantService, never()).getExperimentIdsForParticipant(userDTO.getId());
+        verify(participantService, never()).getExperimentInfoForParticipant(userDTO.getId());
     }
 
     @Test
@@ -570,7 +569,7 @@ public class UserControllerIntegrationTest {
                 )))
                 .andExpect(view().name(PROFILE));
         verify(userService).getUser(USERNAME);
-        verify(participantService, never()).getExperimentIdsForParticipant(userDTO.getId());
+        verify(participantService, never()).getExperimentInfoForParticipant(userDTO.getId());
     }
 
     @Test
@@ -589,7 +588,7 @@ public class UserControllerIntegrationTest {
                 )))
                 .andExpect(view().name(PROFILE));
         verify(userService).getUser(USERNAME);
-        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
+        verify(participantService, never()).getExperimentInfoForParticipant(anyInt());
     }
 
     @Test
@@ -609,7 +608,7 @@ public class UserControllerIntegrationTest {
                 )))
                 .andExpect(view().name(PROFILE));
         verify(userService).getUser(userDTO.getUsername());
-        verify(participantService, never()).getExperimentIdsForParticipant(anyInt());
+        verify(participantService, never()).getExperimentInfoForParticipant(anyInt());
     }
 
     @Test

@@ -36,9 +36,7 @@ import org.springframework.web.servlet.LocaleResolver;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -424,7 +422,7 @@ public class UserController {
         }
 
         UserDTO userDTO;
-        List<Integer> experimentIds = new ArrayList<>();
+        HashMap<Integer, String> experiments = new HashMap<>();
 
         if (username == null || username.trim().isBlank() || !httpServletRequest.isUserInRole("ROLE_ADMIN")) {
             try {
@@ -442,10 +440,10 @@ public class UserController {
         }
 
         if (userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
-            experimentIds = participantService.getExperimentIdsForParticipant(userDTO.getId());
+            experiments = participantService.getExperimentInfoForParticipant(userDTO.getId());
         }
 
-        model.addAttribute("experiments", experimentIds);
+        model.addAttribute("experiments", experiments);
         model.addAttribute("userDTO", userDTO);
         model.addAttribute("passwordDTO", new PasswordDTO());
         model.addAttribute("language",
