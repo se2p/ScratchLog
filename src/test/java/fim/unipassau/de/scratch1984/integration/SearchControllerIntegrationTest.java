@@ -1,7 +1,7 @@
 package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.service.SearchService;
-import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -67,7 +67,7 @@ public class SearchControllerIntegrationTest {
     private static final int COUNT = 25;
     private static final int MAX_RESULTS = 30;
     private List<UserProjection> users;
-    private List<ExperimentSearchProjection> experiments;
+    private List<ExperimentTableProjection> experiments;
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -227,13 +227,13 @@ public class SearchControllerIntegrationTest {
         return userProjections;
     }
 
-    private List<ExperimentSearchProjection> getExperiments(int number) {
-        List<ExperimentSearchProjection> experiments = new ArrayList<>();
+    private List<ExperimentTableProjection> getExperiments(int number) {
+        List<ExperimentTableProjection> experiments = new ArrayList<>();
 
         for (int i = 0; i < number; i++) {
             int id = i + 1;
 
-            ExperimentSearchProjection experiment = new ExperimentSearchProjection() {
+            ExperimentTableProjection experiment = new ExperimentTableProjection() {
                 @Override
                 public Integer getId() {
                     return id;
@@ -247,6 +247,11 @@ public class SearchControllerIntegrationTest {
                 @Override
                 public String getDescription() {
                     return "description" + id;
+                }
+
+                @Override
+                public boolean isActive() {
+                    return false;
                 }
             };
 

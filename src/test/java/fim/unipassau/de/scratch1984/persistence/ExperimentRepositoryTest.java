@@ -3,11 +3,8 @@ package fim.unipassau.de.scratch1984.persistence;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
-import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
-import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
-import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +13,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -92,7 +88,7 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentSuggestions() {
-        List<ExperimentSearchProjection> experiments = repository.findExperimentSuggestions(SHORT_QUERY);
+        List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(SHORT_QUERY);
         assertAll(
                 () -> assertEquals(5, experiments.size()),
                 () -> assertTrue(experiments.stream().anyMatch(experiment
@@ -110,7 +106,7 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentSuggestionsLessThan5() {
-        List<ExperimentSearchProjection> experiments = repository.findExperimentSuggestions(TITLE_QUERY);
+        List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(TITLE_QUERY);
         assertAll(
                 () -> assertEquals(4, experiments.size()),
                 () -> assertTrue(experiments.stream().anyMatch(experiment
@@ -128,13 +124,13 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentSuggestionsNoResults() {
-        List<ExperimentSearchProjection> experiments = repository.findExperimentSuggestions(NO_RESULTS);
+        List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(NO_RESULTS);
         assertTrue(experiments.isEmpty());
     }
 
     @Test
     public void testFindExperimentResults() {
-        List<ExperimentSearchProjection> experiments = repository.findExperimentResults(SHORT_QUERY, LIMIT);
+        List<ExperimentTableProjection> experiments = repository.findExperimentResults(SHORT_QUERY, LIMIT);
         assertAll(
                 () -> assertEquals(5, experiments.size()),
                 () -> assertTrue(experiments.stream().anyMatch(experiment
@@ -152,7 +148,7 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentResultsAll() {
-        List<ExperimentSearchProjection> experiments = repository.findExperimentResults(SHORT_QUERY,
+        List<ExperimentTableProjection> experiments = repository.findExperimentResults(SHORT_QUERY,
                 Constants.PAGE_SIZE);
         assertAll(
                 () -> assertEquals(6, experiments.size()),

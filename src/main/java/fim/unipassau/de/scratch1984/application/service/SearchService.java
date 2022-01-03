@@ -1,6 +1,6 @@
 package fim.unipassau.de.scratch1984.application.service;
 
-import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
@@ -74,10 +74,10 @@ public class SearchService {
      *
      * @param query The title to search for.
      * @param limit The maximum amount of results to return.
-     * @return A list of matching {@link ExperimentSearchProjection}s, or an empty list, if no entries could be found.
+     * @return A list of matching {@link ExperimentTableProjection}s, or an empty list, if no entries could be found.
      */
     @Transactional
-    public List<ExperimentSearchProjection> getExperimentList(final String query, final int limit) {
+    public List<ExperimentTableProjection> getExperimentList(final String query, final int limit) {
         if (query == null || query.trim().isBlank()) {
             logger.error("Cannot search for experiments with invalid query string null or blank!");
             throw new IllegalArgumentException("Cannot search for experiments with invalid query string null or "
@@ -135,7 +135,7 @@ public class SearchService {
     @Transactional
     public List<String[]> getSearchSuggestions(final String query) {
         List<UserProjection> users = userRepository.findUserSuggestions(query);
-        List<ExperimentSearchProjection> experiments = experimentRepository.findExperimentSuggestions(query);
+        List<ExperimentTableProjection> experiments = experimentRepository.findExperimentSuggestions(query);
         List<String[]> suggestions = addExperimentInfo(experiments);
         suggestions.addAll(addUserInfo(users));
         return suggestions;
@@ -193,17 +193,17 @@ public class SearchService {
     /**
      * Returns a list of all experiment ids and titles of the experiments in the given list.
      *
-     * @param experiments The list of {@link ExperimentSearchProjection}s.
+     * @param experiments The list of {@link ExperimentTableProjection}s.
      * @return A list of experiment ids and titles, or an empty list.
      */
-    private List<String[]> addExperimentInfo(final List<ExperimentSearchProjection> experiments) {
+    private List<String[]> addExperimentInfo(final List<ExperimentTableProjection> experiments) {
         List<String[]> experimentInfo = new ArrayList<>();
 
         if (experiments.isEmpty()) {
             return experimentInfo;
         }
 
-        for (ExperimentSearchProjection experiment : experiments) {
+        for (ExperimentTableProjection experiment : experiments) {
             String[] addInfo = new String[] {String.valueOf(experiment.getId()), experiment.getTitle()};
             experimentInfo.add(addInfo);
         }

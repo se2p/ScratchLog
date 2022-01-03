@@ -2,7 +2,6 @@ package fim.unipassau.de.scratch1984.persistence.repository;
 
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
-import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -96,22 +95,22 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * Returns a list of the first five experiments whose title contains the given query value.
      *
      * @param query The title to search for.
-     * @return A list of {@link ExperimentSearchProjection}s.
+     * @return A list of {@link ExperimentTableProjection}s.
      */
     @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
             + " LIMIT 5")
-    List<ExperimentSearchProjection> findExperimentSuggestions(@Param("query") String query);
+    List<ExperimentTableProjection> findExperimentSuggestions(@Param("query") String query);
 
     /**
      * Returns a list of at most as many experiments as the given limit whose title contains the given query value.
      *
      * @param query The title to search for.
      * @param limit The maximum amount of results to be returned.
-     * @return A list of {@link ExperimentSearchProjection}s.
+     * @return A list of {@link ExperimentTableProjection}s.
      */
     @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
             + " LIMIT :limit")
-    List<ExperimentSearchProjection> findExperimentResults(@Param("query") String query, @Param("limit") int limit);
+    List<ExperimentTableProjection> findExperimentResults(@Param("query") String query, @Param("limit") int limit);
 
     /**
      * Returns the number of experiments whose title contains the given query value.
