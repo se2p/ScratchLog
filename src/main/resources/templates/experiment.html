@@ -184,7 +184,7 @@
 
         <!-- The button to start the experiment. -->
         <div th:if="${participant != null}">
-            <div class="text-center" th:if="${participant.end == null and experimentDTO.active and secret == null}">
+            <div class="text-center" th:if="${participant.end == null and experimentDTO.active}">
                 <a class="btn btn-primary" target="_blank" th:href="@{/participant/start(id=${experimentDTO.id})}"
                    th:text="#{start_experiment}"></a>
             </div>

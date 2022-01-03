@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ParticipantController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -81,7 +82,7 @@ public class ParticipantControllerTest {
     private static final String PARTICIPANT = "participant";
     private static final String EXPERIMENT = "experiment";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
-    private static final String REDIRECT_GUI = "redirect:http://localhost:8601?uid=";
+    private static final String REDIRECT_GUI = "redirect:" + Constants.GUI_URL + "?uid=";
     private static final String REDIRECT_FINISH = "redirect:/finish?id=";
     private static final String EXP_ID = "&expid=";
     private static final String RESTART = "&restart=true";

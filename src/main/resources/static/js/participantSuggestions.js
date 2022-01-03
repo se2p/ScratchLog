@@ -22,7 +22,7 @@ $(document).ready(function () {
 function getUserSuggestions() {
     let request = $.ajax({
         dataType: "json",
-        url: "/search/user",
+        url: contextPath + "/search/user",
         delay: 250,
         data: {query: $('#participantInput').val(), id: $('#experimentId').val()}
     });
@@ -47,7 +47,7 @@ function getUserSuggestions() {
 function getUserDeleteSuggestions() {
     let request = $.ajax({
         dataType: "json",
-        url: "/search/delete",
+        url: contextPath + "/search/delete",
         delay: 250,
         data: {query: $('#deleteParticipantInput').val(), id: $('#deleteId').val()}
     });

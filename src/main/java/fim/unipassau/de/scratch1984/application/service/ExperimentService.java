@@ -90,7 +90,11 @@ public class ExperimentService {
 
         Experiment experiment = experimentRepository.findByTitle(title);
 
-        return experiment.getId() != id;
+        if (experiment == null) {
+            return false;
+        } else {
+            return experiment.getId() != id;
+        }
     }
 
     /**

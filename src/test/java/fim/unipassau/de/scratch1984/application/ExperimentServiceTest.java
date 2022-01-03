@@ -124,6 +124,13 @@ public class ExperimentServiceTest {
     }
 
     @Test
+    public void testExistsExperimentNull() {
+        when(experimentRepository.findByTitle(TITLE)).thenReturn(null);
+        assertFalse(experimentService.existsExperiment(TITLE, experiment.getId()));
+        verify(experimentRepository).findByTitle(TITLE);
+    }
+
+    @Test
     public void testExistsExperimentWithIdTitleNull() {
         assertFalse(experimentService.existsExperiment(null, ID));
         verify(experimentRepository, never()).findByTitle(TITLE);

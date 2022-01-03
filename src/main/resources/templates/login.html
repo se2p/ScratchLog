@@ -57,10 +57,10 @@
                     </div>
                     <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 </div>
-                <!-- The submit button. -->
+                <!-- The forgot password and submit buttons. -->
                 <div class="d-flex justify-content-between">
-                    <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
                     <a class="btn btn-secondary" th:text="#{forgot_password}" th:href="@{/reset}"></a>
+                    <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
                 </div>
             </div>
         </form>

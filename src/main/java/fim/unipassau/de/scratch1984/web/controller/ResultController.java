@@ -236,7 +236,7 @@ public class ResultController {
             }
 
             for (FileDTO fileDTO : fileDTOS) {
-                writeSavedFileData(zos, fileDTO);
+                writeFileDataNoZips(zos, fileDTO);
             }
 
             writeJsonData(zos, code);
@@ -467,8 +467,8 @@ public class ResultController {
     }
 
     /**
-     * Generates sb3 files the desired json codes saved for the given user during the given experiment and makes them
-     * available for download in a zip file. The json files loaded from the database are filtered according to the
+     * Generates sb3 files for the desired json codes saved for the given user during the given experiment and makes
+     * them available for download in a zip file. The json files loaded from the database are filtered according to the
      * specified step parameter, or the specified start, end and include parameters, if present. Every json code is put
      * in a zip file as a project.json file together with all costumes and sounds present in the experiment project file
      * as well as all files saved for the user during the experiment that were not saved as zip files, meaning they are
@@ -652,42 +652,6 @@ public class ResultController {
 
         zin.close();
         file.close();
-    }
-
-    /**
-     * Writes the content of the given {@link FileDTO} representing a file the participant uploaded during the
-     * experiment to the given {@link ZipOutputStream}.
-     *
-     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
-     * @param fileDTO The {@link FileDTO} containing the file data.
-     * @throws IOException if the file content could not be written correctly.
-     */
-    private void writeSavedFileData(final ZipOutputStream zos, final FileDTO fileDTO) throws IOException {
-        if (fileDTO.getName().endsWith("zip")) {
-            InputStream file = new ByteArrayInputStream(fileDTO.getContent());
-            ZipInputStream zin = new ZipInputStream(file);
-            ZipEntry ze = zin.getNextEntry();
-
-            if (ze != null) {
-                ZipEntry entry = new ZipEntry(fileDTO.getName().replace("zip", fileDTO.getFiletype()));
-                entry.setSize(ze.getSize());
-                zos.putNextEntry(entry);
-                int current;
-                while ((current = zin.read()) >= 0) {
-                    zos.write(current);
-                }
-                zos.closeEntry();
-            }
-
-            zin.close();
-            file.close();
-        } else {
-            ZipEntry entry = new ZipEntry(fileDTO.getId() + fileDTO.getName());
-            entry.setSize(fileDTO.getContent().length);
-            zos.putNextEntry(entry);
-            zos.write(fileDTO.getContent());
-            zos.closeEntry();
-        }
     }
 
     /**

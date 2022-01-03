@@ -27,6 +27,7 @@ import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -331,14 +332,19 @@ public class ParticipantServiceTest {
     public void testGetExperimentIdsForParticipant() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(participantRepository.findAllByUser(user)).thenReturn(participantList);
-        List<Integer> experimentIds = participantService.getExperimentIdsForParticipant(ID);
+        HashMap<Integer, String> experiments = participantService.getExperimentInfoForParticipant(ID);
         assertAll(
-                () -> assertEquals(5, experimentIds.size()),
-                () -> assertTrue(experimentIds.contains(1)),
-                () -> assertTrue(experimentIds.contains(2)),
-                () -> assertTrue(experimentIds.contains(3)),
-                () -> assertTrue(experimentIds.contains(4)),
-                () -> assertTrue(experimentIds.contains(5))
+                () -> assertEquals(5, experiments.size()),
+                () -> assertTrue(experiments.containsKey(1)),
+                () -> assertTrue(experiments.containsValue("Title 0")),
+                () -> assertTrue(experiments.containsKey(2)),
+                () -> assertTrue(experiments.containsValue("Title 1")),
+                () -> assertTrue(experiments.containsKey(3)),
+                () -> assertTrue(experiments.containsValue("Title 2")),
+                () -> assertTrue(experiments.containsKey(4)),
+                () -> assertTrue(experiments.containsValue("Title 3")),
+                () -> assertTrue(experiments.containsKey(5)),
+                () -> assertTrue(experiments.containsValue("Title 4"))
         );
         verify(userRepository).getOne(ID);
         verify(participantRepository).findAllByUser(user);
@@ -349,7 +355,7 @@ public class ParticipantServiceTest {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(participantRepository.findAllByUser(user)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
-                () -> participantService.getExperimentIdsForParticipant(ID)
+                () -> participantService.getExperimentInfoForParticipant(ID)
         );
         verify(userRepository).getOne(ID);
         verify(participantRepository).findAllByUser(user);
@@ -358,7 +364,7 @@ public class ParticipantServiceTest {
     @Test
     public void testGetExperimentIdsForParticipantIdInvalid() {
         assertThrows(IllegalArgumentException.class,
-                () -> participantService.getExperimentIdsForParticipant(0)
+                () -> participantService.getExperimentInfoForParticipant(0)
         );
         verify(userRepository, never()).getOne(ID);
         verify(participantRepository, never()).findAllByUser(user);
@@ -433,6 +439,7 @@ public class ParticipantServiceTest {
             user.setId(i + 1);
             Experiment experiment = new Experiment();
             experiment.setId(i + 1);
+            experiment.setTitle("Title " + i);
             participants.add(new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null));
         }
         return participants;
