@@ -2,11 +2,15 @@ package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
-import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.HomeController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +36,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -53,9 +58,11 @@ public class HomeControllerIntegrationTest {
     @MockBean
     private ExperimentService experimentService;
 
+    @MockBean
+    private UserService userService;
+
     private static final String INDEX = "index";
     private static final String FINISH = "experiment-finish";
-    private static final String ERROR = "redirect:/error";
     private static final String CURRENT = "3";
     private static final String LAST = "4";
     private static final String BLANK = "   ";
@@ -67,14 +74,21 @@ public class HomeControllerIntegrationTest {
     private static final String THANKS = "thanks";
     private static final String ID_PARAM = "id";
     private final int pageNum = 3;
-    private final int lastPage = 3;
+    private final int lastPage = 4;
     private static final int ID = 1;
     private static final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "My Experiment", "description",
             "info", "postscript", true);
-    private final Page<Experiment> experimentPage = new PageImpl<>(getExperiments(5));
+    private static final UserDTO userDTO = new UserDTO("participant", "email", UserDTO.Role.PARTICIPANT,
+            UserDTO.Language.ENGLISH, "password", "");
+    private final Page<ExperimentTableProjection> experimentPage = new PageImpl<>(getExperimentProjections(5));
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
+
+    @BeforeEach
+    public void setup() {
+        userDTO.setId(ID);
+    }
 
     @AfterEach
     public void resetService() {
@@ -90,6 +104,7 @@ public class HomeControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(INDEX));
+        verify(userService, never()).getUser(anyString());
         verify(experimentService, never()).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
     }
@@ -106,11 +121,50 @@ public class HomeControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_PAGE, is(lastPage + 1)))
+                .andExpect(model().attribute(LAST_PAGE, is(lastPage)))
                 .andExpect(model().attribute(PAGE_PARAM, is(1)))
                 .andExpect(view().name(INDEX));
+        verify(userService, never()).getUser(anyString());
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
+    public void testGetIndexPageParticipant() throws Exception {
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(experimentService.getLastExperimentPage(userDTO.getId())).thenReturn(lastPage);
+        when(experimentService.getExperimentParticipantPage(any(PageRequest.class),
+                anyInt())).thenReturn(experimentPage);
+        mvc.perform(get("/")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
+                .andExpect(model().attribute(LAST_PAGE, is(lastPage)))
+                .andExpect(model().attribute(PAGE_PARAM, is(1)))
+                .andExpect(view().name(INDEX));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(experimentService).getLastExperimentPage(userDTO.getId());
+        verify(experimentService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
+    public void testGetIndexPageParticipantNotFound() throws Exception {
+        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
+        mvc.perform(get("/")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
     }
 
     @Test
@@ -125,7 +179,7 @@ public class HomeControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_PAGE, is(lastPage + 1)))
+                .andExpect(model().attribute(LAST_PAGE, is(lastPage)))
                 .andExpect(model().attribute(PAGE_PARAM, is(pageNum + 1)))
                 .andExpect(view().name(INDEX));
         verify(experimentService).getLastPage();
@@ -142,7 +196,7 @@ public class HomeControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
     }
@@ -157,7 +211,7 @@ public class HomeControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
     }
@@ -174,7 +228,7 @@ public class HomeControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_PAGE, is(lastPage + 1)))
+                .andExpect(model().attribute(LAST_PAGE, is(lastPage)))
                 .andExpect(model().attribute(PAGE_PARAM, is(pageNum - 1)))
                 .andExpect(view().name(INDEX));
         verify(experimentService).getLastPage();
@@ -191,7 +245,7 @@ public class HomeControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
     }
@@ -206,7 +260,7 @@ public class HomeControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
     }
@@ -220,7 +274,7 @@ public class HomeControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
     }
@@ -236,7 +290,7 @@ public class HomeControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_PAGE, is(lastPage + 1)))
+                .andExpect(model().attribute(LAST_PAGE, is(lastPage)))
                 .andExpect(model().attribute(PAGE_PARAM, is(1)))
                 .andExpect(view().name(INDEX));
         verify(experimentService).getLastPage();
@@ -254,8 +308,8 @@ public class HomeControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_PAGE, is(lastPage + 1)))
-                .andExpect(model().attribute(PAGE_PARAM, is(lastPage + 1)))
+                .andExpect(model().attribute(LAST_PAGE, is(lastPage)))
+                .andExpect(model().attribute(PAGE_PARAM, is(lastPage)))
                 .andExpect(view().name(INDEX));
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
@@ -287,7 +341,7 @@ public class HomeControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(model().attribute(THANKS, nullValue()))
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService).getExperiment(ID);
     }
 
@@ -301,14 +355,36 @@ public class HomeControllerIntegrationTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(model().attribute(THANKS, nullValue()))
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(anyInt());
     }
 
-    private List<Experiment> getExperiments(int number) {
-        List<Experiment> experiments = new ArrayList<>();
+    private List<ExperimentTableProjection> getExperimentProjections(int number) {
+        List<ExperimentTableProjection> experiments = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            experiments.add(new Experiment(i, "Experiment " + i, "Description for experiment " + i, "", "", false));
+            int finalI = i;
+            ExperimentTableProjection projection = new ExperimentTableProjection() {
+                @Override
+                public Integer getId() {
+                    return finalI;
+                }
+
+                @Override
+                public String getTitle() {
+                    return "Experiment " + finalI;
+                }
+
+                @Override
+                public String getDescription() {
+                    return "Description for experiment " + finalI;
+                }
+
+                @Override
+                public boolean isActive() {
+                    return false;
+                }
+            };
+            experiments.add(projection);
         }
         return experiments;
     }

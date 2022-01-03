@@ -1,8 +1,13 @@
 package fim.unipassau.de.scratch1984.persistence;
 
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +41,8 @@ public class ExperimentRepositoryTest {
     private static final String TITLE_QUERY = "Experiment";
     private static final String NO_RESULTS = "description";
     private static final int LIMIT = 5;
+    private PageRequest pageRequest;
+    private User user = new User("user", "email", "PARTICIPANT", "ENGLISH", "password", "secret");
     private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
             "Some postscript", false);
     private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
@@ -47,15 +55,25 @@ public class ExperimentRepositoryTest {
             "Some postscript", false);
     private Experiment experiment6 = new Experiment(null, "Exp 6", "Description for experiment 3", "Some info",
             "Some postscript", false);
+    private Participant participant1 = new Participant(user, experiment1, null, null);
+    private Participant participant2 = new Participant(user, experiment2, null, null);
+    private Participant participant3 = new Participant(user, experiment3, null, null);
+    private Participant participant4 = new Participant(user, experiment4, null, null);
 
     @BeforeEach
     public void setup() {
+        pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
+        user = entityManager.persist(user);
         experiment1 = entityManager.persist(experiment1);
         experiment2 = entityManager.persist(experiment2);
         experiment3 = entityManager.persist(experiment3);
         experiment4 = entityManager.persist(experiment4);
         experiment5 = entityManager.persist(experiment5);
         experiment6 = entityManager.persist(experiment6);
+        participant1 = entityManager.persist(participant1);
+        participant2 = entityManager.persist(participant2);
+        participant3 = entityManager.persist(participant3);
+        participant4 = entityManager.persist(participant4);
     }
 
     @Test
@@ -182,5 +200,48 @@ public class ExperimentRepositoryTest {
     @Test
     public void testGetExperimentResultCountZero() {
         assertEquals(0, repository.getExperimentResultsCount(NO_RESULTS));
+    }
+
+    @Test
+    public void testFindExperimentsByParticipant() {
+        Page<ExperimentTableProjection> projections = repository.findExperimentsByParticipant(user.getId(),
+                pageRequest);
+        assertAll(
+                () -> assertEquals(4, projections.getNumberOfElements()),
+                () -> assertTrue(projections.stream().anyMatch(e -> Objects.equals(e.getId(), experiment1.getId()))),
+                () -> assertTrue(projections.stream().anyMatch(e -> Objects.equals(e.getId(), experiment2.getId()))),
+                () -> assertTrue(projections.stream().anyMatch(e -> Objects.equals(e.getId(), experiment3.getId()))),
+                () -> assertTrue(projections.stream().anyMatch(e -> Objects.equals(e.getId(), experiment4.getId())))
+        );
+    }
+
+    @Test
+    public void testFindExperimentsByParticipantPageSizeTooSmall() {
+        pageRequest = PageRequest.of(0, 3);
+        Page<ExperimentTableProjection> projections = repository.findExperimentsByParticipant(user.getId(),
+                pageRequest);
+        assertAll(
+                () -> assertEquals(3, projections.getNumberOfElements()),
+                () -> assertTrue(projections.stream().anyMatch(e -> Objects.equals(e.getId(), experiment1.getId()))),
+                () -> assertTrue(projections.stream().anyMatch(e -> Objects.equals(e.getId(), experiment2.getId()))),
+                () -> assertTrue(projections.stream().anyMatch(e -> Objects.equals(e.getId(), experiment3.getId()))),
+                () -> assertFalse(projections.stream().anyMatch(e -> Objects.equals(e.getId(), experiment4.getId())))
+        );
+    }
+
+    @Test
+    public void testFindExperimentsByParticipantNoUser() {
+        Page<ExperimentTableProjection> projections = repository.findExperimentsByParticipant(5, pageRequest);
+        assertEquals(0, projections.getNumberOfElements());
+    }
+
+    @Test
+    public void testGetParticipantPageCount() {
+        assertEquals(4, repository.getParticipantPageCount(user.getId()));
+    }
+
+    @Test
+    public void testGetParticipantPageCountZero() {
+        assertEquals(0, repository.getParticipantPageCount(5));
     }
 }

@@ -27,13 +27,13 @@
         </div>
 
         <!-- The standard index page content shown to unauthenticated users and participants. -->
-        <div sec:authorize="!hasRole('ADMIN')">
+        <div sec:authorize="!hasRole('PARTICIPANT')">
             <h2 class="mb-5" th:text="${T(fim.unipassau.de.scratch1984.util.Constants).PROJECT_NAME}"></h2>
             <div class="mx-5" th:text="#{project_info}"></div>
         </div>
 
         <!-- The experiment heading and table shown to administrators. -->
-        <div sec:authorize="hasRole('ADMIN')">
+        <div sec:authorize="hasRole('PARTICIPANT')">
             <h2 class="mb-5" th:text="#{experiment}"></h2>
             <!-- The table containing the experiment information. -->
             <table class="table table-hover">
@@ -69,7 +69,7 @@
                 </tbody>
             </table>
             <!-- The navigation elements below the table. -->
-            <div class="text-center">
+            <div class="text-center" sec:authorize="hasRole('ADMIN')">
                 <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}" th:href="@{/first}"
                    th:aria-label="#{first_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-left"></i>
