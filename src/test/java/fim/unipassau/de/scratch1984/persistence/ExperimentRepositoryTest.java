@@ -91,17 +91,6 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindAllByActive() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Experiment> active = repository.findAllByActive(true, pageable);
-        Page<Experiment> inactive = repository.findAllByActive(false, pageable);
-        assertAll(
-                () -> assertEquals(1, active.getNumberOfElements()),
-                () -> assertEquals(5, inactive.getNumberOfElements())
-        );
-    }
-
-    @Test
     public void testFindExperimentSuggestions() {
         List<ExperimentSearchProjection> experiments = repository.findExperimentSuggestions(SHORT_QUERY);
         assertAll(
