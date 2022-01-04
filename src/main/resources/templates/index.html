@@ -69,7 +69,7 @@
                 </tbody>
             </table>
             <!-- The navigation elements below the table. -->
-            <div class="text-center" sec:authorize="hasRole('ADMIN')">
+            <div class="text-center">
                 <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}" th:href="@{/first}"
                    th:aria-label="#{first_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-left"></i>

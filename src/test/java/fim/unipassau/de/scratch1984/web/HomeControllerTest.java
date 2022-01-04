@@ -187,94 +187,396 @@ public class HomeControllerTest {
 
     @Test
     public void testGetNextPage() {
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        assertEquals(INDEX, homeController.getNextPage(CURRENT, model));
+        assertEquals(INDEX, homeController.getNextPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
+        verify(userService, never()).getUser(anyString());
         verify(model, times(3)).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testGetNextPageInvalidCurrent() {
+    public void testGetNextPageInvalidCurrentEqualLast() {
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
-        assertEquals(Constants.ERROR, homeController.getNextPage(BLANK, model));
+        assertEquals(Constants.ERROR, homeController.getNextPage(LAST, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
+        verify(userService, never()).getUser(anyString());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testGetNextPageInvalidCurrentEqualLast() {
-        when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
-        assertEquals(Constants.ERROR, homeController.getNextPage(LAST, model));
-        verify(experimentService).getLastPage();
+    public void testGetNextPageUserParticipant() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(experimentService.getLastExperimentPage(userDTO.getId())).thenReturn(LAST_PAGE);
+        when(experimentService.getExperimentParticipantPage(any(PageRequest.class),
+                anyInt())).thenReturn(experimentPage);
+        assertEquals(INDEX, homeController.getNextPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(userDTO.getUsername());
+        verify(experimentService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(experimentService).getLastExperimentPage(userDTO.getId());
+    }
+
+    @Test
+    public void testGetNextPageUserParticipantCurrentEqualsLast() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(experimentService.getLastExperimentPage(userDTO.getId())).thenReturn(LAST_PAGE);
+        assertEquals(Constants.ERROR, homeController.getNextPage(LAST, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(userDTO.getUsername());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(experimentService).getLastExperimentPage(userDTO.getId());
+    }
+
+    @Test
+    public void testGetNextPageUserParticipantNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, homeController.getNextPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(userDTO.getUsername());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+    }
+
+    @Test
+    public void testGetNextPageUserParticipantAuthenticationNameNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        assertEquals(Constants.ERROR, homeController.getNextPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+    }
+
+    @Test
+    public void testGetNextPageUserParticipantAuthenticationNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        assertEquals(Constants.ERROR, homeController.getNextPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+    }
+
+    @Test
+    public void testGetNextPageInvalidCurrent() {
+        assertEquals(Constants.ERROR, homeController.getNextPage(BLANK, httpServletRequest, model));
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(experimentService, never()).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
+        verify(userService, never()).getUser(anyString());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetNextPageInvalidCurrentNull() {
-        assertEquals(Constants.ERROR, homeController.getNextPage(null, model));
+        assertEquals(Constants.ERROR, homeController.getNextPage(null, httpServletRequest, model));
+        verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(experimentService, never()).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
+        verify(userService, never()).getUser(anyString());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetPrevious() {
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        assertEquals(INDEX, homeController.getPreviousPage(CURRENT, model));
+        assertEquals(INDEX, homeController.getPreviousPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
+        verify(userService, never()).getUser(anyString());
         verify(model, times(3)).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testGetPreviousCurrent0() {
-        when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
-        assertEquals(Constants.ERROR, homeController.getPreviousPage("0", model));
+    public void testGetPreviousLastSmallerCurrent() {
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
+        when(experimentService.getLastPage()).thenReturn(1);
+        assertEquals(Constants.ERROR, homeController.getPreviousPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(experimentService).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
+        verify(userService, never()).getUser(anyString());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testGetPreviousLastSmallerCurrent() {
-        when(experimentService.getLastPage()).thenReturn(1);
-        assertEquals(Constants.ERROR, homeController.getPreviousPage(CURRENT, model));
-        verify(experimentService).getLastPage();
+    public void testGetPreviousParticipant() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(experimentService.getLastExperimentPage(userDTO.getId())).thenReturn(LAST_PAGE);
+        when(experimentService.getExperimentParticipantPage(any(PageRequest.class),
+                anyInt())).thenReturn(experimentPage);
+        assertEquals(INDEX, homeController.getPreviousPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(experimentService).getLastExperimentPage(userDTO.getId());
+        verify(experimentService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(userService).getUser(userDTO.getUsername());
+        verify(model, times(3)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetPreviousParticipantLastSmallerCurrent() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(experimentService.getLastExperimentPage(userDTO.getId())).thenReturn(1);
+        assertEquals(Constants.ERROR, homeController.getPreviousPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(experimentService).getLastExperimentPage(userDTO.getId());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(userService).getUser(userDTO.getUsername());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetPreviousParticipantNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, homeController.getPreviousPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(userService).getUser(userDTO.getUsername());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetPreviousParticipantAuthenticationNameNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        assertEquals(Constants.ERROR, homeController.getPreviousPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication).getName();
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(userService, never()).getUser(anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetPreviousParticipantAuthenticationNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        assertEquals(Constants.ERROR, homeController.getPreviousPage(CURRENT, httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, never()).getName();
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(userService, never()).getUser(anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetPreviousCurrent0() {
+        assertEquals(Constants.ERROR, homeController.getPreviousPage("0", httpServletRequest, model));
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(experimentService, never()).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
+        verify(authentication, never()).getName();
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetPreviousCurrentNull() {
-        assertEquals(Constants.ERROR, homeController.getPreviousPage(null, model));
+        assertEquals(Constants.ERROR, homeController.getPreviousPage(null, httpServletRequest, model));
+        verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(experimentService, never()).getLastPage();
         verify(experimentService, never()).getExperimentPage(any(PageRequest.class));
+        verify(authentication, never()).getName();
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetFirstPage() {
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        assertEquals(INDEX, homeController.getFirstPage(model));
+        assertEquals(INDEX, homeController.getFirstPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
+        verify(userService, never()).getUser(anyString());
         verify(model, times(3)).addAttribute(anyString(), any());
     }
 
     @Test
+    public void testGetFirstPageParticipant() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(experimentService.getLastExperimentPage(userDTO.getId())).thenReturn(LAST_PAGE);
+        when(experimentService.getExperimentParticipantPage(any(PageRequest.class),
+                anyInt())).thenReturn(experimentPage);
+        assertEquals(INDEX, homeController.getFirstPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(userDTO.getUsername());
+        verify(experimentService).getLastExperimentPage(userDTO.getId());
+        verify(experimentService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(model, times(3)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetFirstPageParticipantNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, homeController.getFirstPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(userDTO.getUsername());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetFirstPageParticipantAuthenticationNameNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        assertEquals(Constants.ERROR, homeController.getFirstPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetFirstPageParticipantAuthenticationNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        assertEquals(Constants.ERROR, homeController.getFirstPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
     public void testGetLastPage() {
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         when(experimentService.getLastPage()).thenReturn(LAST_PAGE);
         when(experimentService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        assertEquals(INDEX, homeController.getLastPage(model));
+        assertEquals(INDEX, homeController.getLastPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(experimentService).getLastPage();
         verify(experimentService).getExperimentPage(any(PageRequest.class));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
         verify(model, times(3)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetLastPageParticipant() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(experimentService.getLastExperimentPage(userDTO.getId())).thenReturn(LAST_PAGE);
+        when(experimentService.getExperimentParticipantPage(any(PageRequest.class),
+                anyInt())).thenReturn(experimentPage);
+        assertEquals(INDEX, homeController.getLastPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(userDTO.getUsername());
+        verify(experimentService).getLastExperimentPage(userDTO.getId());
+        verify(experimentService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(model, times(3)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetLastPageParticipantNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, homeController.getLastPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(userDTO.getUsername());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetLastPageParticipantAuthenticationNameNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        assertEquals(Constants.ERROR, homeController.getLastPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetLastPageParticipantAuthenticationNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        assertEquals(Constants.ERROR, homeController.getLastPage(httpServletRequest, model));
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        verify(experimentService, never()).getLastPage();
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(experimentService, never()).getLastExperimentPage(anyInt());
+        verify(experimentService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test

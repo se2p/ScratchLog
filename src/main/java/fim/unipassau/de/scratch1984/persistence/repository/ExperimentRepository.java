@@ -97,7 +97,7 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * @param query The title to search for.
      * @return A list of {@link ExperimentTableProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
+    @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
             + " LIMIT 5")
     List<ExperimentTableProjection> findExperimentSuggestions(@Param("query") String query);
 
@@ -108,7 +108,7 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * @param limit The maximum amount of results to be returned.
      * @return A list of {@link ExperimentTableProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
+    @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
             + " LIMIT :limit")
     List<ExperimentTableProjection> findExperimentResults(@Param("query") String query, @Param("limit") int limit);
 
@@ -129,7 +129,7 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * @param pageable The pageable to use.
      * @return A page of {@link ExperimentTableProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e INNER JOIN participant AS p ON p.experiment_id"
+    @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e INNER JOIN participant AS p ON p.experiment_id"
             + " = e.id WHERE p.user_id = :participant")
     Page<ExperimentTableProjection> findExperimentsByParticipant(@Param("participant") int userId, Pageable pageable);
 

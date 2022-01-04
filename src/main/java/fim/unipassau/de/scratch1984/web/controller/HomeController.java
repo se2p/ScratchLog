@@ -80,7 +80,8 @@ public class HomeController {
 
     /**
      * Loads the index page containing basic information about the project. If the user is an administrator, a page
-     * containing the latest experiments is loaded instead.
+     * containing the latest experiments is loaded instead. If the user is a participant, a page containing the
+     * experiments they are participating in is displayed instead.
      *
      * @param httpServletRequest The servlet request.
      * @param model The model to store the loaded information in.
@@ -91,10 +92,8 @@ public class HomeController {
         if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             Page<ExperimentTableProjection> experimentPage = experimentService.getExperimentPage(PageRequest.of(0,
                     Constants.PAGE_SIZE));
-            model.addAttribute(EXPERIMENTS, experimentPage);
-            model.addAttribute(PAGE, 1);
             int lastPage = experimentService.getLastPage();
-            model.addAttribute(LAST_PAGE, lastPage);
+            addModelInfo(experimentPage, 1, lastPage, model);
         } else if (httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -108,9 +107,7 @@ public class HomeController {
                 Page<ExperimentTableProjection> experimentPage = experimentService.getExperimentParticipantPage(
                         PageRequest.of(0, Constants.PAGE_SIZE), userDTO.getId());
                 int lastPage = experimentService.getLastExperimentPage(userDTO.getId());
-                model.addAttribute(EXPERIMENTS, experimentPage);
-                model.addAttribute(PAGE, 1);
-                model.addAttribute(LAST_PAGE, lastPage);
+                addModelInfo(experimentPage, 1, lastPage, model);
             } catch (NotFoundException e) {
                 return Constants.ERROR;
             }
@@ -123,31 +120,60 @@ public class HomeController {
      * Loads the next experiment page from the database. If the current page is the last page, the error page is
      * displayed instead.
      *
+     * @param httpServletRequest The servlet request.
      * @param model The model to store the loaded information in.
      * @param currentPage The page currently being displayed.
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/next")
-    @Secured(Constants.ROLE_ADMIN)
-    public String getNextPage(@RequestParam(PAGE) final String currentPage, final Model model) {
+    @Secured(Constants.ROLE_PARTICIPANT)
+    public String getNextPage(@RequestParam(PAGE) final String currentPage,
+                              final HttpServletRequest httpServletRequest, final Model model) {
         if (currentPage == null) {
             return Constants.ERROR;
         }
 
         int current = parseStringValue(currentPage);
-        int last = experimentService.getLastPage();
+        int last;
+        Page<ExperimentTableProjection> experimentPage;
 
-        if (current <= -1 || current >= last) {
+        if (current <= -1) {
             return Constants.ERROR;
         }
 
-        Page<ExperimentTableProjection> experimentPage = experimentService.getExperimentPage(PageRequest.of(current,
-                Constants.PAGE_SIZE));
-        current++;
-        model.addAttribute(EXPERIMENTS, experimentPage);
-        model.addAttribute(PAGE, current);
-        model.addAttribute(LAST_PAGE, last);
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+            last = experimentService.getLastPage();
 
+            if (current >= last) {
+                return Constants.ERROR;
+            }
+
+            experimentPage = experimentService.getExperimentPage(PageRequest.of(current, Constants.PAGE_SIZE));
+        } else {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || authentication.getName() == null) {
+                logger.error("Can't show the participant experiment page for an unauthenticated user!");
+                return Constants.ERROR;
+            }
+
+            try {
+                UserDTO userDTO = userService.getUser(authentication.getName());
+                last = experimentService.getLastExperimentPage(userDTO.getId());
+
+                if (current >= last) {
+                    return Constants.ERROR;
+                }
+
+                experimentPage = experimentService.getExperimentParticipantPage(PageRequest.of(current,
+                        Constants.PAGE_SIZE), userDTO.getId());
+            } catch (NotFoundException e) {
+                return Constants.ERROR;
+            }
+        }
+
+        current++;
+        addModelInfo(experimentPage, current, last, model);
         return INDEX;
     }
 
@@ -155,72 +181,139 @@ public class HomeController {
      * Loads the previous experiment page from the database. If the current page is the last page, the error page is
      * displayed instead.
      *
+     * @param httpServletRequest The servlet request.
      * @param model The model to store the loaded information in.
      * @param currentPage The page currently being displayed.
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/previous")
-    @Secured(Constants.ROLE_ADMIN)
-    public String getPreviousPage(@RequestParam(PAGE) final String currentPage, final Model model) {
+    @Secured(Constants.ROLE_PARTICIPANT)
+    public String getPreviousPage(@RequestParam(PAGE) final String currentPage,
+                                  final HttpServletRequest httpServletRequest, final Model model) {
         if (currentPage == null) {
             return Constants.ERROR;
         }
 
         int current = parseStringValue(currentPage);
-        int last = experimentService.getLastPage();
+        int last;
+        Page<ExperimentTableProjection> experimentPage;
 
-        if (current <= 1 || last < current) {
+        if (current <= 1) {
             return Constants.ERROR;
         }
 
-        Page<ExperimentTableProjection> experimentPage = experimentService.getExperimentPage(PageRequest.of(current - 2,
-                Constants.PAGE_SIZE));
-        current--;
-        model.addAttribute(EXPERIMENTS, experimentPage);
-        model.addAttribute(PAGE, current);
-        model.addAttribute(LAST_PAGE, last);
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+            last = experimentService.getLastPage();
 
+            if (last < current) {
+                return Constants.ERROR;
+            }
+
+            experimentPage = experimentService.getExperimentPage(PageRequest.of(current - 2, Constants.PAGE_SIZE));
+        } else {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || authentication.getName() == null) {
+                logger.error("Can't show the participant experiment page for an unauthenticated user!");
+                return Constants.ERROR;
+            }
+
+            try {
+                UserDTO userDTO = userService.getUser(authentication.getName());
+                last = experimentService.getLastExperimentPage(userDTO.getId());
+
+                if (last < current) {
+                    return Constants.ERROR;
+                }
+
+                experimentPage = experimentService.getExperimentParticipantPage(
+                        PageRequest.of(current - 2, Constants.PAGE_SIZE), userDTO.getId());
+            } catch (NotFoundException e) {
+                return Constants.ERROR;
+            }
+        }
+
+        current--;
+        addModelInfo(experimentPage, current, last, model);
         return INDEX;
     }
 
     /**
      * Loads the first experiment page from the database.
      *
+     * @param httpServletRequest The servlet request.
      * @param model The model to store the loaded information in.
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/first")
-    @Secured(Constants.ROLE_ADMIN)
-    public String getFirstPage(final Model model) {
-        int last = experimentService.getLastPage();
+    @Secured(Constants.ROLE_PARTICIPANT)
+    public String getFirstPage(final HttpServletRequest httpServletRequest, final Model model) {
+        int last;
+        Page<ExperimentTableProjection> experimentPage;
 
-        Page<ExperimentTableProjection> experimentPage = experimentService.getExperimentPage(PageRequest.of(0,
-                Constants.PAGE_SIZE));
-        model.addAttribute(EXPERIMENTS, experimentPage);
-        model.addAttribute(PAGE, 1);
-        model.addAttribute(LAST_PAGE, last);
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+            last = experimentService.getLastPage();
+            experimentPage = experimentService.getExperimentPage(PageRequest.of(0,
+                    Constants.PAGE_SIZE));
+        } else {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+            if (authentication == null || authentication.getName() == null) {
+                logger.error("Can't show the participant experiment page for an unauthenticated user!");
+                return Constants.ERROR;
+            }
+
+            try {
+                UserDTO userDTO = userService.getUser(authentication.getName());
+                experimentPage = experimentService.getExperimentParticipantPage(
+                        PageRequest.of(0, Constants.PAGE_SIZE), userDTO.getId());
+                last = experimentService.getLastExperimentPage(userDTO.getId());
+            } catch (NotFoundException e) {
+                return Constants.ERROR;
+            }
+        }
+
+        addModelInfo(experimentPage, 1, last, model);
         return INDEX;
     }
 
     /**
      * Loads the last experiment page from the database.
      *
+     * @param httpServletRequest The servlet request.
      * @param model The model to store the loaded information in.
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/last")
-    @Secured(Constants.ROLE_ADMIN)
-    public String getLastPage(final Model model) {
-        int last = experimentService.getLastPage();
+    @Secured(Constants.ROLE_PARTICIPANT)
+    public String getLastPage(final HttpServletRequest httpServletRequest, final Model model) {
+        int last;
+        Page<ExperimentTableProjection> experimentPage;
 
-        Page<ExperimentTableProjection> experimentPage = experimentService.getExperimentPage(PageRequest.of(--last,
-                Constants.PAGE_SIZE));
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+            last = experimentService.getLastPage();
+            experimentPage = experimentService.getExperimentPage(PageRequest.of(--last,
+                    Constants.PAGE_SIZE));
+        } else {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || authentication.getName() == null) {
+                logger.error("Can't show the participant experiment page for an unauthenticated user!");
+                return Constants.ERROR;
+            }
+
+            try {
+                UserDTO userDTO = userService.getUser(authentication.getName());
+                last = experimentService.getLastExperimentPage(userDTO.getId());
+                experimentPage = experimentService.getExperimentParticipantPage(
+                        PageRequest.of(--last, Constants.PAGE_SIZE), userDTO.getId());
+            } catch (NotFoundException e) {
+                return Constants.ERROR;
+            }
+        }
+
         last++;
-        model.addAttribute(EXPERIMENTS, experimentPage);
-        model.addAttribute(PAGE, last);
-        model.addAttribute(LAST_PAGE, last);
-
+        addModelInfo(experimentPage, last, last, model);
         return INDEX;
     }
 
@@ -292,6 +385,22 @@ public class HomeController {
         } catch (NumberFormatException e) {
             return -1;
         }
+    }
+
+    /**
+     * Adds the required page numbers and experiment information to the {@link Model} to display the experiment table on
+     * the index page.
+     *
+     * @param experiments The current experiment page.
+     * @param currentPage The number of the current page.
+     * @param lastPage The number of the last page.
+     * @param model The model used to save the info.
+     */
+    private void addModelInfo(final Page<ExperimentTableProjection> experiments, final int currentPage,
+                              final int lastPage, final Model model) {
+        model.addAttribute(EXPERIMENTS, experiments);
+        model.addAttribute(PAGE, currentPage);
+        model.addAttribute(LAST_PAGE, lastPage);
     }
 
 }
