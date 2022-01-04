@@ -98,9 +98,19 @@ public class ExperimentController {
     private static final String EXPERIMENT_EDIT = "experiment-edit";
 
     /**
-     * String corresponding to redirecting to the error page.
+     * String corresponding to the id request parameter.
      */
-    private static final String ERROR = "redirect:/error";
+    private static final String ID = "id";
+
+    /**
+     * String corresponding to the page request parameter or model attribute.
+     */
+    private static final String PAGE = "page";
+
+    /**
+     * String corresponding to the error model attribute.
+     */
+    private static final String ERROR = "error";
 
     /**
      * Constructs a new experiment controller with the given dependencies.
@@ -133,16 +143,16 @@ public class ExperimentController {
      * @return The experiment page on success, or the error page otherwise.
      */
     @GetMapping
-    @Secured("ROLE_PARTICIPANT")
-    public String getExperiment(@RequestParam("id") final String id, final Model model,
+    @Secured(Constants.ROLE_PARTICIPANT)
+    public String getExperiment(@RequestParam(ID) final String id, final Model model,
                                 final HttpServletRequest httpServletRequest) {
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
-        if (!httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+        if (!httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             try {
@@ -151,7 +161,7 @@ public class ExperimentController {
                 if (!userDTO.isActive()) {
                     logger.debug("Cannot display experiment page for user with id " + userDTO.getId() + " since their "
                             + "account is inactive!");
-                    return ERROR;
+                    return Constants.ERROR;
                 } else if (userDTO.getSecret() == null) {
                     model.addAttribute("secret", false);
                 }
@@ -160,7 +170,7 @@ public class ExperimentController {
                 model.addAttribute("participant", participantDTO);
             } catch (NotFoundException e) {
                 logger.error("Can't find user with username " + authentication.getName() + " in the database!", e);
-                return ERROR;
+                return Constants.ERROR;
             }
         }
 
@@ -169,7 +179,7 @@ public class ExperimentController {
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -180,7 +190,7 @@ public class ExperimentController {
      * @return A new empty form.
      */
     @GetMapping("/create")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     public String getExperimentForm(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO) {
         return EXPERIMENT_EDIT;
     }
@@ -194,12 +204,12 @@ public class ExperimentController {
      * @return The experiment edit page on success, or the error page otherwise.
      */
     @GetMapping("/edit")
-    @Secured("ROLE_ADMIN")
-    public String getEditExperimentForm(@RequestParam("id") final String id, final Model model) {
+    @Secured(Constants.ROLE_ADMIN)
+    public String getEditExperimentForm(@RequestParam(ID) final String id, final Model model) {
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
@@ -207,7 +217,7 @@ public class ExperimentController {
             model.addAttribute("experimentDTO", findExperiment);
             return EXPERIMENT_EDIT;
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -221,7 +231,7 @@ public class ExperimentController {
      * @return The experiment edit page, if the input is invalid, or experiment page on success.
      */
     @PostMapping("/update")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     public String editExperiment(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO,
                                  final BindingResult bindingResult) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -273,25 +283,25 @@ public class ExperimentController {
      * @return The index page.
      */
     @PostMapping("/delete")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     public String deleteExperiment(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
-                                   @RequestParam("id") final String id) {
+                                   @RequestParam(ID) final String id) {
         if (id == null || passwordDTO.getPassword() == null) {
             logger.error("Cannot delete experiment with id null or input password null!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
             logger.error("An unauthenticated user tried to delete experiment with id " + experimentId + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
@@ -305,7 +315,7 @@ public class ExperimentController {
             experimentService.deleteExperiment(experimentId);
             return "redirect:/?success=true";
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -322,13 +332,13 @@ public class ExperimentController {
      * @return The experiment page.
      */
     @GetMapping("/status")
-    @Secured("ROLE_ADMIN")
-    public String changeExperimentStatus(@RequestParam("stat") final String status, @RequestParam("id") final String id,
+    @Secured(Constants.ROLE_ADMIN)
+    public String changeExperimentStatus(@RequestParam("stat") final String status, @RequestParam(ID) final String id,
                                          final Model model, final HttpServletRequest httpServletRequest) {
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID || status == null) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
@@ -354,12 +364,12 @@ public class ExperimentController {
             } else {
                 logger.debug("Cannot return the corresponding experiment page for requested status change " + status
                         + "!");
-                return ERROR;
+                return Constants.ERROR;
             }
 
             addModelInfo(0, experimentDTO, model);
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         return EXPERIMENT;
@@ -377,13 +387,13 @@ public class ExperimentController {
      * @return The experiment page on success, or the error page otherwise.
      */
     @RequestMapping("/search")
-    @Secured("ROLE_ADMIN")
-    public String searchForUser(@RequestParam("participant") final String search, @RequestParam("id") final String id,
+    @Secured(Constants.ROLE_ADMIN)
+    public String searchForUser(@RequestParam("participant") final String search, @RequestParam(ID) final String id,
                                 final Model model, final HttpServletRequest httpServletRequest) {
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -394,11 +404,11 @@ public class ExperimentController {
         try {
             experimentDTO = experimentService.getExperiment(experimentId);
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         if (validateSearch != null) {
-            model.addAttribute("error", resourceBundle.getString(validateSearch));
+            model.addAttribute(ERROR, resourceBundle.getString(validateSearch));
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
         }
@@ -406,18 +416,18 @@ public class ExperimentController {
         UserDTO userDTO = userService.getUserByUsernameOrEmail(search);
 
         if (userDTO == null) {
-            model.addAttribute("error", resourceBundle.getString("user_not_found"));
+            model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
         } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
-            model.addAttribute("error", resourceBundle.getString("user_not_participant"));
+            model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
         } else if (userService.existsParticipant(userDTO.getId(), experimentId)) {
-            model.addAttribute("error", resourceBundle.getString("participant_entry"));
+            model.addAttribute(ERROR, resourceBundle.getString("participant_entry"));
         } else if (!experimentDTO.isActive()) {
-            model.addAttribute("error", resourceBundle.getString("experiment_closed"));
+            model.addAttribute(ERROR, resourceBundle.getString("experiment_closed"));
         }
 
-        if (model.getAttribute("error") != null) {
+        if (model.getAttribute(ERROR) != null) {
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
         }
@@ -430,7 +440,7 @@ public class ExperimentController {
             UserDTO saved = userService.updateUser(userDTO);
             participantService.saveParticipant(saved.getId(), experimentId);
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         Map<String, Object> templateModel = getTemplateModel(id, secret, httpServletRequest);
@@ -441,13 +451,13 @@ public class ExperimentController {
                 templateModel, "participant-email")) {
             return REDIRECT_EXPERIMENT + id;
         } else {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
     /**
-     * Loads the the next participant page from the database. If the current page is the last page, or no experiment
-     * with a corresponding id could be found in the database, the error page is displayed instead.
+     * Loads the next participant page from the database. If the current page is the last page, or no experiment with a
+     * corresponding id could be found in the database, the error page is displayed instead.
      *
      * @param id The experiment id.
      * @param model The model to store the loaded information in.
@@ -455,34 +465,34 @@ public class ExperimentController {
      * @return The experiment page on success, or the error page otherwise.
      */
     @GetMapping("/next")
-    @Secured("ROLE_ADMIN")
-    public String getNextPage(@RequestParam("id") final String id, @RequestParam("page") final String currentPage,
+    @Secured(Constants.ROLE_ADMIN)
+    public String getNextPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
                               final Model model) {
         if (currentPage == null) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int current = parseNumber(currentPage);
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID || current <= -1) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
             if (!addModelInfo(current, experimentDTO, model)) {
-                return ERROR;
+                return Constants.ERROR;
             }
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         return EXPERIMENT;
     }
 
     /**
-     * Loads the the previous participant page from the database. If the current page is the last page, or no experiment
+     * Loads the previous participant page from the database. If the current page is the last page, or no experiment
      * with a corresponding id could be found in the database, the error page is displayed instead.
      *
      * @param id The experiment id.
@@ -491,34 +501,34 @@ public class ExperimentController {
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/previous")
-    @Secured("ROLE_ADMIN")
-    public String getPreviousPage(@RequestParam("id") final String id, @RequestParam("page") final String currentPage,
+    @Secured(Constants.ROLE_ADMIN)
+    public String getPreviousPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
                                   final Model model) {
         if (currentPage == null) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int current = parseNumber(currentPage);
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID || current <= -1) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
             if (!addModelInfo(current - 2, experimentDTO, model)) {
-                return ERROR;
+                return Constants.ERROR;
             }
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         return EXPERIMENT;
     }
 
     /**
-     * Loads the the first participant page from the database. If the passed id is invalid, or no experiment with the
+     * Loads the first participant page from the database. If the passed id is invalid, or no experiment with the
      * corresponding id could be found, the error page is displayed instead.
      *
      * @param id The experiment id.
@@ -526,39 +536,39 @@ public class ExperimentController {
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/first")
-    @Secured("ROLE_ADMIN")
-    public String getFirstPage(@RequestParam("id") final String id, final Model model) {
+    @Secured(Constants.ROLE_ADMIN)
+    public String getFirstPage(@RequestParam(ID) final String id, final Model model) {
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
             addModelInfo(0, experimentDTO, model);
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         return EXPERIMENT;
     }
 
     /**
-     * Loads the the last participant page from the database. If the passed experiment id is invalid, or no experiment
-     * with the corresponding id could be found, the error page is displayed instead.
+     * Loads the last participant page from the database. If the passed experiment id is invalid, or no experiment with
+     * the corresponding id could be found, the error page is displayed instead.
      *
      * @param id The experiment id.
      * @param model The model to store the loaded information in.
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/last")
-    @Secured("ROLE_ADMIN")
-    public String getLastPage(@RequestParam("id") final String id, final Model model) {
+    @Secured(Constants.ROLE_ADMIN)
+    public String getLastPage(@RequestParam(ID) final String id, final Model model) {
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
@@ -566,7 +576,7 @@ public class ExperimentController {
             int page = experimentService.getLastParticipantPage(experimentId);
             addModelInfo(page, experimentDTO, model);
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         return EXPERIMENT;
@@ -582,8 +592,8 @@ public class ExperimentController {
      * @param httpServletResponse The servlet response returning the files.
      */
     @GetMapping("/csv")
-    @Secured("ROLE_ADMIN")
-    public void downloadCSVFile(@RequestParam("id") final String id, final HttpServletResponse httpServletResponse) {
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadCSVFile(@RequestParam(ID) final String id, final HttpServletResponse httpServletResponse) {
         if (id == null) {
             logger.error("Cannot download CSV file for experiment with id null!");
             throw new IncompleteDataException("Cannot download CSV file for experiment with id null!");
@@ -634,19 +644,19 @@ public class ExperimentController {
      * @return The experiment page on success, or if the file was invalid, or the error page otherwise.
      */
     @PostMapping("/upload")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     public String uploadProjectFile(@RequestParam("file") final MultipartFile file,
-                                    @RequestParam("id") final String id, final Model model) {
+                                    @RequestParam(ID) final String id, final Model model) {
         if (id == null || file == null) {
             logger.error("Cannot upload file for experiment with id null or with file null!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot upload project file for experiment with invalid id " + id + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -654,16 +664,16 @@ public class ExperimentController {
 
         if (file.isEmpty()) {
             logger.error("Cannot upload empty file for experiment with id " + id + "!");
-            model.addAttribute("error", resourceBundle.getString("file_empty"));
+            model.addAttribute(ERROR, resourceBundle.getString("file_empty"));
         } else if (file.getContentType() == null || !file.getContentType().equals("application/octet-stream")) {
             logger.error("Cannot upload file with invalid content type " + file.getContentType() + "!");
-            model.addAttribute("error", resourceBundle.getString("file_type"));
+            model.addAttribute(ERROR, resourceBundle.getString("file_type"));
         } else if (file.getOriginalFilename() == null || !file.getOriginalFilename().endsWith(Constants.SB3)) {
             logger.error("Cannot upload file with invalid filename " + file.getOriginalFilename() + "!");
-            model.addAttribute("error", resourceBundle.getString("file_name"));
+            model.addAttribute(ERROR, resourceBundle.getString("file_name"));
         }
 
-        if (model.getAttribute("error") != null) {
+        if (model.getAttribute(ERROR) != null) {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
@@ -673,10 +683,10 @@ public class ExperimentController {
             experimentService.uploadSb3Project(experimentId, file.getBytes());
             return REDIRECT_EXPERIMENT + experimentId;
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         } catch (IOException e) {
             logger.error("Could not upload file due to IOException", e);
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -688,25 +698,25 @@ public class ExperimentController {
      * @return The experiment page on success, or the error page otherwise.
      */
     @GetMapping("/sb3")
-    @Secured("ROLE_ADMIN")
-    public String deleteProjectFile(@RequestParam("id") final String id) {
+    @Secured(Constants.ROLE_ADMIN)
+    public String deleteProjectFile(@RequestParam(ID) final String id) {
         if (id == null) {
             logger.error("Cannot delete file for experiment with id null!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot delete project file for experiment with invalid id " + id + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
             experimentService.deleteSb3Project(experimentId);
             return REDIRECT_EXPERIMENT + experimentId;
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -755,7 +765,7 @@ public class ExperimentController {
             model.addAttribute("project", true);
         }
 
-        model.addAttribute("page", page + 1);
+        model.addAttribute(PAGE, page + 1);
         model.addAttribute("lastPage", last);
         model.addAttribute("experimentDTO", experimentDTO);
         model.addAttribute("passwordDTO", new PasswordDTO());
