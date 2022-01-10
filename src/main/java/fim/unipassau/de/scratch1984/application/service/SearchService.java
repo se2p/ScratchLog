@@ -65,7 +65,7 @@ public class SearchService {
             throw new IllegalArgumentException("Cannot search for users with invalid search result limit " + limit);
         }
 
-        return userRepository.findUserResults(query, limit);
+        return userRepository.findUserResults(query, limit, 0);
     }
 
     /**
@@ -88,7 +88,7 @@ public class SearchService {
                     + limit);
         }
 
-        return experimentRepository.findExperimentResults(query, limit);
+        return experimentRepository.findExperimentResults(query, limit, 0);
     }
 
     /**
@@ -170,6 +170,37 @@ public class SearchService {
     }
 
     /**
+     * Retrieves a list of additional user information for the search page with a maximum size as specified in the page
+     * size constant with the computed offset where the username or email contain the search query string.
+     *
+     * @param query The username or email to search for.
+     * @param page The current page used to compute the offset.
+     * @return A list of ids, usernames, emails and roles, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<String[]> getNextUsers(final String query, final int page) {
+        int offset = Constants.PAGE_SIZE * page;
+        List<UserProjection> users = userRepository.findUserResults(query, Constants.PAGE_SIZE, offset);
+        return addUserProjectionInfo(users);
+    }
+
+    /**
+     * Retrieves a list of additional experiment information for the search page with a maximum size as specified in
+     * the page size constant with the computed offset where the title contains the query string.
+     *
+     * @param query The title to search for.
+     * @param page The current page used to compute the offset.
+     * @return A list of ids, titles and descriptions, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<String[]> getNextExperiments(final String query, final int page) {
+        int offset = Constants.PAGE_SIZE * page;
+        List<ExperimentTableProjection> projections = experimentRepository.findExperimentResults(query,
+                Constants.PAGE_SIZE, offset);
+        return addExperimentTableInfo(projections);
+    }
+
+    /**
      * Returns a list of all usernames and emails of the users in the given list.
      *
      * @param users The list of {@link UserProjection}s.
@@ -209,6 +240,42 @@ public class SearchService {
         }
 
         return experimentInfo;
+    }
+
+    /**
+     * Returns a list of all user information contained in the retrieved list.
+     *
+     * @param projections The list of {@link UserProjection}s.
+     * @return A list of ids, usernames, emails, and roles or an empty list.
+     */
+    private List<String[]> addUserProjectionInfo(final List<UserProjection> projections) {
+        List<String[]> userInfo = new ArrayList<>();
+
+        for (UserProjection projection : projections) {
+            String[] info = new String[] {String.valueOf(projection.getId()), projection.getUsername(),
+                    projection.getEmail(), projection.getRole()};
+            userInfo.add(info);
+        }
+
+        return userInfo;
+    }
+
+    /**
+     * Returns a list of the experiment information contained in the retrieved list.
+     *
+     * @param projections The list of {@link ExperimentTableProjection}s.
+     * @return A list of experiment ids, titles, and descriptions or an empty list.
+     */
+    private List<String[]> addExperimentTableInfo(final List<ExperimentTableProjection> projections) {
+        List<String[]> experimentTableInfo = new ArrayList<>();
+
+        for (ExperimentTableProjection projection : projections) {
+            String[] info = new String[] {String.valueOf(projection.getId()), projection.getTitle(),
+                    projection.getDescription()};
+            experimentTableInfo.add(info);
+        }
+
+        return experimentTableInfo;
     }
 
 }

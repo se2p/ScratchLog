@@ -38,7 +38,6 @@ public class SearchServiceTest {
     private ExperimentRepository experimentRepository;
 
     private static final String PARTICIPANT = "PARTICIPANT";
-    private static final String LANGUAGE = "ENGLISH";
     private static final String USERNAME1 = "user1";
     private static final String USERNAME2 = "user2";
     private static final String USERNAME3 = "user3";
@@ -53,12 +52,13 @@ public class SearchServiceTest {
     private static final int ID = 1;
     private static final int LIMIT = Constants.PAGE_SIZE;
     private static final int COUNT = 25;
+    private static final int PAGE = 1;
     private final List<UserProjection> users = addUserSuggestions();
     private final List<ExperimentTableProjection> experiments = addExperimentSuggestions();
 
     @Test
     public void testGetUserList() {
-        when(userRepository.findUserResults(QUERY, LIMIT)).thenReturn(users);
+        when(userRepository.findUserResults(QUERY, LIMIT, 0)).thenReturn(users);
         List<UserProjection> userProjections = searchService.getUserList(QUERY, LIMIT);
         assertAll(
                 () -> assertEquals(3, userProjections.size()),
@@ -66,7 +66,7 @@ public class SearchServiceTest {
                 () -> assertTrue(userProjections.stream().anyMatch(user -> user.getId() == ID + 1)),
                 () -> assertTrue(userProjections.stream().anyMatch(user -> user.getId() == ID + 2))
         );
-        verify(userRepository).findUserResults(QUERY, LIMIT);
+        verify(userRepository).findUserResults(QUERY, LIMIT, 0);
     }
 
     @Test
@@ -74,7 +74,7 @@ public class SearchServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> searchService.getUserList(QUERY, 9)
         );
-        verify(userRepository, never()).findUserResults(anyString(), anyInt());
+        verify(userRepository, never()).findUserResults(anyString(), anyInt(), anyInt());
     }
 
     @Test
@@ -82,19 +82,27 @@ public class SearchServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> searchService.getUserList(BLANK, LIMIT)
         );
-        verify(userRepository, never()).findUserResults(anyString(), anyInt());
+        verify(userRepository, never()).findUserResults(anyString(), anyInt(), anyInt());
+    }
+
+    @Test
+    public void testGetUserListQueryNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getUserList(null, LIMIT)
+        );
+        verify(userRepository, never()).findUserResults(anyString(), anyInt(), anyInt());
     }
 
     @Test
     public void testGetExperimentList() {
-        when(experimentRepository.findExperimentResults(QUERY, LIMIT)).thenReturn(experiments);
+        when(experimentRepository.findExperimentResults(QUERY, LIMIT, 0)).thenReturn(experiments);
         List<ExperimentTableProjection> experimentList = searchService.getExperimentList(QUERY, LIMIT);
         assertAll(
                 () -> assertEquals(2, experimentList.size()),
                 () -> assertTrue(experimentList.stream().anyMatch(experiment -> experiment.getId() == ID)),
                 () -> assertTrue(experimentList.stream().anyMatch(experiment -> experiment.getId() == ID + 1))
         );
-        verify(experimentRepository).findExperimentResults(QUERY, LIMIT);
+        verify(experimentRepository).findExperimentResults(QUERY, LIMIT, 0);
     }
 
     @Test
@@ -102,7 +110,7 @@ public class SearchServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> searchService.getExperimentList(QUERY, 0)
         );
-        verify(experimentRepository, never()).findExperimentResults(anyString(), anyInt());
+        verify(experimentRepository, never()).findExperimentResults(anyString(), anyInt(), anyInt());
     }
 
     @Test
@@ -110,7 +118,7 @@ public class SearchServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> searchService.getExperimentList(BLANK, LIMIT)
         );
-        verify(experimentRepository, never()).findExperimentResults(anyString(), anyInt());
+        verify(experimentRepository, never()).findExperimentResults(anyString(), anyInt(), anyInt());
     }
 
     @Test
@@ -118,7 +126,7 @@ public class SearchServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> searchService.getExperimentList(null, LIMIT)
         );
-        verify(experimentRepository, never()).findExperimentResults(anyString(), anyInt());
+        verify(experimentRepository, never()).findExperimentResults(anyString(), anyInt(), anyInt());
     }
 
     @Test
@@ -165,14 +173,6 @@ public class SearchServiceTest {
                 () -> searchService.getExperimentCount(null)
         );
         verify(experimentRepository, never()).getExperimentResultsCount(anyString());
-    }
-
-    @Test
-    public void testGetUserListQueryNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> searchService.getUserList(null, LIMIT)
-        );
-        verify(userRepository, never()).findUserResults(anyString(), anyInt());
     }
 
     @Test
@@ -250,6 +250,49 @@ public class SearchServiceTest {
         List<String[]> userInfo = searchService.getUserDeleteSuggestions(QUERY, ID);
         assertEquals(0, userInfo.size());
         verify(userRepository).findDeleteParticipantSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetNextUsers() {
+        when(userRepository.findUserResults(QUERY, LIMIT, PAGE * LIMIT)).thenReturn(users);
+        List<String[]> userInfo = searchService.getNextUsers(QUERY, PAGE);
+        String[] firstUser = userInfo.get(0);
+        String[] secondUser = userInfo.get(1);
+        String[] thirdUser = userInfo.get(2);
+        assertAll(
+                () -> assertEquals(3, userInfo.size()),
+                () -> assertEquals("1", firstUser[0]),
+                () -> assertEquals(USERNAME1, firstUser[1]),
+                () -> assertEquals(EMAIL1, firstUser[2]),
+                () -> assertEquals(PARTICIPANT, firstUser[3]),
+                () -> assertEquals("2", secondUser[0]),
+                () -> assertEquals(USERNAME2, secondUser[1]),
+                () -> assertEquals(EMAIL2, secondUser[2]),
+                () -> assertEquals(PARTICIPANT, secondUser[3]),
+                () -> assertEquals("3", thirdUser[0]),
+                () -> assertEquals(USERNAME3, thirdUser[1]),
+                () -> assertEquals(EMAIL3, thirdUser[2]),
+                () -> assertEquals(PARTICIPANT, thirdUser[3])
+        );
+        verify(userRepository).findUserResults(QUERY, LIMIT, PAGE * LIMIT);
+    }
+
+    @Test
+    public void testGetNextExperiments() {
+        when(experimentRepository.findExperimentResults(QUERY, LIMIT, PAGE * LIMIT)).thenReturn(experiments);
+        List<String[]> experimentInfo = searchService.getNextExperiments(QUERY, PAGE);
+        String[] firstExperiment = experimentInfo.get(0);
+        String[] secondExperiment = experimentInfo.get(1);
+        assertAll(
+                () -> assertEquals(2, experimentInfo.size()),
+                () -> assertEquals(experiments.get(0).getId().toString(), firstExperiment[0]),
+                () -> assertEquals(experiments.get(0).getTitle(), firstExperiment[1]),
+                () -> assertEquals(experiments.get(0).getDescription(), firstExperiment[2]),
+                () -> assertEquals(experiments.get(1).getId().toString(), secondExperiment[0]),
+                () -> assertEquals(experiments.get(1).getTitle(), secondExperiment[1]),
+                () -> assertEquals(experiments.get(1).getDescription(), secondExperiment[2])
+        );
+        verify(experimentRepository).findExperimentResults(QUERY, LIMIT, PAGE * LIMIT);
     }
 
     private List<UserProjection> addUserSuggestions() {

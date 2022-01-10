@@ -99,15 +99,18 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<UserProjection> findUserSuggestions(@Param("query") String query);
 
     /**
-     * Returns a list of at most as many users as the given limit whose email or username contain the given query value.
+     * Returns a list of at most as many users as the given limit with the given offset whose email or username contain
+     * the given query value.
      *
      * @param query The username or email to search for.
      * @param limit The maximum amount of results to be returned.
+     * @param offset The offset used to return new results.
      * @return A list of {@link UserProjection}s.
      */
     @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
-            + "OR u.email LIKE CONCAT('%', :query, '%')) LIMIT :limit")
-    List<UserProjection> findUserResults(@Param("query") String query, @Param("limit") int limit);
+            + "OR u.email LIKE CONCAT('%', :query, '%')) LIMIT :limit OFFSET :offset")
+    List<UserProjection> findUserResults(@Param("query") String query, @Param("limit") int limit,
+                                         @Param("offset") int offset);
 
     /**
      * Returns the number of users whose email or username contain the given query value.

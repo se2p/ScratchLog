@@ -42,6 +42,11 @@ public class SearchRestController {
     private static final String ID = "id";
 
     /**
+     * String corresponding to the page request parameter.
+     */
+    private static final String PAGE = "page";
+
+    /**
      * Constructs a new search REST controller with the given dependencies.
      *
      * @param searchService The search service to use.
@@ -66,6 +71,48 @@ public class SearchRestController {
         }
 
         return searchService.getSearchSuggestions(query);
+    }
+
+    /**
+     * Retrieves a list of additional user results for the search page where the username or email contain the search
+     * query and the given page parameter is used to compute the offset of results to be retrieved from the database. If
+     * the passed parameters are invalid, an empty list is returned instead.
+     *
+     * @param query The username or email to search for.
+     * @param page The current user result page used to compute the offset.
+     * @return A list of matching suggestions, or an empty list, if no entries could be found.
+     */
+    @GetMapping("users")
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getMoreUsers(@RequestParam(QUERY) final String query,
+                                       @RequestParam(PAGE) final String page) {
+        if (invalidParams(query, page)) {
+            return new ArrayList<>();
+        }
+
+        int pageNumber = parseNumber(page);
+        return searchService.getNextUsers(query, pageNumber);
+    }
+
+    /**
+     * Retrieves a list of additional experiment results for the search page where the title contains the search query
+     * and the given page parameter is used to compute the offset of results to be retrieved from the database. If the
+     * passed parameters are invalid, an empty list is returned instead.
+     *
+     * @param query The title to search for.
+     * @param page The current experiment result page used to compute the offset.
+     * @return A list of matching suggestions, or an empty list, if no entries could be found.
+     */
+    @GetMapping("/experiments")
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getMoreExperiments(@RequestParam(QUERY) final String query,
+                                             @RequestParam(PAGE) final String page) {
+        if (invalidParams(query, page)) {
+            return new ArrayList<>();
+        }
+
+        int pageNumber = parseNumber(page);
+        return searchService.getNextExperiments(query, pageNumber);
     }
 
     /**

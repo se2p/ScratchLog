@@ -54,7 +54,7 @@
                         <td colspan="4" th:text="#{table_empty}"></td>
                     </tr>
                     </tbody>
-                    <tbody th:unless="${users.isEmpty()}">
+                    <tbody th:unless="${users.isEmpty()}" id="userBody">
                     <tr th:each="user : ${users}">
                         <th scope="row">
                             <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
@@ -79,9 +79,8 @@
                     <span th:text="#{elements}"></span>
                     <span th:text="${userCount}"></span>
                 </div>
-                <div class="text-center" th:if="${userCount > limit}">
-                    <a class="btn btn-outline-dark" th:href="@{/search/result(query=${query}, page=${page})}"
-                       th:aria-label="#{search_result_label}">
+                <div class="text-center" id="userButton" th:if="${userCount > limit}">
+                    <a id="userResults" class="btn btn-outline-dark" th:aria-label="#{search_result_label}">
                         <i aria-hidden="true" class="fas fa-angle-down"></i>
                     </a>
                 </div>
@@ -101,7 +100,7 @@
                         <td colspan="3" th:text="#{table_empty}"></td>
                     </tr>
                     </tbody>
-                    <tbody th:unless="${experiments.isEmpty()}">
+                    <tbody th:unless="${experiments.isEmpty()}" id="experimentBody">
                     <tr th:each="experiment : ${experiments}">
                         <th scope="row">
                             <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
@@ -122,9 +121,8 @@
                     <span th:text="#{elements}"></span>
                     <span th:text="${experimentCount}"></span>
                 </div>
-                <div class="text-center" th:if="${experimentCount > limit}">
-                    <a class="btn btn-outline-dark" th:href="@{/search/result(query=${query}, page=${page})}"
-                       th:aria-label="#{search_result_label}">
+                <div class="text-center" id="experimentButton" th:if="${experimentCount > limit}">
+                    <a id="experimentResults" class="btn btn-outline-dark" th:aria-label="#{search_result_label}">
                         <i aria-hidden="true" class="fas fa-angle-down"></i>
                     </a>
                 </div>
@@ -133,6 +131,16 @@
     </div>
     <div class="col-2"></div>
 </div>
+
+<!-- Let Thymeleaf initialize the total user count, experiment count and the page size. -->
+<script>
+    var userCount = [[${userCount}]];
+    var experimentCount = [[${experimentCount}]];
+    var pageSize = [[${T(fim.unipassau.de.scratch1984.util.Constants).PAGE_SIZE}]];
+</script>
+
+<!-- Script to fetch the search results. -->
+<script type="text/javascript" th:src="@{/js/searchResults.js}"></script>
 
 <!-- Footer -->
 <div th:insert="footer :: footer"></div>

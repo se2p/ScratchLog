@@ -36,7 +36,6 @@ public class SearchControllerTest {
     @Mock
     private Model model;
 
-    private static final String PAGE = "3";
     private static final String QUERY = "query";
     private static final String LONG_QUERY = "queeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
             + "eeeeeeeeeeeeeeeeeeeeeeeeeery";
@@ -46,7 +45,6 @@ public class SearchControllerTest {
     private static final String SEARCH = "search";
     private static final String ERROR = "redirect:/error";
     private static final int COUNT = 25;
-    private static final int MAX_RESULTS = 30;
     private List<UserProjection> users;
     private List<ExperimentTableProjection> experiments;
 
@@ -58,79 +56,27 @@ public class SearchControllerTest {
         when(searchService.getExperimentCount(QUERY)).thenReturn(COUNT);
         when(searchService.getUserList(QUERY, Constants.PAGE_SIZE)).thenReturn(users);
         when(searchService.getExperimentList(QUERY, Constants.PAGE_SIZE)).thenReturn(experiments);
-        assertEquals(SEARCH, searchController.getSearchPage(null, QUERY, model));
+        assertEquals(SEARCH, searchController.getSearchPage(QUERY, model));
         verify(searchService).getUserCount(QUERY);
         verify(searchService).getExperimentCount(QUERY);
         verify(searchService).getUserList(QUERY, Constants.PAGE_SIZE);
         verify(searchService).getExperimentList(QUERY, Constants.PAGE_SIZE);
-        verify(model, times(7)).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetSearchPagePageBlank() {
-        users = getUsers(Constants.PAGE_SIZE);
-        experiments = getExperiments(Constants.PAGE_SIZE);
-        when(searchService.getUserCount(QUERY)).thenReturn(COUNT);
-        when(searchService.getExperimentCount(QUERY)).thenReturn(COUNT);
-        when(searchService.getUserList(QUERY, Constants.PAGE_SIZE)).thenReturn(users);
-        when(searchService.getExperimentList(QUERY, Constants.PAGE_SIZE)).thenReturn(experiments);
-        assertEquals(SEARCH, searchController.getSearchPage(BLANK, QUERY, model));
-        verify(searchService).getUserCount(QUERY);
-        verify(searchService).getExperimentCount(QUERY);
-        verify(searchService).getUserList(QUERY, Constants.PAGE_SIZE);
-        verify(searchService).getExperimentList(QUERY, Constants.PAGE_SIZE);
-        verify(model, times(7)).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetSearchPagePageGiven() {
-        users = getUsers(COUNT);
-        experiments = getExperiments(COUNT);
-        when(searchService.getUserCount(QUERY)).thenReturn(COUNT);
-        when(searchService.getExperimentCount(QUERY)).thenReturn(COUNT);
-        when(searchService.getUserList(QUERY, MAX_RESULTS)).thenReturn(users);
-        when(searchService.getExperimentList(QUERY, MAX_RESULTS)).thenReturn(experiments);
-        assertEquals(SEARCH, searchController.getSearchPage(PAGE, QUERY, model));
-        verify(searchService).getUserCount(QUERY);
-        verify(searchService).getExperimentCount(QUERY);
-        verify(searchService).getUserList(QUERY, MAX_RESULTS);
-        verify(searchService).getExperimentList(QUERY, MAX_RESULTS);
-        verify(model, times(7)).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetSearchPagePageInvalid() {
-        assertEquals(ERROR, searchController.getSearchPage(ADMIN, QUERY, model));
-        verify(searchService, never()).getUserCount(anyString());
-        verify(searchService, never()).getExperimentCount(anyString());
-        verify(searchService, never()).getUserList(anyString(), anyInt());
-        verify(searchService, never()).getExperimentList(anyString(), anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetSearchPagePageNegative() {
-        assertEquals(ERROR, searchController.getSearchPage("-1", QUERY, model));
-        verify(searchService, never()).getUserCount(anyString());
-        verify(searchService, never()).getExperimentCount(anyString());
-        verify(searchService, never()).getUserList(anyString(), anyInt());
-        verify(searchService, never()).getExperimentList(anyString(), anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetSearchPageQueryBlank() {
-        assertEquals(SEARCH, searchController.getSearchPage(PAGE, BLANK, model));
+        assertEquals(SEARCH, searchController.getSearchPage(BLANK, model));
         verify(searchService, never()).getUserCount(anyString());
         verify(searchService, never()).getExperimentCount(anyString());
         verify(searchService, never()).getUserList(anyString(), anyInt());
         verify(searchService, never()).getExperimentList(anyString(), anyInt());
-        verify(model, times(7)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetSearchPageQueryTooLong() {
-        assertEquals(ERROR, searchController.getSearchPage(PAGE, LONG_QUERY, model));
+        assertEquals(ERROR, searchController.getSearchPage(LONG_QUERY, model));
         verify(searchService, never()).getUserCount(anyString());
         verify(searchService, never()).getExperimentCount(anyString());
         verify(searchService, never()).getUserList(anyString(), anyInt());
@@ -140,7 +86,7 @@ public class SearchControllerTest {
 
     @Test
     public void testGetSearchPageQueryNull() {
-        assertEquals(ERROR, searchController.getSearchPage(PAGE, null, model));
+        assertEquals(ERROR, searchController.getSearchPage(null, model));
         verify(searchService, never()).getUserCount(anyString());
         verify(searchService, never()).getExperimentCount(anyString());
         verify(searchService, never()).getUserList(anyString(), anyInt());

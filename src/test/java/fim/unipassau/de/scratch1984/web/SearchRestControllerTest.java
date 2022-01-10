@@ -30,17 +30,24 @@ public class SearchRestControllerTest {
     private SearchService searchService;
 
     private static final String ID_STRING = "1";
+    private static final String PAGE_STRING = "2";
     private static final String QUERY = "participant";
     private static final String BLANK = "   ";
+    private static final String PARTICIPANT = "PARTICIPANT";
     private static final int ID = 1;
+    private static final int PAGE = 2;
     private List<String[]> userData;
+    private List<String[]> userProjectionData;
     private List<String[]> experimentData;
+    private List<String[]> experimentTableData;
 
     @BeforeEach
     public void setup() {
         addUserData(5);
         addExperimentData(3);
         experimentData.addAll(userData);
+        addUserProjectionData(2);
+        addExperimentTableData(2);
     }
 
     @Test
@@ -61,6 +68,38 @@ public class SearchRestControllerTest {
     public void testGetSearchSuggestionsQueryNull() {
         assertTrue(searchRestController.getSearchSuggestions(null).isEmpty());
         verify(searchService, never()).getSearchSuggestions(anyString());
+    }
+
+    @Test
+    public void testGetMoreUsers() {
+        when(searchService.getNextUsers(QUERY, PAGE)).thenReturn(userProjectionData);
+        assertEquals(2, searchRestController.getMoreUsers(QUERY, PAGE_STRING).size());
+        verify(searchService).getNextUsers(QUERY, PAGE);
+    }
+
+    @Test
+    public void testGetMoreUsersInvalidPage() {
+        assertTrue(searchRestController.getMoreUsers(QUERY, "0").isEmpty());
+        verify(searchService, never()).getNextUsers(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetMoreExperiments() {
+        when(searchService.getNextExperiments(QUERY, PAGE)).thenReturn(experimentTableData);
+        assertEquals(2, searchRestController.getMoreExperiments(QUERY, PAGE_STRING).size());
+        verify(searchService).getNextExperiments(QUERY, PAGE);
+    }
+
+    @Test
+    public void testGetMoreExperimentsPageBlank() {
+        assertTrue(searchRestController.getMoreExperiments(QUERY, BLANK).isEmpty());
+        verify(searchService, never()).getNextExperiments(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetMoreExperimentsPageNull() {
+        assertTrue(searchRestController.getMoreExperiments(QUERY, null).isEmpty());
+        verify(searchService, never()).getNextExperiments(anyString(), anyInt());
     }
 
     @Test
@@ -129,6 +168,23 @@ public class SearchRestControllerTest {
         for (int i = 0; i < number; i++) {
             String[] userInfo = new String[]{"experiment" + i, "description" + i};
             experimentData.add(userInfo);
+        }
+    }
+
+    private void addUserProjectionData(int number) {
+        userProjectionData = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            String user = "participant" + i;
+            String[] userInfo = new String[]{String.valueOf(i), user, user + "@participant.de", PARTICIPANT};
+            userProjectionData.add(userInfo);
+        }
+    }
+
+    private void addExperimentTableData(int number) {
+        experimentTableData = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            String[] userInfo = new String[]{String.valueOf(i), "experiment" + i, "description" + i};
+            experimentTableData.add(userInfo);
         }
     }
 }
