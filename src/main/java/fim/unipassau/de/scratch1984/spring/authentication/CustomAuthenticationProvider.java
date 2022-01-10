@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.spring.authentication;
 
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,12 +65,12 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         if (userDTO != null && userDTO.getRole() != null && userDTO.isActive()) {
             if (userDTO.getRole() == UserDTO.Role.PARTICIPANT || userDTO.getRole() == UserDTO.Role.ADMIN) {
-                GrantedAuthority grantedAuthorityUser = new SimpleGrantedAuthority("ROLE_PARTICIPANT");
+                GrantedAuthority grantedAuthorityUser = new SimpleGrantedAuthority(Constants.ROLE_PARTICIPANT);
                 authorities.add(grantedAuthorityUser);
             }
 
             if (userDTO.getRole() == UserDTO.Role.ADMIN) {
-                GrantedAuthority grantedAuthorityAdmin = new SimpleGrantedAuthority("ROLE_ADMIN");
+                GrantedAuthority grantedAuthorityAdmin = new SimpleGrantedAuthority(Constants.ROLE_ADMIN);
                 authorities.add(grantedAuthorityAdmin);
             }
         }

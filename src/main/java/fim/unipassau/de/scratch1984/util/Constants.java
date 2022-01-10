@@ -33,7 +33,22 @@ public final class Constants {
     public static final String CONTEXT_PATH = "";
 
     /**
-     * The filetype of an sb3 zip.
+     * String corresponding to the administrator role used by Spring Security for granting role-based access.
+     */
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
+
+    /**
+     * String corresponding to the participant role used by Spring Security for granting role-based access.
+     */
+    public static final String ROLE_PARTICIPANT = "ROLE_PARTICIPANT";
+
+    /**
+     * String corresponding to redirecting to the error page.
+     */
+    public static final String ERROR = "redirect:/error";
+
+    /**
+     * The filetype of a sb3 zip.
      */
     public static final String SB3 = "sb3";
 

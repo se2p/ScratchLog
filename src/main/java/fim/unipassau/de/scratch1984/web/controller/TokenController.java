@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -46,11 +47,6 @@ public class TokenController {
     private final UserService userService;
 
     /**
-     * String corresponding to redirecting to the error page.
-     */
-    private static final String ERROR = "redirect:/error";
-
-    /**
      * String corresponding to the register page.
      */
     private static final String PASSWORD_SET = "password-set";
@@ -84,7 +80,7 @@ public class TokenController {
         try {
             tokenDTO = tokenService.findToken(token);
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         LocalDateTime localDateTime = LocalDateTime.now();
@@ -99,7 +95,7 @@ public class TokenController {
                 userService.updateEmail(tokenDTO.getUser(), tokenDTO.getMetadata());
                 tokenService.deleteToken(tokenDTO.getValue());
             } catch (NotFoundException e) {
-                return ERROR;
+                return Constants.ERROR;
             }
         } else if (tokenDTO.getType() == TokenDTO.Type.REGISTER || tokenDTO.getType()
                 == TokenDTO.Type.FORGOT_PASSWORD) {
@@ -132,10 +128,10 @@ public class TokenController {
         if (userDTO == null || userDTO.getId() == null || userDTO.getPassword() == null
                 || userDTO.getConfirmPassword() == null) {
             logger.error("Cannot register user with id null, or passwords null!");
-            return ERROR;
+            return Constants.ERROR;
         } else if (token == null || token.trim().isBlank()) {
             logger.error("Cannot register user with token null or blank!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -157,7 +153,7 @@ public class TokenController {
             tokenService.deleteToken(tokenDTO.getValue());
             return "redirect:/?success=true";
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 

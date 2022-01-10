@@ -1,7 +1,7 @@
 package fim.unipassau.de.scratch1984.application;
 
 import fim.unipassau.de.scratch1984.application.service.SearchService;
-import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
@@ -54,7 +54,7 @@ public class SearchServiceTest {
     private static final int LIMIT = Constants.PAGE_SIZE;
     private static final int COUNT = 25;
     private final List<UserProjection> users = addUserSuggestions();
-    private final List<ExperimentSearchProjection> experiments = addExperimentSuggestions();
+    private final List<ExperimentTableProjection> experiments = addExperimentSuggestions();
 
     @Test
     public void testGetUserList() {
@@ -88,7 +88,7 @@ public class SearchServiceTest {
     @Test
     public void testGetExperimentList() {
         when(experimentRepository.findExperimentResults(QUERY, LIMIT)).thenReturn(experiments);
-        List<ExperimentSearchProjection> experimentList = searchService.getExperimentList(QUERY, LIMIT);
+        List<ExperimentTableProjection> experimentList = searchService.getExperimentList(QUERY, LIMIT);
         assertAll(
                 () -> assertEquals(2, experimentList.size()),
                 () -> assertTrue(experimentList.stream().anyMatch(experiment -> experiment.getId() == ID)),
@@ -286,13 +286,13 @@ public class SearchServiceTest {
         return projections;
     }
 
-    private List<ExperimentSearchProjection> addExperimentSuggestions() {
-        List<ExperimentSearchProjection> projections = new ArrayList<>();
+    private List<ExperimentTableProjection> addExperimentSuggestions() {
+        List<ExperimentTableProjection> projections = new ArrayList<>();
 
         for (int i = 0; i < 2; i++) {
             int id = i + 1;
 
-            ExperimentSearchProjection projection = new ExperimentSearchProjection() {
+            ExperimentTableProjection projection = new ExperimentTableProjection() {
                 @Override
                 public Integer getId() {
                     return id;
@@ -306,6 +306,11 @@ public class SearchServiceTest {
                 @Override
                 public String getDescription() {
                     return "description" + id;
+                }
+
+                @Override
+                public boolean isActive() {
+                    return false;
                 }
             };
 

@@ -32,6 +32,16 @@ public class SearchRestController {
     private final SearchService searchService;
 
     /**
+     * String corresponding to the query request parameter.
+     */
+    private static final String QUERY = "query";
+
+    /**
+     * String corresponding to the id request parameter.
+     */
+    private static final String ID = "id";
+
+    /**
      * Constructs a new search REST controller with the given dependencies.
      *
      * @param searchService The search service to use.
@@ -49,8 +59,8 @@ public class SearchRestController {
      * @return A list of matching suggestions, or an empty list, if no entries could be found.
      */
     @GetMapping("/suggestions")
-    @Secured("ROLE_ADMIN")
-    public List<String[]> getSearchSuggestions(@RequestParam("query") final String query) {
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getSearchSuggestions(@RequestParam(QUERY) final String query) {
         if (query == null || query.trim().isBlank()) {
             return new ArrayList<>();
         }
@@ -67,9 +77,9 @@ public class SearchRestController {
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
     @GetMapping("/user")
-    @Secured("ROLE_ADMIN")
-    public List<String[]> getUserSuggestions(@RequestParam("query") final String query,
-                                             @RequestParam("id") final String id) {
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getUserSuggestions(@RequestParam(QUERY) final String query,
+                                             @RequestParam(ID) final String id) {
         if (invalidParams(query, id)) {
             return new ArrayList<>();
         }
@@ -87,9 +97,9 @@ public class SearchRestController {
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
     @GetMapping("/delete")
-    @Secured("ROLE_ADMIN")
-    public List<String[]> getDeleteUserSuggestions(@RequestParam("query") final String query,
-                                                   @RequestParam("id") final String id) {
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getDeleteUserSuggestions(@RequestParam(QUERY) final String query,
+                                                   @RequestParam(ID) final String id) {
         if (invalidParams(query, id)) {
             return new ArrayList<>();
         }

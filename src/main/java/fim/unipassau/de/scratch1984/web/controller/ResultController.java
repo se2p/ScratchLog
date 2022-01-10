@@ -84,9 +84,19 @@ public class ResultController {
     private static final String RESULT = "result";
 
     /**
-     * String corresponding to redirecting to the error page.
+     * String corresponding to the id request parameter.
      */
-    private static final String ERROR = "redirect:/error";
+    private static final String ID = "id";
+
+    /**
+     * String corresponding to the user request parameter.
+     */
+    private static final String USER = "user";
+
+    /**
+     * String corresponding to the experiment request parameter.
+     */
+    private static final String EXPERIMENT = "experiment";
 
     /**
      * Constructs a new result controller with the given dependencies.
@@ -116,12 +126,12 @@ public class ResultController {
      * @return The result page on success, or the error page otherwise.
      */
     @GetMapping("")
-    @Secured("ROLE_ADMIN")
-    public ModelAndView getResult(@RequestParam("experiment") final String experiment,
-                                  @RequestParam("user") final String user, final Model model) {
+    @Secured(Constants.ROLE_ADMIN)
+    public ModelAndView getResult(@RequestParam(EXPERIMENT) final String experiment,
+                                  @RequestParam(USER) final String user, final Model model) {
         if (user == null || experiment == null) {
             logger.error("Cannot return result page for user with id null or experiment with id null!");
-            return new ModelAndView(ERROR);
+            return new ModelAndView(Constants.ERROR);
         }
 
         int userId = parseId(user);
@@ -130,12 +140,12 @@ public class ResultController {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot return result page for user with invalid id " + userId + " or experiment with invalid "
                     + "id " + experimentId + "!");
-            return new ModelAndView(ERROR);
+            return new ModelAndView(Constants.ERROR);
         }
         if (!userService.existsParticipant(userId, experimentId)) {
             logger.error("Could not find participant entry for user with id " + userId + " for experiment with id "
                     + experimentId);
-            return new ModelAndView(ERROR);
+            return new ModelAndView(Constants.ERROR);
         }
 
         try {
@@ -155,7 +165,7 @@ public class ResultController {
             model.addAttribute("experiment", experimentId);
             return new ModelAndView(RESULT);
         } catch (NotFoundException e) {
-            return new ModelAndView(ERROR);
+            return new ModelAndView(Constants.ERROR);
         }
     }
 
@@ -167,18 +177,18 @@ public class ResultController {
      * @return The file for download on success, or the error page otherwise.
      */
     @GetMapping("/file")
-    @Secured("ROLE_ADMIN")
-    public Object downloadFile(@RequestParam("id") final String id) {
+    @Secured(Constants.ROLE_ADMIN)
+    public Object downloadFile(@RequestParam(ID) final String id) {
         if (id == null) {
             logger.error("Cannot download file with invalid id null!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int fileId = parseId(id);
 
         if (fileId < Constants.MIN_ID) {
             logger.error("Cannot download file with invalid id " + fileId + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
@@ -186,7 +196,7 @@ public class ResultController {
             return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""
                     + fileDTO.getName() + "\"").body(fileDTO.getContent());
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -204,9 +214,9 @@ public class ResultController {
      * @param httpServletResponse The servlet response.
      */
     @GetMapping("/generate")
-    @Secured("ROLE_ADMIN")
-    public void generateZipFile(@RequestParam("experiment") final String experiment,
-                                @RequestParam("user") final String user, @RequestParam("json") final String json,
+    @Secured(Constants.ROLE_ADMIN)
+    public void generateZipFile(@RequestParam(EXPERIMENT) final String experiment,
+                                @RequestParam(USER) final String user, @RequestParam("json") final String json,
                                 final HttpServletResponse httpServletResponse) {
         if (json == null || experiment == null || user == null) {
             logger.error("Cannot generate zip file with JSON, experiment or user null!");
@@ -255,18 +265,18 @@ public class ResultController {
      * @return The zip file for download on success, or the error page otherwise.
      */
     @GetMapping("/zip")
-    @Secured("ROLE_ADMIN")
-    public Object downloadZip(@RequestParam("id") final String id) {
+    @Secured(Constants.ROLE_ADMIN)
+    public Object downloadZip(@RequestParam(ID) final String id) {
         if (id == null) {
             logger.error("Cannot download zip file with invalid id null!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int zipId = parseId(id);
 
         if (zipId < Constants.MIN_ID) {
             logger.error("Cannot download zip file with invalid id " + zipId + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
@@ -274,7 +284,7 @@ public class ResultController {
             return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""
                     + sb3ZipDTO.getName() + "\"").body(sb3ZipDTO.getContent());
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -288,9 +298,9 @@ public class ResultController {
      * @param httpServletResponse The servlet response returning the files.
      */
     @GetMapping("/zips")
-    @Secured("ROLE_ADMIN")
-    public void downloadAllZips(@RequestParam("experiment") final String experiment,
-                                @RequestParam("user") final String user,
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadAllZips(@RequestParam(EXPERIMENT) final String experiment,
+                                @RequestParam(USER) final String user,
                                 final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
             logger.error("Cannot download zip files for user with id null or experiment with id null!");
@@ -337,9 +347,9 @@ public class ResultController {
      * @param httpServletResponse The servlet response returning the files.
      */
     @GetMapping("/xmls")
-    @Secured("ROLE_ADMIN")
-    public void downloadAllXmlFiles(@RequestParam("experiment") final String experiment,
-                                    @RequestParam("user") final String user,
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadAllXmlFiles(@RequestParam(EXPERIMENT) final String experiment,
+                                    @RequestParam(USER) final String user,
                                     final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
             logger.error("Cannot download xml files for user with id null or experiment with id null!");
@@ -386,9 +396,9 @@ public class ResultController {
      * @param httpServletResponse The servlet response returning the files.
      */
     @GetMapping("/jsons")
-    @Secured("ROLE_ADMIN")
-    public void downloadAllJsonFiles(@RequestParam("experiment") final String experiment,
-                                     @RequestParam("user") final String user,
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadAllJsonFiles(@RequestParam(EXPERIMENT) final String experiment,
+                                     @RequestParam(USER) final String user,
                                      final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
             logger.error("Cannot download json files for user with id null or experiment with id null!");
@@ -435,10 +445,10 @@ public class ResultController {
      * @return The list of block event projections.
      */
     @GetMapping("/codes")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     @ResponseBody
-    public List<BlockEventProjection> getCodes(@RequestParam("experiment") final String experiment,
-                                               @RequestParam("user") final String user,
+    public List<BlockEventProjection> getCodes(@RequestParam(EXPERIMENT) final String experiment,
+                                               @RequestParam(USER) final String user,
                                                @RequestParam("page") final String page) {
         if (user == null || experiment == null || page == null) {
             logger.error("Cannot get codes for user with id null or experiment with id null or page null!");
@@ -486,9 +496,9 @@ public class ResultController {
      * @param httpServletResponse The servlet response returning the files.
      */
     @GetMapping("/sb3s")
-    @Secured("ROLE_ADMIN")
-    public void downloadSb3Files(@RequestParam("experiment") final String experiment,
-                                 @RequestParam("user") final String user,
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadSb3Files(@RequestParam(EXPERIMENT) final String experiment,
+                                 @RequestParam(USER) final String user,
                                  @RequestParam(value = "step", required = false) final String step,
                                  @RequestParam(value = "start", required = false) final String start,
                                  @RequestParam(value = "end", required = false) final String end,

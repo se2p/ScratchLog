@@ -1,7 +1,7 @@
 package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.application.service.SearchService;
-import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.SearchController;
@@ -48,7 +48,7 @@ public class SearchControllerTest {
     private static final int COUNT = 25;
     private static final int MAX_RESULTS = 30;
     private List<UserProjection> users;
-    private List<ExperimentSearchProjection> experiments;
+    private List<ExperimentTableProjection> experiments;
 
     @Test
     public void testGetSearchPage() {
@@ -182,13 +182,13 @@ public class SearchControllerTest {
         return userProjections;
     }
 
-    private List<ExperimentSearchProjection> getExperiments(int number) {
-        List<ExperimentSearchProjection> experiments = new ArrayList<>();
+    private List<ExperimentTableProjection> getExperiments(int number) {
+        List<ExperimentTableProjection> experiments = new ArrayList<>();
 
         for (int i = 0; i < number; i++) {
             int id = i + 1;
 
-            ExperimentSearchProjection experiment = new ExperimentSearchProjection() {
+            ExperimentTableProjection experiment = new ExperimentTableProjection() {
                 @Override
                 public Integer getId() {
                     return id;
@@ -202,6 +202,11 @@ public class SearchControllerTest {
                 @Override
                 public String getDescription() {
                     return "description" + id;
+                }
+
+                @Override
+                public boolean isActive() {
+                    return false;
                 }
             };
 

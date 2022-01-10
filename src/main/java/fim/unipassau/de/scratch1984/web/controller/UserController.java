@@ -96,11 +96,6 @@ public class UserController {
     private static final String INDEX = "redirect:/";
 
     /**
-     * String corresponding to redirecting to the error page.
-     */
-    private static final String ERROR = "redirect:/error";
-
-    /**
      * String corresponding to the profile page.
      */
     private static final String PROFILE = "profile";
@@ -124,6 +119,11 @@ public class UserController {
      * String corresponding to the password reset page.
      */
     private static final String PASSWORD_RESET = "password-reset";
+
+    /**
+     * String corresponding to the userDTO model attribute.
+     */
+    private static final String USER_DTO = "userDTO";
 
     /**
      * Constructs a new user controller with the given dependencies.
@@ -165,7 +165,7 @@ public class UserController {
                                    final HttpServletResponse httpServletResponse) {
         if (id == null || id.trim().isBlank() || secret == null || secret.trim().isBlank()) {
             logger.error("Cannot authenticate participant with id or secret null or blank!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int experimentId = parseId(id);
@@ -173,19 +173,19 @@ public class UserController {
 
         if (experimentId < Constants.MIN_ID) {
             logger.debug("Cannot authenticate user with invalid experiment id " + id + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
             authenticated = userService.authenticateUser(secret);
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
         if (!userService.existsParticipant(authenticated.getId(), experimentId)) {
             logger.error("No participation entry could be found for the user with username "
                     + authenticated.getUsername() + " and experiment with id " + id + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         clearSecurityContext(httpServletRequest);
@@ -208,7 +208,7 @@ public class UserController {
      * @return The login page, if an authentication error occurred, or redirect to the index page.
      */
     @PostMapping(path = "/login")
-    public String loginUser(@ModelAttribute("userDTO") final UserDTO userDTO, final Model model,
+    public String loginUser(@ModelAttribute(USER_DTO) final UserDTO userDTO, final Model model,
                             final HttpServletRequest httpServletRequest, final HttpServletResponse httpServletResponse,
                             final BindingResult bindingResult) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -217,10 +217,10 @@ public class UserController {
         String passwordValidation = validateInput(userDTO.getPassword());
 
         if (usernameValidation != null) {
-            bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
+            bindingResult.addError(createFieldError(USER_DTO, "username", usernameValidation, resourceBundle));
         }
         if (passwordValidation != null) {
-            bindingResult.addError(createFieldError("userDTO", "password", passwordValidation, resourceBundle));
+            bindingResult.addError(createFieldError(USER_DTO, "password", passwordValidation, resourceBundle));
         }
 
         if (bindingResult.hasErrors()) {
@@ -269,18 +269,18 @@ public class UserController {
      * @return The index page on success, or the error page otherwise.
      */
     @GetMapping("/logout")
-    @Secured("ROLE_PARTICIPANT")
+    @Secured(Constants.ROLE_PARTICIPANT)
     public String logoutUser(final HttpServletRequest httpServletRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
             logger.error("Can't logout an unauthenticated user!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         if (!userService.existsUser(authentication.getName())) {
             logger.error("Can't find user with username " + authentication.getName() + " in the database!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         clearSecurityContext(httpServletRequest);
@@ -294,7 +294,7 @@ public class UserController {
      * @return The user page.
      */
     @GetMapping("/add")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     public String getAddUser(final UserDTO userDTO) {
         return USER;
     }
@@ -311,14 +311,14 @@ public class UserController {
      * @return The index page on success, or the error page or user page otherwise.
      */
     @PostMapping("/add")
-    @Secured("ROLE_ADMIN")
-    public String addUser(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult) {
+    @Secured(Constants.ROLE_ADMIN)
+    public String addUser(@ModelAttribute(USER_DTO) final UserDTO userDTO, final BindingResult bindingResult) {
         if (userDTO.getId() != null) {
             logger.error("Cannot add new user with id not null!");
-            return ERROR;
+            return Constants.ERROR;
         } else if (userDTO.getLanguage() == null || userDTO.getRole() == null || userDTO.getEmail() == null) {
             logger.error("Cannot add new user with language, role, or email null!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -327,15 +327,15 @@ public class UserController {
         String usernameValidation = UsernameValidator.validate(userDTO.getUsername());
 
         if (emailValidation != null) {
-            bindingResult.addError(createFieldError("userDTO", "email", emailValidation, resourceBundle));
+            bindingResult.addError(createFieldError(USER_DTO, "email", emailValidation, resourceBundle));
         } else if (userService.existsEmail(userDTO.getEmail())) {
-            bindingResult.addError(createFieldError("userDTO", "email", "email_exists", resourceBundle));
+            bindingResult.addError(createFieldError(USER_DTO, "email", "email_exists", resourceBundle));
         }
 
         if (usernameValidation != null) {
-            bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
+            bindingResult.addError(createFieldError(USER_DTO, "username", usernameValidation, resourceBundle));
         } else if (userService.existsUser(userDTO.getUsername())) {
-            bindingResult.addError(createFieldError("userDTO", "username", "username_exists", resourceBundle));
+            bindingResult.addError(createFieldError(USER_DTO, "username", "username_exists", resourceBundle));
         }
 
         if (bindingResult.hasErrors()) {
@@ -349,7 +349,7 @@ public class UserController {
                 resourceBundle)) {
             return "redirect:/?success=true";
         } else {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -364,15 +364,15 @@ public class UserController {
      * @return The index page on success, or the error page or password reset page otherwise.
      */
     @PostMapping("/reset")
-    public String passwordReset(@ModelAttribute("userDTO") final UserDTO userDTO, final Model model) {
+    public String passwordReset(@ModelAttribute(USER_DTO) final UserDTO userDTO, final Model model) {
         if (userDTO.getUsername() == null || userDTO.getEmail() == null || userDTO.getUsername().trim().isBlank()
                 || userDTO.getEmail().trim().isBlank()) {
             logger.error("Cannot reset password for user with username or email null or blank!");
-            return ERROR;
+            return Constants.ERROR;
         } else if (userDTO.getUsername().length() > Constants.SMALL_FIELD
                 || userDTO.getEmail().length() > Constants.LARGE_FIELD) {
             logger.error("Cannot reset password for user with with user with input username or email too long!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -391,7 +391,7 @@ public class UserController {
                 }
             }
 
-            return ERROR;
+            return Constants.ERROR;
         } catch (NotFoundException e) {
             model.addAttribute("error", resourceBundle.getString("user_not_found"));
             return PASSWORD_RESET;
@@ -409,7 +409,7 @@ public class UserController {
      * @return The profile page on success, or the error page otherwise.
      */
     @GetMapping("/profile")
-    @Secured("ROLE_PARTICIPANT")
+    @Secured(Constants.ROLE_PARTICIPANT)
     public String getProfile(@RequestParam(value = "name", required = false) final String username, final Model model,
                              final HttpServletRequest httpServletRequest) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -418,24 +418,24 @@ public class UserController {
 
         if (authentication == null || authentication.getName() == null) {
             logger.error("Can't show the profile page for an unauthenticated user!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         UserDTO userDTO;
         HashMap<Integer, String> experiments = new HashMap<>();
 
-        if (username == null || username.trim().isBlank() || !httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+        if (username == null || username.trim().isBlank() || !httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             try {
                 userDTO = userService.getUser(authentication.getName());
             } catch (NotFoundException e) {
                 clearSecurityContext(httpServletRequest);
-                return ERROR;
+                return Constants.ERROR;
             }
         } else {
             try {
                 userDTO = userService.getUser(username);
             } catch (NotFoundException e) {
-                return ERROR;
+                return Constants.ERROR;
             }
         }
 
@@ -444,7 +444,7 @@ public class UserController {
         }
 
         model.addAttribute("experiments", experiments);
-        model.addAttribute("userDTO", userDTO);
+        model.addAttribute(USER_DTO, userDTO);
         model.addAttribute("passwordDTO", new PasswordDTO());
         model.addAttribute("language",
                 resourceBundle.getString(userDTO.getLanguage().toString().toLowerCase()));
@@ -462,33 +462,33 @@ public class UserController {
      * @return The profile edit page on success, or the error page otherwise.
      */
     @GetMapping("/edit")
-    @Secured("ROLE_PARTICIPANT")
+    @Secured(Constants.ROLE_PARTICIPANT)
     public String getEditProfileForm(@RequestParam(value = "name", required = false) final String username,
                                      final Model model, final HttpServletRequest httpServletRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
             logger.error("Can't show the profile page for an unauthenticated user!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
-        if (username == null || username.trim().isBlank() || !httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+        if (username == null || username.trim().isBlank() || !httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
-                model.addAttribute("userDTO", userDTO);
+                model.addAttribute(USER_DTO, userDTO);
                 return PROFILE_EDIT;
             } catch (NotFoundException e) {
                 clearSecurityContext(httpServletRequest);
-                return ERROR;
+                return Constants.ERROR;
             }
         }
 
         try {
             UserDTO userDTO = userService.getUser(username);
-            model.addAttribute("userDTO", userDTO);
+            model.addAttribute(USER_DTO, userDTO);
             return PROFILE_EDIT;
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -505,13 +505,13 @@ public class UserController {
      * @return The profile edit page, if the input is invalid, or the profile page on success.
      */
     @PostMapping("/update")
-    @Secured("ROLE_PARTICIPANT")
-    public String updateUser(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult,
+    @Secured(Constants.ROLE_PARTICIPANT)
+    public String updateUser(@ModelAttribute(USER_DTO) final UserDTO userDTO, final BindingResult bindingResult,
                              final HttpServletRequest httpServletRequest,
                              final HttpServletResponse httpServletResponse) {
         if (userDTO.getEmail() == null) {
             logger.error("The new email should never be null, but only an empty string!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -521,21 +521,21 @@ public class UserController {
         try {
             findOldUser = userService.getUserById(userDTO.getId());
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
-        if (!httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+        if (!httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             if (!findOldUser.equals(userDTO)) {
                 logger.error("Participant with id " + userDTO.getId() + " tried to edit the profile of user with id "
                         + findOldUser.getId() + "!");
-                return ERROR;
+                return Constants.ERROR;
             } else if (userDTO.getUsername() != null) {
                 logger.error("Participant with id " + userDTO.getId() + " tried to change their username!");
-                return ERROR;
+                return Constants.ERROR;
             }
         }
 
-        if (httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             validateUpdateUsername(userDTO, findOldUser, bindingResult, resourceBundle);
         }
 
@@ -551,7 +551,7 @@ public class UserController {
 
         String username = findOldUser.getUsername();
 
-        if (!username.equals(userDTO.getUsername()) && httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+        if (!username.equals(userDTO.getUsername()) && httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             findOldUser.setUsername(userDTO.getUsername());
         }
 
@@ -594,26 +594,26 @@ public class UserController {
      * @return The index page on success, or the profile or error page.
      */
     @PostMapping("/delete")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     public String deleteUser(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
                              @RequestParam("id") final String id, final HttpServletRequest httpServletRequest) {
         if (id == null || passwordDTO.getPassword() == null) {
             logger.error("Cannot delete user with id null or input password null!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int userId = parseId(id);
 
         if (userId < Constants.MIN_ID) {
             logger.error("Cannot delete user with invalid id " + id + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
             logger.error("User with authentication name null tried to delete user with id " + userId + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
@@ -635,7 +635,7 @@ public class UserController {
 
             return "redirect:/?success=true";
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -649,18 +649,18 @@ public class UserController {
      * @return The participant's profile page on success, or the error page, otherwise.
      */
     @GetMapping("/active")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     public String changeActiveStatus(@RequestParam("id") final String id) {
         if (id == null) {
             logger.debug("Cannot change active status of user with id null!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int userId = parseId(id);
 
         if (userId < Constants.MIN_ID) {
             logger.debug("Cannot change active status of user with invalid id " + id + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
@@ -668,7 +668,7 @@ public class UserController {
 
             if (userDTO.getRole().equals(UserDTO.Role.ADMIN)) {
                 logger.error("Cannot deactivate an administrator profile!");
-                return ERROR;
+                return Constants.ERROR;
             }
 
             if (userDTO.isActive()) {
@@ -681,7 +681,7 @@ public class UserController {
             userService.updateUser(userDTO);
             return "redirect:/users/profile?name=" + userDTO.getUsername();
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
     }
 
@@ -695,32 +695,32 @@ public class UserController {
      * @return The password page on success, or the error page otherwise.
      */
     @GetMapping("/forgot")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     public String getPasswordResetForm(@RequestParam("id") final String id, final Model model,
                                        final HttpServletRequest httpServletRequest) {
         if (id == null) {
             logger.debug("Cannot reset password for user with id null!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         int userId = parseId(id);
 
         if (userId < Constants.MIN_ID) {
             logger.debug("Cannot reset password for user with invalid id " + id + "!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         try {
             UserDTO userDTO = userService.getUserById(userId);
-            if (httpServletRequest.isUserInRole("ROLE_ADMIN")) {
-                model.addAttribute("userDTO", userDTO);
+            if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+                model.addAttribute(USER_DTO, userDTO);
                 return PASSWORD;
             }
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
-        return ERROR;
+        return Constants.ERROR;
     }
 
     /**
@@ -732,12 +732,12 @@ public class UserController {
      * @return The user profile page on success, or the error page otherwise.
      */
     @PostMapping("/forgot")
-    @Secured("ROLE_ADMIN")
-    public String passwordReset(@ModelAttribute("userDTO") final UserDTO userDTO, final BindingResult bindingResult,
+    @Secured(Constants.ROLE_ADMIN)
+    public String passwordReset(@ModelAttribute(USER_DTO) final UserDTO userDTO, final BindingResult bindingResult,
                                 final HttpServletRequest httpServletRequest) {
         if (userDTO.getPassword() == null || userDTO.getNewPassword() == null || userDTO.getConfirmPassword() == null) {
             logger.error("The new passwords should never be null, but only empty strings!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
@@ -747,16 +747,16 @@ public class UserController {
         try {
             findOldUser = userService.getUserById(userDTO.getId());
         } catch (NotFoundException e) {
-            return ERROR;
+            return Constants.ERROR;
         }
 
-        if (httpServletRequest.isUserInRole("ROLE_ADMIN")) {
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication.getName() == null) {
                 logger.error("Cannot reset the password for user " + userDTO.getId() + " with authentication with name "
                         + "null!");
-                return ERROR;
+                return Constants.ERROR;
             }
 
             UserDTO admin;
@@ -764,11 +764,11 @@ public class UserController {
             try {
                 admin = userService.getUser(authentication.getName());
             } catch (NotFoundException e) {
-                return ERROR;
+                return Constants.ERROR;
             }
 
             if (userDTO.getNewPassword().trim().isBlank()) {
-                bindingResult.addError(createFieldError("userDTO", "newPassword", "empty_string", resourceBundle));
+                bindingResult.addError(createFieldError(USER_DTO, "newPassword", "empty_string", resourceBundle));
             }
 
             validateUpdatePassword(userDTO, admin, bindingResult, resourceBundle);
@@ -782,7 +782,7 @@ public class UserController {
             return "redirect:/users/profile?name=" + findOldUser.getUsername();
         }
 
-        return ERROR;
+        return Constants.ERROR;
     }
 
     /**
@@ -799,9 +799,9 @@ public class UserController {
             String usernameValidation = UsernameValidator.validate(userDTO.getUsername());
 
             if (usernameValidation != null) {
-                bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
+                bindingResult.addError(createFieldError(USER_DTO, "username", usernameValidation, resourceBundle));
             } else if (userService.existsUser(userDTO.getUsername())) {
-                bindingResult.addError(createFieldError("userDTO", "username", "username_exists", resourceBundle));
+                bindingResult.addError(createFieldError(USER_DTO, "username", "username_exists", resourceBundle));
             }
         }
     }
@@ -817,16 +817,16 @@ public class UserController {
     private void validateUpdateEmail(final UserDTO userDTO, final UserDTO findOldUser,
                                         final BindingResult bindingResult, final ResourceBundle resourceBundle) {
         if (findOldUser.getEmail() != null && userDTO.getEmail().trim().isBlank()) {
-            bindingResult.addError(createFieldError("userDTO", "email", "empty_string", resourceBundle));
+            bindingResult.addError(createFieldError(USER_DTO, "email", "empty_string", resourceBundle));
         }
 
         if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
             String emailValidation = EmailValidator.validate(userDTO.getEmail());
 
             if (emailValidation != null) {
-                bindingResult.addError(createFieldError("userDTO", "email", emailValidation, resourceBundle));
+                bindingResult.addError(createFieldError(USER_DTO, "email", emailValidation, resourceBundle));
             } else if (userService.existsEmail(userDTO.getEmail())) {
-                bindingResult.addError(createFieldError("userDTO", "email", "email_exists", resourceBundle));
+                bindingResult.addError(createFieldError(USER_DTO, "email", "email_exists", resourceBundle));
             }
         }
     }
@@ -846,13 +846,13 @@ public class UserController {
                     userDTO.getConfirmPassword());
 
             if (passwordValidation != null) {
-                bindingResult.addError(createFieldError("userDTO", "newPassword", passwordValidation, resourceBundle));
+                bindingResult.addError(createFieldError(USER_DTO, "newPassword", passwordValidation, resourceBundle));
             }
 
             if (userDTO.getPassword() == null || userDTO.getPassword().trim().isBlank()) {
-                bindingResult.addError(createFieldError("userDTO", "password", "enter_password", resourceBundle));
+                bindingResult.addError(createFieldError(USER_DTO, "password", "enter_password", resourceBundle));
             } else if (!userService.matchesPassword(userDTO.getPassword(), matchPassword.getPassword())) {
-                bindingResult.addError(createFieldError("userDTO", "password", "invalid_password",
+                bindingResult.addError(createFieldError(USER_DTO, "password", "invalid_password",
                         resourceBundle));
             }
         }

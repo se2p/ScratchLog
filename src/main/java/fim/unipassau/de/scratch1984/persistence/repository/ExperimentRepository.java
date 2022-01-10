@@ -2,7 +2,7 @@ package fim.unipassau.de.scratch1984.persistence.repository;
 
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
-import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -70,18 +70,9 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * Returns a page of experiments corresponding to the parameters set in the pageable.
      *
      * @param pageable The pageable to use.
-     * @return An new experiment page.
+     * @return A new experiment page.
      */
-    Page<Experiment> findAll(Pageable pageable);
-
-    /**
-     * Returns a page of experiments with the given active status corresponding to the parameters set in the pageable.
-     *
-     * @param active The active status of the experiment.
-     * @param pageable The pageable to use.
-     * @return An new experiment page.
-     */
-    Page<Experiment> findAllByActive(boolean active, Pageable pageable);
+    Page<ExperimentTableProjection> findAllProjectedBy(Pageable pageable);
 
     /**
      * Deletes the experiment with the given id from the database, if existent.
@@ -104,22 +95,22 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * Returns a list of the first five experiments whose title contains the given query value.
      *
      * @param query The title to search for.
-     * @return A list of {@link ExperimentSearchProjection}s.
+     * @return A list of {@link ExperimentTableProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
-            + " LIMIT 5;")
-    List<ExperimentSearchProjection> findExperimentSuggestions(@Param("query") String query);
+    @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
+            + " LIMIT 5")
+    List<ExperimentTableProjection> findExperimentSuggestions(@Param("query") String query);
 
     /**
      * Returns a list of at most as many experiments as the given limit whose title contains the given query value.
      *
      * @param query The title to search for.
      * @param limit The maximum amount of results to be returned.
-     * @return A list of {@link ExperimentSearchProjection}s.
+     * @return A list of {@link ExperimentTableProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT e.* FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
+    @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
             + " LIMIT :limit")
-    List<ExperimentSearchProjection> findExperimentResults(@Param("query") String query, @Param("limit") int limit);
+    List<ExperimentTableProjection> findExperimentResults(@Param("query") String query, @Param("limit") int limit);
 
     /**
      * Returns the number of experiments whose title contains the given query value.
@@ -130,5 +121,26 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
     @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM experiment AS e WHERE e.title LIKE"
             + " CONCAT('%', :query, '%')")
     int getExperimentResultsCount(@Param("query") String query);
+
+    /**
+     * Returns a page of experiments in which the user with the given id is participating in.
+     *
+     * @param userId The user id to search for.
+     * @param pageable The pageable to use.
+     * @return A page of {@link ExperimentTableProjection}s.
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e INNER JOIN participant AS p ON p.experiment_id"
+            + " = e.id WHERE p.user_id = :participant")
+    Page<ExperimentTableProjection> findExperimentsByParticipant(@Param("participant") int userId, Pageable pageable);
+
+    /**
+     * Returns the number of experiment pages for the given participant.
+     *
+     * @param userId The user id to search for.
+     * @return The page count.
+     */
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM experiment AS e INNER JOIN participant AS p ON"
+            + " p.experiment_id = e.id WHERE p.user_id = :participant")
+    int getParticipantPageCount(@Param("participant") int userId);
 
 }

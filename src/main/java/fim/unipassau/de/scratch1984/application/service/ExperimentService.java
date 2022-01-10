@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -176,7 +177,12 @@ public class ExperimentService {
      * @return The experiment page.
      */
     @Transactional
-    public Page<Experiment> getExperimentPage(final Pageable pageable) {
+    public Page<ExperimentTableProjection> getExperimentPage(final Pageable pageable) {
+        if (pageable == null) {
+            logger.error("Cannot return experiment page with pageable null!");
+            throw new IllegalArgumentException("Cannot return experiment page with pageable null!");
+        }
+
         int pageSize = pageable.getPageSize();
         int currentPage = pageable.getPageNumber();
 
@@ -186,8 +192,8 @@ public class ExperimentService {
                     + "!");
         }
 
-        Page<Experiment> experiments = experimentRepository.findAll(PageRequest.of(currentPage, pageSize,
-                Sort.by("id").descending()));
+        Page<ExperimentTableProjection> experiments = experimentRepository.findAllProjectedBy(
+                PageRequest.of(currentPage, pageSize, Sort.by("id").descending()));
 
         if (experiments.isEmpty()) {
             logger.info("Could not find any experiments for the page with page size of " + pageSize
@@ -195,6 +201,36 @@ public class ExperimentService {
         }
 
         return experiments;
+    }
+
+    /**
+     * Returns a page of {@link ExperimentTableProjection}s in which the user with the given id is participating
+     * corresponding to the parameters passed in the given pageable.
+     *
+     * @param pageable The pageable containing the page size and page number.
+     * @param userId The user id to search for.
+     * @return The page of {@link ExperimentTableProjection}s.
+     */
+    @Transactional
+    public Page<ExperimentTableProjection> getExperimentParticipantPage(final Pageable pageable, final int userId) {
+        if (userId < Constants.MIN_ID) {
+            logger.error("Cannot return participant experiment page for user with invalid id " + userId + "!");
+            throw new IllegalArgumentException("Cannot return participant experiment page for user with invalid id "
+                    + userId + "!");
+        } else if (pageable == null) {
+            logger.error("Cannot return participant experiment page with pageable null!");
+            throw new IllegalArgumentException("Cannot return participant experiment page with pageable null!");
+        }
+
+        int pageSize = pageable.getPageSize();
+
+        if (pageSize != Constants.PAGE_SIZE) {
+            logger.error("Cannot return participant experiment page with invalid page size of " + pageSize + "!");
+            throw new IllegalArgumentException("Cannot return participant experiment page with invalid page size of "
+                    + pageSize + "!");
+        }
+
+        return experimentRepository.findExperimentsByParticipant(userId, pageable);
     }
 
     /**
@@ -220,7 +256,26 @@ public class ExperimentService {
     @Transactional
     public int getLastPage() {
         int rows = countExperimentRows();
-        return computeLastPage(rows);
+        return computeLastPage(rows) + 1;
+    }
+
+    /**
+     * Returns the number of the last page for the participant experiment pagination.
+     *
+     * @param userId The user id of the participant.
+     * @return The last page value.
+     */
+    @Transactional
+    public int getLastExperimentPage(final int userId) {
+        if (userId < Constants.MIN_ID) {
+            logger.error("Cannot calculate the last participant experiment page for user with invalid id " + userId
+                    + "!");
+            throw new IllegalArgumentException("Cannot calculate the last participant experiment page for user with "
+                    + "invalid id " + userId + "!");
+        }
+
+        int rows = experimentRepository.getParticipantPageCount(userId);
+        return computeLastPage(rows) + 1;
     }
 
     /**

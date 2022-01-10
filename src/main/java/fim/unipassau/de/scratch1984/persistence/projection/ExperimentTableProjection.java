@@ -2,9 +2,9 @@ package fim.unipassau.de.scratch1984.persistence.projection;
 
 /**
  * Projection interface for the {@link fim.unipassau.de.scratch1984.persistence.entity.Experiment} class to return only
- * the id, title, and description.
+ * the id, title, description, and status.
  */
-public interface ExperimentSearchProjection {
+public interface ExperimentTableProjection {
 
     /**
      * Returns the unique id of the experiment.
@@ -26,5 +26,12 @@ public interface ExperimentSearchProjection {
      * @return The description.
      */
     String getDescription();
+
+    /**
+     * Returns whether the experiment is currently running.
+     *
+     * @return The experiment status.
+     */
+    boolean isActive();
 
 }

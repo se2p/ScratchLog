@@ -1,7 +1,7 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.service.SearchService;
-import fim.unipassau.de.scratch1984.persistence.projection.ExperimentSearchProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
 import org.slf4j.Logger;
@@ -40,11 +40,6 @@ public class SearchController {
     private static final String SEARCH = "search";
 
     /**
-     * String corresponding to redirecting to the error page.
-     */
-    private static final String ERROR = "redirect:/error";
-
-    /**
      * Constructs a new search controller with the given dependencies.
      *
      * @param searchService The search service to use.
@@ -65,12 +60,12 @@ public class SearchController {
      * @return The search page on success, or the error page otherwise.
      */
     @GetMapping("")
-    @Secured("ROLE_ADMIN")
+    @Secured(Constants.ROLE_ADMIN)
     public String getSearchPage(@RequestParam(value = "page", required = false) final String page,
                                 @RequestParam("query") final String query, final Model model) {
         if (query == null || query.length() > Constants.LARGE_FIELD) {
             logger.error("Cannot search for results for query string null or query string too long!");
-            return ERROR;
+            return Constants.ERROR;
         }
 
         if (query.trim().isBlank()) {
@@ -80,14 +75,14 @@ public class SearchController {
 
             if (number < 0) {
                 logger.error("Cannot search for results invalid page number " + page + "!");
-                return ERROR;
+                return Constants.ERROR;
             }
 
             int limit = number * Constants.PAGE_SIZE;
             int userCount = searchService.getUserCount(query);
             int experimentCount = searchService.getExperimentCount(query);
             List<UserProjection> users = searchService.getUserList(query, limit);
-            List<ExperimentSearchProjection> experiments = searchService.getExperimentList(query, limit);
+            List<ExperimentTableProjection> experiments = searchService.getExperimentList(query, limit);
             addModelInfo(users, experiments, userCount, experimentCount, query, number, model);
         }
 
@@ -98,14 +93,14 @@ public class SearchController {
      * Adds the given information to the {@link Model}.
      *
      * @param users The {@link UserProjection} results.
-     * @param experiments The {@link ExperimentSearchProjection} results.
+     * @param experiments The {@link ExperimentTableProjection} results.
      * @param userCount The number of user results for the given query string.
      * @param experimentCount The number of experiment results for the fiven query string.
      * @param query The query string.
      * @param page The current page.
      * @param model The model used to save the information.
      */
-    private void addModelInfo(final List<UserProjection> users, final List<ExperimentSearchProjection> experiments,
+    private void addModelInfo(final List<UserProjection> users, final List<ExperimentTableProjection> experiments,
                               final int userCount, final int experimentCount, final String query, final int page,
                               final Model model) {
         model.addAttribute("users", users);
