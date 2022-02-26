@@ -208,16 +208,7 @@ public class SearchService {
      */
     private List<String[]> addUserInfo(final List<UserProjection> users) {
         List<String[]> userInfo = new ArrayList<>();
-
-        if (users.isEmpty()) {
-            return userInfo;
-        }
-
-        for (UserProjection user : users) {
-            String[] addInfo = new String[] {user.getUsername(), user.getEmail()};
-            userInfo.add(addInfo);
-        }
-
+        users.forEach(user -> userInfo.add(new String[] {user.getUsername(), user.getEmail()}));
         return userInfo;
     }
 
@@ -229,16 +220,8 @@ public class SearchService {
      */
     private List<String[]> addExperimentInfo(final List<ExperimentTableProjection> experiments) {
         List<String[]> experimentInfo = new ArrayList<>();
-
-        if (experiments.isEmpty()) {
-            return experimentInfo;
-        }
-
-        for (ExperimentTableProjection experiment : experiments) {
-            String[] addInfo = new String[] {String.valueOf(experiment.getId()), experiment.getTitle()};
-            experimentInfo.add(addInfo);
-        }
-
+        experiments.forEach(experiment -> experimentInfo.add(new String[] {String.valueOf(experiment.getId()),
+                experiment.getTitle()}));
         return experimentInfo;
     }
 
@@ -250,13 +233,8 @@ public class SearchService {
      */
     private List<String[]> addUserProjectionInfo(final List<UserProjection> projections) {
         List<String[]> userInfo = new ArrayList<>();
-
-        for (UserProjection projection : projections) {
-            String[] info = new String[] {String.valueOf(projection.getId()), projection.getUsername(),
-                    projection.getEmail(), projection.getRole()};
-            userInfo.add(info);
-        }
-
+        projections.forEach(projection -> userInfo.add(new String[] {String.valueOf(projection.getId()),
+                projection.getUsername(), projection.getEmail(), projection.getRole()}));
         return userInfo;
     }
 
@@ -268,13 +246,8 @@ public class SearchService {
      */
     private List<String[]> addExperimentTableInfo(final List<ExperimentTableProjection> projections) {
         List<String[]> experimentTableInfo = new ArrayList<>();
-
-        for (ExperimentTableProjection projection : projections) {
-            String[] info = new String[] {String.valueOf(projection.getId()), projection.getTitle(),
-                    projection.getDescription()};
-            experimentTableInfo.add(info);
-        }
-
+        projections.forEach(projection -> experimentTableInfo.add(new String[] {String.valueOf(projection.getId()),
+                projection.getTitle(), projection.getDescription()}));
         return experimentTableInfo;
     }
 

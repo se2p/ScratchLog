@@ -37,14 +37,26 @@ function loadUserResults() {
         userPage++;
         let html = userBody.innerHTML;
         result.forEach(function(element) {
-            html += "<tr><th scope=\"row\"><a class=\"no_decoration\" href=\"" + contextPath + "/users/profile?name="
-                + element[1] + "\">" + element[0] + "</a></th><td><a class=\"no_decoration\" href=\"" + contextPath
-                + "/users/profile?name=" + element[1] + "\">" + element[1] + "</a></td><td>"
-                + "<a class=\"no_decoration\" href=\"" + contextPath + "/users/profile?name=" + element[1] + "\">"
-                + element[2] + "</a></td><td><a class=\"no_decoration\" href=\"" + contextPath + "/users/profile?name="
-                + element[1] + "\">" + element[3] + "</a></td></tr>";
+            html += `
+            <tr>
+                <th scope="row">
+                    <a class="no_decoration" href="${contextPath}/users/profile?name=${element[1]}">${element[0]}</a>
+                </th>
+                <td>
+                    <a class="no_decoration" href="${contextPath}/users/profile?name=${element[1]}">${element[1]}</a>
+                </td>
+                <td>
+                    <a class="no_decoration" href="${contextPath}/users/profile?name=${element[1]}">
+                        ${sanitize(element[2])}
+                    </a>
+                </td>
+                <td>
+                    <a class="no_decoration" href="${contextPath}/users/profile?name=${element[1]}">${element[3]}</a>
+                </td>
+            </tr>
+            `
         });
-        $("#userBody").html(html);
+        userBody.innerHTML = html;
         hideUserResultButton();
     });
 }
@@ -66,12 +78,25 @@ function loadExperimentResults() {
         experimentPage++;
         let html = experimentBody.innerHTML;
         result.forEach(function(element) {
-            html += "<tr><th scope=\"row\"><a class=\"no_decoration\" href=\"" + contextPath + "/experiment?id="
-                + element[0] + "\">" + element[0] + "</a></th><td><a class=\"no_decoration\" href=\"" + contextPath
-                + "/experiment?id=" + element[0] + "\">" + element[1] + "</a></td><td>" + "<a class=\"no_decoration\" "
-                + "href=\"" + contextPath + "/experiment?id=" + element[0] + "\">" + element[2] + "</a></td></tr>";
+            html += `
+            <tr>
+                <th scope="row">
+                    <a class="no_decoration" href="${contextPath}/experiment?id=${element[0]}">${element[0]}</a>
+                </th>
+                <td>
+                    <a class="no_decoration" href="${contextPath}/experiment?id=${element[0]}">
+                        ${sanitize(element[1])}
+                    </a>
+                </td>
+                <td>
+                    <a class="no_decoration" href="${contextPath}/experiment?id=${element[0]}">
+                        ${sanitize(element[2])}
+                    </a>
+                </td>
+            </tr>
+            `
         });
-        $("#experimentBody").html(html);
+        experimentBody.innerHTML = html;
         hideExperimentResultButton();
     });
 }

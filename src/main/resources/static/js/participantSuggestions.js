@@ -30,9 +30,14 @@ function getUserSuggestions() {
     request.done(function(result) {
         let html = "<ul class='list-group'>";
         result.forEach(function(element) {
-            html += "<li class='list-group-item list-group-item-action'><div class='ms-2 me-auto'>"
-                + "<div class='fw-bold' onclick='setParticipantInput(this.innerHTML)'>" + element[0] + "</div>"
-                + "<div onclick='setParticipantInput(this.innerHTML)'>" + element[1] + "</div>" + "</div></li>";
+            html += `
+            <li class="list-group-item list-group-item-action">
+                <div class='ms-2 me-auto no_decoration'>
+                    <div class="fw-bold" onclick='setParticipantInput(this.innerText)'>${sanitize(element[0])}</div>
+                    <div onclick='setParticipantInput(this.innerText)'>${sanitize(element[1])}</div>
+                </div>
+            </li>
+            `
         });
         html += "</ul>";
         $("#results").html(html);
@@ -55,9 +60,14 @@ function getUserDeleteSuggestions() {
     request.done(function(result) {
         let html = "<ul class='list-group'>";
         result.forEach(function(element) {
-            html += "<li class='list-group-item list-group-item-action'><div class='ms-2 me-auto'>"
-                + "<div class='fw-bold' onclick='setDeleteInput(this.innerHTML)'>" + element[0] + "</div>"
-                + "<div onclick='setDeleteInput(this.innerHTML)'>" + element[1] + "</div>" + "</div></li>";
+            html += `
+            <li class="list-group-item list-group-item-action">
+                <div class='ms-2 me-auto no_decoration'>
+                    <div class="fw-bold" onclick='setDeleteInput(this.innerText)'>${sanitize(element[0])}</div>
+                    <div onclick='setDeleteInput(this.innerText)'>${sanitize(element[1])}</div>
+                </div>
+            </li>
+            `
         });
         html += "</ul>";
         $("#deleteResults").html(html);
