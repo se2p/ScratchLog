@@ -89,6 +89,16 @@ public class ParticipantController {
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
 
     /**
+     * String corresponding to redirecting to the secret page.
+     */
+    private static final String REDIRECT_SECRET = "redirect:/secret?user=";
+
+    /**
+     * String corresponding to the experiment id parameter.
+     */
+    private static final String EXPERIMENT_PARAM = "&experiment=";
+
+    /**
      * String corresponding to the id request parameter.
      */
     private static final String ID = "id";
@@ -219,8 +229,11 @@ public class ParticipantController {
         templateModel.put("secret", experimentUrl);
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
+        System.out.println(Constants.MAIL_SERVER);
 
-        if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
+        if (!Constants.MAIL_SERVER) {
+            return REDIRECT_SECRET + saved.getId() + EXPERIMENT_PARAM + id;
+        } else if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
             return REDIRECT_EXPERIMENT + id;
         } else {
