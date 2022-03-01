@@ -130,7 +130,7 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentResults() {
-        List<ExperimentTableProjection> experiments = repository.findExperimentResults(SHORT_QUERY, LIMIT);
+        List<ExperimentTableProjection> experiments = repository.findExperimentResults(SHORT_QUERY, LIMIT, 0);
         assertAll(
                 () -> assertEquals(5, experiments.size()),
                 () -> assertTrue(experiments.stream().anyMatch(experiment
@@ -147,9 +147,29 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
+    public void testFindExperimentResultsOffset() {
+        List<ExperimentTableProjection> experiments = repository.findExperimentResults(SHORT_QUERY, LIMIT, 2);
+        assertAll(
+                () -> assertEquals(4, experiments.size()),
+                () -> assertFalse(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment1.getTitle()))),
+                () -> assertFalse(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment2.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment3.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment4.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment5.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment6.getTitle())))
+        );
+    }
+
+    @Test
     public void testFindExperimentResultsAll() {
         List<ExperimentTableProjection> experiments = repository.findExperimentResults(SHORT_QUERY,
-                Constants.PAGE_SIZE);
+                Constants.PAGE_SIZE, 0);
         assertAll(
                 () -> assertEquals(6, experiments.size()),
                 () -> assertTrue(experiments.stream().anyMatch(experiment

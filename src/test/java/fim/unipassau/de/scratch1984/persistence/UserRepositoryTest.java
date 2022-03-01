@@ -134,7 +134,7 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindUserResults() {
-        List<UserProjection> users = userRepository.findUserResults(QUERY, Constants.PAGE_SIZE);
+        List<UserProjection> users = userRepository.findUserResults(QUERY, Constants.PAGE_SIZE, 0);
         assertAll(
                 () -> assertEquals(10, users.size()),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user1.getUsername())))
@@ -142,8 +142,28 @@ public class UserRepositoryTest {
     }
 
     @Test
+    public void testFindUserResultsOffset() {
+        List<UserProjection> users = userRepository.findUserResults(QUERY, Constants.PAGE_SIZE, 2);
+        assertAll(
+                () -> assertEquals(10, users.size()),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user1.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user2.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user5.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user6.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user7.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user8.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user9.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user10.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user11.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user12.getUsername())))
+        );
+    }
+
+    @Test
     public void testFindUserResultsAll() {
-        List<UserProjection> users = userRepository.findUserResults(QUERY, 20);
+        List<UserProjection> users = userRepository.findUserResults(QUERY, 20, 0);
         assertAll(
                 () -> assertEquals(16, users.size()),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user1.getUsername()))),
@@ -167,7 +187,7 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindUserResultsEmpty() {
-        assertTrue(userRepository.findUserResults(LANGUAGE, Constants.PAGE_SIZE).isEmpty());
+        assertTrue(userRepository.findUserResults(LANGUAGE, Constants.PAGE_SIZE, 0).isEmpty());
     }
 
     @Test

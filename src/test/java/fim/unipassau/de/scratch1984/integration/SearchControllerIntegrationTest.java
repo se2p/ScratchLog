@@ -49,8 +49,6 @@ public class SearchControllerIntegrationTest {
     @MockBean
     private SearchService searchService;
 
-    private static final String PAGE = "3";
-    private static final String PAGE_PARAM = "page";
     private static final String QUERY = "query";
     private static final String LONG_QUERY = "queeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
             + "eeeeeeeeeeeeeeeeeeeeeeeeeery";
@@ -65,7 +63,6 @@ public class SearchControllerIntegrationTest {
     private static final String SEARCH = "search";
     private static final String ERROR = "redirect:/error";
     private static final int COUNT = 25;
-    private static final int MAX_RESULTS = 30;
     private List<UserProjection> users;
     private List<ExperimentTableProjection> experiments;
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
@@ -84,7 +81,6 @@ public class SearchControllerIntegrationTest {
         when(searchService.getUserList(QUERY, Constants.PAGE_SIZE)).thenReturn(users);
         when(searchService.getExperimentList(QUERY, Constants.PAGE_SIZE)).thenReturn(experiments);
         mvc.perform(get("/search/result")
-                .param(PAGE_PARAM, BLANK)
                 .param(QUERY, QUERY)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -96,7 +92,6 @@ public class SearchControllerIntegrationTest {
                 .andExpect(model().attribute(EXPERIMENT_COUNT, is(COUNT)))
                 .andExpect(model().attribute(LIMIT, is(Constants.PAGE_SIZE)))
                 .andExpect(model().attribute(QUERY, is(QUERY)))
-                .andExpect(model().attribute(PAGE_PARAM, is(2)))
                 .andExpect(status().isOk())
                 .andExpect(view().name(SEARCH));
         verify(searchService).getUserCount(QUERY);
@@ -106,56 +101,8 @@ public class SearchControllerIntegrationTest {
     }
 
     @Test
-    public void testGetSearchPagePageGiven() throws Exception {
-        users = getUsers(COUNT);
-        experiments = getExperiments(COUNT);
-        when(searchService.getUserCount(QUERY)).thenReturn(COUNT);
-        when(searchService.getExperimentCount(QUERY)).thenReturn(COUNT);
-        when(searchService.getUserList(QUERY, MAX_RESULTS)).thenReturn(users);
-        when(searchService.getExperimentList(QUERY, MAX_RESULTS)).thenReturn(experiments);
-        mvc.perform(get("/search/result")
-                .param(PAGE_PARAM, PAGE)
-                .param(QUERY, QUERY)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(model().attribute(USERS, is(users)))
-                .andExpect(model().attribute(EXPERIMENTS, is(experiments)))
-                .andExpect(model().attribute(USER_COUNT, is(COUNT)))
-                .andExpect(model().attribute(EXPERIMENT_COUNT, is(COUNT)))
-                .andExpect(model().attribute(LIMIT, is(MAX_RESULTS)))
-                .andExpect(model().attribute(QUERY, is(QUERY)))
-                .andExpect(model().attribute(PAGE_PARAM, is(4)))
-                .andExpect(status().isOk())
-                .andExpect(view().name(SEARCH));
-        verify(searchService).getUserCount(QUERY);
-        verify(searchService).getExperimentCount(QUERY);
-        verify(searchService).getUserList(QUERY, MAX_RESULTS);
-        verify(searchService).getExperimentList(QUERY, MAX_RESULTS);
-    }
-
-    @Test
-    public void testGetSearchPagePageInvalid() throws Exception {
-        mvc.perform(get("/search/result")
-                .param(PAGE_PARAM, PARTICIPANT)
-                .param(QUERY, QUERY)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
-        verify(searchService, never()).getUserCount(anyString());
-        verify(searchService, never()).getExperimentCount(anyString());
-        verify(searchService, never()).getUserList(anyString(), anyInt());
-        verify(searchService, never()).getExperimentList(anyString(), anyInt());
-    }
-
-    @Test
     public void testGetSearchPageQueryBlank() throws Exception {
         mvc.perform(get("/search/result")
-                .param(PAGE_PARAM, BLANK)
                 .param(QUERY, BLANK)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -165,9 +112,8 @@ public class SearchControllerIntegrationTest {
                 .andExpect(model().attribute(EXPERIMENTS, is(empty())))
                 .andExpect(model().attribute(USER_COUNT, is(0)))
                 .andExpect(model().attribute(EXPERIMENT_COUNT, is(0)))
-                .andExpect(model().attribute(LIMIT, is(0)))
+                .andExpect(model().attribute(LIMIT, is(10)))
                 .andExpect(model().attribute(QUERY, is("")))
-                .andExpect(model().attribute(PAGE_PARAM, is(1)))
                 .andExpect(status().isOk())
                 .andExpect(view().name(SEARCH));
         verify(searchService, never()).getUserCount(anyString());
@@ -179,7 +125,6 @@ public class SearchControllerIntegrationTest {
     @Test
     public void testGetSearchPageQueryTooLong() throws Exception {
         mvc.perform(get("/search/result")
-                .param(PAGE_PARAM, BLANK)
                 .param(QUERY, LONG_QUERY)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())

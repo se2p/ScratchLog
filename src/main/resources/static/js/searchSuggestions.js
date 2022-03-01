@@ -25,9 +25,14 @@ function getSuggestions() {
     request.done(function(result) {
         let html = "<ul class='list-group'>";
         result.forEach(function(element) {
-            html += "<li class='list-group-item list-group-item-action'><a class='no_decoration'"
-                + " onclick='setHref(this.firstChild.innerHTML)'><span class='me-2'>"
-                + element[0] + "</span><span>" + element[1] + "</span></a></li>";
+            html += `
+            <li class="list-group-item list-group-item-action">
+                <a class="no_decoration"
+                onclick="setHref(this.firstChild.innerText)"><span class="me-2">${sanitize(element[0])}</span>
+                    <span>${sanitize(element[1])}</span>
+                </a>
+            </li>
+            `
         });
         html += "</ul>";
         $("#searchResults").html(html);
@@ -48,4 +53,33 @@ function setHref(value) {
     } else {
         location.href = contextPath + "/users/profile?name=" + value;
     }
+}
+
+/**
+ * Sanitizes the passed data by replacing dangerous characters to avoid code injections.
+ *
+ * @param data The data to be sanitized.
+ * @returns {any} The sanitized data.
+ */
+function sanitize(data) {
+    const tagsToReplace = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '(': '%28',
+        ')': '%29',
+    }
+
+    let str = JSON.stringify(data)
+
+    const replaceTag = function(tag) {
+        return tagsToReplace[tag] || tag
+    }
+
+    const safe_tags_replace = function(str) {
+        return str.replace(/[&<>()]/g, replaceTag)
+    }
+
+    str = safe_tags_replace(str)
+    return JSON.parse(str)
 }
