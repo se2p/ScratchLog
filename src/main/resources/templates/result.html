@@ -292,6 +292,11 @@
                 <span class="sr-only" th:text="#{last}"></span>
             </span>
             <br class="mb-3">
+            <span class="text-muted">
+                <span th:text="#{current}"></span>
+                <span id="current">1</span>
+            </span>
+            <br class="mb-3">
             <span class="btn btn-primary" id="xml">
                 <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download current xml file"></i>
                 <span class="sr-only" th:text="#{download}"></span>
@@ -314,10 +319,10 @@
 
 <!-- Let Thymeleaf initialize user, experiment and total variables used for displaying the xml code. -->
 <script>
-    var user = [[${user}]];
-    var experiment = [[${experiment}]];
-    var total = [[${codeCount}]];
-    var pageSize = [[${pageSize}]];
+    const user = [[${user}]];
+    const experiment = [[${experiment}]];
+    const total = [[${codeCount}]];
+    const pageSize = [[${pageSize}]];
 </script>
 
 <!-- Footer -->
