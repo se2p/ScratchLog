@@ -344,7 +344,7 @@ public class UserService {
     }
 
     /**
-     * Reactivates the accounts of participants who have not started an experiment when it is being reopened. If the
+     * Reactivates the accounts of participants who have not finished an experiment when it is being reopened. If the
      * participant is not currently participating in a different experiment, their account is activated and a secret
      * generated. The list of the updated and reactivated users is then passed to the controller to send out new
      * invitation mails. If no experiment with the corresponding id could be found, a {@link NotFoundException} is
@@ -365,7 +365,7 @@ public class UserService {
         List<UserDTO> userDTOS = new ArrayList<>();
 
         try {
-            participants = participantRepository.findAllByExperimentAndStart(experiment, null);
+            participants = participantRepository.findAllByExperimentAndEnd(experiment, null);
         } catch (EntityNotFoundException e) {
             logger.error("Could not find experiment with id " + experimentId + "!", e);
             throw new NotFoundException("Could not find experiment with id " + experimentId + "!", e);
