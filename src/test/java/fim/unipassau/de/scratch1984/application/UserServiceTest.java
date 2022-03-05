@@ -602,6 +602,42 @@ public class UserServiceTest {
     }
 
     @Test
+    public void testFindUnfinishedUsers() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findAllByExperimentAndEnd(experiment, null)).thenReturn(participants);
+        List<UserDTO> userDTOS = userService.findUnfinishedUsers(ID);
+        assertAll(
+                () -> assertEquals(3, userDTOS.size()),
+                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 2)),
+                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 3)),
+                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 4))
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findAllByExperimentAndEnd(experiment, null);
+    }
+
+    @Test
+    public void testFindUnfinishedUsersNotFound() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findAllByExperimentAndEnd(experiment,
+                null)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> userService.findUnfinishedUsers(ID)
+        );
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findAllByExperimentAndEnd(experiment, null);
+    }
+
+    @Test
+    public void testFindUnfinishedUsersInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.findUnfinishedUsers(0)
+        );
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).findAllByExperimentAndEnd(any(), any());
+    }
+
+    @Test
     public void testIsLastAdmin() {
         admins.add(new User());
         when(userRepository.findAllByRole(ADMIN)).thenReturn(admins);

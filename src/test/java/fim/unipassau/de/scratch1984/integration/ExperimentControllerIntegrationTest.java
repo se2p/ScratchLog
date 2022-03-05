@@ -10,6 +10,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.powermock.reflect.Whitebox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -103,6 +106,9 @@ public class ExperimentControllerIntegrationTest {
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String INVALID = "redirect:/experiment?invalid=true&id=";
     private static final String SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_SECRET = "redirect:/secret?user=";
+    private static final String REDIRECT_SECRET_LIST = "redirect:/secret/list?experiment=";
+    private static final String EXPERIMENT_PARAM = "&experiment=";
     private static final String BLANK = "    ";
     private static final String EXPERIMENT_DTO = "experimentDTO";
     private static final String PASSWORD_DTO = "passwordDTO";
@@ -111,14 +117,12 @@ public class ExperimentControllerIntegrationTest {
     private static final String ID_PARAM = "id";
     private static final String STATUS_PARAM = "stat";
     private static final String PAGE_PARAM = "page";
-    private static final String FILE_PARAM = "file";
     private static final String PARTICIPANTS = "participants";
     private static final String PARTICIPANT = "participant";
     private static final String PAGE = "page";
     private static final String LAST_PAGE_ATTRIBUTE = "lastPage";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String CURRENT = "3";
-    private static final String LAST = "4";
     private static final String FILETYPE = "application/octet-stream";
     private static final String FILENAME = "project.sb3";
     private static final String USERNAME = "user";
@@ -616,6 +620,8 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testChangeExperimentStatusOpen() throws Exception {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         experimentDTO.setActive(true);
         List<UserDTO> userDTOS = new ArrayList<>();
         userDTOS.add(participant);
@@ -649,6 +655,31 @@ public class ExperimentControllerIntegrationTest {
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testChangeExperimentStatusOpenNoMailServer() throws Exception {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        experimentDTO.setActive(true);
+        List<UserDTO> userDTOS = new ArrayList<>();
+        userDTOS.add(participant);
+        when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
+        when(userService.reactivateUserAccounts(ID)).thenReturn(userDTOS);
+        mvc.perform(get("/experiment/status")
+                        .param(STATUS_PARAM, "open")
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_SECRET_LIST + ID));
+        verify(experimentService).changeExperimentStatus(true, ID);
+        verify(userService).reactivateUserAccounts(ID);
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(experimentService, never()).getLastParticipantPage(ID);
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -713,6 +744,8 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testSearchForUser() throws Exception {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         experimentDTO.setActive(true);
         participant.setSecret("secret");
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
@@ -737,6 +770,8 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testSearchForUserSecretNull() throws Exception {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
@@ -756,6 +791,31 @@ public class ExperimentControllerIntegrationTest {
         verify(userService).updateUser(participant);
         verify(participantService).saveParticipant(participant.getId(), ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testSearchForUserNoMailServer() throws Exception {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        experimentDTO.setActive(true);
+        participant.setSecret("secret");
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
+        when(userService.updateUser(participant)).thenReturn(participant);
+        mvc.perform(get("/experiment/search")
+                        .param(PARTICIPANT, PARTICIPANT)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_SECRET + participant.getId() + EXPERIMENT_PARAM + ID));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(userService).updateUser(participant);
+        verify(participantService).saveParticipant(participant.getId(), ID);
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
@@ -783,6 +843,66 @@ public class ExperimentControllerIntegrationTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(userService, never()).updateUser(participant);
         verify(participantService, never()).saveParticipant(participant.getId(), ID);
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testSearchForUserParticipantExists() throws Exception {
+        experimentDTO.setActive(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
+        when(userService.existsParticipant(participant.getId(), ID)).thenReturn(true);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mvc.perform(get("/experiment/search")
+                        .param(PARTICIPANT, PARTICIPANT)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
+                .andExpect(model().attribute(PARTICIPANTS, participants))
+                .andExpect(model().attribute(PAGE, FIRST_PAGE))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
+                .andExpect(model().attribute("experimentDTO", experimentDTO))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(userService).existsParticipant(participant.getId(), ID);
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testSearchForUserParticipantNull() throws Exception {
+        experimentDTO.setActive(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mvc.perform(get("/experiment/search")
+                        .param(PARTICIPANT, PARTICIPANT)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
+                .andExpect(model().attribute(PARTICIPANTS, participants))
+                .andExpect(model().attribute(PAGE, FIRST_PAGE))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE + 1)))
+                .andExpect(model().attribute("experimentDTO", experimentDTO))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(userService, never()).updateUser(any());
+        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 

@@ -22,6 +22,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -55,16 +58,21 @@ public class SecretControllerIntegrationTest {
     private static final String URL = Constants.BASE_URL + "/users/authenticate?id=" + ID + "&secret=";
     private static final String USER_PARAM = "user";
     private static final String EXPERIMENT_PARAM = "experiment";
-    private UserDTO userDTO = new UserDTO("participant", "part@part.de", UserDTO.Role.PARTICIPANT,
+    private final UserDTO user1 = new UserDTO("participant", "part@part.de", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", SECRET);
+    private final UserDTO user2 = new UserDTO("participant2", "part2@part.de", UserDTO.Role.PARTICIPANT,
+            UserDTO.Language.ENGLISH, "password2", SECRET);
+    private List<UserDTO> users;
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @BeforeEach
     public void setUp() {
-        userDTO.setId(ID);
-        userDTO.setSecret(SECRET);
+        user1.setId(ID);
+        user1.setSecret(SECRET);
+        user2.setId(ID + 1);
+        users = Arrays.asList(user1, user2);
     }
 
     @AfterEach
@@ -72,7 +80,7 @@ public class SecretControllerIntegrationTest {
 
     @Test
     public void testDisplaySecret() throws Exception {
-        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenReturn(user1);
         mvc.perform(get("/secret")
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT_PARAM, ID_STRING)
@@ -82,7 +90,7 @@ public class SecretControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENT_PARAM, is(ID)))
-                .andExpect(model().attribute(USERS, contains(userDTO)))
+                .andExpect(model().attribute(USERS, contains(user1)))
                 .andExpect(model().attribute(LINK, is(URL)))
                 .andExpect(view().name(SECRET));
         verify(userService).getUserById(ID);
@@ -90,8 +98,8 @@ public class SecretControllerIntegrationTest {
 
     @Test
     public void testDisplaySecretNull() throws Exception {
-        userDTO.setSecret(null);
-        when(userService.getUserById(ID)).thenReturn(userDTO);
+        user1.setSecret(null);
+        when(userService.getUserById(ID)).thenReturn(user1);
         mvc.perform(get("/secret")
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT_PARAM, ID_STRING)
@@ -145,6 +153,50 @@ public class SecretControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUserById(anyInt());
+    }
+
+    @Test
+    public void testDisplaySecrets() throws Exception {
+        when(userService.findUnfinishedUsers(ID)).thenReturn(users);
+        mvc.perform(get("/secret/list")
+                        .param(EXPERIMENT_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(EXPERIMENT_PARAM, is(ID)))
+                .andExpect(model().attribute(USERS, is(users)))
+                .andExpect(model().attribute(LINK, is(URL)))
+                .andExpect(view().name(SECRET));
+        verify(userService).findUnfinishedUsers(ID);
+    }
+
+    @Test
+    public void testDisplaySecretsNotFound() throws Exception {
+        when(userService.findUnfinishedUsers(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/secret/list")
+                        .param(EXPERIMENT_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(userService).findUnfinishedUsers(ID);
+    }
+
+    @Test
+    public void testDisplaySecretsExperimentBlank() throws Exception {
+        mvc.perform(get("/secret/list")
+                        .param(EXPERIMENT_PARAM, BLANK)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(userService, never()).findUnfinishedUsers(anyInt());
     }
 
 }

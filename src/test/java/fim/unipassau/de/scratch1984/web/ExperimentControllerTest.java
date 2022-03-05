@@ -10,6 +10,7 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -24,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.powermock.reflect.Whitebox;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -116,6 +118,9 @@ public class ExperimentControllerTest {
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String INVALID = "redirect:/experiment?invalid=true&id=";
     private static final String SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_SECRET = "redirect:/secret?user=";
+    private static final String REDIRECT_SECRET_LIST = "redirect:/secret/list?experiment=";
+    private static final String EXPERIMENT_PARAM = "&experiment=";
     private static final String BLANK = "    ";
     private static final String EXPERIMENT_DTO = "experimentDTO";
     private static final String ID_STRING = "1";
@@ -575,12 +580,14 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusOpen() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true).thenReturn(false);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        String returnString = experimentController.changeExperimentStatus("open", ID_STRING, model, httpServletRequest);
-        assertEquals(EXPERIMENT, returnString);
+        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("open", ID_STRING, model,
+                httpServletRequest));
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, times(2)).sendEmail(anyString(), anyString(), any(), anyString());
@@ -591,12 +598,27 @@ public class ExperimentControllerTest {
     }
 
     @Test
+    public void testChangeExperimentStatusOpenNoMailServer() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
+        when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
+        assertEquals(REDIRECT_SECRET_LIST + ID, experimentController.changeExperimentStatus("open",
+                ID_STRING, model, httpServletRequest));
+        verify(experimentService).changeExperimentStatus(true, ID);
+        verify(userService).reactivateUserAccounts(ID);
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(experimentService, never()).getLastParticipantPage(anyInt());
+        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
     public void testChangeExperimentStatusClose() {
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model,
-                httpServletRequest);
-        assertEquals(EXPERIMENT, returnString);
+        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("close", ID_STRING, model,
+                httpServletRequest));
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
         verify(experimentService).getLastParticipantPage(ID);
@@ -610,9 +632,8 @@ public class ExperimentControllerTest {
         experimentDTO.setInfo(null);
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        String returnString = experimentController.changeExperimentStatus("close", ID_STRING, model,
-                httpServletRequest);
-        assertEquals(EXPERIMENT, returnString);
+        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("close", ID_STRING, model,
+                httpServletRequest));
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
         verify(experimentService).getLastParticipantPage(ID);
@@ -623,9 +644,8 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusInvalid() {
-        String returnString = experimentController.changeExperimentStatus("blabla", ID_STRING, model,
-                httpServletRequest);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, experimentController.changeExperimentStatus("blabla", ID_STRING, model,
+                httpServletRequest));
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
@@ -633,43 +653,59 @@ public class ExperimentControllerTest {
     @Test
     public void testChangeExperimentStatusOpenNotFound() {
         when(experimentService.changeExperimentStatus(true, ID)).thenThrow(NotFoundException.class);
-        String returnString = experimentController.changeExperimentStatus("open", ID_STRING, model, httpServletRequest);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, experimentController.changeExperimentStatus("open", ID_STRING, model, httpServletRequest));
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     @Test
     public void testChangeExperimentStatusStatusNull() {
-        String returnString = experimentController.changeExperimentStatus(null, ID_STRING, model, httpServletRequest);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, experimentController.changeExperimentStatus(null, ID_STRING, model, httpServletRequest));
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     @Test
     public void testChangeExperimentStatusIdNull() {
-        String returnString = experimentController.changeExperimentStatus("open", null, model, httpServletRequest);
-        assertEquals(ERROR, returnString);
+        assertEquals(ERROR, experimentController.changeExperimentStatus("open", null, model, httpServletRequest));
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     @Test
     public void testSearchForUser() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         experimentDTO.setActive(true);
-        participant.setSecret("secret");
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
-                httpServletRequest));
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING,
+                model, httpServletRequest));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService).updateUser(participant);
         verify(participantService).saveParticipant(participant.getId(), ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(any(), any());
+    }
+
+    @Test
+    public void testSearchForUserNoMailServer() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        experimentDTO.setActive(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
+        when(userService.updateUser(participant)).thenReturn(participant);
+        assertEquals(REDIRECT_SECRET + participant.getId() + EXPERIMENT_PARAM + ID,
+                experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
+        verify(userService).updateUser(participant);
+        verify(participantService).saveParticipant(participant.getId(), ID);
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
         verify(model, never()).addAttribute(any(), any());
     }
 
@@ -680,8 +716,8 @@ public class ExperimentControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
-                httpServletRequest));
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING,
+                model, httpServletRequest));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService).updateUser(participant);
@@ -741,7 +777,8 @@ public class ExperimentControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
+                httpServletRequest));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService, never()).updateUser(participant);
@@ -756,7 +793,8 @@ public class ExperimentControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.existsParticipant(participant.getId(), ID)).thenReturn(true);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
+                httpServletRequest));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService, never()).updateUser(participant);
@@ -782,7 +820,9 @@ public class ExperimentControllerTest {
     @Test
     public void testSearchForUserNull() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        when(model.getAttribute("error")).thenReturn("error");
+        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
+                httpServletRequest));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService, never()).updateUser(any());

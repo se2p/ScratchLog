@@ -13,6 +13,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.Model;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -38,18 +41,23 @@ public class SecretControllerTest {
     private static final String STRING_ID = "1";
     private static final String SECRET = "secret";
     private static final String BLANK = " ";
-    private UserDTO userDTO = new UserDTO("participant", "part@part.de", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", SECRET);
+    private final UserDTO user1 = new UserDTO("participant1", "part1@part.de", UserDTO.Role.PARTICIPANT,
+            UserDTO.Language.ENGLISH, "password1", SECRET);
+    private final UserDTO user2 = new UserDTO("participant2", "part2@part.de", UserDTO.Role.PARTICIPANT,
+            UserDTO.Language.ENGLISH, "password2", SECRET);
+    private List<UserDTO> users;
 
     @BeforeEach
     public void setUp() {
-        userDTO.setId(ID);
-        userDTO.setSecret(SECRET);
+        user1.setId(ID);
+        user1.setSecret(SECRET);
+        user2.setId(ID + 1);
+        users = Arrays.asList(user1, user2);
     }
 
     @Test
     public void testDisplaySecret() {
-        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(userService.getUserById(ID)).thenReturn(user1);
         assertEquals(SECRET, secretController.displaySecret(STRING_ID, STRING_ID, model));
         verify(userService).getUserById(ID);
         verify(model, times(3)).addAttribute(anyString(), any());
@@ -57,8 +65,8 @@ public class SecretControllerTest {
 
     @Test
     public void testDisplaySecretNull() {
-        userDTO.setSecret(null);
-        when(userService.getUserById(ID)).thenReturn(userDTO);
+        user1.setSecret(null);
+        when(userService.getUserById(ID)).thenReturn(user1);
         assertEquals(Constants.ERROR, secretController.displaySecret(STRING_ID, STRING_ID, model));
         verify(userService).getUserById(ID);
         verify(model, never()).addAttribute(anyString(), any());
@@ -111,6 +119,43 @@ public class SecretControllerTest {
     public void testDisplaySecretExperimentIdNull() {
         assertEquals(Constants.ERROR, secretController.displaySecret(STRING_ID, null, model));
         verify(userService, never()).getUserById(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDisplaySecrets() {
+        when(userService.findUnfinishedUsers(ID)).thenReturn(users);
+        assertEquals(SECRET, secretController.displaySecrets(STRING_ID, model));
+        verify(userService).findUnfinishedUsers(ID);
+        verify(model, times(3)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDisplaySecretsNotFound() {
+        when(userService.findUnfinishedUsers(ID)).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, secretController.displaySecrets(STRING_ID, model));
+        verify(userService).findUnfinishedUsers(ID);
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDisplaySecretsInvalidId() {
+        assertEquals(Constants.ERROR, secretController.displaySecrets("0", model));
+        verify(userService, never()).findUnfinishedUsers(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDisplaySecretsExperimentBlank() {
+        assertEquals(Constants.ERROR, secretController.displaySecrets(BLANK, model));
+        verify(userService, never()).findUnfinishedUsers(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDisplaySecretsExperimentNull() {
+        assertEquals(Constants.ERROR, secretController.displaySecrets(null, model));
+        verify(userService, never()).findUnfinishedUsers(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 }

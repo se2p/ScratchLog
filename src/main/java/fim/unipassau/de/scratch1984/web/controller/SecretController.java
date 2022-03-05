@@ -55,7 +55,7 @@ public class SecretController {
      *
      * @param user The id of the user whose participant link is to be displayed.
      * @param experiment The id of the experiment in which the user is participating.
-     * @param model The model to hold the information.
+     * @param model The {@link Model} to hold the information.
      * @return The secret page on success or the error page otherwise.
      */
     @GetMapping
@@ -85,10 +85,40 @@ public class SecretController {
                 return Constants.ERROR;
             }
 
-            String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + experimentId + "&secret=";
-            model.addAttribute("users", List.of(userDTO));
-            model.addAttribute("link", experimentUrl);
-            model.addAttribute("experiment", experimentId);
+            addModelInfo(List.of(userDTO), experimentId, model);
+            return SECRET;
+        } catch (NotFoundException e) {
+            return Constants.ERROR;
+        }
+    }
+
+    /**
+     * Finds all users who have not yet finished the given experiment and generates the basic participation link that
+     * to display each user's individual participation link on the secret page. If no experiment with a corresponding id
+     * could be found or passed parameter is invalid, the error page is returned instead.
+     *
+     * @param experiment The id of the experiment.
+     * @param model The {@link Model} to hold the information.
+     * @return The secret page on success or the error page otherwise.
+     */
+    @GetMapping("/list")
+    @Secured(Constants.ROLE_ADMIN)
+    public String displaySecrets(@RequestParam("experiment") final String experiment, final Model model) {
+        if (experiment == null || experiment.trim().isBlank()) {
+            logger.error("Cannot display secrets for experiment id null or blank!");
+            return Constants.ERROR;
+        }
+
+        int experimentId = parseId(experiment);
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot display secrets for experiment with invalid id " + experiment + "!");
+            return Constants.ERROR;
+        }
+
+        try {
+            List<UserDTO> reactivatedAccounts = userService.findUnfinishedUsers(experimentId);
+            addModelInfo(reactivatedAccounts, experimentId, model);
             return SECRET;
         } catch (NotFoundException e) {
             return Constants.ERROR;
@@ -107,6 +137,21 @@ public class SecretController {
         } catch (NumberFormatException e) {
             return -1;
         }
+    }
+
+    /**
+     * Adds the passed arguments as information to the given model as well as the basic link used for participant
+     * authentication.
+     *
+     * @param userDTOS The list of {@link UserDTO}s whose new authentication link is to be displayed.
+     * @param experimentId The id of the experiment in which the users are participating.
+     * @param model The {@link Model} to hold the information.
+     */
+    private void addModelInfo(final List<UserDTO> userDTOS, final int experimentId, final Model model) {
+        String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + experimentId + "&secret=";
+        model.addAttribute("users", userDTOS);
+        model.addAttribute("link", experimentUrl);
+        model.addAttribute("experiment", experimentId);
     }
 
 }

@@ -93,6 +93,21 @@ public class ExperimentController {
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
 
     /**
+     * String corresponding to redirecting to the secret page.
+     */
+    private static final String REDIRECT_SECRET_LIST = "redirect:/secret/list?experiment=";
+
+    /**
+     * String corresponding to redirecting to the secret page.
+     */
+    private static final String REDIRECT_SECRET = "redirect:/secret?user=";
+
+    /**
+     * String corresponding to the experiment id parameter.
+     */
+    private static final String EXPERIMENT_PARAM = "&experiment=";
+
+    /**
      * String corresponding to the experiment edit page.
      */
     private static final String EXPERIMENT_EDIT = "experiment-edit";
@@ -348,15 +363,10 @@ public class ExperimentController {
                 experimentDTO = experimentService.changeExperimentStatus(true, experimentId);
                 List<UserDTO> userDTOS = userService.reactivateUserAccounts(experimentId);
 
-                for (UserDTO userDTO : userDTOS) {
-                    Map<String, Object> templateModel = getTemplateModel(id, userDTO.getSecret(), httpServletRequest);
-                    ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
-                            getLocaleFromLanguage(userDTO.getLanguage()));
-
-                    if (!mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
-                            templateModel, "participant-email")) {
-                        logger.error("Could not send invitation mail to user with email " + userDTO.getEmail() + ".");
-                    }
+                if (!Constants.MAIL_SERVER) {
+                    return REDIRECT_SECRET_LIST + experimentId;
+                } else {
+                    userDTOS.forEach(userDTO -> sendEmail(userDTO, id, httpServletRequest));
                 }
             } else if (status.equals("close")) {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
@@ -368,11 +378,10 @@ public class ExperimentController {
             }
 
             addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
         } catch (NotFoundException e) {
             return Constants.ERROR;
         }
-
-        return EXPERIMENT;
     }
 
     /**
@@ -398,7 +407,6 @@ public class ExperimentController {
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
-        String validateSearch = validateInput(search, Constants.LARGE_FIELD);
         ExperimentDTO experimentDTO;
 
         try {
@@ -407,35 +415,21 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        if (validateSearch != null) {
-            model.addAttribute(ERROR, resourceBundle.getString(validateSearch));
-            addModelInfo(0, experimentDTO, model);
+        if (!isValidSearch(search, experimentDTO, resourceBundle, model)) {
             return EXPERIMENT;
         }
 
         UserDTO userDTO = userService.getUserByUsernameOrEmail(search);
-
-        if (userDTO == null) {
-            model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
-            addModelInfo(0, experimentDTO, model);
-            return EXPERIMENT;
-        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
-            model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
-        } else if (userService.existsParticipant(userDTO.getId(), experimentId)) {
-            model.addAttribute(ERROR, resourceBundle.getString("participant_entry"));
-        } else if (!experimentDTO.isActive()) {
-            model.addAttribute(ERROR, resourceBundle.getString("experiment_closed"));
-        }
+        validateUser(userDTO, experimentDTO, resourceBundle, model);
 
         if (model.getAttribute(ERROR) != null) {
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
         }
 
-        String secret = userDTO.getSecret() == null ? Secrets.generateRandomBytes(Constants.SECRET_LENGTH)
-                : userDTO.getSecret();
-
         try {
+            String secret = userDTO.getSecret() == null ? Secrets.generateRandomBytes(Constants.SECRET_LENGTH)
+                    : userDTO.getSecret();
             userDTO.setSecret(secret);
             UserDTO saved = userService.updateUser(userDTO);
             participantService.saveParticipant(saved.getId(), experimentId);
@@ -443,12 +437,9 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        Map<String, Object> templateModel = getTemplateModel(id, secret, httpServletRequest);
-        ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
-                getLocaleFromLanguage(userDTO.getLanguage()));
-
-        if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
-                templateModel, "participant-email")) {
+        if (!Constants.MAIL_SERVER) {
+            return REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + experimentId;
+        } else if (sendEmail(userDTO, id, httpServletRequest)) {
             return REDIRECT_EXPERIMENT + id;
         } else {
             return Constants.ERROR;
@@ -721,6 +712,30 @@ public class ExperimentController {
     }
 
     /**
+     * Sends an email with a participation link for the experiment with the given id to the email address of the given
+     * {@link UserDTO}.
+     *
+     * @param userDTO The user to whom the email should be sent.
+     * @param experimentId The id of the experiment in which the user is participating.
+     * @param httpServletRequest The {@link HttpServletRequest}.
+     * @return {@code true} if the message has been sent successfully or {@code false} otherwise.
+     */
+    private boolean sendEmail(final UserDTO userDTO, final String experimentId,
+                              final HttpServletRequest httpServletRequest) {
+        Map<String, Object> templateModel = getTemplateModel(experimentId, userDTO.getSecret(), httpServletRequest);
+        ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
+                getLocaleFromLanguage(userDTO.getLanguage()));
+
+        if (!mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
+                templateModel, "participant-email")) {
+            logger.error("Could not send invitation mail to user with email " + userDTO.getEmail() + ".");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Creates a {@link Map} containing the base URL of the application and the link to the experiment with the given id
      * and the generated secret for the user that are going to be used in the experiment invitation email template.
      *
@@ -790,7 +805,6 @@ public class ExperimentController {
         if (experimentId < Constants.MIN_ID) {
             logger.debug("Cannot return the corresponding experiment page for experiment with invalid id "
                     + experimentId + "!");
-            return -1;
         }
 
         return experimentId;
@@ -853,6 +867,51 @@ public class ExperimentController {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;
+    }
+
+    /**
+     * Checks whether the given search string respects the chosen input restrictions. If not, a corresponding error
+     * message is added to the given model.
+     *
+     * @param search The search string.
+     * @param experimentDTO The {@link ExperimentDTO} to be added to the model.
+     * @param resourceBundle The {@link ResourceBundle} from which the error message is taken.
+     * @param model The {@link Model} to store the error messages.
+     * @return {@code true} if the search input is valid or {@code false} otherwise.
+     */
+    private boolean isValidSearch(final String search, final ExperimentDTO experimentDTO,
+                                  final ResourceBundle resourceBundle, final Model model) {
+        String validateSearch = validateInput(search, Constants.LARGE_FIELD);
+
+        if (validateSearch != null) {
+            model.addAttribute(ERROR, resourceBundle.getString(validateSearch));
+            addModelInfo(0, experimentDTO, model);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Verifies that the given {@link UserDTO} can be added as a participant to the given experiment. If the user does
+     * not satisfy the conditions, a corresponding error message is added to the given model instead.
+     *
+     * @param userDTO The user to be added to the experiment.
+     * @param experimentDTO The experiment to which the user is to be added as a participant.
+     * @param resourceBundle The {@link ResourceBundle} from which the error messages are taken.
+     * @param model The {@link Model} to store the error messages.
+     */
+    private void validateUser(final UserDTO userDTO, final ExperimentDTO experimentDTO,
+                           final ResourceBundle resourceBundle, final Model model) {
+        if (userDTO == null) {
+            model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
+        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+            model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
+        } else if (userService.existsParticipant(userDTO.getId(), experimentDTO.getId())) {
+            model.addAttribute(ERROR, resourceBundle.getString("participant_entry"));
+        } else if (!experimentDTO.isActive()) {
+            model.addAttribute(ERROR, resourceBundle.getString("experiment_closed"));
+        }
     }
 
 }

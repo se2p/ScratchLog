@@ -356,40 +356,36 @@ public class UserService {
     @Transactional
     public List<UserDTO> reactivateUserAccounts(final int experimentId) {
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot search for user with invalid id " + experimentId + "!");
-            throw new IllegalArgumentException("Cannot search for user with invalid id " + experimentId + "!");
+            logger.error("Cannot search for user with invalid experiment id " + experimentId + "!");
+            throw new IllegalArgumentException("Cannot search for user with invalid experiment id " + experimentId
+                    + "!");
         }
 
-        Experiment experiment = experimentRepository.getOne(experimentId);
-        List<Participant> participants;
+        List<Participant> participants = findUnfinishedParticipants(experimentId);
         List<UserDTO> userDTOS = new ArrayList<>();
+        participants.forEach(participant -> userDTOS.add(activateParticipantAccount(participant, experimentId)));
+        return userDTOS;
+    }
 
-        try {
-            participants = participantRepository.findAllByExperimentAndEnd(experiment, null);
-        } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + experimentId + "!", e);
-            throw new NotFoundException("Could not find experiment with id " + experimentId + "!", e);
+    /**
+     * Retrieves a list of {@link UserDTO}s who have not yet finished the experiment with the given id. If no experiment
+     * with a corresponding id could be found, a {@link NotFoundException} is thrown instead.
+     *
+     * @param experimentId The experiment id to search for.
+     * @return The list of users.
+     */
+    @Transactional
+    public List<UserDTO> findUnfinishedUsers(final int experimentId) {
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot search for reactivated user accounts with invalid experiment id " + experimentId
+                    + "!");
+            throw new IllegalArgumentException("Cannot search for reactivated user accounts with invalid experiment id "
+                    + experimentId + "!");
         }
 
-        for (Participant participant : participants) {
-            User user = participant.getUser();
-
-            if (user.getId() == null) {
-                logger.error("Could not find corresponding user for participant entry for experiment with id "
-                        + experimentId + "!");
-                throw new IllegalStateException("Could not find corresponding user for participant entry for experiment"
-                        + " with id " + experimentId + "!");
-            }
-
-            if (user.getSecret() == null) {
-                user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
-            }
-
-            user.setActive(true);
-            userRepository.save(user);
-            userDTOS.add(createUserDTO(user));
-        }
-
+        List<Participant> participants = findUnfinishedParticipants(experimentId);
+        List<UserDTO> userDTOS = new ArrayList<>();
+        participants.forEach(participant -> userDTOS.add(createUserDTO(participant.getUser())));
         return userDTOS;
     }
 
@@ -462,6 +458,55 @@ public class UserService {
      */
     public String encodePassword(final String password) {
         return passwordEncoder.encode(password);
+    }
+
+    /**
+     * Activates the user account linked to the given {@link Participant} and generates a secret, if the user does not
+     * yet have one. Finally, the updated {@link UserDTO} is returned. If the user id is null, an
+     * {@link IllegalStateException} is thrown instead.
+     *
+     * @param participant The participant whose account is to be activated.
+     * @param experimentId The id of the experiment in which the user is participating.
+     * @return The updated user information.
+     */
+    private UserDTO activateParticipantAccount(final Participant participant, final int experimentId) {
+        User user = participant.getUser();
+
+        if (user.getId() == null) {
+            logger.error("Could not find corresponding user for participant entry for experiment with id "
+                    + experimentId + "!");
+            throw new IllegalStateException("Could not find corresponding user for participant entry for experiment"
+                    + " with id " + experimentId + "!");
+        }
+
+        if (user.getSecret() == null) {
+            user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
+        }
+
+        user.setActive(true);
+        userRepository.save(user);
+        return createUserDTO(user);
+    }
+
+    /**
+     * Returns a list of all participants who have not yet finished the experiment with the given id. If no experiment
+     * with a corresponding id could be found, a {@link NotFoundException} is thrown instead.
+     *
+     * @param experimentId The id of the experiment.
+     * @return The list of participants.
+     */
+    private List<Participant> findUnfinishedParticipants(final int experimentId) {
+        Experiment experiment = experimentRepository.getOne(experimentId);
+        List<Participant> participants;
+
+        try {
+            participants = participantRepository.findAllByExperimentAndEnd(experiment, null);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find experiment with id " + experimentId + "!", e);
+            throw new NotFoundException("Could not find experiment with id " + experimentId + "!", e);
+        }
+
+        return participants;
     }
 
     /**
