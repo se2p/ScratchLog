@@ -370,7 +370,7 @@ public class HomeController {
      */
     @GetMapping("/reset")
     public String getResetPage(final UserDTO userDTO) {
-        return "password-reset";
+        return Constants.MAIL_SERVER ? "password-reset" : Constants.ERROR;
     }
 
     /**

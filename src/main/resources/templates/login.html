@@ -57,9 +57,14 @@
                     </div>
                     <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 </div>
-                <!-- The forgot password and submit buttons. -->
-                <div class="d-flex justify-content-between">
+                <!-- The forgot password and submit buttons if the mail server constant is set to true. -->
+                <div class="d-flex justify-content-between"
+                     th:if="${T(fim.unipassau.de.scratch1984.util.Constants).MAIL_SERVER}">
                     <a class="btn btn-secondary" th:text="#{forgot_password}" th:href="@{/reset}"></a>
+                    <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
+                </div>
+                <!-- The submit button if the mail server constant is set to false. -->
+                <div class="text-center" th:unless="${T(fim.unipassau.de.scratch1984.util.Constants).MAIL_SERVER}">
                     <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
                 </div>
             </div>

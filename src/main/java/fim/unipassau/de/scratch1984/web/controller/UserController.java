@@ -343,13 +343,18 @@ public class UserController {
         }
 
         UserDTO saved = userService.saveUser(userDTO);
-        TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.REGISTER, null, saved.getId());
 
-        if (sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
-                resourceBundle)) {
-            return "redirect:/?success=true";
+        if (!Constants.MAIL_SERVER) {
+            return "redirect:/users/profile?name=" + saved.getUsername();
         } else {
-            return Constants.ERROR;
+            TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.REGISTER, null, saved.getId());
+
+            if (sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
+                    resourceBundle)) {
+                return "redirect:/?success=true";
+            } else {
+                return Constants.ERROR;
+            }
         }
     }
 
@@ -371,7 +376,10 @@ public class UserController {
             return Constants.ERROR;
         } else if (userDTO.getUsername().length() > Constants.SMALL_FIELD
                 || userDTO.getEmail().length() > Constants.LARGE_FIELD) {
-            logger.error("Cannot reset password for user with with user with input username or email too long!");
+            logger.error("Cannot reset password for user with input username or email too long!");
+            return Constants.ERROR;
+        } else if (!Constants.MAIL_SERVER) {
+            logger.warn("Cannot reset password without a mail server!");
             return Constants.ERROR;
         }
 
@@ -558,7 +566,11 @@ public class UserController {
         boolean sent = false;
 
         if (!findOldUser.getEmail().equals(userDTO.getEmail())) {
-            sent = updateEmail(userDTO.getEmail(), userDTO.getId(), httpServletRequest, resourceBundle);
+            if (Constants.MAIL_SERVER) {
+                sent = updateEmail(userDTO.getEmail(), userDTO.getId(), resourceBundle);
+            } else {
+                findOldUser.setEmail(userDTO.getEmail());
+            }
         }
 
         if (userDTO.getNewPassword() != null && !userDTO.getNewPassword().trim().isBlank()) {
@@ -865,12 +877,10 @@ public class UserController {
      *
      * @param email The new email address.
      * @param id The id of the user for whom the token is to be generated.
-     * @param httpServletRequest The servlet request.
      * @param resourceBundle The resource bundle for message translations.
      * @return {@code true} if a token was created and the email sent, or {@code false} otherwise.
      */
-    private boolean updateEmail(final String email, final int id, final HttpServletRequest httpServletRequest,
-                                final ResourceBundle resourceBundle) {
+    private boolean updateEmail(final String email, final int id, final ResourceBundle resourceBundle) {
         TokenDTO tokenDTO;
 
         try {
