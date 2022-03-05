@@ -1,6 +1,9 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
+import com.opencsv.CSVWriter;
+import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -14,6 +17,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,6 +40,11 @@ public class SecretController {
     private final UserService userService;
 
     /**
+     * The experiment service to use for experiment management.
+     */
+    private final ExperimentService experimentService;
+
+    /**
      * String corresponding to the secret page.
      */
     private static final String SECRET = "secret";
@@ -42,10 +53,12 @@ public class SecretController {
      * Constructs a new secret controller with the given dependencies.
      *
      * @param userService The {@link UserService} to use.
+     * @param experimentService The {@link ExperimentService} to use.
      */
     @Autowired
-    public SecretController(final UserService userService) {
+    public SecretController(final UserService userService, final ExperimentService experimentService) {
         this.userService = userService;
+        this.experimentService = experimentService;
     }
 
     /**
@@ -77,15 +90,21 @@ public class SecretController {
         }
 
         try {
-            UserDTO userDTO = userService.getUserById(userId);
+            if (isInactive(experimentId)) {
+                model.addAttribute("inactive", true);
+                addModelInfo(new ArrayList<>(), experimentId, model);
+            } else {
+                UserDTO userDTO = userService.getUserById(userId);
 
-            if (userDTO.getSecret() == null) {
-                logger.error("Cannot display newly created secret for user " + userDTO.getId() + " as the user's "
-                        + "secret is null!");
-                return Constants.ERROR;
+                if (userDTO.getSecret() == null) {
+                    logger.error("Cannot display newly created secret for user " + userDTO.getId() + " as the user's "
+                            + "secret is null!");
+                    return Constants.ERROR;
+                }
+
+                addModelInfo(List.of(userDTO), experimentId, model);
             }
 
-            addModelInfo(List.of(userDTO), experimentId, model);
             return SECRET;
         } catch (NotFoundException e) {
             return Constants.ERROR;
@@ -117,11 +136,61 @@ public class SecretController {
         }
 
         try {
-            List<UserDTO> reactivatedAccounts = userService.findUnfinishedUsers(experimentId);
-            addModelInfo(reactivatedAccounts, experimentId, model);
+            if (isInactive(experimentId)) {
+                model.addAttribute("inactive", true);
+                addModelInfo(new ArrayList<>(), experimentId, model);
+            } else {
+                List<UserDTO> reactivatedAccounts = userService.findUnfinishedUsers(experimentId);
+                addModelInfo(reactivatedAccounts, experimentId, model);
+            }
+
             return SECRET;
         } catch (NotFoundException e) {
             return Constants.ERROR;
+        }
+    }
+
+    /**
+     * Retrieves all participation links for users participating in the experiment with the given id or only that for
+     * the particular user with the given id and makes the information available for download in a CSV file. If the
+     * passed parameters are invalid an {@link IncompleteDataException} is thrown instead. If an {@link IOException}
+     * occurs, a {@link RuntimeException} is thrown.
+     *
+     * @param experiment The id of the experiment.
+     * @param user The (optional) id of the user.
+     * @param httpServletResponse The {@link HttpServletResponse} returning the file.
+     */
+    @GetMapping("/csv")
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadParticipationLinks(@RequestParam("experiment") final String experiment,
+                                           @RequestParam(required = false, value = "user") final String user,
+                                           final HttpServletResponse httpServletResponse) {
+        if (experiment == null || experiment.trim().isBlank()) {
+            logger.error("Cannot download participation links for experiment id null or blank!");
+            throw new IncompleteDataException("Cannot download participation links for experiment id null or blank!");
+        }
+
+        int experimentId = parseId(experiment);
+
+        if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot download participation links for experiment with invalid id " + experiment + "!");
+            throw new IncompleteDataException("Cannot download participation links for experiment with invalid id "
+                    + experiment + "!");
+        }
+
+        List<String[]> users = prepareCSVData(experimentId, user);
+
+        try {
+            String fileName = user == null ? "experiment_" + experimentId : "experiment_" + experimentId + "_user_"
+                    + user;
+            httpServletResponse.setContentType("text/csv");
+            httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + fileName + ".csv");
+            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+            CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
+            csvWriter.writeAll(users);
+        } catch (IOException e) {
+            logger.error("Could not download participation links due to IOException!", e);
+            throw new RuntimeException("Could not download participation links due to IOException!");
         }
     }
 
@@ -137,6 +206,62 @@ public class SecretController {
         } catch (NumberFormatException e) {
             return -1;
         }
+    }
+
+    /**
+     * Checks whether the experiment with the given id is currently active.
+     *
+     * @param experimentId The id of the experiment.
+     * @return {@code true} if the experiment is inactive or {@code false otherwise}.
+     */
+    private boolean isInactive(final int experimentId) {
+        return !experimentService.getExperiment(experimentId).isActive();
+    }
+
+    /**
+     * Prepares the data to be written to the CSV file for the experiment with the given id. If the passed user string
+     * represents a valid user id, only the information of that single user is returned. If the user id is not null, but
+     * an invalid id, an {@link IncompleteDataException} is thrown instead. Otherwise, information on all users who have
+     * not yet finished the experiment is returned.
+     *
+     * @param experimentId The id of the experiment.
+     * @param user The id of the user or null.
+     * @return A list of string arrays containing the information.
+     */
+    private List<String[]> prepareCSVData(final int experimentId, final String user) {
+        if (user != null) {
+            int userId = parseId(user);
+
+            if (userId < Constants.MIN_ID) {
+                logger.error("Cannot download participation link for user with invalid id " + user + "!");
+                throw new IncompleteDataException("Cannot download participation link for user with invalid id "
+                        + user + "!");
+            }
+
+            UserDTO userDTO = userService.getUserById(userId);
+            return transformUserData(List.of(userDTO), experimentId);
+        } else {
+            List<UserDTO> activeAccounts = userService.findUnfinishedUsers(experimentId);
+            return transformUserData(activeAccounts, experimentId);
+        }
+    }
+
+    /**
+     * Returns a list of string arrays containing the id, username and participation link of each user passed in the
+     * given list for the CSV file.
+     *
+     * @param userDTOS The list of {@link UserDTO}.
+     * @param experimentId The id of the experiment in which the users are participating.
+     * @return A list of string arrays containing the information.
+     */
+    private List<String[]> transformUserData(final List<UserDTO> userDTOS, final int experimentId) {
+        String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + experimentId + "&secret=";
+        List<String[]> users = new ArrayList<>();
+        String[] header = new String[]{"id", "name", "participation link"};
+        users.add(header);
+        userDTOS.forEach(userDTO -> users.add(new String[]{String.valueOf(userDTO.getId()), userDTO.getUsername(),
+                experimentUrl + userDTO.getSecret()}));
+        return users;
     }
 
     /**
