@@ -943,6 +943,16 @@ public class ResultControllerIntegrationTest {
                 public String getCode() {
                     return "code" + id;
                 }
+
+                @Override
+                public Timestamp getDate() {
+                    return null;
+                }
+
+                @Override
+                public String getSprite() {
+                    return "sprite";
+                }
             });
         }
         return projections;

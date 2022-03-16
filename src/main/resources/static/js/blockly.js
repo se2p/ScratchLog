@@ -10,6 +10,8 @@ let sb3Button = document.getElementById("sb3");
 let downloadRangeButton = document.getElementById("downloadRange");
 
 let current = document.getElementById("current");
+let time = document.getElementById("time");
+let sprite = document.getElementById("sprite");
 let first = document.getElementById("first");
 let prev = document.getElementById("prev");
 let next = document.getElementById("next");
@@ -155,13 +157,13 @@ downloadRangeButton.addEventListener("click", function () {
 first.addEventListener("click", function () {
     count = 0;
     pos = 0;
-    setCurrent();
 
     if (page > 0) {
         page = 0;
         getXML();
     } else {
         setCode(pos);
+        setInformation(pos);
     }
 
     first.style.display = "none";
@@ -185,6 +187,7 @@ prev.addEventListener("click", function () {
             count--;
             pos--;
             setCode(pos);
+            setInformation(pos);
         }
 
         if (count === 0) {
@@ -192,7 +195,6 @@ prev.addEventListener("click", function () {
             prev.style.display = "none";
         }
 
-        setCurrent();
         next.style.display = "";
         last.style.display = "";
     }
@@ -212,6 +214,7 @@ next.addEventListener("click", function () {
         } else {
             pos++;
             setCode(pos);
+            setInformation(pos);
         }
 
         if (count === total - 1) {
@@ -219,7 +222,6 @@ next.addEventListener("click", function () {
             next.style.display = "none";
         }
 
-        setCurrent();
         prev.style.display = "";
         first.style.display = "";
     }
@@ -239,9 +241,9 @@ last.addEventListener("click", function () {
         getXML();
     } else {
         setCode(pos);
+        setInformation(pos);
     }
 
-    setCurrent();
     prev.style.display = "";
     first.style.display = "";
     last.style.display = "none";
@@ -264,6 +266,7 @@ function getXML() {
             if (data) {
                 xml = data;
                 setCode(pos);
+                setInformation(pos);
             }
         }
     });
@@ -272,8 +275,13 @@ function getXML() {
 /**
  * Updates the number of the current step displayed in the blockly area.
  */
-function setCurrent() {
-    current.innerText = pos + 1;
+function setInformation(position) {
+    let currentDate = xml[position].date;
+    let day = currentDate.substring(0, currentDate.indexOf('T'));
+    let hours = currentDate.substring(currentDate.indexOf('T') + 1, currentDate.indexOf('.'))
+    current.innerText = count + 1;
+    time.innerText = day + " " + hours;
+    sprite.innerText = xml[position].sprite;
 }
 
 /**
