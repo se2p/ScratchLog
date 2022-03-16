@@ -11,6 +11,7 @@ import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.UserController;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserBulkDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
@@ -44,6 +46,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -95,20 +98,24 @@ public class UserControllerIntegrationTest {
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
     private static final String PASSWORD_RESET = "password-reset";
+    private static final String PARTICIPANTS_ADD = "participants-add";
     private static final String USER_DTO = "userDTO";
     private static final String PASSWORD_DTO = "passwordDTO";
+    private static final String USER_BULK_DTO = "userBulkDTO";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String NAME = "name";
     private static final String ID_STRING = "1";
     private static final String ID_PARAM = "id";
     private static final String SECRET = "secret";
     private static final int ID = 1;
+    private static final int AMOUNT = 5;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
             PASSWORD, SECRET);
     private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH, PASSWORD,
             SECRET);
     private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
+    private final UserBulkDTO userBulkDTO = new UserBulkDTO(AMOUNT, UserDTO.Language.ENGLISH, USERNAME, true);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -132,6 +139,8 @@ public class UserControllerIntegrationTest {
         userDTO.setConfirmPassword("");
         userDTO.setAttempts(0);
         passwordDTO.setPassword(PASSWORD);
+        userBulkDTO.setUsername(USERNAME);
+        userBulkDTO.setAmount(AMOUNT);
     }
 
     @AfterEach
@@ -444,6 +453,94 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).saveUser(any());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testGetAddParticipants() throws Exception {
+        setMailServer(false);
+        mvc.perform(get("/users/bulk")
+                        .flashAttr(USER_BULK_DTO, userBulkDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANTS_ADD));
+    }
+
+    @Test
+    public void testGetAddParticipantsMailServer() throws Exception {
+        setMailServer(true);
+        mvc.perform(get("/users/bulk")
+                        .flashAttr(USER_BULK_DTO, userBulkDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT));
+    }
+
+    @Test
+    public void testAddParticipants() throws Exception {
+        mvc.perform(post("/users/bulk")
+                        .flashAttr(USER_BULK_DTO, userBulkDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_SUCCESS))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+        verify(userService, never()).findLastId();
+        verify(userService, times(AMOUNT)).existsUser(anyString());
+        verify(userService, times(AMOUNT)).saveUser(any());
+    }
+
+    @Test
+    public void testAddParticipantsUsernameExists() throws Exception {
+        List<String> existingNames = List.of("admin5");
+        when(userService.existsUser(existingNames.get(0))).thenReturn(true);
+        mvc.perform(post("/users/bulk")
+                        .flashAttr(USER_BULK_DTO, userBulkDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANTS_ADD))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, is(existingNames)));
+        verify(userService, never()).findLastId();
+        verify(userService, times(AMOUNT)).existsUser(anyString());
+        verify(userService, times(AMOUNT - existingNames.size())).saveUser(any());
+    }
+
+    @Test
+    public void testAddParticipantsInvalidUsername() throws Exception {
+        userBulkDTO.setUsername("ad");
+        mvc.perform(post("/users/bulk")
+                        .flashAttr(USER_BULK_DTO, userBulkDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANTS_ADD))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+        verify(userService, never()).findLastId();
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    public void testAddParticipantsInvalidAmount() throws Exception {
+        userBulkDTO.setAmount(-1);
+        mvc.perform(post("/users/bulk")
+                        .flashAttr(USER_BULK_DTO, userBulkDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+        verify(userService, never()).findLastId();
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
     }
 
     @Test

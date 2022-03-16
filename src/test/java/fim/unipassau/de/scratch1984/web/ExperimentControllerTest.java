@@ -128,6 +128,7 @@ public class ExperimentControllerTest {
     private static final String ADMIN = "ROLE_ADMIN";
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "password";
+    private static final String EMAIL = "participant@part.de";
     private static final String LONG_PASSWORD = "VeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongPassword";
     private static final String PARTICIPANTS = "participants";
     private static final String CURRENT = "3";
@@ -141,7 +142,7 @@ public class ExperimentControllerTest {
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, PASSWORD, "secret1");
-    private final UserDTO participant = new UserDTO(PARTICIPANTS, "participant@part.de", UserDTO.Role.PARTICIPANT,
+    private final UserDTO participant = new UserDTO(PARTICIPANTS, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "user", null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final List<UserDTO> userDTOS = new ArrayList<>();
@@ -155,6 +156,7 @@ public class ExperimentControllerTest {
         participant.setSecret(null);
         userDTO.setActive(true);
         userDTO.setSecret("secret1");
+        participant.setEmail(EMAIL);
         experimentDTO.setActive(false);
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
@@ -399,6 +401,7 @@ public class ExperimentControllerTest {
     @Test
     public void testEditExperimentCreate() {
         experimentDTO.setId(null);
+        experimentDTO.setPostscript(BLANK);
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(REDIRECT_EXPERIMENT + experimentDTO.getId(), returnString);
@@ -421,6 +424,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testEditExperimentTitleTooLong() {
+        experimentDTO.setPostscript(null);
         experimentDTO.setTitle(createLongString(200).toString());
         when(bindingResult.hasErrors()).thenReturn(true);
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
@@ -711,6 +715,8 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserSecretNull() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -728,6 +734,8 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserEmailNotSent() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -738,6 +746,24 @@ public class ExperimentControllerTest {
         verify(userService).updateUser(participant);
         verify(participantService).saveParticipant(participant.getId(), ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(any(), any());
+    }
+
+    @Test
+    public void testSearchForUserEmailNull() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        participant.setEmail(null);
+        experimentDTO.setActive(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
+        when(userService.updateUser(participant)).thenReturn(participant);
+        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
+        verify(userService).updateUser(participant);
+        verify(participantService).saveParticipant(participant.getId(), ID);
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
         verify(model, never()).addAttribute(any(), any());
     }
 
@@ -931,7 +957,7 @@ public class ExperimentControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        assertEquals(EXPERIMENT, experimentController.getNextPage(ID_STRING, CURRENT, model));
+        assertEquals(EXPERIMENT, experimentController.getPreviousPage(ID_STRING, CURRENT, model));
         verify(experimentService).getExperiment(ID);
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
@@ -942,7 +968,7 @@ public class ExperimentControllerTest {
     public void testGetPreviousPageCurrentPageBiggerLastPage() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(experimentService.getLastParticipantPage(ID)).thenReturn(1);
-        assertEquals(ERROR, experimentController.getNextPage(ID_STRING, LAST, model));
+        assertEquals(ERROR, experimentController.getPreviousPage(ID_STRING, LAST, model));
         verify(experimentService).getExperiment(ID);
         verify(experimentService).getLastParticipantPage(ID);
         verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
@@ -952,7 +978,7 @@ public class ExperimentControllerTest {
     @Test
     public void testGetPreviousPageNotFound() {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, experimentController.getNextPage(ID_STRING, CURRENT, model));
+        assertEquals(ERROR, experimentController.getPreviousPage(ID_STRING, CURRENT, model));
         verify(experimentService).getExperiment(ID);
         verify(experimentService, never()).getLastParticipantPage(ID);
         verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
@@ -961,7 +987,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testGetPreviousPageInvalidId() {
-        assertEquals(ERROR, experimentController.getNextPage(BLANK, CURRENT, model));
+        assertEquals(ERROR, experimentController.getPreviousPage(BLANK, CURRENT, model));
         verify(experimentService, never()).getExperiment(ID);
         verify(experimentService, never()).getLastParticipantPage(ID);
         verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
@@ -970,7 +996,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testGetPreviousPageInvalidCurrent() {
-        assertEquals(ERROR, experimentController.getNextPage(ID_STRING, "-5", model));
+        assertEquals(ERROR, experimentController.getPreviousPage(ID_STRING, "-5", model));
         verify(experimentService, never()).getExperiment(ID);
         verify(experimentService, never()).getLastParticipantPage(ID);
         verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
@@ -979,7 +1005,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testGetPreviousPageCurrentNull() {
-        assertEquals(ERROR, experimentController.getNextPage(ID_STRING, null, model));
+        assertEquals(ERROR, experimentController.getPreviousPage(ID_STRING, null, model));
         verify(experimentService, never()).getExperiment(ID);
         verify(experimentService, never()).getLastParticipantPage(ID);
         verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));

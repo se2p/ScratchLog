@@ -12,6 +12,7 @@ import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserBulkDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +37,9 @@ import org.springframework.web.servlet.LocaleResolver;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -119,6 +122,11 @@ public class UserController {
      * String corresponding to the password reset page.
      */
     private static final String PASSWORD_RESET = "password-reset";
+
+    /**
+     * String corresponding to the add participants page.
+     */
+    private static final String PARTICIPANTS_ADD = "participants-add";
 
     /**
      * String corresponding to the userDTO model attribute.
@@ -359,6 +367,80 @@ public class UserController {
     }
 
     /**
+     * Returns the add participants page for adding a number of new participants.
+     *
+     * @param userBulkDTO The {@link UserBulkDTO} used to save the information.
+     * @return The add participants page.
+     */
+    @GetMapping("/bulk")
+    @Secured(Constants.ROLE_ADMIN)
+    public String getAddParticipants(final UserBulkDTO userBulkDTO) {
+        if (Constants.MAIL_SERVER) {
+            return INDEX;
+        }
+
+        return PARTICIPANTS_ADD;
+    }
+
+    /**
+     * Adds the given amount of participants to the database if the numbered username doesn't yet exist. For any
+     * username that already exists in the database, the corresponding username is saved to a list. If the given
+     * username pattern is invalid or a pre-existing username has been found, the user returns to the add participants
+     * page where corresponding information is displayed. If the any necessary information passed is invalid, the user
+     * is redirected to the error page instead.
+     *
+     * @param userBulkDTO The {@link UserBulkDTO} containing the necessary information.
+     * @param bindingResult The {@link BindingResult} to return information on an invalid username pattern.
+     * @param model The {@link Model} used to store information on existing usernames.
+     * @return The index page on success, or the add participants or error page otherwise.
+     */
+    @PostMapping("/bulk")
+    @Secured(Constants.ROLE_ADMIN)
+    public String addParticipants(final UserBulkDTO userBulkDTO, final BindingResult bindingResult, final Model model) {
+        if (userBulkDTO.getUsername() == null || userBulkDTO.getLanguage() == null) {
+            logger.error("Cannot add participants with username or language null!");
+            return Constants.ERROR;
+        } else if (userBulkDTO.getAmount() < 1 || userBulkDTO.getAmount() > Constants.MAX_ADD_PARTICIPANTS) {
+            logger.error("Cannot add an illegal number of " + userBulkDTO.getAmount() + " participants!");
+            return Constants.ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        String usernameValidation = UsernameValidator.validate(userBulkDTO.getUsername());
+
+        if (usernameValidation != null) {
+            bindingResult.addError(createFieldError("userBulkDTO", "username", usernameValidation, resourceBundle));
+            return PARTICIPANTS_ADD;
+        }
+
+        int number = userBulkDTO.isStartAtOne() ? 1 : userService.findLastId() + 1;
+        List<String> invalidUsernames = new ArrayList<>();
+
+        for (int i = 0; i < userBulkDTO.getAmount(); i++) {
+            String username = userBulkDTO.getUsername() + number;
+
+            if (userService.existsUser(username)) {
+                invalidUsernames.add(username);
+            } else {
+                UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, UserDTO.Role.PARTICIPANT,
+                        userBulkDTO.getLanguage(), null, null);
+                userDTO.setActive(true);
+                userService.saveUser(userDTO);
+            }
+
+            number++;
+        }
+
+        if (invalidUsernames.isEmpty()) {
+            return "redirect:/?success=true";
+        } else {
+            model.addAttribute("error", invalidUsernames);
+            return PARTICIPANTS_ADD;
+        }
+    }
+
+    /**
      * Generates a password reset token for the given user and sends an email to complete the password reset. If the
      * passed parameters are invalid, the user is redirected to the error page instead. If no user with matching
      * username and email could be found, the user returns to the password reset page where an error message is
@@ -565,7 +647,7 @@ public class UserController {
 
         boolean sent = false;
 
-        if (!findOldUser.getEmail().equals(userDTO.getEmail())) {
+        if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
             if (Constants.MAIL_SERVER) {
                 sent = updateEmail(userDTO.getEmail(), userDTO.getId(), resourceBundle);
             } else {

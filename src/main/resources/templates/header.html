@@ -35,7 +35,7 @@
                         <li>
                             <a class="dropdown-item" th:href="@{/users/add}" th:text="#{new_user}"></a>
                         </li>
-                        <li>
+                        <li th:unless="${T(fim.unipassau.de.scratch1984.util.Constants).MAIL_SERVER}">
                             <a class="dropdown-item" th:href="@{/users/bulk}" th:text="#{new_users}"></a>
                         </li>
                     </ul>

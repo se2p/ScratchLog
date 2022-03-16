@@ -15,6 +15,14 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
+        <!-- The error message shown at the top of the page when some participants couldn't be added. -->
+        <div class="row" th:if="${error != null}">
+            <div class="col-12 alert alert-warning">
+                <div th:text="#{names_exists}"></div>
+                <div th:text="${error}"></div>
+            </div>
+        </div>
+
         <!-- The add participants page heading. -->
         <h2 class="mb-5" th:text="#{add_participants}"></h2>
 
@@ -29,7 +37,7 @@
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="amount" th:text="#{amount}"></label>
                 <div class="input-group">
-                    <input class="w-100" type="range" id="amount" min="1"
+                    <input class="w-100" type="range" id="amount" th:field="*{amount}" min="1"
                            th:max="${T(fim.unipassau.de.scratch1984.util.Constants).MAX_ADD_PARTICIPANTS}"/>
                 </div>
                 <div class="form-text">
@@ -56,8 +64,9 @@
             <!-- The checkbox controlling the numbers added to the username. -->
             <div class="mb-3 form-group position-relative">
                 <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" value="" id="startAtOne">
-                    <label class="form-check-label" for="startAtOne" th:text="#{start_number}"></label>
+                    <input class="form-check-input" type="checkbox" value="" id="startAtOne" th:field="*{startAtOne}">
+                    <label class="form-check-label" for="startAtOne" th:text="#{start_number}">
+                    </label>
                 </div>
                 <div class="form-text" th:text="#{start_number_info}"></div>
             </div>

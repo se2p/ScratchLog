@@ -722,6 +722,11 @@ public class ExperimentController {
      */
     private boolean sendEmail(final UserDTO userDTO, final String experimentId,
                               final HttpServletRequest httpServletRequest) {
+        if (userDTO.getEmail() == null) {
+            logger.error("Cannot send invitation mail to user with email null!");
+            return false;
+        }
+
         Map<String, Object> templateModel = getTemplateModel(experimentId, userDTO.getSecret(), httpServletRequest);
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
