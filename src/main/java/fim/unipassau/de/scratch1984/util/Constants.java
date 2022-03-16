@@ -113,6 +113,11 @@ public final class Constants {
     public static final int SECRET_LENGTH = 32;
 
     /**
+     * The maximum number of participants that can be added in a bulk.
+     */
+    public static final int MAX_ADD_PARTICIPANTS = 30;
+
+    /**
      * The number a minute value needs to be multiplied with to convert it to milliseconds.
      */
     public static final int MINUTES_TO_MILLIS = 60 * 1000;
