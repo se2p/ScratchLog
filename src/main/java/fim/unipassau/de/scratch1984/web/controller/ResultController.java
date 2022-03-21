@@ -436,7 +436,7 @@ public class ResultController {
     }
 
     /**
-     * Loads a list of {@link BlockEventProjection} with for the given page number, user and experiment from the
+     * Loads a list of {@link BlockEventProjection}s for the given page number, user and experiment from the
      * database. If the parameters are invalid an {@link IncompleteDataException} is thrown instead.
      *
      * @param experiment The experiment id to search for.
@@ -717,8 +717,9 @@ public class ResultController {
      * Filters the passed {@link BlockEventJSONProjection}s according to the passed steps in minutes. Starting with the
      * first json, steps minutes are added to its timestamp. The remaining json files are traversed until one with a
      * timestamp after the calculated one is found. Its predecessor is added to filtered list and the calculated time
-     * increased by one more step. The same json file might be added multiple times if the next calculated timestamp
-     * is more than one time step apart from the timestamp of the next json file.
+     * is increased by one more step. The same json file might be added multiple times if the next calculated timestamp
+     * is more than one time step apart from the timestamp of the next json file. To avoid adding the same file too many
+     * times, the process skips time breaks longer than a certain threshold.
      *
      * @param projections A list of {@link BlockEventJSONProjection} containing the relevant block event data.
      * @param step The time steps the files should be apart in minutes.
@@ -729,36 +730,83 @@ public class ResultController {
                                                                    final int step, final Timestamp lastProjectStamp) {
         List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
         filteredProjections.add(projections.get(0));
-        int lastProjectionPosition = projections.size() - 1;
 
         if (projections.size() > 1) {
             long stepsInMillis = (long) step * Constants.MINUTES_TO_MILLIS;
-            long currentTime = projections.get(0).getDate().getTime() + stepsInMillis;
-            Timestamp nextProjection = new Timestamp(currentTime);
-
-            for (int i = 1; i < projections.size(); i++) {
-                BlockEventJSONProjection projection = projections.get(i);
-                while (projection.getDate().after(nextProjection)) {
-                    filteredProjections.add(projections.get(i - 1));
-                    currentTime += stepsInMillis;
-                    nextProjection = new Timestamp(currentTime);
-                }
-            }
-
-            int compare = lastProjectStamp.compareTo(projections.get(lastProjectionPosition).getDate());
-
-            if (compare <= 0) {
-                filteredProjections.add(projections.get(lastProjectionPosition));
-            }
-
-            while (lastProjectStamp.after(nextProjection)) {
-                filteredProjections.add(projections.get(lastProjectionPosition));
-                currentTime += stepsInMillis;
-                nextProjection = new Timestamp(currentTime);
-            }
+            filteredProjections.addAll(addProjections(projections, stepsInMillis, lastProjectStamp));
         }
 
         return filteredProjections;
+    }
+
+    /**
+     * Adds the passed {@link BlockEventJSONProjection}s to a list depending on their timestamp. If the timestamp of the
+     * current file is after that of the current time, it is added to the list (possibly more than once), unless the
+     * timestamp is after the maximum allowed time break. In that case, the project is only added once. Finally, the
+     * last project file is added and the list returned.
+     *
+     * @param projections A list of {@link BlockEventJSONProjection} containing the relevant block event data.
+     * @param stepsInMillis The regular desired time break between two projections.
+     * @param lastProjectStamp The {@link Timestamp} of the last project.
+     * @return The list of filtered projections.
+     */
+    private List<BlockEventJSONProjection> addProjections(final List<BlockEventJSONProjection> projections,
+                                                          final long stepsInMillis, final Timestamp lastProjectStamp) {
+        List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
+        long currentTime = projections.get(0).getDate().getTime() + stepsInMillis;
+        long maxAllowedTime = projections.get(0).getDate().getTime() + Constants.MAX_ALLOWED_BREAK_FACTOR
+                * stepsInMillis;
+
+        for (int i = 1; i < projections.size(); i++) {
+            BlockEventJSONProjection projection = projections.get(i);
+            long projectionTime = projection.getDate().getTime();
+
+            if (projectionTime < maxAllowedTime) {
+                while (projectionTime >= currentTime) {
+                    filteredProjections.add(projections.get(i - 1));
+                    currentTime += stepsInMillis;
+                    maxAllowedTime += stepsInMillis;
+                }
+            } else {
+                filteredProjections.add(projections.get(i - 1));
+                currentTime = projections.get(i - 1).getDate().getTime() + stepsInMillis;
+                maxAllowedTime = projections.get(i - 1).getDate().getTime() + Constants.MAX_ALLOWED_BREAK_FACTOR
+                        * stepsInMillis;
+            }
+        }
+
+        addLastProjection(filteredProjections, lastProjectStamp, currentTime, maxAllowedTime, stepsInMillis);
+        return filteredProjections;
+    }
+
+    /**
+     * Adds the participant's final sb3 project file to the given {@link BlockEventJSONProjection} list.
+     *
+     * @param projections The list of projections.
+     * @param lastProjectStamp The {@link Timestamp} of the last saved project change.
+     * @param currentTime The current time to look at in milliseconds.
+     * @param maxAllowedTime The maximum allowed break time signifying that the participant has been inactive.
+     * @param stepsInMillis The desired step size in milliseconds.
+     */
+    private void addLastProjection(final List<BlockEventJSONProjection> projections, final Timestamp lastProjectStamp,
+                                   final long currentTime, final long maxAllowedTime, final long stepsInMillis) {
+        int lastProjectionPosition = projections.size() - 1;
+        int compare = lastProjectStamp.compareTo(projections.get(lastProjectionPosition).getDate());
+
+        if (compare <= 0) {
+            projections.add(projections.get(lastProjectionPosition));
+        }
+
+        long projectTime = lastProjectStamp.getTime();
+
+        if (projectTime < maxAllowedTime) {
+            while (projectTime >= currentTime) {
+                projections.add(projections.get(lastProjectionPosition));
+                projectTime -= stepsInMillis;
+            }
+        } else {
+            projections.add(projections.get(lastProjectionPosition));
+        }
     }
 
     /**

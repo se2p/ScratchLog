@@ -11,6 +11,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ResultController;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
@@ -999,6 +1000,44 @@ public class ResultControllerTest {
     }
 
     @Test
+    public void testDownloadSb3FilesStepMaxAllowedTime() throws IOException {
+        fileDTOS.add(fileDTO);
+        fileDTOS.add(zip);
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(getJsonProjectionsWithCustomTimeDifference());
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.empty());
+        assertDoesNotThrow(
+                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, ID_STRING, null, null, null,
+                        httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).getJsonForUser(ID, ID);
+        verify(fileService).findFinalProject(ID, ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
     public void testDownloadSb3FilesStepNoFinalProject() throws IOException {
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
@@ -1409,6 +1448,63 @@ public class ResultControllerTest {
                 }
             });
         }
+        return projections;
+    }
+
+    private List<BlockEventJSONProjection> getJsonProjectionsWithCustomTimeDifference() {
+        List<BlockEventJSONProjection> projections = new ArrayList<>();
+
+        projections.add(new BlockEventJSONProjection() {
+            @Override
+            public Integer getId() {
+                return 1;
+            }
+
+            @Override
+            public String getCode() {
+                return "json" + 1;
+            }
+
+            @Override
+            public Timestamp getDate() {
+                return Timestamp.valueOf(LocalDateTime.now());
+            }
+        });
+
+        projections.add(new BlockEventJSONProjection() {
+            @Override
+            public Integer getId() {
+                return 2;
+            }
+
+            @Override
+            public String getCode() {
+                return "json" + 2;
+            }
+
+            @Override
+            public Timestamp getDate() {
+                return Timestamp.valueOf(LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 1));
+            }
+        });
+
+        projections.add(new BlockEventJSONProjection() {
+            @Override
+            public Integer getId() {
+                return 3;
+            }
+
+            @Override
+            public String getCode() {
+                return "json" + 3;
+            }
+
+            @Override
+            public Timestamp getDate() {
+                return Timestamp.valueOf(LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 3));
+            }
+        });
+
         return projections;
     }
 

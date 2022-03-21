@@ -122,4 +122,9 @@ public final class Constants {
      */
     public static final int MINUTES_TO_MILLIS = 60 * 1000;
 
+    /**
+     * The maximum allowed break time factor when downloading sb3 files in steps.
+     */
+    public static final int MAX_ALLOWED_BREAK_FACTOR = 4;
+
 }
