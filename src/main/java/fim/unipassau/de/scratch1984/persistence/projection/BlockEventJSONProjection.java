@@ -29,4 +29,11 @@ public interface BlockEventJSONProjection {
      */
     Timestamp getDate();
 
+    /**
+     * Returns the concrete event that occurred.
+     *
+     * @return The respective event.
+     */
+    String getEvent();
+
 }

@@ -122,6 +122,11 @@ public class EventServiceTest {
         public Timestamp getDate() {
             return Timestamp.valueOf(LocalDateTime.now());
         }
+
+        @Override
+        public String getEvent() {
+            return "event";
+        }
     };
 
     @BeforeEach
@@ -841,6 +846,11 @@ public class EventServiceTest {
                 @Override
                 public Timestamp getDate() {
                     return Timestamp.valueOf(LocalDateTime.now());
+                }
+
+                @Override
+                public String getEvent() {
+                    return "event";
                 }
             });
         }

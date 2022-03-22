@@ -1446,6 +1446,11 @@ public class ResultControllerTest {
                 public Timestamp getDate() {
                     return Timestamp.valueOf(LocalDateTime.now().plusMinutes(id).minusSeconds(id));
                 }
+
+                @Override
+                public String getEvent() {
+                    return "event";
+                }
             });
         }
         return projections;
@@ -1469,6 +1474,11 @@ public class ResultControllerTest {
             public Timestamp getDate() {
                 return Timestamp.valueOf(LocalDateTime.now());
             }
+
+            @Override
+            public String getEvent() {
+                return "event";
+            }
         });
 
         projections.add(new BlockEventJSONProjection() {
@@ -1486,6 +1496,11 @@ public class ResultControllerTest {
             public Timestamp getDate() {
                 return Timestamp.valueOf(LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 1));
             }
+
+            @Override
+            public String getEvent() {
+                return "event";
+            }
         });
 
         projections.add(new BlockEventJSONProjection() {
@@ -1502,6 +1517,11 @@ public class ResultControllerTest {
             @Override
             public Timestamp getDate() {
                 return Timestamp.valueOf(LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 3));
+            }
+
+            @Override
+            public String getEvent() {
+                return "event";
             }
         });
 

@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
+import com.opencsv.CSVWriter;
 import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
@@ -37,6 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -419,6 +421,7 @@ public class ResultController {
         try {
             List<BlockEventJSONProjection> json = eventService.getJsonForUser(userId, experimentId);
             ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json");
+            writeCSVData(zos, json, Optional.empty(), false);
 
             for (BlockEventJSONProjection projection : json) {
                 ZipEntry entry = new ZipEntry("json" + projection.getId() + ".json");
@@ -580,6 +583,7 @@ public class ResultController {
 
         try {
             ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip");
+            writeCSVData(zos, jsons, finalProject, includeFinalProject);
 
             for (int i = 0; i < jsons.size(); i++) {
                 BlockEventJSONProjection json = jsons.get(i);
@@ -634,6 +638,39 @@ public class ResultController {
                 + "_experiment" + experimentId + fileEnding);
         httpServletResponse.setStatus(HttpServletResponse.SC_OK);
         return new ZipOutputStream(httpServletResponse.getOutputStream());
+    }
+
+    /**
+     * Creates a zip file entry for a CSV file containing information on the filtered {@link BlockEventJSONProjection}s
+     * for which a sb3 file will be generated. For each projection, its id, the date at which it was created and the
+     * event that triggered it are written to the csv file. If the final sb3 project is present, and it is to be
+     * included, its information is added as well.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param projections The filtered projections.
+     * @param finalProject The {@link Optional} {@link Sb3ZipDTO} containing the information on the final project.
+     * @param includeFinalProject Boolean indicating whether the final project data should be added.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeCSVData(final ZipOutputStream zos, final List<BlockEventJSONProjection> projections,
+                              final Optional<Sb3ZipDTO> finalProject, final boolean includeFinalProject)
+            throws IOException {
+        List<String[]> data = new ArrayList<>();
+        String[] header = {"id", "date", "event"};
+        data.add(header);
+        projections.forEach(projection -> data.add(new String[]{String.valueOf(projection.getId()),
+                String.valueOf(projection.getDate()), projection.getEvent()}));
+
+        if (finalProject.isPresent() && includeFinalProject) {
+            data.add(new String[]{"final project", String.valueOf(finalProject.get().getDate()), "FINISH"});
+        }
+
+        ZipEntry entry = new ZipEntry("events.csv");
+        zos.putNextEntry(entry);
+        CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(zos));
+        csvWriter.writeAll(data);
+        csvWriter.flush();
+        zos.closeEntry();
     }
 
     /**
@@ -775,7 +812,7 @@ public class ResultController {
             }
         }
 
-        addLastProjection(filteredProjections, lastProjectStamp, currentTime, maxAllowedTime, stepsInMillis);
+        addLastProjection(projections, lastProjectStamp, currentTime, maxAllowedTime, stepsInMillis);
         return filteredProjections;
     }
 
