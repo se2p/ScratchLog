@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title th:text="#{experiment_edit_title}"></title>
@@ -94,7 +94,7 @@
 <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
 
 <script>
-    var simplemde = new SimpleMDE({element: document.getElementById("info")});
+    let simplemde = new SimpleMDE({element: document.getElementById("info")});
 </script>
 </body>
 </html>

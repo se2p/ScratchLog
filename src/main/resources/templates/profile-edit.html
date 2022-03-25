@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title th:text="#{profile_edit_title}"></title>
@@ -66,6 +66,7 @@
                         <span class="sr-only" th:text="#{language}"></span>
                     </span>
                     <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
+                        <!--suppress ThymeleafVariablesResolveInspection -->
                         <option th:each="lang : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Language).values()}"
                                 th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
                     </select>

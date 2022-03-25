@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title th:text="#{user_title}"></title>
@@ -71,6 +71,7 @@
                         <span class="sr-only" th:text="#{language}"></span>
                     </span>
                     <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
+                        <!--suppress ThymeleafVariablesResolveInspection -->
                         <option th:each="lang : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Language).values()}"
                                 th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
                     </select>
@@ -85,6 +86,7 @@
                         <span class="sr-only" th:text="#{role}"></span>
                     </span>
                     <select id="role" class="form-select" th:aria-label="#{role}" th:field="*{role}">
+                        <!--suppress ThymeleafVariablesResolveInspection -->
                         <option th:each="userRole : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).values()}"
                                 th:value="${userRole}" th:text="#{${userRole.toString().toLowerCase()}}"></option>
                     </select>
