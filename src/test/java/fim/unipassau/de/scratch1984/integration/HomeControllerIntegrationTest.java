@@ -13,6 +13,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.powermock.reflect.Whitebox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -63,6 +65,7 @@ public class HomeControllerIntegrationTest {
 
     private static final String INDEX = "index";
     private static final String FINISH = "experiment-finish";
+    private static final String PASSWORD_RESET = "password-reset";
     private static final String CURRENT = "3";
     private static final String LAST = "4";
     private static final String BLANK = "   ";
@@ -572,6 +575,30 @@ public class HomeControllerIntegrationTest {
         verify(experimentService, never()).getExperiment(anyInt());
     }
 
+    @Test
+    public void testGetResetPage() throws Exception {
+        setMailServer(true);
+        mvc.perform(get("/reset")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PASSWORD_RESET));
+    }
+
+    @Test
+    public void testGetResetPageNoMailServer() throws Exception {
+        setMailServer(false);
+        mvc.perform(get("/reset")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+    }
+
     private List<ExperimentTableProjection> getExperimentProjections(int number) {
         List<ExperimentTableProjection> experiments = new ArrayList<>();
         for (int i = 0; i < number; i++) {
@@ -600,5 +627,10 @@ public class HomeControllerIntegrationTest {
             experiments.add(projection);
         }
         return experiments;
+    }
+
+    private void setMailServer(boolean isMailServer) {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", isMailServer);
     }
 }

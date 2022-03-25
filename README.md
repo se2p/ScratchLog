@@ -28,6 +28,8 @@ to do the necessary configuration described below.
 To get the project up and running, you need to adapt the following configurations to your system:
 - Edit the `application.properties` file in the `resources` folder to configure the database connection and mail
   sending.
+- If you want to use the application without a mail server, set the *MAIL_SERVER* boolean in the `Constants` class to
+  false. With this setting, you will not be able to use the reset password functionality of this application.
 - Change the *BASE_URL* string in the `Constants` class to the application URL.
 - Change the *GUI_URL* string in the `Constants` class to the URL of the instrumented Scratch GUI.
 - Change the *logging._baseUrl* in *start()* in the `virtual-machine.js` to

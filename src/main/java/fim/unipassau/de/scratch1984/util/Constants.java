@@ -13,6 +13,11 @@ public final class Constants {
     }
 
     /**
+     * The boolean indicating whether the project uses a mail server or not.
+     */
+    public static final Boolean MAIL_SERVER = true;
+
+    /**
      * The project name to be displayed in the header and the index page.
      */
     public static final String PROJECT_NAME = "Scratch1984";

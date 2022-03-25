@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.UserController;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
@@ -19,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.powermock.reflect.Whitebox;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -105,7 +107,6 @@ public class UserControllerTest {
     private static final String NEW_EMAIL = "admin@admin.com";
     private static final String REDIRECT = "redirect:/";
     private static final String LOGIN = "login";
-    private static final String ERROR = "redirect:/error";
     private static final String PROFILE = "profile";
     private static final String PROFILE_EDIT = "profile-edit";
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
@@ -172,7 +173,7 @@ public class UserControllerTest {
     @Test
     public void testAuthenticateUserNoParticipant() {
         when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
-        assertEquals(ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).authenticateUser(SECRET);
@@ -183,7 +184,7 @@ public class UserControllerTest {
     @Test
     public void testAuthenticateUserNotFound() {
         when(userService.authenticateUser(SECRET)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).authenticateUser(SECRET);
@@ -193,7 +194,7 @@ public class UserControllerTest {
 
     @Test
     public void testAuthenticateUserInvalidId() {
-        assertEquals(ERROR, userController.authenticateUser("0", SECRET, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser("0", SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).authenticateUser(SECRET);
@@ -203,7 +204,7 @@ public class UserControllerTest {
 
     @Test
     public void testAuthenticateUserIdNull() {
-        assertEquals(ERROR, userController.authenticateUser(null, SECRET, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(null, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).authenticateUser(SECRET);
@@ -213,7 +214,7 @@ public class UserControllerTest {
 
     @Test
     public void testAuthenticateUserIdBlank() {
-        assertEquals(ERROR, userController.authenticateUser(BLANK, SECRET, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(BLANK, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).authenticateUser(SECRET);
@@ -223,7 +224,7 @@ public class UserControllerTest {
 
     @Test
     public void testAuthenticateUserSecretNull() {
-        assertEquals(ERROR, userController.authenticateUser(ID_STRING, null, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, null, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).authenticateUser(SECRET);
@@ -233,7 +234,7 @@ public class UserControllerTest {
 
     @Test
     public void testAuthenticateUserSecretBlank() {
-        assertEquals(ERROR, userController.authenticateUser(ID_STRING, BLANK, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, BLANK, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).authenticateUser(SECRET);
@@ -398,7 +399,7 @@ public class UserControllerTest {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
-        assertEquals(ERROR, userController.logoutUser(httpServletRequest));
+        assertEquals(Constants.ERROR, userController.logoutUser(httpServletRequest));
         verify(userService).existsUser(USERNAME);
     }
 
@@ -406,14 +407,14 @@ public class UserControllerTest {
     public void testLogoutUserAuthenticationNameNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(ERROR, userController.logoutUser(httpServletRequest));
+        assertEquals(Constants.ERROR, userController.logoutUser(httpServletRequest));
         verify(userService, never()).existsUser(anyString());
     }
 
     @Test
     public void testLogoutUserAuthenticationNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        assertEquals(ERROR, userController.logoutUser(httpServletRequest));
+        assertEquals(Constants.ERROR, userController.logoutUser(httpServletRequest));
         verify(userService, never()).existsUser(anyString());
     }
 
@@ -424,6 +425,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddUser() {
+        setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -439,16 +441,31 @@ public class UserControllerTest {
 
     @Test
     public void testAddUserMailNotSent() {
+        setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
-        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        assertEquals(Constants.ERROR, userController.addUser(userDTO, bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(userService).existsEmail(userDTO.getEmail());
         verify(userService).existsUser(userDTO.getUsername());
         verify(userService).saveUser(userDTO);
         verify(tokenService).generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserNoMailServer() {
+        setMailServer(false);
+        userDTO.setId(null);
+        when(userService.saveUser(userDTO)).thenReturn(oldDTO);
+        assertEquals(PROFILE_REDIRECT + oldDTO.getUsername(), userController.addUser(userDTO, bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(userService).existsEmail(userDTO.getEmail());
+        verify(userService).existsUser(userDTO.getUsername());
+        verify(userService).saveUser(userDTO);
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
@@ -513,7 +530,7 @@ public class UserControllerTest {
     public void testAddUserEmailNull() {
         userDTO.setId(null);
         userDTO.setEmail(null);
-        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        assertEquals(Constants.ERROR, userController.addUser(userDTO, bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).existsUser(anyString());
@@ -526,7 +543,7 @@ public class UserControllerTest {
     public void testAddUserRoleNull() {
         userDTO.setId(null);
         userDTO.setRole(null);
-        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        assertEquals(Constants.ERROR, userController.addUser(userDTO, bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).existsUser(anyString());
@@ -539,7 +556,7 @@ public class UserControllerTest {
     public void testAddUserLanguageNull() {
         userDTO.setId(null);
         userDTO.setLanguage(null);
-        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        assertEquals(Constants.ERROR, userController.addUser(userDTO, bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).existsUser(anyString());
@@ -550,7 +567,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddUserIdNotNull() {
-        assertEquals(ERROR, userController.addUser(userDTO, bindingResult));
+        assertEquals(Constants.ERROR, userController.addUser(userDTO, bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).existsUser(anyString());
@@ -561,6 +578,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordReset() {
+        setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
@@ -574,10 +592,11 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetMailNotSent() {
+        setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
-        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
@@ -586,10 +605,11 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetUsersNotEqual() {
+        setMailServer(true);
         oldDTO.setId(ID + 1);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(oldDTO);
-        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -598,6 +618,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetEmailNotFound() {
+        setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenThrow(NotFoundException.class);
         assertEquals(PASSWORD_RESET, userController.passwordReset(userDTO, model));
@@ -609,9 +630,21 @@ public class UserControllerTest {
     }
 
     @Test
+    public void testPasswordResetNoMailServer() {
+        setMailServer(false);
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserByEmail(anyString());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
     public void testPasswordResetLongUsername() {
+        setMailServer(true);
         userDTO.setUsername(LONG_USERNAME);
-        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -621,8 +654,9 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetLongEmail() {
+        setMailServer(true);
         userDTO.setEmail(LONG_EMAIL);
-        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -632,8 +666,9 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetEmailBlank() {
+        setMailServer(true);
         userDTO.setEmail(BLANK);
-        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -643,8 +678,9 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetUsernameBlank() {
+        setMailServer(true);
         userDTO.setUsername(BLANK);
-        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -654,8 +690,9 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetEmailNull() {
+        setMailServer(true);
         userDTO.setEmail(null);
-        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -665,8 +702,9 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetUsernameNull() {
+        setMailServer(true);
         userDTO.setUsername(null);
-        assertEquals(ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -714,7 +752,7 @@ public class UserControllerTest {
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
-        assertEquals(ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
         verify(participantService, never()).getExperimentInfoForParticipant(anyInt());
         verify(authentication).getName();
@@ -753,7 +791,7 @@ public class UserControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.getProfile(null, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getProfile(null, model, httpServletRequest));
         verify(userService).getUser(USERNAME);
         verify(participantService, never()).getExperimentInfoForParticipant(anyInt());
         verify(authentication, times(2)).getName();
@@ -765,7 +803,7 @@ public class UserControllerTest {
     public void testGetProfileAuthenticationNameNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(authentication).getName();
         verify(userService, never()).getUser(USERNAME);
         verify(model, never()).addAttribute(USER_DTO, userDTO);
@@ -774,7 +812,7 @@ public class UserControllerTest {
     @Test
     public void testGetProfileAuthenticationNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        assertEquals(ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getProfile(USERNAME, model, httpServletRequest));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(USERNAME);
         verify(model, never()).addAttribute(USER_DTO, userDTO);
@@ -800,7 +838,7 @@ public class UserControllerTest {
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
-        assertEquals(ERROR, userController.getEditProfileForm(USERNAME, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getEditProfileForm(USERNAME, model, httpServletRequest));
         verify(authentication).getName();
         verify(userService).getUser(USERNAME);
         verify(model, never()).addAttribute(USER_DTO, userDTO);
@@ -836,7 +874,7 @@ public class UserControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.getEditProfileForm(BLANK, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getEditProfileForm(BLANK, model, httpServletRequest));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(model, never()).addAttribute(USER_DTO, userDTO);
@@ -846,7 +884,7 @@ public class UserControllerTest {
     public void testGetEditProfileFormAuthenticationNameNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(ERROR, userController.getEditProfileForm(BLANK, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getEditProfileForm(BLANK, model, httpServletRequest));
         verify(authentication).getName();
         verify(userService, never()).getUser(USERNAME);
         verify(model, never()).addAttribute(USER_DTO, userDTO);
@@ -855,7 +893,7 @@ public class UserControllerTest {
     @Test
     public void testGetEditProfileFormAuthenticationNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        assertEquals(ERROR, userController.getEditProfileForm(BLANK, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getEditProfileForm(BLANK, model, httpServletRequest));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(USERNAME);
         verify(model, never()).addAttribute(USER_DTO, userDTO);
@@ -922,7 +960,7 @@ public class UserControllerTest {
     @Test
     public void testUpdateUserParticipantUsernameNotNull() {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
-        assertEquals(ERROR, userController.updateUser(userDTO, bindingResult, httpServletRequest, httpServletResponse));
+        assertEquals(Constants.ERROR, userController.updateUser(userDTO, bindingResult, httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
         verify(userService).getUserById(ID);
         verify(authentication, never()).getName();
@@ -936,7 +974,7 @@ public class UserControllerTest {
     public void testUpdateUserParticipantUsersNotEqual() {
         oldDTO.setId(ID + 1);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
-        assertEquals(ERROR, userController.updateUser(userDTO, bindingResult, httpServletRequest, httpServletResponse));
+        assertEquals(Constants.ERROR, userController.updateUser(userDTO, bindingResult, httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
         verify(userService).getUserById(ID);
         verify(authentication, never()).getName();
@@ -969,6 +1007,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmail() {
+        setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -991,6 +1030,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmailFalse() {
+        setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1011,6 +1051,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmailTokenNotFound() {
+        setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1026,6 +1067,27 @@ public class UserControllerTest {
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+        verify(httpServletRequest, never()).getSession(false);
+    }
+
+    @Test
+    public void testUpdateUserChangeEmailNoMailServer() {
+        setMailServer(false);
+        userDTO.setEmail(NEW_EMAIL);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
+                httpServletRequest, httpServletResponse));
+        verify(bindingResult, never()).addError(any());
+        verify(userService).getUserById(ID);
+        verify(authentication).getName();
+        verify(userService).updateUser(oldDTO);
+        verify(userService).existsEmail(NEW_EMAIL);
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(httpServletRequest, never()).getSession(false);
     }
@@ -1175,7 +1237,7 @@ public class UserControllerTest {
     @Test
     public void testUpdateUserNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.updateUser(userDTO, bindingResult, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(userService).getUserById(ID);
     }
@@ -1183,7 +1245,7 @@ public class UserControllerTest {
     @Test
     public void testUpdateUserEmailNull() {
         userDTO.setEmail(null);
-        assertEquals(ERROR, userController.updateUser(userDTO, bindingResult, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(userService, never()).getUserById(ID);
     }
@@ -1305,7 +1367,7 @@ public class UserControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService, never()).getUserById(anyInt());
@@ -1319,7 +1381,7 @@ public class UserControllerTest {
     public void testDeleteUserAuthenticationNameNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
         verify(authentication).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
@@ -1331,7 +1393,7 @@ public class UserControllerTest {
 
     @Test
     public void testDeleteUserInvalidId() {
-        assertEquals(ERROR, userController.deleteUser(passwordDTO, "0", httpServletRequest));
+        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, "0", httpServletRequest));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
@@ -1343,7 +1405,7 @@ public class UserControllerTest {
 
     @Test
     public void testDeleteUserNumberFormat() {
-        assertEquals(ERROR, userController.deleteUser(passwordDTO, BLANK, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, BLANK, httpServletRequest));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
@@ -1355,7 +1417,7 @@ public class UserControllerTest {
 
     @Test
     public void testDeleteUserIdNull() {
-        assertEquals(ERROR, userController.deleteUser(passwordDTO, null, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, null, httpServletRequest));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
@@ -1368,7 +1430,7 @@ public class UserControllerTest {
     @Test
     public void testDeleteUserPasswordNull() {
         passwordDTO.setPassword(null);
-        assertEquals(ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
@@ -1400,7 +1462,7 @@ public class UserControllerTest {
     @Test
     public void testChangeActiveStatusUserAdmin() {
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(ERROR, userController.changeActiveStatus(ID_STRING));
+        assertEquals(Constants.ERROR, userController.changeActiveStatus(ID_STRING));
         verify(userService).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
@@ -1408,21 +1470,21 @@ public class UserControllerTest {
     @Test
     public void testChangeActiveStatusNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.changeActiveStatus(ID_STRING));
+        assertEquals(Constants.ERROR, userController.changeActiveStatus(ID_STRING));
         verify(userService).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
 
     @Test
     public void testChangeActiveStatusIdInvalid() {
-        assertEquals(ERROR, userController.changeActiveStatus(BLANK));
+        assertEquals(Constants.ERROR, userController.changeActiveStatus(BLANK));
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
 
     @Test
     public void testChangeActiveStatusIdNull() {
-        assertEquals(ERROR, userController.changeActiveStatus(null));
+        assertEquals(Constants.ERROR, userController.changeActiveStatus(null));
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
@@ -1439,7 +1501,7 @@ public class UserControllerTest {
     @Test
     public void testGetPasswordResetFormNoAdmin() {
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
     }
@@ -1447,21 +1509,21 @@ public class UserControllerTest {
     @Test
     public void testGetPasswordResetFormUserNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
     }
 
     @Test
     public void testGetPasswordResetFormInvalidId() {
-        assertEquals(ERROR, userController.getPasswordResetForm("-1", model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getPasswordResetForm("-1", model, httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
         verify(httpServletRequest, never()).isUserInRole(anyString());
     }
 
     @Test
     public void testGetPasswordResetFormIdNull() {
-        assertEquals(ERROR, userController.getPasswordResetForm(null, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getPasswordResetForm(null, model, httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
         verify(httpServletRequest, never()).isUserInRole(anyString());
     }
@@ -1539,7 +1601,7 @@ public class UserControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
@@ -1555,7 +1617,7 @@ public class UserControllerTest {
         when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication).getName();
@@ -1568,7 +1630,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordUserNotAdmin() {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
-        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, never()).getName();
@@ -1581,7 +1643,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordUserNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(authentication, never()).getName();
@@ -1594,7 +1656,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordConfirmPasswordNull() {
         userDTO.setConfirmPassword(null);
-        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService, never()).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(authentication, never()).getName();
@@ -1607,7 +1669,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordNewPasswordNull() {
         userDTO.setNewPassword(null);
-        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService, never()).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(authentication, never()).getName();
@@ -1620,7 +1682,7 @@ public class UserControllerTest {
     @Test
     public void testResetPasswordPasswordNull() {
         userDTO.setPassword(null);
-        assertEquals(ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
         verify(userService, never()).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(authentication, never()).getName();
@@ -1628,5 +1690,10 @@ public class UserControllerTest {
         verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(bindingResult, never()).hasErrors();
         verify(userService, never()).encodePassword(anyString());
+    }
+
+    private void setMailServer(boolean isMailServer) {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", isMailServer);
     }
 }

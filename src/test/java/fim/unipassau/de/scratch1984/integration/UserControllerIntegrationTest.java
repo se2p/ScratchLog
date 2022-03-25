@@ -7,6 +7,7 @@ import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.UserController;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.powermock.reflect.Whitebox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -81,7 +84,6 @@ public class UserControllerIntegrationTest {
     private static final String NEW_EMAIL = "admin@admin.com";
     private static final String REDIRECT = "redirect:/";
     private static final String LOGIN = "login";
-    private static final String ERROR = "redirect:/error";
     private static final String PROFILE = "profile";
     private static final String PROFILE_EDIT = "profile-edit";
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
@@ -163,7 +165,7 @@ public class UserControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).authenticateUser(SECRET);
         verify(userService).existsParticipant(userDTO.getId(), ID);
     }
@@ -179,7 +181,7 @@ public class UserControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).authenticateUser(SECRET);
         verify(userService, never()).existsParticipant(userDTO.getId(), ID);
     }
@@ -194,7 +196,7 @@ public class UserControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).authenticateUser(SECRET);
         verify(userService, never()).existsParticipant(userDTO.getId(), ID);
     }
@@ -329,7 +331,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).existsUser(anyString());
     }
 
@@ -346,6 +348,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testAddUser() throws Exception {
+        setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -366,6 +369,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testAddUserEmailNotSent() throws Exception {
+        setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -375,12 +379,33 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).existsUser(userDTO.getUsername());
         verify(userService).existsEmail(userDTO.getEmail());
         verify(userService).saveUser(userDTO);
         verify(tokenService).generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
+    public void testAddUserNoMailServer() throws Exception {
+        setMailServer(false);
+        userDTO.setId(null);
+        when(userService.saveUser(userDTO)).thenReturn(oldDTO);
+        when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
+        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
+        mvc.perform(post("/users/add")
+                        .flashAttr(USER_DTO, userDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(PROFILE_REDIRECT + oldDTO.getUsername()));
+        verify(userService).existsUser(userDTO.getUsername());
+        verify(userService).existsEmail(userDTO.getEmail());
+        verify(userService).saveUser(userDTO);
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
@@ -423,6 +448,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testPasswordReset() throws Exception {
+        setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
@@ -442,6 +468,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testPasswordResetMailNotSent() throws Exception {
+        setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
@@ -451,7 +478,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
@@ -459,7 +486,24 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    public void testPasswordResetNoMailServer() throws Exception {
+        setMailServer(false);
+        mvc.perform(post("/users/reset")
+                        .flashAttr(USER_DTO, userDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).getUserByEmail(anyString());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+    }
+
+    @Test
     public void testPasswordResetUsersNotEqual() throws Exception {
+        setMailServer(true);
         oldDTO.setId(ID + 1);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(oldDTO);
@@ -469,7 +513,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -478,6 +522,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testPasswordResetUsernameNotFound() throws Exception {
+        setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
         mvc.perform(post("/users/reset")
                 .flashAttr(USER_DTO, userDTO)
@@ -548,7 +593,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUser(USERNAME);
         verify(participantService, never()).getExperimentInfoForParticipant(userDTO.getId());
     }
@@ -640,7 +685,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUser(USERNAME);
     }
 
@@ -691,7 +736,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUser(USERNAME);
     }
 
@@ -799,6 +844,7 @@ public class UserControllerIntegrationTest {
     @Test
     @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangeEmail() throws Exception {
+        setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
@@ -822,8 +868,35 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = PROFILE, roles = {"ADMIN"})
+    public void testUpdateUserChangeEmailNoMailServer() throws Exception {
+        setMailServer(false);
+        userDTO.setEmail(NEW_EMAIL);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
+        mvc.perform(post("/users/update")
+                        .flashAttr(USER_DTO, userDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(PROFILE_REDIRECT + USERNAME));
+        verify(userService, never()).existsUser(anyString());
+        verify(userService).existsEmail(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService).updateUser(oldDTO);
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+    }
+
+    @Test
     @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
     public void testUpdateUserParticipantChangeEmailUpdatePassword() throws Exception {
+        setMailServer(true);
         userDTO.setUsername(null);
         userDTO.setPassword(PASSWORD);
         userDTO.setNewPassword(VALID_PASSWORD);
@@ -855,6 +928,7 @@ public class UserControllerIntegrationTest {
     @Test
     @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangeEmailNotSent() throws Exception {
+        setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
@@ -997,7 +1071,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -1017,7 +1091,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -1039,7 +1113,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -1147,7 +1221,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -1164,7 +1238,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -1212,7 +1286,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
@@ -1226,7 +1300,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
@@ -1239,7 +1313,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
@@ -1268,7 +1342,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
     }
 
@@ -1281,7 +1355,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
     }
 
@@ -1293,7 +1367,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUserById(anyInt());
     }
 
@@ -1354,7 +1428,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
         verify(userService).getUser(USERNAME);
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -1373,7 +1447,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -1390,11 +1464,16 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUser(any());
+    }
+
+    private void setMailServer(boolean isMailServer) {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", isMailServer);
     }
 }

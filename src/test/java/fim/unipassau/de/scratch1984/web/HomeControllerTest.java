@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.powermock.reflect.Whitebox;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -625,7 +626,14 @@ public class HomeControllerTest {
 
     @Test
     public void testGetResetPage() {
+        setMailServer(true);
         assertEquals(PASSWORD_RESET, homeController.getResetPage(new UserDTO()));
+    }
+
+    @Test
+    public void testGetResetPageNoMailServer() {
+        setMailServer(false);
+        assertEquals(Constants.ERROR, homeController.getResetPage(new UserDTO()));
     }
 
     private List<ExperimentTableProjection> getExperimentProjections(int number) {
@@ -656,5 +664,10 @@ public class HomeControllerTest {
             experiments.add(projection);
         }
         return experiments;
+    }
+
+    private void setMailServer(boolean isMailServer) {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", isMailServer);
     }
 }

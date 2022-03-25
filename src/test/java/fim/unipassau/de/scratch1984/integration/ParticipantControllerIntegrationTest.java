@@ -16,6 +16,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.powermock.reflect.Whitebox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -78,6 +80,7 @@ public class ParticipantControllerIntegrationTest {
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String REDIRECT_GUI = "redirect:" + Constants.GUI_URL + "?uid=";
     private static final String REDIRECT_FINISH = "redirect:/finish?id=";
+    private static final String REDIRECT_SECRET = "redirect:/secret?user=";
     private static final String EXP_ID = "&expid=";
     private static final String RESTART = "&restart=true";
     private static final String EMAIL = "participant@participant.de";
@@ -187,6 +190,8 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testAddParticipant() throws Exception {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/participant/add")
@@ -204,7 +209,29 @@ public class ParticipantControllerIntegrationTest {
     }
 
     @Test
+    public void testAddParticipantNoMailServer() throws Exception {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        when(userService.saveUser(newUser)).thenReturn(userDTO);
+        mvc.perform(post("/participant/add")
+                        .flashAttr(USER_DTO, newUser)
+                        .param(EXP_ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_SECRET + userDTO.getId() + "&" + EXPERIMENT_PARAM + "="
+                        + ID));
+        verify(userService).saveUser(newUser);
+        verify(participantService).saveParticipant(userDTO.getId(), ID);
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+    }
+
+    @Test
     public void testAddParticipantMessagingError() throws Exception {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)

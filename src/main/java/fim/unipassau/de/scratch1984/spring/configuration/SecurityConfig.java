@@ -48,7 +48,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/login", "/finish", "/token/password", "/reset",
                         "/users/reset").not().authenticated()
                 .antMatchers("/experiment/*", "/users/add", "/users/delete", "/users/forgot", "/users/add",
-                        "/result", "/search").hasRole("ADMIN")
+                        "/result", "/search", "/secret").hasRole("ADMIN")
                 .antMatchers("/experiment", "/users/profile", "/users/logout", "/users/edit",
                         "/users/update").hasRole("PARTICIPANT")
                 .and().formLogin().loginPage("/login").usernameParameter("username")

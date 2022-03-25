@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.powermock.reflect.Whitebox;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -84,8 +85,10 @@ public class ParticipantControllerTest {
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String REDIRECT_GUI = "redirect:" + Constants.GUI_URL + "?uid=";
     private static final String REDIRECT_FINISH = "redirect:/finish?id=";
+    private static final String REDIRECT_SECRET = "redirect:/secret?user=";
     private static final String EXP_ID = "&expid=";
     private static final String RESTART = "&restart=true";
+    private static final String EXPERIMENT_PARAM = "&experiment=";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String EMAIL = "participant@participant.de";
     private static final String BLANK = "   ";
@@ -104,7 +107,7 @@ public class ParticipantControllerTest {
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws NoSuchFieldException, IllegalAccessException {
         userDTO.setId(ID);
         userDTO.setUsername(PARTICIPANT);
         userDTO.setEmail(EMAIL);
@@ -178,6 +181,8 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipant() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         assertEquals(REDIRECT_EXPERIMENT + ID, participantController.addParticipant(ID_STRING, newUser, model,
@@ -189,7 +194,22 @@ public class ParticipantControllerTest {
     }
 
     @Test
+    public void testAddParticipantNoMailServer() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        when(userService.saveUser(newUser)).thenReturn(userDTO);
+        assertEquals(REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + ID,
+                participantController.addParticipant(ID_STRING, newUser, model, bindingResult, httpServletRequest));
+        verify(userService).saveUser(newUser);
+        verify(participantService).saveParticipant(userDTO.getId(), ID);
+        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+        verify(bindingResult, never()).addError(any());
+    }
+
+    @Test
     public void testAddParticipantMessagingException() {
+        Mockito.mock(Constants.class);
+        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         assertEquals(ERROR, participantController.addParticipant(ID_STRING, newUser, model, bindingResult,
                 httpServletRequest));

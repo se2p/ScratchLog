@@ -9,6 +9,9 @@ let jsonButton = document.getElementById("json");
 let sb3Button = document.getElementById("sb3");
 let downloadRangeButton = document.getElementById("downloadRange");
 
+let current = document.getElementById("current");
+let time = document.getElementById("time");
+let sprite = document.getElementById("sprite");
 let first = document.getElementById("first");
 let prev = document.getElementById("prev");
 let next = document.getElementById("next");
@@ -160,6 +163,7 @@ first.addEventListener("click", function () {
         getXML();
     } else {
         setCode(pos);
+        setInformation(pos);
     }
 
     first.style.display = "none";
@@ -183,6 +187,7 @@ prev.addEventListener("click", function () {
             count--;
             pos--;
             setCode(pos);
+            setInformation(pos);
         }
 
         if (count === 0) {
@@ -209,6 +214,7 @@ next.addEventListener("click", function () {
         } else {
             pos++;
             setCode(pos);
+            setInformation(pos);
         }
 
         if (count === total - 1) {
@@ -235,6 +241,7 @@ last.addEventListener("click", function () {
         getXML();
     } else {
         setCode(pos);
+        setInformation(pos);
     }
 
     prev.style.display = "";
@@ -259,9 +266,22 @@ function getXML() {
             if (data) {
                 xml = data;
                 setCode(pos);
+                setInformation(pos);
             }
         }
     });
+}
+
+/**
+ * Updates the number of the current step displayed in the blockly area.
+ */
+function setInformation(position) {
+    let currentDate = xml[position].date;
+    let day = currentDate.substring(0, currentDate.indexOf('T'));
+    let hours = currentDate.substring(currentDate.indexOf('T') + 1, currentDate.indexOf('.'))
+    current.innerText = count + 1;
+    time.innerText = day + " " + hours;
+    sprite.innerText = xml[position].sprite;
 }
 
 /**
