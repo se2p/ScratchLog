@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web;
 
+import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
@@ -17,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.powermock.reflect.Whitebox;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -626,13 +626,13 @@ public class HomeControllerTest {
 
     @Test
     public void testGetResetPage() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         assertEquals(PASSWORD_RESET, homeController.getResetPage(new UserDTO()));
     }
 
     @Test
     public void testGetResetPageNoMailServer() {
-        setMailServer(false);
+        MailServerSetter.setMailServer(false);
         assertEquals(Constants.ERROR, homeController.getResetPage(new UserDTO()));
     }
 
@@ -666,8 +666,4 @@ public class HomeControllerTest {
         return experiments;
     }
 
-    private void setMailServer(boolean isMailServer) {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", isMailServer);
-    }
 }

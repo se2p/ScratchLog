@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web;
 
+import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
@@ -21,7 +22,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.powermock.reflect.Whitebox;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -434,7 +434,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddUser() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -450,7 +450,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddUserMailNotSent() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -465,7 +465,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddUserNoMailServer() {
-        setMailServer(false);
+        MailServerSetter.setMailServer(false);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         assertEquals(PROFILE_REDIRECT + oldDTO.getUsername(), userController.addUser(userDTO, bindingResult));
@@ -587,13 +587,13 @@ public class UserControllerTest {
 
     @Test
     public void testGetAddParticipants() {
-        setMailServer(false);
+        MailServerSetter.setMailServer(false);
         assertEquals(PARTICIPANTS_ADD, userController.getAddParticipants(userBulkDTO));
     }
 
     @Test
     public void testGetAddParticipantsMailServer() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         assertEquals(REDIRECT, userController.getAddParticipants(userBulkDTO));
     }
 
@@ -678,7 +678,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordReset() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
@@ -692,7 +692,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetMailNotSent() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
@@ -705,7 +705,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetUsersNotEqual() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         oldDTO.setId(ID + 1);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(oldDTO);
@@ -718,7 +718,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetEmailNotFound() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenThrow(NotFoundException.class);
         assertEquals(PASSWORD_RESET, userController.passwordReset(userDTO, model));
@@ -731,7 +731,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetNoMailServer() {
-        setMailServer(false);
+        MailServerSetter.setMailServer(false);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
@@ -742,7 +742,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetLongUsername() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setUsername(LONG_USERNAME);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -754,7 +754,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetLongEmail() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(LONG_EMAIL);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -766,7 +766,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetEmailBlank() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(BLANK);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -778,7 +778,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetUsernameBlank() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setUsername(BLANK);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -790,7 +790,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetEmailNull() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(null);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -802,7 +802,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetUsernameNull() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setUsername(null);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -1111,7 +1111,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmail() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1134,7 +1134,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmailFalse() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1155,7 +1155,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmailTokenNotFound() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1177,7 +1177,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmailNoMailServer() {
-        setMailServer(false);
+        MailServerSetter.setMailServer(false);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1796,8 +1796,4 @@ public class UserControllerTest {
         verify(userService, never()).encodePassword(anyString());
     }
 
-    private void setMailServer(boolean isMailServer) {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", isMailServer);
-    }
 }

@@ -13,6 +13,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjecti
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
@@ -136,8 +137,8 @@ public class ResultController {
             return new ModelAndView(Constants.ERROR);
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot return result page for user with invalid id " + userId + " or experiment with invalid "
@@ -186,7 +187,7 @@ public class ResultController {
             return Constants.ERROR;
         }
 
-        int fileId = parseId(id);
+        int fileId = NumberParser.parseNumber(id);
 
         if (fileId < Constants.MIN_ID) {
             logger.error("Cannot download file with invalid id " + fileId + "!");
@@ -225,9 +226,9 @@ public class ResultController {
             throw new IncompleteDataException("Cannot generate zip file with JSON, experiment or user null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
-        int jsonId = parseId(json);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
+        int jsonId = NumberParser.parseNumber(json);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID || jsonId < Constants.MIN_ID) {
             logger.error("Cannot generate zip file for user with invalid id " + user + " or experiment with invalid "
@@ -274,7 +275,7 @@ public class ResultController {
             return Constants.ERROR;
         }
 
-        int zipId = parseId(id);
+        int zipId = NumberParser.parseNumber(id);
 
         if (zipId < Constants.MIN_ID) {
             logger.error("Cannot download zip file with invalid id " + zipId + "!");
@@ -310,8 +311,8 @@ public class ResultController {
                     + "null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot download zip files for user with invalid id " + userId + " or experiment with invalid "
@@ -359,8 +360,8 @@ public class ResultController {
                     + "null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot download xml files for user with invalid id " + userId + " or experiment with invalid "
@@ -408,8 +409,8 @@ public class ResultController {
                     + "null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot download json files for user with invalid id " + userId + " or experiment with "
@@ -459,9 +460,9 @@ public class ResultController {
                     + "page null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
-        int currentPage = parseId(page);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
+        int currentPage = NumberParser.parseNumber(page);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot get codes for user with invalid id " + userId + " or experiment with invalid id "
@@ -522,23 +523,23 @@ public class ResultController {
                     + "parameters are specified!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
         int steps = 0;
         int startPosition = 0;
         int endPosition = 0;
         boolean includeFinalProject = true;
 
         if (step != null) {
-            steps = parseId(step);
+            steps = NumberParser.parseNumber(step);
 
             if (steps < 1) {
                 logger.error("Cannot generate zip file for invalid step interval " + step + "!");
                 throw new IncompleteDataException("Cannot generate zip file for invalid step interval " + step + "!");
             }
         } else if (start != null) {
-            startPosition = parseId(start);
-            endPosition = parseId(end);
+            startPosition = NumberParser.parseNumber(start);
+            endPosition = NumberParser.parseNumber(end);
             includeFinalProject = !include.equals("false");
 
             if (startPosition < 1 || endPosition < 1) {
@@ -843,20 +844,6 @@ public class ResultController {
             }
         } else {
             projections.add(projections.get(lastProjectionPosition));
-        }
-    }
-
-    /**
-     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
-     *
-     * @param id The id in its string representation.
-     * @return The corresponding int value, or -1.
-     */
-    private int parseId(final String id) {
-        try {
-            return Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            return -1;
         }
     }
 

@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web;
 
+import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
@@ -19,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.powermock.reflect.Whitebox;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -181,8 +181,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipant() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         assertEquals(REDIRECT_EXPERIMENT + ID, participantController.addParticipant(ID_STRING, newUser, model,
@@ -195,8 +194,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipantNoMailServer() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        MailServerSetter.setMailServer(false);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         assertEquals(REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + ID,
                 participantController.addParticipant(ID_STRING, newUser, model, bindingResult, httpServletRequest));
@@ -208,8 +206,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipantMessagingException() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         assertEquals(ERROR, participantController.addParticipant(ID_STRING, newUser, model, bindingResult,
                 httpServletRequest));

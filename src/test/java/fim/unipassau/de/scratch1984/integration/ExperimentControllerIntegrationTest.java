@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.integration;
 
+import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
@@ -10,7 +11,6 @@ import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
-import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -20,8 +20,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.powermock.reflect.Whitebox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -620,8 +618,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testChangeExperimentStatusOpen() throws Exception {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         experimentDTO.setActive(true);
         List<UserDTO> userDTOS = new ArrayList<>();
         userDTOS.add(participant);
@@ -659,8 +656,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testChangeExperimentStatusOpenNoMailServer() throws Exception {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        MailServerSetter.setMailServer(false);
         experimentDTO.setActive(true);
         List<UserDTO> userDTOS = new ArrayList<>();
         userDTOS.add(participant);
@@ -744,8 +740,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testSearchForUser() throws Exception {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         experimentDTO.setActive(true);
         participant.setSecret("secret");
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
@@ -770,8 +765,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testSearchForUserSecretNull() throws Exception {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
@@ -795,8 +789,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testSearchForUserNoMailServer() throws Exception {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        MailServerSetter.setMailServer(false);
         experimentDTO.setActive(true);
         participant.setSecret("secret");
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);

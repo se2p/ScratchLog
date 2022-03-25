@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
@@ -133,7 +134,7 @@ public class HomeController {
             return Constants.ERROR;
         }
 
-        int current = parseStringValue(currentPage);
+        int current = NumberParser.parseNumber(currentPage);
         int last;
         Page<ExperimentTableProjection> experimentPage;
 
@@ -194,7 +195,7 @@ public class HomeController {
             return Constants.ERROR;
         }
 
-        int current = parseStringValue(currentPage);
+        int current = NumberParser.parseNumber(currentPage);
         int last;
         Page<ExperimentTableProjection> experimentPage;
 
@@ -342,7 +343,7 @@ public class HomeController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseStringValue(id);
+        int experimentId = NumberParser.parseNumber(id);
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
 
@@ -371,20 +372,6 @@ public class HomeController {
     @GetMapping("/reset")
     public String getResetPage(final UserDTO userDTO) {
         return Constants.MAIL_SERVER ? "password-reset" : Constants.ERROR;
-    }
-
-    /**
-     * Returns the corresponding int value of the given string, or -1, if the value is not a number.
-     *
-     * @param value The value in its string representation.
-     * @return The corresponding int value, or -1.
-     */
-    private int parseStringValue(final String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
     }
 
     /**

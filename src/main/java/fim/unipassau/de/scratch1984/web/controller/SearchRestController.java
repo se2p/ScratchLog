@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 
 import fim.unipassau.de.scratch1984.application.service.SearchService;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,7 +91,7 @@ public class SearchRestController {
             return new ArrayList<>();
         }
 
-        int pageNumber = parseNumber(page);
+        int pageNumber = NumberParser.parseNumber(page);
         return searchService.getNextUsers(query, pageNumber);
     }
 
@@ -111,7 +112,7 @@ public class SearchRestController {
             return new ArrayList<>();
         }
 
-        int pageNumber = parseNumber(page);
+        int pageNumber = NumberParser.parseNumber(page);
         return searchService.getNextExperiments(query, pageNumber);
     }
 
@@ -131,7 +132,7 @@ public class SearchRestController {
             return new ArrayList<>();
         }
 
-        int experimentId = parseNumber(id);
+        int experimentId = NumberParser.parseNumber(id);
         return searchService.getUserSuggestions(query, experimentId);
     }
 
@@ -151,7 +152,7 @@ public class SearchRestController {
             return new ArrayList<>();
         }
 
-        int experimentId = parseNumber(id);
+        int experimentId = NumberParser.parseNumber(id);
         return searchService.getUserDeleteSuggestions(query, experimentId);
     }
 
@@ -167,21 +168,7 @@ public class SearchRestController {
             return true;
         }
 
-        return parseNumber(id) < Constants.MIN_ID;
-    }
-
-    /**
-     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
-     *
-     * @param id The id in its string representation.
-     * @return The corresponding int value, or -1.
-     */
-    private int parseNumber(final String id) {
-        try {
-            return Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
+        return NumberParser.parseNumber(id) < Constants.MIN_ID;
     }
 
 }

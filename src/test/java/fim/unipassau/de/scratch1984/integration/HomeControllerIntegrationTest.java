@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.integration;
 
+import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
@@ -13,8 +14,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.powermock.reflect.Whitebox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -577,7 +576,7 @@ public class HomeControllerIntegrationTest {
 
     @Test
     public void testGetResetPage() throws Exception {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         mvc.perform(get("/reset")
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -589,7 +588,7 @@ public class HomeControllerIntegrationTest {
 
     @Test
     public void testGetResetPageNoMailServer() throws Exception {
-        setMailServer(false);
+        MailServerSetter.setMailServer(false);
         mvc.perform(get("/reset")
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -629,8 +628,4 @@ public class HomeControllerIntegrationTest {
         return experiments;
     }
 
-    private void setMailServer(boolean isMailServer) {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", isMailServer);
-    }
 }

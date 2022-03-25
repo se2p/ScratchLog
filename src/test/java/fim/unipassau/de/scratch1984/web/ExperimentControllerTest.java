@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web;
 
+import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
@@ -10,7 +11,6 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
-import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -25,7 +25,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.powermock.reflect.Whitebox;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -584,8 +583,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusOpen() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true).thenReturn(false);
@@ -603,8 +601,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusOpenNoMailServer() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        MailServerSetter.setMailServer(false);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
         assertEquals(REDIRECT_SECRET_LIST + ID, experimentController.changeExperimentStatus("open",
@@ -678,8 +675,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUser() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -697,8 +693,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserNoMailServer() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        MailServerSetter.setMailServer(false);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -715,8 +710,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserSecretNull() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -734,8 +728,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserEmailNotSent() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -751,8 +744,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserEmailNull() {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         participant.setEmail(null);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);

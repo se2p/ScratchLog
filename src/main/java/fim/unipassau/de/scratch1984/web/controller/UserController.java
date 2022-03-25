@@ -7,6 +7,7 @@ import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
@@ -176,7 +177,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseNumber(id);
         UserDTO authenticated;
 
         if (experimentId < Constants.MIN_ID) {
@@ -696,7 +697,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        int userId = parseId(id);
+        int userId = NumberParser.parseNumber(id);
 
         if (userId < Constants.MIN_ID) {
             logger.error("Cannot delete user with invalid id " + id + "!");
@@ -750,7 +751,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        int userId = parseId(id);
+        int userId = NumberParser.parseNumber(id);
 
         if (userId < Constants.MIN_ID) {
             logger.debug("Cannot change active status of user with invalid id " + id + "!");
@@ -797,7 +798,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        int userId = parseId(id);
+        int userId = NumberParser.parseNumber(id);
 
         if (userId < Constants.MIN_ID) {
             logger.debug("Cannot reset password for user with invalid id " + id + "!");
@@ -1067,20 +1068,6 @@ public class UserController {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;
-    }
-
-    /**
-     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
-     *
-     * @param id The id in its string representation.
-     * @return The corresponding int value, or -1.
-     */
-    private int parseId(final String id) {
-        try {
-            return Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
     }
 
 }
