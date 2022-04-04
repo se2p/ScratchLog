@@ -41,7 +41,8 @@ public class ResourceConfiguration implements WebMvcConfigurer {
      */
     @Override
     public void addCorsMappings(final CorsRegistry registry) {
-        registry.addMapping("/store/*").allowedMethods("GET", "POST").allowedOrigins(Constants.GUI_URL);
+        registry.addMapping(Constants.CONTEXT_PATH + "/store/*").allowedMethods("GET",
+                "POST").allowedOrigins(Constants.GUI_URL);
     }
 
 }
