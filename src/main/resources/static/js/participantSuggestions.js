@@ -32,9 +32,10 @@ function getUserSuggestions() {
         result.forEach(function(element) {
             html += `
             <li class="list-group-item list-group-item-action">
-                <div class='ms-2 me-auto no_decoration'>
-                    <div class="fw-bold" onclick='setParticipantInput(this.innerText)'>${sanitize(element[0])}</div>
-                    <div onclick='setParticipantInput(this.innerText)'>${sanitize(element[1])}</div>
+                <div class='ms-2 me-auto no_decoration'
+                onclick="setParticipantInput(this.getElementsByClassName('fw-bold')[0])">
+                    <div class="fw-bold">${sanitize(element[0])}</div>
+                    <div>${sanitize(element[1])}</div>
                 </div>
             </li>
             `
@@ -62,9 +63,10 @@ function getUserDeleteSuggestions() {
         result.forEach(function(element) {
             html += `
             <li class="list-group-item list-group-item-action">
-                <div class='ms-2 me-auto no_decoration'>
-                    <div class="fw-bold" onclick='setDeleteInput(this.innerText)'>${sanitize(element[0])}</div>
-                    <div onclick='setDeleteInput(this.innerText)'>${sanitize(element[1])}</div>
+                <div class='ms-2 me-auto no_decoration'
+                onclick="setDeleteInput(this.getElementsByClassName('fw-bold')[0])">
+                    <div class="fw-bold">${sanitize(element[0])}</div>
+                    <div>${sanitize(element[1])}</div>
                 </div>
             </li>
             `
@@ -80,7 +82,7 @@ function getUserDeleteSuggestions() {
  * @param element The value to be set.
  */
 function setParticipantInput(element) {
-    document.getElementById("participantInput").value = element;
+    document.getElementById("participantInput").value = element.innerText;
 }
 
 /**
@@ -89,5 +91,5 @@ function setParticipantInput(element) {
  * @param element The value to be set.
  */
 function setDeleteInput(element) {
-    document.getElementById("deleteParticipantInput").value = element;
+    document.getElementById("deleteParticipantInput").value = element.innerText;
 }

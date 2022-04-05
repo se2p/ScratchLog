@@ -7,6 +7,7 @@ import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
@@ -141,7 +142,7 @@ public class ParticipantController {
             return Constants.ERROR;
         }
 
-        int id = parseId(experimentId);
+        int id = NumberParser.parseNumber(experimentId);
 
         if (id < Constants.MIN_ID) {
             logger.error("Cannot add new participant for experiment with invalid id " + id + "!");
@@ -195,7 +196,7 @@ public class ParticipantController {
             return Constants.ERROR;
         }
 
-        int id = parseId(experimentId);
+        int id = NumberParser.parseNumber(experimentId);
 
         if (id < Constants.MIN_ID) {
             logger.error("Cannot add new participant for experiment with invalid id " + id + "!");
@@ -229,7 +230,6 @@ public class ParticipantController {
         templateModel.put("secret", experimentUrl);
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
-        System.out.println(Constants.MAIL_SERVER);
 
         if (!Constants.MAIL_SERVER) {
             return REDIRECT_SECRET + saved.getId() + EXPERIMENT_PARAM + id;
@@ -262,7 +262,7 @@ public class ParticipantController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseNumber(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot delete a participant for experiment with invalid id " + id + "!");
@@ -329,7 +329,7 @@ public class ParticipantController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseNumber(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot start experiment with invalid id " + id + "!");
@@ -406,8 +406,8 @@ public class ParticipantController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(experiment);
-        int userId = parseId(user);
+        int experimentId = NumberParser.parseNumber(experiment);
+        int userId = NumberParser.parseNumber(user);
 
         if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
             logger.error("Cannot stop experiment with invalid user id " + user + " or experiment id " + experiment
@@ -554,20 +554,6 @@ public class ParticipantController {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;
-    }
-
-    /**
-     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
-     *
-     * @param id The id in its string representation.
-     * @return The corresponding int value, or -1.
-     */
-    private int parseId(final String id) {
-        try {
-            return Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
     }
 
 }

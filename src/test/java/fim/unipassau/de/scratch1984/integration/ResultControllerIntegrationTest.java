@@ -919,6 +919,11 @@ public class ResultControllerIntegrationTest {
                 public Timestamp getDate() {
                     return Timestamp.valueOf(LocalDateTime.now().plusMinutes(id));
                 }
+
+                @Override
+                public String getEvent() {
+                    return "event";
+                }
             });
         }
         return projections;

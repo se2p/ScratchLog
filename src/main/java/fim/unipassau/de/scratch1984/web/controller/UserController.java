@@ -7,11 +7,13 @@ import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserBulkDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +38,9 @@ import org.springframework.web.servlet.LocaleResolver;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -121,6 +125,11 @@ public class UserController {
     private static final String PASSWORD_RESET = "password-reset";
 
     /**
+     * String corresponding to the add participants page.
+     */
+    private static final String PARTICIPANTS_ADD = "participants-add";
+
+    /**
      * String corresponding to the userDTO model attribute.
      */
     private static final String USER_DTO = "userDTO";
@@ -168,7 +177,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseNumber(id);
         UserDTO authenticated;
 
         if (experimentId < Constants.MIN_ID) {
@@ -355,6 +364,80 @@ public class UserController {
             } else {
                 return Constants.ERROR;
             }
+        }
+    }
+
+    /**
+     * Returns the add participants page for adding a number of new participants.
+     *
+     * @param userBulkDTO The {@link UserBulkDTO} used to save the information.
+     * @return The add participants page.
+     */
+    @GetMapping("/bulk")
+    @Secured(Constants.ROLE_ADMIN)
+    public String getAddParticipants(final UserBulkDTO userBulkDTO) {
+        if (Constants.MAIL_SERVER) {
+            return INDEX;
+        }
+
+        return PARTICIPANTS_ADD;
+    }
+
+    /**
+     * Adds the given amount of participants to the database if the numbered username doesn't yet exist. For any
+     * username that already exists in the database, the corresponding username is saved to a list. If the given
+     * username pattern is invalid or a pre-existing username has been found, the user returns to the add participants
+     * page where corresponding information is displayed. If the any necessary information passed is invalid, the user
+     * is redirected to the error page instead.
+     *
+     * @param userBulkDTO The {@link UserBulkDTO} containing the necessary information.
+     * @param bindingResult The {@link BindingResult} to return information on an invalid username pattern.
+     * @param model The {@link Model} used to store information on existing usernames.
+     * @return The index page on success, or the add participants or error page otherwise.
+     */
+    @PostMapping("/bulk")
+    @Secured(Constants.ROLE_ADMIN)
+    public String addParticipants(final UserBulkDTO userBulkDTO, final BindingResult bindingResult, final Model model) {
+        if (userBulkDTO.getUsername() == null || userBulkDTO.getLanguage() == null) {
+            logger.error("Cannot add participants with username or language null!");
+            return Constants.ERROR;
+        } else if (userBulkDTO.getAmount() < 1 || userBulkDTO.getAmount() > Constants.MAX_ADD_PARTICIPANTS) {
+            logger.error("Cannot add an illegal number of " + userBulkDTO.getAmount() + " participants!");
+            return Constants.ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        String usernameValidation = UsernameValidator.validate(userBulkDTO.getUsername());
+
+        if (usernameValidation != null) {
+            bindingResult.addError(createFieldError("userBulkDTO", "username", usernameValidation, resourceBundle));
+            return PARTICIPANTS_ADD;
+        }
+
+        int number = userBulkDTO.isStartAtOne() ? 1 : userService.findLastId() + 1;
+        List<String> invalidUsernames = new ArrayList<>();
+
+        for (int i = 0; i < userBulkDTO.getAmount(); i++) {
+            String username = userBulkDTO.getUsername() + number;
+
+            if (userService.existsUser(username)) {
+                invalidUsernames.add(username);
+            } else {
+                UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, UserDTO.Role.PARTICIPANT,
+                        userBulkDTO.getLanguage(), null, null);
+                userDTO.setActive(true);
+                userService.saveUser(userDTO);
+            }
+
+            number++;
+        }
+
+        if (invalidUsernames.isEmpty()) {
+            return "redirect:/?success=true";
+        } else {
+            model.addAttribute("error", invalidUsernames);
+            return PARTICIPANTS_ADD;
         }
     }
 
@@ -565,7 +648,7 @@ public class UserController {
 
         boolean sent = false;
 
-        if (!findOldUser.getEmail().equals(userDTO.getEmail())) {
+        if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
             if (Constants.MAIL_SERVER) {
                 sent = updateEmail(userDTO.getEmail(), userDTO.getId(), resourceBundle);
             } else {
@@ -614,7 +697,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        int userId = parseId(id);
+        int userId = NumberParser.parseNumber(id);
 
         if (userId < Constants.MIN_ID) {
             logger.error("Cannot delete user with invalid id " + id + "!");
@@ -668,7 +751,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        int userId = parseId(id);
+        int userId = NumberParser.parseNumber(id);
 
         if (userId < Constants.MIN_ID) {
             logger.debug("Cannot change active status of user with invalid id " + id + "!");
@@ -715,7 +798,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        int userId = parseId(id);
+        int userId = NumberParser.parseNumber(id);
 
         if (userId < Constants.MIN_ID) {
             logger.debug("Cannot reset password for user with invalid id " + id + "!");
@@ -985,20 +1068,6 @@ public class UserController {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;
-    }
-
-    /**
-     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
-     *
-     * @param id The id in its string representation.
-     * @return The corresponding int value, or -1.
-     */
-    private int parseId(final String id) {
-        try {
-            return Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
     }
 
 }

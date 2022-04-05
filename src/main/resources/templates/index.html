@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title th:text="${T(fim.unipassau.de.scratch1984.util.Constants).PROJECT_NAME}"></title>
@@ -17,12 +17,12 @@
     <div class="col-8">
 
         <!-- The success message shown at the top of the page after a successfully completed operation. -->
-        <div class="row" th:style="${param.success != null ? 'display:block' : 'display:none'}">
+        <div class="row" th:if="${param.success != null}">
             <div class="col-12 alert alert-success" th:text="#{success}"></div>
         </div>
 
         <!-- The error message shown at the top of the page when an error occurs. -->
-        <div class="row" th:style="${param.error != null ? 'display:block' : 'display:none'}">
+        <div class="row" th:if="${param.error != null}">
             <div class="col-12 alert alert-danger" th:text="#{error}"></div>
         </div>
 

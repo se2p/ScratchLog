@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="#{user_title}"></title>
+    <title th:text="#{add_participants_title}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
     <link rel="stylesheet" th:href="@{/design/style.css}">
@@ -15,23 +15,38 @@
 <div class="row" id="content">
     <div class="col-2"></div>
     <div class="col-8">
-
-        <!-- The add user page heading. -->
-        <h2 class="mb-5" th:text="#{add_user}"></h2>
-
-        <!-- The information shown on the add user page if the mail server constant is set to true. -->
-        <div class="row" th:if="${T(fim.unipassau.de.scratch1984.util.Constants).MAIL_SERVER}">
-            <div class="col-12 mb-5" th:text="#{user_info}"></div>
+        <!-- The error message shown at the top of the page when some participants couldn't be added. -->
+        <div class="row" th:if="${error != null}">
+            <div class="col-12 alert alert-warning">
+                <div th:text="#{names_exists}"></div>
+                <div th:text="${error}"></div>
+            </div>
         </div>
 
-        <!-- The information shown on the add user page if the mail server constant is set to false. -->
-        <div class="row" th:unless="${T(fim.unipassau.de.scratch1984.util.Constants).MAIL_SERVER}">
-            <div class="col-12 mb-5" th:text="#{user_info_no_mail}"></div>
+        <!-- The add participants page heading. -->
+        <h2 class="mb-5" th:text="#{add_participants}"></h2>
+
+        <!-- The information shown on the add participants page -->
+        <div class="row">
+            <div class="col-12 mb-5" th:text="#{add_participants_info}"></div>
         </div>
 
-        <!-- The form for adding new users. -->
-        <form th:action="@{/users/add}" th:object="${userDTO}" th:name="userDTO" method="post">
-            <!-- The input group for the username. -->
+        <!-- The form for adding new participants. -->
+        <!--/*@thymesVar id="userBulkDTO" type="fim.unipassau.de.scratch1984.web.dto.UserBulkDTO"*/-->
+        <form th:action="@{/users/bulk}" th:object="${userBulkDTO}" th:name="userBulkDTO" method="post">
+            <!-- The input group for the range. -->
+            <div class="mb-3 form-group position-relative">
+                <label class="form-label" for="amount" th:text="#{amount}"></label>
+                <div class="input-group">
+                    <input name="amount" id="amount" class="w-100" type="range" th:field="*{amount}" min="1"
+                           th:max="${T(fim.unipassau.de.scratch1984.util.Constants).MAX_ADD_PARTICIPANTS}"/>
+                </div>
+                <div class="form-text">
+                    <span th:text="#{value}"></span>
+                    <span id="value"></span>
+                </div>
+            </div>
+            <!-- The input group for the username pattern. -->
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="username" th:text="#{username}"></label>
                 <div class="input-group">
@@ -47,20 +62,15 @@
                 <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                 <div class="form-text" th:text="#{username_max}"></div>
             </div>
-            <!-- The input group for the email. -->
+            <!-- The checkbox controlling the numbers added to the username. -->
             <div class="mb-3 form-group position-relative">
-                <label class="form-label" for="email" th:text="#{email}"></label>
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i aria-hidden="true" class="fa fa-envelope" title="Email address"></i>
-                        <span class="sr-only" th:text="#{email}"></span>
-                    </span>
-                    <input name="email" id="email" type="text" th:placeholder="#{email}"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
-                           th:field="*{email}" th:class="${#fields.hasErrors('email')
-                                   ? 'form-control is-invalid' : 'form-control'}" required/>
+                <div class="form-check mb-3">
+                    <input name="startAtOne" id="startAtOne" class="form-check-input" type="checkbox" value=""
+                           th:field="*{startAtOne}">
+                    <label class="form-check-label" for="startAtOne" th:text="#{start_number}">
+                    </label>
                 </div>
-                <div class="validation" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                <div class="form-text" th:text="#{start_number_info}"></div>
             </div>
             <!-- The selection menu for the language. -->
             <div class="mb-3 form-group position-relative">
@@ -77,21 +87,6 @@
                     </select>
                 </div>
             </div>
-            <!-- The selection menu for the role. -->
-            <div class="mb-3 form-group position-relative">
-                <label class="form-label" for="role" th:text="#{role}"></label>
-                <div class="input-group">
-                    <span class="input-group-text">
-                        <i aria-hidden="true" class="fas fa-id-card" title="Role"></i>
-                        <span class="sr-only" th:text="#{role}"></span>
-                    </span>
-                    <select id="role" class="form-select" th:aria-label="#{role}" th:field="*{role}">
-                        <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="userRole : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).values()}"
-                                th:value="${userRole}" th:text="#{${userRole.toString().toLowerCase()}}"></option>
-                    </select>
-                </div>
-            </div>
             <!-- The submit button. -->
             <div class="text-center">
                 <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
@@ -100,6 +95,16 @@
     </div>
     <div class="col-2"></div>
 </div>
+
+<script>
+    let amount = document.getElementById("amount");
+    let value = document.getElementById("value");
+    value.innerHTML = amount.value;
+
+    amount.oninput = function() {
+        value.innerHTML = this.value;
+    }
+</script>
 
 <!-- Footer -->
 <div th:insert="footer :: footer"></div>

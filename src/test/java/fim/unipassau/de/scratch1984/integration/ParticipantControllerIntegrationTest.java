@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.integration;
 
+import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
@@ -16,8 +17,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.powermock.reflect.Whitebox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -190,8 +189,7 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testAddParticipant() throws Exception {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/participant/add")
@@ -210,8 +208,7 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testAddParticipantNoMailServer() throws Exception {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", false);
+        MailServerSetter.setMailServer(false);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         mvc.perform(post("/participant/add")
                         .flashAttr(USER_DTO, newUser)
@@ -230,8 +227,7 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testAddParticipantMessagingError() throws Exception {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", true);
+        MailServerSetter.setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)

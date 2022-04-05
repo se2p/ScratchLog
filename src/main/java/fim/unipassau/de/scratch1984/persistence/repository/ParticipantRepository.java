@@ -55,7 +55,7 @@ public interface ParticipantRepository extends JpaRepository<Participant, Partic
      * Returns a list of all participants for the given experiment with the given end timestamp, if any entries exist.
      *
      * @param experiment The experiment to search for.
-     * @param end The starting timestamp.
+     * @param end The ending timestamp.
      * @return The participant list.
      */
     List<Participant> findAllByExperimentAndEnd(Experiment experiment, Timestamp end);

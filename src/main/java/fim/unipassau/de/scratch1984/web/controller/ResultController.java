@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
+import com.opencsv.CSVWriter;
 import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
@@ -12,6 +13,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjecti
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.FileProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
@@ -37,6 +39,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -134,8 +137,8 @@ public class ResultController {
             return new ModelAndView(Constants.ERROR);
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot return result page for user with invalid id " + userId + " or experiment with invalid "
@@ -184,7 +187,7 @@ public class ResultController {
             return Constants.ERROR;
         }
 
-        int fileId = parseId(id);
+        int fileId = NumberParser.parseNumber(id);
 
         if (fileId < Constants.MIN_ID) {
             logger.error("Cannot download file with invalid id " + fileId + "!");
@@ -223,9 +226,9 @@ public class ResultController {
             throw new IncompleteDataException("Cannot generate zip file with JSON, experiment or user null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
-        int jsonId = parseId(json);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
+        int jsonId = NumberParser.parseNumber(json);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID || jsonId < Constants.MIN_ID) {
             logger.error("Cannot generate zip file for user with invalid id " + user + " or experiment with invalid "
@@ -272,7 +275,7 @@ public class ResultController {
             return Constants.ERROR;
         }
 
-        int zipId = parseId(id);
+        int zipId = NumberParser.parseNumber(id);
 
         if (zipId < Constants.MIN_ID) {
             logger.error("Cannot download zip file with invalid id " + zipId + "!");
@@ -308,8 +311,8 @@ public class ResultController {
                     + "null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot download zip files for user with invalid id " + userId + " or experiment with invalid "
@@ -357,8 +360,8 @@ public class ResultController {
                     + "null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot download xml files for user with invalid id " + userId + " or experiment with invalid "
@@ -406,8 +409,8 @@ public class ResultController {
                     + "null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot download json files for user with invalid id " + userId + " or experiment with "
@@ -419,6 +422,7 @@ public class ResultController {
         try {
             List<BlockEventJSONProjection> json = eventService.getJsonForUser(userId, experimentId);
             ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json");
+            writeCSVData(zos, json, Optional.empty(), false);
 
             for (BlockEventJSONProjection projection : json) {
                 ZipEntry entry = new ZipEntry("json" + projection.getId() + ".json");
@@ -436,7 +440,7 @@ public class ResultController {
     }
 
     /**
-     * Loads a list of {@link BlockEventProjection} with for the given page number, user and experiment from the
+     * Loads a list of {@link BlockEventProjection}s for the given page number, user and experiment from the
      * database. If the parameters are invalid an {@link IncompleteDataException} is thrown instead.
      *
      * @param experiment The experiment id to search for.
@@ -456,9 +460,9 @@ public class ResultController {
                     + "page null!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
-        int currentPage = parseId(page);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
+        int currentPage = NumberParser.parseNumber(page);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot get codes for user with invalid id " + userId + " or experiment with invalid id "
@@ -519,23 +523,23 @@ public class ResultController {
                     + "parameters are specified!");
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
         int steps = 0;
         int startPosition = 0;
         int endPosition = 0;
         boolean includeFinalProject = true;
 
         if (step != null) {
-            steps = parseId(step);
+            steps = NumberParser.parseNumber(step);
 
             if (steps < 1) {
                 logger.error("Cannot generate zip file for invalid step interval " + step + "!");
                 throw new IncompleteDataException("Cannot generate zip file for invalid step interval " + step + "!");
             }
         } else if (start != null) {
-            startPosition = parseId(start);
-            endPosition = parseId(end);
+            startPosition = NumberParser.parseNumber(start);
+            endPosition = NumberParser.parseNumber(end);
             includeFinalProject = !include.equals("false");
 
             if (startPosition < 1 || endPosition < 1) {
@@ -580,6 +584,7 @@ public class ResultController {
 
         try {
             ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip");
+            writeCSVData(zos, jsons, finalProject, includeFinalProject);
 
             for (int i = 0; i < jsons.size(); i++) {
                 BlockEventJSONProjection json = jsons.get(i);
@@ -634,6 +639,39 @@ public class ResultController {
                 + "_experiment" + experimentId + fileEnding);
         httpServletResponse.setStatus(HttpServletResponse.SC_OK);
         return new ZipOutputStream(httpServletResponse.getOutputStream());
+    }
+
+    /**
+     * Creates a zip file entry for a CSV file containing information on the filtered {@link BlockEventJSONProjection}s
+     * for which a sb3 file will be generated. For each projection, its id, the date at which it was created and the
+     * event that triggered it are written to the csv file. If the final sb3 project is present, and it is to be
+     * included, its information is added as well.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param projections The filtered projections.
+     * @param finalProject The {@link Optional} {@link Sb3ZipDTO} containing the information on the final project.
+     * @param includeFinalProject Boolean indicating whether the final project data should be added.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeCSVData(final ZipOutputStream zos, final List<BlockEventJSONProjection> projections,
+                              final Optional<Sb3ZipDTO> finalProject, final boolean includeFinalProject)
+            throws IOException {
+        List<String[]> data = new ArrayList<>();
+        String[] header = {"id", "date", "event"};
+        data.add(header);
+        projections.forEach(projection -> data.add(new String[]{String.valueOf(projection.getId()),
+                String.valueOf(projection.getDate()), projection.getEvent()}));
+
+        if (finalProject.isPresent() && includeFinalProject) {
+            data.add(new String[]{"final project", String.valueOf(finalProject.get().getDate()), "FINISH"});
+        }
+
+        ZipEntry entry = new ZipEntry("events.csv");
+        zos.putNextEntry(entry);
+        CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(zos));
+        csvWriter.writeAll(data);
+        csvWriter.flush();
+        zos.closeEntry();
     }
 
     /**
@@ -717,8 +755,9 @@ public class ResultController {
      * Filters the passed {@link BlockEventJSONProjection}s according to the passed steps in minutes. Starting with the
      * first json, steps minutes are added to its timestamp. The remaining json files are traversed until one with a
      * timestamp after the calculated one is found. Its predecessor is added to filtered list and the calculated time
-     * increased by one more step. The same json file might be added multiple times if the next calculated timestamp
-     * is more than one time step apart from the timestamp of the next json file.
+     * is increased by one more step. The same json file might be added multiple times if the next calculated timestamp
+     * is more than one time step apart from the timestamp of the next json file. To avoid adding the same file too many
+     * times, the process skips time breaks longer than a certain threshold.
      *
      * @param projections A list of {@link BlockEventJSONProjection} containing the relevant block event data.
      * @param step The time steps the files should be apart in minutes.
@@ -729,49 +768,82 @@ public class ResultController {
                                                                    final int step, final Timestamp lastProjectStamp) {
         List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
         filteredProjections.add(projections.get(0));
-        int lastProjectionPosition = projections.size() - 1;
 
         if (projections.size() > 1) {
             long stepsInMillis = (long) step * Constants.MINUTES_TO_MILLIS;
-            long currentTime = projections.get(0).getDate().getTime() + stepsInMillis;
-            Timestamp nextProjection = new Timestamp(currentTime);
-
-            for (int i = 1; i < projections.size(); i++) {
-                BlockEventJSONProjection projection = projections.get(i);
-                while (projection.getDate().after(nextProjection)) {
-                    filteredProjections.add(projections.get(i - 1));
-                    currentTime += stepsInMillis;
-                    nextProjection = new Timestamp(currentTime);
-                }
-            }
-
-            int compare = lastProjectStamp.compareTo(projections.get(lastProjectionPosition).getDate());
-
-            if (compare <= 0) {
-                filteredProjections.add(projections.get(lastProjectionPosition));
-            }
-
-            while (lastProjectStamp.after(nextProjection)) {
-                filteredProjections.add(projections.get(lastProjectionPosition));
-                currentTime += stepsInMillis;
-                nextProjection = new Timestamp(currentTime);
-            }
+            filteredProjections.addAll(addProjections(projections, stepsInMillis, lastProjectStamp));
         }
 
         return filteredProjections;
     }
 
     /**
-     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
+     * Adds the passed {@link BlockEventJSONProjection}s to a list depending on their timestamp. If the timestamp of the
+     * current file is after that of the current time, it is added to the list (possibly more than once), unless the
+     * timestamp is after the maximum allowed time break. In that case, the project is only added once. Finally, the
+     * last project file is added and the list returned.
      *
-     * @param id The id in its string representation.
-     * @return The corresponding int value, or -1.
+     * @param projections A list of {@link BlockEventJSONProjection} containing the relevant block event data.
+     * @param stepsInMillis The regular desired time break between two projections.
+     * @param lastProjectStamp The {@link Timestamp} of the last project.
+     * @return The list of filtered projections.
      */
-    private int parseId(final String id) {
-        try {
-            return Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            return -1;
+    private List<BlockEventJSONProjection> addProjections(final List<BlockEventJSONProjection> projections,
+                                                          final long stepsInMillis, final Timestamp lastProjectStamp) {
+        List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
+        long currentTime = projections.get(0).getDate().getTime() + stepsInMillis;
+        long maxAllowedTime = projections.get(0).getDate().getTime() + Constants.MAX_ALLOWED_BREAK_FACTOR
+                * stepsInMillis;
+
+        for (int i = 1; i < projections.size(); i++) {
+            BlockEventJSONProjection projection = projections.get(i);
+            long projectionTime = projection.getDate().getTime();
+
+            if (projectionTime < maxAllowedTime) {
+                while (projectionTime >= currentTime) {
+                    filteredProjections.add(projections.get(i - 1));
+                    currentTime += stepsInMillis;
+                    maxAllowedTime += stepsInMillis;
+                }
+            } else {
+                filteredProjections.add(projections.get(i - 1));
+                currentTime = projections.get(i - 1).getDate().getTime() + stepsInMillis;
+                maxAllowedTime = projections.get(i - 1).getDate().getTime() + Constants.MAX_ALLOWED_BREAK_FACTOR
+                        * stepsInMillis;
+            }
+        }
+
+        addLastProjection(projections, lastProjectStamp, currentTime, maxAllowedTime, stepsInMillis);
+        return filteredProjections;
+    }
+
+    /**
+     * Adds the participant's final sb3 project file to the given {@link BlockEventJSONProjection} list.
+     *
+     * @param projections The list of projections.
+     * @param lastProjectStamp The {@link Timestamp} of the last saved project change.
+     * @param currentTime The current time to look at in milliseconds.
+     * @param maxAllowedTime The maximum allowed break time signifying that the participant has been inactive.
+     * @param stepsInMillis The desired step size in milliseconds.
+     */
+    private void addLastProjection(final List<BlockEventJSONProjection> projections, final Timestamp lastProjectStamp,
+                                   final long currentTime, final long maxAllowedTime, final long stepsInMillis) {
+        int lastProjectionPosition = projections.size() - 1;
+        int compare = lastProjectStamp.compareTo(projections.get(lastProjectionPosition).getDate());
+
+        if (compare <= 0) {
+            projections.add(projections.get(lastProjectionPosition));
+        }
+
+        long projectTime = lastProjectStamp.getTime();
+
+        if (projectTime < maxAllowedTime) {
+            while (projectTime >= currentTime) {
+                projections.add(projections.get(lastProjectionPosition));
+                projectTime -= stepsInMillis;
+            }
+        } else {
+            projections.add(projections.get(lastProjectionPosition));
         }
     }
 

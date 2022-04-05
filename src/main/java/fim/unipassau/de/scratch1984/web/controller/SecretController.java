@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,8 +81,8 @@ public class SecretController {
             return Constants.ERROR;
         }
 
-        int userId = parseId(user);
-        int experimentId = parseId(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot display secret for user with invalid id " + user + " or experiment with invalid id "
@@ -128,7 +129,7 @@ public class SecretController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(experiment);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot display secrets for experiment with invalid id " + experiment + "!");
@@ -170,7 +171,7 @@ public class SecretController {
             throw new IncompleteDataException("Cannot download participation links for experiment id null or blank!");
         }
 
-        int experimentId = parseId(experiment);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot download participation links for experiment with invalid id " + experiment + "!");
@@ -191,20 +192,6 @@ public class SecretController {
         } catch (IOException e) {
             logger.error("Could not download participation links due to IOException!", e);
             throw new RuntimeException("Could not download participation links due to IOException!");
-        }
-    }
-
-    /**
-     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
-     *
-     * @param id The id in its string representation.
-     * @return The corresponding int value, or -1.
-     */
-    private int parseId(final String id) {
-        try {
-            return Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            return -1;
         }
     }
 
@@ -230,20 +217,18 @@ public class SecretController {
      */
     private List<String[]> prepareCSVData(final int experimentId, final String user) {
         if (user != null) {
-            int userId = parseId(user);
+            int userId = NumberParser.parseNumber(user);
 
             if (userId < Constants.MIN_ID) {
                 logger.error("Cannot download participation link for user with invalid id " + user + "!");
                 throw new IncompleteDataException("Cannot download participation link for user with invalid id "
                         + user + "!");
             }
-
-            UserDTO userDTO = userService.getUserById(userId);
-            return transformUserData(List.of(userDTO), experimentId);
-        } else {
-            List<UserDTO> activeAccounts = userService.findUnfinishedUsers(experimentId);
-            return transformUserData(activeAccounts, experimentId);
         }
+
+        List<UserDTO> users = user != null ? List.of(userService.getUserById(NumberParser.parseNumber(user)))
+                : userService.findUnfinishedUsers(experimentId);
+        return transformUserData(users, experimentId);
     }
 
     /**

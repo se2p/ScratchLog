@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web;
 
+import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
@@ -10,6 +11,7 @@ import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.UserController;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserBulkDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +22,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.powermock.reflect.Whitebox;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -118,15 +120,18 @@ public class UserControllerTest {
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
     private static final String PASSWORD_RESET = "password-reset";
+    private static final String PARTICIPANTS_ADD = "participants-add";
     private static final String USER_DTO = "userDTO";
     private static final String ID_STRING = "1";
     private static final String SECRET = "secret";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final int ID = 1;
+    private static final int AMOUNT = 5;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
             PASSWORD, SECRET);
     private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
             PASSWORD, SECRET);
+    private final UserBulkDTO userBulkDTO = new UserBulkDTO(AMOUNT, UserDTO.Language.ENGLISH, USERNAME, false);
     private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
 
@@ -146,6 +151,10 @@ public class UserControllerTest {
         userDTO.setActive(true);
         userDTO.setSecret(SECRET);
         userDTO.setAttempts(0);
+        userBulkDTO.setAmount(AMOUNT);
+        userBulkDTO.setLanguage(UserDTO.Language.ENGLISH);
+        userBulkDTO.setUsername(USERNAME);
+        userBulkDTO.setStartAtOne(false);
         passwordDTO.setPassword(PASSWORD);
         securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
     }
@@ -425,7 +434,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddUser() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -441,7 +450,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddUserMailNotSent() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -456,7 +465,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddUserNoMailServer() {
-        setMailServer(false);
+        MailServerSetter.setMailServer(false);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         assertEquals(PROFILE_REDIRECT + oldDTO.getUsername(), userController.addUser(userDTO, bindingResult));
@@ -577,8 +586,99 @@ public class UserControllerTest {
     }
 
     @Test
+    public void testGetAddParticipants() {
+        MailServerSetter.setMailServer(false);
+        assertEquals(PARTICIPANTS_ADD, userController.getAddParticipants(userBulkDTO));
+    }
+
+    @Test
+    public void testGetAddParticipantsMailServer() {
+        MailServerSetter.setMailServer(true);
+        assertEquals(REDIRECT, userController.getAddParticipants(userBulkDTO));
+    }
+
+    @Test
+    public void testAddParticipants() {
+        when(userService.findLastId()).thenReturn(AMOUNT);
+        assertEquals(REDIRECT_SUCCESS, userController.addParticipants(userBulkDTO, bindingResult, model));
+        verify(bindingResult, never()).addError(any());
+        verify(userService).findLastId();
+        verify(userService, times(AMOUNT)).existsUser(anyString());
+        verify(userService, times(AMOUNT)).saveUser(any());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsStartOneUsernameExists() {
+        List<String> existingNames = List.of("admin1");
+        userBulkDTO.setStartAtOne(true);
+        when(userService.existsUser(existingNames.get(0))).thenReturn(true);
+        assertEquals(PARTICIPANTS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
+        verify(bindingResult, never()).addError(any());
+        verify(userService, never()).findLastId();
+        verify(userService, times(AMOUNT)).existsUser(anyString());
+        verify(userService, times(AMOUNT - existingNames.size())).saveUser(any());
+        verify(model).addAttribute("error", existingNames);
+    }
+
+    @Test
+    public void testAddParticipantsInvalidUsername() {
+        userBulkDTO.setUsername(BLANK);
+        assertEquals(PARTICIPANTS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
+        verify(bindingResult).addError(any());
+        verify(userService, never()).findLastId();
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsAmountBiggerMax() {
+        userBulkDTO.setAmount(Constants.MAX_ADD_PARTICIPANTS + 1);
+        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
+        verify(bindingResult, never()).addError(any());
+        verify(userService, never()).findLastId();
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsAmountTooSmall() {
+        userBulkDTO.setAmount(0);
+        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
+        verify(bindingResult, never()).addError(any());
+        verify(userService, never()).findLastId();
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsLanguageNull() {
+        userBulkDTO.setLanguage(null);
+        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
+        verify(bindingResult, never()).addError(any());
+        verify(userService, never()).findLastId();
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsUsernameNull() {
+        userBulkDTO.setUsername(null);
+        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
+        verify(bindingResult, never()).addError(any());
+        verify(userService, never()).findLastId();
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
     public void testPasswordReset() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
@@ -592,7 +692,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetMailNotSent() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
@@ -605,7 +705,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetUsersNotEqual() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         oldDTO.setId(ID + 1);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(oldDTO);
@@ -618,7 +718,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetEmailNotFound() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenThrow(NotFoundException.class);
         assertEquals(PASSWORD_RESET, userController.passwordReset(userDTO, model));
@@ -631,7 +731,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetNoMailServer() {
-        setMailServer(false);
+        MailServerSetter.setMailServer(false);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
@@ -642,7 +742,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetLongUsername() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setUsername(LONG_USERNAME);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -654,7 +754,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetLongEmail() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(LONG_EMAIL);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -666,7 +766,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetEmailBlank() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(BLANK);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -678,7 +778,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetUsernameBlank() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setUsername(BLANK);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -690,7 +790,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetEmailNull() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(null);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -702,7 +802,7 @@ public class UserControllerTest {
 
     @Test
     public void testPasswordResetUsernameNull() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setUsername(null);
         assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
         verify(userService, never()).getUser(anyString());
@@ -901,6 +1001,10 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUser() {
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
+        userDTO.setEmail(BLANK);
+        oldDTO.setEmail(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
@@ -1007,7 +1111,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmail() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1030,7 +1134,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmailFalse() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1051,7 +1155,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmailTokenNotFound() {
-        setMailServer(true);
+        MailServerSetter.setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1073,7 +1177,7 @@ public class UserControllerTest {
 
     @Test
     public void testUpdateUserChangeEmailNoMailServer() {
-        setMailServer(false);
+        MailServerSetter.setMailServer(false);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1692,8 +1796,4 @@ public class UserControllerTest {
         verify(userService, never()).encodePassword(anyString());
     }
 
-    private void setMailServer(boolean isMailServer) {
-        Mockito.mock(Constants.class);
-        Whitebox.setInternalState(Constants.class, "MAIL_SERVER", isMailServer);
-    }
 }

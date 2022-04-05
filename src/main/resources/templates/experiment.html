@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title th:text="#{experiment_title}"></title>
@@ -68,7 +68,7 @@
                 <span class="text-muted" th:unless="${experimentDTO.active}" th:text="#{closed}"></span>
             </div>
             <a id="open" class="btn btn-primary" type="submit" th:text="#{open}" th:unless="${experimentDTO.active}"
-               th:href="@{/experiment/status(id=${experimentDTO.id}, stat=open)}"></a>
+               th:href="@{/experiment/status(id=${experimentDTO.id}, stat='open')}"></a>
             <input th:if="${experimentDTO.active}" id="close" class="btn btn-secondary" type="submit"
                    th:value="#{close}">
         </div>
@@ -233,7 +233,7 @@
         <div class="d-flex justify-content-between">
             <input id="abortStop" class="btn btn-secondary" type="submit" th:value="#{abort}">
             <a class="btn btn-danger" th:text="#{close}" th:href="@{/experiment/status(id=${experimentDTO.id},
-            stat=close)}"></a>
+            stat='close')}"></a>
         </div>
     </div>
 </div>

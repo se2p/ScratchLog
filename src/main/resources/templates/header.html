@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title th:text="#{header_title}"></title>
@@ -34,6 +34,9 @@
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/users/add}" th:text="#{new_user}"></a>
+                        </li>
+                        <li th:unless="${T(fim.unipassau.de.scratch1984.util.Constants).MAIL_SERVER}">
+                            <a class="dropdown-item" th:href="@{/users/bulk}" th:text="#{new_users}"></a>
                         </li>
                     </ul>
                 </li>

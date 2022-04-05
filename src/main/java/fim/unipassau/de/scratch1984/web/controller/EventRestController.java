@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
@@ -156,7 +157,7 @@ public class EventRestController {
             return;
         }
 
-        int experimentId = parseNumber(id);
+        int experimentId = NumberParser.parseNumber(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot retrieve sb3 file for experiment with invalid id " + experimentId + "!");
@@ -208,8 +209,8 @@ public class EventRestController {
             return;
         }
 
-        int userId = parseNumber(user);
-        int experimentId = parseNumber(experiment);
+        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             logger.error("Cannot retrieve the last json file for experiment with invalid id " + experiment
@@ -373,20 +374,6 @@ public class EventRestController {
         }
 
         return dto;
-    }
-
-    /**
-     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
-     *
-     * @param id The id in its string representation.
-     * @return The corresponding int value, or -1.
-     */
-    private int parseNumber(final String id) {
-        try {
-            return Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
     }
 
 }

@@ -11,6 +11,7 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -463,7 +464,7 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        int current = parseNumber(currentPage);
+        int current = NumberParser.parseNumber(currentPage);
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID || current <= -1) {
@@ -499,7 +500,7 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        int current = parseNumber(currentPage);
+        int current = NumberParser.parseNumber(currentPage);
         int experimentId = parseId(id);
 
         if (experimentId < Constants.MIN_ID || current <= -1) {
@@ -722,6 +723,11 @@ public class ExperimentController {
      */
     private boolean sendEmail(final UserDTO userDTO, final String experimentId,
                               final HttpServletRequest httpServletRequest) {
+        if (userDTO.getEmail() == null) {
+            logger.error("Cannot send invitation mail to user with email null!");
+            return false;
+        }
+
         Map<String, Object> templateModel = getTemplateModel(experimentId, userDTO.getSecret(), httpServletRequest);
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
@@ -800,7 +806,7 @@ public class ExperimentController {
             return -1;
         }
 
-        int experimentId = parseNumber(id);
+        int experimentId = NumberParser.parseNumber(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.debug("Cannot return the corresponding experiment page for experiment with invalid id "
@@ -808,20 +814,6 @@ public class ExperimentController {
         }
 
         return experimentId;
-    }
-
-    /**
-     * Returns the corresponding int value of the given id, or -1, if the id is not a number.
-     *
-     * @param id The id in its string representation.
-     * @return The corresponding int value, or -1.
-     */
-    private int parseNumber(final String id) {
-        try {
-            return Integer.parseInt(id);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
     }
 
     /**

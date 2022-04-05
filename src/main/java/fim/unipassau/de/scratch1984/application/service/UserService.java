@@ -19,9 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * A service providing methods related to users.
@@ -361,10 +361,8 @@ public class UserService {
                     + "!");
         }
 
-        List<Participant> participants = findUnfinishedParticipants(experimentId);
-        List<UserDTO> userDTOS = new ArrayList<>();
-        participants.forEach(participant -> userDTOS.add(activateParticipantAccount(participant, experimentId)));
-        return userDTOS;
+        return findUnfinishedParticipants(experimentId).stream().map(participant
+                -> activateParticipantAccount(participant, experimentId)).collect(Collectors.toList());
     }
 
     /**
@@ -383,10 +381,8 @@ public class UserService {
                     + experimentId + "!");
         }
 
-        List<Participant> participants = findUnfinishedParticipants(experimentId);
-        List<UserDTO> userDTOS = new ArrayList<>();
-        participants.forEach(participant -> userDTOS.add(createUserDTO(participant.getUser())));
-        return userDTOS;
+        return findUnfinishedParticipants(experimentId).stream().map(participant
+                -> createUserDTO(participant.getUser())).collect(Collectors.toList());
     }
 
     /**
@@ -399,7 +395,7 @@ public class UserService {
     public boolean isLastAdmin() {
         List<User> admins = userRepository.findAllByRole(UserDTO.Role.ADMIN.toString());
 
-        if (admins.size() < Constants.MIN_ID) {
+        if (admins.size() < 1) {
             logger.error("There are no users with administrator status in the database!");
             throw new IllegalStateException("There are no users with administrator status in the database!");
         }

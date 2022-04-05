@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:sec="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title th:text="#{profile_title}"></title>
@@ -46,11 +46,13 @@
         </h2>
 
         <!-- The administrator profile information. -->
+        <!--suppress ThymeleafVariablesResolveInspection -->
         <div class="row mb-5" th:if="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
             <div class="text-danger fs-5" th:text="#{admin}"></div>
         </div>
 
         <!-- The profile activation status information and the button to activate or deactivate the profile. -->
+        <!--suppress ThymeleafVariablesResolveInspection -->
         <div class="row mb-3" th:unless="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).ADMIN}">
             <div class="col-9" th:if="${userDTO.active}">
                 <i aria-hidden="true" class="fa fa-lock-open fa-2x" title="Participant profile inactive"></i>
@@ -69,6 +71,7 @@
         </div>
 
         <!-- The list of experiments the user participated in. -->
+        <!--suppress ThymeleafVariablesResolveInspection -->
         <div class="row mb-5"
              th:if="${userDTO.role == T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).PARTICIPANT}"
              sec:authorize="hasRole('PARTICIPANT')">
