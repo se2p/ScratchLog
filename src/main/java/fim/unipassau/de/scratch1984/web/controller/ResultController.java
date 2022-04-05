@@ -813,37 +813,39 @@ public class ResultController {
             }
         }
 
-        addLastProjection(projections, lastProjectStamp, currentTime, maxAllowedTime, stepsInMillis);
+        addLastProjection(filteredProjections, projections.get(projections.size() - 1), lastProjectStamp, currentTime,
+                maxAllowedTime, stepsInMillis);
         return filteredProjections;
     }
 
     /**
      * Adds the participant's final sb3 project file to the given {@link BlockEventJSONProjection} list.
      *
-     * @param projections The list of projections.
+     * @param filteredProjections The list of filtered projections.
+     * @param lastProjection The last projection to be added.
      * @param lastProjectStamp The {@link Timestamp} of the last saved project change.
      * @param currentTime The current time to look at in milliseconds.
      * @param maxAllowedTime The maximum allowed break time signifying that the participant has been inactive.
      * @param stepsInMillis The desired step size in milliseconds.
      */
-    private void addLastProjection(final List<BlockEventJSONProjection> projections, final Timestamp lastProjectStamp,
+    private void addLastProjection(final List<BlockEventJSONProjection> filteredProjections,
+                                   final BlockEventJSONProjection lastProjection, final Timestamp lastProjectStamp,
                                    final long currentTime, final long maxAllowedTime, final long stepsInMillis) {
-        int lastProjectionPosition = projections.size() - 1;
-        int compare = lastProjectStamp.compareTo(projections.get(lastProjectionPosition).getDate());
+        int compare = lastProjectStamp.compareTo(lastProjection.getDate());
 
         if (compare <= 0) {
-            projections.add(projections.get(lastProjectionPosition));
+            filteredProjections.add(lastProjection);
         }
 
         long projectTime = lastProjectStamp.getTime();
 
         if (projectTime < maxAllowedTime) {
             while (projectTime >= currentTime) {
-                projections.add(projections.get(lastProjectionPosition));
+                filteredProjections.add(lastProjection);
                 projectTime -= stepsInMillis;
             }
         } else {
-            projections.add(projections.get(lastProjectionPosition));
+            filteredProjections.add(lastProjection);
         }
     }
 
