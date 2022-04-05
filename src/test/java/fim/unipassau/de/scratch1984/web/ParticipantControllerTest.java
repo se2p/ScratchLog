@@ -31,7 +31,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -84,7 +88,7 @@ public class ParticipantControllerTest {
     private static final String EXPERIMENT = "experiment";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String REDIRECT_GUI = "redirect:" + Constants.GUI_URL + "?uid=";
-    private static final String REDIRECT_FINISH = "redirect:/finish?id=";
+    private static final String REDIRECT_FINISH = "redirect:/finish?user=";
     private static final String REDIRECT_SECRET = "redirect:/secret?user=";
     private static final String EXP_ID = "&expid=";
     private static final String RESTART = "&restart=true";
@@ -710,7 +714,8 @@ public class ParticipantControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
-        assertEquals(REDIRECT_FINISH + ID, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID,
+                participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -726,7 +731,8 @@ public class ParticipantControllerTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.simultaneousParticipation(ID)).thenReturn(true);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
-        assertEquals(REDIRECT_FINISH + ID, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID,
+                participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -844,5 +850,134 @@ public class ParticipantControllerTest {
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).saveUser(any());
         verify(httpServletRequest, never()).getSession(anyBoolean());
+    }
+
+    @Test
+    public void testRestartExperiment() {
+        userDTO.setActive(false);
+        participantDTO.setStart(LocalDateTime.now());
+        participantDTO.setEnd(LocalDateTime.now());
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        when(participantService.updateParticipant(participantDTO)).thenReturn(true);
+        assertAll(
+                () -> assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + RESTART,
+                        participantController.restartExperiment(ID_STRING, ID_STRING, httpServletRequest)),
+                () -> assertTrue(userDTO.isActive()),
+                () -> assertNull(participantDTO.getEnd())
+        );
+        verify(userService).getUserById(ID);
+        verify(participantService).getParticipant(ID, ID);
+        verify(participantService).updateParticipant(participantDTO);
+        verify(userService).updateUser(userDTO);
+    }
+
+    @Test
+    public void testRestartExperimentParticipantNotUpdated() {
+        userDTO.setActive(false);
+        participantDTO.setStart(LocalDateTime.now());
+        participantDTO.setEnd(LocalDateTime.now());
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        assertAll(
+                () -> assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
+                        httpServletRequest)),
+                () -> assertFalse(userDTO.isActive()),
+                () -> assertNull(participantDTO.getEnd())
+        );
+        verify(userService).getUserById(ID);
+        verify(participantService).getParticipant(ID, ID);
+        verify(participantService).updateParticipant(participantDTO);
+        verify(userService, never()).updateUser(any());
+    }
+
+    @Test
+    public void testRestartExperimentParticipantNotFinished() {
+        participantDTO.setStart(LocalDateTime.now());
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
+                        httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(participantService).getParticipant(ID, ID);
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).updateUser(any());
+    }
+
+    @Test
+    public void testRestartExperimentParticipantNotStarted() {
+        participantDTO.setEnd(LocalDateTime.now());
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
+                httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(participantService).getParticipant(ID, ID);
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).updateUser(any());
+    }
+
+    @Test
+    public void testRestartExperimentNotFound() {
+        when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
+                httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).updateUser(any());
+    }
+
+    @Test
+    public void testRestartExperimentUserAdmin() {
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
+                httpServletRequest));
+        verify(userService, never()).getUserById(anyInt());
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).updateUser(any());
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+    }
+
+    @Test
+    public void testRestartExperimentInvalidExperimentId() {
+        assertEquals(Constants.ERROR, participantController.restartExperiment(INFO, ID_STRING,
+                httpServletRequest));
+        verify(userService, never()).getUserById(anyInt());
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).updateUser(any());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+    }
+
+    @Test
+    public void testRestartExperimentInvalidUserId() {
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, "0", httpServletRequest));
+        verify(userService, never()).getUserById(anyInt());
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).updateUser(any());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+    }
+
+    @Test
+    public void testRestartExperimentExperimentIdNull() {
+        assertEquals(Constants.ERROR, participantController.restartExperiment(null, ID_STRING, httpServletRequest));
+        verify(userService, never()).getUserById(anyInt());
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).updateUser(any());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+    }
+
+    @Test
+    public void testRestartExperimentUserIdNull() {
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, null, httpServletRequest));
+        verify(userService, never()).getUserById(anyInt());
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).updateUser(any());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
     }
 }

@@ -47,11 +47,6 @@ public class HomeController {
     private final UserService userService;
 
     /**
-     * String corresponding to the index page.
-     */
-    private static final String INDEX = "index";
-
-    /**
      * String corresponding to the name of the model attribute containing the experiment page.
      */
     private static final String EXPERIMENTS = "experiments";
@@ -114,7 +109,7 @@ public class HomeController {
             }
         }
 
-        return INDEX;
+        return "index";
     }
 
     /**
@@ -175,7 +170,7 @@ public class HomeController {
 
         current++;
         addModelInfo(experimentPage, current, last, model);
-        return INDEX;
+        return "index";
     }
 
     /**
@@ -236,7 +231,7 @@ public class HomeController {
 
         current--;
         addModelInfo(experimentPage, current, last, model);
-        return INDEX;
+        return "index";
     }
 
     /**
@@ -275,7 +270,7 @@ public class HomeController {
         }
 
         addModelInfo(experimentPage, 1, last, model);
-        return INDEX;
+        return "index";
     }
 
     /**
@@ -315,7 +310,7 @@ public class HomeController {
 
         last++;
         addModelInfo(experimentPage, last, last, model);
-        return INDEX;
+        return "index";
     }
 
     /**
@@ -332,23 +327,28 @@ public class HomeController {
     /**
      * Loads the experiment finish page for the experiment with the current id.
      *
-     * @param id The experiment id.
+     * @param user The user id of the participant.
+     * @param experiment The experiment id.
      * @param model The model used to store the message to be displayed on the page.
      * @return The experiment finish page.
      */
     @GetMapping("/finish")
-    public String getExperimentFinishPage(@RequestParam("id") final String id, final Model model) {
-        if (id == null) {
-            logger.error("Cannot load experiment finish page of experiment with id null!");
+    public String getExperimentFinishPage(@RequestParam("user") final String user,
+                                          @RequestParam("experiment") final String experiment,
+                                          final Model model) {
+        if (experiment == null || user == null || experiment.trim().isBlank() || user.trim().isBlank()) {
+            logger.error("Cannot load experiment finish page of experiment or user with id null or blank!");
             return Constants.ERROR;
         }
 
-        int experimentId = NumberParser.parseNumber(id);
+        int experimentId = NumberParser.parseNumber(experiment);
+        int userId = NumberParser.parseNumber(user);
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
 
-        if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot load experiment finish page for invalid id " + experimentId + "!");
+        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
+            logger.error("Cannot load experiment finish page for invalid experiment id " + experiment
+                    + " or invalid user id " + user + "!");
             return Constants.ERROR;
         }
 
@@ -356,6 +356,8 @@ public class HomeController {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
             model.addAttribute("thanks", experimentDTO.getPostscript() != null ? experimentDTO.getPostscript()
                     : resourceBundle.getString("thanks"));
+            model.addAttribute("user", userId);
+            model.addAttribute("experiment", experimentId);
         } catch (NotFoundException e) {
             return Constants.ERROR;
         }

@@ -75,24 +75,9 @@ public class ParticipantController {
     private final MailService mailService;
 
     /**
-     * String corresponding to the participant page.
-     */
-    private static final String PARTICIPANT = "participant";
-
-    /**
-     * String corresponding to the experiment page.
-     */
-    private static final String EXPERIMENT = "experiment";
-
-    /**
      * String corresponding to redirecting to the experiment page.
      */
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
-
-    /**
-     * String corresponding to redirecting to the secret page.
-     */
-    private static final String REDIRECT_SECRET = "redirect:/secret?user=";
 
     /**
      * String corresponding to the experiment id parameter.
@@ -165,7 +150,7 @@ public class ParticipantController {
         model.addAttribute("experiment", id);
         model.addAttribute("userDTO", userDTO);
 
-        return PARTICIPANT;
+        return "participant";
     }
 
     /**
@@ -210,7 +195,7 @@ public class ParticipantController {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("experiment", id);
-            return PARTICIPANT;
+            return "participant";
         }
 
         String secret = Secrets.generateRandomBytes(Constants.SECRET_LENGTH);
@@ -232,7 +217,7 @@ public class ParticipantController {
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
         if (!Constants.MAIL_SERVER) {
-            return REDIRECT_SECRET + saved.getId() + EXPERIMENT_PARAM + id;
+            return "redirect:/secret" + "?user=" + saved.getId() + EXPERIMENT_PARAM + id;
         } else if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
             return REDIRECT_EXPERIMENT + id;
@@ -283,7 +268,7 @@ public class ParticipantController {
         if (userDTO == null) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
             addModelInfo(experimentDTO, model);
-            return EXPERIMENT;
+            return "experiment";
         } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
         } else if (!userService.existsParticipant(userDTO.getId(), experimentId)) {
@@ -294,7 +279,7 @@ public class ParticipantController {
 
         if (model.getAttribute(ERROR) != null) {
             addModelInfo(experimentDTO, model);
-            return EXPERIMENT;
+            return "experiment";
         }
 
         try {
@@ -401,25 +386,12 @@ public class ParticipantController {
     @GetMapping("/stop")
     public String stopExperiment(@RequestParam("experiment") final String experiment,
                                  @RequestParam("user") final String user, final HttpServletRequest httpServletRequest) {
-        if (experiment == null || user == null) {
-            logger.error("Cannot stop experiment with invalid user or experiment id null!");
+        if (invalidParameters(experiment, user, "restart", httpServletRequest)) {
             return Constants.ERROR;
         }
 
         int experimentId = NumberParser.parseNumber(experiment);
         int userId = NumberParser.parseNumber(user);
-
-        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            logger.error("Cannot stop experiment with invalid user id " + user + " or experiment id " + experiment
-                    + " !");
-            return Constants.ERROR;
-        }
-
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            logger.error("An administrator tried to finish the experiment with id " + experiment + " for user" + user
-                    + "!");
-            return Constants.ERROR;
-        }
 
         try {
             UserDTO userDTO = userService.getUserById(userId);
@@ -438,13 +410,13 @@ public class ParticipantController {
             if (participantService.simultaneousParticipation(userId)
                     && participantService.updateParticipant(participantDTO)) {
                 clearSecurityContext(httpServletRequest);
-                return "redirect:/finish?id=" + experimentId;
+                return "redirect:/finish?user=" + userId + "&experiment=" + experimentId;
             } else if (participantService.updateParticipant(participantDTO)) {
                     userDTO.setActive(false);
                     userDTO.setSecret(null);
                     userService.saveUser(userDTO);
                     clearSecurityContext(httpServletRequest);
-                    return "redirect:/finish?id=" + experimentId;
+                    return "redirect:/finish?user=" + userId + "&experiment=" + experimentId;
             } else {
                 logger.error("Failed to update the finishing time of participant with user id "
                         + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment() + "!");
@@ -453,6 +425,54 @@ public class ParticipantController {
             }
         } catch (NotFoundException e) {
             clearSecurityContext(httpServletRequest);
+            return Constants.ERROR;
+        }
+    }
+
+    /**
+     * Restarts an already finished experiment with the given id for the participant with the given id if a
+     * corresponding participant relation exists. In this case, the ending time of the user is reset to null. If the
+     * passed parameters are invalid, the user is an administrator, or no corresponding participant exists, the user is
+     * redirected to the error page instead.
+     *
+     * @param experiment The id of the experiment.
+     * @param user The id of the user.
+     * @param httpServletRequest The {@link HttpServletRequest}.
+     * @return Opens the Scratch GUI on success, or redirects to the error page.
+     */
+    @GetMapping("/restart")
+    public String restartExperiment(@RequestParam("experiment") final String experiment,
+                                    @RequestParam("user") final String user,
+                                    final HttpServletRequest httpServletRequest) {
+        if (invalidParameters(experiment, user, "restart", httpServletRequest)) {
+            return Constants.ERROR;
+        }
+
+        int experimentId = NumberParser.parseNumber(experiment);
+        int userId = NumberParser.parseNumber(user);
+
+        try {
+            UserDTO userDTO = userService.getUserById(userId);
+            ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userId);
+
+            if (participantDTO.getStart() == null || participantDTO.getEnd() == null) {
+                logger.error("Cannot restart experiment for user " + userId + " and experiment " + experimentId
+                        + " with start or end time nulL!");
+                return Constants.ERROR;
+            }
+
+            participantDTO.setEnd(null);
+
+            if (!participantService.updateParticipant(participantDTO)) {
+                logger.error("Could not reset the ending time for user " + userId + " and experiment " + experimentId);
+                return Constants.ERROR;
+            } else {
+                userDTO.setActive(true);
+                userService.updateUser(userDTO);
+                return "redirect:" + Constants.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
+                        + participantDTO.getExperiment() + "&restart=true";
+            }
+        } catch (NotFoundException e) {
             return Constants.ERROR;
         }
     }
@@ -554,6 +574,41 @@ public class ParticipantController {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;
+    }
+
+    /**
+     * Checks whether the passed experiment and user strings are valid ids and the user is not an administrator and logs
+     * an error message, if this is not the case.
+     *
+     * @param experiment The string representation of the experiment id.
+     * @param user The string representation of the user id.
+     * @param message A string specifying the method for which the parameters are to be validated.
+     * @param httpServletRequest The {@link HttpServletRequest}.
+     * @return {@code true} if the parameters are valid and the user is no administrator or {@code false} otherwise.
+     */
+    private boolean invalidParameters(final String experiment, final String user, final String message,
+                                      final HttpServletRequest httpServletRequest) {
+        if (experiment == null || user == null) {
+            logger.error("Cannot " + message + " experiment with invalid user or experiment id null!");
+            return true;
+        }
+
+        int experimentId = NumberParser.parseNumber(experiment);
+        int userId = NumberParser.parseNumber(user);
+
+        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
+            logger.error("Cannot " + message + " experiment with invalid user id " + user + " or experiment id "
+                    + experiment + "!");
+            return true;
+        }
+
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+            logger.error("An administrator tried to " + message + " the experiment with id " + experiment + " for user"
+                    + user + "!");
+            return true;
+        }
+
+        return false;
     }
 
 }

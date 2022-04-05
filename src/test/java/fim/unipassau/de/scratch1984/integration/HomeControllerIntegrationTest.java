@@ -74,7 +74,8 @@ public class HomeControllerIntegrationTest {
     private static final String EXPERIMENTS = "experiments";
     private static final String ID_STRING = "1";
     private static final String THANKS = "thanks";
-    private static final String ID_PARAM = "id";
+    private static final String EXPERIMENT = "experiment";
+    private static final String USER = "user";
     private final int pageNum = 3;
     private final int lastPage = 4;
     private static final int ID = 1;
@@ -534,13 +535,16 @@ public class HomeControllerIntegrationTest {
     public void testGetExperimentFinishPage() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/finish")
-                        .param(ID_PARAM, ID_STRING)
+                        .param(EXPERIMENT, ID_STRING)
+                        .param(USER, ID_STRING)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(THANKS, is(experimentDTO.getPostscript())))
+                .andExpect(model().attribute(EXPERIMENT, is(ID)))
+                .andExpect(model().attribute(USER, is(ID)))
                 .andExpect(view().name(FINISH));
         verify(experimentService).getExperiment(ID);
     }
@@ -549,7 +553,8 @@ public class HomeControllerIntegrationTest {
     public void testGetExperimentFinishPageNotFound() throws Exception {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/finish")
-                        .param(ID_PARAM, ID_STRING)
+                        .param(EXPERIMENT, ID_STRING)
+                        .param(USER, ID_STRING)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
@@ -561,9 +566,25 @@ public class HomeControllerIntegrationTest {
     }
 
     @Test
-    public void testGetExperimentFinishPageInvalidId() throws Exception {
+    public void testGetExperimentFinishPageInvalidExperimentId() throws Exception {
         mvc.perform(get("/finish")
-                        .param(ID_PARAM, INVALID_NUMBER)
+                        .param(EXPERIMENT, INVALID_NUMBER)
+                        .param(USER, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(model().attribute(THANKS, nullValue()))
+                .andExpect(view().name(Constants.ERROR));
+        verify(experimentService, never()).getExperiment(anyInt());
+    }
+
+    @Test
+    public void testGetExperimentFinishPageUserIdBlank() throws Exception {
+        mvc.perform(get("/finish")
+                        .param(EXPERIMENT, ID_STRING)
+                        .param(USER, BLANK)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)

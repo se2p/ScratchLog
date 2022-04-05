@@ -20,6 +20,12 @@
             <div class="col-12 mb-3 form-group position-relative" th:text="${thanks}">
             </div>
         </div>
+        <div class="row mx-5">
+            <div class="col-12 text-center">
+                <a class="btn btn-secondary" th:text="#{restart}"
+                   th:href="@{/participant/restart(user=${user}, experiment=${experiment})}"></a>
+            </div>
+        </div>
     </div>
     <div class="col-2"></div>
 </div>
