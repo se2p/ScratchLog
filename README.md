@@ -21,19 +21,31 @@ Install npm in the `resources/static` folder. The result page of this project us
 npm install
 ```
 Since this project is build with the Spring framework, you can run this project from within an IDE. You will still need
-to do the necessary configuration described below.
+to do the necessary configurations described below.
 
 #### Configuration
 
-To get the project up and running, you need to adapt the following configurations to your system:
-- Edit the `application.properties` file in the `resources` folder to configure the database connection and mail
-  sending.
-- If you want to use the application without a mail server, set the *MAIL_SERVER* boolean in the `Constants` class to
-  false. With this setting, you will not be able to use the reset password functionality of this application.
-- Change the *BASE_URL* string in the `Constants` class to the application URL.
-- Change the *GUI_URL* string in the `Constants` class to the URL of the instrumented Scratch GUI.
-- Change the *logging._baseUrl* in *start()* in the `virtual-machine.js` to
-  `<applicationURL>/store/sb3?id=`.
+To get the project up and running, you need to adapt the `application.properties` file in the `resources` folder as
+follows:
+- Configure the database connection and mail sending to match your system.
+- If you want to use the application without a mail server, set the *app.mail* boolean to false. With this setting,
+  you will not be able to use the reset password functionality of this application. Please note that switching between
+  mail server options, e.g. first using the application without a mail server and then using one, might cause the
+  application to not work properly anymore.
+- Change the *app.url* string to the application base URL, e.g. `scratch.fim.uni-passau.de`.
+- Change the *app.gui* string to the URL under which the instrumented Scratch GUI is available.
+- Set the *app.gui.base* string to the base URL of the Scratch GUI. This might be the same as the *app.gui* property.
+  However, if you have deployed the GUI under a relative context path, e.g. `scratch.fim.uni-passau.de/gui`, *app.gui*
+  would have to be set to the full path (`scratch.fim.uni-passau.de/gui`) while *app.gui.base* will only be
+  `scratch.fim.uni-passau.de`.
+
+If you plan to deploy the project under a relative context path, e.g.`scratch.fim.uni-passau.de/scratch1984` instead of
+`scratch.fim.uni-passau.de`, you need to change the `server.servlet.context-path` in the `application.properties` file
+accordingly, e.g. to `/scratch1984` while the *app.url* value is `scratch.fim.uni-passau.de`.
+
+You will also have to make some changes to the instrumented Scratch instance:
+- Change the *logging._baseUrl* in the *start()* method of `virtual-machine.js` in the instrumented `scratch-vm` to
+  `<applicationURL>/store`.
 - Change the `window.location.href` in the *handleFinishExperiment()* method in `menu-bar.jsx` in the instrumented
   `scratch-gui` to the application URL.
 - The instrumented `scratch-gui` and `scratch-vm` need to be linked via the `npm link` setting, as described
@@ -43,13 +55,6 @@ The `schema.sql` file in `main/resources` contains the necessary database schema
 administrator is added automatically, if no other administrator could be found in the database. The login credentials
 are specified in the `UserInitialization` class. You should change these credentials immediately after you have logged
 in.
-
-If you plan to deploy the project under a different context path than the root context path, e.g.
-`scratch.fim.uni-passau.de/scratch1984` instead of `scratch.fim.uni-passau.de`, there are a few more things you have to
-do:
-- The `application.properties` file contains a section where you can configure the context path. Uncomment the two lines
-and change the `server.servlet.context-path` accordingly.
-- Change the *CONTEXT_PATH* string in the `Constants` class to the specified context path.
 
 ## Build and Deployment
 

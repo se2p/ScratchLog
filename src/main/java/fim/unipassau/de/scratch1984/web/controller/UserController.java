@@ -990,7 +990,7 @@ public class UserController {
                               final ResourceBundle resourceBundle) {
         String tokenUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH + "/token?value=" + value;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", ApplicationProperties.BASE_URL);
+        templateModel.put("baseUrl", ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH);
         templateModel.put("token", tokenUrl);
         return mailService.sendEmail(email, resourceBundle.getString(subject), templateModel, template);
     }
