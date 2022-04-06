@@ -8,7 +8,8 @@
 <div th:fragment="footer">
     <div id="footer" class="footer">
         <p id="copyright_footer">
-            Copyright &copy; 2021 <span th:text="${T(fim.unipassau.de.scratch1984.util.Constants).PROJECT_NAME}"></span><br>
+            Copyright &copy; 2021
+            <span th:text="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).APPLICATION_NAME}"></span><br>
             <span th:text="#{address}"></span><br>
             <!--Link to the chair's page-->
             <a class="link" href="https://www.fim.uni-passau.de/lehrstuhl-fuer-software-engineering-ii/"

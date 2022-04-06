@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.SecretController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -64,7 +65,8 @@ public class SecretControllerIntegrationTest {
     private static final String USERS = "users";
     private static final String LINK = "link";
     private static final String INACTIVE = "inactive";
-    private static final String URL = Constants.BASE_URL + "/users/authenticate?id=" + ID + "&secret=";
+    private static final String URL = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
+            + "/users/authenticate?id=" + ID + "&secret=";
     private static final String USER_PARAM = "user";
     private static final String EXPERIMENT_PARAM = "experiment";
     private final ExperimentDTO experiment = new ExperimentDTO(ID, "experiment", "my experiment", "info", "no", true);

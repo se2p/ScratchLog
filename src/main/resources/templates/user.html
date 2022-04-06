@@ -20,12 +20,12 @@
         <h2 class="mb-5" th:text="#{add_user}"></h2>
 
         <!-- The information shown on the add user page if the mail server constant is set to true. -->
-        <div class="row" th:if="${T(fim.unipassau.de.scratch1984.util.Constants).MAIL_SERVER}">
+        <div class="row" th:if="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).MAIL_SERVER}">
             <div class="col-12 mb-5" th:text="#{user_info}"></div>
         </div>
 
         <!-- The information shown on the add user page if the mail server constant is set to false. -->
-        <div class="row" th:unless="${T(fim.unipassau.de.scratch1984.util.Constants).MAIL_SERVER}">
+        <div class="row" th:unless="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).MAIL_SERVER}">
             <div class="col-12 mb-5" th:text="#{user_info_no_mail}"></div>
         </div>
 

@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
+import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
@@ -353,7 +354,7 @@ public class UserController {
 
         UserDTO saved = userService.saveUser(userDTO);
 
-        if (!Constants.MAIL_SERVER) {
+        if (!ApplicationProperties.MAIL_SERVER) {
             return "redirect:/users/profile?name=" + saved.getUsername();
         } else {
             TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.REGISTER, null, saved.getId());
@@ -376,7 +377,7 @@ public class UserController {
     @GetMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
     public String getAddParticipants(final UserBulkDTO userBulkDTO) {
-        if (Constants.MAIL_SERVER) {
+        if (ApplicationProperties.MAIL_SERVER) {
             return INDEX;
         }
 
@@ -461,7 +462,7 @@ public class UserController {
                 || userDTO.getEmail().length() > Constants.LARGE_FIELD) {
             logger.error("Cannot reset password for user with input username or email too long!");
             return Constants.ERROR;
-        } else if (!Constants.MAIL_SERVER) {
+        } else if (!ApplicationProperties.MAIL_SERVER) {
             logger.warn("Cannot reset password without a mail server!");
             return Constants.ERROR;
         }
@@ -649,7 +650,7 @@ public class UserController {
         boolean sent = false;
 
         if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
-            if (Constants.MAIL_SERVER) {
+            if (ApplicationProperties.MAIL_SERVER) {
                 sent = updateEmail(userDTO.getEmail(), userDTO.getId(), resourceBundle);
             } else {
                 findOldUser.setEmail(userDTO.getEmail());
@@ -987,9 +988,9 @@ public class UserController {
      */
     private boolean sendEmail(final String email, final String value, final String subject, final String template,
                               final ResourceBundle resourceBundle) {
-        String tokenUrl = Constants.BASE_URL + "/token?value=" + value;
+        String tokenUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH + "/token?value=" + value;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", Constants.BASE_URL);
+        templateModel.put("baseUrl", ApplicationProperties.BASE_URL);
         templateModel.put("token", tokenUrl);
         return mailService.sendEmail(email, resourceBundle.getString(subject), templateModel, template);
     }

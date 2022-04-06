@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
+import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -373,7 +374,7 @@ public class HomeController {
      */
     @GetMapping("/reset")
     public String getResetPage(final UserDTO userDTO) {
-        return Constants.MAIL_SERVER ? "password-reset" : Constants.ERROR;
+        return ApplicationProperties.MAIL_SERVER ? "password-reset" : Constants.ERROR;
     }
 
     /**

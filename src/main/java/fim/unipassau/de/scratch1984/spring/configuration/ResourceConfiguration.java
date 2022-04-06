@@ -1,6 +1,6 @@
 package fim.unipassau.de.scratch1984.spring.configuration;
 
-import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -41,8 +41,8 @@ public class ResourceConfiguration implements WebMvcConfigurer {
      */
     @Override
     public void addCorsMappings(final CorsRegistry registry) {
-        registry.addMapping(Constants.CONTEXT_PATH + "/store/*").allowedMethods("GET",
-                "POST").allowedOrigins(Constants.GUI_BASE_URL);
+        registry.addMapping("/store/*").allowedMethods("GET",
+                "POST").allowedOrigins(ApplicationProperties.GUI_BASE_URL);
     }
 
 }
