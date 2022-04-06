@@ -209,7 +209,8 @@ public class ParticipantController {
             return Constants.ERROR;
         }
 
-        String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + id + "&secret=" + secret;
+        String experimentUrl = Constants.BASE_URL + Constants.CONTEXT_PATH + "/users/authenticate?id=" + id + "&secret="
+                + secret;
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put("baseUrl", Constants.BASE_URL);
         templateModel.put("secret", experimentUrl);

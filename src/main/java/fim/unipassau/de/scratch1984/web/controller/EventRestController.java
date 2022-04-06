@@ -16,7 +16,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,7 +36,6 @@ import java.util.Base64;
 /**
  * The REST controller receiving all the logging requests sent by the Scratch GUI and VM.
  */
-@CrossOrigin(origins = Constants.GUI_URL)
 @RestController
 @RequestMapping(value = "/store")
 public class EventRestController {
