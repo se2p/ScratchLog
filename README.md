@@ -15,13 +15,17 @@ To access the database, you only need to change the connection details in the `a
 
 ### Run from within an IDE
 
-Install npm in the `resources/static` folder. The result page of this project uses Google's `Blockly` and
-`Scratch Blocks` to display the participant code.
+Create a new database with a database user to grant the application access and specify the connection details in the
+`application.properties` file. Add the necessary tables and constraints using the `schema.sql` file in the
+`main/resources` folder.
+
+Install npm in the `resources/static` folder via the following command:
 ```bash
 npm install
 ```
-Since this project is build with the Spring framework, you can run this project from within an IDE. You will still need
-to do the necessary configurations described below.
+The result page of this project uses Google's `Blockly` and `Scratch Blocks` to display the participant code. Since this
+project is build with the Spring framework, you can run this project from within an IDE. You will still need to do the
+necessary configurations described below.
 
 #### Configuration
 
@@ -43,18 +47,17 @@ If you plan to deploy the project under a relative context path, e.g.`scratch.fi
 `scratch.fim.uni-passau.de`, you need to change the `server.servlet.context-path` in the `application.properties` file
 accordingly, e.g. to `/scratch1984` while the *app.url* value is `scratch.fim.uni-passau.de`.
 
-You will also have to make some changes to the instrumented Scratch instance:
+You also have to make some changes to the instrumented Scratch instance:
 - Change the *logging._baseUrl* in the *start()* method of `virtual-machine.js` in the instrumented `scratch-vm` to
-  `<applicationURL>/store`.
+  `<app.url> + <server.servlet.context-path>/store`.
 - Change the `window.location.href` in the *handleFinishExperiment()* method in `menu-bar.jsx` in the instrumented
-  `scratch-gui` to the application URL.
+  `scratch-gui` to `<app.url> + <server.servlet.context-path>`.
 - The instrumented `scratch-gui` and `scratch-vm` need to be linked via the `npm link` setting, as described
   [here](https://github.com/LLK/scratch-gui/wiki/Getting-Started).
 
-The `schema.sql` file in `main/resources` contains the necessary database schema. On application startup, a first
-administrator is added automatically, if no other administrator could be found in the database. The login credentials
-are specified in the `UserInitialization` class. You should change these credentials immediately after you have logged
-in.
+On application startup, a first administrator is added automatically, if no other administrator could be found in the
+database. The login credentials are specified in the `UserInitialization` class. You should change these credentials
+immediately after you have logged in.
 
 ## Build and Deployment
 
