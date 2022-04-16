@@ -21,6 +21,12 @@
             <div class="col-12 alert alert-success" th:text="#{success}"></div>
         </div>
 
+        <!-- The information shown at the top of the page if the application has attempted to send an email for password
+        reset. -->
+        <div class="row" th:if="${param.info != null}">
+            <div class="col-12 alert alert-info" th:text="#{reset_info}"></div>
+        </div>
+
         <!-- The error message shown at the top of the page when an error occurs. -->
         <div class="row" th:if="${param.error != null}">
             <div class="col-12 alert alert-danger" th:text="#{error}"></div>

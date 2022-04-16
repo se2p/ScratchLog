@@ -91,12 +91,12 @@ public class UserControllerIntegrationTest {
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_INFO = "redirect:/?info=true";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String INVALID = "redirect:/users/profile?invalid=true&name=";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
-    private static final String PASSWORD_RESET = "password-reset";
     private static final String PARTICIPANTS_ADD = "participants-add";
     private static final String USER_DTO = "userDTO";
     private static final String PASSWORD_DTO = "passwordDTO";
@@ -555,7 +555,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT_SUCCESS));
+                .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
@@ -574,7 +574,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
@@ -609,7 +609,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -625,9 +625,8 @@ public class UserControllerIntegrationTest {
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(model().attribute("error", notNullValue()))
-                .andExpect(status().isOk())
-                .andExpect(view().name(PASSWORD_RESET));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());

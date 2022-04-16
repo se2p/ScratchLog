@@ -121,11 +121,6 @@ public class UserController {
     private static final String USER = "user";
 
     /**
-     * String corresponding to the password reset page.
-     */
-    private static final String PASSWORD_RESET = "password-reset";
-
-    /**
      * String corresponding to the add participants page.
      */
     private static final String PARTICIPANTS_ADD = "participants-add";
@@ -444,16 +439,13 @@ public class UserController {
 
     /**
      * Generates a password reset token for the given user and sends an email to complete the password reset. If the
-     * passed parameters are invalid, the user is redirected to the error page instead. If no user with matching
-     * username and email could be found, the user returns to the password reset page where an error message is
-     * displayed.
+     * passed parameters are invalid or no user with matching username and email could be found, nothing happens.
      *
      * @param userDTO The {@link UserDTO} used to save the new user data.
-     * @param model The {@link Model} used to store the error message.
-     * @return The index page on success, or the error page or password reset page otherwise.
+     * @return The index page displaying further information.
      */
     @PostMapping("/reset")
-    public String passwordReset(@ModelAttribute(USER_DTO) final UserDTO userDTO, final Model model) {
+    public String passwordReset(@ModelAttribute(USER_DTO) final UserDTO userDTO) {
         if (userDTO.getUsername() == null || userDTO.getEmail() == null || userDTO.getUsername().trim().isBlank()
                 || userDTO.getEmail().trim().isBlank()) {
             logger.error("Cannot reset password for user with username or email null or blank!");
@@ -476,17 +468,13 @@ public class UserController {
 
             if (findEmail.equals(findUsername)) {
                 TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, findEmail.getId());
-
-                if (sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
-                        resourceBundle)) {
-                    return "redirect:/?success=true";
-                }
+                sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
+                        resourceBundle);
             }
 
-            return Constants.ERROR;
+            return "redirect:/?info=true";
         } catch (NotFoundException e) {
-            model.addAttribute("error", resourceBundle.getString("user_not_found"));
-            return PASSWORD_RESET;
+            return "redirect:/?info=true";
         }
     }
 
