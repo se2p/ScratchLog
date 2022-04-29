@@ -90,7 +90,7 @@ public final class Constants {
     /**
      * The maximum number of participants that can be added in a bulk.
      */
-    public static final int MAX_ADD_PARTICIPANTS = 30;
+    public static final int MAX_ADD_PARTICIPANTS = 50;
 
     /**
      * The number a minute value needs to be multiplied with to convert it to milliseconds.

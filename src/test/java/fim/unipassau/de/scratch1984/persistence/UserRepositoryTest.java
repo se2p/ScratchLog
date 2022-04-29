@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -274,6 +275,41 @@ public class UserRepositoryTest {
     public void testFindDeleteParticipantSuggestionsEmpty() {
         List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, 100);
         assertTrue(users.isEmpty());
+    }
+
+    @Test
+    public void testFindLastUsername() {
+        Optional<UserProjection> user = userRepository.findLastUsername(USERNAME_SEARCH);
+        Optional<UserProjection> participant = userRepository.findLastUsername("part");
+        assertAll(
+                () -> assertTrue(user.isPresent()),
+                () -> assertTrue(participant.isPresent()),
+                () -> assertEquals(USERNAME_SEARCH + "6", user.get().getUsername()),
+                () -> assertEquals("part8", participant.get().getUsername())
+        );
+    }
+
+    @Test
+    public void testFindLastUsernameDeleteUser() {
+        entityManager.remove(user8);
+        Optional<UserProjection> user = userRepository.findLastUsername(USERNAME_SEARCH);
+        assertAll(
+                () -> assertTrue(user.isPresent()),
+                () -> assertEquals(USERNAME_SEARCH + "5", user.get().getUsername())
+        );
+    }
+
+    @Test
+    public void testFindLastUsernameAddUser() {
+        String username = "user7";
+        User user = new User(username, "part6@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+        user = entityManager.persist(user);
+        Optional<UserProjection> findUser = userRepository.findLastUsername(USERNAME_SEARCH);
+        entityManager.remove(user);
+        assertAll(
+                () -> assertTrue(findUser.isPresent()),
+                () -> assertEquals(username, findUser.get().getUsername())
+        );
     }
 
 }

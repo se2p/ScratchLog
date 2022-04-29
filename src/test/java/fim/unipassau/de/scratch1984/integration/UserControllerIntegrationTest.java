@@ -488,6 +488,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SUCCESS))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+        verify(userService).findValidNumberForUsername(userBulkDTO.getUsername());
         verify(userService, never()).findLastId();
         verify(userService, times(AMOUNT)).existsUser(anyString());
         verify(userService, times(AMOUNT)).saveUser(any());
@@ -496,6 +497,7 @@ public class UserControllerIntegrationTest {
     @Test
     public void testAddParticipantsUsernameExists() throws Exception {
         List<String> existingNames = List.of("admin5");
+        when(userService.findValidNumberForUsername(userBulkDTO.getUsername())).thenReturn(1);
         when(userService.existsUser(existingNames.get(0))).thenReturn(true);
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
@@ -505,6 +507,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(PARTICIPANTS_ADD))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, is(existingNames)));
+        verify(userService).findValidNumberForUsername(userBulkDTO.getUsername());
         verify(userService, never()).findLastId();
         verify(userService, times(AMOUNT)).existsUser(anyString());
         verify(userService, times(AMOUNT - existingNames.size())).saveUser(any());
@@ -521,6 +524,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(PARTICIPANTS_ADD))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+        verify(userService, never()).findValidNumberForUsername(anyString());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).saveUser(any());
@@ -537,6 +541,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+        verify(userService, never()).findValidNumberForUsername(anyString());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).saveUser(any());

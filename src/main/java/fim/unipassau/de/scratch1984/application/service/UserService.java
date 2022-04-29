@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
@@ -436,6 +437,33 @@ public class UserService {
     }
 
     /**
+     * Searches for the user whose username starts with the given username string and ends with the highest number
+     * found. The number at the end of the username is then incremented and returned. If no corresponding user could be
+     * found, or the username does not end with a digit, 1 is returned instead.
+     *
+     * @param username The username pattern to search for.
+     * @return The number at the end of the retrieved username, or 1.
+     */
+    @Transactional
+    public int findValidNumberForUsername(final String username) {
+        if (username == null || username.isBlank()) {
+            logger.error("Cannot search for matching username with username null or blank!");
+            throw new IllegalArgumentException("Cannot search for matching username with username null or blank!");
+        }
+
+        Optional<UserProjection> user = userRepository.findLastUsername(username);
+
+        if (user.isEmpty()) {
+            logger.debug("Couldn't find username starting with " + username + ".");
+            return 1;
+        } else {
+            String name = user.get().getUsername();
+            int position = getFirstDigitPositionAtEnd(name);
+            return position == name.length() ? 1 : Integer.parseInt(name.substring(position)) + 1;
+        }
+    }
+
+    /**
      * Checks, whether the given input string matches the given hashed password value.
      *
      * @param input The input string.
@@ -454,6 +482,24 @@ public class UserService {
      */
     public String encodePassword(final String password) {
         return passwordEncoder.encode(password);
+    }
+
+    /**
+     * Returns the position of the first digit at the end of the string after which only more numbers occur, if any.
+     *
+     * @param username The username to check.
+     * @return The position of the last digit, or the length of the string, if the last character is not a digit.
+     */
+    private int getFirstDigitPositionAtEnd(final String username) {
+        int pos;
+
+        for (pos = username.length() - 1; pos >= 0; pos--) {
+            if (!Character.isDigit(username.charAt(pos))) {
+                break;
+            }
+        }
+
+        return pos + 1;
     }
 
     /**

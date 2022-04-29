@@ -411,7 +411,8 @@ public class UserController {
             return PARTICIPANTS_ADD;
         }
 
-        int number = userBulkDTO.isStartAtOne() ? 1 : userService.findLastId() + 1;
+        int number = userBulkDTO.isStartAtOne() ? userService.findValidNumberForUsername(userBulkDTO.getUsername())
+                : userService.findLastId() + 1;
         List<String> invalidUsernames = new ArrayList<>();
 
         for (int i = 0; i < userBulkDTO.getAmount(); i++) {

@@ -610,7 +610,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddParticipantsStartOneUsernameExists() {
-        List<String> existingNames = List.of("admin1");
+        List<String> existingNames = List.of("admin0");
         userBulkDTO.setStartAtOne(true);
         when(userService.existsUser(existingNames.get(0))).thenReturn(true);
         assertEquals(PARTICIPANTS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));

@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
@@ -13,6 +14,8 @@ import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +25,7 @@ import javax.persistence.EntityNotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -688,5 +692,97 @@ public class UserServiceTest {
                 () -> userService.findLastId()
         );
         verify(userRepository).findFirstByOrderByIdDesc();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {9, 25, 100})
+    public void testFindLastUsernameNumber(int number) {
+        UserProjection projection = getProjection(number);
+        when(userRepository.findLastUsername(USERNAME)).thenReturn(java.util.Optional.of(projection));
+        assertEquals(number + 1, userService.findValidNumberForUsername(USERNAME));
+        verify(userRepository).findLastUsername(USERNAME);
+    }
+
+    @Test
+    public void testFindLastUsernameOnlyDigits() {
+        UserProjection projection = new UserProjection() {
+            @Override
+            public Integer getId() {
+                return 1;
+            }
+
+            @Override
+            public String getUsername() {
+                return "9999";
+            }
+
+            @Override
+            public String getEmail() {
+                return EMAIL;
+            }
+
+            @Override
+            public String getRole() {
+                return ADMIN;
+            }
+        };
+        when(userRepository.findLastUsername(USERNAME)).thenReturn(java.util.Optional.of(projection));
+        assertEquals(10000, userService.findValidNumberForUsername(USERNAME));
+        verify(userRepository).findLastUsername(USERNAME);
+    }
+
+    @Test
+    public void testFindLastUsernameNumberNoDigit() {
+        UserProjection projection = getProjection(null);
+        when(userRepository.findLastUsername(USERNAME)).thenReturn(java.util.Optional.of(projection));
+        assertEquals(1, userService.findValidNumberForUsername(USERNAME));
+        verify(userRepository).findLastUsername(USERNAME);
+    }
+
+    @Test
+    public void testFindLastUsernameEmpty() {
+        when(userRepository.findLastUsername(USERNAME)).thenReturn(Optional.empty());
+        assertEquals(1, userService.findValidNumberForUsername(USERNAME));
+        verify(userRepository).findLastUsername(USERNAME);
+    }
+
+    @Test
+    public void testFindLastUsernameBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.findValidNumberForUsername(BLANK)
+        );
+        verify(userRepository, never()).findLastUsername(anyString());
+    }
+
+    @Test
+    public void testFindLastUsernameNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.findValidNumberForUsername(null)
+        );
+        verify(userRepository, never()).findLastUsername(anyString());
+    }
+
+    private UserProjection getProjection(Integer number) {
+        return new UserProjection() {
+            @Override
+            public Integer getId() {
+                return number;
+            }
+
+            @Override
+            public String getUsername() {
+                return number == null ? USERNAME : USERNAME + number;
+            }
+
+            @Override
+            public String getEmail() {
+                return EMAIL;
+            }
+
+            @Override
+            public String getRole() {
+                return ADMIN;
+            }
+        };
     }
 }
