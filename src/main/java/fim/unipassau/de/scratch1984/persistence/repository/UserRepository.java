@@ -155,7 +155,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @return The user projection containing information or an empty {@link Optional}.
      */
     @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE u.username LIKE CONCAT(:name, '%') AND "
-            + "RIGHT(u.username, 1) IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9) ORDER BY u.username DESC LIMIT 1")
+            + "RIGHT(u.username, 1) IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9) ORDER BY LENGTH(u.username) DESC, u.username "
+            + "DESC LIMIT 1")
     Optional<UserProjection> findLastUsername(@Param("name") String name);
 
 }
