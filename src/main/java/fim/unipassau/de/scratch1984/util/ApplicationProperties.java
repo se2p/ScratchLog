@@ -38,7 +38,7 @@ public final class ApplicationProperties {
     public static final Boolean MAIL_SERVER;
 
     static {
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("application");
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("application-local");
         APPLICATION_NAME = resourceBundle.getString("app.name");
         BASE_URL = resourceBundle.getString("app.url");
         CONTEXT_PATH = resourceBundle.getString("server.servlet.context-path");
