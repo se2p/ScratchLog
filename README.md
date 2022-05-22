@@ -42,6 +42,13 @@ follows:
   However, if you have deployed the GUI under a relative context path, e.g. `scratch.fim.uni-passau.de/gui`, *app.gui*
   would have to be set to the full path (`scratch.fim.uni-passau.de/gui`) while *app.gui.base* will only be
   `scratch.fim.uni-passau.de`.
+- If you only want to use the `application.properties` file, you can comment out the *spring.profile.active* line.
+
+Since the `application.properties` file contains some critical data (e.g. login information for the database) that might
+easily be committed by accident, some sections have been commented out. You should put these in a file named
+`application-local.properties` in the `resources` folder, uncomment them and adapt them there. This file has been added
+to the `.gitignore` file and the *spring.profile.active* configuration in the `application.properties` file has been
+set accordingly for spring to automatically pick up the configurations.
 
 If you plan to deploy the project under a relative context path, e.g.`scratch.fim.uni-passau.de/scratch1984` instead of
 `scratch.fim.uni-passau.de`, you need to change the `server.servlet.context-path` in the `application.properties` file
