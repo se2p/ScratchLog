@@ -9,6 +9,7 @@ import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
@@ -364,7 +365,7 @@ public class ExperimentController {
                 experimentDTO = experimentService.changeExperimentStatus(true, experimentId);
                 List<UserDTO> userDTOS = userService.reactivateUserAccounts(experimentId);
 
-                if (!Constants.MAIL_SERVER) {
+                if (!ApplicationProperties.MAIL_SERVER) {
                     return REDIRECT_SECRET_LIST + experimentId;
                 } else {
                     userDTOS.forEach(userDTO -> sendEmail(userDTO, id, httpServletRequest));
@@ -438,7 +439,7 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        if (!Constants.MAIL_SERVER) {
+        if (!ApplicationProperties.MAIL_SERVER) {
             return REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + experimentId;
         } else if (sendEmail(userDTO, id, httpServletRequest)) {
             return REDIRECT_EXPERIMENT + id;
@@ -752,9 +753,10 @@ public class ExperimentController {
      */
     private Map<String, Object> getTemplateModel(final String id, final String secret,
                                                  final HttpServletRequest httpServletRequest) {
-        String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + id + "&secret=" + secret;
+        String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
+                + "/users/authenticate?id=" + id + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", Constants.BASE_URL);
+        templateModel.put("baseUrl", ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH);
         templateModel.put("secret", experimentUrl);
         return templateModel;
     }

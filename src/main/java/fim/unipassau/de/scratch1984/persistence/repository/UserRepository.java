@@ -80,15 +80,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findAllByRole(String role);
 
     /**
-     * Returns a list of the first five users whose email or username contain the given values.
-     *
-     * @param username The username to search for.
-     * @param email The email to search for.
-     * @return A list of users.
-     */
-    List<User> findFirst5ByUsernameOrEmailContainsIgnoreCase(String username, String email);
-
-    /**
      * Returns a list of the first five users whose email or username contain the given query value.
      *
      * @param query The username or email to search for.
@@ -154,5 +145,18 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @return The user.
      */
     User findFirstByOrderByIdDesc();
+
+    /**
+     * Returns an optional {@link UserProjection} containing information on the username starting with the given name
+     * value and ending with a digit, if existent. If more than one match is found, the one that occurs last in
+     * alphabetical order is returned.
+     *
+     * @param name The username pattern to search for.
+     * @return The user projection containing information or an empty {@link Optional}.
+     */
+    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE u.username LIKE CONCAT(:name, '%') AND "
+            + "RIGHT(u.username, 1) IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9) ORDER BY LENGTH(u.username) DESC, u.username "
+            + "DESC LIMIT 1")
+    Optional<UserProjection> findLastUsername(@Param("name") String name);
 
 }

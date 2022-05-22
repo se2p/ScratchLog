@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
+import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
@@ -118,11 +119,6 @@ public class UserController {
      * String corresponding to the add user page.
      */
     private static final String USER = "user";
-
-    /**
-     * String corresponding to the password reset page.
-     */
-    private static final String PASSWORD_RESET = "password-reset";
 
     /**
      * String corresponding to the add participants page.
@@ -353,7 +349,7 @@ public class UserController {
 
         UserDTO saved = userService.saveUser(userDTO);
 
-        if (!Constants.MAIL_SERVER) {
+        if (!ApplicationProperties.MAIL_SERVER) {
             return "redirect:/users/profile?name=" + saved.getUsername();
         } else {
             TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.REGISTER, null, saved.getId());
@@ -376,7 +372,7 @@ public class UserController {
     @GetMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
     public String getAddParticipants(final UserBulkDTO userBulkDTO) {
-        if (Constants.MAIL_SERVER) {
+        if (ApplicationProperties.MAIL_SERVER) {
             return INDEX;
         }
 
@@ -415,7 +411,8 @@ public class UserController {
             return PARTICIPANTS_ADD;
         }
 
-        int number = userBulkDTO.isStartAtOne() ? 1 : userService.findLastId() + 1;
+        int number = userBulkDTO.isStartAtOne() ? userService.findValidNumberForUsername(userBulkDTO.getUsername())
+                : userService.findLastId() + 1;
         List<String> invalidUsernames = new ArrayList<>();
 
         for (int i = 0; i < userBulkDTO.getAmount(); i++) {
@@ -443,16 +440,13 @@ public class UserController {
 
     /**
      * Generates a password reset token for the given user and sends an email to complete the password reset. If the
-     * passed parameters are invalid, the user is redirected to the error page instead. If no user with matching
-     * username and email could be found, the user returns to the password reset page where an error message is
-     * displayed.
+     * passed parameters are invalid or no user with matching username and email could be found, nothing happens.
      *
      * @param userDTO The {@link UserDTO} used to save the new user data.
-     * @param model The {@link Model} used to store the error message.
-     * @return The index page on success, or the error page or password reset page otherwise.
+     * @return The index page displaying further information.
      */
     @PostMapping("/reset")
-    public String passwordReset(@ModelAttribute(USER_DTO) final UserDTO userDTO, final Model model) {
+    public String passwordReset(@ModelAttribute(USER_DTO) final UserDTO userDTO) {
         if (userDTO.getUsername() == null || userDTO.getEmail() == null || userDTO.getUsername().trim().isBlank()
                 || userDTO.getEmail().trim().isBlank()) {
             logger.error("Cannot reset password for user with username or email null or blank!");
@@ -461,7 +455,7 @@ public class UserController {
                 || userDTO.getEmail().length() > Constants.LARGE_FIELD) {
             logger.error("Cannot reset password for user with input username or email too long!");
             return Constants.ERROR;
-        } else if (!Constants.MAIL_SERVER) {
+        } else if (!ApplicationProperties.MAIL_SERVER) {
             logger.warn("Cannot reset password without a mail server!");
             return Constants.ERROR;
         }
@@ -475,17 +469,13 @@ public class UserController {
 
             if (findEmail.equals(findUsername)) {
                 TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, findEmail.getId());
-
-                if (sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
-                        resourceBundle)) {
-                    return "redirect:/?success=true";
-                }
+                sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
+                        resourceBundle);
             }
 
-            return Constants.ERROR;
+            return "redirect:/?info=true";
         } catch (NotFoundException e) {
-            model.addAttribute("error", resourceBundle.getString("user_not_found"));
-            return PASSWORD_RESET;
+            return "redirect:/?info=true";
         }
     }
 
@@ -649,7 +639,7 @@ public class UserController {
         boolean sent = false;
 
         if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
-            if (Constants.MAIL_SERVER) {
+            if (ApplicationProperties.MAIL_SERVER) {
                 sent = updateEmail(userDTO.getEmail(), userDTO.getId(), resourceBundle);
             } else {
                 findOldUser.setEmail(userDTO.getEmail());
@@ -987,9 +977,9 @@ public class UserController {
      */
     private boolean sendEmail(final String email, final String value, final String subject, final String template,
                               final ResourceBundle resourceBundle) {
-        String tokenUrl = Constants.BASE_URL + "/token?value=" + value;
+        String tokenUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH + "/token?value=" + value;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", Constants.BASE_URL);
+        templateModel.put("baseUrl", ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH);
         templateModel.put("token", tokenUrl);
         return mailService.sendEmail(email, resourceBundle.getString(subject), templateModel, template);
     }

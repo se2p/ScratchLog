@@ -114,12 +114,12 @@ public class UserControllerTest {
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_INFO = "redirect:/?info=true";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String INVALID = "redirect:/users/profile?invalid=true&name=";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
-    private static final String PASSWORD_RESET = "password-reset";
     private static final String PARTICIPANTS_ADD = "participants-add";
     private static final String USER_DTO = "userDTO";
     private static final String ID_STRING = "1";
@@ -610,7 +610,7 @@ public class UserControllerTest {
 
     @Test
     public void testAddParticipantsStartOneUsernameExists() {
-        List<String> existingNames = List.of("admin1");
+        List<String> existingNames = List.of("admin0");
         userBulkDTO.setStartAtOne(true);
         when(userService.existsUser(existingNames.get(0))).thenReturn(true);
         assertEquals(PARTICIPANTS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
@@ -683,7 +683,7 @@ public class UserControllerTest {
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        assertEquals(REDIRECT_SUCCESS, userController.passwordReset(userDTO, model));
+        assertEquals(REDIRECT_INFO, userController.passwordReset(userDTO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
@@ -696,7 +696,7 @@ public class UserControllerTest {
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(REDIRECT_INFO, userController.passwordReset(userDTO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
@@ -709,7 +709,7 @@ public class UserControllerTest {
         oldDTO.setId(ID + 1);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(oldDTO);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(REDIRECT_INFO, userController.passwordReset(userDTO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -721,95 +721,87 @@ public class UserControllerTest {
         MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenThrow(NotFoundException.class);
-        assertEquals(PASSWORD_RESET, userController.passwordReset(userDTO, model));
+        assertEquals(REDIRECT_INFO, userController.passwordReset(userDTO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model).addAttribute(anyString(), any());
     }
 
     @Test
     public void testPasswordResetNoMailServer() {
         MailServerSetter.setMailServer(false);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testPasswordResetLongUsername() {
         MailServerSetter.setMailServer(true);
         userDTO.setUsername(LONG_USERNAME);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testPasswordResetLongEmail() {
         MailServerSetter.setMailServer(true);
         userDTO.setEmail(LONG_EMAIL);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testPasswordResetEmailBlank() {
         MailServerSetter.setMailServer(true);
         userDTO.setEmail(BLANK);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testPasswordResetUsernameBlank() {
         MailServerSetter.setMailServer(true);
         userDTO.setUsername(BLANK);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testPasswordResetEmailNull() {
         MailServerSetter.setMailServer(true);
         userDTO.setEmail(null);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testPasswordResetUsernameNull() {
         MailServerSetter.setMailServer(true);
         userDTO.setUsername(null);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, model));
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test

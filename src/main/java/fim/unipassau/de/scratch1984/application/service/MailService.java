@@ -16,6 +16,9 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.util.Map;
 
+/**
+ * A service providing methods related to sending emails to users.
+ */
 @Service
 public class MailService {
 

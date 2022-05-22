@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,6 +56,7 @@ public class UserRepositoryTest {
     private User user14 = new User("part6", "part12@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user15 = new User("part7", "part13@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user16 = new User("part8", "part14@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+    private User user17 = new User("user17", "part17@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", "", true);
     private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", "", true);
     private Participant participant1 = new Participant(user3, experiment1, null, null);
@@ -82,6 +84,7 @@ public class UserRepositoryTest {
         user14 = entityManager.persist(user14);
         user15 = entityManager.persist(user15);
         user16 = entityManager.persist(user16);
+        user17 = entityManager.persist(user17);
         experiment1 = entityManager.persist(experiment1);
         experiment2 = entityManager.persist(experiment2);
         participant1 = entityManager.persist(participant1);
@@ -165,7 +168,7 @@ public class UserRepositoryTest {
     public void testFindUserResultsAll() {
         List<UserProjection> users = userRepository.findUserResults(QUERY, 20, 0);
         assertAll(
-                () -> assertEquals(16, users.size()),
+                () -> assertEquals(17, users.size()),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user1.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user2.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername()))),
@@ -192,12 +195,12 @@ public class UserRepositoryTest {
 
     @Test
     public void testGetUserResultCount() {
-        assertEquals(16, userRepository.getUserResultsCount(QUERY));
+        assertEquals(17, userRepository.getUserResultsCount(QUERY));
     }
 
     @Test
     public void testGetUserResultCountUser() {
-        assertEquals(6, userRepository.getUserResultsCount(USERNAME_SEARCH));
+        assertEquals(7, userRepository.getUserResultsCount(USERNAME_SEARCH));
     }
 
     @Test
@@ -214,11 +217,12 @@ public class UserRepositoryTest {
     public void testFindParticipantSuggestionsUsername() {
         List<UserProjection> users = userRepository.findParticipantSuggestions(USERNAME_SEARCH, experiment1.getId());
         assertAll(
-                () -> assertEquals(4, users.size()),
+                () -> assertEquals(5, users.size()),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user5.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user7.getUsername()))),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user8.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user17.getUsername()))),
                 () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user6.getUsername()))),
                 () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername())))
         );
@@ -274,6 +278,41 @@ public class UserRepositoryTest {
     public void testFindDeleteParticipantSuggestionsEmpty() {
         List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, 100);
         assertTrue(users.isEmpty());
+    }
+
+    @Test
+    public void testFindLastUsername() {
+        Optional<UserProjection> user = userRepository.findLastUsername(USERNAME_SEARCH);
+        Optional<UserProjection> participant = userRepository.findLastUsername("part");
+        assertAll(
+                () -> assertTrue(user.isPresent()),
+                () -> assertTrue(participant.isPresent()),
+                () -> assertEquals(USERNAME_SEARCH + "17", user.get().getUsername()),
+                () -> assertEquals("part8", participant.get().getUsername())
+        );
+    }
+
+    @Test
+    public void testFindLastUsernameDeleteUser() {
+        entityManager.remove(user17);
+        Optional<UserProjection> user = userRepository.findLastUsername(USERNAME_SEARCH);
+        assertAll(
+                () -> assertTrue(user.isPresent()),
+                () -> assertEquals(USERNAME_SEARCH + "6", user.get().getUsername())
+        );
+    }
+
+    @Test
+    public void testFindLastUsernameAddUser() {
+        String username = "user18";
+        User user = new User(username, "part6@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+        user = entityManager.persist(user);
+        Optional<UserProjection> findUser = userRepository.findLastUsername(USERNAME_SEARCH);
+        entityManager.remove(user);
+        assertAll(
+                () -> assertTrue(findUser.isPresent()),
+                () -> assertEquals(username, findUser.get().getUsername())
+        );
     }
 
 }

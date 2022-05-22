@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
@@ -209,14 +210,15 @@ public class ParticipantController {
             return Constants.ERROR;
         }
 
-        String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + id + "&secret=" + secret;
+        String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
+                + "/users/authenticate?id=" + id + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", Constants.BASE_URL);
+        templateModel.put("baseUrl", ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH);
         templateModel.put("secret", experimentUrl);
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
-        if (!Constants.MAIL_SERVER) {
+        if (!ApplicationProperties.MAIL_SERVER) {
             return "redirect:/secret" + "?user=" + saved.getId() + EXPERIMENT_PARAM + id;
         } else if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
@@ -355,8 +357,8 @@ public class ParticipantController {
                     participantDTO.setStart(LocalDateTime.now());
 
                     if (participantService.updateParticipant(participantDTO)) {
-                        return "redirect:" + Constants.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
-                                + participantDTO.getExperiment();
+                        return "redirect:" + ApplicationProperties.GUI_URL + "?uid=" + participantDTO.getUser()
+                                + "&expid=" + participantDTO.getExperiment();
                     } else {
                         logger.error("Failed to update the starting time of participant with user id "
                                 + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment()
@@ -364,7 +366,7 @@ public class ParticipantController {
                         return Constants.ERROR;
                     }
                 } else {
-                    return "redirect:" + Constants.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
+                    return "redirect:" + ApplicationProperties.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
                             + participantDTO.getExperiment() + "&restart=true";
                 }
             } catch (NotFoundException e) {
@@ -469,7 +471,7 @@ public class ParticipantController {
             } else {
                 userDTO.setActive(true);
                 userService.updateUser(userDTO);
-                return "redirect:" + Constants.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
+                return "redirect:" + ApplicationProperties.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
                         + participantDTO.getExperiment() + "&restart=true";
             }
         } catch (NotFoundException e) {

@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.exception.IncompleteDataExceptio
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -240,7 +241,8 @@ public class SecretController {
      * @return A list of string arrays containing the information.
      */
     private List<String[]> transformUserData(final List<UserDTO> userDTOS, final int experimentId) {
-        String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + experimentId + "&secret=";
+        String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
+                + "/users/authenticate?id=" + experimentId + "&secret=";
         List<String[]> users = new ArrayList<>();
         String[] header = new String[]{"id", "name", "participation link"};
         users.add(header);
@@ -258,7 +260,8 @@ public class SecretController {
      * @param model The {@link Model} to hold the information.
      */
     private void addModelInfo(final List<UserDTO> userDTOS, final int experimentId, final Model model) {
-        String experimentUrl = Constants.BASE_URL + "/users/authenticate?id=" + experimentId + "&secret=";
+        String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
+                + "/users/authenticate?id=" + experimentId + "&secret=";
         model.addAttribute("users", userDTOS);
         model.addAttribute("link", experimentUrl);
         model.addAttribute("experiment", experimentId);

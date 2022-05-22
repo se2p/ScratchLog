@@ -91,12 +91,12 @@ public class UserControllerIntegrationTest {
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_INFO = "redirect:/?info=true";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String LAST_ADMIN = "redirect:/users/profile?lastAdmin=true";
     private static final String INVALID = "redirect:/users/profile?invalid=true&name=";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
-    private static final String PASSWORD_RESET = "password-reset";
     private static final String PARTICIPANTS_ADD = "participants-add";
     private static final String USER_DTO = "userDTO";
     private static final String PASSWORD_DTO = "passwordDTO";
@@ -488,6 +488,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SUCCESS))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+        verify(userService).findValidNumberForUsername(userBulkDTO.getUsername());
         verify(userService, never()).findLastId();
         verify(userService, times(AMOUNT)).existsUser(anyString());
         verify(userService, times(AMOUNT)).saveUser(any());
@@ -496,6 +497,7 @@ public class UserControllerIntegrationTest {
     @Test
     public void testAddParticipantsUsernameExists() throws Exception {
         List<String> existingNames = List.of("admin5");
+        when(userService.findValidNumberForUsername(userBulkDTO.getUsername())).thenReturn(1);
         when(userService.existsUser(existingNames.get(0))).thenReturn(true);
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
@@ -505,6 +507,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(PARTICIPANTS_ADD))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, is(existingNames)));
+        verify(userService).findValidNumberForUsername(userBulkDTO.getUsername());
         verify(userService, never()).findLastId();
         verify(userService, times(AMOUNT)).existsUser(anyString());
         verify(userService, times(AMOUNT - existingNames.size())).saveUser(any());
@@ -521,6 +524,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(PARTICIPANTS_ADD))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+        verify(userService, never()).findValidNumberForUsername(anyString());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).saveUser(any());
@@ -537,6 +541,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+        verify(userService, never()).findValidNumberForUsername(anyString());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).saveUser(any());
@@ -555,7 +560,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT_SUCCESS));
+                .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
@@ -574,7 +579,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
@@ -609,7 +614,7 @@ public class UserControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
@@ -625,9 +630,8 @@ public class UserControllerIntegrationTest {
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(model().attribute("error", notNullValue()))
-                .andExpect(status().isOk())
-                .andExpect(view().name(PASSWORD_RESET));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService, never()).getUserByEmail(anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
