@@ -18,8 +18,10 @@
 
         <!-- Library versions -->
         <spring.version>2.4.5</spring.version>
-        <security.test.version>5.5.0</security.test.version>
+        <security.version>5.5.0</security.version>
         <thymeleaf.version>3.0.4.RELEASE</thymeleaf.version>
+        <bouncycastle.version>1.64</bouncycastle.version>
+        <codec.version>1.15</codec.version>
         <jQuery.version>3.5.1</jQuery.version>
         <json.version>20190722</json.version>
         <commonmark.version>0.16.1</commonmark.version>
@@ -66,14 +68,12 @@
             <artifactId>spring-boot-starter-mail</artifactId>
             <version>${spring.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
             <version>${spring.version}</version>
             <scope>compile</scope>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -87,10 +87,26 @@
             </exclusions>
         </dependency>
 
+        <!-- Spring Security dependency needed because of security extension below. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+            <version>${security.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Spring Security for SAML authentication. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-saml2-service-provider</artifactId>
+            <version>${security.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
-            <version>${security.test.version}</version>
+            <version>${security.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -99,6 +115,20 @@
             <groupId>org.thymeleaf.extras</groupId>
             <artifactId>thymeleaf-extras-springsecurity5</artifactId>
             <version>${thymeleaf.version}</version>
+        </dependency>
+
+        <!-- Used in SAML2Configuration -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+
+        <!-- Needed for Spring with SAML2 -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>${codec.version}</version>
         </dependency>
 
         <!-- MySQL connector -->
