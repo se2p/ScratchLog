@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
 
@@ -71,8 +70,6 @@ public class SAML2Service {
      * @return The authentication token used to finish the authentication process.
      */
     public Authentication handleAuthentication(final Saml2AuthenticatedPrincipal principal) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        logger.debug("SAML2 User '{}' logged in, attributes {}", authentication.getName(), principal.getAttributes());
         String username = substituteAttributes(properties.getUsernamePattern(), principal);
         User user = userRepository.findUserByUsername(username);
 
@@ -80,8 +77,8 @@ public class SAML2Service {
             user = createUserFromAuth(username, principal);
 
             if (user.getId() == null) {
-                logger.error("Could not save new user " + username + " authentication with SAML2!");
-                throw new IllegalStateException("Could not save new user " + username + " authentication with SAML2!");
+                logger.error("Could not save new user " + username + " authenticated with SAML2!");
+                throw new IllegalStateException("Could not save new user " + username + " authenticated with SAML2!");
             }
         }
 

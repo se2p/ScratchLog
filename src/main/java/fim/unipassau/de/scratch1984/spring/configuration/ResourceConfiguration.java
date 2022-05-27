@@ -43,6 +43,10 @@ public class ResourceConfiguration implements WebMvcConfigurer {
     public void addCorsMappings(final CorsRegistry registry) {
         registry.addMapping("/store/*").allowedMethods("GET",
                 "POST").allowedOrigins(ApplicationProperties.GUI_BASE_URL);
+        registry.addMapping("/login/saml2").allowedMethods("GET",
+                "POST").allowedOrigins(ApplicationProperties.SAML2_BASE_URL);
+        registry.addMapping("/saml2/**").allowedMethods("GET",
+                "POST").allowedOrigins(ApplicationProperties.SAML2_BASE_URL);
     }
 
 }

@@ -185,28 +185,24 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(final HttpSecurity http) throws Exception {
         http
+                .cors()
+                .and()
                 .requestMatchers()
                 // This filter chain is only applied if the URL matches
-                // Else the request is filtered by {@link SecurityConfiguration}.
+                // Else the request is filtered by {@link SecurityConfig}.
                 .antMatchers("/saml2/**", "/login/saml2/**")
                 .and()
                 .csrf()
                 // Needed for SAML to work properly
                 .disable()
                 .authorizeRequests()
-                // The request to the api is permitted and checked directly
-                // This allows returning a 401 if the user is not logged in via SAML2
-                // to notify the client that a login is needed.
-                .antMatchers("/saml2").permitAll()
-                // Every other request must be authenticated. Any request triggers a SAML2
-                // authentication flow
                 .anyRequest().authenticated()
                 .and()
                 // Processes the RelyingPartyRegistrationRepository Bean and installs the filters for SAML2
                 .saml2Login()
                 .and().formLogin().loginPage("/login/saml2")
-                // Redirect back to the root
-                .defaultSuccessUrl("/index", true);
+                .defaultSuccessUrl("/index", true)
+                .and().headers().frameOptions().sameOrigin();
     }
 
 }

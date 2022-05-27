@@ -1,6 +1,5 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
-import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.SAML2Service;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.util.ApplicationProperties;
@@ -89,7 +88,7 @@ public class SAML2Controller {
             authReq = authenticationProvider.authenticate(authReq);
             updateSecurityContext(httpServletRequest, authReq);
             return "redirect:/";
-        } catch (NotFoundException e) {
+        } catch (Exception e) {
             clearSecurityContext(httpServletRequest);
             return Constants.ERROR;
         }
