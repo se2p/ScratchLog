@@ -24,7 +24,7 @@ import static org.springframework.security.web.context.HttpSessionSecurityContex
  * The controller for handling SAML2 authenticated users. This class has been adapted from the Artemis project.
  */
 @Controller
-@RequestMapping("/login/saml2")
+@RequestMapping("/saml2")
 public class SAML2Controller {
 
     /**
@@ -64,7 +64,7 @@ public class SAML2Controller {
      * @param httpServletRequest The {@link HttpServletRequest} request containing the current user session.
      * @return The index page on success or the error page otherwise.
      */
-    @GetMapping()
+    @GetMapping("/login")
     public String authorizeSAML2(final HttpServletRequest httpServletRequest) {
         if (saml2Service.isEmpty() || !ApplicationProperties.SAML_AUTHENTICATION) {
             logger.error("Cannot authenticate SAML2 users when SAML2 is disabled!");

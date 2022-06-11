@@ -84,6 +84,10 @@ authentication.
 - Change the *saml.certificate* and *saml.key* strings to the paths at which the server certificate and the key file are
 available.
 
+Please note that username or email changes from the IDP side are not propagated to the application. This means that if a
+user has been authenticated via SSO once and the user has been added to the database, if the user changes their name and
+authenticates via SSO again, a new user profile will be created in this case.
+
 ## Build and Deployment
 
 ### Deployment

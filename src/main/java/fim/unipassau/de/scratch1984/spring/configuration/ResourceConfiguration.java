@@ -32,6 +32,7 @@ public class ResourceConfiguration implements WebMvcConfigurer {
     @Override
     public void addViewControllers(final ViewControllerRegistry registry) {
         registry.addViewController("/login").setViewName("forward:/login.html");
+        registry.addRedirectViewController("/login/saml2", "/saml2/login");
     }
 
     /**

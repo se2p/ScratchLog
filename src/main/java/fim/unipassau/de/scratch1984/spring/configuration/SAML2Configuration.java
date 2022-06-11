@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.spring.configuration;
 
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.slf4j.Logger;
@@ -171,7 +172,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         try (FileReader keyReader = new FileReader(file, StandardCharsets.UTF_8)) {
             PEMParser pemParser = new PEMParser(keyReader);
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-            PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
+            PrivateKeyInfo privateKeyInfo = ((PEMKeyPair) (pemParser.readObject())).getPrivateKeyInfo();
             return (RSAPrivateKey) converter.getPrivateKey(privateKeyInfo);
         }
     }
