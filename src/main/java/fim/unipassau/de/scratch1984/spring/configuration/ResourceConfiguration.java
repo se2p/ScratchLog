@@ -32,6 +32,7 @@ public class ResourceConfiguration implements WebMvcConfigurer {
     @Override
     public void addViewControllers(final ViewControllerRegistry registry) {
         registry.addViewController("/login").setViewName("forward:/login.html");
+        registry.addRedirectViewController("/login/saml2", "/saml2/login");
     }
 
     /**
@@ -43,6 +44,10 @@ public class ResourceConfiguration implements WebMvcConfigurer {
     public void addCorsMappings(final CorsRegistry registry) {
         registry.addMapping("/store/*").allowedMethods("GET",
                 "POST").allowedOrigins(ApplicationProperties.GUI_BASE_URL);
+        registry.addMapping("/login/saml2").allowedMethods("GET",
+                "POST").allowedOrigins(ApplicationProperties.SAML2_BASE_URL);
+        registry.addMapping("/saml2/**").allowedMethods("GET",
+                "POST").allowedOrigins(ApplicationProperties.SAML2_BASE_URL);
     }
 
 }

@@ -35,3 +35,6 @@ build/
 ### Static resources ###
 src/main/resources/static/node_modules/
 src/main/resources/static/package-lock.json
+
+### Local properties file ###
+src/main/resources/application-local.properties

@@ -42,6 +42,13 @@ follows:
   However, if you have deployed the GUI under a relative context path, e.g. `scratch.fim.uni-passau.de/gui`, *app.gui*
   would have to be set to the full path (`scratch.fim.uni-passau.de/gui`) while *app.gui.base* will only be
   `scratch.fim.uni-passau.de`.
+- If you only want to use the `application.properties` file, you can comment out the *spring.profiles.active* line.
+
+Since the `application.properties` file contains some critical data (e.g. login information for the database) that might
+easily be committed by accident, some sections have been commented out. You should put these in a file named
+`application-local.properties` in the `resources` folder, uncomment them and adapt them there. This file has been added
+to the `.gitignore` file and the *spring.profiles.active* configuration in the `application.properties` file has been
+set accordingly for spring to automatically pick up the configurations.
 
 If you plan to deploy the project under a relative context path, e.g.`scratch.fim.uni-passau.de/scratch1984` instead of
 `scratch.fim.uni-passau.de`, you need to change the `server.servlet.context-path` in the `application.properties` file
@@ -58,6 +65,28 @@ You also have to make some changes to the instrumented Scratch instance:
 On application startup, a first administrator is added automatically, if no other administrator could be found in the
 database. The login credentials are specified in the `UserInitialization` class. You should change these credentials
 immediately after you have logged in.
+
+#### Configuring SSO Authentication
+
+The application offers functionality to use single sign on through an identity service provider with SAML2. In order to
+use this feature, you will have to do some additional configuration in the properties file(s):
+- Add `saml2` to the *spring.profiles.active* property.
+- Change the *app.saml2.base* string to the base URL of the IdP.
+- Change the *saml.username* string to the username pattern with which the username can be extracted from the SAML2
+authentication.
+- Change the *saml.email* string to the email pattern with which the email can be extracted from the SAML2
+authentication.
+- Change the *saml.extraction.key* string if needed.
+- Change the *saml.extraction.value* string if needed.
+- Change the *saml.metadata* string to the path at which the IdP's metadata file is located.
+- Change the *saml.idp* string to the name of the IdP.
+- Change the *saml.entity* string to the address at which Scratch1984 will be available.
+- Change the *saml.certificate* and *saml.key* strings to the paths at which the server certificate and the key file are
+available.
+
+Please note that username or email changes from the IDP side are not propagated to the application. This means that if a
+user has been authenticated via SSO once and the user has been added to the database, if the user changes their name and
+authenticates via SSO again, a new user profile will be created in this case.
 
 ## Build and Deployment
 

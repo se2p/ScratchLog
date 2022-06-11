@@ -72,7 +72,7 @@
                     </a>
                 </li>
                 <!-- The logout icon. -->
-                <li class="nav-item active" sec:authorize="hasRole('PARTICIPANT')">
+                <li class="nav-item active" sec:authorize="isAuthenticated()">
                     <a id="logout" class="btn btn-link" th:aria-label="#{logout_label}" th:href="@{/users/logout}">
                         <i aria-hidden="true" class="fas fa-sign-out-alt fa-lg"></i>
                     </a>

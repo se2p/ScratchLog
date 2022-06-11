@@ -33,9 +33,19 @@ public final class ApplicationProperties {
     public static final String GUI_URL;
 
     /**
+     * The base URL of the SAML2 identity provider.
+     */
+    public static final String SAML2_BASE_URL;
+
+    /**
      * The boolean indicating whether the project uses a mail server or not.
      */
-    public static final Boolean MAIL_SERVER;
+    public static final boolean MAIL_SERVER;
+
+    /**
+     * The boolean indicating whether the project supports authentication using SAML2 or not.
+     */
+    public static final boolean SAML_AUTHENTICATION;
 
     static {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("application");
@@ -44,7 +54,9 @@ public final class ApplicationProperties {
         CONTEXT_PATH = resourceBundle.getString("server.servlet.context-path");
         GUI_BASE_URL = resourceBundle.getString("app.gui.base");
         GUI_URL = resourceBundle.getString("app.gui");
+        SAML2_BASE_URL = resourceBundle.getString("app.saml.base");
         MAIL_SERVER = resourceBundle.getString("app.mail").equals("true");
+        SAML_AUTHENTICATION = resourceBundle.getString("spring.profiles.active").contains("saml2");
     }
 
 }

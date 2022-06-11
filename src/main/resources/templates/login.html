@@ -24,6 +24,10 @@
         <!-- The login page heading. -->
         <h2 class="mb-5">Login</h2>
 
+        <div class="text-end" th:if="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).MAIL_SERVER}">
+            <a class="link-secondary" th:text="#{forgot_password}" th:href="@{/reset}"></a>
+        </div>
+
         <!-- The login form. -->
         <form th:action="@{/users/login}" th:object="${userDTO}" th:name="userDTO" method="post">
             <div class="row mx-5">
@@ -59,13 +63,13 @@
                 </div>
                 <!-- The forgot password and submit buttons if the mail server constant is set to true. -->
                 <div class="d-flex justify-content-between"
-                     th:if="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).MAIL_SERVER}">
-                    <a class="btn btn-secondary" th:text="#{forgot_password}" th:href="@{/reset}"></a>
+                     th:if="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).SAML_AUTHENTICATION}">
+                    <a class="btn btn-secondary" th:text="#{saml2_login}" th:href="@{/login/saml2}"></a>
                     <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
                 </div>
                 <!-- The submit button if the mail server constant is set to false. -->
                 <div class="text-center"
-                     th:unless="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).MAIL_SERVER}">
+                     th:unless="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).SAML_AUTHENTICATION}">
                     <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
                 </div>
             </div>
