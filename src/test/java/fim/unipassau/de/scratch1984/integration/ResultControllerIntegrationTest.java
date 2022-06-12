@@ -99,6 +99,7 @@ public class ResultControllerIntegrationTest {
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "file", new byte[]{1, 2, 3});
     private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
+    private final List<EventCountDTO> clickEvents = getEventCounts(3, "GREENFLAG");
     private final List<EventCountDTO> resourceEvents = getEventCounts(2, "RENAME");
     private final List<FileProjection> files = getFileProjections(7);
     private final List<Integer> zips = Arrays.asList(1, 4, 10, 18);
@@ -125,6 +126,7 @@ public class ResultControllerIntegrationTest {
     public void testGetResult() throws Exception {
         when(userService.existsParticipant(ID, ID)).thenReturn(true);
         when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
+        when(eventService.getClickEventCounts(ID, ID)).thenReturn(clickEvents);
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
@@ -137,6 +139,7 @@ public class ResultControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("blockEvents", is(blockEvents)))
+                .andExpect(model().attribute("clickEvents", is(clickEvents)))
                 .andExpect(model().attribute("resourceEvents", is(resourceEvents)))
                 .andExpect(model().attribute("files", is(files)))
                 .andExpect(model().attribute("zips", is(zips)))
@@ -147,6 +150,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(view().name(RESULT));
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
+        verify(eventService).getClickEventCounts(ID, ID);
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
@@ -157,6 +161,7 @@ public class ResultControllerIntegrationTest {
     public void testGetResultCodesDataZero() throws Exception {
         when(userService.existsParticipant(ID, ID)).thenReturn(true);
         when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
+        when(eventService.getClickEventCounts(ID, ID)).thenReturn(clickEvents);
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
@@ -169,6 +174,7 @@ public class ResultControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("blockEvents", is(blockEvents)))
+                .andExpect(model().attribute("clickEvents", is(clickEvents)))
                 .andExpect(model().attribute("resourceEvents", is(resourceEvents)))
                 .andExpect(model().attribute("files", is(files)))
                 .andExpect(model().attribute("zips", is(zips)))
@@ -179,6 +185,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(view().name(RESULT));
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
+        verify(eventService).getClickEventCounts(ID, ID);
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
@@ -189,6 +196,7 @@ public class ResultControllerIntegrationTest {
     public void testGetResultNotFound() throws Exception {
         when(userService.existsParticipant(ID, ID)).thenReturn(true);
         when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
+        when(eventService.getClickEventCounts(ID, ID)).thenReturn(clickEvents);
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenThrow(NotFoundException.class);
@@ -204,6 +212,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
+        verify(eventService).getClickEventCounts(ID, ID);
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
@@ -223,6 +232,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService).existsParticipant(ID, ID);
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
+        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
@@ -242,6 +252,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
+        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());

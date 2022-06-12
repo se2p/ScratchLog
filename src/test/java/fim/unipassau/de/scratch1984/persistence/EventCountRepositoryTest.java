@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence;
 
 import fim.unipassau.de.scratch1984.persistence.entity.BlockEvent;
+import fim.unipassau.de.scratch1984.persistence.entity.ClickEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ResourceEvent;
@@ -46,6 +47,11 @@ public class EventCountRepositoryTest {
             null, null, null);
     private BlockEvent blockEvent5 = new BlockEvent(user1, experiment1, timestamp, "DRAG", "ENDDRAG", "Figur1",
             null, null, null);
+    private ClickEvent clickEvent1 = new ClickEvent(user1, experiment1, timestamp, "ICON", "GREENFLAG", "");
+    private ClickEvent clickEvent2 = new ClickEvent(user1, experiment1, timestamp, "CODE", "STACKCLICK", "");
+    private ClickEvent clickEvent3 = new ClickEvent(user1, experiment1, timestamp, "CODE", "STACKCLICK", "");
+    private ClickEvent clickEvent4 = new ClickEvent(user1, experiment2, timestamp, "CODE", "STACKCLICK", "");
+    private ClickEvent clickEvent5 = new ClickEvent(user2, experiment1, timestamp, "ICON", "GREENFLAG", "");
     private ResourceEvent resourceEvent1 = new ResourceEvent(user1, experiment1, timestamp, "ADD", "ADD_SOUND", "Miau",
             "hash", "wav", 0);
     private ResourceEvent resourceEvent2 = new ResourceEvent(user1, experiment1, timestamp, "DELETE", "DELETE_SOUND",
@@ -68,6 +74,11 @@ public class EventCountRepositoryTest {
         blockEvent3 = testEntityManager.persist(blockEvent3);
         blockEvent4 = testEntityManager.persist(blockEvent4);
         blockEvent5 = testEntityManager.persist(blockEvent5);
+        clickEvent1 = testEntityManager.persist(clickEvent1);
+        clickEvent2 = testEntityManager.persist(clickEvent2);
+        clickEvent3 = testEntityManager.persist(clickEvent3);
+        clickEvent4 = testEntityManager.persist(clickEvent4);
+        clickEvent5 = testEntityManager.persist(clickEvent5);
         resourceEvent1 = testEntityManager.persist(resourceEvent1);
         resourceEvent2 = testEntityManager.persist(resourceEvent2);
         resourceEvent3 = testEntityManager.persist(resourceEvent3);
@@ -99,6 +110,32 @@ public class EventCountRepositoryTest {
     public void testFindAllBlockEventsByExperiment() {
         List<EventCount> eventCounts = eventCountRepository.findAllBlockEventsByExperiment(experiment1.getId());
        assertEquals(3, eventCounts.size());
+    }
+
+    @Test
+    public void testFindAllClickEventsByUserAndExperiment() {
+        List<EventCount> eventCounts = eventCountRepository.findAllClickEventsByUserAndExperiment(user1.getId(),
+                experiment1.getId());
+        assertAll(
+                () -> assertEquals(2, eventCounts.size()),
+                () -> assertEquals(clickEvent1.getEvent(), eventCounts.get(0).getEvent()),
+                () -> assertEquals(1, eventCounts.get(0).getCount()),
+                () -> assertEquals(clickEvent2.getEvent(), eventCounts.get(1).getEvent()),
+                () -> assertEquals(2, eventCounts.get(1).getCount())
+        );
+    }
+
+    @Test
+    public void testFindAllClickEventsByUserAndExperimentNoEntries() {
+        List<EventCount> eventCounts = eventCountRepository.findAllClickEventsByUserAndExperiment(user2.getId(),
+                experiment2.getId());
+        assertTrue(eventCounts.isEmpty());
+    }
+
+    @Test
+    public void testFindAllClickEventsByExperiment() {
+        List<EventCount> eventCounts = eventCountRepository.findAllClickEventsByExperiment(experiment1.getId());
+        assertEquals(3, eventCounts.size());
     }
 
     @Test

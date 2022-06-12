@@ -8,6 +8,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
@@ -89,6 +90,22 @@ public class EventRestController {
         }
 
         eventService.saveBlockEvent(blockEventDTO);
+    }
+
+    /**
+     * Saves the click event data passed in the request body.
+     *
+     * @param data The string containing the click event data.
+     */
+    @PostMapping("/click")
+    public void storeClickEvent(@RequestBody final String data) {
+        ClickEventDTO clickEventDTO = createClickEventDTO(data);
+
+        if (clickEventDTO == null) {
+            return;
+        }
+
+        eventService.saveClickEvent(clickEventDTO);
     }
 
     /**
@@ -277,6 +294,37 @@ public class EventRestController {
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
             logger.error("The block event data sent to the server was incomplete!", e);
+            return null;
+        }
+
+        return dto;
+    }
+
+    /**
+     * Creates a {@link ClickEventDTO} with the given data.
+     *
+     * @param data The data passed in the request body.
+     * @return The new click event DTO containing the information.
+     */
+    private ClickEventDTO createClickEventDTO(final String data) {
+        ClickEventDTO dto = new ClickEventDTO();
+
+        try {
+            JSONObject object = new JSONObject(data);
+            String metadata = object.getString("metadata");
+
+            dto.setUser(object.getInt("user"));
+            dto.setExperiment(object.getInt("experiment"));
+            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            dto.setEventType(ClickEventDTO.ClickEventType.valueOf(object.getString("type")));
+            dto.setEvent(ClickEventDTO.ClickEvent.valueOf(object.getString("event")));
+
+            if (!metadata.trim().isBlank()) {
+                dto.setMetadata(metadata);
+            }
+        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
+                | JSONException e) {
+            logger.error("The click event data sent to the server was incomplete!", e);
             return null;
         }
 

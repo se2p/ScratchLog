@@ -70,7 +70,7 @@
             <div class="text-muted mt-3" th:text="#{download_info}"></div>
         </div>
 
-        <!-- The block and resource events tables. -->
+        <!-- The block and click events tables. -->
         <div class="row mb-5">
             <div class="col-6">
                 <h4 class="mb-3" th:text="#{block_events}"></h4>
@@ -95,6 +95,32 @@
                 </table>
             </div>
             <div class="col-6">
+                <h4 class="mb-3" th:text="#{click_events}"></h4>
+                <table class="table">
+                    <thead class="table-primary">
+                    <tr>
+                        <th scope="col" th:text="#{event}"></th>
+                        <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${clickEvents.isEmpty()}">
+                    <tr>
+                        <td colspan="2" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${clickEvents.isEmpty()}">
+                    <tr th:each="clickEvent : ${clickEvents}">
+                        <td th:text="${clickEvent.event}"></td>
+                        <td class="text-center" th:text="${clickEvent.count}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- The resource events tables. -->
+        <div class="row mb-5">
+            <div class="col-6">
                 <h4 class="mb-3" th:text="#{resource_events}"></h4>
                 <table class="table">
                     <thead class="table-primary">
@@ -116,6 +142,7 @@
                     </tbody>
                 </table>
             </div>
+            <div class="col-6"></div>
         </div>
 
         <!-- The download sb3 files heading and the corresponding button. -->

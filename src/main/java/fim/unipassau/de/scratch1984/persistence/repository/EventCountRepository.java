@@ -26,13 +26,34 @@ public interface EventCountRepository extends JpaRepository<EventCount, EventCou
                                                            @Param("expId") Integer experiment);
 
     /**
-     * Returns all block count data for the given the given experiment, if any exist.
+     * Returns all block count data for the given experiment, if any exist.
      *
      * @param experiment The experiment to search for.
      * @return A list of event counts that is empty if no entry could be found.
      */
     @Query(nativeQuery = true, value = "SELECT * FROM user_num_block_events AS n WHERE n.experiment = :expId")
     List<EventCount> findAllBlockEventsByExperiment(@Param("expId") Integer experiment);
+
+    /**
+     * Returns all click count data for the given user during the given experiment, if any exist.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @return A list of event counts that is empty if no entry could be found.
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM user_num_click_events AS n WHERE n.user = :uId AND "
+            + "n.experiment = :expId")
+    List<EventCount> findAllClickEventsByUserAndExperiment(@Param("uId") Integer user,
+                                                           @Param("expId") Integer experiment);
+
+    /**
+     * Returns all click count data for the given experiment, if any exist.
+     *
+     * @param experiment The experiment to search for.
+     * @return A list of event counts that is empty if no entry could be found.
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM user_num_click_events AS n WHERE n.experiment = :expId")
+    List<EventCount> findAllClickEventsByExperiment(@Param("expId") Integer experiment);
 
     /**
      * Returns all resource count data for the given user during the given experiment, if any exist.

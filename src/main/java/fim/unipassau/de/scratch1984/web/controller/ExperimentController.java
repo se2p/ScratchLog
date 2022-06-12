@@ -607,15 +607,19 @@ public class ExperimentController {
             CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
 
             List<String[]> blockEvents = eventService.getBlockEventData(experimentId);
+            List<String[]> clickEvents = eventService.getClickEventData(experimentId);
             List<String[]> resourceEvents = eventService.getResourceEventData(experimentId);
             List<String[]> blockEventCounts = eventService.getBlockEventCount(experimentId);
+            List<String[]> clickEventCounts = eventService.getClickEventCount(experimentId);
             List<String[]> resourceEventCounts = eventService.getResourceEventCount(experimentId);
             List<String[]> codesData = eventService.getCodesDataForExperiment(experimentId);
             List<String[]> experimentData = experimentService.getExperimentData(experimentId);
 
             csvWriter.writeAll(blockEvents);
+            csvWriter.writeAll(clickEvents);
             csvWriter.writeAll(resourceEvents);
             csvWriter.writeAll(blockEventCounts);
+            csvWriter.writeAll(clickEventCounts);
             csvWriter.writeAll(resourceEventCounts);
             csvWriter.writeAll(codesData);
             csvWriter.writeAll(experimentData);

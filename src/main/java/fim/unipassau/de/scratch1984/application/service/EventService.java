@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.application.service;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.persistence.entity.BlockEvent;
+import fim.unipassau.de.scratch1984.persistence.entity.ClickEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.CodesData;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
@@ -12,6 +13,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProject
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.BlockEventRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.ClickEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CodesDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
@@ -20,6 +22,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventReposito
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
@@ -67,6 +70,11 @@ public class EventService {
     private final BlockEventRepository blockEventRepository;
 
     /**
+     * The click event repository to use for click event queries.
+     */
+    private final ClickEventRepository clickEventRepository;
+
+    /**
      * The resource event repository to use for resource event queries.
      */
     private final ResourceEventRepository resourceEventRepository;
@@ -92,6 +100,7 @@ public class EventService {
      * @param eventCountRepository The {@link EventCountRepository} to use.
      * @param codesDataRepository The {@link CodesDataRepository} to use.
      * @param blockEventRepository The {@link BlockEventRepository} to use.
+     * @param clickEventRepository The {@link ClickEventRepository} to use.
      * @param resourceEventRepository The {@link ResourceEventRepository} to use.
      * @param participantRepository The {@link ParticipantRepository} to use.
      * @param userRepository The {@link UserRepository} to use.
@@ -101,6 +110,7 @@ public class EventService {
     public EventService(final EventCountRepository eventCountRepository,
                         final CodesDataRepository codesDataRepository,
                         final BlockEventRepository blockEventRepository,
+                        final ClickEventRepository clickEventRepository,
                         final ResourceEventRepository resourceEventRepository,
                         final ParticipantRepository participantRepository,
                         final UserRepository userRepository,
@@ -108,6 +118,7 @@ public class EventService {
         this.eventCountRepository = eventCountRepository;
         this.codesDataRepository = codesDataRepository;
         this.blockEventRepository = blockEventRepository;
+        this.clickEventRepository = clickEventRepository;
         this.resourceEventRepository = resourceEventRepository;
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
@@ -143,6 +154,38 @@ public class EventService {
             logger.error("Could not store the block event data for user with id " + blockEventDTO.getUser()
                     + " for experiment with id " + blockEventDTO.getExperiment() + " since the block event violates the"
                     + " block event table constraints!", e);
+        }
+    }
+
+    /**
+     * Creates a new click event with the given parameters in the database.
+     *
+     * @param clickEventDTO The dto containing the event information to set.
+     */
+    @Transactional
+    public void saveClickEvent(final ClickEventDTO clickEventDTO) {
+        User user = userRepository.getOne(clickEventDTO.getUser());
+        Experiment experiment = experimentRepository.getOne(clickEventDTO.getExperiment());
+
+        try {
+            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+
+            if (participant == null) {
+                logger.error("No corresponding participant entry could be found for user with id "
+                        + clickEventDTO.getUser() + " and experiment " + clickEventDTO.getExperiment()
+                        + " when trying to save a click event!");
+                return;
+            }
+
+            ClickEvent clickEvent = createClickEvent(clickEventDTO, user, experiment);
+            clickEventRepository.save(clickEvent);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find user with id " + clickEventDTO.getUser() + " or experiment with id "
+                    + clickEventDTO.getExperiment() + " when trying to save a click event!", e);
+        } catch (ConstraintViolationException e) {
+            logger.error("Could not store the click event data for user with id " + clickEventDTO.getUser()
+                    + " for experiment with id " + clickEventDTO.getExperiment() + " since the click event violates the"
+                    + " click event table constraints!", e);
         }
     }
 
@@ -268,6 +311,26 @@ public class EventService {
 
         List<EventCount> blockEvents = eventCountRepository.findAllBlockEventsByUserAndExperiment(user, experiment);
         return createEventCountDTOList(blockEvents);
+    }
+
+    /**
+     * Returns the click event counts for the user with the given id during the experiment with the given id.
+     *
+     * @param user The user id to search for.
+     * @param experiment The experiment id to search for.
+     * @return A list of event count DTOs with the click event counts.
+     */
+    @Transactional
+    public List<EventCountDTO> getClickEventCounts(final int user, final int experiment) {
+        if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
+            logger.error("Cannot retrieve click event count for user with invalid id " + user + " or experiment with "
+                    + "invalid id " + experiment + "!");
+            throw new IllegalArgumentException("Cannot retrieve click event count for user with invalid id " + user
+                    + " or experiment with invalid id " + experiment + "!");
+        }
+
+        List<EventCount> clickEvents = eventCountRepository.findAllClickEventsByUserAndExperiment(user, experiment);
+        return createEventCountDTOList(clickEvents);
     }
 
     /**
@@ -468,6 +531,33 @@ public class EventService {
     }
 
     /**
+     * Retrieves all click event data for the experiment with the given ID as a list of string arrays. If the id is
+     * invalid, an {@link IllegalArgumentException} is thrown instead. If no corresponding experiment could be found, a
+     * {@link NotFoundException} is thrown.
+     *
+     * @param id The experiment ID.
+     * @return The list of string arrays.
+     */
+    @Transactional
+    public List<String[]> getClickEventData(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot retrieve click event data for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve click event data for experiment with invalid id " + id
+                    + "!");
+        }
+
+        Experiment experiment = experimentRepository.getOne(id);
+
+        try {
+            List<ClickEvent> clickEvents = clickEventRepository.findAllByExperiment(experiment);
+            return createClickEventList(clickEvents);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find experiment with id " + id + " in the database!", e);
+            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
+        }
+    }
+
+    /**
      * Retrieves all resource event data for the experiment with the given ID as a list of string arrays. If the id is
      * invalid, an {@link IllegalArgumentException} is thrown instead. If no corresponding experiment could be found, a
      * {@link NotFoundException} is thrown.
@@ -510,6 +600,25 @@ public class EventService {
         }
 
         List<EventCount> eventCounts = eventCountRepository.findAllBlockEventsByExperiment(id);
+        return createEventCountList(eventCounts);
+    }
+
+    /**
+     * Retrieves all click event counts for the experiment with the given ID as a list of string arrays. If the id is
+     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     *
+     * @param id The experiment ID.
+     * @return The list of string arrays.
+     */
+    @Transactional
+    public List<String[]> getClickEventCount(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot retrieve click event count data for experiment with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve click event count data for experiment with invalid id "
+                    + id + "!");
+        }
+
+        List<EventCount> eventCounts = eventCountRepository.findAllClickEventsByExperiment(id);
         return createEventCountList(eventCounts);
     }
 
@@ -614,6 +723,40 @@ public class EventService {
     }
 
     /**
+     * Creates a {@link ClickEvent} with the given information of the {@link ClickEventDTO}, the {@link User}, and the
+     * {@link Experiment}.
+     *
+     * @param clickEventDTO The dto containing the information.
+     * @param user The user who caused the event.
+     * @param experiment The experiment during which the event occurred.
+     * @return The new click event containing the information passed in the DTO.
+     */
+    private ClickEvent createClickEvent(final ClickEventDTO clickEventDTO, final User user,
+                                        final Experiment experiment) {
+        ClickEvent clickEvent = new ClickEvent();
+
+        if (user != null) {
+            clickEvent.setUser(user);
+        }
+        if (experiment != null) {
+            clickEvent.setExperiment(experiment);
+        }
+        if (clickEventDTO.getId() != null) {
+            clickEvent.setId(clickEventDTO.getId());
+        }
+        if (clickEventDTO.getDate() != null) {
+            clickEvent.setDate(Timestamp.valueOf(clickEventDTO.getDate()));
+        }
+        if (clickEventDTO.getMetadata() != null) {
+            clickEvent.setMetadata(clickEventDTO.getMetadata());
+        }
+
+        clickEvent.setEventType(clickEventDTO.getEventType().toString());
+        clickEvent.setEvent(clickEventDTO.getEvent().toString());
+        return clickEvent;
+    }
+
+    /**
      * Creates a {@link ResourceEvent} with the given information of the {@link ResourceEventDTO}, the {@link User},
      * and the {@link Experiment}.
      *
@@ -715,6 +858,27 @@ public class EventService {
                     blockEvent.getExperiment().getId().toString(), blockEvent.getDate().toString(),
                     blockEvent.getEventType(), blockEvent.getEvent(), blockEvent.getSprite(), blockEvent.getMetadata(),
                     blockEvent.getXml(), blockEvent.getCode()};
+            events.add(data);
+        }
+
+        return events;
+    }
+
+    /**
+     * Creates a list of String arrays holding the information passed in the {@link ClickEvent} list.
+     *
+     * @param clickEvents The click events.
+     * @return The new list containing the information passed in the click event objects.
+     */
+    private List<String[]> createClickEventList(final List<ClickEvent> clickEvents) {
+        List<String[]> events = new ArrayList<>();
+        String[] header = {"id", "user", "experiment", "date", "eventType", "event", "metadata"};
+        events.add(header);
+
+        for (ClickEvent clickEvent : clickEvents) {
+            String[] data = {clickEvent.getId().toString(), clickEvent.getUser().getId().toString(),
+                    clickEvent.getExperiment().getId().toString(), clickEvent.getDate().toString(),
+                    clickEvent.getEventType(), clickEvent.getEvent(), clickEvent.getMetadata()};
             events.add(data);
         }
 
