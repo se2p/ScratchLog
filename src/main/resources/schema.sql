@@ -74,6 +74,50 @@ CREATE TABLE IF NOT EXISTS `click_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
+-- scratch1984.debugger_event definition
+
+CREATE TABLE IF NOT EXISTS `debugger_event` (
+                               `id` int NOT NULL AUTO_INCREMENT,
+                               `user_id` int NOT NULL,
+                               `experiment_id` int NOT NULL,
+                               `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                               `event_type` varchar(255) NOT NULL,
+                               `event` varchar(255) NOT NULL,
+                               `block_target_id` varchar(255) DEFAULT NULL,
+                               `name_opcode` varchar(255) DEFAULT NULL,
+                               `original` int DEFAULT NULL,
+                               PRIMARY KEY (`id`),
+                               KEY `user_id` (`user_id`),
+                               KEY `experiment_id` (`experiment_id`),
+                               CONSTRAINT `debugger_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+                               CONSTRAINT `debugger_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- scratch1984.question_event definition
+
+CREATE TABLE IF NOT EXISTS `question_event` (
+                                  `id` int NOT NULL AUTO_INCREMENT,
+                                  `user_id` int NOT NULL,
+                                  `experiment_id` int NOT NULL,
+                                  `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                  `event_type` varchar(255) NOT NULL,
+                                  `event` varchar(255) NOT NULL,
+                                  `feedback` int DEFAULT NULL,
+                                  `type` varchar(255) DEFAULT NULL,
+                                  `values` varchar(255) DEFAULT NULL,
+                                  `category` varchar(255) DEFAULT NULL,
+                                  `form` varchar(255) DEFAULT NULL,
+                                  `block_id` varchar(255) DEFAULT NULL,
+                                  `opcode` varchar(255) DEFAULT NULL,
+                                  PRIMARY KEY (`id`),
+                                  KEY `user_id` (`user_id`),
+                                  KEY `experiment_id` (`experiment_id`),
+                                  CONSTRAINT `question_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+                                  CONSTRAINT `question_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
 -- scratch1984.file definition
 
 CREATE TABLE IF NOT EXISTS `file` (

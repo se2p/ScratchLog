@@ -9,6 +9,7 @@ import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
@@ -106,6 +107,22 @@ public class EventRestController {
         }
 
         eventService.saveClickEvent(clickEventDTO);
+    }
+
+    /**
+     * Saves the debugger event data passed in the request body.
+     *
+     * @param data The string containing the debugger event data.
+     */
+    @PostMapping("/debugger")
+    public void storeDebuggerEvent(@RequestBody final String data) {
+        DebuggerEventDTO debuggerEventDTO = createDebuggerEventDTO(data);
+
+        if (debuggerEventDTO == null) {
+            return;
+        }
+
+        eventService.saveDebuggerEvent(debuggerEventDTO);
     }
 
     /**
@@ -325,6 +342,45 @@ public class EventRestController {
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
             logger.error("The click event data sent to the server was incomplete!", e);
+            return null;
+        }
+
+        return dto;
+    }
+
+    /**
+     * Creates a {@link DebuggerEventDTO} with the given data.
+     *
+     * @param data The data passed in the request body.
+     * @return The new debugger event DTO containing the information.
+     */
+    private DebuggerEventDTO createDebuggerEventDTO(final String data) {
+        DebuggerEventDTO dto = new DebuggerEventDTO();
+
+        try {
+            JSONObject object = new JSONObject(data);
+            String id = object.getString("id");
+            String name = object.getString("name");
+            String original = object.getString("original");
+
+            dto.setUser(object.getInt("user"));
+            dto.setExperiment(object.getInt("experiment"));
+            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            dto.setEventType(DebuggerEventDTO.DebuggerEventType.valueOf(object.getString("type")));
+            dto.setEvent(DebuggerEventDTO.DebuggerEvent.valueOf(object.getString("event")));
+
+            if (!id.trim().isBlank()) {
+                dto.setBlockOrTargetID(id);
+            }
+            if (!name.trim().isBlank()) {
+                dto.setNameOrOpcode(name);
+            }
+            if (!original.trim().isBlank()) {
+                dto.setOriginal(object.getInt("original"));
+            }
+        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
+                | JSONException e) {
+            logger.error("The debugger event data sent to the server was incomplete!", e);
             return null;
         }
 

@@ -61,6 +61,7 @@ public class EventRestControllerIntegrationTest {
     private static final int ID = 1;
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject clickEventObject = new JSONObject();
+    private final JSONObject debuggerEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
     private final JSONObject sb3ZipObject = new JSONObject();
@@ -96,6 +97,14 @@ public class EventRestControllerIntegrationTest {
         clickEventObject.put("time", "2021-06-28T12:36:37.601Z");
         clickEventObject.put("event", "STOPALL");
         clickEventObject.put("metadata", "meta");
+        debuggerEventObject.put("user", 3);
+        debuggerEventObject.put("experiment", 39);
+        debuggerEventObject.put("type", "SPRITE");
+        debuggerEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        debuggerEventObject.put("event", "SELECT_SPRITE");
+        debuggerEventObject.put("id", "id");
+        debuggerEventObject.put("name", "name");
+        debuggerEventObject.put("original", "1");
         resourceEventObject.put("user", 3);
         resourceEventObject.put("experiment", 39);
         resourceEventObject.put("type", "DELETE");
@@ -223,6 +232,44 @@ public class EventRestControllerIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
         verify(eventService, never()).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEvent() throws Exception {
+        mvc.perform(post("/store/debugger")
+                        .content(debuggerEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventJSON() throws Exception {
+        debuggerEventObject.put("user", "user");
+        mvc.perform(post("/store/debugger")
+                        .content(debuggerEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventTimeParse() throws Exception {
+        debuggerEventObject.put("time", ".");
+        mvc.perform(post("/store/debugger")
+                        .content(debuggerEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveDebuggerEvent(any());
     }
 
     @Test

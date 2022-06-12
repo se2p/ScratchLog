@@ -29,7 +29,7 @@ public class ClickEventDTO {
     }
 
     /**
-     * All possible specific events for a block event.
+     * All possible specific events for a click event.
      */
     public enum ClickEvent {
         /**

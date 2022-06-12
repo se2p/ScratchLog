@@ -52,6 +52,7 @@ public class EventRestControllerTest {
     private static final int ID = 1;
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject clickEventObject = new JSONObject();
+    private final JSONObject debuggerEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
     private final JSONObject sb3ZipObject = new JSONObject();
@@ -84,6 +85,14 @@ public class EventRestControllerTest {
         clickEventObject.put("time", "2021-06-28T12:36:37.601Z");
         clickEventObject.put("event", "STOPALL");
         clickEventObject.put("metadata", "meta");
+        debuggerEventObject.put("user", 3);
+        debuggerEventObject.put("experiment", 39);
+        debuggerEventObject.put("type", "SPRITE");
+        debuggerEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        debuggerEventObject.put("event", "SELECT_SPRITE");
+        debuggerEventObject.put("id", "id");
+        debuggerEventObject.put("name", "name");
+        debuggerEventObject.put("original", "1");
         resourceEventObject.put("user", 3);
         resourceEventObject.put("experiment", 39);
         resourceEventObject.put("type", "DELETE");
@@ -219,6 +228,68 @@ public class EventRestControllerTest {
                 () -> eventRestController.storeClickEvent(clickEventObject.toString())
         );
         verify(eventService, never()).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEvent() {
+        assertDoesNotThrow(
+                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
+        );
+        verify(eventService).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventIdBlank() {
+        debuggerEventObject.put("id", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
+        );
+        verify(eventService).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventNameBlank() {
+        debuggerEventObject.put("name", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
+        );
+        verify(eventService).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventOriginalBlank() {
+        debuggerEventObject.put("original", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
+        );
+        verify(eventService).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventJSON() {
+        debuggerEventObject.put("original", "one");
+        assertDoesNotThrow(
+                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
+        );
+        verify(eventService, never()).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventIllegalArgument() {
+        debuggerEventObject.put("type", "one");
+        assertDoesNotThrow(
+                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
+        );
+        verify(eventService, never()).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventDateTimeParse() {
+        debuggerEventObject.put("time", "time");
+        assertDoesNotThrow(
+                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
+        );
+        verify(eventService, never()).saveDebuggerEvent(any());
     }
 
     @Test

@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.persistence.entity.BlockEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.ClickEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.CodesData;
+import fim.unipassau.de.scratch1984.persistence.entity.DebuggerEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
@@ -15,6 +16,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjecti
 import fim.unipassau.de.scratch1984.persistence.repository.BlockEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ClickEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CodesDataRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.DebuggerEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
@@ -24,6 +26,7 @@ import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
+import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import org.slf4j.Logger;
@@ -75,6 +78,11 @@ public class EventService {
     private final ClickEventRepository clickEventRepository;
 
     /**
+     * The debugger event repository to use for debugger event queries.
+     */
+    private final DebuggerEventRepository debuggerEventRepository;
+
+    /**
      * The resource event repository to use for resource event queries.
      */
     private final ResourceEventRepository resourceEventRepository;
@@ -101,6 +109,7 @@ public class EventService {
      * @param codesDataRepository The {@link CodesDataRepository} to use.
      * @param blockEventRepository The {@link BlockEventRepository} to use.
      * @param clickEventRepository The {@link ClickEventRepository} to use.
+     * @param debuggerEventRepository The {@link DebuggerEventRepository} to use.
      * @param resourceEventRepository The {@link ResourceEventRepository} to use.
      * @param participantRepository The {@link ParticipantRepository} to use.
      * @param userRepository The {@link UserRepository} to use.
@@ -111,6 +120,7 @@ public class EventService {
                         final CodesDataRepository codesDataRepository,
                         final BlockEventRepository blockEventRepository,
                         final ClickEventRepository clickEventRepository,
+                        final DebuggerEventRepository debuggerEventRepository,
                         final ResourceEventRepository resourceEventRepository,
                         final ParticipantRepository participantRepository,
                         final UserRepository userRepository,
@@ -119,6 +129,7 @@ public class EventService {
         this.codesDataRepository = codesDataRepository;
         this.blockEventRepository = blockEventRepository;
         this.clickEventRepository = clickEventRepository;
+        this.debuggerEventRepository = debuggerEventRepository;
         this.resourceEventRepository = resourceEventRepository;
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
@@ -186,6 +197,38 @@ public class EventService {
             logger.error("Could not store the click event data for user with id " + clickEventDTO.getUser()
                     + " for experiment with id " + clickEventDTO.getExperiment() + " since the click event violates the"
                     + " click event table constraints!", e);
+        }
+    }
+
+    /**
+     * Creates a new debugger event with the given parameters in the database.
+     *
+     * @param debuggerEventDTO The dto containing the event information to set.
+     */
+    @Transactional
+    public void saveDebuggerEvent(final DebuggerEventDTO debuggerEventDTO) {
+        User user = userRepository.getOne(debuggerEventDTO.getUser());
+        Experiment experiment = experimentRepository.getOne(debuggerEventDTO.getExperiment());
+
+        try {
+            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+
+            if (participant == null) {
+                logger.error("No corresponding participant entry could be found for user with id "
+                        + debuggerEventDTO.getUser() + " and experiment " + debuggerEventDTO.getExperiment()
+                        + " when trying to save a debugger event!");
+                return;
+            }
+
+            DebuggerEvent debuggerEvent = createDebuggerEvent(debuggerEventDTO, user, experiment);
+            debuggerEventRepository.save(debuggerEvent);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find user with id " + debuggerEventDTO.getUser() + " or experiment with id "
+                    + debuggerEventDTO.getExperiment() + " when trying to save a debugger event!", e);
+        } catch (ConstraintViolationException e) {
+            logger.error("Could not store the debugger event data for user with id " + debuggerEventDTO.getUser()
+                    + " for experiment with id " + debuggerEventDTO.getExperiment() + " since the debugger event "
+                    + "violates the debugger event table constraints!", e);
         }
     }
 
@@ -754,6 +797,46 @@ public class EventService {
         clickEvent.setEventType(clickEventDTO.getEventType().toString());
         clickEvent.setEvent(clickEventDTO.getEvent().toString());
         return clickEvent;
+    }
+
+    /**
+     * Creates a {@link DebuggerEvent} with the given information of the {@link DebuggerEventDTO}, the {@link User},
+     * and the {@link Experiment}.
+     *
+     * @param debuggerEventDTO The dto containing the information.
+     * @param user The user who caused the event.
+     * @param experiment The experiment during which the event occurred.
+     * @return The new debugger event containing the information passed in the DTO.
+     */
+    private DebuggerEvent createDebuggerEvent(final DebuggerEventDTO debuggerEventDTO, final User user,
+                                              final Experiment experiment) {
+        DebuggerEvent debuggerEvent = new DebuggerEvent();
+
+        if (user != null) {
+            debuggerEvent.setUser(user);
+        }
+        if (experiment != null) {
+            debuggerEvent.setExperiment(experiment);
+        }
+        if (debuggerEventDTO.getId() != null) {
+            debuggerEvent.setId(debuggerEventDTO.getId());
+        }
+        if (debuggerEventDTO.getDate() != null) {
+            debuggerEvent.setDate(Timestamp.valueOf(debuggerEventDTO.getDate()));
+        }
+        if (debuggerEventDTO.getBlockOrTargetID() != null) {
+            debuggerEvent.setBlockOrTargetID(debuggerEventDTO.getBlockOrTargetID());
+        }
+        if (debuggerEventDTO.getNameOrOpcode() != null) {
+            debuggerEvent.setNameOrOpcode(debuggerEventDTO.getNameOrOpcode());
+        }
+        if (debuggerEventDTO.getOriginal() != null) {
+            debuggerEvent.setOriginal(debuggerEventDTO.getOriginal());
+        }
+
+        debuggerEvent.setEventType(debuggerEventDTO.getEventType().toString());
+        debuggerEvent.setEvent(debuggerEventDTO.getEvent().toString());
+        return debuggerEvent;
     }
 
     /**
