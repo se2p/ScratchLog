@@ -252,7 +252,7 @@ public class ClickEventDTO {
         }
 
         ClickEventDTO that = (ClickEventDTO) other;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     /**

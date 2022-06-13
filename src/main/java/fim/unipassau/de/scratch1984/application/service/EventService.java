@@ -8,6 +8,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.DebuggerEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.persistence.entity.QuestionEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.ResourceEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.BlockEventJSONProjection;
@@ -20,6 +21,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.DebuggerEventReposito
 import fim.unipassau.de.scratch1984.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.QuestionEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -28,6 +30,7 @@ import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
+import fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +45,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -83,6 +88,11 @@ public class EventService {
     private final DebuggerEventRepository debuggerEventRepository;
 
     /**
+     * The question event repository to use for debugger event queries.
+     */
+    private final QuestionEventRepository questionEventRepository;
+
+    /**
      * The resource event repository to use for resource event queries.
      */
     private final ResourceEventRepository resourceEventRepository;
@@ -110,6 +120,7 @@ public class EventService {
      * @param blockEventRepository The {@link BlockEventRepository} to use.
      * @param clickEventRepository The {@link ClickEventRepository} to use.
      * @param debuggerEventRepository The {@link DebuggerEventRepository} to use.
+     * @param questionEventRepository The {@link QuestionEventRepository} to use.
      * @param resourceEventRepository The {@link ResourceEventRepository} to use.
      * @param participantRepository The {@link ParticipantRepository} to use.
      * @param userRepository The {@link UserRepository} to use.
@@ -121,6 +132,7 @@ public class EventService {
                         final BlockEventRepository blockEventRepository,
                         final ClickEventRepository clickEventRepository,
                         final DebuggerEventRepository debuggerEventRepository,
+                        final QuestionEventRepository questionEventRepository,
                         final ResourceEventRepository resourceEventRepository,
                         final ParticipantRepository participantRepository,
                         final UserRepository userRepository,
@@ -130,6 +142,7 @@ public class EventService {
         this.blockEventRepository = blockEventRepository;
         this.clickEventRepository = clickEventRepository;
         this.debuggerEventRepository = debuggerEventRepository;
+        this.questionEventRepository = questionEventRepository;
         this.resourceEventRepository = resourceEventRepository;
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
@@ -147,20 +160,11 @@ public class EventService {
         Experiment experiment = experimentRepository.getOne(blockEventDTO.getExperiment());
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
-
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id "
-                        + blockEventDTO.getUser() + " and experiment " + blockEventDTO.getExperiment()
-                        + " when trying to save a block event!");
-                return;
+            if (isParticipant(user, experiment, blockEventDTO.getUser(), blockEventDTO.getExperiment())
+                    && isValidEvent(user, experiment, blockEventDTO.getDate())) {
+                BlockEvent blockEvent = createBlockEvent(blockEventDTO, user, experiment);
+                blockEventRepository.save(blockEvent);
             }
-
-            BlockEvent blockEvent = createBlockEvent(blockEventDTO, user, experiment);
-            blockEventRepository.save(blockEvent);
-        } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + blockEventDTO.getUser() + " or experiment with id "
-                    + blockEventDTO.getExperiment() + " when trying to save a block event!", e);
         } catch (ConstraintViolationException e) {
             logger.error("Could not store the block event data for user with id " + blockEventDTO.getUser()
                     + " for experiment with id " + blockEventDTO.getExperiment() + " since the block event violates the"
@@ -179,20 +183,11 @@ public class EventService {
         Experiment experiment = experimentRepository.getOne(clickEventDTO.getExperiment());
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
-
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id "
-                        + clickEventDTO.getUser() + " and experiment " + clickEventDTO.getExperiment()
-                        + " when trying to save a click event!");
-                return;
+            if (isParticipant(user, experiment, clickEventDTO.getUser(), clickEventDTO.getExperiment())
+                    && isValidEvent(user, experiment, clickEventDTO.getDate())) {
+                ClickEvent clickEvent = createClickEvent(clickEventDTO, user, experiment);
+                clickEventRepository.save(clickEvent);
             }
-
-            ClickEvent clickEvent = createClickEvent(clickEventDTO, user, experiment);
-            clickEventRepository.save(clickEvent);
-        } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + clickEventDTO.getUser() + " or experiment with id "
-                    + clickEventDTO.getExperiment() + " when trying to save a click event!", e);
         } catch (ConstraintViolationException e) {
             logger.error("Could not store the click event data for user with id " + clickEventDTO.getUser()
                     + " for experiment with id " + clickEventDTO.getExperiment() + " since the click event violates the"
@@ -211,24 +206,38 @@ public class EventService {
         Experiment experiment = experimentRepository.getOne(debuggerEventDTO.getExperiment());
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
-
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id "
-                        + debuggerEventDTO.getUser() + " and experiment " + debuggerEventDTO.getExperiment()
-                        + " when trying to save a debugger event!");
-                return;
+            if (isParticipant(user, experiment, debuggerEventDTO.getUser(), debuggerEventDTO.getExperiment())
+                    && isValidEvent(user, experiment, debuggerEventDTO.getDate())) {
+                DebuggerEvent debuggerEvent = createDebuggerEvent(debuggerEventDTO, user, experiment);
+                debuggerEventRepository.save(debuggerEvent);
             }
-
-            DebuggerEvent debuggerEvent = createDebuggerEvent(debuggerEventDTO, user, experiment);
-            debuggerEventRepository.save(debuggerEvent);
-        } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + debuggerEventDTO.getUser() + " or experiment with id "
-                    + debuggerEventDTO.getExperiment() + " when trying to save a debugger event!", e);
         } catch (ConstraintViolationException e) {
             logger.error("Could not store the debugger event data for user with id " + debuggerEventDTO.getUser()
                     + " for experiment with id " + debuggerEventDTO.getExperiment() + " since the debugger event "
                     + "violates the debugger event table constraints!", e);
+        }
+    }
+
+    /**
+     * Creates a new question event with the given parameters in the database.
+     *
+     * @param questionEventDTO The dto containing the event information to set.
+     */
+    @Transactional
+    public void saveQuestionEvent(final QuestionEventDTO questionEventDTO) {
+        User user = userRepository.getOne(questionEventDTO.getUser());
+        Experiment experiment = experimentRepository.getOne(questionEventDTO.getExperiment());
+
+        try {
+            if (isParticipant(user, experiment, questionEventDTO.getUser(), questionEventDTO.getExperiment())
+                    && isValidEvent(user, experiment, questionEventDTO.getDate())) {
+                QuestionEvent questionEvent = createQuestionEvent(questionEventDTO, user, experiment);
+                questionEventRepository.save(questionEvent);
+            }
+        } catch (ConstraintViolationException e) {
+            logger.error("Could not store the question event data for user with id " + questionEventDTO.getUser()
+                    + " for experiment with id " + questionEventDTO.getExperiment() + " since the question event "
+                    + "violates the question event table constraints!", e);
         }
     }
 
@@ -243,20 +252,11 @@ public class EventService {
         Experiment experiment = experimentRepository.getOne(resourceEventDTO.getExperiment());
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
-
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id "
-                        + resourceEventDTO.getUser() + " and experiment " + resourceEventDTO.getExperiment()
-                        + " when trying to save a resource event!");
-                return;
+            if (isParticipant(user, experiment, resourceEventDTO.getUser(), resourceEventDTO.getExperiment())
+                    && isValidEvent(user, experiment, resourceEventDTO.getDate())) {
+                ResourceEvent resourceEvent = createResourceEvent(resourceEventDTO, user, experiment);
+                resourceEventRepository.save(resourceEvent);
             }
-
-            ResourceEvent resourceEvent = createResourceEvent(resourceEventDTO, user, experiment);
-            resourceEventRepository.save(resourceEvent);
-        } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + resourceEventDTO.getUser() + " or experiment with id "
-                    + resourceEventDTO.getExperiment() + " when trying to save a resource event!", e);
         } catch (ConstraintViolationException e) {
             logger.error("Could not store the resource event data for user with id " + resourceEventDTO.getUser()
                     + " for experiment with id " + resourceEventDTO.getExperiment() + " since the resource event "
@@ -703,6 +703,52 @@ public class EventService {
     }
 
     /**
+     * Checks whether any participant entry exists for the user and experiment with the given id. If not even a user or
+     * experiment with the given id exist, {@code false} is returned.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @param userId The user id.
+     * @param experimentId The experiment id.
+     * @return {@code true} if a participant entry could be found, or {@code false} otherwise.
+     */
+    private boolean isParticipant(final User user, final Experiment experiment, final int userId,
+                                  final int experimentId) {
+        try {
+            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+
+            if (participant == null) {
+                logger.error("No corresponding participant entry could be found for user with id " + userId
+                        + " and experiment " + experimentId + " when trying to save an event!");
+                return false;
+            }
+
+            return true;
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+                    + " when trying to save an event!", e);
+            return false;
+        }
+    }
+
+    /**
+     * Checks whether the user, experiment and date instances required for saving any type of event are present.
+     *
+     * @param user The {@link User} who caused the event.
+     * @param experiment The {@link Experiment} during which the event occurred.
+     * @param date The time at which the event occurred.
+     * @return {@code true} if the given attributes are non-null values, or {@code false} otherwise.
+     */
+    private boolean isValidEvent(final User user, final Experiment experiment, final LocalDateTime date) {
+        if (user != null && experiment != null && date != null) {
+            return true;
+        } else {
+            logger.error("Cannot save event to database with user, experiment or timestamp null!");
+            return false;
+        }
+    }
+
+    /**
      * Creates a {@link CodesDataDTO} with the given information of the {@link CodesData}.
      *
      * @param codesData The entity containing the information.
@@ -735,17 +781,8 @@ public class EventService {
                                         final Experiment experiment) {
         BlockEvent blockEvent = new BlockEvent();
 
-        if (user != null) {
-            blockEvent.setUser(user);
-        }
-        if (experiment != null) {
-            blockEvent.setExperiment(experiment);
-        }
         if (blockEventDTO.getId() != null) {
             blockEvent.setId(blockEventDTO.getId());
-        }
-        if (blockEventDTO.getDate() != null) {
-            blockEvent.setDate(Timestamp.valueOf(blockEventDTO.getDate()));
         }
         if (blockEventDTO.getSprite() != null) {
             blockEvent.setSprite(blockEventDTO.getSprite());
@@ -760,6 +797,9 @@ public class EventService {
             blockEvent.setCode(blockEventDTO.getCode());
         }
 
+        blockEvent.setUser(user);
+        blockEvent.setExperiment(experiment);
+        blockEvent.setDate(Timestamp.valueOf(blockEventDTO.getDate()));
         blockEvent.setEventType(blockEventDTO.getEventType().toString());
         blockEvent.setEvent(blockEventDTO.getEvent().toString());
         return blockEvent;
@@ -778,22 +818,16 @@ public class EventService {
                                         final Experiment experiment) {
         ClickEvent clickEvent = new ClickEvent();
 
-        if (user != null) {
-            clickEvent.setUser(user);
-        }
-        if (experiment != null) {
-            clickEvent.setExperiment(experiment);
-        }
         if (clickEventDTO.getId() != null) {
             clickEvent.setId(clickEventDTO.getId());
-        }
-        if (clickEventDTO.getDate() != null) {
-            clickEvent.setDate(Timestamp.valueOf(clickEventDTO.getDate()));
         }
         if (clickEventDTO.getMetadata() != null) {
             clickEvent.setMetadata(clickEventDTO.getMetadata());
         }
 
+        clickEvent.setUser(user);
+        clickEvent.setExperiment(experiment);
+        clickEvent.setDate(Timestamp.valueOf(clickEventDTO.getDate()));
         clickEvent.setEventType(clickEventDTO.getEventType().toString());
         clickEvent.setEvent(clickEventDTO.getEvent().toString());
         return clickEvent;
@@ -812,17 +846,8 @@ public class EventService {
                                               final Experiment experiment) {
         DebuggerEvent debuggerEvent = new DebuggerEvent();
 
-        if (user != null) {
-            debuggerEvent.setUser(user);
-        }
-        if (experiment != null) {
-            debuggerEvent.setExperiment(experiment);
-        }
         if (debuggerEventDTO.getId() != null) {
             debuggerEvent.setId(debuggerEventDTO.getId());
-        }
-        if (debuggerEventDTO.getDate() != null) {
-            debuggerEvent.setDate(Timestamp.valueOf(debuggerEventDTO.getDate()));
         }
         if (debuggerEventDTO.getBlockOrTargetID() != null) {
             debuggerEvent.setBlockOrTargetID(debuggerEventDTO.getBlockOrTargetID());
@@ -834,9 +859,58 @@ public class EventService {
             debuggerEvent.setOriginal(debuggerEventDTO.getOriginal());
         }
 
+        debuggerEvent.setUser(user);
+        debuggerEvent.setExperiment(experiment);
+        debuggerEvent.setDate(Timestamp.valueOf(debuggerEventDTO.getDate()));
         debuggerEvent.setEventType(debuggerEventDTO.getEventType().toString());
         debuggerEvent.setEvent(debuggerEventDTO.getEvent().toString());
         return debuggerEvent;
+    }
+
+    /**
+     * Creates a {@link QuestionEvent} with the given information of the {@link QuestionEventDTO}, the {@link User},
+     * and the {@link Experiment}.
+     *
+     * @param questionEventDTO The dto containing the information.
+     * @param user The user who caused the event.
+     * @param experiment The experiment during which the event occurred.
+     * @return The new question event containing the information passed in the DTO.
+     */
+    private QuestionEvent createQuestionEvent(final QuestionEventDTO questionEventDTO, final User user,
+                                              final Experiment experiment) {
+        QuestionEvent questionEvent = new QuestionEvent();
+
+        if (questionEventDTO.getId() != null) {
+            questionEvent.setId(questionEventDTO.getId());
+        }
+        if (questionEventDTO.getFeedback() != null) {
+            questionEvent.setFeedback(questionEventDTO.getFeedback());
+        }
+        if (questionEventDTO.getType() != null) {
+            questionEvent.setType(questionEventDTO.getType());
+        }
+        if (questionEventDTO.getValues() != null) {
+            questionEvent.setValues(Arrays.toString(questionEventDTO.getValues()).replaceAll("[\\[\\]]", ""));
+        }
+        if (questionEventDTO.getCategory() != null) {
+            questionEvent.setCategory(questionEventDTO.getCategory());
+        }
+        if (questionEventDTO.getForm() != null) {
+            questionEvent.setForm(questionEventDTO.getForm());
+        }
+        if (questionEventDTO.getBlockID() != null) {
+            questionEvent.setBlockID(questionEventDTO.getBlockID());
+        }
+        if (questionEventDTO.getOpcode() != null) {
+            questionEvent.setOpcode(questionEventDTO.getOpcode());
+        }
+
+        questionEvent.setUser(user);
+        questionEvent.setExperiment(experiment);
+        questionEvent.setDate(Timestamp.valueOf(questionEventDTO.getDate()));
+        questionEvent.setEventType(questionEventDTO.getEventType().toString());
+        questionEvent.setEvent(questionEventDTO.getEvent().toString());
+        return questionEvent;
     }
 
     /**
@@ -852,17 +926,8 @@ public class EventService {
                                               final Experiment experiment) {
         ResourceEvent resourceEvent = new ResourceEvent();
 
-        if (user != null) {
-            resourceEvent.setUser(user);
-        }
-        if (experiment != null) {
-            resourceEvent.setExperiment(experiment);
-        }
         if (resourceEventDTO.getId() != null) {
             resourceEvent.setId(resourceEventDTO.getId());
-        }
-        if (resourceEventDTO.getDate() != null) {
-            resourceEvent.setDate(Timestamp.valueOf(resourceEventDTO.getDate()));
         }
         if (resourceEventDTO.getName() != null) {
             resourceEvent.setResourceName(resourceEventDTO.getName());
@@ -879,6 +944,9 @@ public class EventService {
             resourceEvent.setLibraryResource(0);
         }
 
+        resourceEvent.setUser(user);
+        resourceEvent.setExperiment(experiment);
+        resourceEvent.setDate(Timestamp.valueOf(resourceEventDTO.getDate()));
         resourceEvent.setEventType(resourceEventDTO.getEventType().toString());
         resourceEvent.setEvent(resourceEventDTO.getEvent().toString());
         return resourceEvent;

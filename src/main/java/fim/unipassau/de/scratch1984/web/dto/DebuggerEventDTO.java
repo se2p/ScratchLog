@@ -329,7 +329,7 @@ public class DebuggerEventDTO {
         }
 
         DebuggerEventDTO that = (DebuggerEventDTO) other;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     /**
