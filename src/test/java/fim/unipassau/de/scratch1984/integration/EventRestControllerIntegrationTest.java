@@ -62,6 +62,7 @@ public class EventRestControllerIntegrationTest {
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject clickEventObject = new JSONObject();
     private final JSONObject debuggerEventObject = new JSONObject();
+    private final JSONObject questionEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
     private final JSONObject sb3ZipObject = new JSONObject();
@@ -105,6 +106,18 @@ public class EventRestControllerIntegrationTest {
         debuggerEventObject.put("id", "id");
         debuggerEventObject.put("name", "name");
         debuggerEventObject.put("original", "1");
+        questionEventObject.put("user", 3);
+        questionEventObject.put("experiment", 39);
+        questionEventObject.put("type", "QUESTION");
+        questionEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        questionEventObject.put("event", "SELECT");
+        questionEventObject.put("feedback", "1");
+        questionEventObject.put("q_type", "block-execution");
+        questionEventObject.put("values", "Cat, Costume");
+        questionEventObject.put("category", "execution");
+        questionEventObject.put("form", "negative");
+        questionEventObject.put("id", "id");
+        questionEventObject.put("opcode", "opcode");
         resourceEventObject.put("user", 3);
         resourceEventObject.put("experiment", 39);
         resourceEventObject.put("type", "DELETE");
@@ -270,6 +283,57 @@ public class EventRestControllerIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
         verify(eventService, never()).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEvent() throws Exception {
+        mvc.perform(post("/store/question")
+                        .content(questionEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventJSON() throws Exception {
+        questionEventObject.put("experiment", "exp");
+        mvc.perform(post("/store/question")
+                        .content(questionEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventIllegalArgument() throws Exception {
+        questionEventObject.put("type", "BREAKPOINT");
+        mvc.perform(post("/store/question")
+                        .content(questionEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventTimeParse() throws Exception {
+        questionEventObject.put("time", "time");
+        mvc.perform(post("/store/question")
+                        .content(questionEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveQuestionEvent(any());
     }
 
     @Test

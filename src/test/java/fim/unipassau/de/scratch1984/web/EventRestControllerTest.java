@@ -53,6 +53,7 @@ public class EventRestControllerTest {
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject clickEventObject = new JSONObject();
     private final JSONObject debuggerEventObject = new JSONObject();
+    private final JSONObject questionEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
     private final JSONObject sb3ZipObject = new JSONObject();
@@ -93,6 +94,18 @@ public class EventRestControllerTest {
         debuggerEventObject.put("id", "id");
         debuggerEventObject.put("name", "name");
         debuggerEventObject.put("original", "1");
+        questionEventObject.put("user", 3);
+        questionEventObject.put("experiment", 39);
+        questionEventObject.put("type", "QUESTION");
+        questionEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        questionEventObject.put("event", "SELECT");
+        questionEventObject.put("feedback", "1");
+        questionEventObject.put("q_type", "block-execution");
+        questionEventObject.put("values", "Cat, Costume");
+        questionEventObject.put("category", "execution");
+        questionEventObject.put("form", "negative");
+        questionEventObject.put("id", "id");
+        questionEventObject.put("opcode", "opcode");
         resourceEventObject.put("user", 3);
         resourceEventObject.put("experiment", 39);
         resourceEventObject.put("type", "DELETE");
@@ -290,6 +303,104 @@ public class EventRestControllerTest {
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
         verify(eventService, never()).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEvent() {
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventFeedbackBlank() {
+        questionEventObject.put("feedback", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventTypeBlank() {
+        questionEventObject.put("q_type", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventValuesBlank() {
+        questionEventObject.put("values", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventCategoryBlank() {
+        questionEventObject.put("category", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventFormBlank() {
+        questionEventObject.put("form", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventBlockIdBlank() {
+        questionEventObject.put("id", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventOpcodeBlank() {
+        questionEventObject.put("opcode", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventJSON() {
+        questionEventObject.put("feedback", 0);
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService, never()).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventIllegalArgument() {
+        questionEventObject.put("event", "SPRITE");
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService, never()).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventDateParse() {
+        questionEventObject.put("time", "0");
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(eventService, never()).saveQuestionEvent(any());
     }
 
     @Test

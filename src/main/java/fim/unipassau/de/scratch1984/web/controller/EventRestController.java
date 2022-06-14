@@ -11,6 +11,7 @@ import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
+import fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
 import org.json.JSONException;
@@ -123,6 +124,22 @@ public class EventRestController {
         }
 
         eventService.saveDebuggerEvent(debuggerEventDTO);
+    }
+
+    /**
+     * Saves the question event data passed in the request body.
+     *
+     * @param data The string containing the question event data.
+     */
+    @PostMapping("/question")
+    public void storeQuestionEvent(@RequestBody final String data) {
+        QuestionEventDTO questionEventDTO = createQuestionEventDTO(data);
+
+        if (questionEventDTO == null) {
+            return;
+        }
+
+        eventService.saveQuestionEvent(questionEventDTO);
     }
 
     /**
@@ -385,6 +402,61 @@ public class EventRestController {
         }
 
         return dto;
+    }
+
+    /**
+     * Creates a {@link QuestionEventDTO} with the given data.
+     *
+     * @param data The data passed in the request body.
+     * @return The new question event DTO containing the information.
+     */
+    private QuestionEventDTO createQuestionEventDTO(final String data) {
+        QuestionEventDTO dto = new QuestionEventDTO();
+
+        try {
+            JSONObject object = new JSONObject(data);
+            String feedback = object.getString("feedback");
+            String type = object.getString("q_type");
+            String values = object.getString("values");
+            String category = object.getString("category");
+            String form = object.getString("form");
+            String blockId = object.getString("id");
+            String opcode = object.getString("opcode");
+
+            dto.setUser(object.getInt("user"));
+            dto.setExperiment(object.getInt("experiment"));
+            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            dto.setEventType(QuestionEventDTO.QuestionEventType.valueOf(object.getString("type")));
+            dto.setEvent(QuestionEventDTO.QuestionEvent.valueOf(object.getString("event")));
+
+            if (!feedback.trim().isBlank()) {
+                dto.setFeedback(object.getInt("feedback"));
+            }
+            if (!type.trim().isBlank()) {
+                dto.setType(type);
+            }
+            if (!values.trim().isBlank()) {
+                dto.setValues(values.split(","));
+            }
+            if (!category.trim().isBlank()) {
+                dto.setCategory(category);
+            }
+            if (!form.trim().isBlank()) {
+                dto.setForm(form);
+            }
+            if (!blockId.trim().isBlank()) {
+                dto.setBlockID(blockId);
+            }
+            if (!opcode.trim().isBlank()) {
+                dto.setOpcode(opcode);
+            }
+
+            return dto;
+        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
+                | JSONException e) {
+            logger.error("The question event data sent to the server was incomplete!", e);
+            return null;
+        }
     }
 
     /**
