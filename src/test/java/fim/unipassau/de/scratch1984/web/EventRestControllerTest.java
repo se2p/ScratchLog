@@ -509,7 +509,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testSToreZipFileJSON() {
+    public void testStoreZipFileJSON() {
         sb3ZipObject.put("user", "theGordon");
         assertDoesNotThrow(
                 () -> eventRestController.storeZipFile(sb3ZipObject.toString())
@@ -518,7 +518,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testSToreZipFileIllegalArgument() {
+    public void testStoreZipFileIllegalArgument() {
         sb3ZipObject.put("zip", "%");
         assertDoesNotThrow(
                 () -> eventRestController.storeZipFile(sb3ZipObject.toString())
@@ -527,7 +527,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testSToreZipFileDateTimeParse() {
+    public void testStoreZipFileDateTimeParse() {
         sb3ZipObject.put("time", "%");
         assertDoesNotThrow(
                 () -> eventRestController.storeZipFile(sb3ZipObject.toString())

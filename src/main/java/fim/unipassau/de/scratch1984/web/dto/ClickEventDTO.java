@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * A DTO representing a click event that resulted from user interaction with a button, icon, or similar event.
  */
-public class ClickEventDTO {
+public class ClickEventDTO implements EventDTO {
 
     /**
      * All possible event types for a click event.
@@ -110,73 +110,81 @@ public class ClickEventDTO {
     }
 
     /**
-     * Returns the ID of the event.
+     * {@inheritDoc}
      *
      * @return The event ID.
      */
+    @Override
     public Integer getId() {
         return id;
     }
 
     /**
-     * Sets the ID of the event.
+     * {@inheritDoc}
      *
      * @param id The event ID to be set.
      */
+    @Override
     public void setId(final Integer id) {
         this.id = id;
     }
 
     /**
-     * Returns the ID of the user who caused the event.
+     * {@inheritDoc}
      *
      * @return The user's ID.
      */
+    @Override
     public Integer getUser() {
         return user;
     }
 
     /**
-     * Sets the user ID of the event.
+     * {@inheritDoc}
      *
      * @param user The user ID to be set.
      */
+    @Override
     public void setUser(final Integer user) {
         this.user = user;
     }
 
     /**
-     * Returns the ID of the experiment where the event occurred.
+     * {@inheritDoc}
      *
      * @return The experiment ID.
      */
+    @Override
     public Integer getExperiment() {
         return experiment;
     }
 
     /**
-     * Sets the experiment ID of the event.
+     * {@inheritDoc}
      *
      * @param experiment The experiment ID to be set.
      */
+    @Override
     public void setExperiment(final Integer experiment) {
         this.experiment = experiment;
     }
 
     /**
-     * Returns the time at which the event occurred.
+     * {@inheritDoc}
      *
      * @return The event time.
      */
+    @Override
     public LocalDateTime getDate() {
         return date;
     }
 
     /**
-     * Sets the local date time of the event.
+     * {@inheritDoc}
      *
      * @param date The time to be set.
      */
+    @Override
     public void setDate(final LocalDateTime date) {
         this.date = date;
     }

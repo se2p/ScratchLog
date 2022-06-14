@@ -10,6 +10,7 @@ import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.EventDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
@@ -292,6 +293,19 @@ public class EventRestController {
     }
 
     /**
+     * Sets the user, experiment and time for every {@link EventDTO} using the values from the passed
+     * {@link JSONObject}.
+     *
+     * @param eventDTO The dto for which the properties are to be set.
+     * @param object The JSON providing the values.
+     */
+    private void setEventDTOData(final EventDTO eventDTO, final JSONObject object) {
+        eventDTO.setUser(object.getInt("user"));
+        eventDTO.setExperiment(object.getInt("experiment"));
+        eventDTO.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+    }
+
+    /**
      * Creates a {@link BlockEventDTO} with the given data.
      *
      * @param data The data passed in the request body.
@@ -307,9 +321,7 @@ public class EventRestController {
             String xml = object.getString("xml");
             String json = object.getString("json");
 
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            setEventDTOData(dto, object);
             dto.setEventType(BlockEventDTO.BlockEventType.valueOf(object.getString("type")));
             dto.setEvent(BlockEventDTO.BlockEvent.valueOf(object.getString("event")));
 
@@ -347,9 +359,7 @@ public class EventRestController {
             JSONObject object = new JSONObject(data);
             String metadata = object.getString("metadata");
 
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            setEventDTOData(dto, object);
             dto.setEventType(ClickEventDTO.ClickEventType.valueOf(object.getString("type")));
             dto.setEvent(ClickEventDTO.ClickEvent.valueOf(object.getString("event")));
 
@@ -380,9 +390,7 @@ public class EventRestController {
             String name = object.getString("name");
             String original = object.getString("original");
 
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            setEventDTOData(dto, object);
             dto.setEventType(DebuggerEventDTO.DebuggerEventType.valueOf(object.getString("type")));
             dto.setEvent(DebuggerEventDTO.DebuggerEvent.valueOf(object.getString("event")));
 
@@ -423,9 +431,7 @@ public class EventRestController {
             String blockId = object.getString("id");
             String opcode = object.getString("opcode");
 
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            setEventDTOData(dto, object);
             dto.setEventType(QuestionEventDTO.QuestionEventType.valueOf(object.getString("type")));
             dto.setEvent(QuestionEventDTO.QuestionEvent.valueOf(object.getString("event")));
 
@@ -474,9 +480,7 @@ public class EventRestController {
             String md5 = object.getString("md5");
             String dataFormat = object.getString("dataFormat");
 
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            setEventDTOData(dto, object);
             dto.setEventType(ResourceEventDTO.ResourceEventType.valueOf(object.getString("type")));
             dto.setEvent(ResourceEventDTO.ResourceEvent.valueOf(object.getString("event")));
             dto.setLibraryResource(ResourceEventDTO.LibraryResource.valueOf(object.getString("libraryResource")));
@@ -510,9 +514,7 @@ public class EventRestController {
 
         try {
             JSONObject object = new JSONObject(data);
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            setEventDTOData(dto, object);
             dto.setName(object.getString("name"));
             dto.setFiletype(object.getString("type"));
             dto.setContent(Base64.getDecoder().decode(object.getString("file")));
@@ -536,10 +538,8 @@ public class EventRestController {
 
         try {
             JSONObject object = new JSONObject(data);
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
+            setEventDTOData(dto, object);
             dto.setName(object.getString("name"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
             dto.setContent(Base64.getDecoder().decode(object.getString("zip")));
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
