@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.BlockEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.ClickEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.CodesData;
 import fim.unipassau.de.scratch1984.persistence.entity.DebuggerEvent;
+import fim.unipassau.de.scratch1984.persistence.entity.Event;
 import fim.unipassau.de.scratch1984.persistence.entity.EventCount;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
@@ -30,6 +31,7 @@ import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
+import fim.unipassau.de.scratch1984.web.dto.EventDTO;
 import fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import org.slf4j.Logger;
@@ -749,6 +751,29 @@ public class EventService {
     }
 
     /**
+     * Sets the properties for every {@link Event} entity using the values from the given attributes.
+     *
+     * @param event The event for which the properties are to be set.
+     * @param user The {@link User} who caused the event.
+     * @param experiment The {@link Experiment} during which the even occurred.
+     * @param eventType The event type to be set.
+     * @param eventName The concrete event to be set.
+     * @param eventDTO The {@link EventDTO} containing additional information.
+     */
+    private void setEventData(final Event event, final User user, final Experiment experiment, final String eventType,
+                              final String eventName, final EventDTO eventDTO) {
+        if (eventDTO.getId() != null) {
+            event.setId(eventDTO.getId());
+        }
+
+        event.setUser(user);
+        event.setExperiment(experiment);
+        event.setDate(Timestamp.valueOf(eventDTO.getDate()));
+        event.setEventType(eventType);
+        event.setEvent(eventName);
+    }
+
+    /**
      * Creates a {@link CodesDataDTO} with the given information of the {@link CodesData}.
      *
      * @param codesData The entity containing the information.
@@ -781,9 +806,6 @@ public class EventService {
                                         final Experiment experiment) {
         BlockEvent blockEvent = new BlockEvent();
 
-        if (blockEventDTO.getId() != null) {
-            blockEvent.setId(blockEventDTO.getId());
-        }
         if (blockEventDTO.getSprite() != null) {
             blockEvent.setSprite(blockEventDTO.getSprite());
         }
@@ -797,11 +819,8 @@ public class EventService {
             blockEvent.setCode(blockEventDTO.getCode());
         }
 
-        blockEvent.setUser(user);
-        blockEvent.setExperiment(experiment);
-        blockEvent.setDate(Timestamp.valueOf(blockEventDTO.getDate()));
-        blockEvent.setEventType(blockEventDTO.getEventType().toString());
-        blockEvent.setEvent(blockEventDTO.getEvent().toString());
+        setEventData(blockEvent, user, experiment, blockEventDTO.getEventType().toString(),
+                blockEventDTO.getEvent().toString(), blockEventDTO);
         return blockEvent;
     }
 
@@ -818,18 +837,12 @@ public class EventService {
                                         final Experiment experiment) {
         ClickEvent clickEvent = new ClickEvent();
 
-        if (clickEventDTO.getId() != null) {
-            clickEvent.setId(clickEventDTO.getId());
-        }
         if (clickEventDTO.getMetadata() != null) {
             clickEvent.setMetadata(clickEventDTO.getMetadata());
         }
 
-        clickEvent.setUser(user);
-        clickEvent.setExperiment(experiment);
-        clickEvent.setDate(Timestamp.valueOf(clickEventDTO.getDate()));
-        clickEvent.setEventType(clickEventDTO.getEventType().toString());
-        clickEvent.setEvent(clickEventDTO.getEvent().toString());
+        setEventData(clickEvent, user, experiment, clickEventDTO.getEventType().toString(),
+                clickEventDTO.getEvent().toString(), clickEventDTO);
         return clickEvent;
     }
 
@@ -846,9 +859,6 @@ public class EventService {
                                               final Experiment experiment) {
         DebuggerEvent debuggerEvent = new DebuggerEvent();
 
-        if (debuggerEventDTO.getId() != null) {
-            debuggerEvent.setId(debuggerEventDTO.getId());
-        }
         if (debuggerEventDTO.getBlockOrTargetID() != null) {
             debuggerEvent.setBlockOrTargetID(debuggerEventDTO.getBlockOrTargetID());
         }
@@ -859,11 +869,8 @@ public class EventService {
             debuggerEvent.setOriginal(debuggerEventDTO.getOriginal());
         }
 
-        debuggerEvent.setUser(user);
-        debuggerEvent.setExperiment(experiment);
-        debuggerEvent.setDate(Timestamp.valueOf(debuggerEventDTO.getDate()));
-        debuggerEvent.setEventType(debuggerEventDTO.getEventType().toString());
-        debuggerEvent.setEvent(debuggerEventDTO.getEvent().toString());
+        setEventData(debuggerEvent, user, experiment, debuggerEventDTO.getEventType().toString(),
+                debuggerEventDTO.getEvent().toString(), debuggerEventDTO);
         return debuggerEvent;
     }
 
@@ -880,9 +887,6 @@ public class EventService {
                                               final Experiment experiment) {
         QuestionEvent questionEvent = new QuestionEvent();
 
-        if (questionEventDTO.getId() != null) {
-            questionEvent.setId(questionEventDTO.getId());
-        }
         if (questionEventDTO.getFeedback() != null) {
             questionEvent.setFeedback(questionEventDTO.getFeedback());
         }
@@ -905,11 +909,8 @@ public class EventService {
             questionEvent.setOpcode(questionEventDTO.getOpcode());
         }
 
-        questionEvent.setUser(user);
-        questionEvent.setExperiment(experiment);
-        questionEvent.setDate(Timestamp.valueOf(questionEventDTO.getDate()));
-        questionEvent.setEventType(questionEventDTO.getEventType().toString());
-        questionEvent.setEvent(questionEventDTO.getEvent().toString());
+        setEventData(questionEvent, user, experiment, questionEventDTO.getEventType().toString(),
+                questionEventDTO.getEvent().toString(), questionEventDTO);
         return questionEvent;
     }
 
@@ -926,9 +927,6 @@ public class EventService {
                                               final Experiment experiment) {
         ResourceEvent resourceEvent = new ResourceEvent();
 
-        if (resourceEventDTO.getId() != null) {
-            resourceEvent.setId(resourceEventDTO.getId());
-        }
         if (resourceEventDTO.getName() != null) {
             resourceEvent.setResourceName(resourceEventDTO.getName());
         }
@@ -944,11 +942,8 @@ public class EventService {
             resourceEvent.setLibraryResource(0);
         }
 
-        resourceEvent.setUser(user);
-        resourceEvent.setExperiment(experiment);
-        resourceEvent.setDate(Timestamp.valueOf(resourceEventDTO.getDate()));
-        resourceEvent.setEventType(resourceEventDTO.getEventType().toString());
-        resourceEvent.setEvent(resourceEventDTO.getEvent().toString());
+        setEventData(resourceEvent, user, experiment, resourceEventDTO.getEventType().toString(),
+                resourceEventDTO.getEvent().toString(), resourceEventDTO);
         return resourceEvent;
     }
 
