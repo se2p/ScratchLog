@@ -120,6 +120,11 @@ public class DebuggerEventDTO implements EventDTO {
     private Integer original;
 
     /**
+     * The number of the block executions of the debugger event.
+     */
+    private Integer execution;
+
+    /**
      * Default constructor for the debugger event dto.
      */
     public DebuggerEventDTO() {
@@ -136,10 +141,11 @@ public class DebuggerEventDTO implements EventDTO {
      * @param blockOrTargetID The block or target ID of the event.
      * @param nameOrOpcode The target name or block opcode of the event.
      * @param original Only applicable to the select sprite event.
+     * @param execution The number of the block executions of the event.
      */
     public DebuggerEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
                             final DebuggerEventType eventType, final DebuggerEvent event, final String blockOrTargetID,
-                            final String nameOrOpcode, final Integer original) {
+                            final String nameOrOpcode, final Integer original, final Integer execution) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
@@ -148,6 +154,7 @@ public class DebuggerEventDTO implements EventDTO {
         this.blockOrTargetID = blockOrTargetID;
         this.nameOrOpcode = nameOrOpcode;
         this.original = original;
+        this.execution = execution;
     }
 
     /**
@@ -318,6 +325,24 @@ public class DebuggerEventDTO implements EventDTO {
      */
     public void setOriginal(final Integer original) {
         this.original = original;
+    }
+
+    /**
+     * Returns the execution number.
+     *
+     * @return The number.
+     */
+    public Integer getExecution() {
+        return execution;
+    }
+
+    /**
+     * Sets the execution number.
+     *
+     * @param execution The number to be set.
+     */
+    public void setExecution(final Integer execution) {
+        this.execution = execution;
     }
 
     /**

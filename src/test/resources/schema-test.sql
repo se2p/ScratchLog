@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS `question_event` (
     `form` varchar(255) DEFAULT NULL,
     `block_id` varchar(255) DEFAULT NULL,
     `opcode` varchar(255) DEFAULT NULL,
+    `execution` int DEFAULT NULL,
     PRIMARY KEY (`id`),
     CONSTRAINT `question_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
     CONSTRAINT `question_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE

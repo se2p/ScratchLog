@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS `debugger_event` (
                                `block_target_id` varchar(255) DEFAULT NULL,
                                `name_opcode` varchar(255) DEFAULT NULL,
                                `original` int DEFAULT NULL,
+                               `execution` int DEFAULT NULL,
                                PRIMARY KEY (`id`),
                                KEY `user_id` (`user_id`),
                                KEY `experiment_id` (`experiment_id`),

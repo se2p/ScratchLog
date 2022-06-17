@@ -34,6 +34,11 @@ public class QuestionEventDTO implements EventDTO {
         OPEN_CATEGORY,
 
         /**
+         * The user closed a question category.
+         */
+        CLOSE_CATEGORY,
+
+        /**
          * The user selected a question.
          */
         SELECT,

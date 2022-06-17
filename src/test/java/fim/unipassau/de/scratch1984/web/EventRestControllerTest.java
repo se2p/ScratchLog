@@ -93,13 +93,14 @@ public class EventRestControllerTest {
         debuggerEventObject.put("event", "SELECT_SPRITE");
         debuggerEventObject.put("id", "id");
         debuggerEventObject.put("name", "name");
-        debuggerEventObject.put("original", "1");
+        debuggerEventObject.put("original", 1);
+        debuggerEventObject.put("execution", 5);
         questionEventObject.put("user", 3);
         questionEventObject.put("experiment", 39);
         questionEventObject.put("type", "QUESTION");
         questionEventObject.put("time", "2021-06-28T12:36:37.601Z");
         questionEventObject.put("event", "SELECT");
-        questionEventObject.put("feedback", "1");
+        questionEventObject.put("feedback", 1);
         questionEventObject.put("q_type", "block-execution");
         questionEventObject.put("values", "Cat, Costume");
         questionEventObject.put("category", "execution");
@@ -279,6 +280,15 @@ public class EventRestControllerTest {
     }
 
     @Test
+    public void testStoreDebuggerEventExecutionBlank() {
+        debuggerEventObject.put("execution", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
+        );
+        verify(eventService).saveDebuggerEvent(any());
+    }
+
+    @Test
     public void testStoreDebuggerEventJSON() {
         debuggerEventObject.put("original", "one");
         assertDoesNotThrow(
@@ -378,7 +388,7 @@ public class EventRestControllerTest {
 
     @Test
     public void testStoreQuestionEventJSON() {
-        questionEventObject.put("feedback", 0);
+        questionEventObject.put("feedback", "no");
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );

@@ -105,13 +105,14 @@ public class EventRestControllerIntegrationTest {
         debuggerEventObject.put("event", "SELECT_SPRITE");
         debuggerEventObject.put("id", "id");
         debuggerEventObject.put("name", "name");
-        debuggerEventObject.put("original", "1");
+        debuggerEventObject.put("original", 1);
+        debuggerEventObject.put("execution", 5);
         questionEventObject.put("user", 3);
         questionEventObject.put("experiment", 39);
         questionEventObject.put("type", "QUESTION");
         questionEventObject.put("time", "2021-06-28T12:36:37.601Z");
         questionEventObject.put("event", "SELECT");
-        questionEventObject.put("feedback", "1");
+        questionEventObject.put("feedback", 1);
         questionEventObject.put("q_type", "block-execution");
         questionEventObject.put("values", "Cat, Costume");
         questionEventObject.put("category", "execution");

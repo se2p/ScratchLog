@@ -868,6 +868,9 @@ public class EventService {
         if (debuggerEventDTO.getOriginal() != null) {
             debuggerEvent.setOriginal(debuggerEventDTO.getOriginal());
         }
+        if (debuggerEventDTO.getExecution() != null) {
+            debuggerEvent.setExecution(debuggerEventDTO.getExecution());
+        }
 
         setEventData(debuggerEvent, user, experiment, debuggerEventDTO.getEventType().toString(),
                 debuggerEventDTO.getEvent().toString(), debuggerEventDTO);

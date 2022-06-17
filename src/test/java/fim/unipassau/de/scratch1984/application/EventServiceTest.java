@@ -102,7 +102,7 @@ public class EventServiceTest {
     private final ClickEventDTO clickEventDTO = new ClickEventDTO(1, 1, LocalDateTime.now(),
             ClickEventDTO.ClickEventType.CODE, ClickEventDTO.ClickEvent.STACKCLICK, "meta");
     private final DebuggerEventDTO debuggerEventDTO = new DebuggerEventDTO(1, 1, LocalDateTime.now(),
-            DebuggerEventDTO.DebuggerEventType.BLOCK, DebuggerEventDTO.DebuggerEvent.OPEN_BLOCK, "id", "name", 0);
+            DebuggerEventDTO.DebuggerEventType.BLOCK, DebuggerEventDTO.DebuggerEvent.OPEN_BLOCK, "id", "name", 0, 5);
     private final QuestionEventDTO questionEventDTO = new QuestionEventDTO(1, 1, LocalDateTime.now(),
             QuestionEventDTO.QuestionEventType.QUESTION, QuestionEventDTO.QuestionEvent.RATE, 0, "type",
             new String[]{"value1", "value2"}, "category", "form", "id", "opcode");

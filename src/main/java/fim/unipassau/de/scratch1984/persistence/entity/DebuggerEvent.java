@@ -76,6 +76,12 @@ public class DebuggerEvent implements Event {
     private Integer original;
 
     /**
+     * The number of the block executions of the debugger event.
+     */
+    @Column(name = "execution")
+    private Integer execution;
+
+    /**
      * Default constructor for the debugger event entity.
      */
     public DebuggerEvent() {
@@ -92,10 +98,11 @@ public class DebuggerEvent implements Event {
      * @param blockOrTargetID The block or target ID of the event.
      * @param nameOrOpcode The target name or block opcode of the event.
      * @param original Only applicable to the select sprite event.
+     * @param execution The number of the block executions of the event.
      */
     public DebuggerEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
                          final String event, final String blockOrTargetID, final String nameOrOpcode,
-                         final Integer original) {
+                         final Integer original, final Integer execution) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
@@ -104,6 +111,7 @@ public class DebuggerEvent implements Event {
         this.blockOrTargetID = blockOrTargetID;
         this.nameOrOpcode = nameOrOpcode;
         this.original = original;
+        this.execution = execution;
     }
 
     /**
@@ -278,6 +286,24 @@ public class DebuggerEvent implements Event {
      */
     public void setOriginal(final Integer original) {
         this.original = original;
+    }
+
+    /**
+     * Returns the execution number.
+     *
+     * @return The number.
+     */
+    public Integer getExecution() {
+        return execution;
+    }
+
+    /**
+     * Sets the execution number.
+     *
+     * @param execution The number to be set.
+     */
+    public void setExecution(final Integer execution) {
+        this.execution = execution;
     }
 
 }

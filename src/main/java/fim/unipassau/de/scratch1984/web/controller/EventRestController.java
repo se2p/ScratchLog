@@ -388,7 +388,8 @@ public class EventRestController {
             JSONObject object = new JSONObject(data);
             String id = object.getString("id");
             String name = object.getString("name");
-            String original = object.getString("original");
+            String original = object.get("original").toString();
+            String execution = object.get("execution").toString();
 
             setEventDTOData(dto, object);
             dto.setEventType(DebuggerEventDTO.DebuggerEventType.valueOf(object.getString("type")));
@@ -402,6 +403,9 @@ public class EventRestController {
             }
             if (!original.trim().isBlank()) {
                 dto.setOriginal(object.getInt("original"));
+            }
+            if (!execution.trim().isBlank()) {
+                dto.setExecution(object.getInt("execution"));
             }
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
@@ -423,7 +427,7 @@ public class EventRestController {
 
         try {
             JSONObject object = new JSONObject(data);
-            String feedback = object.getString("feedback");
+            String feedback = object.get("feedback").toString();
             String type = object.getString("q_type");
             String values = object.getString("values");
             String category = object.getString("category");
