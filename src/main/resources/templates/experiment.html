@@ -31,7 +31,7 @@
             <!-- The experiment title. -->
             <h1 class="mb-3 h2" th:text="${experimentDTO.title}"></h1>
             <div sec:authorize="hasRole('ADMIN')">
-                <a class="btn btn-primary" th:href="@{/experiment/edit(id=${experimentDTO.id})}">
+                <a class="btn btn-secondary" th:href="@{/experiment/edit(id=${experimentDTO.id})}">
                     <i aria-hidden="true" class="fas fa-edit fa-inverse" th:title="#{edit}"></i>
                     <span th:text="#{edit}"></span>
                 </a>
@@ -47,9 +47,11 @@
             <div class="col-12 mb-5" th:text="${experimentDTO.description}"></div>
         </div>
 
-        <div class="controls d-flex flex-row gap-5 justify-content-start mb-5 flex-wrap">
+        <div class="controls d-flex flex-row gap-5 justify-content-start mb-5 flex-wrap"
+             sec:authorize="hasRole('ADMIN')">
+
             <!-- The download button for the experiment csv file and upload button for an initial sb3 template. -->
-            <div sec:authorize="hasRole('ADMIN')">
+            <div>
                 <h2 th:text="#{heading_csv}" class="h5"></h2>
                 <a class="btn btn-primary" th:unless="${participants.isEmpty()}"
                    th:href="@{/experiment/csv(id=${experimentDTO.id})}">
@@ -59,7 +61,7 @@
                 </a>
             </div>
 
-            <div sec:authorize="hasRole('ADMIN')">
+            <div>
                 <h2 th:text="#{heading_sb3}" class="h5"></h2>
                 <form method="post" th:action="@{/experiment/upload}" enctype="multipart/form-data"
                       th:if="${project == null}">
@@ -72,7 +74,7 @@
             </div>
 
             <!-- The experiment status and the button to start or stop the experiment. -->
-            <div sec:authorize="hasRole('ADMIN')">
+            <div>
                 <div>
                     <h2 class="h5">
                         <i aria-hidden="true" th:class="${experimentDTO.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
@@ -90,8 +92,9 @@
         </div>
 
         <!-- The table of participants in the experiment and the buttons for adding and removing participants. -->
-        <div class="d-flex justify-content-between mb-5" sec:authorize="hasRole('ADMIN')">
-            <div class="col-7">
+        <div class="mb-5" sec:authorize="hasRole('ADMIN')">
+            <h2 class="h3" th:text="#{heading_participants}"></h2>
+            <div class="col-12 mb-5">
                 <!-- The table containing the participant information. -->
                 <table class="table table-hover">
                     <thead>
@@ -177,12 +180,12 @@
                 </div>
             </div>
             <!-- The buttons for participant management. -->
-            <div class="col-5 text-end" th:if="${experimentDTO.active}">
+            <div class="d-flex gap-3" th:if="${experimentDTO.active}">
                 <div class="mb-3">
                     <input id="add" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
                 </div>
                 <div class="mb-3">
-                    <a class="btn btn-primary" th:href="@{/participant/add(id=${experimentDTO.id})}">
+                    <a class="btn btn-secondary" th:href="@{/participant/add(id=${experimentDTO.id})}">
                         <span th:text="#{add_new_participant}"></span>
                     </a>
                 </div>
