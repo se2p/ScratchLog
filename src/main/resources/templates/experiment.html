@@ -32,10 +32,13 @@
             <h1 class="mb-3 h2" th:text="${experimentDTO.title}"></h1>
             <div>
                 <a class="btn btn-primary" th:href="@{/experiment/edit(id=${experimentDTO.id})}">
-                    <i aria-hidden="true" class="fas fa-edit fa-inverse" title="Download CSV file"></i>
+                    <i aria-hidden="true" class="fas fa-edit fa-inverse" th:title="#{edit}"></i>
                     <span th:text="#{edit}"></span>
                 </a>
-                <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
+                <a id="delete" class="btn btn-danger">
+                    <i aria-hidden="true" class="fas fa-trash-alt fa-inverse" th:title="#{delete}"></i>
+                    <span th:text="#{delete}"></span>
+                </a>
             </div>
         </div>
 
