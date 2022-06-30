@@ -28,12 +28,16 @@
 
         <!-- The buttons for editing and deleting the experiment. -->
         <div class="d-flex justify-content-between mb-3" sec:authorize="hasRole('ADMIN')">
-            <a class="btn btn-primary" th:text="#{edit}" th:href="@{/experiment/edit(id=${experimentDTO.id})}"></a>
-            <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
+            <!-- The experiment title. -->
+            <h2 class="mb-3" th:text="${experimentDTO.title}"></h2>
+            <div>
+                <a class="btn btn-primary" th:href="@{/experiment/edit(id=${experimentDTO.id})}">
+                    <i aria-hidden="true" class="fas fa-edit fa-inverse" title="Download CSV file"></i>
+                    <span th:text="#{edit}"></span>
+                </a>
+                <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}">
+            </div>
         </div>
-
-        <!-- The experiment title. -->
-        <h2 class="mb-3" th:text="${experimentDTO.title}"></h2>
 
         <!-- The experiment description. -->
         <div class="row">
