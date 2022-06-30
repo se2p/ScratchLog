@@ -35,27 +35,24 @@
     }
 }
 
+html,
 body {
-    overflow-x: hidden;
     height: 100%;
 }
 
-#header {
-    position: absolute;
-    height: 60px;
+body {
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
 }
 
 #content {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    right: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
+    flex-grow: 1;
 }
 
 .col-2 {
@@ -63,7 +60,7 @@ body {
 }
 
 .col-8 {
-    box-shadow: 0 8px 20px 0 rgba(0,0,0,.08);
+    box-shadow: 0 8px 20px 0 rgba(0, 0, 0, .08);
     padding: 1%;
     margin-top: 10px;
 }
@@ -74,11 +71,6 @@ body {
 }
 
 #footer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
     text-align: center;
     background-color: #212529;
     color: white;
