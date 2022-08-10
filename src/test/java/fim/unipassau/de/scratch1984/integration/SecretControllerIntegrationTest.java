@@ -58,6 +58,7 @@ public class SecretControllerIntegrationTest {
     @MockBean
     private ExperimentService experimentService;
 
+    private static final String GUI_URL = "scratch";
     private static final int ID = 1;
     private static final String ID_STRING = "1";
     private static final String SECRET = "secret";
@@ -69,7 +70,8 @@ public class SecretControllerIntegrationTest {
             + "/users/authenticate?id=" + ID + "&secret=";
     private static final String USER_PARAM = "user";
     private static final String EXPERIMENT_PARAM = "experiment";
-    private final ExperimentDTO experiment = new ExperimentDTO(ID, "experiment", "my experiment", "info", "no", true);
+    private final ExperimentDTO experiment = new ExperimentDTO(ID, "experiment", "my experiment", "info", "no", true,
+            GUI_URL);
     private final UserDTO user1 = new UserDTO("participant", "part@part.de", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", SECRET);
     private final UserDTO user2 = new UserDTO("participant2", "part2@part.de", UserDTO.Role.PARTICIPANT,

@@ -31,10 +31,13 @@ public class Sb3ZipRepositoryTest {
     private Sb3ZipRepository sb3ZipRepository;
 
     private final Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+    private static final String GUI_URL = "scratch";
     private User user1 = new User("participant1", "part1@part.de", "PARTICIPANT", "GERMAN", "password", "secret1");
     private User user2 = new User("participant2", "part2@part.de", "PARTICIPANT", "GERMAN", "password", "secret2");
-    private Experiment experiment1 = new Experiment(null, "experiment1", "description", "info", "postscript", true);
-    private Experiment experiment2 = new Experiment(null, "experiment2", "description", "info", "postscript", true);
+    private Experiment experiment1 = new Experiment(null, "experiment1", "description", "info", "postscript", true,
+            GUI_URL);
+    private Experiment experiment2 = new Experiment(null, "experiment2", "description", "info", "postscript", true,
+            GUI_URL);
     private Sb3Zip sb3Zip1 = new Sb3Zip(user1, experiment1, timestamp, "zip1", new byte[]{1, 2, 3});
     private Sb3Zip sb3Zip2 = new Sb3Zip(user1, experiment1, timestamp, "zip2", new byte[]{1, 2, 3});
     private Sb3Zip sb3Zip3 = new Sb3Zip(user1, experiment1, timestamp, "zip3", new byte[]{1, 2, 3});

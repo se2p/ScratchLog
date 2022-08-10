@@ -137,8 +137,10 @@ public class ExperimentControllerTest {
     private static final String ERROR_ATTRIBUTE = "error";
     private static final int LAST_PAGE = 3;
     private static final int ID = 1;
+    private static final String GUI_URL = "scratch";
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false,
+            GUI_URL);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, PASSWORD, "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANTS, EMAIL, UserDTO.Role.PARTICIPANT,

@@ -59,8 +59,11 @@ public class ExperimentServiceTest {
     private static final int INVALID_ID = 2;
     private static final String[] HEADER = {"experiment", "participants", "started", "finished"};
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
-    private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "Some info text", "Some postscript", false);
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, "Some info text", "Some postscript", false);
+    private static final String GUI_URL = "scratch";
+    private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "Some info text", "Some postscript",
+            false, GUI_URL);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, "Some info text",
+            "Some postscript", false, GUI_URL);
     private final ExperimentData experimentData = new ExperimentData(ID, 5, 3, 2);
     private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
     private Page<ExperimentTableProjection> experimentPage;
@@ -81,6 +84,7 @@ public class ExperimentServiceTest {
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
+        experimentDTO.setGuiURL(GUI_URL);
         experiment.setActive(false);
         experiment.setProject(null);
     }
@@ -178,7 +182,8 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experimentDTO.getTitle(), saved.getTitle()),
                 () -> assertEquals(experimentDTO.getDescription(), saved.getDescription()),
                 () -> assertEquals(experimentDTO.getInfo(), saved.getInfo()),
-                () -> assertFalse(experimentDTO.isActive())
+                () -> assertFalse(experimentDTO.isActive()),
+                () -> assertEquals(experimentDTO.getGuiURL(), experiment.getGuiURL())
         );
         verify(experimentRepository).save(any());
         verify(experimentRepository, never()).findById(anyInt());
@@ -193,7 +198,8 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experimentDTO.getTitle(), saved.getTitle()),
                 () -> assertEquals(experimentDTO.getDescription(), saved.getDescription()),
                 () -> assertEquals(experimentDTO.getInfo(), saved.getInfo()),
-                () -> assertFalse(experimentDTO.isActive())
+                () -> assertFalse(experimentDTO.isActive()),
+                () -> assertEquals(experimentDTO.getGuiURL(), experiment.getGuiURL())
         );
         verify(experimentRepository).save(any());
     }
@@ -245,6 +251,24 @@ public class ExperimentServiceTest {
     }
 
     @Test
+    public void testSaveExperimentGuiURLNull() {
+        experimentDTO.setGuiURL(null);
+        assertThrows(IncompleteDataException.class,
+                () -> experimentService.saveExperiment(experimentDTO)
+        );
+        verify(experimentRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveExperimentGuiURLBlank() {
+        experimentDTO.setGuiURL(BLANK);
+        assertThrows(IncompleteDataException.class,
+                () -> experimentService.saveExperiment(experimentDTO)
+        );
+        verify(experimentRepository, never()).save(any());
+    }
+
+    @Test
     public void testGetExperiment() {
         when(experimentRepository.findById(ID)).thenReturn(experiment);
         ExperimentDTO found = experimentService.getExperiment(ID);
@@ -253,7 +277,8 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experiment.getTitle(), found.getTitle()),
                 () -> assertEquals(experiment.getDescription(), found.getDescription()),
                 () -> assertEquals(experiment.getInfo(), found.getInfo()),
-                () -> assertFalse(found.isActive())
+                () -> assertFalse(found.isActive()),
+                () -> assertEquals(experiment.getGuiURL(), found.getGuiURL())
         );
         verify(experimentRepository).findById(ID);
     }
@@ -450,7 +475,8 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experiment.getTitle(), changedStatus.getTitle()),
                 () -> assertEquals(experiment.getDescription(), changedStatus.getDescription()),
                 () -> assertEquals(experiment.getInfo(), changedStatus.getInfo()),
-                () -> assertTrue(changedStatus.isActive())
+                () -> assertTrue(changedStatus.isActive()),
+                () -> assertEquals(experiment.getGuiURL(), changedStatus.getGuiURL())
         );
         verify(experimentRepository).existsById(ID);
         verify(experimentRepository).updateStatusById(ID, true);
@@ -467,7 +493,8 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experiment.getTitle(), changedStatus.getTitle()),
                 () -> assertEquals(experiment.getDescription(), changedStatus.getDescription()),
                 () -> assertEquals(experiment.getInfo(), changedStatus.getInfo()),
-                () -> assertFalse(changedStatus.isActive())
+                () -> assertFalse(changedStatus.isActive()),
+                () -> assertEquals(experiment.getGuiURL(), changedStatus.getGuiURL())
         );
         verify(experimentRepository).existsById(ID);
         verify(experimentRepository).updateStatusById(ID, false);

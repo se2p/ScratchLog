@@ -357,8 +357,8 @@ public class ParticipantController {
                     participantDTO.setStart(LocalDateTime.now());
 
                     if (participantService.updateParticipant(participantDTO)) {
-                        return "redirect:" + ApplicationProperties.GUI_URL + "?uid=" + participantDTO.getUser()
-                                + "&expid=" + participantDTO.getExperiment();
+                        return "redirect:" + experimentDTO.getGuiURL() + "?uid=" + participantDTO.getUser() + "&expid="
+                                + participantDTO.getExperiment();
                     } else {
                         logger.error("Failed to update the starting time of participant with user id "
                                 + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment()
@@ -366,7 +366,7 @@ public class ParticipantController {
                         return Constants.ERROR;
                     }
                 } else {
-                    return "redirect:" + ApplicationProperties.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
+                    return "redirect:" + experimentDTO.getGuiURL() + "?uid=" + participantDTO.getUser() + "&expid="
                             + participantDTO.getExperiment() + "&restart=true";
                 }
             } catch (NotFoundException e) {
@@ -455,11 +455,12 @@ public class ParticipantController {
 
         try {
             UserDTO userDTO = userService.getUserById(userId);
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
             ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userId);
 
             if (participantDTO.getStart() == null || participantDTO.getEnd() == null) {
                 logger.error("Cannot restart experiment for user " + userId + " and experiment " + experimentId
-                        + " with start or end time nulL!");
+                        + " with start or end time null!");
                 return Constants.ERROR;
             }
 
@@ -471,7 +472,7 @@ public class ParticipantController {
             } else {
                 userDTO.setActive(true);
                 userService.updateUser(userDTO);
-                return "redirect:" + ApplicationProperties.GUI_URL + "?uid=" + participantDTO.getUser() + "&expid="
+                return "redirect:" + experimentDTO.getGuiURL() + "?uid=" + participantDTO.getUser() + "&expid="
                         + participantDTO.getExperiment() + "&restart=true";
             }
         } catch (NotFoundException e) {

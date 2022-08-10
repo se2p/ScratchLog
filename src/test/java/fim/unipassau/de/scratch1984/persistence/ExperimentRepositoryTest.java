@@ -36,21 +36,22 @@ public class ExperimentRepositoryTest {
     private static final String SHORT_QUERY = "Exp";
     private static final String TITLE_QUERY = "Experiment";
     private static final String NO_RESULTS = "description";
+    private static final String GUI_URL = "scratch";
     private static final int LIMIT = 5;
     private PageRequest pageRequest;
     private User user = new User("user", "email", "PARTICIPANT", "ENGLISH", "password", "secret");
     private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
-            "Some postscript", false);
+            "Some postscript", false, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
-            "Some postscript", true);
+            "Some postscript", true, GUI_URL);
     private Experiment experiment3 = new Experiment(null, "Experiment 3", "Description for experiment 3", "Some info",
-            "Some postscript", false);
+            "Some postscript", false, GUI_URL);
     private Experiment experiment4 = new Experiment(null, "Experiment 4", "Description for experiment 1", "Some info",
-            "Some postscript", false);
+            "Some postscript", false, GUI_URL);
     private Experiment experiment5 = new Experiment(null, "Exp 5", "Description for experiment 2", "Some info",
-            "Some postscript", false);
+            "Some postscript", false, GUI_URL);
     private Experiment experiment6 = new Experiment(null, "Exp 6", "Description for experiment 3", "Some info",
-            "Some postscript", false);
+            "Some postscript", false, GUI_URL);
     private Participant participant1 = new Participant(user, experiment1, null, null);
     private Participant participant2 = new Participant(user, experiment2, null, null);
     private Participant participant3 = new Participant(user, experiment3, null, null);

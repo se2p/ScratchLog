@@ -40,6 +40,7 @@ public class UserRepositoryTest {
     private static final String EMAIL_SEARCH = "test";
     private static final String USER_SEARCH = "2";
     private static final String QUERY = "a";
+    private static final String GUI_URL = "scratch";
     private User user1 = new User(ADMIN1, "admin1@test.de", ROLE_ADMIN, LANGUAGE, "admin1", "secret1");
     private User user2 = new User("admin2", "admin2@test.com", ROLE_ADMIN, LANGUAGE, "admin2", "secret2");
     private User user3 = new User("user1", "part1@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
@@ -57,8 +58,8 @@ public class UserRepositoryTest {
     private User user15 = new User("part7", "part13@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user16 = new User("part8", "part14@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user17 = new User("user17", "part17@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", "", true);
-    private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", "", true);
+    private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", "", true, GUI_URL);
+    private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", "", true, GUI_URL);
     private Participant participant1 = new Participant(user3, experiment1, null, null);
     private Participant participant2 = new Participant(user12, experiment1, null, null);
     private Participant participant3 = new Participant(user13, experiment1, null, null);

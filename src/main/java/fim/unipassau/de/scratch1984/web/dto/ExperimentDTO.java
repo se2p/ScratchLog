@@ -38,6 +38,11 @@ public class ExperimentDTO {
     private boolean active;
 
     /**
+     * The URL of the instrumented Scratch-GUI instance to be used for this experiment.
+     */
+    private String guiURL;
+
+    /**
      * Default constructor for the experiment dto.
      */
     public ExperimentDTO() {
@@ -52,15 +57,17 @@ public class ExperimentDTO {
      * @param info The experiment information text.
      * @param postscript The postscript text.
      * @param active Whether the experiment is currently running or not.
+     * @param guiURL The URL of the instrumented Scratch-GUI this experiment uses.
      */
     public ExperimentDTO(final Integer id, final String title, final String description, final String info,
-                         final String postscript, final boolean active) {
+                         final String postscript, final boolean active, final String guiURL) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.info = info;
         this.postscript = postscript;
         this.active = active;
+        this.guiURL = guiURL;
     }
 
     /**
@@ -163,12 +170,30 @@ public class ExperimentDTO {
     }
 
     /**
-     * Sets the running status the experiment.
+     * Sets the running status of the experiment.
      *
      * @param active The status.
      */
     public void setActive(final boolean active) {
         this.active = active;
+    }
+
+    /**
+     * Returns whether the GUI-URL of the experiment.
+     *
+     * @return The GUI-URL.
+     */
+    public String getGuiURL() {
+        return guiURL;
+    }
+
+    /**
+     * Sets the GUI_URL of the experiment.
+     *
+     * @param guiURL The GUI_URL.
+     */
+    public void setGuiURL(final String guiURL) {
+        this.guiURL = guiURL;
     }
 
     /**
@@ -215,6 +240,8 @@ public class ExperimentDTO {
                 + ", description='" + description + '\''
                 + ", postscript='" + postscript + '\''
                 + ", info='" + info + '\''
+                + ", active='" + active + '\''
+                + ", url='" + guiURL + '\''
                 + '}';
     }
 

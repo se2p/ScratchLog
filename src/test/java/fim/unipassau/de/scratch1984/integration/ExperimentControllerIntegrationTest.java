@@ -98,6 +98,7 @@ public class ExperimentControllerIntegrationTest {
     private static final String INFO = "Some info text";
     private static final String POSTSCRIPT = "Some postscript";
     private static final String INFO_PARSED = "<p>Some info text</p>\n";
+    private static final String GUI_URL = "scratch";
     private static final String ERROR = "redirect:/error";
     private static final String EXPERIMENT = "experiment";
     private static final String EXPERIMENT_EDIT = "experiment-edit";
@@ -132,7 +133,8 @@ public class ExperimentControllerIntegrationTest {
     private static final int NEXT = 4;
     private static final int ID = 1;
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false,
+            GUI_URL);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, PASSWORD, "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANT, "participant@part.de", UserDTO.Role.PARTICIPANT,

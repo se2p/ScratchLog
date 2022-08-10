@@ -6,7 +6,6 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
-import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ParticipantController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -84,11 +83,12 @@ public class ParticipantControllerTest {
     private Authentication authentication;
 
     private MockedStatic<SecurityContextHolder> securityContextHolder;
+    private static final String GUI_URL = "scratch";
     private static final String ERROR = "redirect:/error";
     private static final String PARTICIPANT = "participant";
     private static final String EXPERIMENT = "experiment";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
-    private static final String REDIRECT_GUI = "redirect:" + ApplicationProperties.GUI_URL + "?uid=";
+    private static final String REDIRECT_GUI = "redirect:" + GUI_URL + "?uid=";
     private static final String REDIRECT_FINISH = "redirect:/finish?user=";
     private static final String REDIRECT_SECRET = "redirect:/secret?user=";
     private static final String EXP_ID = "&expid=";
@@ -108,7 +108,8 @@ public class ParticipantControllerTest {
             UserDTO.Language.ENGLISH, "password", "secret");
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true,
+            GUI_URL);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
 
     @BeforeEach
@@ -859,6 +860,7 @@ public class ParticipantControllerTest {
         participantDTO.setStart(LocalDateTime.now());
         participantDTO.setEnd(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         assertAll(
@@ -868,6 +870,7 @@ public class ParticipantControllerTest {
                 () -> assertNull(participantDTO.getEnd())
         );
         verify(userService).getUserById(ID);
+        verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).updateParticipant(participantDTO);
         verify(userService).updateUser(userDTO);
@@ -879,6 +882,7 @@ public class ParticipantControllerTest {
         participantDTO.setStart(LocalDateTime.now());
         participantDTO.setEnd(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertAll(
                 () -> assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
@@ -887,6 +891,7 @@ public class ParticipantControllerTest {
                 () -> assertNull(participantDTO.getEnd())
         );
         verify(userService).getUserById(ID);
+        verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).updateParticipant(participantDTO);
         verify(userService, never()).updateUser(any());
@@ -896,10 +901,12 @@ public class ParticipantControllerTest {
     public void testRestartExperimentParticipantNotFinished() {
         participantDTO.setStart(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
                         httpServletRequest));
         verify(userService).getUserById(ID);
+        verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -909,10 +916,12 @@ public class ParticipantControllerTest {
     public void testRestartExperimentParticipantNotStarted() {
         participantDTO.setEnd(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
                 httpServletRequest));
         verify(userService).getUserById(ID);
+        verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -924,6 +933,7 @@ public class ParticipantControllerTest {
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
                 httpServletRequest));
         verify(userService).getUserById(ID);
+        verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -935,6 +945,7 @@ public class ParticipantControllerTest {
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
                 httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
+        verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -946,6 +957,7 @@ public class ParticipantControllerTest {
         assertEquals(Constants.ERROR, participantController.restartExperiment(INFO, ID_STRING,
                 httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
+        verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -956,6 +968,7 @@ public class ParticipantControllerTest {
     public void testRestartExperimentInvalidUserId() {
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, "0", httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
+        verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -966,6 +979,7 @@ public class ParticipantControllerTest {
     public void testRestartExperimentExperimentIdNull() {
         assertEquals(Constants.ERROR, participantController.restartExperiment(null, ID_STRING, httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
+        verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -976,6 +990,7 @@ public class ParticipantControllerTest {
     public void testRestartExperimentUserIdNull() {
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, null, httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
+        verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());

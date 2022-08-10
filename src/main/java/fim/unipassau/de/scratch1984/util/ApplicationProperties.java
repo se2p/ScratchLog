@@ -25,12 +25,12 @@ public final class ApplicationProperties {
     /**
      * The base URL of the Scratch GUI instance.
      */
-    public static final String GUI_BASE_URL;
+    public static final String[] GUI_BASE_URL;
 
     /**
      * The full path to the Scratch GUI instance.
      */
-    public static final String GUI_URL;
+    public static final String[] GUI_URL;
 
     /**
      * The base URL of the SAML2 identity provider.
@@ -52,8 +52,8 @@ public final class ApplicationProperties {
         APPLICATION_NAME = resourceBundle.getString("app.name");
         BASE_URL = resourceBundle.getString("app.url");
         CONTEXT_PATH = resourceBundle.getString("server.servlet.context-path");
-        GUI_BASE_URL = resourceBundle.getString("app.gui.base");
-        GUI_URL = resourceBundle.getString("app.gui");
+        GUI_BASE_URL = resourceBundle.getString("app.gui.base").split(",");
+        GUI_URL = resourceBundle.getString("app.gui").split(",");
         SAML2_BASE_URL = resourceBundle.getString("app.saml.base");
         MAIL_SERVER = resourceBundle.getString("app.mail").equals("true");
         SAML_AUTHENTICATION = resourceBundle.getString("spring.profiles.active").contains("saml2");

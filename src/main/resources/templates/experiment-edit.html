@@ -67,7 +67,7 @@
                         <div class="form-text" th:text="#{postscript_max}"></div>
                     </div>
                     <!-- The input group for the experiment information. -->
-                    <div class="mb-5 form-group position-relative">
+                    <div class="mb-3 form-group position-relative">
                         <label class="form-label" for="info" th:text="#{info}"></label>
                         <textarea name="info" id="info" type="text" rows="10" th:placeholder="#{info_placeholder}"
                                   th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_AREA}"
@@ -76,6 +76,14 @@
                         <div class="validation" th:if="${#fields.hasErrors('info')}" th:errors="*{info}">
                         </div>
                         <div class="form-text" th:text="#{markdown}"></div>
+                    </div>
+                    <!-- Dropdown menu listing all defined GUI-URLs defined in the properties file. -->
+                    <div class="mb-5 form-group position-relative">
+                        <label for="urlSelect">Scratch-GUI Address</label>
+                        <select class="form-control" id="urlSelect" th:field="*{guiURL}">
+                            <option th:each="url : ${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).GUI_URL}"
+                                    th:value="${url}" th:text="${url}"></option>
+                        </select>
                     </div>
                     <!-- The submit button. -->
                     <div class="text-center">

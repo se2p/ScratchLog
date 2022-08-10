@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS `experiment` (
     `infotext` text,
     `active` bit(1) NOT NULL DEFAULT 0,
     `project` longblob NULL DEFAULT NULL,
+    `gui_url` varchar(2000) DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `title` (`title`)
 );
