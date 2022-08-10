@@ -11,8 +11,10 @@ import java.sql.Statement;
 /**
  * Class to performing an update on the experiment table, adding a column for specifying a Scratch GUI-URL.
  */
-@SuppressWarnings("checkstyle:TypeName")
+//CHECKSTYLE:OFF
 public class V2__add_url_column extends BaseJavaMigration {
+
+//CHECKSTYLE:ON
 
     /**
      * Adds a new column for the URL to the instrumented Scratch-GUI to the experiment table. For any existing
