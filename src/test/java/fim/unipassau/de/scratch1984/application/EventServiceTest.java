@@ -16,16 +16,20 @@ import fim.unipassau.de.scratch1984.persistence.projection.BlockEventXMLProjecti
 import fim.unipassau.de.scratch1984.persistence.repository.BlockEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ClickEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CodesDataRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.DebuggerEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.QuestionEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
+import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
+import fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,6 +76,12 @@ public class EventServiceTest {
     private ClickEventRepository clickEventRepository;
 
     @Mock
+    private DebuggerEventRepository debuggerEventRepository;
+
+    @Mock
+    private QuestionEventRepository questionEventRepository;
+
+    @Mock
     private ResourceEventRepository resourceEventRepository;
 
     @Mock
@@ -91,6 +101,11 @@ public class EventServiceTest {
             BlockEventDTO.BlockEventType.CHANGE, BlockEventDTO.BlockEvent.CHANGE, "sprite", "meta", "xml", "json");
     private final ClickEventDTO clickEventDTO = new ClickEventDTO(1, 1, LocalDateTime.now(),
             ClickEventDTO.ClickEventType.CODE, ClickEventDTO.ClickEvent.STACKCLICK, "meta");
+    private final DebuggerEventDTO debuggerEventDTO = new DebuggerEventDTO(1, 1, LocalDateTime.now(),
+            DebuggerEventDTO.DebuggerEventType.BLOCK, DebuggerEventDTO.DebuggerEvent.OPEN_BLOCK, "id", "name", 0, 5);
+    private final QuestionEventDTO questionEventDTO = new QuestionEventDTO(1, 1, LocalDateTime.now(),
+            QuestionEventDTO.QuestionEventType.QUESTION, QuestionEventDTO.QuestionEvent.RATE, 0, "type",
+            new String[]{"value1", "value2"}, "category", "form", "id", "opcode");
     private final ResourceEventDTO resourceEventDTO = new ResourceEventDTO(1, 1, LocalDateTime.now(),
             ResourceEventDTO.ResourceEventType.ADD, ResourceEventDTO.ResourceEvent.ADD_SOUND, "name", "hash",
             "filetype", ResourceEventDTO.LibraryResource.TRUE);
@@ -146,6 +161,9 @@ public class EventServiceTest {
         user.setId(ID);
         resourceEventDTO.setLibraryResource(ResourceEventDTO.LibraryResource.TRUE);
         blockEvent.setCode(JSON);
+        blockEventDTO.setDate(LocalDateTime.now());
+        resourceEventDTO.setDate(LocalDateTime.now());
+        questionEventDTO.setDate(LocalDateTime.now());
     }
 
     @Test
@@ -190,6 +208,47 @@ public class EventServiceTest {
     }
 
     @Test
+    public void testSaveBlockEventUserNull() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(any(), any())).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveBlockEvent(blockEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(any(), any());
+        verify(blockEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveBlockEventExperimentNull() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(participantRepository.findByUserAndExperiment(any(), any())).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveBlockEvent(blockEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(any(), any());
+        verify(blockEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveBlockEventDateNull() {
+        blockEventDTO.setDate(null);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(any(), any())).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveBlockEvent(blockEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(blockEventRepository, never()).save(any());
+    }
+
+    @Test
     public void testSaveBlockEventConstraintViolation() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
@@ -219,7 +278,7 @@ public class EventServiceTest {
     }
 
     @Test
-    public void testSaveClickEventParticipantNull() {
+    public void testSaveClickEventNoParticipant() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         assertDoesNotThrow(
@@ -232,16 +291,15 @@ public class EventServiceTest {
     }
 
     @Test
-    public void testSaveClickEventEntityNotFound() {
-        when(userRepository.getOne(ID)).thenReturn(user);
+    public void testSaveClickEventInvalidEvent() {
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        when(participantRepository.findByUserAndExperiment(any(), any())).thenReturn(participant);
         assertDoesNotThrow(
                 () -> eventService.saveClickEvent(clickEventDTO)
         );
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
-        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(participantRepository).findByUserAndExperiment(any(), any());
         verify(clickEventRepository, never()).save(any());
     }
 
@@ -258,6 +316,119 @@ public class EventServiceTest {
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment);
         verify(clickEventRepository).save(any());
+    }
+
+    @Test
+    public void testSaveDebuggerEvent() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveDebuggerEvent(debuggerEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(debuggerEventRepository).save(any());
+    }
+
+    @Test
+    public void testSaveDebuggerEventNoParticipant() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        assertDoesNotThrow(
+                () -> eventService.saveDebuggerEvent(debuggerEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(debuggerEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveDebuggerEventInvalidEvent() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(participantRepository.findByUserAndExperiment(any(), any())).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveDebuggerEvent(debuggerEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(any(), any());
+        verify(debuggerEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveDebuggerEventConstraintViolation() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(debuggerEventRepository.save(any())).thenThrow(ConstraintViolationException.class);
+        assertDoesNotThrow(
+                () -> eventService.saveDebuggerEvent(debuggerEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(debuggerEventRepository).save(any());
+    }
+
+    @Test
+    public void testSaveQuestionEvent() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveQuestionEvent(questionEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(questionEventRepository).save(any());
+    }
+
+    @Test
+    public void testSaveQuestionEventNoParticipant() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        assertDoesNotThrow(
+                () -> eventService.saveQuestionEvent(questionEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(questionEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveQuestionEventInvalidEvent() {
+        questionEventDTO.setDate(null);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveQuestionEvent(questionEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(questionEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveQuestionEventConstraintViolation() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(questionEventRepository.save(any())).thenThrow(ConstraintViolationException.class);
+        assertDoesNotThrow(
+                () -> eventService.saveQuestionEvent(questionEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(questionEventRepository).save(any());
     }
 
     @Test
@@ -320,10 +491,9 @@ public class EventServiceTest {
     }
 
     @Test
-    public void testSaveResourceEventEntityNotFound() {
+    public void testSaveResourceEventNoParticipant() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
         assertDoesNotThrow(
                 () -> eventService.saveResourceEvent(resourceEventDTO)
         );
@@ -334,9 +504,11 @@ public class EventServiceTest {
     }
 
     @Test
-    public void testSaveResourceEventParticipantNull() {
+    public void testSaveResourceEventInvalidEvent() {
+        resourceEventDTO.setDate(null);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
         assertDoesNotThrow(
                 () -> eventService.saveResourceEvent(resourceEventDTO)
         );

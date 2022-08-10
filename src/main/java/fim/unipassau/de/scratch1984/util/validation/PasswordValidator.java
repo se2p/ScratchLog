@@ -13,7 +13,7 @@ public final class PasswordValidator {
      * The RegEx to use when validating a password's strength.
      */
     private static final Pattern REGEX = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])"
-            + "(?=.*[!?+\\-*.:,;@#$%_äöüÄÖÜßẞ]).{" + Constants.PASSWORD_MIN + "," + Constants.SMALL_FIELD + "}$");
+            + "([!?+\\-*.:,;@#$%_äöüÄÖÜßẞ]*).{" + Constants.PASSWORD_MIN + "," + Constants.SMALL_FIELD + "}$");
 
     /**
      * Validates the given {@code password} and returns the appropriate error message string if the input does not meet

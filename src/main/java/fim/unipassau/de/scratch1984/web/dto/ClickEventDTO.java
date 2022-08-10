@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * A DTO representing a click event that resulted from user interaction with a button, icon, or similar event.
  */
-public class ClickEventDTO {
+public class ClickEventDTO implements EventDTO {
 
     /**
      * All possible event types for a click event.
@@ -29,7 +29,7 @@ public class ClickEventDTO {
     }
 
     /**
-     * All possible specific events for a block event.
+     * All possible specific events for a click event.
      */
     public enum ClickEvent {
         /**
@@ -45,7 +45,47 @@ public class ClickEventDTO {
         /**
          * The user clicked on a block.
          */
-        STACKCLICK
+        STACKCLICK,
+
+        /**
+         * The user rewound the execution slider.
+         */
+        REWIND_EXECUTION_SLIDER_CHANGE,
+
+        /**
+         * The user revisited the previous step in the block execution.
+         */
+        STEP_BACK,
+
+        /**
+         * The user jumped over an execution step.
+         */
+        STEP_OVER,
+
+        /**
+         * The user paused the execution of a code block.
+         */
+        PAUSE_EXECUTION,
+
+        /**
+         * The user resumed the execution of a code block.
+         */
+        RESUME_EXECUTION,
+
+        /**
+         * The user deactivated the observation.
+         */
+        DEACTIVATE_OBSERVATION,
+
+        /**
+         * The user activated the observation.
+         */
+        ACTIVATE_OBSERVATION,
+
+        /**
+         * The user closed the debugger.
+         */
+        CLOSE_DEBUGGER
     }
 
     /**
@@ -110,73 +150,81 @@ public class ClickEventDTO {
     }
 
     /**
-     * Returns the ID of the event.
+     * {@inheritDoc}
      *
      * @return The event ID.
      */
+    @Override
     public Integer getId() {
         return id;
     }
 
     /**
-     * Sets the ID of the event.
+     * {@inheritDoc}
      *
      * @param id The event ID to be set.
      */
+    @Override
     public void setId(final Integer id) {
         this.id = id;
     }
 
     /**
-     * Returns the ID of the user who caused the event.
+     * {@inheritDoc}
      *
      * @return The user's ID.
      */
+    @Override
     public Integer getUser() {
         return user;
     }
 
     /**
-     * Sets the user ID of the event.
+     * {@inheritDoc}
      *
      * @param user The user ID to be set.
      */
+    @Override
     public void setUser(final Integer user) {
         this.user = user;
     }
 
     /**
-     * Returns the ID of the experiment where the event occurred.
+     * {@inheritDoc}
      *
      * @return The experiment ID.
      */
+    @Override
     public Integer getExperiment() {
         return experiment;
     }
 
     /**
-     * Sets the experiment ID of the event.
+     * {@inheritDoc}
      *
      * @param experiment The experiment ID to be set.
      */
+    @Override
     public void setExperiment(final Integer experiment) {
         this.experiment = experiment;
     }
 
     /**
-     * Returns the time at which the event occurred.
+     * {@inheritDoc}
      *
      * @return The event time.
      */
+    @Override
     public LocalDateTime getDate() {
         return date;
     }
 
     /**
-     * Sets the local date time of the event.
+     * {@inheritDoc}
      *
      * @param date The time to be set.
      */
+    @Override
     public void setDate(final LocalDateTime date) {
         this.date = date;
     }
@@ -252,7 +300,7 @@ public class ClickEventDTO {
         }
 
         ClickEventDTO that = (ClickEventDTO) other;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     /**

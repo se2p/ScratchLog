@@ -11,13 +11,14 @@ import javax.persistence.ManyToOne;
 import java.sql.Timestamp;
 
 /**
- * An entity representing a click event that resulted from user interaction with a button, icon, or similar event.
+ * An entity representing a debugger event that resulted from user interaction with the Scratch debugger,
+ * not including interaction with questions.
  */
 @Entity
-public class ClickEvent implements Event {
+public class DebuggerEvent implements Event {
 
     /**
-     * The unique ID of the click event.
+     * The unique ID of the debugger event.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,67 +26,92 @@ public class ClickEvent implements Event {
     private Integer id;
 
     /**
-     * The {@link User} who caused the click event.
+     * The {@link User} who caused the debugger event.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
     /**
-     * The {@link Experiment} during which the click event occurred.
+     * The {@link Experiment} during which the debugger event occurred.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "experiment_id")
     private Experiment experiment;
 
     /**
-     * The timestamp at which the click event occurred.
+     * The timestamp at which the debugger event occurred.
      */
     @Column(name = "date")
     private Timestamp date;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ClickEventDTO.ClickEventType}.
+     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO.DebuggerEventType}.
      */
     @Column(name = "event_type")
     private String eventType;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ClickEventDTO.ClickEvent}.
+     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO.DebuggerEvent}.
      */
     @Column(name = "event")
     private String event;
 
     /**
-     * Additional information about the event.
+     * The block or target id of the debugger event.
      */
-    @Column(name = "metadata")
-    private String metadata;
+    @Column(name = "block_target_id")
+    private String blockOrTargetID;
 
     /**
-     * Default constructor for the click event entity.
+     * The target name or block opcode of the debugger event.
      */
-    public ClickEvent() {
+    @Column(name = "name_opcode")
+    private String nameOrOpcode;
+
+    /**
+     * Only applicable to select sprite event, null for everything else.
+     */
+    @Column(name = "original")
+    private Integer original;
+
+    /**
+     * The number of the block executions of the debugger event.
+     */
+    @Column(name = "execution")
+    private Integer execution;
+
+    /**
+     * Default constructor for the debugger event entity.
+     */
+    public DebuggerEvent() {
     }
 
     /**
-     * Constructs a new click event with the given attributes.
+     * Constructs a new debugger event with the given attributes.
      *
      * @param user The user who caused the event.
      * @param experiment The experiment during which the event occurred.
      * @param date The time at which the event occurred.
      * @param eventType The event type.
      * @param event The specific event.
-     * @param metadata The metadata.
+     * @param blockOrTargetID The block or target ID of the event.
+     * @param nameOrOpcode The target name or block opcode of the event.
+     * @param original Only applicable to the select sprite event.
+     * @param execution The number of the block executions of the event.
      */
-    public ClickEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
-                      final String event, final String metadata) {
+    public DebuggerEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
+                         final String event, final String blockOrTargetID, final String nameOrOpcode,
+                         final Integer original, final Integer execution) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
         this.eventType = eventType;
         this.event = event;
-        this.metadata = metadata;
+        this.blockOrTargetID = blockOrTargetID;
+        this.nameOrOpcode = nameOrOpcode;
+        this.original = original;
+        this.execution = execution;
     }
 
     /**
@@ -209,21 +235,75 @@ public class ClickEvent implements Event {
     }
 
     /**
-     * Returns the metadata of the event.
+     * Returns the block or target ID.
      *
-     * @return The metadata.
+     * @return The ID.
      */
-    public String getMetadata() {
-        return metadata;
+    public String getBlockOrTargetID() {
+        return blockOrTargetID;
     }
 
     /**
-     * Sets the metadata of the event.
+     * Sets the block or target ID.
      *
-     * @param metadata The metadata to be set.
+     * @param blockOrTargetID The ID to be set.
      */
-    public void setMetadata(final String metadata) {
-        this.metadata = metadata;
+    public void setBlockOrTargetID(final String blockOrTargetID) {
+        this.blockOrTargetID = blockOrTargetID;
+    }
+
+    /**
+     * Returns the target name or block opcode.
+     *
+     * @return The name.
+     */
+    public String getNameOrOpcode() {
+        return nameOrOpcode;
+    }
+
+    /**
+     * Sets the target name or block opcode.
+     *
+     * @param nameOrOpcode The name or opcode to be set.
+     */
+    public void setNameOrOpcode(final String nameOrOpcode) {
+        this.nameOrOpcode = nameOrOpcode;
+    }
+
+    /**
+     * Returns the original value.
+     *
+     * @return The value.
+     */
+    public Integer getOriginal() {
+        return original;
+    }
+
+    /**
+     * Sets the original value.
+     *
+     * @param original The value to be set.
+     */
+    public void setOriginal(final Integer original) {
+        this.original = original;
+    }
+
+    /**
+     * Returns the execution number.
+     *
+     * @return The number.
+     */
+    public Integer getExecution() {
+        return execution;
+    }
+
+    /**
+     * Sets the execution number.
+     *
+     * @param execution The number to be set.
+     */
+    public void setExecution(final Integer execution) {
+        this.execution = execution;
     }
 
 }
