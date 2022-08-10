@@ -51,6 +51,7 @@ public class EventRestControllerTest {
     private static final String JSON = "json";
     private static final int ID = 1;
     private final JSONObject blockEventObject = new JSONObject();
+    private final JSONObject clickEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
     private final JSONObject sb3ZipObject = new JSONObject();
@@ -77,6 +78,12 @@ public class EventRestControllerTest {
         blockEventObject.put("spritename", "Figur1");
         blockEventObject.put("xml", "xml");
         blockEventObject.put("json", "json");
+        clickEventObject.put("user", 3);
+        clickEventObject.put("experiment", 39);
+        clickEventObject.put("type", "ICON");
+        clickEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        clickEventObject.put("event", "STOPALL");
+        clickEventObject.put("metadata", "meta");
         resourceEventObject.put("user", 3);
         resourceEventObject.put("experiment", 39);
         resourceEventObject.put("type", "DELETE");
@@ -171,6 +178,50 @@ public class EventRestControllerTest {
     }
 
     @Test
+    public void testStoreClickEvent() throws JSONException {
+        assertDoesNotThrow(
+                () -> eventRestController.storeClickEvent(clickEventObject.toString())
+        );
+        verify(eventService).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreClickEventMetadataBlank() throws JSONException {
+        clickEventObject.put("metadata", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeClickEvent(clickEventObject.toString())
+        );
+        verify(eventService).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreClickEventJSON() throws JSONException {
+        clickEventObject.put("user", "unicorn");
+        assertDoesNotThrow(
+                () -> eventRestController.storeClickEvent(clickEventObject.toString())
+        );
+        verify(eventService, never()).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreClickEventIllegalArgument() throws JSONException {
+        clickEventObject.put("event", "");
+        assertDoesNotThrow(
+                () -> eventRestController.storeClickEvent(clickEventObject.toString())
+        );
+        verify(eventService, never()).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreClickEventDateTimeParse() throws JSONException {
+        clickEventObject.put("time", "0");
+        assertDoesNotThrow(
+                () -> eventRestController.storeClickEvent(clickEventObject.toString())
+        );
+        verify(eventService, never()).saveClickEvent(any());
+    }
+
+    @Test
     public void testStoreResourceEvent() {
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
@@ -216,7 +267,7 @@ public class EventRestControllerTest {
 
     @Test
     public void testStoreResourceEventIllegalArgument() throws JSONException {
-        resourceEventObject.put("event", "unicorn");
+        resourceEventObject.put("event", "");
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
