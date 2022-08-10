@@ -27,7 +27,7 @@ The result page of this project uses Google's `Blockly` and `Scratch Blocks` to 
 project is build with the Spring framework, you can run this project from within an IDE. You will still need to do the
 necessary configurations described below.
 
-#### Configuration
+#### Standard configuration
 
 To get the project up and running, you need to adapt the `application.properties` file in the `resources` folder as
 follows:
@@ -49,6 +49,16 @@ easily be committed by accident, some sections have been commented out. You shou
 `application-local.properties` in the `resources` folder, uncomment them and adapt them there. This file has been added
 to the `.gitignore` file and the *spring.profiles.active* configuration in the `application.properties` file has been
 set accordingly for spring to automatically pick up the configurations.
+
+#### Configuring multiple Scratch GUI instances
+
+Since the URL to the instrumented Scratch-GUI instance is saved per experiment, it is possible to use different Scratch
+GUIs for individual experiments. To take advantage of this feature, the *app.gui* property can contain a list of
+comma-separated URLs **without whitespaces**. The provided URLs will be available as options in a dropdown-menu when
+creating a new experiment. The *app.gui.base* property has to be configured accordingly to contain a comma-separated
+string of all the unique base URLs of the different Scratch GUI instances (no need to specify the same base URL twice).
+
+#### Deployment under a relative context path
 
 If you plan to deploy the project under a relative context path, e.g.`scratch.fim.uni-passau.de/scratch1984` instead of
 `scratch.fim.uni-passau.de`, you need to change the `server.servlet.context-path` in the `application.properties` file
