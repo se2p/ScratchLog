@@ -20,6 +20,7 @@
         <spring.version>2.4.5</spring.version>
         <security.version>5.5.0</security.version>
         <thymeleaf.version>3.0.4.RELEASE</thymeleaf.version>
+        <flyway.version>8.1.0</flyway.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <codec.version>1.15</codec.version>
         <jQuery.version>3.5.1</jQuery.version>
@@ -116,6 +117,14 @@
             <artifactId>thymeleaf-extras-springsecurity5</artifactId>
             <version>${thymeleaf.version}</version>
         </dependency>
+
+        <!-- Flyway for database version management -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>${flyway.version}</version>
+        </dependency>
+
 
         <!-- Used in SAML2Configuration -->
         <dependency>
