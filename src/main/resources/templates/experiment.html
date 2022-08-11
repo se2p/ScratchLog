@@ -94,7 +94,7 @@
         <!-- The table of participants in the experiment and the buttons for adding and removing participants. -->
         <div class="mb-5" sec:authorize="hasRole('ADMIN')">
             <h2 class="h3" th:text="#{heading_participants}"></h2>
-            <div class="col-12 mb-5">
+            <div class="col-12 mb-5" style="overflow-y: auto">
                 <!-- The table containing the participant information. -->
                 <table class="table table-hover">
                     <thead>
