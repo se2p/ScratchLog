@@ -27,7 +27,7 @@
         </div>
 
         <!-- The buttons for editing and deleting the experiment. -->
-        <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex justify-content-between flex-wrap mb-3">
             <!-- The experiment title. -->
             <h1 class="mb-3 h2" th:text="${experimentDTO.title}"></h1>
             <div sec:authorize="hasRole('ADMIN')">
