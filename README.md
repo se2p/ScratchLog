@@ -64,9 +64,11 @@ If you plan to deploy the project under a relative context path, e.g.`scratch.fi
 `scratch.fim.uni-passau.de`, you need to change the `server.servlet.context-path` in the `application.properties` file
 accordingly, e.g. to `/scratch1984` while the *app.url* value is `scratch.fim.uni-passau.de`.
 
+#### Configuring the instrumented Scratch instance
+
 You also have to make some changes to the instrumented Scratch instance:
-- Change the *logging._baseUrl* in the *start()* method of `virtual-machine.js` in the instrumented `scratch-vm` to
-  `<app.url> + <server.servlet.context-path>/store`.
+- Change the *baseUrl* in `logging.js` in the instrumented `scratch-vm` to `<app.url> + <server.servlet.context-path>
+  /store`.
 - Change the `window.location.href` in the *handleFinishExperiment()* method in `menu-bar.jsx` in the instrumented
   `scratch-gui` to `<app.url> + <server.servlet.context-path>`.
 - The instrumented `scratch-gui` and `scratch-vm` need to be linked via the `npm link` setting, as described
