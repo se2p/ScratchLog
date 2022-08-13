@@ -38,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -92,11 +93,46 @@ public class FileServiceTest {
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
         assertDoesNotThrow(
-                () -> fileService.saveFile(fileDTO)
+                () -> fileService.saveFile(fileDTO, false)
         );
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(fileRepository, never()).findAllByUserAndExperimentAndNameOrderByDateDesc(any(), any(), anyString());
+        verify(fileRepository).save(any());
+    }
+
+    @Test
+    public void testSaveFileDrawing() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(fileRepository.findAllByUserAndExperimentAndNameOrderByDateDesc(user, experiment,
+                fileDTO.getName())).thenReturn(files);
+        assertDoesNotThrow(
+                () -> fileService.saveFile(fileDTO, true)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(fileRepository).findAllByUserAndExperimentAndNameOrderByDateDesc(user, experiment, fileDTO.getName());
+        verify(fileRepository).save(files.get(0));
+    }
+
+    @Test
+    public void testSaveFileDrawingEmpty() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(fileRepository.findAllByUserAndExperimentAndNameOrderByDateDesc(user, experiment,
+                fileDTO.getName())).thenReturn(new ArrayList<>());
+        assertDoesNotThrow(
+                () -> fileService.saveFile(fileDTO, true)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(fileRepository).findAllByUserAndExperimentAndNameOrderByDateDesc(user, experiment, fileDTO.getName());
         verify(fileRepository).save(any());
     }
 
@@ -107,11 +143,12 @@ public class FileServiceTest {
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
         when(fileRepository.save(any())).thenThrow(ConstraintViolationException.class);
         assertDoesNotThrow(
-                () -> fileService.saveFile(fileDTO)
+                () -> fileService.saveFile(fileDTO, false)
         );
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(fileRepository, never()).findAllByUserAndExperimentAndNameOrderByDateDesc(any(), any(), anyString());
         verify(fileRepository).save(any());
     }
 
@@ -121,11 +158,12 @@ public class FileServiceTest {
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
         assertDoesNotThrow(
-                () -> fileService.saveFile(fileDTO)
+                () -> fileService.saveFile(fileDTO, false)
         );
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(fileRepository, never()).findAllByUserAndExperimentAndNameOrderByDateDesc(any(), any(), anyString());
         verify(fileRepository, never()).save(any());
     }
 
@@ -134,11 +172,12 @@ public class FileServiceTest {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         assertDoesNotThrow(
-                () -> fileService.saveFile(fileDTO)
+                () -> fileService.saveFile(fileDTO, false)
         );
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(fileRepository, never()).findAllByUserAndExperimentAndNameOrderByDateDesc(any(), any(), anyString());
         verify(fileRepository, never()).save(any());
     }
 

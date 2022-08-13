@@ -26,6 +26,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -104,6 +105,7 @@ public class EventRestControllerIntegrationTest {
         fileEventObject.put("type", "audio/x-wav");
         fileEventObject.put("file", "blub");
         fileEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        fileEventObject.put("drawing", false);
         sb3ZipObject.put("user", 3);
         sb3ZipObject.put("experiment", 39);
         sb3ZipObject.put("name", "sb3zip.sb3");
@@ -219,7 +221,7 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreFile() throws Exception {
+    public void testStoreFileEvent() throws Exception {
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -227,11 +229,37 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(fileService).saveFile(any());
+        verify(fileService).saveFile(any(), anyBoolean());
     }
 
     @Test
-    public void testStoreFileJSON() throws Exception {
+    public void testStoreFileEventDrawing() throws Exception {
+        fileEventObject.put("drawing", true);
+        mvc.perform(post("/store/file")
+                        .content(fileEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(fileService).saveFile(any(), anyBoolean());
+    }
+
+    @Test
+    public void testStoreFileEventDrawingJSON() throws Exception {
+        fileEventObject.put("drawing", "bla");
+        mvc.perform(post("/store/file")
+                        .content(fileEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(fileService).saveFile(any(), anyBoolean());
+    }
+
+    @Test
+    public void testStoreFileEventJSON() throws Exception {
         fileEventObject.put("user", "unicorn");
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
@@ -240,11 +268,11 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(fileService, never()).saveFile(any());
+        verify(fileService, never()).saveFile(any(), anyBoolean());
     }
 
     @Test
-    public void testStoreFileIllegalArgument() throws Exception {
+    public void testStoreFileEventIllegalArgument() throws Exception {
         fileEventObject.put("file", "%");
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
@@ -253,11 +281,11 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(fileService, never()).saveFile(any());
+        verify(fileService, never()).saveFile(any(), anyBoolean());
     }
 
     @Test
-    public void testStoreFileDateTimeParse() throws Exception {
+    public void testStoreFileEventDateTimeParse() throws Exception {
         fileEventObject.put("time", "%");
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
@@ -266,7 +294,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(fileService, never()).saveFile(any());
+        verify(fileService, never()).saveFile(any(), anyBoolean());
     }
 
     @Test

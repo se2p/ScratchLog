@@ -249,7 +249,7 @@ public class ResultController {
             }
 
             for (FileDTO fileDTO : fileDTOS) {
-                writeFileDataNoZips(zos, fileDTO);
+                writeFileData(zos, fileDTO);
             }
 
             writeJsonData(zos, code);
@@ -596,7 +596,7 @@ public class ResultController {
                 }
 
                 for (FileDTO fileDTO : fileDTOS) {
-                    writeFileDataNoZips(innerZos, fileDTO);
+                    writeFileData(innerZos, fileDTO);
                 }
 
                 byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
@@ -710,13 +710,30 @@ public class ResultController {
      * @param fileDTO The {@link FileDTO} containing the file data.
      * @throws IOException if the file content could not be written correctly.
      */
-    private void writeFileDataNoZips(final ZipOutputStream zos, final FileDTO fileDTO) throws IOException {
+    private void writeFileData(final ZipOutputStream zos, final FileDTO fileDTO) throws IOException {
         if (!fileDTO.getName().endsWith("zip")) {
-            ZipEntry entry = new ZipEntry(fileDTO.getId() + fileDTO.getName());
+            ZipEntry entry = new ZipEntry(fileDTO.getName());
             entry.setSize(fileDTO.getContent().length);
             zos.putNextEntry(entry);
             zos.write(fileDTO.getContent());
             zos.closeEntry();
+        } else {
+            InputStream file = new ByteArrayInputStream(fileDTO.getContent());
+            ZipInputStream zin = new ZipInputStream(file);
+            ZipEntry ze = zin.getNextEntry();
+
+            if (ze != null) {
+                ZipEntry entry = new ZipEntry(ze.getName());
+                zos.putNextEntry(entry);
+                int current;
+                while ((current = zin.read()) >= 0) {
+                    zos.write(current);
+                }
+                zos.closeEntry();
+            }
+
+            zin.close();
+            file.close();
         }
     }
 

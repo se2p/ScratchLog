@@ -85,12 +85,14 @@ public class FileService {
     }
 
     /**
-     * Creates a new file with the given parameters in the database.
+     * Creates a new file with the given parameters in the database, if the file is not a drawing or no previous drawing
+     * with the same name could be found. Otherwise, the existing drawing is updated.
      *
      * @param fileDTO The dto containing the file information to set.
+     * @param isDrawing Whether the file to be saved is a drawing or not.
      */
     @Transactional
-    public void saveFile(final FileDTO fileDTO) {
+    public void saveFile(final FileDTO fileDTO, final boolean isDrawing) {
         User user = userRepository.getOne(fileDTO.getUser());
         Experiment experiment = experimentRepository.getOne(fileDTO.getExperiment());
 
@@ -102,6 +104,18 @@ public class FileService {
                         + fileDTO.getUser() + " and experiment " + fileDTO.getExperiment()
                         + " when trying to save a file!");
                 return;
+            }
+
+            if (isDrawing) {
+                List<File> drawings = fileRepository.findAllByUserAndExperimentAndNameOrderByDateDesc(user, experiment,
+                        fileDTO.getName());
+
+                if (!drawings.isEmpty()) {
+                    File drawing = drawings.get(0);
+                    drawing.setContent(fileDTO.getContent());
+                    fileRepository.save(drawing);
+                    return;
+                }
             }
 
             File file = createFile(fileDTO, user, experiment);

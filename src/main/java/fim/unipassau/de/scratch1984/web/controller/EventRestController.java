@@ -120,7 +120,7 @@ public class EventRestController {
             return;
         }
 
-        fileService.saveFile(fileDTO);
+        fileService.saveFile(fileDTO, isDrawing(data));
     }
 
     /**
@@ -372,6 +372,22 @@ public class EventRestController {
         }
 
         return dto;
+    }
+
+    /**
+     * Returns whether the given data representing a file is a drawing or not.
+     *
+     * @param data The string containing the file data.
+     * @return {@code true} if the file is a drawing, or {@code false} otherwise.
+     */
+    private boolean isDrawing(final String data) {
+        try {
+            JSONObject object = new JSONObject(data);
+            return object.getBoolean("drawing");
+        } catch (NullPointerException | JSONException e) {
+            logger.error("Missing boolean attribute drawing in file object!", e);
+            return false;
+        }
     }
 
 }

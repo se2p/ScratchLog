@@ -33,6 +33,16 @@ public interface FileRepository extends JpaRepository<File, Integer> {
     List<File> findAllByUserAndExperiment(User user, Experiment experiment);
 
     /**
+     * Returns all files with the given name uploaded by the given user during the given experiment, if any exist.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @param name The file name to search for.
+     * @return A list of files, or an empty list, if no matching entries could be found.
+     */
+    List<File> findAllByUserAndExperimentAndNameOrderByDateDesc(User user, Experiment experiment, String name);
+
+    /**
      * Returns the file with the given id, if any such file exists.
      *
      * @param id The file id to search for.
