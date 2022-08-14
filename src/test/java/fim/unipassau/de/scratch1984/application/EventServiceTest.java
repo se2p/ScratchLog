@@ -136,6 +136,7 @@ public class EventServiceTest {
         user.setId(ID);
         resourceEventDTO.setLibraryResource(ResourceEventDTO.LibraryResource.TRUE);
         blockEvent.setCode(JSON);
+        participant.setEnd(null);
     }
 
     @Test
@@ -150,6 +151,21 @@ public class EventServiceTest {
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment);
         verify(blockEventRepository).save(any());
+    }
+
+    @Test
+    public void testSaveBlockEventParticipantFinished() {
+        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveBlockEvent(blockEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(blockEventRepository, never()).save(any());
     }
 
     @Test
@@ -258,6 +274,21 @@ public class EventServiceTest {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        assertDoesNotThrow(
+                () -> eventService.saveResourceEvent(resourceEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(resourceEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveResourceEventParticipantFinished() {
+        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
         assertDoesNotThrow(
                 () -> eventService.saveResourceEvent(resourceEventDTO)
         );

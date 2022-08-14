@@ -132,6 +132,10 @@ public class EventService {
                         + blockEventDTO.getUser() + " and experiment " + blockEventDTO.getExperiment()
                         + " when trying to save a block event!");
                 return;
+            } else if (participant.getEnd() != null) {
+                logger.error("Tried to insert a block event for participant " + blockEventDTO.getUser()
+                        + " during experiment " + blockEventDTO.getExperiment() + " who has already finished!");
+                return;
             }
 
             BlockEvent blockEvent = createBlockEvent(blockEventDTO, user, experiment);
@@ -163,6 +167,10 @@ public class EventService {
                 logger.error("No corresponding participant entry could be found for user with id "
                         + resourceEventDTO.getUser() + " and experiment " + resourceEventDTO.getExperiment()
                         + " when trying to save a resource event!");
+                return;
+            } else if (participant.getEnd() != null) {
+                logger.error("Tried to insert a resource event for participant " + resourceEventDTO.getUser()
+                        + " during experiment " + resourceEventDTO.getExperiment() + " who has already finished!");
                 return;
             }
 

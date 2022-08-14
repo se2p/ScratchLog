@@ -23,7 +23,6 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -93,7 +92,6 @@ public class EventRestControllerTest {
         fileEventObject.put("type", "audio/x-wav");
         fileEventObject.put("file", "blub");
         fileEventObject.put("time", "2021-06-28T12:36:37.601Z");
-        fileEventObject.put("drawing", false);
         sb3ZipObject.put("user", 3);
         sb3ZipObject.put("experiment", 39);
         sb3ZipObject.put("name", "sb3zip.sb3");
@@ -239,25 +237,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
-        verify(fileService).saveFile(any(), anyBoolean());
-    }
-
-    @Test
-    public void testStoreFileEventDrawing() {
-        fileEventObject.put("drawing", true);
-        assertDoesNotThrow(
-                () -> eventRestController.storeFileEvent(fileEventObject.toString())
-        );
-        verify(fileService).saveFile(any(), anyBoolean());
-    }
-
-    @Test
-    public void testStoreFileEventDrawingJSON() {
-        fileEventObject.remove("drawing");
-        assertDoesNotThrow(
-                () -> eventRestController.storeFileEvent(fileEventObject.toString())
-        );
-        verify(fileService).saveFile(any(), anyBoolean());
+        verify(fileService).saveFile(any());
     }
 
     @Test
@@ -266,7 +246,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
-        verify(fileService, never()).saveFile(any(), anyBoolean());
+        verify(fileService, never()).saveFile(any());
     }
 
     @Test
@@ -275,7 +255,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
-        verify(fileService, never()).saveFile(any(), anyBoolean());
+        verify(fileService, never()).saveFile(any());
     }
 
     @Test
@@ -284,7 +264,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
-        verify(fileService, never()).saveFile(any(), anyBoolean());
+        verify(fileService, never()).saveFile(any());
     }
 
     @Test

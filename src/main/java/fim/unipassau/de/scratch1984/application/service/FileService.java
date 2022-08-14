@@ -85,14 +85,12 @@ public class FileService {
     }
 
     /**
-     * Creates a new file with the given parameters in the database, if the file is not a drawing or no previous drawing
-     * with the same name could be found. Otherwise, the existing drawing is updated.
+     * Creates a new file with the given parameters in the database.
      *
      * @param fileDTO The dto containing the file information to set.
-     * @param isDrawing Whether the file to be saved is a drawing or not.
      */
     @Transactional
-    public void saveFile(final FileDTO fileDTO, final boolean isDrawing) {
+    public void saveFile(final FileDTO fileDTO) {
         User user = userRepository.getOne(fileDTO.getUser());
         Experiment experiment = experimentRepository.getOne(fileDTO.getExperiment());
 
@@ -104,18 +102,10 @@ public class FileService {
                         + fileDTO.getUser() + " and experiment " + fileDTO.getExperiment()
                         + " when trying to save a file!");
                 return;
-            }
-
-            if (isDrawing) {
-                List<File> drawings = fileRepository.findAllByUserAndExperimentAndNameOrderByDateDesc(user, experiment,
-                        fileDTO.getName());
-
-                if (!drawings.isEmpty()) {
-                    File drawing = drawings.get(0);
-                    drawing.setContent(fileDTO.getContent());
-                    fileRepository.save(drawing);
-                    return;
-                }
+            } else if (participant.getEnd() != null) {
+                logger.error("Tried to save a file for participant " + fileDTO.getUser() + " during experiment "
+                        + fileDTO.getExperiment() + " who has already finished!");
+                return;
             }
 
             File file = createFile(fileDTO, user, experiment);
@@ -146,6 +136,10 @@ public class FileService {
                 logger.error("No corresponding participant entry could be found for user with id "
                         + sb3ZipDTO.getUser() + " and experiment " + sb3ZipDTO.getExperiment()
                         + " when trying to save an sb3 zip file!");
+                return;
+            } else if (participant.getEnd() != null) {
+                logger.error("Tried to save a sb3 file for participant " + sb3ZipDTO.getUser() + " during experiment "
+                        + sb3ZipDTO.getExperiment() + " who has already finished!");
                 return;
             }
 
