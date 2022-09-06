@@ -187,8 +187,10 @@ code {
 }
 
 #blocklyArea {
-    width: 63vw;
+    width: 80vw;
     height: 63vh;
+    max-width: 72rem;
+    max-height: 72rem;
 }
 
 #searchResults {
