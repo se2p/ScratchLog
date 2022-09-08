@@ -163,6 +163,7 @@ public class EventServiceTest {
         user.setId(ID);
         resourceEventDTO.setLibraryResource(ResourceEventDTO.LibraryResource.TRUE);
         blockEvent.setCode(JSON);
+        participant.setEnd(null);
         blockEventDTO.setDate(LocalDateTime.now());
         resourceEventDTO.setDate(LocalDateTime.now());
         questionEventDTO.setDate(LocalDateTime.now());
@@ -491,6 +492,22 @@ public class EventServiceTest {
         verify(participantRepository).findByUserAndExperiment(user, experiment);
         verify(resourceEventRepository).save(any());
     }
+
+    @Test
+    public void testSaveResourceEventParticipantFinished() {
+        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveResourceEvent(resourceEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(resourceEventRepository, never()).save(any());
+    }
+
 
     @Test
     public void testSaveResourceEventNoParticipant() {
