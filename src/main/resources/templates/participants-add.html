@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="#{add_participants_title}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
@@ -13,8 +14,7 @@
 
 <!-- Page content -->
 <div class="row" id="content">
-    <div class="col-2"></div>
-    <div class="col-8">
+    <div class="inside">
         <!-- The error message shown at the top of the page when some participants couldn't be added. -->
         <div class="row" th:if="${error != null}">
             <div class="col-12 alert alert-warning">
@@ -93,7 +93,6 @@
             </div>
         </form>
     </div>
-    <div class="col-2"></div>
 </div>
 
 <script>

@@ -32,13 +32,18 @@ import org.springframework.web.servlet.LocaleResolver;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -95,6 +100,9 @@ public class UserControllerTest {
 
     @Mock
     private LocaleResolver localeResolver;
+
+    @Mock
+    private Principal principal;
 
     private MockedStatic<SecurityContextHolder> securityContextHolder;
     private static final String USERNAME = "admin";
@@ -1001,7 +1009,7 @@ public class UserControllerTest {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -1020,7 +1028,10 @@ public class UserControllerTest {
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(httpServletRequest.getSession(false)).thenReturn(session);
         when(httpServletRequest.getSession(true)).thenReturn(session);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
+        when(httpServletRequest.getUserPrincipal()).thenReturn(principal);
+        when(principal.getName()).thenReturn(oldDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(oldDTO);
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -1030,6 +1041,8 @@ public class UserControllerTest {
         verify(localeResolver).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest).getSession(false);
         verify(httpServletRequest).getSession(true);
+        verify(httpServletRequest).getUserPrincipal();
+        verify(userService).getUser(oldDTO.getUsername());
     }
 
     @Test
@@ -1089,7 +1102,7 @@ public class UserControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true, false);
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -1105,13 +1118,15 @@ public class UserControllerTest {
     public void testUpdateUserChangeEmail() {
         MailServerSetter.setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(EMAIL_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -1128,12 +1143,14 @@ public class UserControllerTest {
     public void testUpdateUserChangeEmailFalse() {
         MailServerSetter.setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -1149,12 +1166,14 @@ public class UserControllerTest {
     public void testUpdateUserChangeEmailTokenNotFound() {
         MailServerSetter.setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenThrow(NotFoundException.class);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -1171,11 +1190,13 @@ public class UserControllerTest {
     public void testUpdateUserChangeEmailNoMailServer() {
         MailServerSetter.setMailServer(false);
         userDTO.setEmail(NEW_EMAIL);
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -1191,11 +1212,13 @@ public class UserControllerTest {
     @Test
     public void testUpdateUserChangeUsername() {
         userDTO.setUsername(NEW_USERNAME);
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_REDIRECT + NEW_USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
         verify(bindingResult, never()).addError(any());
@@ -1213,13 +1236,18 @@ public class UserControllerTest {
         userDTO.setConfirmPassword(PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(bindingResult.hasErrors()).thenReturn(true);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
+        when(httpServletRequest.getUserPrincipal()).thenReturn(principal);
+        when(principal.getName()).thenReturn(oldDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(oldDTO);
         assertEquals(PROFILE_EDIT, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(bindingResult, times(2)).addError(any());
         verify(userService).getUserById(ID);
         verify(localeResolver, never()).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
+        verify(httpServletRequest).getUserPrincipal();
+        verify(userService).getUser(userDTO.getUsername());
     }
 
     @Test
@@ -1229,13 +1257,18 @@ public class UserControllerTest {
         userDTO.setConfirmPassword(VALID_PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(bindingResult.hasErrors()).thenReturn(true);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
+        when(httpServletRequest.getUserPrincipal()).thenReturn(principal);
+        when(principal.getName()).thenReturn(oldDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(oldDTO);
         assertEquals(PROFILE_EDIT, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(bindingResult).addError(any());
         verify(userService).getUserById(ID);
         verify(localeResolver, never()).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
+        verify(httpServletRequest).getUserPrincipal();
+        verify(userService).getUser(userDTO.getUsername());
     }
 
     @Test
@@ -1245,13 +1278,42 @@ public class UserControllerTest {
         userDTO.setConfirmPassword(VALID_PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(bindingResult.hasErrors()).thenReturn(true);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
+        when(httpServletRequest.getUserPrincipal()).thenReturn(principal);
+        when(principal.getName()).thenReturn(oldDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(oldDTO);
         assertEquals(PROFILE_EDIT, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(bindingResult).addError(any());
         verify(userService).getUserById(ID);
         verify(localeResolver, never()).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
+        verify(httpServletRequest).getUserPrincipal();
+        verify(userService).getUser(userDTO.getUsername());
+    }
+
+    @Test
+    public void testUpdateUserChangePasswordNewPasswordSameAsOld() {
+        oldDTO.setPassword(VALID_PASSWORD);
+        userDTO.setPassword(VALID_PASSWORD);
+        userDTO.setNewPassword(VALID_PASSWORD);
+        userDTO.setConfirmPassword(VALID_PASSWORD);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(bindingResult.hasErrors()).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
+        when(httpServletRequest.getUserPrincipal()).thenReturn(principal);
+        when(principal.getName()).thenReturn(oldDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(oldDTO);
+        when(userService.matchesPassword(anyString(), anyString())).thenReturn(true);
+        assertEquals(PROFILE_EDIT, userController.updateUser(userDTO, bindingResult, httpServletRequest,
+                httpServletResponse));
+        verify(bindingResult).addError(any());
+        verify(userService).getUserById(ID);
+        verify(localeResolver, never()).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
+        verify(httpServletRequest, never()).getSession(false);
+        verify(httpServletRequest).getUserPrincipal();
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).matchesPassword(anyString(), anyString());
     }
 
     @Test
@@ -1259,7 +1321,10 @@ public class UserControllerTest {
         userDTO.setEmail(PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(bindingResult.hasErrors()).thenReturn(true);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
+        when(httpServletRequest.getUserPrincipal()).thenReturn(principal);
+        when(principal.getName()).thenReturn(oldDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(oldDTO);
         assertEquals(PROFILE_EDIT, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(bindingResult).addError(any());
@@ -1267,6 +1332,8 @@ public class UserControllerTest {
         verify(userService, never()).existsEmail(anyString());
         verify(localeResolver, never()).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
+        verify(httpServletRequest).getUserPrincipal();
+        verify(userService).getUser(userDTO.getUsername());
     }
 
     @Test
@@ -1275,7 +1342,10 @@ public class UserControllerTest {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.existsEmail(NEW_EMAIL)).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
+        when(httpServletRequest.getUserPrincipal()).thenReturn(principal);
+        when(principal.getName()).thenReturn(oldDTO.getUsername());
+        when(userService.getUser(userDTO.getUsername())).thenReturn(oldDTO);
         assertEquals(PROFILE_EDIT, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(bindingResult).addError(any());
@@ -1283,14 +1353,18 @@ public class UserControllerTest {
         verify(userService).existsEmail(NEW_EMAIL);
         verify(localeResolver, never()).setLocale(httpServletRequest, httpServletResponse, Locale.ENGLISH);
         verify(httpServletRequest, never()).getSession(false);
+        verify(httpServletRequest).getUserPrincipal();
+        verify(userService).getUser(userDTO.getUsername());
     }
 
     @Test
     public void testUpdateUserChangeUsernameInvalid() {
         userDTO.setUsername(BLANK);
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(bindingResult.hasErrors()).thenReturn(true);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_EDIT, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(bindingResult).addError(any());
@@ -1303,10 +1377,12 @@ public class UserControllerTest {
     @Test
     public void testUpdateUserChangeUsernameExists() {
         userDTO.setUsername(NEW_USERNAME);
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.existsUser(NEW_USERNAME)).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_EDIT, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(bindingResult).addError(any());
@@ -1319,9 +1395,11 @@ public class UserControllerTest {
     @Test
     public void testUpdateUserNewEmailBlank() {
         userDTO.setEmail(BLANK);
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(bindingResult.hasErrors()).thenReturn(true);
-        when(httpServletRequest.isUserInRole("ROLE_ADMIN")).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_EDIT, userController.updateUser(userDTO, bindingResult, httpServletRequest,
                 httpServletResponse));
         verify(bindingResult).addError(any());
@@ -1540,7 +1618,12 @@ public class UserControllerTest {
     public void testChangeActiveStatusDeactivate() {
         userDTO.setRole(UserDTO.Role.PARTICIPANT);
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(PROFILE_REDIRECT + userDTO.getUsername(), userController.changeActiveStatus(ID_STRING));
+        assertAll(
+                () -> assertEquals(PROFILE_REDIRECT + userDTO.getUsername(),
+                        userController.changeActiveStatus(ID_STRING)),
+                () -> assertFalse(userDTO.isActive()),
+                () -> assertNull(userDTO.getSecret())
+        );
         verify(userService).getUserById(ID);
         verify(userService).updateUser(userDTO);
     }
@@ -1549,8 +1632,14 @@ public class UserControllerTest {
     public void testChangeActiveStatusActivate() {
         userDTO.setRole(UserDTO.Role.PARTICIPANT);
         userDTO.setActive(false);
+        userDTO.setAttempts(3);
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(PROFILE_REDIRECT + userDTO.getUsername(), userController.changeActiveStatus(ID_STRING));
+        assertAll(
+                () -> assertEquals(PROFILE_REDIRECT + userDTO.getUsername(),
+                        userController.changeActiveStatus(ID_STRING)),
+                () -> assertTrue(userDTO.isActive()),
+                () -> assertEquals(0, userDTO.getAttempts())
+        );
         verify(userService).getUserById(ID);
         verify(userService).updateUser(userDTO);
     }

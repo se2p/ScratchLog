@@ -8,7 +8,11 @@ import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
+import fim.unipassau.de.scratch1984.web.dto.EventDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
+import fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
 import org.json.JSONException;
@@ -89,6 +93,54 @@ public class EventRestController {
         }
 
         eventService.saveBlockEvent(blockEventDTO);
+    }
+
+    /**
+     * Saves the click event data passed in the request body.
+     *
+     * @param data The string containing the click event data.
+     */
+    @PostMapping("/click")
+    public void storeClickEvent(@RequestBody final String data) {
+        ClickEventDTO clickEventDTO = createClickEventDTO(data);
+
+        if (clickEventDTO == null) {
+            return;
+        }
+
+        eventService.saveClickEvent(clickEventDTO);
+    }
+
+    /**
+     * Saves the debugger event data passed in the request body.
+     *
+     * @param data The string containing the debugger event data.
+     */
+    @PostMapping("/debugger")
+    public void storeDebuggerEvent(@RequestBody final String data) {
+        DebuggerEventDTO debuggerEventDTO = createDebuggerEventDTO(data);
+
+        if (debuggerEventDTO == null) {
+            return;
+        }
+
+        eventService.saveDebuggerEvent(debuggerEventDTO);
+    }
+
+    /**
+     * Saves the question event data passed in the request body.
+     *
+     * @param data The string containing the question event data.
+     */
+    @PostMapping("/question")
+    public void storeQuestionEvent(@RequestBody final String data) {
+        QuestionEventDTO questionEventDTO = createQuestionEventDTO(data);
+
+        if (questionEventDTO == null) {
+            return;
+        }
+
+        eventService.saveQuestionEvent(questionEventDTO);
     }
 
     /**
@@ -241,6 +293,19 @@ public class EventRestController {
     }
 
     /**
+     * Sets the user, experiment and time for every {@link EventDTO} using the values from the passed
+     * {@link JSONObject}.
+     *
+     * @param eventDTO The dto for which the properties are to be set.
+     * @param object The JSON providing the values.
+     */
+    private void setEventDTOData(final EventDTO eventDTO, final JSONObject object) {
+        eventDTO.setUser(object.getInt("user"));
+        eventDTO.setExperiment(object.getInt("experiment"));
+        eventDTO.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+    }
+
+    /**
      * Creates a {@link BlockEventDTO} with the given data.
      *
      * @param data The data passed in the request body.
@@ -256,9 +321,7 @@ public class EventRestController {
             String xml = object.getString("xml");
             String json = object.getString("json");
 
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            setEventDTOData(dto, object);
             dto.setEventType(BlockEventDTO.BlockEventType.valueOf(object.getString("type")));
             dto.setEvent(BlockEventDTO.BlockEvent.valueOf(object.getString("event")));
 
@@ -284,6 +347,129 @@ public class EventRestController {
     }
 
     /**
+     * Creates a {@link ClickEventDTO} with the given data.
+     *
+     * @param data The data passed in the request body.
+     * @return The new click event DTO containing the information.
+     */
+    private ClickEventDTO createClickEventDTO(final String data) {
+        ClickEventDTO dto = new ClickEventDTO();
+
+        try {
+            JSONObject object = new JSONObject(data);
+            String metadata = object.getString("metadata");
+
+            setEventDTOData(dto, object);
+            dto.setEventType(ClickEventDTO.ClickEventType.valueOf(object.getString("type")));
+            dto.setEvent(ClickEventDTO.ClickEvent.valueOf(object.getString("event")));
+
+            if (!metadata.trim().isBlank()) {
+                dto.setMetadata(metadata);
+            }
+        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
+                | JSONException e) {
+            logger.error("The click event data sent to the server was incomplete!", e);
+            return null;
+        }
+
+        return dto;
+    }
+
+    /**
+     * Creates a {@link DebuggerEventDTO} with the given data.
+     *
+     * @param data The data passed in the request body.
+     * @return The new debugger event DTO containing the information.
+     */
+    private DebuggerEventDTO createDebuggerEventDTO(final String data) {
+        DebuggerEventDTO dto = new DebuggerEventDTO();
+
+        try {
+            JSONObject object = new JSONObject(data);
+            String id = object.getString("id");
+            String name = object.getString("name");
+            String original = object.get("original").toString();
+            String execution = object.get("execution").toString();
+
+            setEventDTOData(dto, object);
+            dto.setEventType(DebuggerEventDTO.DebuggerEventType.valueOf(object.getString("type")));
+            dto.setEvent(DebuggerEventDTO.DebuggerEvent.valueOf(object.getString("event")));
+
+            if (!id.trim().isBlank()) {
+                dto.setBlockOrTargetID(id);
+            }
+            if (!name.trim().isBlank()) {
+                dto.setNameOrOpcode(name);
+            }
+            if (!original.trim().isBlank()) {
+                dto.setOriginal(object.getInt("original"));
+            }
+            if (!execution.trim().isBlank()) {
+                dto.setExecution(object.getInt("execution"));
+            }
+        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
+                | JSONException e) {
+            logger.error("The debugger event data sent to the server was incomplete!", e);
+            return null;
+        }
+
+        return dto;
+    }
+
+    /**
+     * Creates a {@link QuestionEventDTO} with the given data.
+     *
+     * @param data The data passed in the request body.
+     * @return The new question event DTO containing the information.
+     */
+    private QuestionEventDTO createQuestionEventDTO(final String data) {
+        QuestionEventDTO dto = new QuestionEventDTO();
+
+        try {
+            JSONObject object = new JSONObject(data);
+            String feedback = object.get("feedback").toString();
+            String type = object.getString("q_type");
+            String values = object.getString("values");
+            String category = object.getString("category");
+            String form = object.getString("form");
+            String blockId = object.getString("id");
+            String opcode = object.getString("opcode");
+
+            setEventDTOData(dto, object);
+            dto.setEventType(QuestionEventDTO.QuestionEventType.valueOf(object.getString("type")));
+            dto.setEvent(QuestionEventDTO.QuestionEvent.valueOf(object.getString("event")));
+
+            if (!feedback.trim().isBlank()) {
+                dto.setFeedback(object.getInt("feedback"));
+            }
+            if (!type.trim().isBlank()) {
+                dto.setType(type);
+            }
+            if (!values.trim().isBlank()) {
+                dto.setValues(values.split(","));
+            }
+            if (!category.trim().isBlank()) {
+                dto.setCategory(category);
+            }
+            if (!form.trim().isBlank()) {
+                dto.setForm(form);
+            }
+            if (!blockId.trim().isBlank()) {
+                dto.setBlockID(blockId);
+            }
+            if (!opcode.trim().isBlank()) {
+                dto.setOpcode(opcode);
+            }
+
+            return dto;
+        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
+                | JSONException e) {
+            logger.error("The question event data sent to the server was incomplete!", e);
+            return null;
+        }
+    }
+
+    /**
      * Creates a {@link ResourceEventDTO} with the given data.
      *
      * @param data The data passed in the request body.
@@ -298,9 +484,7 @@ public class EventRestController {
             String md5 = object.getString("md5");
             String dataFormat = object.getString("dataFormat");
 
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            setEventDTOData(dto, object);
             dto.setEventType(ResourceEventDTO.ResourceEventType.valueOf(object.getString("type")));
             dto.setEvent(ResourceEventDTO.ResourceEvent.valueOf(object.getString("event")));
             dto.setLibraryResource(ResourceEventDTO.LibraryResource.valueOf(object.getString("libraryResource")));
@@ -334,9 +518,7 @@ public class EventRestController {
 
         try {
             JSONObject object = new JSONObject(data);
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
+            setEventDTOData(dto, object);
             dto.setName(object.getString("name"));
             dto.setFiletype(object.getString("type"));
             dto.setContent(Base64.getDecoder().decode(object.getString("file")));
@@ -360,10 +542,8 @@ public class EventRestController {
 
         try {
             JSONObject object = new JSONObject(data);
-            dto.setUser(object.getInt("user"));
-            dto.setExperiment(object.getInt("experiment"));
+            setEventDTOData(dto, object);
             dto.setName(object.getString("name"));
-            dto.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
             dto.setContent(Base64.getDecoder().decode(object.getString("zip")));
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {

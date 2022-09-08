@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="#{search_title}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
@@ -13,8 +14,7 @@
 
 <!-- Page content -->
 <div class="row" id="content">
-    <div class="col-2"></div>
-    <div class="col-8">
+    <div class="inside">
 
         <!-- The search page heading. -->
         <h2 class="mb-3" th:text="#{search_results}"></h2>
@@ -40,41 +40,43 @@
         <div class="tab-content" id="nav-tabContent">
             <!-- The tab content containing the user search results. -->
             <div class="tab-pane fade show active" id="nav-user" role="tabpanel" aria-labelledby="nav-user-tab">
-                <table class="table table-hover mt-2">
-                    <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col" th:text="#{username}"></th>
-                        <th scope="col" th:text="#{email}"></th>
-                        <th scope="col" th:text="#{role}"></th>
-                    </tr>
-                    </thead>
-                    <tbody th:if="${users.isEmpty()}">
-                    <tr>
-                        <td colspan="4" th:text="#{table_empty}"></td>
-                    </tr>
-                    </tbody>
-                    <tbody th:unless="${users.isEmpty()}" id="userBody">
-                    <tr th:each="user : ${users}">
-                        <th scope="row">
-                            <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
-                               th:text="${user.id}"></a>
-                        </th>
-                        <td>
-                            <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
-                               th:text="${user.username}"></a>
-                        </td>
-                        <td>
-                            <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
-                               th:text="${user.email}"></a>
-                        </td>
-                        <td>
-                            <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
-                               th:text="${user.role}"></a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="table table-hover mt-2">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col" th:text="#{username}"></th>
+                            <th scope="col" th:text="#{email}"></th>
+                            <th scope="col" th:text="#{role}"></th>
+                        </tr>
+                        </thead>
+                        <tbody th:if="${users.isEmpty()}">
+                        <tr>
+                            <td colspan="4" th:text="#{table_empty}"></td>
+                        </tr>
+                        </tbody>
+                        <tbody th:unless="${users.isEmpty()}" id="userBody">
+                        <tr th:each="user : ${users}">
+                            <th scope="row">
+                                <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
+                                   th:text="${user.id}"></a>
+                            </th>
+                            <td>
+                                <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
+                                   th:text="${user.username}"></a>
+                            </td>
+                            <td>
+                                <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
+                                   th:text="${user.email}"></a>
+                            </td>
+                            <td>
+                                <a class="no_decoration" th:href="@{/users/profile(name=${user.username})}"
+                                   th:text="${user.role}"></a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <div class="text-center mb-2">
                     <span th:text="#{elements}"></span>
                     <span th:text="${userCount}"></span>
@@ -87,36 +89,38 @@
             </div>
             <!-- The tab content containing the experiment search results. -->
             <div class="tab-pane fade" id="nav-experiment" role="tabpanel" aria-labelledby="nav-experiment-tab">
-                <table class="table table-hover mt-2">
-                    <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col" th:text="#{title}"></th>
-                        <th scope="col" th:text="#{description}"></th>
-                    </tr>
-                    </thead>
-                    <tbody th:if="${experiments.isEmpty()}">
-                    <tr>
-                        <td colspan="3" th:text="#{table_empty}"></td>
-                    </tr>
-                    </tbody>
-                    <tbody th:unless="${experiments.isEmpty()}" id="experimentBody">
-                    <tr th:each="experiment : ${experiments}">
-                        <th scope="row">
-                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
-                               th:text="${experiment.id}"></a>
-                        </th>
-                        <td>
-                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
-                               th:text="${experiment.title}"></a>
-                        </td>
-                        <td>
-                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
-                               th:text="${experiment.description}"></a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="table table-hover mt-2">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col" th:text="#{title}"></th>
+                            <th scope="col" th:text="#{description}"></th>
+                        </tr>
+                        </thead>
+                        <tbody th:if="${experiments.isEmpty()}">
+                        <tr>
+                            <td colspan="3" th:text="#{table_empty}"></td>
+                        </tr>
+                        </tbody>
+                        <tbody th:unless="${experiments.isEmpty()}" id="experimentBody">
+                        <tr th:each="experiment : ${experiments}">
+                            <th scope="row">
+                                <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                                   th:text="${experiment.id}"></a>
+                            </th>
+                            <td>
+                                <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                                   th:text="${experiment.title}"></a>
+                            </td>
+                            <td>
+                                <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                                   th:text="${experiment.description}"></a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <div class="text-center mb-2">
                     <span th:text="#{elements}"></span>
                     <span th:text="${experimentCount}"></span>
@@ -129,7 +133,6 @@
             </div>
         </div>
     </div>
-    <div class="col-2"></div>
 </div>
 
 <!-- Let Thymeleaf initialize the total user count, experiment count and the page size. -->

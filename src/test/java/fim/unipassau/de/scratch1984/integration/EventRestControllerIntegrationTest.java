@@ -60,6 +60,9 @@ public class EventRestControllerIntegrationTest {
     private static final String JSON = "json";
     private static final int ID = 1;
     private final JSONObject blockEventObject = new JSONObject();
+    private final JSONObject clickEventObject = new JSONObject();
+    private final JSONObject debuggerEventObject = new JSONObject();
+    private final JSONObject questionEventObject = new JSONObject();
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
     private final JSONObject sb3ZipObject = new JSONObject();
@@ -89,6 +92,33 @@ public class EventRestControllerIntegrationTest {
         blockEventObject.put("spritename", "Figur1");
         blockEventObject.put("xml", "xml");
         blockEventObject.put("json", "json");
+        clickEventObject.put("user", 3);
+        clickEventObject.put("experiment", 39);
+        clickEventObject.put("type", "ICON");
+        clickEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        clickEventObject.put("event", "STOPALL");
+        clickEventObject.put("metadata", "meta");
+        debuggerEventObject.put("user", 3);
+        debuggerEventObject.put("experiment", 39);
+        debuggerEventObject.put("type", "SPRITE");
+        debuggerEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        debuggerEventObject.put("event", "SELECT_SPRITE");
+        debuggerEventObject.put("id", "id");
+        debuggerEventObject.put("name", "name");
+        debuggerEventObject.put("original", 1);
+        debuggerEventObject.put("execution", 5);
+        questionEventObject.put("user", 3);
+        questionEventObject.put("experiment", 39);
+        questionEventObject.put("type", "QUESTION");
+        questionEventObject.put("time", "2021-06-28T12:36:37.601Z");
+        questionEventObject.put("event", "SELECT");
+        questionEventObject.put("feedback", 1);
+        questionEventObject.put("q_type", "block-execution");
+        questionEventObject.put("values", "Cat, Costume");
+        questionEventObject.put("category", "execution");
+        questionEventObject.put("form", "negative");
+        questionEventObject.put("id", "id");
+        questionEventObject.put("opcode", "opcode");
         resourceEventObject.put("user", 3);
         resourceEventObject.put("experiment", 39);
         resourceEventObject.put("type", "DELETE");
@@ -165,6 +195,146 @@ public class EventRestControllerIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
         verify(eventService, never()).saveBlockEvent(any());
+    }
+
+    @Test
+    public void testStoreClickEvent() throws Exception {
+        mvc.perform(post("/store/click")
+                        .content(clickEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreClickEventJSON() throws Exception {
+        clickEventObject.put("user", "unicorn");
+        mvc.perform(post("/store/click")
+                        .content(clickEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreClickEventIllegalArgument() throws Exception {
+        clickEventObject.put("event", "unicorn");
+        mvc.perform(post("/store/click")
+                        .content(clickEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreClickEventTimeParse() throws Exception {
+        clickEventObject.put("time", "-1");
+        mvc.perform(post("/store/click")
+                        .content(clickEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveClickEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEvent() throws Exception {
+        mvc.perform(post("/store/debugger")
+                        .content(debuggerEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventJSON() throws Exception {
+        debuggerEventObject.put("user", "user");
+        mvc.perform(post("/store/debugger")
+                        .content(debuggerEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventTimeParse() throws Exception {
+        debuggerEventObject.put("time", ".");
+        mvc.perform(post("/store/debugger")
+                        .content(debuggerEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEvent() throws Exception {
+        mvc.perform(post("/store/question")
+                        .content(questionEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventJSON() throws Exception {
+        questionEventObject.put("experiment", "exp");
+        mvc.perform(post("/store/question")
+                        .content(questionEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventIllegalArgument() throws Exception {
+        questionEventObject.put("type", "BREAKPOINT");
+        mvc.perform(post("/store/question")
+                        .content(questionEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventTimeParse() throws Exception {
+        questionEventObject.put("time", "time");
+        mvc.perform(post("/store/question")
+                        .content(questionEventObject.toString())
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        verify(eventService, never()).saveQuestionEvent(any());
     }
 
     @Test

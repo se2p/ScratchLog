@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="#{experiment_title}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
@@ -13,8 +14,7 @@
 
 <!-- Page content -->
 <div class="row" id="content">
-    <div class="col-2"></div>
-    <div class="col-8">
+    <div class="inside">
 
         <!-- The error message shown at the top of the page when entering an invalid password. -->
         <div class="row" th:if="${param.invalid != null}">
@@ -27,7 +27,7 @@
         </div>
 
         <!-- The buttons for editing and deleting the experiment. -->
-        <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex justify-content-between flex-wrap mb-3">
             <!-- The experiment title. -->
             <h1 class="mb-3 h2" th:text="${experimentDTO.title}"></h1>
             <div sec:authorize="hasRole('ADMIN')">
@@ -96,66 +96,68 @@
             <h2 class="h3" th:text="#{heading_participants}"></h2>
             <div class="col-12 mb-5">
                 <!-- The table containing the participant information. -->
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col" th:text="#{username}"></th>
-                        <th class="text-center" scope="col" th:text="#{started}"></th>
-                        <th class="text-center" scope="col" th:text="#{finished}"></th>
-                        <th class="text-center" scope="col" th:text="#{results}"></th>
-                    </tr>
-                    </thead>
-                    <tbody th:if="${participants.isEmpty()}">
-                    <tr>
-                        <td colspan="5" th:text="#{table_empty}"></td>
-                    </tr>
-                    </tbody>
-                    <tbody th:unless="${participants.isEmpty()}">
-                    <tr th:each="participant : ${participants}">
-                        <th scope="row">
-                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
-                               th:text="${participant.user.id}"></a>
-                        </th>
-                        <td>
-                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
-                               th:text="${participant.user.username}"></a>
-                        </td>
-                        <td class="text-center">
-                            <i aria-hidden="true" th:class="${participant.start != null ? 'fa fa-check text-success'
-                            : 'fa fa-times text-danger'}" title="Experiment started status"></i>
-                            <span class="sr-only" th:if="${participant.start == null}">
-                                <span th:text="#{not_started}"></span>
-                            </span>
-                            <span class="sr-only" th:unless="${participant.start == null}">
-                                <span th:text="#{started}"></span>
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            <i aria-hidden="true" th:class="${participant.end != null ? 'fa fa-check text-success'
-                            : 'fa fa-times text-danger'}" title="Experiment finished status"></i>
-                            <span class="sr-only" th:if="${participant.end == null}">
-                                <span th:text="#{not_finished}"></span>
-                            </span>
-                            <span class="sr-only" th:unless="${participant.end == null}">
-                                <span th:text="#{finished}"></span>
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            <span th:if="${participant.start == null}">
-                                <i aria-hidden="true" class="fa fa-times text-danger" title="No statistics"></i>
-                                <span class="sr-only" th:text="#{table_empty}"></span>
-                            </span>
-                            <span th:unless="${participant.start == null}">
-                                <a class="no_decoration" th:aria-label="#{result_label}"
-                                   th:href="@{/result(experiment=${experimentDTO.id}, user=${participant.user.id})}">
-                                    <i aria-hidden="true" class="far fa-chart-bar"></i>
-                                </a>
-                            </span>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col" th:text="#{username}"></th>
+                            <th class="text-center" scope="col" th:text="#{started}"></th>
+                            <th class="text-center" scope="col" th:text="#{finished}"></th>
+                            <th class="text-center" scope="col" th:text="#{results}"></th>
+                        </tr>
+                        </thead>
+                        <tbody th:if="${participants.isEmpty()}">
+                        <tr>
+                            <td colspan="5" th:text="#{table_empty}"></td>
+                        </tr>
+                        </tbody>
+                        <tbody th:unless="${participants.isEmpty()}">
+                        <tr th:each="participant : ${participants}">
+                            <th scope="row">
+                                <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                                   th:text="${participant.user.id}"></a>
+                            </th>
+                            <td>
+                                <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                                   th:text="${participant.user.username}"></a>
+                            </td>
+                            <td class="text-center">
+                                <i aria-hidden="true" th:class="${participant.start != null ? 'fa fa-check text-success'
+                                : 'fa fa-times text-danger'}" title="Experiment started status"></i>
+                                <span class="sr-only" th:if="${participant.start == null}">
+                                    <span th:text="#{not_started}"></span>
+                                </span>
+                                <span class="sr-only" th:unless="${participant.start == null}">
+                                    <span th:text="#{started}"></span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <i aria-hidden="true" th:class="${participant.end != null ? 'fa fa-check text-success'
+                                : 'fa fa-times text-danger'}" title="Experiment finished status"></i>
+                                <span class="sr-only" th:if="${participant.end == null}">
+                                    <span th:text="#{not_finished}"></span>
+                                </span>
+                                <span class="sr-only" th:unless="${participant.end == null}">
+                                    <span th:text="#{finished}"></span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${participant.start == null}">
+                                    <i aria-hidden="true" class="fa fa-times text-danger" title="No statistics"></i>
+                                    <span class="sr-only" th:text="#{table_empty}"></span>
+                                </span>
+                                <span th:unless="${participant.start == null}">
+                                    <a class="no_decoration" th:aria-label="#{result_label}"
+                                       th:href="@{/result(experiment=${experimentDTO.id}, user=${participant.user.id})}">
+                                        <i aria-hidden="true" class="far fa-chart-bar"></i>
+                                    </a>
+                                </span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <!-- The navigation elements below the table. -->
                 <div class="text-center">
                     <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
@@ -180,7 +182,7 @@
                 </div>
             </div>
             <!-- The buttons for participant management. -->
-            <div class="d-flex gap-3" th:if="${experimentDTO.active}">
+            <div class="d-flex gap-3 flex-wrap" th:if="${experimentDTO.active}">
                 <div class="mb-3">
                     <input id="add" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
                 </div>
@@ -212,7 +214,6 @@
                  th:text="#{participation_impossible}"></div>
         </div>
     </div>
-    <div class="col-2"></div>
 </div>
 
 <!-- The popup dialog to delete the experiment. -->

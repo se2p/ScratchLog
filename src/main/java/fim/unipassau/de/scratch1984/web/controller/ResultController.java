@@ -155,6 +155,7 @@ public class ResultController {
 
         try {
             List<EventCountDTO> blockEvents = eventService.getBlockEventCounts(userId, experimentId);
+            List<EventCountDTO> clickEvents = eventService.getClickEventCounts(userId, experimentId);
             List<EventCountDTO> resourceEvents = eventService.getResourceEventCounts(userId, experimentId);
             List<FileProjection> files = fileService.getFiles(userId, experimentId);
             List<Integer> zipIds = fileService.getZipIds(userId, experimentId);
@@ -163,6 +164,7 @@ public class ResultController {
             model.addAttribute("codeCount", Math.max(codesDataDTO.getCount(), 0));
             model.addAttribute("pageSize", Constants.PAGE_SIZE);
             model.addAttribute("blockEvents", blockEvents);
+            model.addAttribute("clickEvents", clickEvents);
             model.addAttribute("resourceEvents", resourceEvents);
             model.addAttribute("files", files);
             model.addAttribute("zips", zipIds);

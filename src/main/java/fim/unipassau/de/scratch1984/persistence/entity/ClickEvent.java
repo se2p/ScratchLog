@@ -11,13 +11,13 @@ import javax.persistence.ManyToOne;
 import java.sql.Timestamp;
 
 /**
- * An entity representing a block event that resulted from user interaction with a Scratch block or a sprite rename.
+ * An entity representing a click event that resulted from user interaction with a button, icon, or similar event.
  */
 @Entity
-public class BlockEvent implements Event {
+public class ClickEvent implements Event {
 
     /**
-     * The unique ID of the block event.
+     * The unique ID of the click event.
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,42 +25,36 @@ public class BlockEvent implements Event {
     private Integer id;
 
     /**
-     * The {@link User} who caused the block event.
+     * The {@link User} who caused the click event.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
     /**
-     * The {@link Experiment} during which the block event occurred.
+     * The {@link Experiment} during which the click event occurred.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "experiment_id")
     private Experiment experiment;
 
     /**
-     * The timestamp at which the block event occurred.
+     * The timestamp at which the click event occurred.
      */
     @Column(name = "date")
     private Timestamp date;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.BlockEventDTO.BlockEventType}.
+     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ClickEventDTO.ClickEventType}.
      */
     @Column(name = "event_type")
     private String eventType;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.BlockEventDTO.BlockEvent}.
+     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ClickEventDTO.ClickEvent}.
      */
     @Column(name = "event")
     private String event;
-
-    /**
-     * The name of the sprite on which the event occurred.
-     */
-    @Column(name = "spritename")
-    private String sprite;
 
     /**
      * Additional information about the event.
@@ -69,48 +63,29 @@ public class BlockEvent implements Event {
     private String metadata;
 
     /**
-     * An xml representation of the blocks on the sprite after the event occurred.
+     * Default constructor for the click event entity.
      */
-    @Column(name = "xml")
-    private String xml;
-
-    /**
-     * The Scratch project state after the event saved in a json format.
-     */
-    @Column(name = "json")
-    private String code;
-
-    /**
-     * Default constructor for the block event entity.
-     */
-    public BlockEvent() {
+    public ClickEvent() {
     }
 
     /**
-     * Constructs a new block event with the given attributes.
+     * Constructs a new click event with the given attributes.
      *
      * @param user The user who caused the event.
      * @param experiment The experiment during which the event occurred.
      * @param date The time at which the event occurred.
      * @param eventType The event type.
      * @param event The specific event.
-     * @param sprite The name of the sprite.
      * @param metadata The metadata.
-     * @param xml The current xml.
-     * @param code The current json.
      */
-    public BlockEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
-                      final String event, final String sprite, final String metadata, final String xml,
-                      final String code) {
+    public ClickEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
+                      final String event, final String metadata) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
         this.eventType = eventType;
         this.event = event;
-        this.sprite = sprite;
         this.metadata = metadata;
-        this.xml = xml;
-        this.code = code;
     }
 
     /**
@@ -234,24 +209,6 @@ public class BlockEvent implements Event {
     }
 
     /**
-     * Returns the spritename of the event.
-     *
-     * @return The respective spritename.
-     */
-    public String getSprite() {
-        return sprite;
-    }
-
-    /**
-     * Sets the spritename of the event.
-     *
-     * @param sprite The name of the sprite to be set.
-     */
-    public void setSprite(final String sprite) {
-        this.sprite = sprite;
-    }
-
-    /**
      * Returns the metadata of the event.
      *
      * @return The metadata.
@@ -267,42 +224,6 @@ public class BlockEvent implements Event {
      */
     public void setMetadata(final String metadata) {
         this.metadata = metadata;
-    }
-
-    /**
-     * Returns the xml of the event.
-     *
-     * @return The xml.
-     */
-    public String getXml() {
-        return xml;
-    }
-
-    /**
-     * Sets the xml of the event.
-     *
-     * @param xml The xml to be set.
-     */
-    public void setXml(final String xml) {
-        this.xml = xml;
-    }
-
-    /**
-     * Returns the code of the event.
-     *
-     * @return The respective code.
-     */
-    public String getCode() {
-        return code;
-    }
-
-    /**
-     * Sets the code of the event.
-     *
-     * @param code The code to be set.
-     */
-    public void setCode(final String code) {
-        this.code = code;
     }
 
 }

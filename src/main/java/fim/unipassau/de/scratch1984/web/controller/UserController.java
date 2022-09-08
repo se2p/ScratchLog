@@ -623,7 +623,14 @@ public class UserController {
         validateUpdateEmail(userDTO, findOldUser, bindingResult, resourceBundle);
 
         if (userDTO.getNewPassword() != null || userDTO.getConfirmPassword() != null) {
-            validateUpdatePassword(userDTO, findOldUser, bindingResult, resourceBundle);
+            if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+                UserDTO admin = userService.getUser(httpServletRequest.getUserPrincipal().getName());
+                validateUpdatePassword(userDTO, admin.getPassword(), findOldUser.getPassword(), bindingResult,
+                        resourceBundle);
+            } else {
+                validateUpdatePassword(userDTO, findOldUser.getPassword(), findOldUser.getPassword(), bindingResult,
+                        resourceBundle);
+            }
         }
 
         if (bindingResult.hasErrors()) {
@@ -761,6 +768,7 @@ public class UserController {
                 userDTO.setSecret(null);
             } else {
                 userDTO.setActive(true);
+                userDTO.setAttempts(0);
             }
 
             userService.updateUser(userDTO);
@@ -856,7 +864,7 @@ public class UserController {
                 bindingResult.addError(createFieldError(USER_DTO, "newPassword", "empty_string", resourceBundle));
             }
 
-            validateUpdatePassword(userDTO, admin, bindingResult, resourceBundle);
+            validateUpdatePassword(userDTO, admin.getPassword(), userDTO.getPassword(), bindingResult, resourceBundle);
 
             if (bindingResult.hasErrors()) {
                 return PASSWORD;
@@ -920,12 +928,13 @@ public class UserController {
      * Validates the passwords passed in the {@link UserDTO} on updating the given user.
      *
      * @param userDTO The user dto containing the new user information.
-     * @param matchPassword The user dto containing the current password the input password should match.
+     * @param matchPassword The password the input password should match.
+     * @param oldPassword The user's old password.
      * @param bindingResult The binding result for returning information on invalid user input.
      * @param resourceBundle The resource bundle for error translation.
      */
-    private void validateUpdatePassword(final UserDTO userDTO, final UserDTO matchPassword,
-                                     final BindingResult bindingResult, final ResourceBundle resourceBundle) {
+    private void validateUpdatePassword(final UserDTO userDTO, final String matchPassword, final String oldPassword,
+                                        final BindingResult bindingResult, final ResourceBundle resourceBundle) {
         if (!userDTO.getNewPassword().trim().isBlank() || !userDTO.getConfirmPassword().trim().isBlank()) {
             String passwordValidation = PasswordValidator.validate(userDTO.getNewPassword(),
                     userDTO.getConfirmPassword());
@@ -936,9 +945,11 @@ public class UserController {
 
             if (userDTO.getPassword() == null || userDTO.getPassword().trim().isBlank()) {
                 bindingResult.addError(createFieldError(USER_DTO, "password", "enter_password", resourceBundle));
-            } else if (!userService.matchesPassword(userDTO.getPassword(), matchPassword.getPassword())) {
+            } else if (!userService.matchesPassword(userDTO.getPassword(), matchPassword)) {
                 bindingResult.addError(createFieldError(USER_DTO, "password", "invalid_password",
                         resourceBundle));
+            } else if (oldPassword.equals(userDTO.getNewPassword())) {
+                bindingResult.addError(createFieldError(USER_DTO, "newPassword", "old_password", resourceBundle));
             }
         }
     }

@@ -94,6 +94,7 @@ public class ResultControllerTest {
             new byte[]{1, 2, 3});
     private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
+    private final List<EventCountDTO> clickEvents = getEventCounts(3, "GREENFLAG");
     private final List<EventCountDTO> resourceEvents = getEventCounts(2, "RENAME");
     private final List<FileProjection> files = getFileProjections(7);
     private final List<Integer> zips = Arrays.asList(1, 4, 10, 18);
@@ -124,6 +125,7 @@ public class ResultControllerTest {
     public void testGetResult() {
         when(userService.existsParticipant(ID, ID)).thenReturn(true);
         when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
+        when(eventService.getClickEventCounts(ID, ID)).thenReturn(clickEvents);
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
@@ -131,17 +133,19 @@ public class ResultControllerTest {
         assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
+        verify(eventService).getClickEventCounts(ID, ID);
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
         verify(eventService).getCodesData(ID, ID);
-        verify(model, times(8)).addAttribute(anyString(), any());
+        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetResultCodesDataZero() {
         when(userService.existsParticipant(ID, ID)).thenReturn(true);
         when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
+        when(eventService.getClickEventCounts(ID, ID)).thenReturn(clickEvents);
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
@@ -149,22 +153,25 @@ public class ResultControllerTest {
         assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
+        verify(eventService).getClickEventCounts(ID, ID);
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
         verify(eventService).getCodesData(ID, ID);
-        verify(model, times(8)).addAttribute(anyString(), any());
+        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetResultNotFound() {
         when(userService.existsParticipant(ID, ID)).thenReturn(true);
         when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
+        when(eventService.getClickEventCounts(ID, ID)).thenReturn(clickEvents);
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenThrow(NotFoundException.class);
         assertEquals(ERROR, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
+        verify(eventService).getClickEventCounts(ID, ID);
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
@@ -176,6 +183,7 @@ public class ResultControllerTest {
         assertEquals(ERROR, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
+        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
@@ -187,6 +195,7 @@ public class ResultControllerTest {
         assertEquals(ERROR, resultController.getResult("0", ID_STRING, model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
+        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
@@ -198,6 +207,7 @@ public class ResultControllerTest {
         assertEquals(ERROR, resultController.getResult(ID_STRING, "  ", model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
+        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
@@ -209,6 +219,7 @@ public class ResultControllerTest {
         assertEquals(ERROR, resultController.getResult(null, ID_STRING, model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
+        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
@@ -220,6 +231,7 @@ public class ResultControllerTest {
         assertEquals(ERROR, resultController.getResult(ID_STRING, null, model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
+        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());

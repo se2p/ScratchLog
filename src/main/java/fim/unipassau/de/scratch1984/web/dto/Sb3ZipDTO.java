@@ -5,9 +5,9 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * A DTO representing an sb3 zip file uploaded during an experiment.
+ * A DTO representing a sb3 zip file uploaded during an experiment.
  */
-public class Sb3ZipDTO {
+public class Sb3ZipDTO implements EventDTO {
 
     /**
      * The unique ID of the zip file.
@@ -64,73 +64,81 @@ public class Sb3ZipDTO {
     }
 
     /**
-     * Returns the ID of the zip file.
+     * {@inheritDoc}
      *
-     * @return The file ID.
+     * @return The ID of the sb3 file.
      */
+    @Override
     public Integer getId() {
         return id;
     }
 
     /**
-     * Sets the ID of the zip file.
+     * {@inheritDoc}
      *
-     * @param id The file ID to be set.
+     * @param id The ID to be set.
      */
+    @Override
     public void setId(final Integer id) {
         this.id = id;
     }
 
     /**
-     * Returns the ID of the user for whom the zip file was created.
+     * {@inheritDoc}
      *
      * @return The user's ID.
      */
+    @Override
     public Integer getUser() {
         return user;
     }
 
     /**
-     * Sets the user's ID.
+     * {@inheritDoc}
      *
      * @param user The user ID to be set.
      */
+    @Override
     public void setUser(final Integer user) {
         this.user = user;
     }
 
     /**
-     * Returns the ID of the experiment during which the zip file was created.
+     * {@inheritDoc}
      *
      * @return The experiment ID.
      */
+    @Override
     public Integer getExperiment() {
         return experiment;
     }
 
     /**
-     * Sets the ID of the experiment.
+     * {@inheritDoc}
      *
      * @param experiment The experiment ID to be set.
      */
+    @Override
     public void setExperiment(final Integer experiment) {
         this.experiment = experiment;
     }
 
     /**
-     * Returns the upload time.
+     * {@inheritDoc}
      *
-     * @return The upload time.
+     * @return The time at which the sb3 file was created.
      */
+    @Override
     public LocalDateTime getDate() {
         return date;
     }
 
     /**
-     * Sets the upload time of the zip file.
+     * {@inheritDoc}
      *
-     * @param date The date and time to be set.
+     * @param date The time to be set.
      */
+    @Override
     public void setDate(final LocalDateTime date) {
         this.date = date;
     }
