@@ -54,6 +54,62 @@ CREATE TABLE IF NOT EXISTS `block_event` (
     CONSTRAINT `block_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 );
 
+-- scratch1984.click_event definition
+
+CREATE TABLE IF NOT EXISTS `click_event` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `experiment_id` int NOT NULL,
+    `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `event_type` varchar(255) NOT NULL,
+    `event` varchar(255) NOT NULL,
+    `metadata` varchar(255) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `click_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `click_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
+);
+
+-- scratch1984.debugger_event definition
+
+CREATE TABLE IF NOT EXISTS `debugger_event` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `experiment_id` int NOT NULL,
+    `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `event_type` varchar(255) NOT NULL,
+    `event` varchar(255) NOT NULL,
+    `block_target_id` varchar(255) DEFAULT NULL,
+    `name_opcode` varchar(255) DEFAULT NULL,
+    `original` int DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `debugger_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `debugger_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
+);
+
+
+-- scratch1984.question_event definition
+
+CREATE TABLE IF NOT EXISTS `question_event` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_id` int NOT NULL,
+    `experiment_id` int NOT NULL,
+    `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `event_type` varchar(255) NOT NULL,
+    `event` varchar(255) NOT NULL,
+    `feedback` int DEFAULT NULL,
+    `q_type` varchar(255) DEFAULT NULL,
+    `q_values` varchar(255) DEFAULT NULL,
+    `category` varchar(255) DEFAULT NULL,
+    `form` varchar(255) DEFAULT NULL,
+    `block_id` varchar(255) DEFAULT NULL,
+    `opcode` varchar(255) DEFAULT NULL,
+    `execution` int DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    CONSTRAINT `question_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `question_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
+);
+
+
 
 -- scratch1984.file definition
 
@@ -142,6 +198,21 @@ select
     `b`.`event` AS `event`
 from
     `block_event` `b`
+group by
+    `b`.`user_id`,
+    `b`.`experiment_id`,
+    `b`.`event`;
+
+-- scratch1984.user_num_click_events source
+
+CREATE OR REPLACE VIEW `user_num_click_events` (`user`, `experiment`, `count`, `event`) AS
+select
+    `b`.`user_id` AS `user_id`,
+    `b`.`experiment_id` AS `experiment_id`,
+    count(`b`.`event`) AS `COUNT(b.event)`,
+    `b`.`event` AS `event`
+from
+    `click_event` `b`
 group by
     `b`.`user_id`,
     `b`.`experiment_id`,

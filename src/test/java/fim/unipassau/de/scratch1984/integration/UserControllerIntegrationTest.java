@@ -882,6 +882,7 @@ public class UserControllerIntegrationTest {
     public void testUpdateUser() throws Exception {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(userService.getUser(USERNAME)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -894,6 +895,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(userService, never()).encodePassword(anyString());
         verify(userService).updateUser(oldDTO);
+        verify(userService).getUser(USERNAME);
     }
 
     @Test
@@ -902,6 +904,7 @@ public class UserControllerIntegrationTest {
         userDTO.setUsername(NEW_USERNAME);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(userService.getUser(USERNAME)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -915,6 +918,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).encodePassword(anyString());
         verify(authenticationProvider).authenticate(any());
         verify(userService).updateUser(userDTO);
+        verify(userService).getUser(USERNAME);
     }
 
     @Test
@@ -926,6 +930,7 @@ public class UserControllerIntegrationTest {
         when(userService.encodePassword(VALID_PASSWORD)).thenReturn(VALID_PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
+        when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -939,6 +944,7 @@ public class UserControllerIntegrationTest {
         verify(userService).encodePassword(anyString());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).updateUser(oldDTO);
+        verify(userService).getUser(PROFILE);
     }
 
     @Test
@@ -950,6 +956,7 @@ public class UserControllerIntegrationTest {
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
+        when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -965,6 +972,7 @@ public class UserControllerIntegrationTest {
         verify(userService).updateUser(oldDTO);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(userService).getUser(PROFILE);
     }
 
     @Test
@@ -976,6 +984,7 @@ public class UserControllerIntegrationTest {
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
+        when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                         .flashAttr(USER_DTO, userDTO)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -991,6 +1000,7 @@ public class UserControllerIntegrationTest {
         verify(userService).updateUser(oldDTO);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService).getUser(PROFILE);
     }
 
     @Test
@@ -1023,6 +1033,7 @@ public class UserControllerIntegrationTest {
         verify(userService).updateUser(oldDTO);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(userService, never()).getUser(anyString());
     }
 
     @Test
@@ -1033,6 +1044,7 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -1048,6 +1060,7 @@ public class UserControllerIntegrationTest {
         verify(userService).updateUser(oldDTO);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(userService).getUser(PROFILE);
     }
 
     @Test
@@ -1060,6 +1073,7 @@ public class UserControllerIntegrationTest {
         when(userService.existsUser(NEW_USERNAME)).thenReturn(true);
         when(userService.existsEmail(NEW_EMAIL)).thenReturn(true);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -1074,6 +1088,7 @@ public class UserControllerIntegrationTest {
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+        verify(userService).getUser(PROFILE);
     }
 
     @Test
@@ -1083,6 +1098,7 @@ public class UserControllerIntegrationTest {
         userDTO.setNewPassword(PASSWORD);
         userDTO.setConfirmPassword(PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -1097,6 +1113,7 @@ public class UserControllerIntegrationTest {
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+        verify(userService).getUser(PROFILE);
     }
 
     @Test
@@ -1104,6 +1121,7 @@ public class UserControllerIntegrationTest {
     public void testUpdateUserChangeEmailInvalid() throws Exception {
         userDTO.setEmail(PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -1118,6 +1136,7 @@ public class UserControllerIntegrationTest {
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+        verify(userService).getUser(PROFILE);
     }
 
     @Test
@@ -1125,6 +1144,7 @@ public class UserControllerIntegrationTest {
     public void testUpdateUserChangeUsernameInvalid() throws Exception {
         userDTO.setUsername("");
         when(userService.getUserById(ID)).thenReturn(oldDTO);
+        when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -1139,12 +1159,15 @@ public class UserControllerIntegrationTest {
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).updateUser(any());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
+        verify(userService).getUser(PROFILE);
     }
 
     @Test
     @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserNewEmailBlank() throws Exception {
         userDTO.setEmail("");
+        userDTO.setNewPassword(null);
+        userDTO.setConfirmPassword(null);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)

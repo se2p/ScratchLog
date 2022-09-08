@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * A DTO representing a file uploaded during an experiment.
  */
-public class FileDTO {
+public class FileDTO implements EventDTO {
 
     /**
      * The unique ID of the file.
@@ -71,73 +71,81 @@ public class FileDTO {
     }
 
     /**
-     * Returns the ID of the file.
+     * {@inheritDoc}
      *
      * @return The file ID.
      */
+    @Override
     public Integer getId() {
         return id;
     }
 
     /**
-     * Sets the ID of the file.
+     * {@inheritDoc}
      *
      * @param id The file ID to be set.
      */
+    @Override
     public void setId(final Integer id) {
         this.id = id;
     }
 
     /**
-     * Returns the ID of the user who added the file.
+     * {@inheritDoc}
      *
      * @return The user's ID.
      */
+    @Override
     public Integer getUser() {
         return user;
     }
 
     /**
-     * Sets the user's ID.
+     * {@inheritDoc}
      *
      * @param user The user ID to be set.
      */
+    @Override
     public void setUser(final Integer user) {
         this.user = user;
     }
 
     /**
-     * Returns the ID of the experiment during which the file was added.
+     * {@inheritDoc}
      *
      * @return The experiment ID.
      */
+    @Override
     public Integer getExperiment() {
         return experiment;
     }
 
     /**
-     * Sets the ID of the experiment.
+     * {@inheritDoc}
      *
      * @param experiment The experiment ID to be set.
      */
+    @Override
     public void setExperiment(final Integer experiment) {
         this.experiment = experiment;
     }
 
     /**
-     * Returns the upload time.
+     * {@inheritDoc}
      *
-     * @return The upload time.
+     * @return The time at which the file was uploaded.
      */
+    @Override
     public LocalDateTime getDate() {
         return date;
     }
 
     /**
-     * Sets the upload time of the file.
+     * {@inheritDoc}
      *
-     * @param date The date and time to be set.
+     * @param date The time to be set.
      */
+    @Override
     public void setDate(final LocalDateTime date) {
         this.date = date;
     }

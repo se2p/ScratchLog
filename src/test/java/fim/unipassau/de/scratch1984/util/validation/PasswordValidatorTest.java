@@ -15,7 +15,7 @@ public class PasswordValidatorTest {
     private static final String MATCH = "passwords_not_matching";
     private static final String BLANK = "   ";
     private static final String PASSWORD = "!V4l1d_P4ssw0rd!";
-    private static final String INVALID1 = "1nv4l1dP4ssw0rd";
+    private static final String NO_SPECIAL_CHARS = "1nv4l1dP4ssw0rd";
     private static final String INVALID2 = "!Invalid_Password?";
     private static final String INVALID3 = "!1nv4l1d_p4ssw0rd!";
     private static final String INVALID4 = "!1NV4L1D_P4SSW0RD!";
@@ -51,7 +51,6 @@ public class PasswordValidatorTest {
     @Test
     public void testValidateInvalidPasswords() {
         assertAll(
-                () -> assertEquals(REGEX, PasswordValidator.validate(INVALID1, PASSWORD)),
                 () -> assertEquals(REGEX, PasswordValidator.validate(INVALID2, PASSWORD)),
                 () -> assertEquals(REGEX, PasswordValidator.validate(INVALID3, PASSWORD)),
                 () -> assertEquals(REGEX, PasswordValidator.validate(INVALID4, PASSWORD))
@@ -60,11 +59,14 @@ public class PasswordValidatorTest {
 
     @Test
     public void testValidateNotMatching() {
-        assertEquals(MATCH, PasswordValidator.validate(PASSWORD, INVALID1));
+        assertEquals(MATCH, PasswordValidator.validate(PASSWORD, NO_SPECIAL_CHARS));
     }
 
     @Test
     public void testValidateValid() {
-        assertNull(PasswordValidator.validate(PASSWORD, PASSWORD));
+        assertAll(
+                () -> assertNull(PasswordValidator.validate(NO_SPECIAL_CHARS, NO_SPECIAL_CHARS)),
+                () -> assertNull(PasswordValidator.validate(PASSWORD, PASSWORD))
+        );
     }
 }

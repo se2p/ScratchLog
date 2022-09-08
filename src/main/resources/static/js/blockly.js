@@ -44,8 +44,9 @@ var onresize = function (e) {
         element = element.offsetParent;
     } while (element);
     // Position blocklyDiv over blocklyArea.
-    blocklyDiv.style.left = 10 + 'px';
+    blocklyDiv.style.left = 0 + 'px';
     blocklyDiv.style.top = 0 + 'px';
+    blocklyDiv.style.right = 20 + "px";
     blocklyDiv.style.width = blocklyArea.offsetWidth + 'px';
     blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
 };

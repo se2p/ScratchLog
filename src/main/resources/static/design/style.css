@@ -35,13 +35,12 @@
     }
 }
 
-html,
-body {
+html {
     height: 100%;
 }
 
 body {
-    overflow-x: hidden;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -49,20 +48,22 @@ body {
 header {
     position: sticky;
     top: 0;
+    z-index: 99999;
 }
 
 #content {
     flex-grow: 1;
-}
-
-.col-2 {
+    max-width: 100%;
+    margin: 0;
     background-color: #f3f3f3;
 }
 
-.col-8 {
+.inside {
+    max-width: 80rem;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
     box-shadow: 0 8px 20px 0 rgba(0, 0, 0, .08);
-    padding: 1%;
-    margin-top: 10px;
 }
 
 .align-vcenter {
@@ -186,8 +187,10 @@ code {
 }
 
 #blocklyArea {
-    width: 63vw;
+    width: 80vw;
     height: 63vh;
+    max-width: 72rem;
+    max-height: 72rem;
 }
 
 #searchResults {
@@ -217,4 +220,21 @@ code {
 /* Used for <span>-attributes that convey the meaning of Font Awesome icons for screen readers. */
 .sr-only {
     visibility: hidden;
+}
+
+
+/* responsive style overwrites */
+
+.profile-info .col-3,
+.profile-info .col-9 {
+    width: max-content;
+}
+
+.navbar-nav .dropdown-menu {
+    position: absolute;
+}
+
+/* make tables responsive */
+.table-container {
+    overflow-x: auto;
 }

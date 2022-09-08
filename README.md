@@ -43,6 +43,7 @@ follows:
   would have to be set to the full path (`scratch.fim.uni-passau.de/gui`) while *app.gui.base* will only be
   `scratch.fim.uni-passau.de`.
 - If you only want to use the `application.properties` file, you can comment out the *spring.profiles.active* line.
+- Optional: Set the log level to *Warn* or *Error*.
 
 Since the `application.properties` file contains some critical data (e.g. login information for the database) that might
 easily be committed by accident, some sections have been commented out. You should put these in a file named

@@ -14,7 +14,7 @@ import java.sql.Timestamp;
  * An entity representing a resource event being the result of a user adding costumes or sounds in the Scratch GUI.
  */
 @Entity
-public class ResourceEvent {
+public class ResourceEvent implements Event {
 
     /**
      * The unique ID of the resource event.
@@ -114,109 +114,121 @@ public class ResourceEvent {
     }
 
     /**
-     * Returns the ID of the event.
+     * {@inheritDoc}
      *
      * @return The event ID.
      */
+    @Override
     public Integer getId() {
         return id;
     }
 
     /**
-     * Sets the ID of the event.
+     * {@inheritDoc}
      *
      * @param id The event ID to be set.
      */
+    @Override
     public void setId(final Integer id) {
         this.id = id;
     }
 
     /**
-     * Returns the user of the event.
+     * {@inheritDoc}
      *
      * @return The respective user.
      */
+    @Override
     public User getUser() {
         return user;
     }
 
     /**
-     * Sets the user of the event.
+     * {@inheritDoc}
      *
      * @param user The event user to be set.
      */
+    @Override
     public void setUser(final User user) {
         this.user = user;
     }
 
     /**
-     * Returns the experiment of the event.
+     * {@inheritDoc}
      *
      * @return The respective experiment.
      */
+    @Override
     public Experiment getExperiment() {
         return experiment;
     }
 
     /**
-     * Sets the experiment of the event.
+     * {@inheritDoc}
      *
      * @param experiment The event experiment to be set.
      */
+    @Override
     public void setExperiment(final Experiment experiment) {
         this.experiment = experiment;
     }
 
     /**
-     * Returns the timestamp of the event.
+     * {@inheritDoc}
      *
      * @return The respective timestamp.
      */
+    @Override
     public Timestamp getDate() {
         return date;
     }
 
     /**
-     * Sets the timestamp of the event.
+     * {@inheritDoc}
      *
      * @param date The event timestamp to be set.
      */
+    @Override
     public void setDate(final Timestamp date) {
         this.date = date;
     }
 
     /**
-     * Returns the type of the event.
+     * {@inheritDoc}
      *
      * @return The event type.
      */
+    @Override
     public String getEventType() {
         return eventType;
     }
 
     /**
-     * Sets the type of the event.
+     * {@inheritDoc}
      *
      * @param eventType The event type to be set.
      */
+    @Override
     public void setEventType(final String eventType) {
         this.eventType = eventType;
     }
 
     /**
-     * Returns the concrete event that occurred.
+     * {@inheritDoc}
      *
      * @return The respective event.
      */
+    @Override
     public String getEvent() {
         return event;
     }
 
     /**
-     * Sets the concrete event that occurred.
+     * {@inheritDoc}
      *
      * @param event The event to be set.
      */
+    @Override
     public void setEvent(final String event) {
         this.event = event;
     }
