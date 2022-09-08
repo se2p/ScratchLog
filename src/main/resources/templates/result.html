@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="#{result_title}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
@@ -20,12 +21,11 @@
 </head>
 <body>
 <!-- Navigation bar -->
-<div th:insert="header :: header"></div>
+<header th:insert="header :: header"></header>
 
 <!-- Page content -->
 <div class="row" id="content">
-    <div class="col-2"></div>
-    <div class="col-8">
+    <div class="inside">
 
         <!-- The result page heading. -->
         <h2 class="mb-5" th:text="#{results}"></h2>
@@ -74,47 +74,51 @@
         <div class="row mb-5">
             <div class="col-6">
                 <h4 class="mb-3" th:text="#{block_events}"></h4>
-                <table class="table">
-                    <thead class="table-primary">
-                    <tr>
-                        <th scope="col" th:text="#{event}"></th>
-                        <th class="text-center" scope="col" th:text="#{event_count}"></th>
-                    </tr>
-                    </thead>
-                    <tbody th:if="${blockEvents.isEmpty()}">
-                    <tr>
-                        <td colspan="2" th:text="#{table_empty}"></td>
-                    </tr>
-                    </tbody>
-                    <tbody th:unless="${blockEvents.isEmpty()}">
-                    <tr th:each="blockEvent : ${blockEvents}">
-                        <td th:text="${blockEvent.event}"></td>
-                        <td class="text-center" th:text="${blockEvent.count}"></td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="table">
+                        <thead class="table-primary">
+                        <tr>
+                            <th scope="col" th:text="#{event}"></th>
+                            <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                        </tr>
+                        </thead>
+                        <tbody th:if="${blockEvents.isEmpty()}">
+                        <tr>
+                            <td colspan="2" th:text="#{table_empty}"></td>
+                        </tr>
+                        </tbody>
+                        <tbody th:unless="${blockEvents.isEmpty()}">
+                        <tr th:each="blockEvent : ${blockEvents}">
+                            <td th:text="${blockEvent.event}"></td>
+                            <td class="text-center" th:text="${blockEvent.count}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div class="col-6">
                 <h4 class="mb-3" th:text="#{click_events}"></h4>
-                <table class="table">
-                    <thead class="table-primary">
-                    <tr>
-                        <th scope="col" th:text="#{event}"></th>
-                        <th class="text-center" scope="col" th:text="#{event_count}"></th>
-                    </tr>
-                    </thead>
-                    <tbody th:if="${clickEvents.isEmpty()}">
-                    <tr>
-                        <td colspan="2" th:text="#{table_empty}"></td>
-                    </tr>
-                    </tbody>
-                    <tbody th:unless="${clickEvents.isEmpty()}">
-                    <tr th:each="clickEvent : ${clickEvents}">
-                        <td th:text="${clickEvent.event}"></td>
-                        <td class="text-center" th:text="${clickEvent.count}"></td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="table">
+                        <thead class="table-primary">
+                        <tr>
+                            <th scope="col" th:text="#{event}"></th>
+                            <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                        </tr>
+                        </thead>
+                        <tbody th:if="${clickEvents.isEmpty()}">
+                        <tr>
+                            <td colspan="2" th:text="#{table_empty}"></td>
+                        </tr>
+                        </tbody>
+                        <tbody th:unless="${clickEvents.isEmpty()}">
+                        <tr th:each="clickEvent : ${clickEvents}">
+                            <td th:text="${clickEvent.event}"></td>
+                            <td class="text-center" th:text="${clickEvent.count}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -122,25 +126,27 @@
         <div class="row mb-5">
             <div class="col-6">
                 <h4 class="mb-3" th:text="#{resource_events}"></h4>
-                <table class="table">
-                    <thead class="table-primary">
-                    <tr>
-                        <th scope="col" th:text="#{event}"></th>
-                        <th class="text-center" scope="col" th:text="#{event_count}"></th>
-                    </tr>
-                    </thead>
-                    <tbody th:if="${resourceEvents.isEmpty()}">
-                    <tr>
-                        <td colspan="2" th:text="#{table_empty}"></td>
-                    </tr>
-                    </tbody>
-                    <tbody th:unless="${resourceEvents.isEmpty()}">
-                    <tr th:each="resourceEvent : ${resourceEvents}">
-                        <td th:text="${resourceEvent.event}"></td>
-                        <td class="text-center" th:text="${resourceEvent.count}"></td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table class="table">
+                        <thead class="table-primary">
+                        <tr>
+                            <th scope="col" th:text="#{event}"></th>
+                            <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                        </tr>
+                        </thead>
+                        <tbody th:if="${resourceEvents.isEmpty()}">
+                        <tr>
+                            <td colspan="2" th:text="#{table_empty}"></td>
+                        </tr>
+                        </tbody>
+                        <tbody th:unless="${resourceEvents.isEmpty()}">
+                        <tr th:each="resourceEvent : ${resourceEvents}">
+                            <td th:text="${resourceEvent.event}"></td>
+                            <td class="text-center" th:text="${resourceEvent.count}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div class="col-6"></div>
         </div>
@@ -282,7 +288,7 @@
         </div>
 
         <!-- The blockly area rendering the participant code. -->
-        <div class="row my-5" th:if="${codeCount > 0}">
+        <div class="row my-5 justify-content-center" th:if="${codeCount > 0}">
             <div id="blocklyArea">
                 <div id="blocklyDiv" style="position: relative"></div>
                 <xml id="toolbox" style="display: none"></xml>
@@ -345,7 +351,6 @@
             </a>
         </div>
     </div>
-    <div class="col-2"></div>
 </div>
 
 <!-- Let Thymeleaf initialize user, experiment and total variables used for displaying the xml code. -->

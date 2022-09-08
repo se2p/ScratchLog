@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="#{profile_title}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
@@ -9,12 +10,11 @@
 </head>
 <body>
 <!-- Navigation bar -->
-<div th:insert="header :: header"></div>
+<header th:insert="header :: header"></header>
 
 <!-- Page content -->
 <div class="row" id="content">
-    <div class="col-2"></div>
-    <div class="col-8">
+    <div class="inside">
 
         <!-- The error message shown at the top of the page when the password is invalid. -->
         <div class="row" th:if="${param.invalid != null}">
@@ -91,7 +91,7 @@
         </div>
 
         <!-- The profile information saved for the given user. -->
-        <div class="card mx-5">
+        <div class="card mx-5 profile-info">
             <h4 class="card-header" th:text="#{profile_info}"></h4>
             <div class="card-body">
                 <p class="card-text">
@@ -137,7 +137,6 @@
             </div>
         </div>
     </div>
-    <div class="col-2"></div>
 </div>
 
 <!-- The popup dialog to delete the user. -->

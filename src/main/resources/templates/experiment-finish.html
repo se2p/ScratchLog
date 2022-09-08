@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="#{experiment_finish_title}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
@@ -9,12 +10,11 @@
 </head>
 <body>
 <!-- Navigation bar -->
-<div th:insert="header :: header"></div>
+<header th:insert="header :: header"></header>
 
 <!-- Page content -->
 <div class="row" id="content">
-    <div class="col-2"></div>
-    <div class="col-8">
+    <div class="inside">
         <h2 class="mb-5" th:text="#{finished_experiment}"></h2>
         <div class="row mx-5">
             <div class="col-12 mb-3 form-group position-relative" th:text="${thanks}">
@@ -27,7 +27,6 @@
             </div>
         </div>
     </div>
-    <div class="col-2"></div>
 </div>
 
 <!-- Footer -->

@@ -2,6 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).APPLICATION_NAME}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
@@ -9,12 +10,11 @@
 </head>
 <body>
 <!-- Navigation bar -->
-<div th:insert="header :: header"></div>
+<header th:insert="header :: header"></header>
 
 <!-- Page content -->
 <div class="row" id="content">
-    <div class="col-2"></div>
-    <div class="col-8">
+    <div class="inside">
 
         <!-- The success message shown at the top of the page after a successfully completed operation. -->
         <div class="row" th:if="${param.success != null}">
@@ -43,38 +43,40 @@
         <div sec:authorize="hasRole('PARTICIPANT')">
             <h2 class="mb-5" th:text="#{experiment}"></h2>
             <!-- The table containing the experiment information. -->
-            <table class="table table-hover">
-                <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col" th:text="#{title}"></th>
-                    <th scope="col" th:text="#{description}"></th>
-                    <th class="text-center" scope="col" th:text="#{status}"></th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="experiment : ${experiments}">
-                    <th scope="row">
-                        <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
-                           th:text="${experiment.id}"></a>
-                    </th>
-                    <td>
-                        <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
-                           th:text="${experiment.title}"></a>
-                    </td>
-                    <td>
-                        <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
-                           th:text="${experiment.description}"></a>
-                    </td>
-                    <td class="text-center">
-                        <i aria-hidden="true" th:class="${experiment.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
-                           title="Experiment active status"></i>
-                        <span class="sr-only" th:if="${experiment.active}" th:text="#{opened}"></span>
-                        <span class="sr-only" th:unless="${experiment.active}" th:text="#{closed}"></span>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{title}"></th>
+                        <th scope="col" th:text="#{description}"></th>
+                        <th class="text-center" scope="col" th:text="#{status}"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="experiment : ${experiments}">
+                        <th scope="row">
+                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                               th:text="${experiment.id}"></a>
+                        </th>
+                        <td>
+                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                               th:text="${experiment.title}"></a>
+                        </td>
+                        <td>
+                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                               th:text="${experiment.description}"></a>
+                        </td>
+                        <td class="text-center">
+                            <i aria-hidden="true" th:class="${experiment.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
+                               title="Experiment active status"></i>
+                            <span class="sr-only" th:if="${experiment.active}" th:text="#{opened}"></span>
+                            <span class="sr-only" th:unless="${experiment.active}" th:text="#{closed}"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
             <!-- The navigation elements below the table. -->
             <div class="text-center">
                 <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}" th:href="@{/first}"
@@ -96,7 +98,6 @@
             </div>
         </div>
     </div>
-    <div class="col-2"></div>
 </div>
 
 <!-- Footer -->
