@@ -213,7 +213,7 @@ public class ExperimentDTO {
         }
 
         ExperimentDTO that = (ExperimentDTO) other;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     /**

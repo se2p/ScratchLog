@@ -377,7 +377,7 @@ public class ResourceEventDTO implements EventDTO {
         }
 
         ResourceEventDTO that = (ResourceEventDTO) other;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     /**

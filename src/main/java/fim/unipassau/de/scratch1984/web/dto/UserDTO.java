@@ -332,8 +332,8 @@ public class UserDTO {
             return false;
         }
 
-        UserDTO user = (UserDTO) other;
-        return id.equals(user.id);
+        UserDTO that = (UserDTO) other;
+        return Objects.equals(id, that.id);
     }
 
     /**

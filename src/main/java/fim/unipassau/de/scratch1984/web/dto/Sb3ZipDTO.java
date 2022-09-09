@@ -195,8 +195,8 @@ public class Sb3ZipDTO implements EventDTO {
             return false;
         }
 
-        Sb3ZipDTO sb3ZipDTO = (Sb3ZipDTO) other;
-        return id.equals(sb3ZipDTO.id);
+        Sb3ZipDTO that = (Sb3ZipDTO) other;
+        return Objects.equals(id, that.id);
     }
 
     /**

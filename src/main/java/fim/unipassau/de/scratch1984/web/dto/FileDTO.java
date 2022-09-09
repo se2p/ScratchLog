@@ -220,8 +220,8 @@ public class FileDTO implements EventDTO {
             return false;
         }
 
-        FileDTO fileDTO = (FileDTO) other;
-        return id.equals(fileDTO.id);
+        FileDTO that = (FileDTO) other;
+        return Objects.equals(id, that.id);
     }
 
     /**

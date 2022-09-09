@@ -442,7 +442,7 @@ public class BlockEventDTO implements EventDTO {
         }
 
         BlockEventDTO that = (BlockEventDTO) other;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     /**
