@@ -8,10 +8,10 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
-import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
-import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
+import fim.unipassau.de.scratch1984.util.validation.StringValidator;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserBulkDTO;
@@ -28,7 +28,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -218,14 +217,14 @@ public class UserController {
                             final BindingResult bindingResult) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
-        String usernameValidation = validateInput(userDTO.getUsername());
-        String passwordValidation = validateInput(userDTO.getPassword());
+        String usernameValidation = StringValidator.validate(userDTO.getUsername(), Constants.SMALL_FIELD);
+        String passwordValidation = StringValidator.validate(userDTO.getPassword(), Constants.SMALL_FIELD);
 
         if (usernameValidation != null) {
-            bindingResult.addError(createFieldError(USER_DTO, "username", usernameValidation, resourceBundle));
+            FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "username", usernameValidation, resourceBundle);
         }
         if (passwordValidation != null) {
-            bindingResult.addError(createFieldError(USER_DTO, "password", passwordValidation, resourceBundle));
+            FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "password", passwordValidation, resourceBundle);
         }
 
         if (bindingResult.hasErrors()) {
@@ -328,20 +327,8 @@ public class UserController {
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
-        String emailValidation = EmailValidator.validate(userDTO.getEmail());
-        String usernameValidation = UsernameValidator.validate(userDTO.getUsername());
-
-        if (emailValidation != null) {
-            bindingResult.addError(createFieldError(USER_DTO, "email", emailValidation, resourceBundle));
-        } else if (userService.existsEmail(userDTO.getEmail())) {
-            bindingResult.addError(createFieldError(USER_DTO, "email", "email_exists", resourceBundle));
-        }
-
-        if (usernameValidation != null) {
-            bindingResult.addError(createFieldError(USER_DTO, "username", usernameValidation, resourceBundle));
-        } else if (userService.existsUser(userDTO.getUsername())) {
-            bindingResult.addError(createFieldError(USER_DTO, "username", "username_exists", resourceBundle));
-        }
+        validateEmail(userDTO.getEmail(), bindingResult, resourceBundle);
+        validateUpdateUsername(userDTO.getUsername(), bindingResult, resourceBundle);
 
         if (bindingResult.hasErrors()) {
             return USER;
@@ -404,10 +391,10 @@ public class UserController {
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
-        String usernameValidation = UsernameValidator.validate(userBulkDTO.getUsername());
+        String usernameValidation = FieldErrorHandler.validateUsername(userBulkDTO.getUsername(), bindingResult,
+                resourceBundle);
 
         if (usernameValidation != null) {
-            bindingResult.addError(createFieldError("userBulkDTO", "username", usernameValidation, resourceBundle));
             return PARTICIPANTS_ADD;
         }
 
@@ -616,8 +603,9 @@ public class UserController {
             }
         }
 
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            validateUpdateUsername(userDTO, findOldUser, bindingResult, resourceBundle);
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)
+                && !findOldUser.getUsername().equals(userDTO.getUsername())) {
+            validateUpdateUsername(userDTO.getUsername(), bindingResult, resourceBundle);
         }
 
         validateUpdateEmail(userDTO, findOldUser, bindingResult, resourceBundle);
@@ -861,7 +849,7 @@ public class UserController {
             }
 
             if (userDTO.getNewPassword().trim().isBlank()) {
-                bindingResult.addError(createFieldError(USER_DTO, "newPassword", "empty_string", resourceBundle));
+                FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "newPassword", "empty_string", resourceBundle);
             }
 
             validateUpdatePassword(userDTO, admin.getPassword(), userDTO.getPassword(), bindingResult, resourceBundle);
@@ -879,23 +867,18 @@ public class UserController {
     }
 
     /**
-     * Validates the username passed in the {@link UserDTO} on updating the given user.
+     * Validates that the given username is a valid username and does not yet exist in the database.
      *
-     * @param userDTO The user dto containing the new user information.
-     * @param findOldUser The user dto containing the old user information.
-     * @param bindingResult The binding result for returning information on invalid user input.
-     * @param resourceBundle The resource bundle for error translation.
+     * @param username The user username to be checked.
+     * @param bindingResult The {@link BindingResult} for returning information on invalid user input.
+     * @param resourceBundle The {@link ResourceBundle} for error fetching error messages in the correct language.
      */
-    private void validateUpdateUsername(final UserDTO userDTO, final UserDTO findOldUser,
-                                     final BindingResult bindingResult, final ResourceBundle resourceBundle) {
-        if (!findOldUser.getUsername().equals(userDTO.getUsername())) {
-            String usernameValidation = UsernameValidator.validate(userDTO.getUsername());
+    private void validateUpdateUsername(final String username, final BindingResult bindingResult,
+                                        final ResourceBundle resourceBundle) {
+        String usernameValidation = FieldErrorHandler.validateUsername(username, bindingResult, resourceBundle);
 
-            if (usernameValidation != null) {
-                bindingResult.addError(createFieldError(USER_DTO, "username", usernameValidation, resourceBundle));
-            } else if (userService.existsUser(userDTO.getUsername())) {
-                bindingResult.addError(createFieldError(USER_DTO, "username", "username_exists", resourceBundle));
-            }
+        if (usernameValidation == null && userService.existsUser(username)) {
+            FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "username", "username_exists", resourceBundle);
         }
     }
 
@@ -908,19 +891,29 @@ public class UserController {
      * @param resourceBundle The resource bundle for error translation.
      */
     private void validateUpdateEmail(final UserDTO userDTO, final UserDTO findOldUser,
-                                        final BindingResult bindingResult, final ResourceBundle resourceBundle) {
+                                     final BindingResult bindingResult, final ResourceBundle resourceBundle) {
         if (findOldUser.getEmail() != null && userDTO.getEmail().trim().isBlank()) {
-            bindingResult.addError(createFieldError(USER_DTO, "email", "empty_string", resourceBundle));
+            FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "email", "empty_string", resourceBundle);
         }
 
         if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
-            String emailValidation = EmailValidator.validate(userDTO.getEmail());
+            validateEmail(userDTO.getEmail(), bindingResult, resourceBundle);
+        }
+    }
 
-            if (emailValidation != null) {
-                bindingResult.addError(createFieldError(USER_DTO, "email", emailValidation, resourceBundle));
-            } else if (userService.existsEmail(userDTO.getEmail())) {
-                bindingResult.addError(createFieldError(USER_DTO, "email", "email_exists", resourceBundle));
-            }
+    /**
+     * Validates whether the given email is valid and not yet present in the database.
+     *
+     * @param email The email to be checked.
+     * @param bindingResult The {@link BindingResult} for returning information on invalid user input.
+     * @param resourceBundle The {@link ResourceBundle} for error fetching error messages in the correct language.
+     */
+    private void validateEmail(final String email, final BindingResult bindingResult,
+                                     final ResourceBundle resourceBundle) {
+        String emailValidation = FieldErrorHandler.validateEmail(email, bindingResult, resourceBundle);
+
+        if (emailValidation == null && userService.existsEmail(email)) {
+            FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "email", "email_exists", resourceBundle);
         }
     }
 
@@ -940,16 +933,17 @@ public class UserController {
                     userDTO.getConfirmPassword());
 
             if (passwordValidation != null) {
-                bindingResult.addError(createFieldError(USER_DTO, "newPassword", passwordValidation, resourceBundle));
+                FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "newPassword", passwordValidation,
+                        resourceBundle);
             }
 
             if (userDTO.getPassword() == null || userDTO.getPassword().trim().isBlank()) {
-                bindingResult.addError(createFieldError(USER_DTO, "password", "enter_password", resourceBundle));
+                FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "password", "enter_password", resourceBundle);
             } else if (!userService.matchesPassword(userDTO.getPassword(), matchPassword)) {
-                bindingResult.addError(createFieldError(USER_DTO, "password", "invalid_password",
-                        resourceBundle));
+                FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "password", "invalid_password",
+                        resourceBundle);
             } else if (oldPassword.equals(userDTO.getNewPassword())) {
-                bindingResult.addError(createFieldError(USER_DTO, "newPassword", "old_password", resourceBundle));
+                FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "newPassword", "old_password", resourceBundle);
             }
         }
     }
@@ -993,39 +987,6 @@ public class UserController {
         templateModel.put("baseUrl", ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH);
         templateModel.put("token", tokenUrl);
         return mailService.sendEmail(email, resourceBundle.getString(subject), templateModel, template);
-    }
-
-    /**
-     * Checks, whether the given input string matches the general requirements and returns a custom error message
-     * string if it does not, or {@code null} if everything is fine.
-     *
-     * @param input The input string to check.
-     * @return The custom error message string or {@code null}.
-     */
-    private String validateInput(final String input) {
-        if (input == null || input.trim().isBlank()) {
-            return "empty_string";
-        }
-
-        if (input.length() > Constants.SMALL_FIELD) {
-            return "long_string";
-        }
-
-        return null;
-    }
-
-    /**
-     * Creates a new field error with the given parameters.
-     *
-     * @param objectName The name of the object.
-     * @param field The field to which the error applies.
-     * @param error The error message string.
-     * @param resourceBundle The resource bundle to retrieve the error message in the current language.
-     * @return The new field error.
-     */
-    private FieldError createFieldError(final String objectName, final String field, final String error,
-                                     final ResourceBundle resourceBundle) {
-        return new FieldError(objectName, field, resourceBundle.getString(error));
     }
 
     /**

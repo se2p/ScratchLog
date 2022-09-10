@@ -8,11 +8,10 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
-import fim.unipassau.de.scratch1984.util.NumberParser;
+import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.Secrets;
-import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
-import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -28,7 +27,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -525,12 +523,10 @@ public class ParticipantController {
      */
     private void validateUsername(final String username, final BindingResult bindingResult,
                                   final ResourceBundle resourceBundle) {
-        String usernameValidation = UsernameValidator.validate(username);
+        String usernameValidation = FieldErrorHandler.validateUsername(username, bindingResult, resourceBundle);
 
-        if (usernameValidation != null) {
-            bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
-        } else if (userService.existsUser(username)) {
-            bindingResult.addError(createFieldError("userDTO", "username", "username_exists", resourceBundle));
+        if (usernameValidation == null && userService.existsUser(username)) {
+            FieldErrorHandler.addFieldError(bindingResult, "userDTO", "username", "username_exists", resourceBundle);
         }
     }
 
@@ -543,27 +539,11 @@ public class ParticipantController {
      */
     private void validateUpdateEmail(final String email, final BindingResult bindingResult,
                                      final ResourceBundle resourceBundle) {
-        String emailValidation = EmailValidator.validate(email);
+        String emailValidation = FieldErrorHandler.validateEmail(email, bindingResult, resourceBundle);
 
-        if (emailValidation != null) {
-            bindingResult.addError(createFieldError("userDTO", "email", emailValidation, resourceBundle));
-        } else if (userService.existsEmail(email)) {
-            bindingResult.addError(createFieldError("userDTO", "email", "email_exists", resourceBundle));
+        if (emailValidation == null && userService.existsEmail(email)) {
+            FieldErrorHandler.addFieldError(bindingResult, "userDTO", "email", "email_exists", resourceBundle);
         }
-    }
-
-    /**
-     * Creates a new field error with the given parameters.
-     *
-     * @param objectName The name of the object.
-     * @param field The field to which the error applies.
-     * @param error The error message string.
-     * @param resourceBundle The resource bundle to retrieve the error message in the current language.
-     * @return The new field error.
-     */
-    private FieldError createFieldError(final String objectName, final String field, final String error,
-                                        final ResourceBundle resourceBundle) {
-        return new FieldError(objectName, field, resourceBundle.getString(error));
     }
 
     /**

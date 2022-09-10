@@ -11,9 +11,11 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.Secrets;
+import fim.unipassau.de.scratch1984.util.validation.StringValidator;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
@@ -30,7 +32,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -253,33 +254,24 @@ public class ExperimentController {
                                  final BindingResult bindingResult) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
-        String titleValidation = validateInput(experimentDTO.getTitle(), Constants.LARGE_FIELD);
-        String descriptionValidation = validateInput(experimentDTO.getDescription(), Constants.SMALL_AREA);
+        FieldErrorHandler.validateExperimentInput(experimentDTO.getTitle(), experimentDTO.getDescription(),
+                experimentDTO.getInfo(), bindingResult, resourceBundle);
 
-        if (titleValidation != null) {
-            bindingResult.addError(createFieldError("title", titleValidation, resourceBundle));
-        }
-        if (descriptionValidation != null) {
-            bindingResult.addError(createFieldError("description", descriptionValidation,
-                    resourceBundle));
-        }
-        if (experimentDTO.getInfo().length() > Constants.LARGE_AREA) {
-            bindingResult.addError(createFieldError("info", "long_string", resourceBundle));
-        }
         if (experimentDTO.getPostscript() != null && !experimentDTO.getPostscript().trim().isBlank()) {
             if (experimentDTO.getPostscript().length() > Constants.SMALL_AREA) {
-                bindingResult.addError(createFieldError("postscript", "long_string", resourceBundle));
+                FieldErrorHandler.addFieldError(bindingResult, "experimentDTO", "postscript", "long_string",
+                        resourceBundle);
             }
         }
         if (experimentDTO.getId() == null) {
             if (experimentService.existsExperiment(experimentDTO.getTitle())) {
                 logger.error("Experiment with same title exists!");
-                bindingResult.addError(createFieldError("title", "title_exists", resourceBundle));
+                FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
             }
         } else {
             if (experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())) {
                 logger.error("Experiment with same name but different id exists!");
-                bindingResult.addError(createFieldError("title", "title_exists", resourceBundle));
+                FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
             }
         }
 
@@ -823,38 +815,6 @@ public class ExperimentController {
     }
 
     /**
-     * Checks, whether the given input string matches the general requirements and returns a custom error message
-     * string if the it does not, or {@code null} if everything is fine.
-     *
-     * @param input The input string to check.
-     * @param maxLength The maximum string length allowed for the field.
-     * @return The custom error message string or {@code null}.
-     */
-    private String validateInput(final String input, final int maxLength) {
-        if (input == null || input.trim().isBlank()) {
-            return "empty_string";
-        }
-
-        if (input.length() > maxLength) {
-            return "long_string";
-        }
-
-        return null;
-    }
-
-    /**
-     * Creates a new field error with the given parameters.
-     *
-     * @param field The field to which the error applies.
-     * @param error The error message string.
-     * @param resourceBundle The resource bundle to retrieve the error message in the current language.
-     * @return The new field error.
-     */
-    private FieldError createFieldError(final String field, final String error, final ResourceBundle resourceBundle) {
-        return new FieldError("experimentDTO", field, resourceBundle.getString(error));
-    }
-
-    /**
      * Returns the proper {@link Locale} based on the user's preferred language settings.
      *
      * @param language The user's preferred language.
@@ -879,7 +839,7 @@ public class ExperimentController {
      */
     private boolean isValidSearch(final String search, final ExperimentDTO experimentDTO,
                                   final ResourceBundle resourceBundle, final Model model) {
-        String validateSearch = validateInput(search, Constants.LARGE_FIELD);
+        String validateSearch = StringValidator.validate(search, Constants.LARGE_FIELD);
 
         if (validateSearch != null) {
             model.addAttribute(ERROR, resourceBundle.getString(validateSearch));
