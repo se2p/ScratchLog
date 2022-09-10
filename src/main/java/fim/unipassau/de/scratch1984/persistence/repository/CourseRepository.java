@@ -19,6 +19,14 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
     boolean existsById(int id);
 
     /**
+     * Checks, whether a course with the given title already exists in the database.
+     *
+     * @param title The title to search for.
+     * @return {@code true} iff a course with the given title was found.
+     */
+    boolean existsByTitle(String title);
+
+    /**
      * Returns the course identified by the given title, if one exists.
      *
      * @param title The title to search for.
