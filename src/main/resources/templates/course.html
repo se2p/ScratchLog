@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,8 +15,22 @@
 <!-- Page content -->
 <div class="row" id="content">
     <div class="inside">
-        <!-- The course title. -->
-        <h1 class="mb-3 h2" th:text="${courseDTO.title}"></h1>
+        <!-- The course title along with edit and delete buttons. -->
+        <div class="d-flex justify-content-between flex-wrap mb-3">
+            <!-- The course title. -->
+            <h1 class="mb-3 h2" th:text="${courseDTO.title}"></h1>
+            <!-- The buttons for editing and deleting the course. -->
+            <div sec:authorize="hasRole('ADMIN')">
+                <a class="btn btn-secondary" th:href="@{/course/edit(id=${courseDTO.id})}">
+                    <i aria-hidden="true" class="fas fa-edit fa-inverse" th:title="#{edit}"></i>
+                    <span th:text="#{edit}"></span>
+                </a>
+                <a id="delete" class="btn btn-danger">
+                    <i aria-hidden="true" class="fas fa-trash-alt fa-inverse" th:title="#{delete}"></i>
+                    <span th:text="#{delete}"></span>
+                </a>
+            </div>
+        </div>
 
         <!-- The course description. -->
         <div class="row">
