@@ -9,7 +9,6 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
-import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,9 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
@@ -72,8 +68,6 @@ public class ParticipantServiceTest {
     private final Participant participant = new Participant(user, experiment, null, null);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final List<Participant> participantList = getParticipants(5);
-    private final Page<Participant> participants = new PageImpl<>(participantList);
-    private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
 
     @BeforeEach
     public void setup() {
@@ -228,44 +222,6 @@ public class ParticipantServiceTest {
         verify(userRepository, never()).getOne(anyInt());
         verify(experimentRepository, never()).getOne(anyInt());
         verify(participantRepository, never()).save(any());
-    }
-
-    @Test
-    public void testGetParticipantPage() {
-        when(participantRepository.findAllByExperiment(any(), any(PageRequest.class))).thenReturn(participants);
-        assertEquals(participants, participantService.getParticipantPage(ID, pageRequest));
-        verify(participantRepository).findAllByExperiment(any(), any(PageRequest.class));
-        verify(experimentRepository).getOne(ID);
-    }
-
-    @Test
-    public void testGetParticipantPageNotFound() {
-        when(participantRepository.findAllByExperiment(any(), any(PageRequest.class)))
-                .thenThrow(EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> participantService.getParticipantPage(ID, pageRequest)
-        );
-        verify(participantRepository).findAllByExperiment(any(), any(PageRequest.class));
-        verify(experimentRepository).getOne(ID);
-    }
-
-    @Test
-    public void testGetParticipantPageInvalidPageSize() {
-        PageRequest invalidRequest = PageRequest.of(0, Constants.PAGE_SIZE + 1);
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.getParticipantPage(ID, invalidRequest)
-        );
-        verify(participantRepository, never()).findAllByExperiment(any(), any(PageRequest.class));
-        verify(experimentRepository, never()).getOne(ID);
-    }
-
-    @Test
-    public void testGetParticipantPageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.getParticipantPage(0, pageRequest)
-        );
-        verify(participantRepository, never()).findAllByExperiment(any(), any(PageRequest.class));
-        verify(experimentRepository, never()).getOne(ID);
     }
 
     @Test

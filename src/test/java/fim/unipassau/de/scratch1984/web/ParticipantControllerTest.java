@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -60,6 +61,9 @@ public class ParticipantControllerTest {
 
     @Mock
     private ParticipantService participantService;
+
+    @Mock
+    private PageService pageService;
 
     @Mock
     private MailService mailService;

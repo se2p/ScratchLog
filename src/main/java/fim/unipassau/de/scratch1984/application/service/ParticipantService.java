@@ -14,10 +14,6 @@ import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -161,43 +157,6 @@ public class ParticipantService {
         }
 
         return false;
-    }
-
-    /**
-     * Retrieves a page of participants for the experiment with the given id. If no corresponding experiment exists in
-     * the database a {@link NotFoundException} is thrown instead.
-     *
-     * @param id The experiment id.
-     * @param pageable The pageable containing the page size and page number.
-     * @return The participant page.
-     */
-    @Transactional
-    public Page<Participant> getParticipantPage(final int id, final Pageable pageable) {
-        int pageSize = pageable.getPageSize();
-        int currentPage = pageable.getPageNumber();
-
-        if (id < Constants.MIN_ID) {
-            logger.error("Cannot find participant data for experiment with invalid id " + id + "!");
-            throw new IllegalArgumentException("Cannot find participant data for experiment with invalid id " + id
-                    + "!");
-        } else if (pageSize != Constants.PAGE_SIZE) {
-            logger.error("Cannot return participant page with invalid page size of " + pageSize + "!");
-            throw new IllegalArgumentException("Cannot return experiment page with invalid page size of " + pageSize
-                    + "!");
-        }
-
-        Experiment experiment = experimentRepository.getOne(id);
-        Page<Participant> participants;
-
-        try {
-            participants = participantRepository.findAllByExperiment(experiment, PageRequest.of(currentPage, pageSize,
-                    Sort.by("user").descending()));
-        } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + id + " in the database!", e);
-            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
-        }
-
-        return participants;
     }
 
     /**

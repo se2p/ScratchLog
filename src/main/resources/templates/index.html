@@ -39,9 +39,73 @@
             <div class="mx-5" th:text="#{project_info}"></div>
         </div>
 
-        <!-- The experiment heading and table shown to administrators or participants. -->
+        <!-- The course heading and table shown to administrators or participants. -->
         <div sec:authorize="hasRole('PARTICIPANT')">
-            <h2 class="mb-5" th:text="#{experiment}"></h2>
+            <h2 class="mb-5" th:text="#{course_heading}"></h2>
+            <!-- The table containing the course information. -->
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{title}"></th>
+                        <th scope="col" th:text="#{description}"></th>
+                        <th class="text-center" scope="col" th:text="#{status}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${courses.isEmpty()}">
+                    <tr>
+                        <td colspan="5" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody>
+                    <tr th:unless="${courses.isEmpty()}" th:each="course : ${courses}">
+                        <th scope="row">
+                            <a class="no_decoration" th:href="@{/course(id=${course.id})}"
+                               th:text="${course.id}"></a>
+                        </th>
+                        <td>
+                            <a class="no_decoration" th:href="@{/course(id=${course.id})}"
+                               th:text="${course.title}"></a>
+                        </td>
+                        <td>
+                            <a class="no_decoration" th:href="@{/course(id=${course.id})}"
+                               th:text="${course.description}"></a>
+                        </td>
+                        <td class="text-center">
+                            <i aria-hidden="true" th:class="${course.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
+                               title="Experiment active status"></i>
+                            <span class="sr-only" th:if="${course.active}" th:text="#{opened}"></span>
+                            <span class="sr-only" th:unless="${course.active}" th:text="#{closed}"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- The navigation elements below the table. -->
+            <div class="text-center" th:unless="${courses.isEmpty()}">
+                <a class="btn btn-outline-dark" th:style="${coursePage == 1 ? 'display:none' : ''}" th:href="@{/first}"
+                   th:aria-label="#{first_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-double-left"></i>
+                </a>
+                <a class="btn btn-outline-dark" th:style="${coursePage == 1 ? 'display:none' : ''}"
+                   th:href="@{/previous(page=${page})}" th:aria-label="#{previous_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-left"></i>
+                </a>
+                <a class="btn btn-outline-dark" th:style="${coursePage == lastCoursePage ? 'display:none' : ''}"
+                   th:href="@{/next(page=${page})}" th:aria-label="#{next_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-right"></i>
+                </a>
+                <a class="btn btn-outline-dark" th:style="${coursePage == lastCoursePage ? 'display:none' : ''}"
+                   th:href="@{/last}" th:aria-label="#{last_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-double-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- The experiment heading and table shown to administrators or participants. -->
+        <div sec:authorize="hasRole('PARTICIPANT')" th:fragment="experiment_table" id="experiment_table">
+            <h2 class="mb-5" th:text="#{experiment_heading}"></h2>
             <!-- The table containing the experiment information. -->
             <div class="table-container">
                 <table class="table table-hover">
@@ -53,8 +117,13 @@
                         <th class="text-center" scope="col" th:text="#{status}"></th>
                     </tr>
                     </thead>
+                    <tbody th:if="${experiments.isEmpty()}">
+                    <tr>
+                        <td colspan="5" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
                     <tbody>
-                    <tr th:each="experiment : ${experiments}">
+                    <tr th:unless="${experiments.isEmpty()}" th:each="experiment : ${experiments}">
                         <th scope="row">
                             <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
                                th:text="${experiment.id}"></a>
@@ -78,20 +147,22 @@
                 </table>
             </div>
             <!-- The navigation elements below the table. -->
-            <div class="text-center">
-                <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}" th:href="@{/first}"
-                   th:aria-label="#{first_page_label}">
+            <div class="text-center" th:unless="${experiments.isEmpty()}">
+                <a id="experimentsFirst" class="btn btn-outline-dark"
+                   th:style="${experimentPage == 1 ? 'display:none' : ''}" th:aria-label="#{first_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-left"></i>
                 </a>
-                <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                      th:href="@{/previous(page=${page})}" th:aria-label="#{previous_page_label}">
+                <a id="experimentsPrev" class="btn btn-outline-dark"
+                   th:style="${experimentPage == 1 ? 'display:none' : ''}" th:aria-label="#{previous_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-left"></i>
                 </a>
-                <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
-                      th:href="@{/next(page=${page})}" th:aria-label="#{next_page_label}">
+                <a id="experimentsNext" class="btn btn-outline-dark"
+                   th:style="${experimentPage == lastExperimentPage ? 'display:none' : ''}"
+                   th:aria-label="#{next_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-right"></i>
                 </a>
-                <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}" th:href="@{/last}"
+                <a id="experimentsLast" class="btn btn-outline-dark"
+                   th:style="${experimentPage == lastExperimentPage ? 'display:none' : ''}"
                    th:aria-label="#{last_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                 </a>
@@ -99,6 +170,14 @@
         </div>
     </div>
 </div>
+
+<!-- Script to update the experiment and course tables on user interactions with the respective buttons. -->
+<script type="text/javascript" th:src="@{/js/startPageTables.js}"></script>
+<!-- Let Thymeleaf fetch the current and the last experiment page number. -->
+<script>
+    let experimentPage = [[${experimentPage}]];
+    let lastExperimentPage = [[${lastExperimentPage}]];
+</script>
 
 <!-- Footer -->
 <div th:insert="footer :: footer"></div>

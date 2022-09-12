@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
@@ -76,6 +77,11 @@ public class ExperimentController {
     private final ParticipantService participantService;
 
     /**
+     * The page service to use for retrieving pageable tables.
+     */
+    private final PageService pageService;
+
+    /**
      * The mail service to use for sending emails.
      */
     private final MailService mailService;
@@ -136,16 +142,18 @@ public class ExperimentController {
      * @param experimentService The experiment service to use.
      * @param userService The user service to use.
      * @param participantService The participant service to use.
+     * @param pageService The page service to use.
      * @param mailService The mail service to use.
      * @param eventService The event service to use.
      */
     @Autowired
     public ExperimentController(final ExperimentService experimentService, final UserService userService,
-                                final ParticipantService participantService, final MailService mailService,
-                                final EventService eventService) {
+                                final ParticipantService participantService, final PageService pageService,
+                                final MailService mailService, final EventService eventService) {
         this.experimentService = experimentService;
         this.userService = userService;
         this.participantService = participantService;
+        this.pageService = pageService;
         this.mailService = mailService;
         this.eventService = eventService;
     }
@@ -453,16 +461,12 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String getNextPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
                               final Model model) {
-        if (currentPage == null) {
+        if (checkParams(id, currentPage)) {
             return Constants.ERROR;
         }
 
         int current = NumberParser.parseNumber(currentPage);
         int experimentId = parseId(id);
-
-        if (experimentId < Constants.MIN_ID || current <= -1) {
-            return Constants.ERROR;
-        }
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
@@ -489,16 +493,12 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String getPreviousPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
                                   final Model model) {
-        if (currentPage == null) {
+        if (checkParams(id, currentPage)) {
             return Constants.ERROR;
         }
 
         int current = NumberParser.parseNumber(currentPage);
         int experimentId = parseId(id);
-
-        if (experimentId < Constants.MIN_ID || current <= -1) {
-            return Constants.ERROR;
-        }
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
@@ -558,7 +558,7 @@ public class ExperimentController {
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            int page = experimentService.getLastParticipantPage(experimentId);
+            int page = pageService.getLastParticipantPage(experimentId);
             addModelInfo(page, experimentDTO, model);
         } catch (NotFoundException e) {
             return Constants.ERROR;
@@ -771,13 +771,13 @@ public class ExperimentController {
             experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
         }
 
-        int last = experimentService.getLastParticipantPage(experimentDTO.getId()) + 1;
+        int last = pageService.getLastParticipantPage(experimentDTO.getId()) + 1;
 
         if (page >= last) {
             return false;
         }
 
-        Page<Participant> participants = participantService.getParticipantPage(experimentDTO.getId(),
+        Page<Participant> participants = pageService.getParticipantPage(experimentDTO.getId(),
                 PageRequest.of(page, Constants.PAGE_SIZE));
 
         if (experimentService.hasProjectFile(experimentDTO.getId())) {
@@ -790,6 +790,24 @@ public class ExperimentController {
         model.addAttribute("passwordDTO", new PasswordDTO());
         model.addAttribute("participants", participants);
         return true;
+    }
+
+    /**
+     * Checks, whether the passed id and current page are valid numbers.
+     *
+     * @param id The id to be checked.
+     * @param currentPage The page number to be checked.
+     * @return {@code true} if any of the given strings is not a valid number, or {@code false} otherwise.
+     */
+    private boolean checkParams(final String id, final String currentPage) {
+        if (currentPage == null) {
+            return true;
+        }
+
+        int current = NumberParser.parseNumber(currentPage);
+        int experimentId = parseId(id);
+
+        return experimentId < Constants.MIN_ID || current <= -1;
     }
 
     /**

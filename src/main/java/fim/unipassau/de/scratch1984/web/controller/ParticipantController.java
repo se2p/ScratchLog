@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
@@ -69,6 +70,11 @@ public class ParticipantController {
     private final ParticipantService participantService;
 
     /**
+     * The page service to use for retrieving pageable tables.
+     */
+    private final PageService pageService;
+
+    /**
      * The mail service to use for sending emails.
      */
     private final MailService mailService;
@@ -99,14 +105,17 @@ public class ParticipantController {
      * @param experimentService The experiment service to use.
      * @param userService The user service to use.
      * @param participantService The participant service to use.
+     * @param pageService The page service to use.
      * @param mailService The mail service to use.
      */
     @Autowired
     public ParticipantController(final UserService userService, final ExperimentService experimentService,
-                                 final ParticipantService participantService, final MailService mailService) {
+                                 final ParticipantService participantService, final PageService pageService,
+                                 final MailService mailService) {
         this.userService = userService;
         this.experimentService = experimentService;
         this.participantService = participantService;
+        this.pageService = pageService;
         this.mailService = mailService;
     }
 
@@ -504,9 +513,9 @@ public class ParticipantController {
             experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
         }
 
-        int last = experimentService.getLastParticipantPage(experimentDTO.getId()) + 1;
+        int last = pageService.getLastParticipantPage(experimentDTO.getId()) + 1;
 
-        Page<Participant> participants = participantService.getParticipantPage(experimentDTO.getId(),
+        Page<Participant> participants = pageService.getParticipantPage(experimentDTO.getId(),
                 PageRequest.of(0, Constants.PAGE_SIZE));
         model.addAttribute("page", 1);
         model.addAttribute("lastPage", last);
