@@ -40,7 +40,7 @@
         </div>
 
         <!-- The course heading and table shown to administrators or participants. -->
-        <div sec:authorize="hasRole('PARTICIPANT')">
+        <div sec:authorize="hasRole('PARTICIPANT')" th:fragment="course_table" id="course_table">
             <h2 class="mb-5" th:text="#{course_heading}"></h2>
             <!-- The table containing the course information. -->
             <div class="table-container">
@@ -84,20 +84,20 @@
             </div>
             <!-- The navigation elements below the table. -->
             <div class="text-center" th:unless="${courses.isEmpty()}">
-                <a class="btn btn-outline-dark" th:style="${coursePage == 1 ? 'display:none' : ''}" th:href="@{/first}"
+                <a id="coursesFirst" class="btn btn-outline-dark" th:style="${coursePage == 1 ? 'display:none' : ''}"
                    th:aria-label="#{first_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-left"></i>
                 </a>
-                <a class="btn btn-outline-dark" th:style="${coursePage == 1 ? 'display:none' : ''}"
-                   th:href="@{/previous(page=${page})}" th:aria-label="#{previous_page_label}">
+                <a id="coursesPrev" class="btn btn-outline-dark" th:style="${coursePage == 1 ? 'display:none' : ''}"
+                   th:aria-label="#{previous_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-left"></i>
                 </a>
-                <a class="btn btn-outline-dark" th:style="${coursePage == lastCoursePage ? 'display:none' : ''}"
-                   th:href="@{/next(page=${page})}" th:aria-label="#{next_page_label}">
+                <a id="coursesNext" class="btn btn-outline-dark"
+                   th:style="${coursePage == lastCoursePage ? 'display:none' : ''}" th:aria-label="#{next_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-right"></i>
                 </a>
-                <a class="btn btn-outline-dark" th:style="${coursePage == lastCoursePage ? 'display:none' : ''}"
-                   th:href="@{/last}" th:aria-label="#{last_page_label}">
+                <a id="coursesLast" class="btn btn-outline-dark"
+                   th:style="${coursePage == lastCoursePage ? 'display:none' : ''}" th:aria-label="#{last_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                 </a>
             </div>
@@ -173,10 +173,12 @@
 
 <!-- Script to update the experiment and course tables on user interactions with the respective buttons. -->
 <script type="text/javascript" th:src="@{/js/startPageTables.js}"></script>
-<!-- Let Thymeleaf fetch the current and the last experiment page number. -->
+<!-- Let Thymeleaf fetch the current and the last experiment and course page numbers. -->
 <script>
     let experimentPage = [[${experimentPage}]];
     let lastExperimentPage = [[${lastExperimentPage}]];
+    let coursePage = [[${coursePage}]];
+    let lastCoursePage = [[${lastCoursePage}]];
 </script>
 
 <!-- Footer -->
