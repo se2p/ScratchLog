@@ -117,6 +117,27 @@ public class SearchRestController {
     }
 
     /**
+     * Retrieves a list of additional course results for the search page where the title contains the search query
+     * and the given page parameter is used to compute the offset of results to be retrieved from the database. If the
+     * passed parameters are invalid, an empty list is returned instead.
+     *
+     * @param query The title to search for.
+     * @param page The current course result page used to compute the offset.
+     * @return A list of matching suggestions, or an empty list, if no entries could be found.
+     */
+    @GetMapping("/courses")
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getMoreCourses(@RequestParam(QUERY) final String query,
+                                         @RequestParam(PAGE) final String page) {
+        if (invalidParams(query, page)) {
+            return new ArrayList<>();
+        }
+
+        int pageNumber = NumberParser.parseNumber(page);
+        return searchService.getNextCourses(query, pageNumber);
+    }
+
+    /**
      * Retrieves a list of up to five usernames and emails where one of the two contain the search query string and who
      * are not already participating in the experiment with the given id.
      *

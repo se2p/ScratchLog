@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.application.service.SearchService;
+import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -47,6 +48,7 @@ public class SearchControllerTest {
     private static final int COUNT = 25;
     private List<UserProjection> users;
     private List<ExperimentTableProjection> experiments;
+    private List<CourseTableProjection> courses;
 
     @Test
     public void testGetSearchPage() {
@@ -54,14 +56,18 @@ public class SearchControllerTest {
         experiments = getExperiments(Constants.PAGE_SIZE);
         when(searchService.getUserCount(QUERY)).thenReturn(COUNT);
         when(searchService.getExperimentCount(QUERY)).thenReturn(COUNT);
+        when(searchService.getCourseCount(QUERY)).thenReturn(COUNT);
         when(searchService.getUserList(QUERY, Constants.PAGE_SIZE)).thenReturn(users);
         when(searchService.getExperimentList(QUERY, Constants.PAGE_SIZE)).thenReturn(experiments);
+        when(searchService.getCourseList(QUERY, Constants.PAGE_SIZE)).thenReturn(courses);
         assertEquals(SEARCH, searchController.getSearchPage(QUERY, model));
         verify(searchService).getUserCount(QUERY);
         verify(searchService).getExperimentCount(QUERY);
+        verify(searchService).getCourseCount(QUERY);
         verify(searchService).getUserList(QUERY, Constants.PAGE_SIZE);
         verify(searchService).getExperimentList(QUERY, Constants.PAGE_SIZE);
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(searchService).getCourseList(QUERY, Constants.PAGE_SIZE);
+        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -69,9 +75,11 @@ public class SearchControllerTest {
         assertEquals(SEARCH, searchController.getSearchPage(BLANK, model));
         verify(searchService, never()).getUserCount(anyString());
         verify(searchService, never()).getExperimentCount(anyString());
+        verify(searchService, never()).getCourseCount(anyString());
         verify(searchService, never()).getUserList(anyString(), anyInt());
         verify(searchService, never()).getExperimentList(anyString(), anyInt());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(searchService, never()).getCourseList(anyString(), anyInt());
+        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -79,8 +87,10 @@ public class SearchControllerTest {
         assertEquals(ERROR, searchController.getSearchPage(LONG_QUERY, model));
         verify(searchService, never()).getUserCount(anyString());
         verify(searchService, never()).getExperimentCount(anyString());
+        verify(searchService, never()).getCourseCount(anyString());
         verify(searchService, never()).getUserList(anyString(), anyInt());
         verify(searchService, never()).getExperimentList(anyString(), anyInt());
+        verify(searchService, never()).getCourseList(anyString(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -89,8 +99,10 @@ public class SearchControllerTest {
         assertEquals(ERROR, searchController.getSearchPage(null, model));
         verify(searchService, never()).getUserCount(anyString());
         verify(searchService, never()).getExperimentCount(anyString());
+        verify(searchService, never()).getCourseCount(anyString());
         verify(searchService, never()).getUserList(anyString(), anyInt());
         verify(searchService, never()).getExperimentList(anyString(), anyInt());
+        verify(searchService, never()).getCourseList(anyString(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 

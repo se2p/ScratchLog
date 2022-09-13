@@ -102,4 +102,9 @@ public final class Constants {
      */
     public static final int MAX_ALLOWED_BREAK_FACTOR = 4;
 
+    /**
+     * The maximum number of search suggestions to show for each category (user, experiment, course) in the search bar.
+     */
+    public static final int MAX_SEARCH_RESULTS = 3;
+
 }

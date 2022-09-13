@@ -80,14 +80,15 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findAllByRole(String role);
 
     /**
-     * Returns a list of the first five users whose email or username contain the given query value.
+     * Returns a list of the first users up to the given limit whose email or username contain the given query value.
      *
      * @param query The username or email to search for.
+     * @param limit The maximum number of results to return.
      * @return A list of {@link UserProjection}s.
      */
     @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
-            + "OR u.email LIKE CONCAT('%', :query, '%')) LIMIT 5;")
-    List<UserProjection> findUserSuggestions(@Param("query") String query);
+            + "OR u.email LIKE CONCAT('%', :query, '%')) LIMIT :limit")
+    List<UserProjection> findUserSuggestions(@Param("query") String query, @Param("limit") int limit);
 
     /**
      * Returns a list of at most as many users as the given limit with the given offset whose email or username contain

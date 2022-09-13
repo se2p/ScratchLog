@@ -89,7 +89,7 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentSuggestions() {
-        List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(SHORT_QUERY);
+        List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(SHORT_QUERY, LIMIT);
         assertAll(
                 () -> assertEquals(5, experiments.size()),
                 () -> assertTrue(experiments.stream().anyMatch(experiment
@@ -107,7 +107,7 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentSuggestionsLessThan5() {
-        List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(TITLE_QUERY);
+        List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(TITLE_QUERY, LIMIT);
         assertAll(
                 () -> assertEquals(4, experiments.size()),
                 () -> assertTrue(experiments.stream().anyMatch(experiment
@@ -125,7 +125,7 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentSuggestionsNoResults() {
-        List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(NO_RESULTS);
+        List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(NO_RESULTS, LIMIT);
         assertTrue(experiments.isEmpty());
     }
 
@@ -190,7 +190,7 @@ public class ExperimentRepositoryTest {
 
     @Test
     public void testFindExperimentResultsNoResults() {
-        assertTrue(repository.findExperimentSuggestions(NO_RESULTS).isEmpty());
+        assertTrue(repository.findExperimentSuggestions(NO_RESULTS, LIMIT).isEmpty());
     }
 
     @Test

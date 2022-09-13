@@ -1,7 +1,9 @@
 package fim.unipassau.de.scratch1984.application.service;
 
+import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -36,15 +38,23 @@ public class SearchService {
     private final ExperimentRepository experimentRepository;
 
     /**
+     * The course repository to use for database queries related to course data.
+     */
+    private final CourseRepository courseRepository;
+
+    /**
      * Constructs a search service with the given dependencies.
      *
-     * @param userRepository The user repository to use.
-     * @param experimentRepository The experiment repository to use.
+     * @param userRepository The {@link UserRepository} to use.
+     * @param experimentRepository The {@link ExperimentRepository} to use.
+     * @param courseRepository The {@link CourseRepository} to use.
      */
     @Autowired
-    public SearchService(final UserRepository userRepository, final ExperimentRepository experimentRepository) {
+    public SearchService(final UserRepository userRepository, final ExperimentRepository experimentRepository,
+                         final CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.experimentRepository = experimentRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -92,6 +102,29 @@ public class SearchService {
     }
 
     /**
+     * Retrieves a list of up to as many course search suggestions as specified in the given limit where the title
+     * matches the query string.
+     *
+     * @param query The title to search for.
+     * @param limit The maximum amount of results to return.
+     * @return A list of matching {@link CourseTableProjection}s, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<CourseTableProjection> getCourseList(final String query, final int limit) {
+        if (query == null || query.trim().isBlank()) {
+            logger.error("Cannot search for courses with invalid query string null or blank!");
+            throw new IllegalArgumentException("Cannot search for courses with invalid query string null or "
+                    + "blank!");
+        } else if (limit < Constants.PAGE_SIZE) {
+            logger.error("Cannot search for courses with invalid search result limit " + limit);
+            throw new IllegalArgumentException("Cannot search for courses with invalid search result limit "
+                    + limit);
+        }
+
+        return courseRepository.findCourseResults(query, limit, 0);
+    }
+
+    /**
      * Returns the number of users whose username or email contain the search query string.
      *
      * @param query The username or email to search for.
@@ -126,6 +159,23 @@ public class SearchService {
     }
 
     /**
+     * Returns the number of courses whose title contains the search query string.
+     *
+     * @param query The title to search for.
+     * @return The number of matching course results.
+     */
+    @Transactional
+    public int getCourseCount(final String query) {
+        if (query == null || query.trim().isBlank()) {
+            logger.error("Cannot get the number of course results with invalid query string null or blank!");
+            throw new IllegalArgumentException("Cannot get the number of course results with invalid query string "
+                    + "null or blank!");
+        }
+
+        return courseRepository.getCourseResultsCount(query);
+    }
+
+    /**
      * Retrieves a list of up to five usernames and emails where one of the two contains the search query string or up
      * to five experiment ids and titles where the title contains the query string.
      *
@@ -134,9 +184,13 @@ public class SearchService {
      */
     @Transactional
     public List<String[]> getSearchSuggestions(final String query) {
-        List<UserProjection> users = userRepository.findUserSuggestions(query);
-        List<ExperimentTableProjection> experiments = experimentRepository.findExperimentSuggestions(query);
-        List<String[]> suggestions = addExperimentInfo(experiments);
+        List<UserProjection> users = userRepository.findUserSuggestions(query, Constants.MAX_SEARCH_RESULTS);
+        List<ExperimentTableProjection> experiments = experimentRepository.findExperimentSuggestions(query,
+                Constants.MAX_SEARCH_RESULTS);
+        List<CourseTableProjection> courses = courseRepository.findCourseSuggestions(query,
+                Constants.MAX_SEARCH_RESULTS);
+        List<String[]> suggestions = addCourseInfo(courses);
+        suggestions.addAll(addExperimentInfo(experiments));
         suggestions.addAll(addUserInfo(users));
         return suggestions;
     }
@@ -152,7 +206,7 @@ public class SearchService {
     @Transactional
     public List<String[]> getUserSuggestions(final String query, final int id) {
         List<UserProjection> users = userRepository.findParticipantSuggestions(query, id);
-        return addUserInfo(users);
+        return addUserInfoSimple(users);
     }
 
     /**
@@ -166,7 +220,7 @@ public class SearchService {
     @Transactional
     public List<String[]> getUserDeleteSuggestions(final String query, final int id) {
         List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(query, id);
-        return addUserInfo(users);
+        return addUserInfoSimple(users);
     }
 
     /**
@@ -201,28 +255,73 @@ public class SearchService {
     }
 
     /**
-     * Returns a list of all usernames and emails of the users in the given list.
+     * Retrieves a list of additional course information for the search page with a maximum size as specified in
+     * the page size constant with the computed offset where the title contains the query string.
+     *
+     * @param query The title to search for.
+     * @param page The current page used to compute the offset.
+     * @return A list of ids, titles and descriptions, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<String[]> getNextCourses(final String query, final int page) {
+        int offset = Constants.PAGE_SIZE * page;
+        List<CourseTableProjection> projections = courseRepository.findCourseResults(query, Constants.PAGE_SIZE,
+                offset);
+        return addCourseTableInfo(projections);
+    }
+
+    /**
+     * Returns a list of all usernames and emails of the users in the given list along with the path to their profile
+     * page.
      *
      * @param users The list of {@link UserProjection}s.
      * @return A list of usernames and emails, or an empty list.
      */
     private List<String[]> addUserInfo(final List<UserProjection> users) {
         List<String[]> userInfo = new ArrayList<>();
+        users.forEach(user -> userInfo.add(new String[] {"/users/profile?name=" + user.getUsername(),
+                user.getUsername(), user.getEmail()}));
+        return userInfo;
+    }
+
+    /**
+     * Returns a list of all usernames and emails of the users in the given list.
+     *
+     * @param users The list of {@link UserProjection}s.
+     * @return A list of usernames and emails, or an empty list.
+     */
+    private List<String[]> addUserInfoSimple(final List<UserProjection> users) {
+        List<String[]> userInfo = new ArrayList<>();
         users.forEach(user -> userInfo.add(new String[] {user.getUsername(), user.getEmail()}));
         return userInfo;
     }
 
     /**
-     * Returns a list of all experiment ids and titles of the experiments in the given list.
+     * Returns a list of all experiment ids and titles of the experiments in the given list along with the path to their
+     * experiment page.
      *
      * @param experiments The list of {@link ExperimentTableProjection}s.
      * @return A list of experiment ids and titles, or an empty list.
      */
     private List<String[]> addExperimentInfo(final List<ExperimentTableProjection> experiments) {
         List<String[]> experimentInfo = new ArrayList<>();
-        experiments.forEach(experiment -> experimentInfo.add(new String[] {String.valueOf(experiment.getId()),
-                experiment.getTitle()}));
+        experiments.forEach(experiment -> experimentInfo.add(new String[] {"/experiment?id=" + experiment.getId(),
+                String.valueOf(experiment.getId()), experiment.getTitle()}));
         return experimentInfo;
+    }
+
+    /**
+     * Returns a list of all course ids and titles of the courses in the given list along with the path to their course
+     * page.
+     *
+     * @param courses The list of {@link CourseTableProjection}s.
+     * @return A list of course ids and titles, or an empty list.
+     */
+    private List<String[]> addCourseInfo(final List<CourseTableProjection> courses) {
+        List<String[]> courseInfo = new ArrayList<>();
+        courses.forEach(course -> courseInfo.add(new String[] {"/course?id=" + course.getId(),
+                String.valueOf(course.getId()), course.getTitle()}));
+        return courseInfo;
     }
 
     /**
@@ -249,6 +348,19 @@ public class SearchService {
         projections.forEach(projection -> experimentTableInfo.add(new String[] {String.valueOf(projection.getId()),
                 projection.getTitle(), projection.getDescription()}));
         return experimentTableInfo;
+    }
+
+    /**
+     * Returns a list of the course information contained in the retrieved list.
+     *
+     * @param projections The list of {@link CourseTableProjection}s.
+     * @return A list of course ids, titles, and descriptions or an empty list.
+     */
+    private List<String[]> addCourseTableInfo(final List<CourseTableProjection> projections) {
+        List<String[]> courseTableInfo = new ArrayList<>();
+        projections.forEach(projection -> courseTableInfo.add(new String[] {String.valueOf(projection.getId()),
+                projection.getTitle(), projection.getDescription()}));
+        return courseTableInfo;
     }
 
 }

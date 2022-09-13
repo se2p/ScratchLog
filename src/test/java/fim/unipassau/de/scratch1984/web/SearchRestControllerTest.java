@@ -40,6 +40,7 @@ public class SearchRestControllerTest {
     private List<String[]> userProjectionData;
     private List<String[]> experimentData;
     private List<String[]> experimentTableData;
+    private List<String[]> courseTableData;
 
     @BeforeEach
     public void setup() {
@@ -48,6 +49,7 @@ public class SearchRestControllerTest {
         experimentData.addAll(userData);
         addUserProjectionData(2);
         addExperimentTableData(2);
+        addCourseTableData(3);
     }
 
     @Test
@@ -100,6 +102,25 @@ public class SearchRestControllerTest {
     public void testGetMoreExperimentsPageNull() {
         assertTrue(searchRestController.getMoreExperiments(QUERY, null).isEmpty());
         verify(searchService, never()).getNextExperiments(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetMoreCourses() {
+        when(searchService.getNextCourses(QUERY, PAGE)).thenReturn(courseTableData);
+        assertEquals(3, searchRestController.getMoreCourses(QUERY, PAGE_STRING).size());
+        verify(searchService).getNextCourses(QUERY, PAGE);
+    }
+
+    @Test
+    public void testGetMoreCoursesPageBlank() {
+        assertTrue(searchRestController.getMoreCourses(QUERY, BLANK).isEmpty());
+        verify(searchService, never()).getNextCourses(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetMoreCoursesPageNull() {
+        assertTrue(searchRestController.getMoreCourses(QUERY, null).isEmpty());
+        verify(searchService, never()).getNextCourses(anyString(), anyInt());
     }
 
     @Test
@@ -183,8 +204,17 @@ public class SearchRestControllerTest {
     private void addExperimentTableData(int number) {
         experimentTableData = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            String[] userInfo = new String[]{String.valueOf(i), "experiment" + i, "description" + i};
-            experimentTableData.add(userInfo);
+            String[] experimentInfo = new String[]{String.valueOf(i), "experiment" + i, "description" + i};
+            experimentTableData.add(experimentInfo);
         }
     }
+
+    private void addCourseTableData(int number) {
+        courseTableData = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            String[] courseInfo = new String[]{String.valueOf(i), "course" + i, "description" + i};
+            courseTableData.add(courseInfo);
+        }
+    }
+
 }

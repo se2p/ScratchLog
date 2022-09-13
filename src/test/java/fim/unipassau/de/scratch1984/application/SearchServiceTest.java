@@ -1,8 +1,10 @@
 package fim.unipassau.de.scratch1984.application;
 
 import fim.unipassau.de.scratch1984.application.service.SearchService;
+import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -35,6 +37,9 @@ public class SearchServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private CourseRepository courseRepository;
+
+    @Mock
     private ExperimentRepository experimentRepository;
 
     private static final String PARTICIPANT = "PARTICIPANT";
@@ -46,6 +51,7 @@ public class SearchServiceTest {
     private static final String EMAIL3 = "part3@test.de";
     private static final String TITLE1 = "experiment1";
     private static final String TITLE2 = "experiment2";
+    private static final String TITLE3 = "Course 1";
     private static final String QUERY = "user";
     private static final String SUGGESTION_QUERY = "r";
     private static final String BLANK = "  ";
@@ -55,6 +61,7 @@ public class SearchServiceTest {
     private static final int PAGE = 1;
     private final List<UserProjection> users = addUserSuggestions();
     private final List<ExperimentTableProjection> experiments = addExperimentSuggestions();
+    private final List<CourseTableProjection> courses = addCourseSuggestions();
 
     @Test
     public void testGetUserList() {
@@ -130,6 +137,41 @@ public class SearchServiceTest {
     }
 
     @Test
+    public void testGetCourseList() {
+        when(courseRepository.findCourseResults(QUERY, LIMIT, 0)).thenReturn(courses);
+        List<CourseTableProjection> courseList = searchService.getCourseList(QUERY, LIMIT);
+        assertAll(
+                () -> assertEquals(1, courseList.size()),
+                () -> assertTrue(courseList.stream().anyMatch(course -> course.getId() == ID))
+        );
+        verify(courseRepository).findCourseResults(QUERY, LIMIT, 0);
+    }
+
+    @Test
+    public void testGetCourseListLimitInvalid() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getCourseList(QUERY, 0)
+        );
+        verify(courseRepository, never()).findCourseResults(anyString(), anyInt(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseListQueryBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getCourseList(BLANK, LIMIT)
+        );
+        verify(courseRepository, never()).findCourseResults(anyString(), anyInt(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseListQueryNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getCourseList(null, LIMIT)
+        );
+        verify(courseRepository, never()).findCourseResults(anyString(), anyInt(), anyInt());
+    }
+
+    @Test
     public void testGetUserCount() {
         when(userRepository.getUserResultsCount(QUERY)).thenReturn(COUNT);
         assertEquals(COUNT, searchService.getUserCount(QUERY));
@@ -176,28 +218,57 @@ public class SearchServiceTest {
     }
 
     @Test
+    public void testGetCourseCount() {
+        when(courseRepository.getCourseResultsCount(QUERY)).thenReturn(COUNT);
+        assertEquals(COUNT, searchService.getCourseCount(QUERY));
+        verify(courseRepository).getCourseResultsCount(QUERY);
+    }
+
+    @Test
+    public void testGetCourseCountQueryBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getCourseCount(BLANK)
+        );
+        verify(courseRepository, never()).getCourseResultsCount(anyString());
+    }
+
+    @Test
+    public void testGetCourseCountQueryNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> searchService.getCourseCount(null)
+        );
+        verify(courseRepository, never()).getCourseResultsCount(anyString());
+    }
+
+    @Test
     public void testGetSearchSuggestions() {
-        when(userRepository.findUserSuggestions(SUGGESTION_QUERY)).thenReturn(users);
-        when(experimentRepository.findExperimentSuggestions(SUGGESTION_QUERY)).thenReturn(experiments);
+        when(userRepository.findUserSuggestions(SUGGESTION_QUERY, Constants.MAX_SEARCH_RESULTS)).thenReturn(users);
+        when(experimentRepository.findExperimentSuggestions(SUGGESTION_QUERY,
+                Constants.MAX_SEARCH_RESULTS)).thenReturn(experiments);
+        when(courseRepository.findCourseSuggestions(SUGGESTION_QUERY,
+                Constants.MAX_SEARCH_RESULTS)).thenReturn(courses);
         List<String[]> suggestions = searchService.getSearchSuggestions(SUGGESTION_QUERY);
         assertAll(
-                () -> assertEquals(5, suggestions.size()),
-                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[1].equals(TITLE1))),
-                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[1].equals(TITLE2))),
-                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[0].equals(USERNAME1))),
-                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[0].equals(USERNAME2))),
-                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[0].equals(USERNAME3)))
+                () -> assertEquals(6, suggestions.size()),
+                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[2].equals(TITLE1))),
+                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[2].equals(TITLE2))),
+                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[1].equals(USERNAME1))),
+                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[1].equals(USERNAME2))),
+                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[1].equals(USERNAME3))),
+                () -> assertTrue(suggestions.stream().anyMatch(suggestion -> suggestion[2].equals(TITLE3)))
         );
-        verify(userRepository).findUserSuggestions(SUGGESTION_QUERY);
-        verify(experimentRepository).findExperimentSuggestions(SUGGESTION_QUERY);
+        verify(userRepository).findUserSuggestions(SUGGESTION_QUERY, Constants.MAX_SEARCH_RESULTS);
+        verify(experimentRepository).findExperimentSuggestions(SUGGESTION_QUERY, Constants.MAX_SEARCH_RESULTS);
+        verify(courseRepository).findCourseSuggestions(SUGGESTION_QUERY, Constants.MAX_SEARCH_RESULTS);
     }
 
     @Test
     public void testGetSearchSuggestionsNone() {
         List<String[]> suggestions = searchService.getSearchSuggestions(SUGGESTION_QUERY);
         assertEquals(0, suggestions.size());
-        verify(userRepository).findUserSuggestions(SUGGESTION_QUERY);
-        verify(experimentRepository).findExperimentSuggestions(SUGGESTION_QUERY);
+        verify(userRepository).findUserSuggestions(SUGGESTION_QUERY, Constants.MAX_SEARCH_RESULTS);
+        verify(experimentRepository).findExperimentSuggestions(SUGGESTION_QUERY, Constants.MAX_SEARCH_RESULTS);
+        verify(courseRepository).findCourseSuggestions(SUGGESTION_QUERY, Constants.MAX_SEARCH_RESULTS);
     }
 
     @Test
@@ -295,6 +366,19 @@ public class SearchServiceTest {
         verify(experimentRepository).findExperimentResults(QUERY, LIMIT, PAGE * LIMIT);
     }
 
+    @Test
+    public void testGetNextCourses() {
+        when(courseRepository.findCourseResults(QUERY, LIMIT, PAGE * LIMIT)).thenReturn(courses);
+        List<String[]> courseInfo = searchService.getNextCourses(QUERY, PAGE);
+        assertAll(
+                () -> assertEquals(1, courseInfo.size()),
+                () -> assertEquals(courses.get(0).getId().toString(), courseInfo.get(0)[0]),
+                () -> assertEquals(courses.get(0).getTitle(), courseInfo.get(0)[1]),
+                () -> assertEquals(courses.get(0).getDescription(), courseInfo.get(0)[2])
+        );
+        verify(courseRepository).findCourseResults(QUERY, LIMIT, PAGE * LIMIT);
+    }
+
     private List<UserProjection> addUserSuggestions() {
         List<UserProjection> projections = new ArrayList<>();
 
@@ -362,4 +446,39 @@ public class SearchServiceTest {
 
         return projections;
     }
+
+    private List<CourseTableProjection> addCourseSuggestions() {
+        List<CourseTableProjection> projections = new ArrayList<>();
+
+        for (int i = 0; i < 1; i++) {
+            int id = i + 1;
+
+            CourseTableProjection projection = new CourseTableProjection() {
+                @Override
+                public Integer getId() {
+                    return id;
+                }
+
+                @Override
+                public String getTitle() {
+                    return "Course " + id;
+                }
+
+                @Override
+                public String getDescription() {
+                    return "Description " + id;
+                }
+
+                @Override
+                public boolean isActive() {
+                    return false;
+                }
+            };
+
+            projections.add(projection);
+        }
+
+        return projections;
+    }
+
 }

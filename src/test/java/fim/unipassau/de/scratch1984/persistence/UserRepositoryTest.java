@@ -41,6 +41,7 @@ public class UserRepositoryTest {
     private static final String USER_SEARCH = "2";
     private static final String QUERY = "a";
     private static final String GUI_URL = "scratch";
+    private static final int LIMIT = 5;
     private User user1 = new User(ADMIN1, "admin1@test.de", ROLE_ADMIN, LANGUAGE, "admin1", "secret1");
     private User user2 = new User("admin2", "admin2@test.com", ROLE_ADMIN, LANGUAGE, "admin2", "secret2");
     private User user3 = new User("user1", "part1@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
@@ -120,7 +121,7 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindUserSuggestions() {
-        List<UserProjection> users = userRepository.findUserSuggestions(USER_SEARCH);
+        List<UserProjection> users = userRepository.findUserSuggestions(USER_SEARCH, LIMIT);
         assertAll(
                 () -> assertEquals(4, users.size()),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user2.getUsername()))),
@@ -132,7 +133,7 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindUserSuggestionsEmpty() {
-        List<UserProjection> users = userRepository.findUserSuggestions(LANGUAGE);
+        List<UserProjection> users = userRepository.findUserSuggestions(LANGUAGE, LIMIT);
         assertTrue(users.isEmpty());
     }
 

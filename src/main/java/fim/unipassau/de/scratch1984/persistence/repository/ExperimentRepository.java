@@ -92,14 +92,15 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
     void updateStatusById(@Param("id") int id, @Param("change") boolean change);
 
     /**
-     * Returns a list of the first five experiments whose title contains the given query value.
+     * Returns a list of the first experiments up to the given limit whose title contains the given query value.
      *
      * @param query The title to search for.
+     * @param limit The maximum number of results to return.
      * @return A list of {@link ExperimentTableProjection}s.
      */
     @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
-            + " LIMIT 5")
-    List<ExperimentTableProjection> findExperimentSuggestions(@Param("query") String query);
+            + " LIMIT :limit")
+    List<ExperimentTableProjection> findExperimentSuggestions(@Param("query") String query, @Param("limit") int limit);
 
     /**
      * Returns a list of at most as many experiments as the given limit with the given offset whose title contains the

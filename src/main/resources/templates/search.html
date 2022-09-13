@@ -33,6 +33,9 @@
                 <button class="nav-link" id="nav-experiment-tab" data-bs-toggle="tab" data-bs-target="#nav-experiment"
                         type="button" role="tab" aria-controls="nav-experiment" aria-selected="false"
                         th:text="#{search_experiment}"></button>
+                <button class="nav-link" id="nav-course-tab" data-bs-toggle="tab" data-bs-target="#nav-course"
+                        type="button" role="tab" aria-controls="nav-course" aria-selected="false"
+                        th:text="#{search_course}"></button>
             </div>
         </nav>
 
@@ -131,6 +134,50 @@
                     </a>
                 </div>
             </div>
+            <!-- The tab content containing the course search results. -->
+            <div class="tab-pane fade" id="nav-course" role="tabpanel" aria-labelledby="nav-course-tab">
+                <div class="table-container">
+                    <table class="table table-hover mt-2">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col" th:text="#{title}"></th>
+                            <th scope="col" th:text="#{description}"></th>
+                        </tr>
+                        </thead>
+                        <tbody th:if="${courses.isEmpty()}">
+                        <tr>
+                            <td colspan="3" th:text="#{table_empty}"></td>
+                        </tr>
+                        </tbody>
+                        <tbody th:unless="${courses.isEmpty()}" id="courseBody">
+                        <tr th:each="course : ${courses}">
+                            <th scope="row">
+                                <a class="no_decoration" th:href="@{/course(id=${course.id})}"
+                                   th:text="${course.id}"></a>
+                            </th>
+                            <td>
+                                <a class="no_decoration" th:href="@{/course(id=${course.id})}"
+                                   th:text="${course.title}"></a>
+                            </td>
+                            <td>
+                                <a class="no_decoration" th:href="@{/course(id=${course.id})}"
+                                   th:text="${course.description}"></a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mb-2">
+                    <span th:text="#{elements}"></span>
+                    <span th:text="${courseCount}"></span>
+                </div>
+                <div class="text-center" id="courseButton" th:if="${courseCount > limit}">
+                    <a id="courseResults" class="btn btn-outline-dark" th:aria-label="#{search_result_label}">
+                        <i aria-hidden="true" class="fas fa-angle-down"></i>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -139,6 +186,7 @@
 <script>
     const userCount = [[${userCount}]];
     const experimentCount = [[${experimentCount}]];
+    const courseCount = [[${courseCount}]];
     const pageSize = [[${T(fim.unipassau.de.scratch1984.util.Constants).PAGE_SIZE}]];
 </script>
 
