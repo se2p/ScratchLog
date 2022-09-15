@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence;
 
+import fim.unipassau.de.scratch1984.persistence.entity.Course;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseExperiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
@@ -15,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,8 +42,14 @@ public class ExperimentRepositoryTest {
     private static final String NO_RESULTS = "description";
     private static final String GUI_URL = "scratch";
     private static final int LIMIT = 5;
+    private static final int SMALL_LIMIT = 3;
+    private static final Timestamp TIMESTAMP = Timestamp.valueOf(LocalDateTime.now());
     private PageRequest pageRequest;
     private User user = new User("user", "email", "PARTICIPANT", "ENGLISH", "password", "secret");
+    private Course course1 = new Course(null, "Course 1", "Description for my course", "No info", true,
+            TIMESTAMP);
+    private Course course2 = new Course(null, "Course 2", "Description for my course", "No info", true,
+            TIMESTAMP);
     private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
             "Some postscript", false, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
@@ -56,11 +66,16 @@ public class ExperimentRepositoryTest {
     private Participant participant2 = new Participant(user, experiment2, null, null);
     private Participant participant3 = new Participant(user, experiment3, null, null);
     private Participant participant4 = new Participant(user, experiment4, null, null);
+    private CourseExperiment courseExperiment1 = new CourseExperiment(course1, experiment1, TIMESTAMP);
+    private CourseExperiment courseExperiment2 = new CourseExperiment(course2, experiment1, TIMESTAMP);
+    private CourseExperiment courseExperiment3 = new CourseExperiment(course1, experiment2, TIMESTAMP);
 
     @BeforeEach
     public void setup() {
         pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
         user = entityManager.persist(user);
+        course1 = entityManager.persist(course1);
+        course2 = entityManager.persist(course2);
         experiment1 = entityManager.persist(experiment1);
         experiment2 = entityManager.persist(experiment2);
         experiment3 = entityManager.persist(experiment3);
@@ -71,6 +86,9 @@ public class ExperimentRepositoryTest {
         participant2 = entityManager.persist(participant2);
         participant3 = entityManager.persist(participant3);
         participant4 = entityManager.persist(participant4);
+        courseExperiment1 = entityManager.persist(courseExperiment1);
+        courseExperiment2 = entityManager.persist(courseExperiment2);
+        courseExperiment3 = entityManager.persist(courseExperiment3);
     }
 
     @Test
@@ -126,6 +144,61 @@ public class ExperimentRepositoryTest {
     @Test
     public void testFindExperimentSuggestionsNoResults() {
         List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(NO_RESULTS, LIMIT);
+        assertTrue(experiments.isEmpty());
+    }
+
+    @Test
+    public void testFindCourseExperimentSuggestions() {
+        List<ExperimentTableProjection> experiments = repository.findCourseExperimentSuggestions(TITLE_QUERY,
+                course1.getId(), LIMIT);
+        assertAll(
+                () -> assertEquals(2, experiments.size()),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment3.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment4.getTitle())))
+        );
+    }
+
+    @Test
+    public void testFindCourseExperimentSuggestionsLimit() {
+        List<ExperimentTableProjection> experiments = repository.findCourseExperimentSuggestions(SHORT_QUERY,
+                course2.getId(), SMALL_LIMIT);
+        assertAll(
+                () -> assertEquals(3, experiments.size()),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment2.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment3.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment4.getTitle())))
+        );
+    }
+
+    @Test
+    public void testFindCourseExperimentSuggestionsNoResults() {
+        List<ExperimentTableProjection> experiments = repository.findCourseExperimentSuggestions(NO_RESULTS,
+                course1.getId(), LIMIT);
+        assertTrue(experiments.isEmpty());
+    }
+
+    @Test
+    public void testFindCourseExperimentDeleteSuggestions() {
+        List<ExperimentTableProjection> experiments = repository.findCourseExperimentDeleteSuggestions(TITLE_QUERY,
+                course1.getId(), LIMIT);
+        assertAll(
+                () -> assertEquals(2, experiments.size()),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment1.getTitle()))),
+                () -> assertTrue(experiments.stream().anyMatch(experiment
+                        -> experiment.getTitle().equals(experiment2.getTitle())))
+        );
+    }
+
+    @Test
+    public void testFindCourseExperimentDeleteSuggestionsNoResults() {
+        List<ExperimentTableProjection> experiments = repository.findCourseExperimentDeleteSuggestions(NO_RESULTS,
+                course1.getId(), LIMIT);
         assertTrue(experiments.isEmpty());
     }
 

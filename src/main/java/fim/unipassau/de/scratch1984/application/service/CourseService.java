@@ -4,9 +4,16 @@ import fim.unipassau.de.scratch1984.application.exception.IncompleteDataExceptio
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.persistence.entity.Course;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseExperiment;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseExperimentId;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
+import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import org.slf4j.Logger;
@@ -15,7 +22,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityNotFoundException;
+import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -45,19 +56,35 @@ public class CourseService {
     private final CourseExperimentRepository courseExperimentRepository;
 
     /**
+     * The experiment repository to use for database queries related to experiment data.
+     */
+    private final ExperimentRepository experimentRepository;
+
+    /**
+     * The user repository to use for database queries related to user data.
+     */
+    private final UserRepository userRepository;
+
+    /**
      * Constructs a new course service with the given dependencies.
      *
      * @param courseRepository The {@link CourseRepository} to use.
      * @param courseParticipantRepository The {@link CourseParticipantRepository} to use.
      * @param courseExperimentRepository The {@link CourseExperimentRepository} to use.
+     * @param experimentRepository The {@link ExperimentRepository} to use.
+     * @param userRepository The {@link UserRepository} to use.
      */
     @Autowired
     public CourseService(final CourseRepository courseRepository,
                          final CourseParticipantRepository courseParticipantRepository,
-                         final CourseExperimentRepository courseExperimentRepository) {
+                         final CourseExperimentRepository courseExperimentRepository,
+                         final ExperimentRepository experimentRepository,
+                         final UserRepository userRepository) {
         this.courseRepository = courseRepository;
         this.courseParticipantRepository = courseParticipantRepository;
         this.courseExperimentRepository = courseExperimentRepository;
+        this.experimentRepository = experimentRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -98,6 +125,30 @@ public class CourseService {
     }
 
     /**
+     * Checks, whether a course experiment entry exists for the course with the given id and the experiment with the
+     * given title.
+     *
+     * @param experimentTitle The title of the experiment.
+     * @param courseId The id of the course.
+     * @return {@code true} if such an entry exists, or {@code false} if not.
+     */
+    @Transactional
+    public boolean existsCourseExperiment(final int courseId, final String experimentTitle) {
+        if (experimentTitle == null || experimentTitle.trim().isBlank() || courseId < Constants.MIN_ID) {
+            return false;
+        }
+
+        Course course = courseRepository.getOne(courseId);
+        Experiment experiment = experimentRepository.findByTitle(experimentTitle);
+
+        try {
+            return experiment != null && courseExperimentRepository.existsByCourseAndExperiment(course, experiment);
+        } catch (EntityNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
      * Creates a new course or updates an existing one with the given parameters in the database. If the DTO contains
      * invalid attribute values, an {@link IncompleteDataException} is thrown. If the information could not be persisted
      * correctly, a {@link StoreException} is thrown instead.
@@ -130,6 +181,85 @@ public class CourseService {
     }
 
     /**
+     * Creates a new {@link CourseExperiment} entry for the course with the given id and the experiment with the given
+     * title. If the passed parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no
+     * corresponding course or experiment entry could be found an {@link EntityNotFoundException} or a
+     * {@link ConstraintViolationException} is thrown instead.
+     *
+     * @param courseId The id of the course.
+     * @param experimentTitle The title of the experiment.
+     */
+    @Transactional
+    public void saveCourseExperiment(final int courseId, final String experimentTitle) {
+        if (experimentTitle == null || experimentTitle.trim().isBlank() || courseId < Constants.MIN_ID) {
+            logger.error("Cannot save course experiment with experiment title null or blank or invalid course id!");
+            throw new IllegalArgumentException("Cannot save course experiment with experiment title null or blank or "
+                    + "invalid course id!");
+        }
+
+        Course course = courseRepository.getOne(courseId);
+        Experiment experiment = experimentRepository.findByTitle(experimentTitle);
+
+        try {
+            if (experiment == null) {
+                logger.error("Could not find the experiment with title " + experimentTitle + " when trying to add a "
+                        + "course experiment!");
+                throw new NotFoundException("Could not find the experiment with title " + experimentTitle
+                        + " when trying to add a course experiment!");
+            }
+
+            CourseExperiment courseExperiment = new CourseExperiment(course, experiment,
+                    Timestamp.valueOf(LocalDateTime.now()));
+            course.setLastChanged(courseExperiment.getAdded());
+            courseExperimentRepository.save(courseExperiment);
+            courseRepository.save(course);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the course when saving the course experiment data!", e);
+            throw new NotFoundException("Could not find the course when saving the course experiment data!", e);
+        } catch (ConstraintViolationException e) {
+            logger.error("The given course experiment data does not meet the foreign key constraints!", e);
+            throw new StoreException("The given course experiment data does not meet the foreign key constraints!", e);
+        }
+    }
+
+    /**
+     * Deletes the course experiment entry for the course with the given id and the experiment with the given title from
+     * the database. If the passed parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no
+     * corresponding course or experiment entry could be found an {@link EntityNotFoundException} is thrown.
+     *
+     * @param courseId The id of the course.
+     * @param experimentTitle The title of the experiment.
+     */
+    @Transactional
+    public void deleteCourseExperiment(final int courseId, final String experimentTitle) {
+        if (experimentTitle == null || experimentTitle.trim().isBlank() || courseId < Constants.MIN_ID) {
+            logger.error("Cannot delete course experiment with experiment title null or blank or invalid course id!");
+            throw new IllegalArgumentException("Cannot delete course experiment with experiment title null or blank or "
+                    + "invalid course id!");
+        }
+
+        Course course = courseRepository.getOne(courseId);
+        Experiment experiment = experimentRepository.findByTitle(experimentTitle);
+
+        try {
+            if (experiment == null) {
+                logger.error("Could not find the experiment with title " + experimentTitle + " when trying to delete a "
+                        + "course experiment!");
+                throw new NotFoundException("Could not find the experiment with title " + experimentTitle
+                        + " when trying to delete a course experiment!");
+            }
+
+            CourseExperimentId courseExperimentId = new CourseExperimentId(courseId, experiment.getId());
+            course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
+            courseExperimentRepository.deleteById(courseExperimentId);
+            courseRepository.save(course);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the course when deleting the course experiment data!", e);
+            throw new NotFoundException("Could not find the course when deleting the course experiment data!", e);
+        }
+    }
+
+    /**
      * Returns a {@link CourseDTO} containing the information about the course with the specified id. If no such course
      * exists, a {@link NotFoundException} is thrown instead.
      *
@@ -151,6 +281,83 @@ public class CourseService {
         }
 
         return createCourseDTO(course.get());
+    }
+
+    /**
+     * Changes the status of the course with the given id to the given status value. Additionally, the status of all
+     * experiments that are part of the course and all users participating in the course is updated accordingly.
+     *
+     * @param status The new status.
+     * @param id The course id.
+     * @return The updated course data.
+     */
+    @Transactional
+    public CourseDTO changeCourseStatus(final boolean status, final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot update status for course with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot update status for course with invalid id " + id + "!");
+        }
+
+        Course course = courseRepository.getOne(id);
+
+        try {
+            List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+            List<CourseParticipant> courseParticipants = courseParticipantRepository.findAllByCourse(course);
+            courseExperiments.forEach(courseExperiment -> updateExperimentStatus(status,
+                    courseExperiment.getExperiment()));
+            courseParticipants.forEach(courseParticipant -> updateUserStatus(status, courseParticipant.getUser()));
+            course.setActive(status);
+            course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
+            courseRepository.save(course);
+            Optional<Course> updated = courseRepository.findById(id);
+
+            if (updated.isEmpty()) {
+                logger.error("The course with the id " + id + " can no longer be found after updating its status!");
+                throw new IllegalStateException("The course with the id " + id + " can no longer be found after "
+                        + "updating its status!");
+            } else {
+                return createCourseDTO(updated.get());
+            }
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not update the status for non-existent course with id " + id + "!");
+            throw new NotFoundException("Could not update the status for non-existent course with id " + id + "!");
+        }
+    }
+
+    /**
+     * Changes the activation status of the given experiment according to the passed status. If the experiment is part
+     * of multiple courses, it will not be deactivated.
+     *
+     * @param status The status to change to.
+     * @param experiment The {@link Experiment} to update.
+     */
+    private void updateExperimentStatus(final boolean status, final Experiment experiment) {
+        if (status) {
+            experimentRepository.updateStatusById(experiment.getId(), true);
+        } else {
+            List<CourseExperiment> courses = courseExperimentRepository.findAllByExperiment(experiment);
+
+            if (courses.size() <= 1) {
+                experimentRepository.updateStatusById(experiment.getId(), false);
+            }
+        }
+    }
+
+    /**
+     * Changes the activation status of the user with the given id according to the passed status.
+     *
+     * @param status The status to change to.
+     * @param user The {@link User} to be updated.
+     */
+    private void updateUserStatus(final boolean status, final User user) {
+        if (status) {
+            user.setActive(true);
+        } else {
+            user.setActive(false);
+            user.setSecret(null);
+        }
+
+        userRepository.save(user);
     }
 
     /**

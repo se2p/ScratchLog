@@ -1,9 +1,11 @@
 package fim.unipassau.de.scratch1984.application.service;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.persistence.entity.Course;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.persistence.projection.CourseExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseExperimentRepository;
@@ -122,17 +124,45 @@ public class PageService {
     @Transactional
     public Page<CourseTableProjection> getCoursePage(final Pageable pageable) {
         checkPageable(pageable);
-        int pageSize = pageable.getPageSize();
-        int currentPage = pageable.getPageNumber();
 
-        Page<CourseTableProjection> courses = courseRepository.findAllProjectedBy(pageable);
+        Page<CourseTableProjection> courses = courseRepository.findAllProjectedBy(
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id").descending()));
 
         if (courses.isEmpty()) {
-            logger.info("Could not find any courses for the page with page size of " + pageSize
-                    + ", current page of " + currentPage + " and offset of " + pageable.getOffset() + "!");
+            logger.info("Could not find any courses for the page with page size of " + pageable.getPageSize()
+                    + ", current page of " + pageable.getPageNumber() + " and offset of " + pageable.getOffset() + "!");
         }
 
         return courses;
+    }
+
+    /**
+     * Returns a page of {@link CourseExperimentProjection}s containing information about the experiments that are part
+     * of this course.
+     *
+     * @param pageable The {@link Pageable} containing the page size and page number.
+     * @param courseId The id of the course.
+     * @return The course experiment page.
+     */
+    @Transactional
+    public Page<CourseExperimentProjection> getCourseExperimentPage(final Pageable pageable, final int courseId) {
+        if (courseId < Constants.MIN_ID) {
+            logger.error("Cannot return course experiment page for course with invalid id " + courseId + "!");
+            throw new IllegalArgumentException("Cannot return course experiment page for course with invalid id "
+                    + courseId + "!");
+        }
+
+        checkPageable(pageable);
+        Course course = courseRepository.getOne(courseId);
+        Page<CourseExperimentProjection> experiments = courseExperimentRepository.findAllProjectedByCourse(pageable,
+                course);
+
+        if (experiments.isEmpty()) {
+            logger.info("Could not find any course experiments for the page with page size of " + pageable.getPageSize()
+                    + ", current page of " + pageable.getPageNumber() + " and offset of " + pageable.getOffset() + "!");
+        }
+
+        return experiments;
     }
 
     /**
@@ -227,6 +257,25 @@ public class PageService {
     @Transactional
     public int computeLastCoursePage() {
         int rows = countCourseRows();
+        return computeLastPage(rows) + 1;
+    }
+
+    /**
+     * Returns the number of the last experiment page for the course with the given id.
+     *
+     * @param courseId The id of the course.
+     * @return The last page value.
+     */
+    @Transactional
+    public int getLastCourseExperimentPage(final int courseId) {
+        if (courseId < Constants.MIN_ID) {
+            logger.error("Cannot calculate the last course experiment page for course with invalid id " + courseId
+                    + "!");
+            throw new IllegalArgumentException("Cannot calculate the last course experiment page for course with "
+                    + "invalid id " + courseId + "!");
+        }
+
+        int rows = courseExperimentRepository.getCourseExperimentRowCount(courseId);
         return computeLastPage(rows) + 1;
     }
 

@@ -224,6 +224,36 @@ public class SearchService {
     }
 
     /**
+     * Retrieves a list of up to as many experiment ids and titles where the title contains the search query string and
+     * where the corresponding experiment is not yet part of the course with the given id.
+     *
+     * @param query The experiment title to search for.
+     * @param id The course id.
+     * @return A list of experiment ids and titles, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<String[]> getCourseExperimentSuggestions(final String query, final int id) {
+        List<ExperimentTableProjection> experiments = experimentRepository.findCourseExperimentSuggestions(query, id,
+                Constants.MAX_SUGGESTION_RESULTS);
+        return addExperimentInfo(experiments);
+    }
+
+    /**
+     * Retrieves a list of up to as many experiment ids and titles where the title contains the search query string and
+     * where the corresponding experiment is part of the course with the given id.
+     *
+     * @param query The experiment title to search for.
+     * @param id The course id.
+     * @return A list of experiment ids and titles, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<String[]> getCourseExperimentDeleteSuggestions(final String query, final int id) {
+        List<ExperimentTableProjection> experiments = experimentRepository.findCourseExperimentDeleteSuggestions(query,
+                id, Constants.MAX_SUGGESTION_RESULTS);
+        return addExperimentInfo(experiments);
+    }
+
+    /**
      * Retrieves a list of additional user information for the search page with a maximum size as specified in the page
      * size constant with the computed offset where the username or email contain the search query string.
      *

@@ -359,6 +359,76 @@ public class SearchRestControllerIntegrationTest {
         verify(searchService, never()).getUserDeleteSuggestions(anyString(), anyInt());
     }
 
+    @Test
+    public void testGetCourseExperimentSuggestions() throws Exception {
+        when(searchService.getCourseExperimentSuggestions(QUERY, ID)).thenReturn(experimentTableData);
+        mvc.perform(get("/search/course/experiment")
+                        .param(QUERY_PARAM, QUERY)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$.[0].[0]").value("0"))
+                .andExpect(jsonPath("$.[0].[1]").value("experiment0"))
+                .andExpect(jsonPath("$.[0].[2]").value("description0"))
+                .andExpect(jsonPath("$.[1].[0]").value("1"))
+                .andExpect(jsonPath("$.[1].[1]").value("experiment1"))
+                .andExpect(jsonPath("$.[1].[2]").value("description1"));
+        verify(searchService).getCourseExperimentSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseExperimentSuggestionsInvalidParams() throws Exception {
+        mvc.perform(get("/search/course/experiment")
+                        .param(QUERY_PARAM, QUERY)
+                        .param(ID_PARAM, BLANK)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        verify(searchService, never()).getCourseExperimentSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseExperimentDeleteSuggestions() throws Exception {
+        when(searchService.getCourseExperimentDeleteSuggestions(QUERY, ID)).thenReturn(experimentTableData);
+        mvc.perform(get("/search/course/delete/experiment")
+                        .param(QUERY_PARAM, QUERY)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$.[0].[0]").value("0"))
+                .andExpect(jsonPath("$.[0].[1]").value("experiment0"))
+                .andExpect(jsonPath("$.[0].[2]").value("description0"))
+                .andExpect(jsonPath("$.[1].[0]").value("1"))
+                .andExpect(jsonPath("$.[1].[1]").value("experiment1"))
+                .andExpect(jsonPath("$.[1].[2]").value("description1"));
+        verify(searchService).getCourseExperimentDeleteSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseExperimentDeleteSuggestionsInvalidParams() throws Exception {
+        mvc.perform(get("/search/course/delete/experiment")
+                        .param(QUERY_PARAM, BLANK)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        verify(searchService, never()).getCourseExperimentDeleteSuggestions(anyString(), anyInt());
+    }
+
     private void addUserData(int number) {
         userData = new ArrayList<>();
         for (int i = 0; i < number; i++) {

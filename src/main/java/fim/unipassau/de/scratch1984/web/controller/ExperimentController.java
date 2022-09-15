@@ -878,7 +878,7 @@ public class ExperimentController {
      * @param model The {@link Model} to store the error messages.
      */
     private void validateUser(final UserDTO userDTO, final ExperimentDTO experimentDTO,
-                           final ResourceBundle resourceBundle, final Model model) {
+                              final ResourceBundle resourceBundle, final Model model) {
         if (userDTO == null) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
         } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {

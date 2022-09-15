@@ -83,7 +83,7 @@ public class SearchRestController {
      * @param page The current user result page used to compute the offset.
      * @return A list of matching suggestions, or an empty list, if no entries could be found.
      */
-    @GetMapping("users")
+    @GetMapping("/users")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getMoreUsers(@RequestParam(QUERY) final String query,
                                        @RequestParam(PAGE) final String page) {
@@ -175,6 +175,46 @@ public class SearchRestController {
 
         int experimentId = NumberParser.parseNumber(id);
         return searchService.getUserDeleteSuggestions(query, experimentId);
+    }
+
+    /**
+     * Retrieves a list of experiment ids and titles where the titles contain the search query string and the experiment
+     * is not yet part of the course with the given id.
+     *
+     * @param query The experiment title to search for.
+     * @param id The course id.
+     * @return A list of experiment ids and titles, or an empty list, if no entries could be found.
+     */
+    @GetMapping("/course/experiment")
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getCourseExperimentSuggestions(@RequestParam(QUERY) final String query,
+                                                         @RequestParam(ID) final String id) {
+        if (invalidParams(query, id)) {
+            return new ArrayList<>();
+        }
+
+        int courseId = NumberParser.parseNumber(id);
+        return searchService.getCourseExperimentSuggestions(query, courseId);
+    }
+
+    /**
+     * Retrieves a list of experiment ids and titles where the titles contain the search query string and the experiment
+     * is part of the course with the given id.
+     *
+     * @param query The experiment title to search for.
+     * @param id The course id.
+     * @return A list of experiment ids and titles, or an empty list, if no entries could be found.
+     */
+    @GetMapping("/course/delete/experiment")
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getCourseExperimentDeleteSuggestions(@RequestParam(QUERY) final String query,
+                                                               @RequestParam(ID) final String id) {
+        if (invalidParams(query, id)) {
+            return new ArrayList<>();
+        }
+
+        int courseId = NumberParser.parseNumber(id);
+        return searchService.getCourseExperimentDeleteSuggestions(query, courseId);
     }
 
     /**

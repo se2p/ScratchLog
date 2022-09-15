@@ -2,6 +2,10 @@ package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.CourseService;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
+import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +40,15 @@ public class CourseControllerTest {
     private CourseService courseService;
 
     @Mock
+    private ExperimentService experimentService;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private PageService pageService;
+
+    @Mock
     private Model model;
 
     @Mock
@@ -51,6 +64,8 @@ public class CourseControllerTest {
     private static final String TITLE = "Title";
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
+    private static final String MODEL_ERROR = "error";
+    private static final String BLANK = "  ";
     private static final LocalDateTime CHANGED = LocalDateTime.now();
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
 
@@ -163,6 +178,138 @@ public class CourseControllerTest {
         verify(bindingResult).addError(any());
         verify(courseService).existsCourse(ID, TITLE);
         verify(courseService, never()).saveCourse(any());
+    }
+
+    @Test
+    public void testAddExperiment() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(experimentService.existsExperiment(TITLE)).thenReturn(true);
+        assertEquals(REDIRECT_COURSE + ID, courseController.addExperiment(TITLE, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService).existsExperiment(TITLE);
+        verify(courseService).existsCourseExperiment(ID, TITLE);
+        verify(courseService).saveCourseExperiment(ID, TITLE);
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddExperimentEntryExists() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(experimentService.existsExperiment(TITLE)).thenReturn(true);
+        when(courseService.existsCourseExperiment(ID, TITLE)).thenReturn(true);
+        when(model.getAttribute(MODEL_ERROR)).thenReturn(TITLE);
+        assertEquals(COURSE, courseController.addExperiment(TITLE, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService).existsExperiment(TITLE);
+        verify(courseService).existsCourseExperiment(ID, TITLE);
+        verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddExperimentNotExistent() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(model.getAttribute(MODEL_ERROR)).thenReturn(TITLE);
+        assertEquals(COURSE, courseController.addExperiment(TITLE, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService).existsExperiment(TITLE);
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddExperimentInvalidInput() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        assertEquals(COURSE, courseController.addExperiment(BLANK, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService, never()).existsExperiment(anyString());
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddExperimentCourseInactive() {
+        courseDTO.setActive(false);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        assertEquals(Constants.ERROR, courseController.addExperiment(TITLE, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService, never()).existsExperiment(anyString());
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddExperimentCourseNotFound() {
+        when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, courseController.addExperiment(TITLE, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService, never()).existsExperiment(anyString());
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddExperimentInvalidId() {
+        assertEquals(Constants.ERROR, courseController.addExperiment(TITLE, TITLE, model));
+        verify(courseService, never()).getCourse(anyInt());
+        verify(experimentService, never()).existsExperiment(anyString());
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteExperiment() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(experimentService.existsExperiment(TITLE)).thenReturn(true);
+        when(courseService.existsCourseExperiment(ID, TITLE)).thenReturn(true);
+        assertEquals(REDIRECT_COURSE + ID, courseController.deleteExperiment(TITLE, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService).existsExperiment(TITLE);
+        verify(courseService).existsCourseExperiment(ID, TITLE);
+        verify(courseService).deleteCourseExperiment(ID, TITLE);
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteExperimentNoEntry() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(experimentService.existsExperiment(TITLE)).thenReturn(true);
+        when(model.getAttribute(MODEL_ERROR)).thenReturn(TITLE);
+        assertEquals(COURSE, courseController.deleteExperiment(TITLE, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService).existsExperiment(TITLE);
+        verify(courseService).existsCourseExperiment(ID, TITLE);
+        verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteExperimentNotExistent() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(model.getAttribute(MODEL_ERROR)).thenReturn(TITLE);
+        assertEquals(COURSE, courseController.deleteExperiment(TITLE, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService).existsExperiment(TITLE);
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteExperimentCourseInactive() {
+        courseDTO.setActive(false);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        assertEquals(Constants.ERROR, courseController.deleteExperiment(TITLE, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(experimentService, never()).existsExperiment(anyString());
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
     }
 
     private StringBuilder createLongString(int length) {

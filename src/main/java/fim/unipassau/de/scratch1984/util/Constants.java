@@ -107,4 +107,10 @@ public final class Constants {
      */
     public static final int MAX_SEARCH_RESULTS = 3;
 
+    /**
+     * The maximum number of search suggestions to show when searching when adding or removing participants or course
+     * experiments.
+     */
+    public static final int MAX_SUGGESTION_RESULTS = 5;
+
 }

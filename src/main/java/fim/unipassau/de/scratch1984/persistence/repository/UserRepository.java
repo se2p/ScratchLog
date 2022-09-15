@@ -80,6 +80,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findAllByRole(String role);
 
     /**
+     * Returns the user with the highest user id currently existing in the database.
+     *
+     * @return The user.
+     */
+    User findFirstByOrderByIdDesc();
+
+    /**
      * Returns a list of the first users up to the given limit whose email or username contain the given query value.
      *
      * @param query The username or email to search for.
@@ -139,13 +146,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.id IN (SELECT p.user_id FROM participant AS p WHERE "
             + "p.experiment_id = :id) LIMIT 5;")
     List<UserProjection> findDeleteParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
-
-    /**
-     * Returns the user with the highest user id currently existing in the database.
-     *
-     * @return The user.
-     */
-    User findFirstByOrderByIdDesc();
 
     /**
      * Returns an optional {@link UserProjection} containing information on the username starting with the given name

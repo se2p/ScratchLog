@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -173,6 +174,34 @@ public class SearchRestControllerTest {
     public void testGetDeleteUserSuggestionsInvalidParams() {
         assertTrue(searchRestController.getDeleteUserSuggestions(BLANK, "0").isEmpty());
         verify(searchService, never()).getUserDeleteSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseExperimentSuggestions() {
+        when(searchService.getCourseExperimentSuggestions(QUERY, ID)).thenReturn(experimentTableData);
+        List<String[]> data = searchRestController.getCourseExperimentSuggestions(QUERY, ID_STRING);
+        assertEquals(2, data.size());
+        verify(searchService).getCourseExperimentSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseExperimentSuggestionsInvalidParams() {
+        assertTrue(searchRestController.getCourseExperimentSuggestions(null, ID_STRING).isEmpty());
+        verify(searchService, never()).getCourseExperimentSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseExperimentDeleteSuggestions() {
+        when(searchService.getCourseExperimentDeleteSuggestions(QUERY, ID)).thenReturn(experimentTableData);
+        List<String[]> data = searchRestController.getCourseExperimentDeleteSuggestions(QUERY, ID_STRING);
+        assertEquals(2, data.size());
+        verify(searchService).getCourseExperimentDeleteSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseExperimentDeleteSuggestionsInvalidParams() {
+        assertTrue(searchRestController.getCourseExperimentDeleteSuggestions(QUERY, QUERY).isEmpty());
+        verify(searchService, never()).getCourseExperimentDeleteSuggestions(anyString(), anyInt());
     }
 
     private void addUserData(int number) {

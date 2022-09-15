@@ -2,7 +2,11 @@ package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.CourseService;
+import fim.unipassau.de.scratch1984.application.service.ExperimentService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
+import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import org.junit.jupiter.api.AfterEach;
@@ -25,8 +29,10 @@ import org.springframework.web.context.WebApplicationContext;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -52,6 +58,15 @@ public class CourseControllerIntegrationTest {
     @MockBean
     private CourseService courseService;
 
+    @MockBean
+    private ExperimentService experimentService;
+
+    @MockBean
+    private UserService userService;
+
+    @MockBean
+    private PageService pageService;
+
     private static final String COURSE = "course";
     private static final String REDIRECT_COURSE = "redirect:/course?id=";
     private static final String COURSE_EDIT = "course-edit";
@@ -59,6 +74,7 @@ public class CourseControllerIntegrationTest {
     private static final String COURSE_DTO = "courseDTO";
     private static final String ID_STRING = "1";
     private static final String ID_PARAM = "id";
+    private static final String TITLE_PARAM = "title";
     private static final int ID = 1;
     private static final String TITLE = "Title";
     private static final String DESCRIPTION = "Description";
@@ -198,6 +214,118 @@ public class CourseControllerIntegrationTest {
                 .andExpect(view().name(COURSE_EDIT));
         verify(courseService).existsCourse(ID, "");
         verify(courseService, never()).saveCourse(any());
+    }
+
+    @Test
+    public void testAddExperiment() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(experimentService.existsExperiment(TITLE)).thenReturn(true);
+        mvc.perform(get("/course/experiment/add")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(TITLE_PARAM, TITLE)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_COURSE + ID));
+        verify(courseService).getCourse(ID);
+        verify(experimentService).existsExperiment(TITLE);
+        verify(courseService).existsCourseExperiment(ID, TITLE);
+        verify(courseService).saveCourseExperiment(ID, TITLE);
+    }
+
+    @Test
+    public void testAddExperimentNotExistent() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/experiment/add")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(TITLE_PARAM, TITLE)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(COURSE))
+                .andExpect(model().attribute("error", notNullValue()));
+        verify(courseService).getCourse(ID);
+        verify(experimentService).existsExperiment(TITLE);
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
+    }
+
+    @Test
+    public void testAddExperimentInvalidId() throws Exception {
+        mvc.perform(get("/course/experiment/add")
+                        .param(ID_PARAM, "0")
+                        .param(TITLE_PARAM, TITLE)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(courseService, never()).getCourse(anyInt());
+        verify(experimentService, never()).existsExperiment(anyString());
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
+    }
+
+    @Test
+    public void testDeleteExperiment() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(experimentService.existsExperiment(TITLE)).thenReturn(true);
+        when(courseService.existsCourseExperiment(ID, TITLE)).thenReturn(true);
+        mvc.perform(get("/course/experiment/delete")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(TITLE_PARAM, TITLE)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_COURSE + ID));
+        verify(courseService).getCourse(ID);
+        verify(experimentService).existsExperiment(TITLE);
+        verify(courseService).existsCourseExperiment(ID, TITLE);
+        verify(courseService).deleteCourseExperiment(ID, TITLE);
+    }
+
+    @Test
+    public void testDeleteExperimentInvalidInput() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/experiment/delete")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(TITLE_PARAM, "  ")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(COURSE))
+                .andExpect(model().attribute("error", notNullValue()));
+        verify(courseService).getCourse(ID);
+        verify(experimentService, never()).existsExperiment(anyString());
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
+    }
+
+    @Test
+    public void testDeleteExperimentNotFound() throws Exception {
+        when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/course/experiment/delete")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(TITLE_PARAM, TITLE)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(courseService).getCourse(ID);
+        verify(experimentService, never()).existsExperiment(anyString());
+        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
     }
 
 }

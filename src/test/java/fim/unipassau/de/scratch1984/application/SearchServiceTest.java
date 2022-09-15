@@ -324,6 +324,56 @@ public class SearchServiceTest {
     }
 
     @Test
+    public void testGetCourseExperimentSuggestions() {
+        when(experimentRepository.findCourseExperimentSuggestions(SUGGESTION_QUERY, ID,
+                Constants.MAX_SUGGESTION_RESULTS)).thenReturn(experiments);
+        List<String[]> experimentInfo = searchService.getCourseExperimentSuggestions(SUGGESTION_QUERY, ID);
+        String[] firstExperiment = experimentInfo.get(0);
+        String[] secondExperiment = experimentInfo.get(1);
+        assertAll(
+                () -> assertEquals(2, experimentInfo.size()),
+                () -> assertEquals("1", firstExperiment[1]),
+                () -> assertEquals(TITLE1, firstExperiment[2]),
+                () -> assertEquals("2", secondExperiment[1]),
+                () -> assertEquals(TITLE2, secondExperiment[2])
+        );
+        verify(experimentRepository).findCourseExperimentSuggestions(SUGGESTION_QUERY, ID,
+                Constants.MAX_SUGGESTION_RESULTS);
+    }
+
+    @Test
+    public void testGetCourseExperimentSuggestionsNone() {
+        assertEquals(0, searchService.getCourseExperimentSuggestions(SUGGESTION_QUERY, ID).size());
+        verify(experimentRepository).findCourseExperimentSuggestions(SUGGESTION_QUERY, ID,
+                Constants.MAX_SUGGESTION_RESULTS);
+    }
+
+    @Test
+    public void testGetCourseExperimentDeleteSuggestions() {
+        when(experimentRepository.findCourseExperimentDeleteSuggestions(SUGGESTION_QUERY, ID,
+                Constants.MAX_SUGGESTION_RESULTS)).thenReturn(experiments);
+        List<String[]> experimentInfo = searchService.getCourseExperimentDeleteSuggestions(SUGGESTION_QUERY, ID);
+        String[] firstExperiment = experimentInfo.get(0);
+        String[] secondExperiment = experimentInfo.get(1);
+        assertAll(
+                () -> assertEquals(2, experimentInfo.size()),
+                () -> assertEquals("1", firstExperiment[1]),
+                () -> assertEquals(TITLE1, firstExperiment[2]),
+                () -> assertEquals("2", secondExperiment[1]),
+                () -> assertEquals(TITLE2, secondExperiment[2])
+        );
+        verify(experimentRepository).findCourseExperimentDeleteSuggestions(SUGGESTION_QUERY, ID,
+                Constants.MAX_SUGGESTION_RESULTS);
+    }
+
+    @Test
+    public void testGetCourseExperimentDeleteSuggestionsNone() {
+        assertEquals(0, searchService.getCourseExperimentDeleteSuggestions(SUGGESTION_QUERY, ID).size());
+        verify(experimentRepository).findCourseExperimentDeleteSuggestions(SUGGESTION_QUERY, ID,
+                Constants.MAX_SUGGESTION_RESULTS);
+    }
+
+    @Test
     public void testGetNextUsers() {
         when(userRepository.findUserResults(QUERY, LIMIT, PAGE * LIMIT)).thenReturn(users);
         List<String[]> userInfo = searchService.getNextUsers(QUERY, PAGE);
