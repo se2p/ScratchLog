@@ -15,6 +15,7 @@ import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
+import fim.unipassau.de.scratch1984.util.PageUtils;
 import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.util.validation.StringValidator;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -172,9 +173,10 @@ public class ExperimentController {
     @Secured(Constants.ROLE_PARTICIPANT)
     public String getExperiment(@RequestParam(ID) final String id, final Model model,
                                 final HttpServletRequest httpServletRequest) {
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot return the experiment page with an invalid id parameter!");
             return Constants.ERROR;
         }
 
@@ -232,9 +234,10 @@ public class ExperimentController {
     @GetMapping("/edit")
     @Secured(Constants.ROLE_ADMIN)
     public String getEditExperimentForm(@RequestParam(ID) final String id, final Model model) {
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot return the experiment edit page with an invalid id parameter!");
             return Constants.ERROR;
         }
 
@@ -308,9 +311,10 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot delete the experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
@@ -345,16 +349,16 @@ public class ExperimentController {
      * @param id The id of the experiment.
      * @param status The new status of the experiment.
      * @param model The model to hold the information.
-     * @param httpServletRequest The {@link HttpServletRequest}.
      * @return The experiment page.
      */
     @GetMapping("/status")
     @Secured(Constants.ROLE_ADMIN)
     public String changeExperimentStatus(@RequestParam("stat") final String status, @RequestParam(ID) final String id,
-                                         final Model model, final HttpServletRequest httpServletRequest) {
-        int experimentId = parseId(id);
+                                         final Model model) {
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID || status == null) {
+            logger.error("Cannot change the status of the experiment with invalid id or status parameters!");
             return Constants.ERROR;
         }
 
@@ -368,7 +372,7 @@ public class ExperimentController {
                 if (!ApplicationProperties.MAIL_SERVER) {
                     return REDIRECT_SECRET_LIST + experimentId;
                 } else {
-                    userDTOS.forEach(userDTO -> sendEmail(userDTO, id, httpServletRequest));
+                    userDTOS.forEach(userDTO -> sendEmail(userDTO, id));
                 }
             } else if (status.equals("close")) {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
@@ -401,9 +405,10 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String searchForUser(@RequestParam("participant") final String search, @RequestParam(ID) final String id,
                                 final Model model, final HttpServletRequest httpServletRequest) {
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot search for a user to add as participant with an invalid experiment id!");
             return Constants.ERROR;
         }
 
@@ -441,7 +446,7 @@ public class ExperimentController {
 
         if (!ApplicationProperties.MAIL_SERVER) {
             return REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + experimentId;
-        } else if (sendEmail(userDTO, id, httpServletRequest)) {
+        } else if (sendEmail(userDTO, id)) {
             return REDIRECT_EXPERIMENT + id;
         } else {
             return Constants.ERROR;
@@ -461,12 +466,12 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String getNextPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
                               final Model model) {
-        if (checkParams(id, currentPage)) {
+        if (PageUtils.isInvalidParams(id, currentPage)) {
             return Constants.ERROR;
         }
 
         int current = NumberParser.parseNumber(currentPage);
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
@@ -493,12 +498,12 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String getPreviousPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
                                   final Model model) {
-        if (checkParams(id, currentPage)) {
+        if (PageUtils.isInvalidParams(id, currentPage)) {
             return Constants.ERROR;
         }
 
         int current = NumberParser.parseNumber(currentPage);
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
@@ -523,7 +528,7 @@ public class ExperimentController {
     @GetMapping("/first")
     @Secured(Constants.ROLE_ADMIN)
     public String getFirstPage(@RequestParam(ID) final String id, final Model model) {
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             return Constants.ERROR;
@@ -550,7 +555,7 @@ public class ExperimentController {
     @GetMapping("/last")
     @Secured(Constants.ROLE_ADMIN)
     public String getLastPage(@RequestParam(ID) final String id, final Model model) {
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             return Constants.ERROR;
@@ -584,7 +589,7 @@ public class ExperimentController {
             throw new IncompleteDataException("Cannot download CSV file for experiment with id null!");
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot download CSV file for experiment with invalid id " + id + "!");
@@ -641,7 +646,7 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot upload project file for experiment with invalid id " + id + "!");
@@ -694,7 +699,7 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot delete project file for experiment with invalid id " + id + "!");
@@ -715,17 +720,15 @@ public class ExperimentController {
      *
      * @param userDTO The user to whom the email should be sent.
      * @param experimentId The id of the experiment in which the user is participating.
-     * @param httpServletRequest The {@link HttpServletRequest}.
      * @return {@code true} if the message has been sent successfully or {@code false} otherwise.
      */
-    private boolean sendEmail(final UserDTO userDTO, final String experimentId,
-                              final HttpServletRequest httpServletRequest) {
+    private boolean sendEmail(final UserDTO userDTO, final String experimentId) {
         if (userDTO.getEmail() == null) {
             logger.error("Cannot send invitation mail to user with email null!");
             return false;
         }
 
-        Map<String, Object> templateModel = getTemplateModel(experimentId, userDTO.getSecret(), httpServletRequest);
+        Map<String, Object> templateModel = getTemplateModel(experimentId, userDTO.getSecret());
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
@@ -744,11 +747,9 @@ public class ExperimentController {
      *
      * @param id The id of the experiment.
      * @param secret The user's secret.
-     * @param httpServletRequest The servlet request.
      * @return The map containing the base URL and the experiment URL.
      */
-    private Map<String, Object> getTemplateModel(final String id, final String secret,
-                                                 final HttpServletRequest httpServletRequest) {
+    private Map<String, Object> getTemplateModel(final String id, final String secret) {
         String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
                 + "/users/authenticate?id=" + id + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();
@@ -790,46 +791,6 @@ public class ExperimentController {
         model.addAttribute("passwordDTO", new PasswordDTO());
         model.addAttribute("participants", participants);
         return true;
-    }
-
-    /**
-     * Checks, whether the passed id and current page are valid numbers.
-     *
-     * @param id The id to be checked.
-     * @param currentPage The page number to be checked.
-     * @return {@code true} if any of the given strings is not a valid number, or {@code false} otherwise.
-     */
-    private boolean checkParams(final String id, final String currentPage) {
-        if (currentPage == null) {
-            return true;
-        }
-
-        int current = NumberParser.parseNumber(currentPage);
-        int experimentId = parseId(id);
-
-        return experimentId < Constants.MIN_ID || current <= -1;
-    }
-
-    /**
-     * Parses the given string to a number, or returns -1, if the id is null or an invalid number.
-     *
-     * @param id The id to check.
-     * @return The number corresponding to the id, if it is a valid number, or -1 otherwise.
-     */
-    private int parseId(final String id) {
-        if (id == null) {
-            logger.debug("Cannot return the corresponding experiment page for experiment with id null!");
-            return -1;
-        }
-
-        int experimentId = NumberParser.parseNumber(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            logger.debug("Cannot return the corresponding experiment page for experiment with invalid id "
-                    + experimentId + "!");
-        }
-
-        return experimentId;
     }
 
     /**

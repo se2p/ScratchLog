@@ -5,6 +5,8 @@ import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.projection.CourseExperimentProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
@@ -17,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -27,6 +32,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -70,12 +77,17 @@ public class CourseControllerIntegrationTest {
     private static final String COURSE = "course";
     private static final String REDIRECT_COURSE = "redirect:/course?id=";
     private static final String COURSE_EDIT = "course-edit";
-    private static final String ERROR = "redirect:/error";
+    private static final String EXPERIMENT_TABLE = "course::course_experiment_table";
     private static final String COURSE_DTO = "courseDTO";
     private static final String ID_STRING = "1";
+    private static final String CURRENT = "3";
+    private static final String LAST = "5";
     private static final String ID_PARAM = "id";
     private static final String TITLE_PARAM = "title";
+    private static final String PAGE_PARAM = "page";
+    private static final String LAST_PAGE_PARAM = "lastPage";
     private static final int ID = 1;
+    private static final int LAST_PAGE = 5;
     private static final String TITLE = "Title";
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
@@ -84,6 +96,7 @@ public class CourseControllerIntegrationTest {
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
+    private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(2));
 
     @BeforeEach
     public void setUp() {
@@ -137,7 +150,7 @@ public class CourseControllerIntegrationTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(courseService).getCourse(ID);
     }
 
@@ -150,7 +163,7 @@ public class CourseControllerIntegrationTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(courseService, never()).getCourse(anyInt());
     }
 
@@ -326,6 +339,189 @@ public class CourseControllerIntegrationTest {
         verify(experimentService, never()).existsExperiment(anyString());
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
         verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
+    }
+
+    @Test
+    public void testGetNextExperimentPage() throws Exception {
+        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/next/experiment")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .param(PAGE_PARAM, CURRENT)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT_TABLE))
+                .andExpect(model().attribute("courseDTO", is(courseDTO)))
+                .andExpect(model().attribute("experiments", is(experiments)))
+                .andExpect(model().attribute("experimentPage", is(4)))
+                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetNextExperimentPageError() throws Exception {
+        mvc.perform(get("/course/next/experiment")
+                        .param(ID_PARAM, "0")
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .param(PAGE_PARAM, CURRENT)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetPreviousExperimentPage() throws Exception {
+        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/previous/experiment")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .param(PAGE_PARAM, CURRENT)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT_TABLE))
+                .andExpect(model().attribute("courseDTO", is(courseDTO)))
+                .andExpect(model().attribute("experiments", is(experiments)))
+                .andExpect(model().attribute("experimentPage", is(2)))
+                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetPreviousExperimentPageError() throws Exception {
+        mvc.perform(get("/course/previous/experiment")
+                        .param(ID_PARAM, "  ")
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .param(PAGE_PARAM, CURRENT)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetFirstExperimentPage() throws Exception {
+        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/first/experiment")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT_TABLE))
+                .andExpect(model().attribute("courseDTO", is(courseDTO)))
+                .andExpect(model().attribute("experiments", is(experiments)))
+                .andExpect(model().attribute("experimentPage", is(1)))
+                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetFirstExperimentPageError() throws Exception {
+        mvc.perform(get("/course/first/experiment")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, "-1")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetLastExperimentPage() throws Exception {
+        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/last/experiment")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT_TABLE))
+                .andExpect(model().attribute("courseDTO", is(courseDTO)))
+                .andExpect(model().attribute("experiments", is(experiments)))
+                .andExpect(model().attribute("experimentPage", is(LAST_PAGE)))
+                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetLastExperimentPageError() throws Exception {
+        mvc.perform(get("/course/last/experiment")
+                        .param(ID_PARAM, "  ")
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    private List<CourseExperimentProjection> getCourseExperiments(int number) {
+        List<CourseExperimentProjection> experiments = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            int id = i + 1;
+            CourseExperimentProjection projection = new CourseExperimentProjection() {
+                @Override
+                public ExperimentTableProjection getExperiment() {
+                    return new ExperimentTableProjection() {
+                        @Override
+                        public Integer getId() {
+                            return id;
+                        }
+
+                        @Override
+                        public String getTitle() {
+                            return "Experiment " + id;
+                        }
+
+                        @Override
+                        public String getDescription() {
+                            return "Some description";
+                        }
+
+                        @Override
+                        public boolean isActive() {
+                            return false;
+                        }
+                    };
+                }
+            };
+            experiments.add(projection);
+        }
+        return experiments;
     }
 
 }

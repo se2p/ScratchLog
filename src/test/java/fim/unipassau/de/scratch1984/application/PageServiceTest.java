@@ -2,10 +2,12 @@ package fim.unipassau.de.scratch1984.application;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.PageService;
+import fim.unipassau.de.scratch1984.persistence.entity.Course;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.projection.CourseExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseExperimentRepository;
@@ -65,11 +67,13 @@ public class PageServiceTest {
     private CourseExperimentRepository courseExperimentRepository;
 
     private static final int ID = 1;
-    private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentData experimentData = new ExperimentData(ID, 5, 3, 2);
+    private final Course course = new Course(ID, "My course", "Description", "no", false,
+            Timestamp.valueOf(LocalDateTime.now()));
     private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
     private Page<ExperimentTableProjection> experimentPage;
     private Page<CourseTableProjection> coursePage;
+    private Page<CourseExperimentProjection> courseExperimentPage;
     private final List<Participant> participantList = getParticipants(5);
     private final Page<Participant> participants = new PageImpl<>(participantList);
 
@@ -141,6 +145,40 @@ public class PageServiceTest {
         when(courseRepository.findAllProjectedBy(any(PageRequest.class))).thenReturn(coursePage);
         assertTrue(pageService.getCoursePage(pageRequest).isEmpty());
         verify(courseRepository).findAllProjectedBy(any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCourseExperimentPage() {
+        courseExperimentPage = new PageImpl<>(getCourseExperiments(2));
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseExperimentRepository.findAllProjectedByCourse(pageRequest, course)).thenReturn(courseExperimentPage);
+        Page<CourseExperimentProjection> getPage = pageService.getCourseExperimentPage(pageRequest, ID);
+        assertAll(
+                () -> assertEquals(courseExperimentPage.getTotalElements(), getPage.getTotalElements()),
+                () -> assertEquals(courseExperimentPage.stream().findFirst(), getPage.stream().findFirst()),
+                () -> assertEquals(courseExperimentPage.getSize(), getPage.getSize())
+        );
+        verify(courseRepository).getOne(ID);
+        verify(courseExperimentRepository).findAllProjectedByCourse(pageRequest, course);
+    }
+
+    @Test
+    public void testGetCourseExperimentPageEmpty() {
+        courseExperimentPage = new PageImpl<>(new ArrayList<>());
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseExperimentRepository.findAllProjectedByCourse(pageRequest, course)).thenReturn(courseExperimentPage);
+        assertTrue(pageService.getCourseExperimentPage(pageRequest, ID).isEmpty());
+        verify(courseRepository).getOne(ID);
+        verify(courseExperimentRepository).findAllProjectedByCourse(pageRequest, course);
+    }
+
+    @Test
+    public void testGetCourseExperimentInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> pageService.getCourseExperimentPage(pageRequest, 0)
+        );
+        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseExperimentRepository, never()).findAllProjectedByCourse(any(PageRequest.class), any());
     }
 
     @Test
@@ -288,6 +326,21 @@ public class PageServiceTest {
     }
 
     @Test
+    public void testGetLastCourseExperimentPage() {
+        when(courseExperimentRepository.getCourseExperimentRowCount(ID)).thenReturn(51);
+        assertEquals(6, pageService.getLastCourseExperimentPage(ID));
+        verify(courseExperimentRepository).getCourseExperimentRowCount(ID);
+    }
+
+    @Test
+    public void testGetLastCourseExperimentPageInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> pageService.getLastCourseExperimentPage(-1)
+        );
+        verify(courseExperimentRepository, never()).getCourseExperimentRowCount(anyInt());
+    }
+
+    @Test
     public void testGetLastExperimentPage() {
         when(experimentRepository.getParticipantPageCount(ID)).thenReturn(Constants.PAGE_SIZE);
         assertEquals(1, pageService.getLastExperimentPage(ID));
@@ -368,6 +421,41 @@ public class PageServiceTest {
                 @Override
                 public boolean isActive() {
                     return false;
+                }
+            };
+            experiments.add(projection);
+        }
+        return experiments;
+    }
+
+    private List<CourseExperimentProjection> getCourseExperiments(int number) {
+        List<CourseExperimentProjection> experiments = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            int id = i + 1;
+            CourseExperimentProjection projection = new CourseExperimentProjection() {
+                @Override
+                public ExperimentTableProjection getExperiment() {
+                    return new ExperimentTableProjection() {
+                        @Override
+                        public Integer getId() {
+                            return id;
+                        }
+
+                        @Override
+                        public String getTitle() {
+                            return "Experiment " + id;
+                        }
+
+                        @Override
+                        public String getDescription() {
+                            return "Some description";
+                        }
+
+                        @Override
+                        public boolean isActive() {
+                            return false;
+                        }
+                    };
                 }
             };
             experiments.add(projection);

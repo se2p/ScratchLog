@@ -9,6 +9,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjec
 import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
+import fim.unipassau.de.scratch1984.util.PageUtils;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
@@ -236,7 +237,7 @@ public class HomeController {
     }
 
     /**
-     * Loads the previous experiment page from the database. If the current page is the last page, the error page is
+     * Loads the previous experiment page from the database. If the current page is the first page, the error page is
      * displayed instead.
      *
      * @param httpServletRequest The servlet request.
@@ -510,11 +511,8 @@ public class HomeController {
      */
     private boolean isInvalidCurrent(final Pair<Integer, Integer> lastPageInformation, final int current,
                                      final int currentBoundary, final boolean isNext) {
-        if (lastPageInformation == null || current <= currentBoundary) {
-            return true;
-        } else {
-            return isNext ? current >= lastPageInformation.getFirst() : current > lastPageInformation.getFirst();
-        }
+        return lastPageInformation == null || PageUtils.isInvalidCurrentPage(current, currentBoundary,
+                lastPageInformation.getFirst(), isNext);
     }
 
     /**

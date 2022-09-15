@@ -240,17 +240,15 @@
     </div>
 </div>
 
-<!-- Script to open and close course page modals. -->
-<script type="module" th:src="@{/js/courseModals.js}"></script>
-
 <!-- Script to update the experiment and course tables on user interactions with the respective buttons. -->
-<script type="text/javascript" th:src="@{/js/coursePageTables.js}"></script>
+<script type="module" th:src="@{/js/coursePage.js}"></script>
 
 <!-- Script to fetch the course experiment and participant suggestions. -->
 <script type="text/javascript" th:src="@{/js/courseSuggestions.js}"></script>
 
 <!-- Let Thymeleaf fetch the current and the last experiment and participant page numbers. -->
 <script>
+    let courseId = [[${courseDTO.id}]];
     let experimentPage = [[${experimentPage}]];
     let lastExperimentPage = [[${lastExperimentPage}]];
 </script>

@@ -594,8 +594,7 @@ public class ExperimentControllerTest {
         when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true).thenReturn(false);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("open", ID_STRING, model,
-                httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("open", ID_STRING, model));
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, times(2)).sendEmail(anyString(), anyString(), any(), anyString());
@@ -611,7 +610,7 @@ public class ExperimentControllerTest {
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
         assertEquals(REDIRECT_SECRET_LIST + ID, experimentController.changeExperimentStatus("open",
-                ID_STRING, model, httpServletRequest));
+                ID_STRING, model));
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
@@ -624,8 +623,7 @@ public class ExperimentControllerTest {
     public void testChangeExperimentStatusClose() {
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("close", ID_STRING, model,
-                httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("close", ID_STRING, model));
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
         verify(pageService).getLastParticipantPage(ID);
@@ -639,8 +637,7 @@ public class ExperimentControllerTest {
         experimentDTO.setInfo(null);
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("close", ID_STRING, model,
-                httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("close", ID_STRING, model));
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
         verify(pageService).getLastParticipantPage(ID);
@@ -651,8 +648,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusInvalid() {
-        assertEquals(ERROR, experimentController.changeExperimentStatus("blabla", ID_STRING, model,
-                httpServletRequest));
+        assertEquals(ERROR, experimentController.changeExperimentStatus("blabla", ID_STRING, model));
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
@@ -660,21 +656,21 @@ public class ExperimentControllerTest {
     @Test
     public void testChangeExperimentStatusOpenNotFound() {
         when(experimentService.changeExperimentStatus(true, ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, experimentController.changeExperimentStatus("open", ID_STRING, model, httpServletRequest));
+        assertEquals(ERROR, experimentController.changeExperimentStatus("open", ID_STRING, model));
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     @Test
     public void testChangeExperimentStatusStatusNull() {
-        assertEquals(ERROR, experimentController.changeExperimentStatus(null, ID_STRING, model, httpServletRequest));
+        assertEquals(ERROR, experimentController.changeExperimentStatus(null, ID_STRING, model));
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
     @Test
     public void testChangeExperimentStatusIdNull() {
-        assertEquals(ERROR, experimentController.changeExperimentStatus("open", null, model, httpServletRequest));
+        assertEquals(ERROR, experimentController.changeExperimentStatus("open", null, model));
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }

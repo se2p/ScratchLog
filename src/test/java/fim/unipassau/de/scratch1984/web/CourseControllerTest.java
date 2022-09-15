@@ -5,6 +5,8 @@ import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.projection.CourseExperimentProjection;
+import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
@@ -14,10 +16,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -57,10 +65,13 @@ public class CourseControllerTest {
     private static final String COURSE = "course";
     private static final String REDIRECT_COURSE = "redirect:/course?id=";
     private static final String COURSE_EDIT = "course-edit";
-    private static final String ERROR = "redirect:/error";
+    private static final String EXPERIMENT_TABLE = "course::course_experiment_table";
     private static final String COURSE_DTO = "courseDTO";
+    private static final String CURRENT = "3";
+    private static final String LAST = "5";
     private static final String ID_STRING = "1";
     private static final int ID = 1;
+    private static final int LAST_PAGE = 5;
     private static final String TITLE = "Title";
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
@@ -68,6 +79,7 @@ public class CourseControllerTest {
     private static final String BLANK = "  ";
     private static final LocalDateTime CHANGED = LocalDateTime.now();
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
+    private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(3));
 
     @BeforeEach
     public void setUp() {
@@ -95,21 +107,21 @@ public class CourseControllerTest {
     @Test
     public void testGetEditCourseFormNotFound() {
         when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, courseController.getEditCourseForm(ID_STRING, model));
+        assertEquals(Constants.ERROR, courseController.getEditCourseForm(ID_STRING, model));
         verify(courseService).getCourse(ID);
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetEditCourseFormInvalidId() {
-        assertEquals(ERROR, courseController.getEditCourseForm("0", model));
+        assertEquals(Constants.ERROR, courseController.getEditCourseForm("0", model));
         verify(courseService, never()).getCourse(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetEditCourseFormIdNull() {
-        assertEquals(ERROR, courseController.getEditCourseForm(null, model));
+        assertEquals(Constants.ERROR, courseController.getEditCourseForm(null, model));
         verify(courseService, never()).getCourse(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
@@ -312,10 +324,154 @@ public class CourseControllerTest {
         verify(model, never()).addAttribute(anyString(), any());
     }
 
+    @Test
+    public void testGetNextExperimentPage() {
+        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getNextExperimentPage(ID_STRING, LAST, CURRENT);
+        assertAll(
+                () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
+                () -> assertEquals(courseDTO, mv.getModel().get("courseDTO")),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
+                () -> assertEquals(4, mv.getModel().get("experimentPage"))
+        );
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetNextExperimentPageInvalidCurrent() {
+        assertEquals(Constants.ERROR, courseController.getNextExperimentPage(ID_STRING, LAST, LAST).getViewName());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetNextExperimentPageInvalidParams() {
+        assertEquals(Constants.ERROR, courseController.getNextExperimentPage(ID_STRING, BLANK, LAST).getViewName());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetPreviousExperimentPage() {
+        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getPreviousExperimentPage(ID_STRING, LAST, CURRENT);
+        assertAll(
+                () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
+                () -> assertEquals(courseDTO, mv.getModel().get("courseDTO")),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
+                () -> assertEquals(2, mv.getModel().get("experimentPage"))
+        );
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetPreviousExperimentPageInvalidCurrent() {
+        assertEquals(Constants.ERROR, courseController.getPreviousExperimentPage(ID_STRING, LAST, "1").getViewName());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetPreviousExperimentPageInvalidParams() {
+        assertEquals(Constants.ERROR, courseController.getPreviousExperimentPage(ID_STRING, null, LAST).getViewName());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetPreviousExperimentPageInvalidParamsCurrent() {
+        assertEquals(Constants.ERROR, courseController.getPreviousExperimentPage(ID_STRING, LAST, BLANK).getViewName());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetFirstExperimentPage() {
+        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getFirstExperimentPage(ID_STRING, LAST);
+        assertAll(
+                () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
+                () -> assertEquals(courseDTO, mv.getModel().get("courseDTO")),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
+                () -> assertEquals(1, mv.getModel().get("experimentPage"))
+        );
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetFirstExperimentPageInvalidParams() {
+        assertEquals(Constants.ERROR, courseController.getFirstExperimentPage(BLANK, LAST).getViewName());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetLastExperimentPage() {
+        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getLastExperimentPage(ID_STRING, LAST);
+        assertAll(
+                () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
+                () -> assertEquals(courseDTO, mv.getModel().get("courseDTO")),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("experimentPage"))
+        );
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetLastExperimentPageInvalidParams() {
+        assertEquals(Constants.ERROR, courseController.getLastExperimentPage(ID_STRING, "-1").getViewName());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
     private StringBuilder createLongString(int length) {
         StringBuilder longString = new StringBuilder();
         longString.append("a".repeat(Math.max(0, length)));
         return longString;
+    }
+
+    private List<CourseExperimentProjection> getCourseExperiments(int number) {
+        List<CourseExperimentProjection> experiments = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            int id = i + 1;
+            CourseExperimentProjection projection = new CourseExperimentProjection() {
+                @Override
+                public ExperimentTableProjection getExperiment() {
+                    return new ExperimentTableProjection() {
+                        @Override
+                        public Integer getId() {
+                            return id;
+                        }
+
+                        @Override
+                        public String getTitle() {
+                            return "Experiment " + id;
+                        }
+
+                        @Override
+                        public String getDescription() {
+                            return "Some description";
+                        }
+
+                        @Override
+                        public boolean isActive() {
+                            return false;
+                        }
+                    };
+                }
+            };
+            experiments.add(projection);
+        }
+        return experiments;
     }
 
 }
