@@ -191,6 +191,19 @@ public class SearchRestControllerTest {
     }
 
     @Test
+    public void testGetCourseParticipantSuggestions() {
+        when(searchService.getCourseParticipantSuggestions(QUERY, ID)).thenReturn(userData);
+        assertEquals(5, searchRestController.getCourseParticipantSuggestions(QUERY, ID_STRING).size());
+        verify(searchService).getCourseParticipantSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseParticipantSuggestionsInvalidParams() {
+        assertTrue(searchRestController.getCourseParticipantSuggestions(QUERY, BLANK).isEmpty());
+        verify(searchService, never()).getCourseParticipantSuggestions(anyString(), anyInt());
+    }
+
+    @Test
     public void testGetCourseExperimentDeleteSuggestions() {
         when(searchService.getCourseExperimentDeleteSuggestions(QUERY, ID)).thenReturn(experimentTableData);
         List<String[]> data = searchRestController.getCourseExperimentDeleteSuggestions(QUERY, ID_STRING);
@@ -202,6 +215,19 @@ public class SearchRestControllerTest {
     public void testGetCourseExperimentDeleteSuggestionsInvalidParams() {
         assertTrue(searchRestController.getCourseExperimentDeleteSuggestions(QUERY, QUERY).isEmpty());
         verify(searchService, never()).getCourseExperimentDeleteSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseParticipantDeleteSuggestions() {
+        when(searchService.getCourseParticipantDeleteSuggestions(QUERY, ID)).thenReturn(userData);
+        assertEquals(5, searchRestController.getCourseParticipantDeleteSuggestions(QUERY, ID_STRING).size());
+        verify(searchService).getCourseParticipantDeleteSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseParticipantDeleteSuggestionsInvalidParams() {
+        assertTrue(searchRestController.getCourseParticipantDeleteSuggestions(BLANK, ID_STRING).isEmpty());
+        verify(searchService, never()).getCourseParticipantDeleteSuggestions(anyString(), anyInt());
     }
 
     private void addUserData(int number) {

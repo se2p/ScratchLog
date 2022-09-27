@@ -115,10 +115,12 @@
                         <tbody th:unless="${participants.isEmpty()}">
                         <tr th:each="participant : ${participants}">
                             <th scope="row">
+                                <!--suppress ThymeleafVariablesResolveInspection -->
                                 <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
                                    th:text="${participant.user.id}"></a>
                             </th>
                             <td>
+                                <!--suppress ThymeleafVariablesResolveInspection -->
                                 <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
                                    th:text="${participant.user.username}"></a>
                             </td>
@@ -148,6 +150,7 @@
                                     <span class="sr-only" th:text="#{table_empty}"></span>
                                 </span>
                                 <span th:unless="${participant.start == null}">
+                                    <!--suppress ThymeleafVariablesResolveInspection -->
                                     <a class="no_decoration" th:aria-label="#{result_label}"
                                        th:href="@{/result(experiment=${experimentDTO.id}, user=${participant.user.id})}">
                                         <i aria-hidden="true" class="far fa-chart-bar"></i>

@@ -198,6 +198,26 @@ public class SearchRestController {
     }
 
     /**
+     * Retrieves a list of participant information whose username or email contain the search query string and who are
+     * not yet part of the course with the given id.
+     *
+     * @param query The username or email to search for.
+     * @param id The course id.
+     * @return A list of usernames and email addresses, or an empty list, if no entries could be found.
+     */
+    @GetMapping("/course/participant")
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getCourseParticipantSuggestions(@RequestParam(QUERY) final String query,
+                                                          @RequestParam(ID) final String id) {
+        if (invalidParams(query, id)) {
+            return new ArrayList<>();
+        }
+
+        int courseId = NumberParser.parseNumber(id);
+        return searchService.getCourseParticipantSuggestions(query, courseId);
+    }
+
+    /**
      * Retrieves a list of experiment ids and titles where the titles contain the search query string and the experiment
      * is part of the course with the given id.
      *
@@ -215,6 +235,26 @@ public class SearchRestController {
 
         int courseId = NumberParser.parseNumber(id);
         return searchService.getCourseExperimentDeleteSuggestions(query, courseId);
+    }
+
+    /**
+     * Retrieves a list of participant information whose username or email contain the search query string and who are
+     * part of the course with the given id.
+     *
+     * @param query The username or email to search for.
+     * @param id The course id.
+     * @return A list of usernames and email addresses, or an empty list, if no entries could be found.
+     */
+    @GetMapping("/course/delete/participant")
+    @Secured(Constants.ROLE_ADMIN)
+    public List<String[]> getCourseParticipantDeleteSuggestions(@RequestParam(QUERY) final String query,
+                                                                @RequestParam(ID) final String id) {
+        if (invalidParams(query, id)) {
+            return new ArrayList<>();
+        }
+
+        int courseId = NumberParser.parseNumber(id);
+        return searchService.getCourseParticipantDeleteSuggestions(query, courseId);
     }
 
     /**

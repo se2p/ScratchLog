@@ -395,6 +395,37 @@ public class SearchRestControllerIntegrationTest {
     }
 
     @Test
+    public void testGetCourseParticipantSuggestions() throws Exception {
+        when(searchService.getCourseParticipantSuggestions(QUERY, ID)).thenReturn(userData);
+        mvc.perform(get("/search/course/participant")
+                        .param(QUERY_PARAM, QUERY)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(5))
+                .andExpect(jsonPath("$.[0].[0]").value("participant0"))
+                .andExpect(jsonPath("$.[0].[1]").value("participant0@participant.de"));
+        verify(searchService).getCourseParticipantSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseParticipantSuggestionsInvalidParams() throws Exception {
+        mvc.perform(get("/search/course/participant")
+                        .param(QUERY_PARAM, QUERY)
+                        .param(ID_PARAM, "0")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        verify(searchService, never()).getCourseParticipantSuggestions(anyString(), anyInt());
+    }
+
+    @Test
     public void testGetCourseExperimentDeleteSuggestions() throws Exception {
         when(searchService.getCourseExperimentDeleteSuggestions(QUERY, ID)).thenReturn(experimentTableData);
         mvc.perform(get("/search/course/delete/experiment")
@@ -427,6 +458,37 @@ public class SearchRestControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
         verify(searchService, never()).getCourseExperimentDeleteSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseParticipantDeleteSuggestions() throws Exception {
+        when(searchService.getCourseParticipantDeleteSuggestions(QUERY, ID)).thenReturn(userData);
+        mvc.perform(get("/search/course/delete/participant")
+                        .param(QUERY_PARAM, QUERY)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(5))
+                .andExpect(jsonPath("$.[0].[0]").value("participant0"))
+                .andExpect(jsonPath("$.[0].[1]").value("participant0@participant.de"));
+        verify(searchService).getCourseParticipantDeleteSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseParticipantDeleteSuggestionsInvalidParams() throws Exception {
+        mvc.perform(get("/search/course/delete/participant")
+                        .param(QUERY_PARAM, QUERY)
+                        .param(ID_PARAM, BLANK)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        verify(searchService, never()).getCourseParticipantDeleteSuggestions(anyString(), anyInt());
     }
 
     private void addUserData(int number) {

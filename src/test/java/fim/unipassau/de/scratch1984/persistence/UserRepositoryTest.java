@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence;
 
+import fim.unipassau.de.scratch1984.persistence.entity.Course;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
@@ -13,6 +15,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +46,7 @@ public class UserRepositoryTest {
     private static final String QUERY = "a";
     private static final String GUI_URL = "scratch";
     private static final int LIMIT = 5;
+    private static final Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
     private User user1 = new User(ADMIN1, "admin1@test.de", ROLE_ADMIN, LANGUAGE, "admin1", "secret1");
     private User user2 = new User("admin2", "admin2@test.com", ROLE_ADMIN, LANGUAGE, "admin2", "secret2");
     private User user3 = new User("user1", "part1@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
@@ -61,12 +66,20 @@ public class UserRepositoryTest {
     private User user17 = new User("user17", "part17@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", "", true, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", "", true, GUI_URL);
+    private Course course1 = new Course(null, "Course 1", "Description 1", "", false, timestamp);
+    private Course course2 = new Course(null, "Course 2", "Description 2", "", false, timestamp);
+    private Course course3 = new Course(null, "Course 3", "Description 3", "", false, timestamp);
     private Participant participant1 = new Participant(user3, experiment1, null, null);
     private Participant participant2 = new Participant(user12, experiment1, null, null);
     private Participant participant3 = new Participant(user13, experiment1, null, null);
     private Participant participant4 = new Participant(user14, experiment1, null, null);
     private Participant participant5 = new Participant(user15, experiment1, null, null);
     private Participant participant6 = new Participant(user16, experiment2, null, null);
+    private CourseParticipant courseParticipant1 = new CourseParticipant(user3, course1, timestamp);
+    private CourseParticipant courseParticipant2 = new CourseParticipant(user3, course2, timestamp);
+    private CourseParticipant courseParticipant3 = new CourseParticipant(user4, course1, timestamp);
+    private CourseParticipant courseParticipant4 = new CourseParticipant(user5, course1, timestamp);
+    private CourseParticipant courseParticipant5 = new CourseParticipant(user6, course1, timestamp);
 
     @BeforeEach
     public void setup() {
@@ -87,6 +100,9 @@ public class UserRepositoryTest {
         user15 = entityManager.persist(user15);
         user16 = entityManager.persist(user16);
         user17 = entityManager.persist(user17);
+        course1 = entityManager.persist(course1);
+        course2 = entityManager.persist(course2);
+        course3 = entityManager.persist(course3);
         experiment1 = entityManager.persist(experiment1);
         experiment2 = entityManager.persist(experiment2);
         participant1 = entityManager.persist(participant1);
@@ -95,6 +111,11 @@ public class UserRepositoryTest {
         participant4 = entityManager.persist(participant4);
         participant5 = entityManager.persist(participant5);
         participant6 = entityManager.persist(participant6);
+        courseParticipant1 = entityManager.persist(courseParticipant1);
+        courseParticipant2 = entityManager.persist(courseParticipant2);
+        courseParticipant3 = entityManager.persist(courseParticipant3);
+        courseParticipant4 = entityManager.persist(courseParticipant4);
+        courseParticipant5 = entityManager.persist(courseParticipant5);
     }
 
     @Test
@@ -280,6 +301,65 @@ public class UserRepositoryTest {
     public void testFindDeleteParticipantSuggestionsEmpty() {
         List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, 100);
         assertTrue(users.isEmpty());
+    }
+
+    @Test
+    public void testFindCourseParticipantSuggestions() {
+        List<UserProjection> users = userRepository.findCourseParticipantSuggestions(USERNAME_SEARCH, course1.getId(),
+                LIMIT);
+        assertAll(
+                () -> assertEquals(3, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user7.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user8.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user17.getUsername())))
+        );
+    }
+
+    @Test
+    public void testFindCourseParticipantSuggestionsLimit() {
+        List<UserProjection> users = userRepository.findCourseParticipantSuggestions(EMAIL_SEARCH, course1.getId(),
+                LIMIT);
+        assertAll(
+                () -> assertEquals(LIMIT, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user7.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user8.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user9.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user10.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user11.getUsername())))
+        );
+    }
+
+    @Test
+    public void testFindCourseParticipantSuggestionsEmpty() {
+        assertTrue(userRepository.findCourseParticipantSuggestions(ADMIN1, course1.getId(), LIMIT).isEmpty());
+    }
+
+    @Test
+    public void testFindDeleteCourseParticipantSuggestions() {
+        List<UserProjection> users = userRepository.findDeleteCourseParticipantSuggestions(USERNAME_SEARCH,
+                course2.getId(), LIMIT);
+        assertAll(
+                () -> assertEquals(1, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername())))
+        );
+    }
+
+    @Test
+    public void testFindDeleteCourseParticipantSuggestionsLimit() {
+        List<UserProjection> users = userRepository.findDeleteCourseParticipantSuggestions(USERNAME_SEARCH,
+                course1.getId(), 3);
+        assertAll(
+                () -> assertEquals(3, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user5.getUsername())))
+        );
+    }
+
+    @Test
+    public void testFindDeleteCourseParticipantSuggestionsEmpty() {
+        assertTrue(userRepository.findDeleteCourseParticipantSuggestions(EMAIL_SEARCH, course3.getId(),
+                LIMIT).isEmpty());
     }
 
     @Test

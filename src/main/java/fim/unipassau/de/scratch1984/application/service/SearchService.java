@@ -239,6 +239,21 @@ public class SearchService {
     }
 
     /**
+     * Retrieves a list of usernames and email addresses where at least one of the two contains the search query string
+     * and where the corresponding participant is not yet part of the course with the given id.
+     *
+     * @param query The username or email to search for.
+     * @param id The course id.
+     * @return A list of usernames and emails, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<String[]> getCourseParticipantSuggestions(final String query, final int id) {
+        List<UserProjection> users = userRepository.findCourseParticipantSuggestions(query, id,
+                Constants.MAX_SUGGESTION_RESULTS);
+        return addUserInfoSimple(users);
+    }
+
+    /**
      * Retrieves a list of up to as many experiment ids and titles where the title contains the search query string and
      * where the corresponding experiment is part of the course with the given id.
      *
@@ -251,6 +266,21 @@ public class SearchService {
         List<ExperimentTableProjection> experiments = experimentRepository.findCourseExperimentDeleteSuggestions(query,
                 id, Constants.MAX_SUGGESTION_RESULTS);
         return addExperimentInfo(experiments);
+    }
+
+    /**
+     * Retrieves a list of usernames and email addresses where at least one of the two contains the search query string
+     * and where the corresponding participant is part of the course with the given id.
+     *
+     * @param query The username or email to search for.
+     * @param id The course id.
+     * @return A list of usernames and emails, or an empty list, if no entries could be found.
+     */
+    @Transactional
+    public List<String[]> getCourseParticipantDeleteSuggestions(final String query, final int id) {
+        List<UserProjection> users = userRepository.findDeleteCourseParticipantSuggestions(query, id,
+                Constants.MAX_SUGGESTION_RESULTS);
+        return addUserInfoSimple(users);
     }
 
     /**

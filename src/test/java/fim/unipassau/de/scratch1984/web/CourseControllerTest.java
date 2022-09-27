@@ -215,7 +215,7 @@ public class CourseControllerTest {
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService).existsCourseExperiment(ID, TITLE);
         verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -227,7 +227,7 @@ public class CourseControllerTest {
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
         verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -238,7 +238,7 @@ public class CourseControllerTest {
         verify(experimentService, never()).existsExperiment(anyString());
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
         verify(courseService, never()).saveCourseExperiment(anyInt(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -297,7 +297,7 @@ public class CourseControllerTest {
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService).existsCourseExperiment(ID, TITLE);
         verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -309,7 +309,7 @@ public class CourseControllerTest {
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
         verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test

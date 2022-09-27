@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.application;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.persistence.entity.Course;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
@@ -74,6 +75,7 @@ public class PageServiceTest {
     private Page<ExperimentTableProjection> experimentPage;
     private Page<CourseTableProjection> coursePage;
     private Page<CourseExperimentProjection> courseExperimentPage;
+    private Page<CourseParticipant> courseParticipantPage;
     private final List<Participant> participantList = getParticipants(5);
     private final Page<Participant> participants = new PageImpl<>(participantList);
 
@@ -291,6 +293,38 @@ public class PageServiceTest {
     }
 
     @Test
+    public void testGetParticipantCoursePage() {
+        List<CourseParticipant> participants = getCourseParticipants(3);
+        courseParticipantPage = new PageImpl<>(participants);
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseParticipantRepository.findAllByCourse(any(),
+                any(PageRequest.class))).thenReturn(courseParticipantPage);
+        assertEquals(courseParticipantPage, pageService.getParticipantCoursePage(ID, pageRequest));
+        verify(courseRepository).getOne(ID);
+        verify(courseParticipantRepository).findAllByCourse(any(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetParticipantCoursePageNotFound() {
+        when(courseParticipantRepository.findAllByCourse(any(),
+                any(PageRequest.class))).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> pageService.getParticipantCoursePage(ID, pageRequest)
+        );
+        verify(courseRepository).getOne(ID);
+        verify(courseParticipantRepository).findAllByCourse(any(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetParticipantCoursePageInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> pageService.getParticipantCoursePage(0, pageRequest)
+        );
+        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseParticipantRepository, never()).findAllByCourse(any(), any(PageRequest.class));
+    }
+
+    @Test
     public void testComputeLastExperimentPage() {
         when(experimentRepository.count()).thenReturn((long) Constants.PAGE_SIZE);
         assertEquals(1, pageService.computeLastExperimentPage());
@@ -352,6 +386,7 @@ public class PageServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> pageService.getLastExperimentPage(-1)
         );
+        verify(experimentRepository, never()).getParticipantPageCount(anyInt());
     }
 
     @Test
@@ -367,6 +402,7 @@ public class PageServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> pageService.getLastCoursePage(0)
         );
+        verify(courseRepository, never()).getParticipantPageCount(anyInt());
     }
 
     @Test
@@ -396,6 +432,21 @@ public class PageServiceTest {
     public void testGetLastParticipantPageNull() {
         assertEquals(0, pageService.getLastParticipantPage(ID));
         verify(experimentDataRepository).findByExperiment(ID);
+    }
+
+    @Test
+    public void testGetLastParticipantCoursePage() {
+        when(courseParticipantRepository.getCourseParticipantRowCount(ID)).thenReturn(Constants.PAGE_SIZE + 1);
+        assertEquals(2, pageService.getLastParticipantCoursePage(ID));
+        verify(courseParticipantRepository).getCourseParticipantRowCount(ID);
+    }
+
+    @Test
+    public void testGetLastParticipantCoursePageInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> pageService.getLastParticipantCoursePage(-1)
+        );
+        verify(courseParticipantRepository, never()).getCourseParticipantRowCount(anyInt());
     }
 
     private List<ExperimentTableProjection> getExperimentProjections(int number) {
@@ -491,6 +542,18 @@ public class PageServiceTest {
             courses.add(projection);
         }
         return courses;
+    }
+
+    private List<CourseParticipant> getCourseParticipants(int number) {
+        List<CourseParticipant> participants = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            User user = new User();
+            user.setId(i + 1);
+            Course course = new Course();
+            course.setId(i + 1);
+            participants.add(new CourseParticipant(user, course, Timestamp.valueOf(LocalDateTime.now())));
+        }
+        return participants;
     }
 
     private List<Participant> getParticipants(int number) {

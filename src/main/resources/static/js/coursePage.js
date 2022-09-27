@@ -81,6 +81,8 @@ function updateCourseExperimentTable(data) {
  */
 function addModalOnclickFunctions() {
     let stopModal = document.getElementById("openStop");
+    let addParticipantModal = document.getElementById("openAddParticipant");
+    let deleteParticipantModal = document.getElementById("openDeleteParticipant");
     let addExperimentModal = document.getElementById("openAddExperiment");
     let deleteExperimentModal = document.getElementById("openDeleteExperiment");
 
@@ -90,6 +92,18 @@ function addModalOnclickFunctions() {
     document.getElementById("abortStop").addEventListener("click", function () {
         closeModal(stopModal);
     })
+    document.getElementById("addParticipant").addEventListener("click", function () {
+        openModal(addParticipantModal);
+    });
+    document.getElementById("abortAddParticipant").addEventListener("click", function () {
+        closeModal(addParticipantModal);
+    });
+    document.getElementById("deleteParticipant").addEventListener("click", function () {
+        openModal(deleteParticipantModal);
+    });
+    document.getElementById("abortDeleteParticipant").addEventListener("click", function () {
+        closeModal(deleteParticipantModal);
+    });
     document.getElementById("addExperiment").addEventListener("click", function () {
         openModal(addExperimentModal);
     });
@@ -113,4 +127,5 @@ function addEventListeners() {
     document.getElementById("experimentsFirst").addEventListener("click", loadFirstCourseExperimentPage);
     document.getElementById("experimentsLast").addEventListener("click", loadLastCourseExperimentPage);
     addModalOnclickFunctions();
+    addKeyupFunctions();
 }

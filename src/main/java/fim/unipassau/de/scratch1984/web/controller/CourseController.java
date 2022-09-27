@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseExperimentProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
@@ -32,7 +33,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 /**
@@ -106,11 +109,13 @@ public class CourseController {
      *
      * @param id The id of the course.
      * @param model The {@link Model} to hold the information.
+     * @param httpServletRequest The {@link HttpServletRequest} for retrieving information about the user.
      * @return The course page on success, or the error page otherwise.
      */
     @GetMapping
     @Secured(Constants.ROLE_PARTICIPANT)
-    public String getCourse(@RequestParam(ID) final String id, final Model model) {
+    public String getCourse(@RequestParam(ID) final String id, final Model model,
+                            final HttpServletRequest httpServletRequest) {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
@@ -120,7 +125,7 @@ public class CourseController {
 
         try {
             CourseDTO courseDTO = courseService.getCourse(courseId);
-            addModelInfo(model, courseDTO);
+            addModelInfo(model, courseDTO, httpServletRequest.isUserInRole(Constants.ROLE_ADMIN));
             return "course";
         } catch (NotFoundException e) {
             return Constants.ERROR;
@@ -231,7 +236,7 @@ public class CourseController {
                 return Constants.ERROR;
             }
 
-            addModelInfo(model, courseDTO);
+            addModelInfo(model, courseDTO, true);
             return "course";
         } catch (NotFoundException e) {
             return Constants.ERROR;
@@ -262,7 +267,7 @@ public class CourseController {
         }
 
         if (checkReturnCoursePage(courseId, title, true, model)) {
-            addModelInfo(model, courseDTO);
+            addModelInfo(model, courseDTO, true);
             return "course";
         }
 
@@ -295,7 +300,7 @@ public class CourseController {
         }
 
         if (checkReturnCoursePage(courseId, title, false, model)) {
-            addModelInfo(model, courseDTO);
+            addModelInfo(model, courseDTO, true);
             return "course";
         }
 
@@ -510,12 +515,16 @@ public class CourseController {
     /**
      * Adds the given {@link CourseDTO} to the {@link Model} to display the information contained in the DTO to the
      * user. A {@link PasswordDTO} is added for handling operations requiring a password to be performed, e.g. delete.
-     * The course content text is sanitized using the {@link MarkdownHandler} before displaying it.
+     * The course content text is sanitized using the {@link MarkdownHandler} before displaying it. Additionally,
+     * the required information to displayed in course experiment and course participant tables is retrieved and added
+     * to the model. As only administrators are allowed to see the course participant information, this information is
+     * not retrieved for participants.
      *
      * @param model The model used to save the information.
+     * @param addParticipants Whether to retrieve the course participant information.
      * @param courseDTO The course DTO containing the information to be displayed.
      */
-    private void addModelInfo(final Model model, final CourseDTO courseDTO) {
+    private void addModelInfo(final Model model, final CourseDTO courseDTO, final boolean addParticipants) {
         if (courseDTO.getContent() != null) {
             courseDTO.setContent(MarkdownHandler.toHtml(courseDTO.getContent()));
         }
@@ -528,6 +537,30 @@ public class CourseController {
         model.addAttribute("experimentPage", 1);
         model.addAttribute("lastExperimentPage", lastExperimentPage);
         model.addAttribute("passwordDTO", new PasswordDTO());
+        addParticipantInfo(model, courseDTO.getId(), addParticipants);
+    }
+
+    /**
+     * Adds the required information for the course participant table to the given model. The page containing the
+     * participant information and the last page value are only retrieved if the information is supposed to be displayed
+     * on the course page, meaning that the requesting user is an administrator.
+     *
+     * @param model The {@link Model} to use for storing the information.
+     * @param courseId The id of the course.
+     * @param addParticipants Whether to add the course participant information or not.
+     */
+    private void addParticipantInfo(final Model model, final int courseId, final boolean addParticipants) {
+        model.addAttribute("participantPage", 1);
+
+        if (addParticipants) {
+            Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId,
+                    PageRequest.of(0, Constants.PAGE_SIZE));
+            model.addAttribute("participants", participants);
+            model.addAttribute("lastParticipantPage", pageService.getLastParticipantCoursePage(courseId));
+        } else {
+            model.addAttribute("participantPage", new ArrayList<>());
+            model.addAttribute("lastParticipantPage", 1);
+        }
     }
 
     /**

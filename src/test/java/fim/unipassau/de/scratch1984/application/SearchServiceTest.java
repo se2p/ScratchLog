@@ -349,6 +349,32 @@ public class SearchServiceTest {
     }
 
     @Test
+    public void testGetCourseParticipantSuggestions() {
+        when(userRepository.findCourseParticipantSuggestions(QUERY, ID,
+                Constants.MAX_SUGGESTION_RESULTS)).thenReturn(users);
+        List<String[]> userInfo = searchService.getCourseParticipantSuggestions(QUERY, ID);
+        String[] firstUser = userInfo.get(0);
+        String[] secondUser = userInfo.get(1);
+        String[] thirdUser = userInfo.get(2);
+        assertAll(
+                () -> assertEquals(3, userInfo.size()),
+                () -> assertEquals(USERNAME1, firstUser[0]),
+                () -> assertEquals(EMAIL1, firstUser[1]),
+                () -> assertEquals(USERNAME2, secondUser[0]),
+                () -> assertEquals(EMAIL2, secondUser[1]),
+                () -> assertEquals(USERNAME3, thirdUser[0]),
+                () -> assertEquals(EMAIL3, thirdUser[1])
+        );
+        verify(userRepository).findCourseParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);
+    }
+
+    @Test
+    public void testGetCourseParticipantSuggestionsNone() {
+        assertEquals(0, searchService.getCourseParticipantSuggestions(QUERY, ID).size());
+        verify(userRepository).findCourseParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);
+    }
+
+    @Test
     public void testGetCourseExperimentDeleteSuggestions() {
         when(experimentRepository.findCourseExperimentDeleteSuggestions(SUGGESTION_QUERY, ID,
                 Constants.MAX_SUGGESTION_RESULTS)).thenReturn(experiments);
@@ -371,6 +397,32 @@ public class SearchServiceTest {
         assertEquals(0, searchService.getCourseExperimentDeleteSuggestions(SUGGESTION_QUERY, ID).size());
         verify(experimentRepository).findCourseExperimentDeleteSuggestions(SUGGESTION_QUERY, ID,
                 Constants.MAX_SUGGESTION_RESULTS);
+    }
+
+    @Test
+    public void testGetCourseParticipantDeleteSuggestions() {
+        when(userRepository.findDeleteCourseParticipantSuggestions(QUERY, ID,
+                Constants.MAX_SUGGESTION_RESULTS)).thenReturn(users);
+        List<String[]> userInfo = searchService.getCourseParticipantDeleteSuggestions(QUERY, ID);
+        String[] firstUser = userInfo.get(0);
+        String[] secondUser = userInfo.get(1);
+        String[] thirdUser = userInfo.get(2);
+        assertAll(
+                () -> assertEquals(3, userInfo.size()),
+                () -> assertEquals(USERNAME1, firstUser[0]),
+                () -> assertEquals(EMAIL1, firstUser[1]),
+                () -> assertEquals(USERNAME2, secondUser[0]),
+                () -> assertEquals(EMAIL2, secondUser[1]),
+                () -> assertEquals(USERNAME3, thirdUser[0]),
+                () -> assertEquals(EMAIL3, thirdUser[1])
+        );
+        verify(userRepository).findDeleteCourseParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);
+    }
+
+    @Test
+    public void testGetCourseParticipantDeleteSuggestionsNone() {
+        assertEquals(0, searchService.getCourseParticipantDeleteSuggestions(QUERY, ID).size());
+        verify(userRepository).findDeleteCourseParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);
     }
 
     @Test

@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.application.service;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.persistence.entity.Course;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
@@ -215,8 +216,6 @@ public class PageService {
     @Transactional
     public Page<Participant> getParticipantPage(final int id, final Pageable pageable) {
         checkPageable(pageable);
-        int pageSize = pageable.getPageSize();
-        int currentPage = pageable.getPageNumber();
 
         if (id < Constants.MIN_ID) {
             logger.error("Cannot find participant data for experiment with invalid id " + id + "!");
@@ -228,14 +227,42 @@ public class PageService {
         Page<Participant> participants;
 
         try {
-            participants = participantRepository.findAllByExperiment(experiment, PageRequest.of(currentPage, pageSize,
-                    Sort.by("user").descending()));
+            participants = participantRepository.findAllByExperiment(experiment,
+                    PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("user").descending()));
         } catch (EntityNotFoundException e) {
             logger.error("Could not find experiment with id " + id + " in the database!", e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
 
         return participants;
+    }
+
+    /**
+     * Retrieves a page of {@link CourseParticipant}s for the course with the given id. If no corresponding course
+     * exists in the database a {@link NotFoundException} is thrown instead. If any of the passed arguments is invalid,
+     * an {@link IllegalArgumentException} is thrown instead.
+     *
+     * @param id The course id.
+     * @param pageable The pageable containing the page size and page number.
+     * @return The course participant page.
+     */
+    @Transactional
+    public Page<CourseParticipant> getParticipantCoursePage(final int id, final Pageable pageable) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot find participant data for course with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot find participant data for course with invalid id " + id + "!");
+        }
+
+        checkPageable(pageable);
+        Course course = courseRepository.getOne(id);
+
+        try {
+            return courseParticipantRepository.findAllByCourse(course, PageRequest.of(pageable.getPageNumber(),
+                    pageable.getPageSize(), Sort.by("added").descending()));
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find course with id " + id + " in the database!", e);
+            throw new NotFoundException("Could not find course with id " + id + " in the database!", e);
+        }
     }
 
     /**
@@ -332,6 +359,24 @@ public class PageService {
             int participants = experimentData.getParticipants();
             return computeLastPage(participants);
         }
+    }
+
+    /**
+     * Returns the number of the last participant page for the course with the given id.
+     *
+     * @param id The id of the course.
+     * @return The last page value.
+     */
+    @Transactional
+    public int getLastParticipantCoursePage(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot calculate the last course participant page for course with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot calculate the last course participant page for course with "
+                    + "invalid id " + id + "!");
+        }
+
+        int rows = courseParticipantRepository.getCourseParticipantRowCount(id);
+        return computeLastPage(rows) + 1;
     }
 
     /**

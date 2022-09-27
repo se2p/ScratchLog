@@ -301,10 +301,12 @@ public class CourseService {
         Course course = courseRepository.getOne(id);
 
         try {
-            List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+            if (!status) {
+                List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+                courseExperiments.forEach(courseExperiment -> deactivateExperiments(courseExperiment.getExperiment()));
+            }
+
             List<CourseParticipant> courseParticipants = courseParticipantRepository.findAllByCourse(course);
-            courseExperiments.forEach(courseExperiment -> updateExperimentStatus(status,
-                    courseExperiment.getExperiment()));
             courseParticipants.forEach(courseParticipant -> updateUserStatus(status, courseParticipant.getUser()));
             course.setActive(status);
             course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
@@ -325,21 +327,15 @@ public class CourseService {
     }
 
     /**
-     * Changes the activation status of the given experiment according to the passed status. If the experiment is part
-     * of multiple courses, it will not be deactivated.
+     * Deactivates the given experiment. If the experiment is part of multiple courses, it will not be deactivated.
      *
-     * @param status The status to change to.
      * @param experiment The {@link Experiment} to update.
      */
-    private void updateExperimentStatus(final boolean status, final Experiment experiment) {
-        if (status) {
-            experimentRepository.updateStatusById(experiment.getId(), true);
-        } else {
-            List<CourseExperiment> courses = courseExperimentRepository.findAllByExperiment(experiment);
+    private void deactivateExperiments(final Experiment experiment) {
+        List<CourseExperiment> courses = courseExperimentRepository.findAllByExperiment(experiment);
 
-            if (courses.size() <= 1) {
-                experimentRepository.updateStatusById(experiment.getId(), false);
-            }
+        if (courses.size() <= 1) {
+            experimentRepository.updateStatusById(experiment.getId(), false);
         }
     }
 

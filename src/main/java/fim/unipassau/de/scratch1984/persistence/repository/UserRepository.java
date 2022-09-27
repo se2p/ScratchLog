@@ -148,6 +148,36 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<UserProjection> findDeleteParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
 
     /**
+     * Returns a list of the first users up to the given limit whose email or username contain the given query value and
+     * who are not yet participating in the course with the given id.
+     *
+     * @param query The username or email to search for.
+     * @param course The id of the course.
+     * @param limit The maximum number of results to return.
+     * @return A list of {@link UserProjection}s.
+     */
+    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+            + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.role = 'PARTICIPANT' AND u.id NOT IN "
+            + "(SELECT p.user_id FROM course_participant AS p WHERE p.course_id = :id) LIMIT :limit")
+    List<UserProjection> findCourseParticipantSuggestions(@Param("query") String query, @Param("id") int course,
+                                                          @Param("limit") int limit);
+
+    /**
+     * Returns a list of the first users up to the given limit whose email or username contain the given query value who
+     * are participating in the given course.
+     *
+     * @param query The username or email to search for.
+     * @param course The id of the course.
+     * @param limit The maximum number of results to return.
+     * @return A list of {@link UserProjection}s.
+     */
+    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+            + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.id IN (SELECT p.user_id FROM course_participant AS p "
+            + "WHERE p.course_id = :id) LIMIT :limit")
+    List<UserProjection> findDeleteCourseParticipantSuggestions(@Param("query") String query, @Param("id") int course,
+                                                                @Param("limit") int limit);
+
+    /**
      * Returns an optional {@link UserProjection} containing information on the username starting with the given name
      * value and ending with a digit, if existent. If more than one match is found, the one that occurs last in
      * alphabetical order is returned.
