@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
@@ -79,6 +80,7 @@ public class CourseControllerIntegrationTest {
     private static final String REDIRECT_COURSE = "redirect:/course?id=";
     private static final String COURSE_EDIT = "course-edit";
     private static final String EXPERIMENT_TABLE = "course::course_experiment_table";
+    private static final String PARTICIPANT_TABLE = "course::course_participant_table";
     private static final String COURSE_DTO = "courseDTO";
     private static final String ID_STRING = "1";
     private static final String CURRENT = "3";
@@ -103,6 +105,7 @@ public class CourseControllerIntegrationTest {
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(2));
+    private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
     @BeforeEach
     public void setUp() {
@@ -467,6 +470,154 @@ public class CourseControllerIntegrationTest {
     }
 
     @Test
+    public void testGetNextParticipantPage() throws Exception {
+        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/next/participant")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .param(PAGE_PARAM, CURRENT)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANT_TABLE))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
+                .andExpect(model().attribute("participants", is(participants)))
+                .andExpect(model().attribute("participantPage", is(4)))
+                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE)));
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetNextParticipantPageError() throws Exception {
+        mvc.perform(get("/course/next/participant")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, TITLE)
+                        .param(PAGE_PARAM, CURRENT)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetPreviousParticipantPage() throws Exception {
+        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/previous/participant")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .param(PAGE_PARAM, CURRENT)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANT_TABLE))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
+                .andExpect(model().attribute("participants", is(participants)))
+                .andExpect(model().attribute("participantPage", is(2)))
+                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE)));
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetPreviousParticipantPageError() throws Exception {
+        mvc.perform(get("/course/previous/participant")
+                        .param(ID_PARAM, "0")
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .param(PAGE_PARAM, CURRENT)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetFirstParticipantPage() throws Exception {
+        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/first/participant")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANT_TABLE))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
+                .andExpect(model().attribute("participants", is(participants)))
+                .andExpect(model().attribute("participantPage", is(1)))
+                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE)));
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetFirstParticipantPageError() throws Exception {
+        mvc.perform(get("/course/first/participant")
+                        .param(ID_PARAM, TITLE)
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetLastParticipantPage() throws Exception {
+        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/last/participant")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, LAST)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANT_TABLE))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
+                .andExpect(model().attribute("participants", is(participants)))
+                .andExpect(model().attribute("participantPage", is(LAST_PAGE)))
+                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE)));
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetLastParticipantPageError() throws Exception {
+        mvc.perform(get("/course/last/participant")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(LAST_PAGE_PARAM, " ")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
     public void testGetNextExperimentPage() throws Exception {
         when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
@@ -480,7 +631,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT_TABLE))
-                .andExpect(model().attribute("courseDTO", is(courseDTO)))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("experiments", is(experiments)))
                 .andExpect(model().attribute("experimentPage", is(4)))
                 .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
@@ -518,7 +669,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT_TABLE))
-                .andExpect(model().attribute("courseDTO", is(courseDTO)))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("experiments", is(experiments)))
                 .andExpect(model().attribute("experimentPage", is(2)))
                 .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
@@ -555,7 +706,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT_TABLE))
-                .andExpect(model().attribute("courseDTO", is(courseDTO)))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("experiments", is(experiments)))
                 .andExpect(model().attribute("experimentPage", is(1)))
                 .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
@@ -591,7 +742,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT_TABLE))
-                .andExpect(model().attribute("courseDTO", is(courseDTO)))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("experiments", is(experiments)))
                 .andExpect(model().attribute("experimentPage", is(LAST_PAGE)))
                 .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));

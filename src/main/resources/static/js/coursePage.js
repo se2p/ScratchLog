@@ -8,6 +8,66 @@ $(document).ready(function () {
 });
 
 /**
+ * Loads the next course participant page and updates the course participant table with the new data.
+ */
+function loadNextCourseParticipantPage() {
+    $.ajax({
+        type: 'get',
+        url: contextPath + "/course/next/participant",
+        data: {id: courseId, lastPage: lastParticipantPage, page: participantPage},
+        success: function(data) {
+            updateCourseParticipantTable(data);
+            participantPage++;
+        },
+    });
+}
+
+/**
+ * Loads the previous course participant page and updates the course participant table with the new data.
+ */
+function loadPreviousCourseParticipantPage() {
+    $.ajax({
+        type: 'get',
+        url: contextPath + "/course/previous/participant",
+        data: {id: courseId, lastPage: lastParticipantPage, page: participantPage},
+        success: function(data) {
+            updateCourseParticipantTable(data);
+            participantPage--;
+        },
+    });
+}
+
+/**
+ * Loads the first course participant page and updates the course participant table with the new data.
+ */
+function loadFirstCourseParticipantPage() {
+    $.ajax({
+        type: 'get',
+        url: contextPath + "/course/first/participant",
+        data: {id: courseId, lastPage: lastParticipantPage},
+        success: function(data) {
+            updateCourseParticipantTable(data);
+            participantPage = 1;
+        },
+    });
+}
+
+/**
+ * Loads the last course participant page and updates the course participant table with the new data.
+ */
+function loadLastCourseParticipantPage() {
+    $.ajax({
+        type: 'get',
+        url: contextPath + "/course/last/participant",
+        data: {id: courseId, lastPage: lastParticipantPage},
+        success: function(data) {
+            updateCourseParticipantTable(data);
+            participantPage = lastParticipantPage;
+        },
+    });
+}
+
+/**
  * Loads the next course experiment page and updates the course experiment table with the new data.
  */
 function loadNextCourseExperimentPage() {
@@ -68,6 +128,15 @@ function loadLastCourseExperimentPage() {
 }
 
 /**
+ * Updates the information shown in the course participant table with the given data and adds the required event
+ * listeners.
+ */
+function updateCourseParticipantTable(data) {
+    $('#course_participant_table').html(data);
+    addEventListeners();
+}
+
+/**
  * Updates the information shown in the course experiment table with the given data and adds the required event
  * listeners.
  */
@@ -122,6 +191,10 @@ function addModalOnclickFunctions() {
  * Adds the event listeners to handle user clicks on the buttons of the course page.
  */
 function addEventListeners() {
+    document.getElementById("participantsNext").addEventListener("click", loadNextCourseParticipantPage);
+    document.getElementById("participantsPrev").addEventListener("click", loadPreviousCourseParticipantPage);
+    document.getElementById("participantsFirst").addEventListener("click", loadFirstCourseParticipantPage);
+    document.getElementById("participantsLast").addEventListener("click", loadLastCourseParticipantPage);
     document.getElementById("experimentsNext").addEventListener("click", loadNextCourseExperimentPage);
     document.getElementById("experimentsPrev").addEventListener("click", loadPreviousCourseExperimentPage);
     document.getElementById("experimentsFirst").addEventListener("click", loadFirstCourseExperimentPage);

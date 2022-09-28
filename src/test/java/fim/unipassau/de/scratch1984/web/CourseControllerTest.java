@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -68,6 +69,7 @@ public class CourseControllerTest {
     private static final String REDIRECT_COURSE = "redirect:/course?id=";
     private static final String COURSE_EDIT = "course-edit";
     private static final String EXPERIMENT_TABLE = "course::course_experiment_table";
+    private static final String PARTICIPANT_TABLE = "course::course_participant_table";
     private static final String COURSE_DTO = "courseDTO";
     private static final String CURRENT = "3";
     private static final String LAST = "5";
@@ -85,6 +87,7 @@ public class CourseControllerTest {
     private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(3));
+    private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
     @BeforeEach
     public void setUp() {
@@ -479,6 +482,96 @@ public class CourseControllerTest {
     }
 
     @Test
+    public void testGetNextParticipantPage() {
+        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getNextParticipantPage(ID_STRING, LAST, CURRENT);
+        assertAll(
+                () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
+                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastParticipantPage")),
+                () -> assertEquals(4, mv.getModel().get("participantPage"))
+        );
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetNextParticipantPageInvalidInfo() {
+        assertEquals(Constants.ERROR, courseController.getNextParticipantPage(ID_STRING, LAST, "-1").getViewName());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetPreviousParticipantPage() {
+        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getPreviousParticipantPage(ID_STRING, LAST, CURRENT);
+        assertAll(
+                () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
+                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastParticipantPage")),
+                () -> assertEquals(2, mv.getModel().get("participantPage"))
+        );
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetPreviousParticipantPageInvalidInfo() {
+        assertEquals(Constants.ERROR, courseController.getPreviousParticipantPage(ID_STRING, LAST,
+                ID_STRING).getViewName());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetFirstParticipantPage() {
+        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getFirstParticipantPage(ID_STRING, LAST);
+        assertAll(
+                () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
+                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastParticipantPage")),
+                () -> assertEquals(1, mv.getModel().get("participantPage"))
+        );
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetFirstParticipantPageInvalidInfo() {
+        courseDTO.setContent(null);
+        assertEquals(Constants.ERROR, courseController.getFirstParticipantPage(ID_STRING, null).getViewName());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetLastParticipantPage() {
+        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getLastParticipantPage(ID_STRING, LAST);
+        assertAll(
+                () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
+                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastParticipantPage")),
+                () -> assertEquals(LAST_PAGE, mv.getModel().get("participantPage"))
+        );
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService).getCourse(ID);
+    }
+
+    @Test
+    public void testGetLastParticipantPageInvalidInfo() {
+        assertEquals(Constants.ERROR, courseController.getLastParticipantPage(ID_STRING, "-1").getViewName());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
     public void testGetNextExperimentPage() {
         courseDTO.setContent(null);
         when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
@@ -486,7 +579,7 @@ public class CourseControllerTest {
         ModelAndView mv = courseController.getNextExperimentPage(ID_STRING, LAST, CURRENT);
         assertAll(
                 () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get("courseDTO")),
+                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
                 () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
                 () -> assertEquals(4, mv.getModel().get("experimentPage"))
         );
@@ -515,7 +608,7 @@ public class CourseControllerTest {
         ModelAndView mv = courseController.getPreviousExperimentPage(ID_STRING, LAST, CURRENT);
         assertAll(
                 () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get("courseDTO")),
+                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
                 () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
                 () -> assertEquals(2, mv.getModel().get("experimentPage"))
         );
@@ -551,7 +644,7 @@ public class CourseControllerTest {
         ModelAndView mv = courseController.getFirstExperimentPage(ID_STRING, LAST);
         assertAll(
                 () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get("courseDTO")),
+                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
                 () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
                 () -> assertEquals(1, mv.getModel().get("experimentPage"))
         );
@@ -573,7 +666,7 @@ public class CourseControllerTest {
         ModelAndView mv = courseController.getLastExperimentPage(ID_STRING, LAST);
         assertAll(
                 () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get("courseDTO")),
+                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
                 () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
                 () -> assertEquals(LAST_PAGE, mv.getModel().get("experimentPage"))
         );
