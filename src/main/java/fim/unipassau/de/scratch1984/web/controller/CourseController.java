@@ -15,6 +15,7 @@ import fim.unipassau.de.scratch1984.util.PageUtils;
 import fim.unipassau.de.scratch1984.util.validation.StringValidator;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -244,6 +245,86 @@ public class CourseController {
     }
 
     /**
+     * Adds the user with the given username or email as a participant to the course with the given id. If the add
+     * parameter is specified, the user is also added as a participant to all experiments offered in the course. If no
+     * corresponding course could be found, the user is redirected to the error page instead. If the given username or
+     * email is invalid, the user is returned to the course page where a corresponding error message is displayed.
+     *
+     * @param participant The username or email to search for.
+     * @param add Whether the user should be added as a participant to all experiments.
+     * @param id The id of the course.
+     * @param model The {@link Model} used to store information on errors.
+     * @return The updated course page on success, the course page displaying an error message, or the error page.
+     */
+    @GetMapping("/participant/add")
+    @Secured(Constants.ROLE_ADMIN)
+    public String addParticipant(@RequestParam("participant") final String participant,
+                                 @RequestParam(required = false, name = "add") final String add,
+                                 @RequestParam("id") final String id,
+                                 final Model model) {
+        int courseId = NumberParser.parseId(id);
+        CourseDTO courseDTO = getActiveCourseDTO(courseId);
+
+        if (courseDTO == null) {
+            logger.error("Cannot add a new participant with an invalid course id parameter!");
+            return Constants.ERROR;
+        }
+
+        if (checkReturnCoursePage(courseId, participant, true, true, model)) {
+            addModelInfo(model, courseDTO, true);
+            return "course";
+        }
+
+        try {
+            int userId = courseService.saveCourseParticipant(courseId, participant);
+
+            if (add != null) {
+                courseService.addParticipantToCourseExperiments(courseId, userId);
+            }
+
+            return "redirect:/course?id=" + courseId;
+        } catch (NotFoundException e) {
+            return Constants.ERROR;
+        }
+    }
+
+    /**
+     * Removes the user with the given username or email as a participant of the course with the given id and of all
+     * experiments offered in the course. If no corresponding course could be found, the user is redirected to the error
+     * page instead. If the given username or email is invalid, the user is returned to the course page where a
+     * corresponding error message is displayed.
+     *
+     * @param participant The username or email to search for.
+     * @param id The id of the course.
+     * @param model The {@link Model} used to store information on errors.
+     * @return The updated course page on success, the course page displaying an error message, or the error page.
+     */
+    @GetMapping("/participant/delete")
+    @Secured(Constants.ROLE_ADMIN)
+    public String deleteParticipant(@RequestParam("participant") final String participant,
+                                    @RequestParam("id") final String id, final Model model) {
+        int courseId = NumberParser.parseId(id);
+        CourseDTO courseDTO = getActiveCourseDTO(courseId);
+
+        if (courseDTO == null) {
+            logger.error("Cannot delete a participant with an invalid course id parameter!");
+            return Constants.ERROR;
+        }
+
+        if (checkReturnCoursePage(courseId, participant, false, true, model)) {
+            addModelInfo(model, courseDTO, true);
+            return "course";
+        }
+
+        try {
+            courseService.deleteCourseParticipant(courseId, participant);
+            return "redirect:/course?id=" + courseId;
+        } catch (NotFoundException e) {
+            return Constants.ERROR;
+        }
+    }
+
+    /**
      * Adds the experiment with the given title to the course with the given id. If the title input does not meet the
      * requirements, no corresponding experiment could be found, or the experiment is already part of the course, the
      * course page is returned to display a corresponding error message. If no course with the given id could be found,
@@ -266,10 +347,11 @@ public class CourseController {
             return Constants.ERROR;
         }
 
-        if (checkReturnCoursePage(courseId, title, true, model)) {
+        if (checkReturnCoursePage(courseId, title, true, false, model)) {
             addModelInfo(model, courseDTO, true);
             return "course";
         }
+
 
         courseService.saveCourseExperiment(courseId, title);
         return "redirect:/course?id=" + courseId;
@@ -299,7 +381,7 @@ public class CourseController {
             return Constants.ERROR;
         }
 
-        if (checkReturnCoursePage(courseId, title, false, model)) {
+        if (checkReturnCoursePage(courseId, title, false, false, model)) {
             addModelInfo(model, courseDTO, true);
             return "course";
         }
@@ -447,25 +529,26 @@ public class CourseController {
     }
 
     /**
-     * Checks, whether the course page should be returned when adding or removing an experiment, e.g. when the user
-     * input was invalid.
+     * Checks, whether the course page should be returned when adding or removing an experiment or participant, e.g.
+     * when the user input was invalid.
      *
      * @param courseId The id of the course.
-     * @param title The title of the experiment.
-     * @param isAdd Whether the experiment is to be added or removed.
+     * @param input The user input.
+     * @param isAdd Whether an add or remove operation is performed.
+     * @param isUser Whether a user or experiment is added or removed.
      * @param model The {@link Model} used to store error messages.
      * @return {@code true} if the course page should be returned, ore {@code false} otherwise.
      */
-    private boolean checkReturnCoursePage(final int courseId, final String title, final boolean isAdd,
-                                          final Model model) {
+    private boolean checkReturnCoursePage(final int courseId, final String input, final boolean isAdd,
+                                          final boolean isUser, final Model model) {
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
 
-        if (!isValidInput(title, Constants.LARGE_FIELD, model, resourceBundle)) {
+        if (!isValidInput(input, Constants.LARGE_FIELD, model, resourceBundle)) {
             return true;
         }
 
-        validateExperimentInput(courseId, title, isAdd, resourceBundle, model);
+        validateUserInput(courseId, input, isAdd, isUser, resourceBundle, model);
         return model.getAttribute(ERROR) != null;
     }
 
@@ -488,6 +571,52 @@ public class CourseController {
         }
 
         return true;
+    }
+
+    /**
+     * Checks, whether the given user input is valid based on the operation to be performed for a user or experiment and
+     * adds corresponding error messages to the given model, if the input is invalid.
+     *
+     * @param courseId The id of the course.
+     * @param input The user input.
+     * @param isAdd Whether an add or remove operation is performed.
+     * @param isUser Whether a user or experiment is added or removed.
+     * @param resourceBundle The {@link ResourceBundle} for fetching the error message in the desired language.
+     * @param model The {@link Model} used to store error messages.
+     */
+    private void validateUserInput(final int courseId, final String input, final boolean isAdd, final boolean isUser,
+                                   final ResourceBundle resourceBundle, final Model model) {
+        if (isUser) {
+            validateParticipantInput(courseId, input, isAdd, resourceBundle, model);
+        } else {
+            validateExperimentInput(courseId, input, isAdd, resourceBundle, model);
+        }
+    }
+
+    /**
+     * Checks, whether a user with the given username or email exists who is not yet part of the course with the given
+     * id, if the user is to be added to the course, or who is part of the course, if the user is to be deleted. If this
+     * is not the case, a corresponding error message is added to the model.
+     *
+     * @param courseId The id of the course.
+     * @param input The username or email.
+     * @param isAdd Whether the user is to be added or removed.
+     * @param resourceBundle The {@link ResourceBundle} for fetching the error message in the desired language.
+     * @param model The {@link Model} used to store the error message.
+     */
+    private void validateParticipantInput(final int courseId, final String input, final boolean isAdd,
+                                          final ResourceBundle resourceBundle, final Model model) {
+        UserDTO userDTO = userService.getUserByUsernameOrEmail(input);
+
+        if (userDTO == null) {
+            model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
+        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+            model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
+        } else if (isAdd && courseService.existsCourseParticipant(courseId, input)) {
+            model.addAttribute(ERROR, resourceBundle.getString("course_participant_exists"));
+        } else if (!isAdd && !courseService.existsCourseParticipant(courseId, input)) {
+            model.addAttribute(ERROR, resourceBundle.getString("course_participant_not_found"));
+        }
     }
 
     /**

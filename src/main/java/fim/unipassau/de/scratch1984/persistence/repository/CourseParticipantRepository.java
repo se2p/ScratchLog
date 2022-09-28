@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.persistence.repository;
 import fim.unipassau.de.scratch1984.persistence.entity.Course;
 import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipantId;
+import fim.unipassau.de.scratch1984.persistence.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,15 @@ import java.util.List;
  * A repository providing functionality for retrieving participant information for a course.
  */
 public interface CourseParticipantRepository extends JpaRepository<CourseParticipant, CourseParticipantId> {
+
+    /**
+     * Checks, whether a course participation for the given course and user exists in the database.
+     *
+     * @param course The {@link Course} to search for.
+     * @param user The {@link User} to search for.
+     * @return {@code true} iff an entry already exists.
+     */
+    boolean existsByCourseAndUser(Course course, User user);
 
     /**
      * Returns a list of all {@link CourseParticipant}s containing the ids of all users participating in the given

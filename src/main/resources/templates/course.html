@@ -278,10 +278,15 @@
 <div id="openAddParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{add_participant}"></h2>
-        <div class="mb-3" th:text="#{add_participant_info}"></div>
+        <div class="mb-3" th:text="#{add_course_participant_info}"></div>
         <form th:action="@{/course/participant/add}">
             <div class="mb-3 form-group position-relative">
                 <input id="addParticipantId" type="hidden" th:name="id" th:value="${courseDTO.id}">
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" th:name="add" id="experimentParticipant">
+                    <label class="form-check-label" for="experimentParticipant" th:text="#{add_experiment_participant}">
+                    </label>
+                </div>
                 <div class="input-group">
                     <input class="form-control" type="text" th:name="participant" id="participantInput"
                            th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>

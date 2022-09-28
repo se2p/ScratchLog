@@ -7,15 +7,21 @@ import fim.unipassau.de.scratch1984.persistence.entity.Course;
 import fim.unipassau.de.scratch1984.persistence.entity.CourseExperiment;
 import fim.unipassau.de.scratch1984.persistence.entity.CourseExperimentId;
 import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipantId;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
+import fim.unipassau.de.scratch1984.persistence.entity.Participant;
+import fim.unipassau.de.scratch1984.persistence.entity.ParticipantId;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +72,11 @@ public class CourseService {
     private final UserRepository userRepository;
 
     /**
+     * The participant repository to use for database queries related to experiment participation data.
+     */
+    private final ParticipantRepository participantRepository;
+
+    /**
      * Constructs a new course service with the given dependencies.
      *
      * @param courseRepository The {@link CourseRepository} to use.
@@ -73,18 +84,21 @@ public class CourseService {
      * @param courseExperimentRepository The {@link CourseExperimentRepository} to use.
      * @param experimentRepository The {@link ExperimentRepository} to use.
      * @param userRepository The {@link UserRepository} to use.
+     * @param participantRepository The {@link ParticipantRepository} to use.
      */
     @Autowired
     public CourseService(final CourseRepository courseRepository,
                          final CourseParticipantRepository courseParticipantRepository,
                          final CourseExperimentRepository courseExperimentRepository,
                          final ExperimentRepository experimentRepository,
-                         final UserRepository userRepository) {
+                         final UserRepository userRepository,
+                         final ParticipantRepository participantRepository) {
         this.courseRepository = courseRepository;
         this.courseParticipantRepository = courseParticipantRepository;
         this.courseExperimentRepository = courseExperimentRepository;
         this.experimentRepository = experimentRepository;
         this.userRepository = userRepository;
+        this.participantRepository = participantRepository;
     }
 
     /**
@@ -149,6 +163,30 @@ public class CourseService {
     }
 
     /**
+     * Checks, whether a course participant entry exists for the course with the given id and the participant with the
+     * given username or email.
+     *
+     * @param input The username or email.
+     * @param courseId The id of the course.
+     * @return {@code true} if such an entry exists, or {@code false} if not.
+     */
+    @Transactional
+    public boolean existsCourseParticipant(final int courseId, final String input) {
+        if (input == null || input.trim().isBlank() || courseId < Constants.MIN_ID) {
+            return false;
+        }
+
+        Course course = courseRepository.getOne(courseId);
+        User user = userRepository.findUserByUsernameOrEmail(input, input);
+
+        try {
+            return user != null && courseParticipantRepository.existsByCourseAndUser(course, user);
+        } catch (EntityNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
      * Creates a new course or updates an existing one with the given parameters in the database. If the DTO contains
      * invalid attribute values, an {@link IncompleteDataException} is thrown. If the information could not be persisted
      * correctly, a {@link StoreException} is thrown instead.
@@ -178,6 +216,99 @@ public class CourseService {
         }
 
         return course.getId();
+    }
+
+    /**
+     * Creates a new {@link CourseParticipant} entry for the course with the given id and the participant with the given
+     * username or email. If the passed parameters are invalid, an {@link IllegalArgumentException} is thrown instead.
+     * If corresponding user could be found, a {@link NotFoundException} is thrown. If the user is not a participant, an
+     * {@link IllegalStateException} is thrown. If no corresponding course entry could be found an
+     * {@link EntityNotFoundException} or a {@link ConstraintViolationException} is thrown instead.
+     *
+     * @param courseId The id of the course.
+     * @param participant The username or email.
+     * @return The id of the user.
+     */
+    @Transactional
+    public int saveCourseParticipant(final int courseId, final String participant) {
+        if (participant == null || participant.trim().isBlank() || courseId < Constants.MIN_ID) {
+            logger.error("Cannot save course participant with participant null or blank or invalid course id!");
+            throw new IllegalArgumentException("Cannot save course experiment with participant null or blank or "
+                    + "invalid course id!");
+        }
+
+        Course course = courseRepository.getOne(courseId);
+        User user = userRepository.findUserByUsernameOrEmail(participant, participant);
+
+        try {
+            if (user == null) {
+                logger.error("Could not find the user with username or email " + participant + " when trying to add a "
+                        + "course participant!");
+                throw new NotFoundException("Could not find the user with username or email " + participant
+                        + " when trying to add a course participant!");
+            } else if (!user.getRole().equals(UserDTO.Role.PARTICIPANT.toString())) {
+                logger.error("Tried to add administrator with username or email " + participant + " as a course "
+                        + "participant!");
+                throw new IllegalStateException("Tried to add administrator with username or email " + participant
+                        + " as a course participant!");
+            }
+
+            CourseParticipant courseParticipant = new CourseParticipant(user, course,
+                    Timestamp.valueOf(LocalDateTime.now()));
+            course.setLastChanged(courseParticipant.getAdded());
+            user.setActive(true);
+            courseParticipantRepository.save(courseParticipant);
+            courseRepository.save(course);
+            userRepository.save(user);
+            return user.getId();
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the course when saving the course participant data!", e);
+            throw new NotFoundException("Could not find the course when saving the course participant data!", e);
+        } catch (ConstraintViolationException e) {
+            logger.error("The given course participant data does not meet the foreign key constraints!", e);
+            throw new StoreException("The given course participant data does not meet the foreign key constraints!", e);
+        }
+    }
+
+    /**
+     * Removes the user with the given username or email as a participant of the course with the given id. Additionally,
+     * the user is removed as a participant from all experiments offered in the course. If no corresponding user could
+     * be found, a {@link NotFoundException} is thrown instead. If no corresponding course could be found, an
+     * {@link EntityNotFoundException} is thrown.
+     *
+     * @param courseId The id of the course.
+     * @param participant The username or email of the participant to be removed.
+     */
+    @Transactional
+    public void deleteCourseParticipant(final int courseId, final String participant) {
+        if (participant == null || participant.trim().isBlank() || courseId < Constants.MIN_ID) {
+            logger.error("Cannot delete course participant with participant null or blank or invalid course id!");
+            throw new IllegalArgumentException("Cannot delete course experiment with participant null or blank or "
+                    + "invalid course id!");
+        }
+
+        Course course = courseRepository.getOne(courseId);
+        User user = userRepository.findUserByUsernameOrEmail(participant, participant);
+
+        try {
+            if (user == null) {
+                logger.error("Could not find the user with username or email " + participant + " when trying to delete "
+                        + "a course participant!");
+                throw new NotFoundException("Could not find the user with username or email " + participant + " when "
+                        + "trying to delete a course participant!");
+            }
+
+            CourseParticipantId courseParticipantId = new CourseParticipantId(user.getId(), courseId);
+            List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+            course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
+            courseExperiments.forEach(courseExperiment -> deleteExperimentParticipant(user,
+                    courseExperiment.getExperiment()));
+            courseParticipantRepository.deleteById(courseParticipantId);
+            courseRepository.save(course);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the course when deleting the course participant data!", e);
+            throw new NotFoundException("Could not find the course when deleting the course participant data!", e);
+        }
     }
 
     /**
@@ -256,6 +387,46 @@ public class CourseService {
         } catch (EntityNotFoundException e) {
             logger.error("Could not find the course when deleting the course experiment data!", e);
             throw new NotFoundException("Could not find the course when deleting the course experiment data!", e);
+        }
+    }
+
+    /**
+     * Adds the course participant with the given id as a participant to all experiments offered as part of that course.
+     * If no course or user corresponding to the given ids could be found, an {@link EntityNotFoundException} or a
+     * {@link ConstraintViolationException} is thrown instead.
+     *
+     * @param courseId The id of the course.
+     * @param userId The id of the user.
+     */
+    @Transactional
+    public void addParticipantToCourseExperiments(final int courseId, final int userId) {
+        if (courseId < Constants.MIN_ID || userId < Constants.MIN_ID) {
+            logger.error("Cannot add participant to course experiment with invalid course id " + courseId
+                    + " or invalid user id " + userId);
+            throw new IllegalArgumentException("Cannot add participant to course experiment with invalid course id "
+                    + courseId + " or invalid user id " + userId);
+        }
+
+        Course course = courseRepository.getOne(courseId);
+        User user = userRepository.getOne(userId);
+
+        try {
+            List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+            courseExperiments.forEach(courseExperiment -> addExperimentParticipant(user,
+                    courseExperiment.getExperiment()));
+
+            if (!courseExperiments.isEmpty() && user.getSecret() == null) {
+                user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
+                userRepository.save(user);
+            }
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the course or user when adding course participants to course experiments!", e);
+            throw new NotFoundException("Could not find the course or user when adding course participants to course "
+                    + "experiments!", e);
+        } catch (ConstraintViolationException e) {
+            logger.error("The given experiment participant data does not meet the foreign key constraints!", e);
+            throw new StoreException("The given experiment participant data does not meet the foreign key constraints!",
+                    e);
         }
     }
 
@@ -354,6 +525,38 @@ public class CourseService {
         }
 
         userRepository.save(user);
+    }
+
+    /**
+     * Adds the given user as a participant to the given experiment. If a participation entry already exists, an
+     * {@link IllegalStateException} is thrown instead.
+     *
+     * @param user The {@link User} to be added as a participant.
+     * @param experiment The {@link Experiment} in which the user should participate.
+     */
+    private void addExperimentParticipant(final User user, final Experiment experiment) {
+        if (participantRepository.existsByUserAndExperiment(user, experiment)) {
+            logger.error("A participant entry for th user with id " + user.getId() + " and experiment with id "
+                    + experiment.getId() + " already exists!");
+            throw new IllegalStateException("A participant entry for th user with id " + user.getId()
+                    + " and experiment with id " + experiment.getId() + " already exists!");
+        }
+
+        Participant participant = new Participant(user, experiment, null, null);
+        participantRepository.save(participant);
+    }
+
+    /**
+     * Removes the participant entry for the given user in the given experiment, if such an entry exists.
+     *
+     * @param user The {@link User} to search for.
+     * @param experiment The {@link Experiment} to search for.
+     */
+    private void deleteExperimentParticipant(final User user, final Experiment experiment) {
+        if (participantRepository.existsByUserAndExperiment(user, experiment)) {
+            ParticipantId participantId = new ParticipantId(user.getId(), experiment.getId());
+            participantRepository.deleteById(participantId);
+        }
     }
 
     /**

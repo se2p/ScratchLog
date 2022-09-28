@@ -11,6 +11,7 @@ import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,15 +85,20 @@ public class CourseControllerIntegrationTest {
     private static final String LAST = "5";
     private static final String ID_PARAM = "id";
     private static final String TITLE_PARAM = "title";
+    private static final String PARTICIPANT_PARAM = "participant";
     private static final String PAGE_PARAM = "page";
     private static final String LAST_PAGE_PARAM = "lastPage";
+    private static final String ERROR_ATTRIBUTE = "error";
     private static final int ID = 1;
     private static final int LAST_PAGE = 5;
     private static final String TITLE = "Title";
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
+    private static final String USERNAME = "participant";
     private static final LocalDateTime CHANGED = LocalDateTime.now();
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
+    private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", UserDTO.Role.PARTICIPANT,
+            UserDTO.Language.ENGLISH, "password", "secret");
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -106,6 +112,7 @@ public class CourseControllerIntegrationTest {
         courseDTO.setContent(CONTENT);
         courseDTO.setActive(true);
         courseDTO.setLastChanged(CHANGED);
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
     }
 
     @AfterEach
@@ -230,6 +237,124 @@ public class CourseControllerIntegrationTest {
     }
 
     @Test
+    public void testAddParticipant() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.saveCourseParticipant(ID, USERNAME)).thenReturn(ID);
+        mvc.perform(get("/course/participant/add")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(PARTICIPANT_PARAM, USERNAME)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_COURSE + ID));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService).saveCourseParticipant(ID, USERNAME);
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testAddParticipantInvalidInput() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/participant/add")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(PARTICIPANT_PARAM, " ")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(COURSE))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+        verify(courseService).getCourse(ID);
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testAddParticipantCourseNotFound() throws Exception {
+        when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/course/participant/add")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(PARTICIPANT_PARAM, USERNAME)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(courseService).getCourse(ID);
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDeleteParticipant() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.existsCourseParticipant(ID, USERNAME)).thenReturn(true);
+        mvc.perform(get("/course/participant/delete")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(PARTICIPANT_PARAM, USERNAME)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_COURSE + ID));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService).deleteCourseParticipant(ID, USERNAME);
+    }
+
+    @Test
+    public void testDeleteParticipantNotFound() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/participant/delete")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(PARTICIPANT_PARAM, USERNAME)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(COURSE))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).deleteCourseParticipant(anyInt(), anyString());
+    }
+
+    @Test
+    public void testDeleteParticipantCourseInactive() throws Exception {
+        courseDTO.setActive(false);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/participant/delete")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(PARTICIPANT_PARAM, USERNAME)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(courseService).getCourse(ID);
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).deleteCourseParticipant(anyInt(), anyString());
+    }
+
+    @Test
     public void testAddExperiment() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
@@ -260,7 +385,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
-                .andExpect(model().attribute("error", notNullValue()));
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
         verify(courseService).getCourse(ID);
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
@@ -316,7 +441,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
-                .andExpect(model().attribute("error", notNullValue()));
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
         verify(courseService).getCourse(ID);
         verify(experimentService, never()).existsExperiment(anyString());
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());

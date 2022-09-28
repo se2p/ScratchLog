@@ -10,6 +10,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjec
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
+import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -75,10 +77,13 @@ public class CourseControllerTest {
     private static final String TITLE = "Title";
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
+    private static final String USERNAME = "participant";
     private static final String MODEL_ERROR = "error";
     private static final String BLANK = "  ";
     private static final LocalDateTime CHANGED = LocalDateTime.now();
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
+    private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", UserDTO.Role.PARTICIPANT,
+            UserDTO.Language.ENGLISH, "password", "secret");
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(3));
 
     @BeforeEach
@@ -89,6 +94,7 @@ public class CourseControllerTest {
         courseDTO.setContent(CONTENT);
         courseDTO.setActive(true);
         courseDTO.setLastChanged(CHANGED);
+        userDTO.setRole(UserDTO.Role.PARTICIPANT);
     }
 
     @Test
@@ -190,6 +196,154 @@ public class CourseControllerTest {
         verify(bindingResult).addError(any());
         verify(courseService).existsCourse(ID, TITLE);
         verify(courseService, never()).saveCourse(any());
+    }
+
+    @Test
+    public void testAddParticipant() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.saveCourseParticipant(ID, USERNAME)).thenReturn(ID);
+        assertEquals(REDIRECT_COURSE + ID, courseController.addParticipant(USERNAME, null, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService).saveCourseParticipant(ID, USERNAME);
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantAddToExperiments() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.saveCourseParticipant(ID, USERNAME)).thenReturn(ID);
+        assertEquals(REDIRECT_COURSE + ID, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService).saveCourseParticipant(ID, USERNAME);
+        verify(courseService).addParticipantToCourseExperiments(ID, ID);
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantNotFound() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.saveCourseParticipant(ID, USERNAME)).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService).saveCourseParticipant(ID, USERNAME);
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantExists() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.existsCourseParticipant(ID, USERNAME)).thenReturn(true);
+        when(model.getAttribute(MODEL_ERROR)).thenReturn(USERNAME);
+        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+        verify(model, times(9)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantAdmin() {
+        userDTO.setRole(UserDTO.Role.ADMIN);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(model.getAttribute(MODEL_ERROR)).thenReturn(USERNAME);
+        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+        verify(model, times(9)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantNoUser() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(model.getAttribute(MODEL_ERROR)).thenReturn(USERNAME);
+        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+        verify(model, times(9)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantCourseInactive() {
+        courseDTO.setActive(false);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        assertEquals(Constants.ERROR, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipant() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.existsCourseParticipant(ID, USERNAME)).thenReturn(true);
+        assertEquals(REDIRECT_COURSE + ID, courseController.deleteParticipant(USERNAME, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService).deleteCourseParticipant(ID, USERNAME);
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantNotFound() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.existsCourseParticipant(ID, USERNAME)).thenReturn(true);
+        doThrow(NotFoundException.class).when(courseService).deleteCourseParticipant(ID, USERNAME);
+        assertEquals(Constants.ERROR, courseController.deleteParticipant(USERNAME, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService).deleteCourseParticipant(ID, USERNAME);
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantNotExistent() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(model.getAttribute(MODEL_ERROR)).thenReturn(USERNAME);
+        assertEquals(COURSE, courseController.deleteParticipant(USERNAME, ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService, never()).deleteCourseParticipant(anyInt(), anyString());
+        verify(model, times(9)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testDeleteParticipantInvalidId() {
+        assertEquals(Constants.ERROR, courseController.deleteParticipant(USERNAME, "0", model));
+        verify(courseService, never()).getCourse(anyInt());
+        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).deleteCourseParticipant(anyInt(), anyString());
+        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
@@ -326,6 +480,7 @@ public class CourseControllerTest {
 
     @Test
     public void testGetNextExperimentPage() {
+        courseDTO.setContent(null);
         when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         ModelAndView mv = courseController.getNextExperimentPage(ID_STRING, LAST, CURRENT);
