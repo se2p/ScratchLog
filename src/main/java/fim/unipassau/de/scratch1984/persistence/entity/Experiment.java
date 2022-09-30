@@ -51,6 +51,12 @@ public class Experiment {
     private boolean active;
 
     /**
+     * Boolean indicating whether the experiment is part of a course.
+     */
+    @Column(name = "course_experiment")
+    private boolean courseExperiment;
+
+    /**
      * The URL of the instrumented Scratch-GUI instance to be used for this experiment.
      */
     @Column(name = "gui_url")
@@ -76,16 +82,19 @@ public class Experiment {
      * @param info The experiment information text.
      * @param postscript The postscript text.
      * @param active Whether the experiment is currently running or not.
+     * @param courseExperiment Whether the experiment is part of a course or not.
      * @param guiURL The URL of the instrumented Scratch-GUI this experiment uses.
      */
     public Experiment(final Integer id, final String title, final String description, final String info,
-                      final String postscript, final boolean active, final String guiURL) {
+                      final String postscript, final boolean active, final boolean courseExperiment,
+                      final String guiURL) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.info = info;
         this.postscript = postscript;
         this.active = active;
+        this.courseExperiment = courseExperiment;
         this.guiURL = guiURL;
     }
 
@@ -195,6 +204,24 @@ public class Experiment {
      */
     public void setActive(final boolean active) {
         this.active = active;
+    }
+
+    /**
+     * Returns whether the experiment is part of a course.
+     *
+     * @return The experiment course status.
+     */
+    public boolean isCourseExperiment() {
+        return courseExperiment;
+    }
+
+    /**
+     * Sets the experiment course status.
+     *
+     * @param courseExperiment The status.
+     */
+    public void setCourseExperiment(final boolean courseExperiment) {
+        this.courseExperiment = courseExperiment;
     }
 
     /**

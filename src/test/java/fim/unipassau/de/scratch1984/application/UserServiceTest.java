@@ -69,7 +69,7 @@ public class UserServiceTest {
     private static final int ID = 1;
     private static final String GUI_URL = "scratch";
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
-            GUI_URL);
+            false, GUI_URL);
     private final User user1 = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, SECRET);
     private final User user2 = new User("participant1", "part1@part.de", "PARTICIPANT", "ENGLISH",
             PASSWORD, SECRET);

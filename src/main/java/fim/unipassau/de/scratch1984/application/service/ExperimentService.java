@@ -339,8 +339,9 @@ public class ExperimentService {
         if (experimentDTO.getGuiURL() != null) {
             experiment.setGuiURL(experimentDTO.getGuiURL());
         }
-        experiment.setActive(experimentDTO.isActive());
 
+        experiment.setActive(experimentDTO.isActive());
+        experiment.setCourseExperiment(experimentDTO.isCourseExperiment());
         return experiment;
     }
 
@@ -371,8 +372,9 @@ public class ExperimentService {
         if (experiment.getGuiURL() != null) {
             experimentDTO.setGuiURL(experiment.getGuiURL());
         }
-        experimentDTO.setActive(experiment.isActive());
 
+        experimentDTO.setActive(experiment.isActive());
+        experimentDTO.setCourseExperiment(experiment.isCourseExperiment());
         return experimentDTO;
     }
 

@@ -173,12 +173,6 @@ function addModalOnclickFunctions() {
     document.getElementById("abortDeleteParticipant").addEventListener("click", function () {
         closeModal(deleteParticipantModal);
     });
-    document.getElementById("addExperiment").addEventListener("click", function () {
-        openModal(addExperimentModal);
-    });
-    document.getElementById("abortAddExperiment").addEventListener("click", function () {
-        closeModal(addExperimentModal);
-    });
     document.getElementById("deleteExperiment").addEventListener("click", function () {
        openModal(deleteExperimentModal);
     });

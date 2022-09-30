@@ -100,7 +100,7 @@ public class HomeControllerTest {
     private static final int LAST_PAGE = 4;
     private static final int ID = 1;
     private static final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "My Experiment", "description",
-            "info", "postscript", true, GUI_URL);
+            "info", "postscript", true, false, GUI_URL);
     private static final UserDTO userDTO = new UserDTO("participant", "email", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "");
     private final Page<ExperimentTableProjection> experimentPage = new PageImpl<>(getExperimentProjections(5));

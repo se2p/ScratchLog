@@ -64,8 +64,10 @@ public class UserRepositoryTest {
     private User user15 = new User("part7", "part13@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user16 = new User("part8", "part14@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user17 = new User("user17", "part17@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", "", true, GUI_URL);
-    private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", "", true, GUI_URL);
+    private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", "", true, false,
+            GUI_URL);
+    private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", "", true, false,
+            GUI_URL);
     private Course course1 = new Course(null, "Course 1", "Description 1", "", false, timestamp);
     private Course course2 = new Course(null, "Course 2", "Description 2", "", false, timestamp);
     private Course course3 = new Course(null, "Course 3", "Description 3", "", false, timestamp);

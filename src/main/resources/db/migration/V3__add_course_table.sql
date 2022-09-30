@@ -34,3 +34,6 @@ CREATE TABLE IF NOT EXISTS `course_experiment` (
     CONSTRAINT `course_experiment_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `course` (`id`) ON DELETE CASCADE,
     CONSTRAINT `course_experiment_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Add course experiment column to experiment table indicating whether the experiment is part of a course or not
+ALTER TABLE experiment ADD COLUMN course_experiment bit(1) NOT NULL DEFAULT b'0';

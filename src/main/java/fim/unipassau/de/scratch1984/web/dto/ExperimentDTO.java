@@ -13,6 +13,11 @@ public class ExperimentDTO {
     private Integer id;
 
     /**
+     * The ID of the course to which this experiment is to be added.
+     */
+    private Integer course;
+
+    /**
      * The unique title of the experiment.
      */
     private String title;
@@ -38,6 +43,11 @@ public class ExperimentDTO {
     private boolean active;
 
     /**
+     * Boolean indicating whether the experiment is part of a course.
+     */
+    private boolean courseExperiment;
+
+    /**
      * The URL of the instrumented Scratch-GUI instance to be used for this experiment.
      */
     private String guiURL;
@@ -57,16 +67,19 @@ public class ExperimentDTO {
      * @param info The experiment information text.
      * @param postscript The postscript text.
      * @param active Whether the experiment is currently running or not.
+     * @param courseExperiment Whether the experiment is part of a course or not.
      * @param guiURL The URL of the instrumented Scratch-GUI this experiment uses.
      */
     public ExperimentDTO(final Integer id, final String title, final String description, final String info,
-                         final String postscript, final boolean active, final String guiURL) {
+                         final String postscript, final boolean active, final boolean courseExperiment,
+                         final String guiURL) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.info = info;
         this.postscript = postscript;
         this.active = active;
+        this.courseExperiment = courseExperiment;
         this.guiURL = guiURL;
     }
 
@@ -86,6 +99,24 @@ public class ExperimentDTO {
      */
     public void setId(final Integer id) {
         this.id = id;
+    }
+
+    /**
+     * Returns the ID of the course.
+     *
+     * @return The course ID.
+     */
+    public Integer getCourse() {
+        return course;
+    }
+
+    /**
+     * Sets the ID of the course.
+     *
+     * @param course The course ID to be set.
+     */
+    public void setCourse(final Integer course) {
+        this.course = course;
     }
 
     /**
@@ -179,6 +210,24 @@ public class ExperimentDTO {
     }
 
     /**
+     * Returns whether the experiment is part of a course.
+     *
+     * @return The experiment course status.
+     */
+    public boolean isCourseExperiment() {
+        return courseExperiment;
+    }
+
+    /**
+     * Sets the experiment course status.
+     *
+     * @param courseExperiment The status.
+     */
+    public void setCourseExperiment(final boolean courseExperiment) {
+        this.courseExperiment = courseExperiment;
+    }
+
+    /**
      * Returns whether the GUI-URL of the experiment.
      *
      * @return The GUI-URL.
@@ -241,6 +290,7 @@ public class ExperimentDTO {
                 + ", postscript='" + postscript + '\''
                 + ", info='" + info + '\''
                 + ", active='" + active + '\''
+                + ", courseExperiment='" + courseExperiment + '\''
                 + ", url='" + guiURL + '\''
                 + '}';
     }

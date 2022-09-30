@@ -113,7 +113,7 @@ public class ParticipantControllerTest {
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true,
-            GUI_URL);
+            false, GUI_URL);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
 
     @BeforeEach

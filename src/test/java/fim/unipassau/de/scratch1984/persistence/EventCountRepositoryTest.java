@@ -37,9 +37,9 @@ public class EventCountRepositoryTest {
     private User user1 = new User("participant1", "part1@part.de", "PARTICIPANT", "GERMAN", "password", "secret1");
     private User user2 = new User("participant2", "part2@part.de", "PARTICIPANT", "GERMAN", "password", "secret2");
     private Experiment experiment1 = new Experiment(null, "experiment1", "description", "info", "postscript", true,
-            GUI_URL);
+            false, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "experiment2", "description", "info", "postscript", true,
-            GUI_URL);
+            false, GUI_URL);
     private BlockEvent blockEvent1 = new BlockEvent(user1, experiment1, timestamp, "CREATE", "CREATE", "Figur1",
             null, "xml", "json");
     private BlockEvent blockEvent2 = new BlockEvent(user1, experiment1, timestamp, "DRAG", "ENDDRAG", "Figur1",

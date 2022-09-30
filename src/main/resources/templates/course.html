@@ -222,7 +222,8 @@
             <!-- The buttons for experiment management. -->
             <div class="d-flex gap-3 flex-wrap" th:if="${courseDTO.active}">
                 <div class="mb-3">
-                    <input id="addExperiment" class="btn btn-secondary" type="submit" th:value="#{add_experiment}">
+                    <a class="btn btn-secondary" th:href="@{/experiment/create(course=${courseDTO.id})}"
+                       th:text="#{add_experiment}"></a>
                 </div>
                 <div class="mb-3">
                     <input id="deleteExperiment" type="submit" class="btn btn-danger" th:value="#{delete_experiment}"/>
@@ -318,28 +319,6 @@
             <div class="d-flex justify-content-between">
                 <a id="abortDeleteParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
                 <input class="btn btn-primary" type="submit" th:value="#{delete}"/>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- The popup dialog to add an existing experiment to the course. -->
-<div id="openAddExperiment" class="modal" sec:authorize="hasRole('ADMIN')">
-    <div class="modal-content">
-        <h2 th:text="#{add_experiment}"></h2>
-        <div class="mb-3" th:text="#{add_experiment_info}"></div>
-        <form th:action="@{/course/experiment/add}">
-            <div class="mb-3 form-group position-relative">
-                <input id="addExperimentId" type="hidden" th:name="id" th:value="${courseDTO.id}">
-                <div class="input-group">
-                    <input class="form-control" type="text" th:name="title" id="experimentInput"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
-                </div>
-                <div id="experimentResults"></div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <a id="abortAddExperiment" class="btn btn-secondary" th:text="#{abort}"></a>
-                <input class="btn btn-primary" type="submit" th:value="#{add}"/>
             </div>
         </form>
     </div>

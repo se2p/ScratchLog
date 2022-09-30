@@ -71,7 +71,7 @@ public class SecretControllerIntegrationTest {
     private static final String USER_PARAM = "user";
     private static final String EXPERIMENT_PARAM = "experiment";
     private final ExperimentDTO experiment = new ExperimentDTO(ID, "experiment", "my experiment", "info", "no", true,
-            GUI_URL);
+            false, GUI_URL);
     private final UserDTO user1 = new UserDTO("participant", "part@part.de", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", SECRET);
     private final UserDTO user2 = new UserDTO("participant2", "part2@part.de", UserDTO.Role.PARTICIPANT,

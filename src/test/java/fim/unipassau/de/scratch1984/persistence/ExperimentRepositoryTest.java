@@ -51,17 +51,17 @@ public class ExperimentRepositoryTest {
     private Course course2 = new Course(null, "Course 2", "Description for my course", "No info", true,
             TIMESTAMP);
     private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
-            "Some postscript", false, GUI_URL);
+            "Some postscript", false, false, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
-            "Some postscript", true, GUI_URL);
+            "Some postscript", true, false, GUI_URL);
     private Experiment experiment3 = new Experiment(null, "Experiment 3", "Description for experiment 3", "Some info",
-            "Some postscript", false, GUI_URL);
+            "Some postscript", false, false, GUI_URL);
     private Experiment experiment4 = new Experiment(null, "Experiment 4", "Description for experiment 1", "Some info",
-            "Some postscript", false, GUI_URL);
+            "Some postscript", false, false, GUI_URL);
     private Experiment experiment5 = new Experiment(null, "Exp 5", "Description for experiment 2", "Some info",
-            "Some postscript", false, GUI_URL);
+            "Some postscript", false, false, GUI_URL);
     private Experiment experiment6 = new Experiment(null, "Exp 6", "Description for experiment 3", "Some info",
-            "Some postscript", false, GUI_URL);
+            "Some postscript", false, false, GUI_URL);
     private Participant participant1 = new Participant(user, experiment1, null, null);
     private Participant participant2 = new Participant(user, experiment2, null, null);
     private Participant participant3 = new Participant(user, experiment3, null, null);

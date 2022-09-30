@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 import com.opencsv.CSVWriter;
 import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
@@ -73,6 +74,11 @@ public class ExperimentController {
     private final ExperimentService experimentService;
 
     /**
+     * The course service to use for course management.
+     */
+    private final CourseService courseService;
+
+    /**
      * The participant service to use for participant management.
      */
     private final ParticipantService participantService;
@@ -140,19 +146,22 @@ public class ExperimentController {
     /**
      * Constructs a new experiment controller with the given dependencies.
      *
-     * @param experimentService The experiment service to use.
-     * @param userService The user service to use.
-     * @param participantService The participant service to use.
-     * @param pageService The page service to use.
-     * @param mailService The mail service to use.
-     * @param eventService The event service to use.
+     * @param experimentService The {@link ExperimentService} to use.
+     * @param userService The {@link UserService} to use.
+     * @param courseService The {@link CourseService} to use.
+     * @param participantService The {@link ParticipantService} to use.
+     * @param pageService The {@link PageService} to use.
+     * @param mailService The {@link MailService} to use.
+     * @param eventService The {@link EventService} to use.
      */
     @Autowired
     public ExperimentController(final ExperimentService experimentService, final UserService userService,
-                                final ParticipantService participantService, final PageService pageService,
-                                final MailService mailService, final EventService eventService) {
+                                final CourseService courseService, final ParticipantService participantService,
+                                final PageService pageService, final MailService mailService,
+                                final EventService eventService) {
         this.experimentService = experimentService;
         this.userService = userService;
+        this.courseService = courseService;
         this.participantService = participantService;
         this.pageService = pageService;
         this.mailService = mailService;
@@ -214,12 +223,28 @@ public class ExperimentController {
     /**
      * Returns the form used to create or edit an experiment.
      *
-     * @param experimentDTO The {@link ExperimentDTO} in which the information will be stored.
+     * @param course The ID of the course to which the new experiment should be added, if applicable.
+     * @param model The {@link Model} used to store the information.
      * @return A new empty form.
      */
     @GetMapping("/create")
     @Secured(Constants.ROLE_ADMIN)
-    public String getExperimentForm(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO) {
+    public String getExperimentForm(@RequestParam(required = false, name = "course") final String course,
+                                    final Model model) {
+        ExperimentDTO experimentDTO = new ExperimentDTO();
+
+        if (course != null) {
+            int courseId = NumberParser.parseId(course);
+
+            if (courseId < Constants.MIN_ID) {
+                return Constants.ERROR;
+            } else {
+                experimentDTO.setCourse(courseId);
+                experimentDTO.setCourseExperiment(true);
+            }
+        }
+
+        model.addAttribute("experimentDTO", experimentDTO);
         return EXPERIMENT_EDIT;
     }
 
@@ -263,6 +288,10 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String editExperiment(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO,
                                  final BindingResult bindingResult) {
+        if (experimentDTO.getCourse() != null && !courseService.existsCourse(experimentDTO.getCourse())) {
+            return Constants.ERROR;
+        }
+
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
         FieldErrorHandler.validateExperimentInput(experimentDTO.getTitle(), experimentDTO.getDescription(),
@@ -291,6 +320,15 @@ public class ExperimentController {
         }
 
         ExperimentDTO saved = experimentService.saveExperiment(experimentDTO);
+
+        if (experimentDTO.getCourse() != null) {
+            try {
+                courseService.saveCourseExperiment(experimentDTO.getCourse(), saved.getId());
+            } catch (Exception e) {
+                experimentService.deleteExperiment(saved.getId());
+                return Constants.ERROR;
+            }
+        }
 
         return REDIRECT_EXPERIMENT + saved.getId();
     }

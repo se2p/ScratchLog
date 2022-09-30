@@ -12,6 +12,7 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -144,7 +145,7 @@ public class ExperimentControllerTest {
     private static final String GUI_URL = "scratch";
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false,
-            GUI_URL);
+            false, GUI_URL);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, PASSWORD, "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANTS, EMAIL, UserDTO.Role.PARTICIPANT,
@@ -352,8 +353,20 @@ public class ExperimentControllerTest {
 
     @Test
     public void testGetExperimentForm() {
-        String returnString = experimentController.getExperimentForm(experimentDTO);
-        assertEquals(EXPERIMENT_EDIT, returnString);
+        assertEquals(EXPERIMENT_EDIT, experimentController.getExperimentForm(null, model));
+        verify(model).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetExperimentFormCourse() {
+        assertEquals(EXPERIMENT_EDIT, experimentController.getExperimentForm(ID_STRING, model));
+        verify(model).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetExperimentFormInvalidCourseId() {
+        assertEquals(Constants.ERROR, experimentController.getExperimentForm("0", model));
+        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test

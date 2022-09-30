@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `experiment` (
     `active` bit(1) NOT NULL DEFAULT 0,
     `project` longblob NULL DEFAULT NULL,
     `gui_url` varchar(2000) DEFAULT NULL,
+    `course_experiment` bit(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `experiment_title` (`title`)
 );

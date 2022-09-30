@@ -69,7 +69,7 @@ public class FileServiceTest {
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip", new byte[]{1, 2, 3, 4});
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
-            GUI_URL);
+            false, GUI_URL);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
     private final File file = new File(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "file", "type",
             new byte[]{1, 2, 3, 4});

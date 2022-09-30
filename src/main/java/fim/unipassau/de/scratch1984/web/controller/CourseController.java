@@ -325,39 +325,6 @@ public class CourseController {
     }
 
     /**
-     * Adds the experiment with the given title to the course with the given id. If the title input does not meet the
-     * requirements, no corresponding experiment could be found, or the experiment is already part of the course, the
-     * course page is returned to display a corresponding error message. If no course with the given id could be found,
-     * or something went wrong when trying to persist the change, the user is redirected to the error page instead.
-     *
-     * @param title The title of the experiment to be added.
-     * @param id The id of the course.
-     * @param model The {@link Model} to store information on errors.
-     * @return The updated course page on success, the course page displaying an error message, or the error page.
-     */
-    @GetMapping("/experiment/add")
-    @Secured(Constants.ROLE_ADMIN)
-    public String addExperiment(@RequestParam("title") final String title, @RequestParam("id") final String id,
-                                final Model model) {
-        int courseId = NumberParser.parseId(id);
-        CourseDTO courseDTO = getActiveCourseDTO(courseId);
-
-        if (courseDTO == null) {
-            logger.error("Cannot add a new experiment with an invalid course id parameter!");
-            return Constants.ERROR;
-        }
-
-        if (checkReturnCoursePage(courseId, title, true, false, model)) {
-            addModelInfo(model, courseDTO, true);
-            return "course";
-        }
-
-
-        courseService.saveCourseExperiment(courseId, title);
-        return "redirect:/course?id=" + courseId;
-    }
-
-    /**
      * Deletes the experiment course entry for the experiment with the given title and the course with the given id. If
      * the title input does not meet the requirements, no corresponding experiment could be found, or the experiment not
      * part of the course, the course page is returned to display a corresponding error message. If no course with the
@@ -699,7 +666,7 @@ public class CourseController {
         if (isUser) {
             validateParticipantInput(courseId, input, isAdd, resourceBundle, model);
         } else {
-            validateExperimentInput(courseId, input, isAdd, resourceBundle, model);
+            validateExperimentInput(courseId, input, resourceBundle, model);
         }
     }
 
@@ -730,23 +697,19 @@ public class CourseController {
     }
 
     /**
-     * Checks, whether an experiment with the given title exists that is not yet part of the course with the given id,
-     * if the experiment is to be added to the course, or that is part of the course, if the experiment is to be
-     * deleted. If this is not the case, a corresponding error message is added to the model.
+     * Checks, whether an experiment with the given title exists that is part of the course with the given id. If this
+     * is not the case, a corresponding error message is added to the model.
      *
      * @param courseId The id of the course.
      * @param title The title of the experiment.
-     * @param isAdd Whether the experiment is to be added or removed.
      * @param resourceBundle The {@link ResourceBundle} for fetching the error message in the desired language.
      * @param model The {@link Model} used to store the error message.
      */
-    private void validateExperimentInput(final int courseId, final String title, final boolean isAdd,
-                                         final ResourceBundle resourceBundle, final Model model) {
+    private void validateExperimentInput(final int courseId, final String title, final ResourceBundle resourceBundle,
+                                         final Model model) {
         if (!experimentService.existsExperiment(title)) {
             model.addAttribute(ERROR, resourceBundle.getString("experiment_not_found"));
-        } else if (isAdd && courseService.existsCourseExperiment(courseId, title)) {
-            model.addAttribute(ERROR, resourceBundle.getString("course_experiment_exists"));
-        } else if (!isAdd && !courseService.existsCourseExperiment(courseId, title)) {
+        } else if (!courseService.existsCourseExperiment(courseId, title)) {
             model.addAttribute(ERROR, resourceBundle.getString("course_experiment_not_found"));
         }
     }
@@ -797,7 +760,7 @@ public class CourseController {
             model.addAttribute("participants", participants);
             model.addAttribute("lastParticipantPage", pageService.getLastParticipantCoursePage(courseId));
         } else {
-            model.addAttribute("participantPage", new ArrayList<>());
+            model.addAttribute("participants", new ArrayList<>());
             model.addAttribute("lastParticipantPage", 1);
         }
     }

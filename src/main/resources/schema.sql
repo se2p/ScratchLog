@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `experiment` (
                               `active` bit(1) NOT NULL DEFAULT b'0',
                               `project` longblob NULL DEFAULT NULL,
                               `gui_url` varchar(2000) NOT NULL,
+                              `course_experiment` bit(1) NOT NULL DEFAULT b'0',
                               PRIMARY KEY (`id`),
                               UNIQUE KEY `experiment_title` (`title`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

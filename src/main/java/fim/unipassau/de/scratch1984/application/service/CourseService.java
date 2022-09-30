@@ -102,6 +102,21 @@ public class CourseService {
     }
 
     /**
+     * Checks, whether a course with the given id already exists in the database.
+     *
+     * @param id The id to search for.
+     * @return {@code true} iff a course with the given id was found.
+     */
+    @Transactional
+    public boolean existsCourse(final int id) {
+        if (id < Constants.MIN_ID) {
+            return false;
+        }
+
+        return courseRepository.existsById(id);
+    }
+
+    /**
      * Checks, whether a course with the given title already exists in the database.
      *
      * @param title The title to search for.
@@ -312,45 +327,26 @@ public class CourseService {
     }
 
     /**
-     * Creates a new {@link CourseExperiment} entry for the course with the given id and the experiment with the given
-     * title. If the passed parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no
-     * corresponding course or experiment entry could be found an {@link EntityNotFoundException} or a
-     * {@link ConstraintViolationException} is thrown instead.
+     * Creates a new {@link CourseExperiment} entry for the course and experiment with the given ids. If the passed
+     * parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no corresponding course or
+     * experiment entry could be found an {@link EntityNotFoundException} or a {@link ConstraintViolationException}
+     * is thrown instead.
      *
      * @param courseId The id of the course.
-     * @param experimentTitle The title of the experiment.
+     * @param experimentId The id of the experiment.
      */
     @Transactional
-    public void saveCourseExperiment(final int courseId, final String experimentTitle) {
-        if (experimentTitle == null || experimentTitle.trim().isBlank() || courseId < Constants.MIN_ID) {
-            logger.error("Cannot save course experiment with experiment title null or blank or invalid course id!");
-            throw new IllegalArgumentException("Cannot save course experiment with experiment title null or blank or "
-                    + "invalid course id!");
+    public void saveCourseExperiment(final int courseId, final int experimentId) {
+        if (courseId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot save course experiment with invalid course id " + courseId + " or experiment id "
+                    + experimentId + "!");
+            throw new IllegalArgumentException("Cannot save course experiment with invalid course id " + courseId
+                    + " or experiment id " + experimentId + "!");
         }
 
         Course course = courseRepository.getOne(courseId);
-        Experiment experiment = experimentRepository.findByTitle(experimentTitle);
-
-        try {
-            if (experiment == null) {
-                logger.error("Could not find the experiment with title " + experimentTitle + " when trying to add a "
-                        + "course experiment!");
-                throw new NotFoundException("Could not find the experiment with title " + experimentTitle
-                        + " when trying to add a course experiment!");
-            }
-
-            CourseExperiment courseExperiment = new CourseExperiment(course, experiment,
-                    Timestamp.valueOf(LocalDateTime.now()));
-            course.setLastChanged(courseExperiment.getAdded());
-            courseExperimentRepository.save(courseExperiment);
-            courseRepository.save(course);
-        } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course when saving the course experiment data!", e);
-            throw new NotFoundException("Could not find the course when saving the course experiment data!", e);
-        } catch (ConstraintViolationException e) {
-            logger.error("The given course experiment data does not meet the foreign key constraints!", e);
-            throw new StoreException("The given course experiment data does not meet the foreign key constraints!", e);
-        }
+        Experiment experiment = experimentRepository.getOne(experimentId);
+        persistCourseExperiment(course, experiment);
     }
 
     /**
@@ -556,6 +552,35 @@ public class CourseService {
         if (participantRepository.existsByUserAndExperiment(user, experiment)) {
             ParticipantId participantId = new ParticipantId(user.getId(), experiment.getId());
             participantRepository.deleteById(participantId);
+        }
+    }
+
+    /**
+     * Creates a new {@link CourseExperiment} relation between the given course and experiment and updates the last
+     * changed attribute of the course. If no corresponding course or experiment entry could be found an
+     * {@link EntityNotFoundException} or a {@link ConstraintViolationException} is thrown instead.
+     *
+     * @param course The course.
+     * @param experiment The experiment.
+     */
+    private void persistCourseExperiment(final Course course, final Experiment experiment) {
+        try {
+            CourseExperiment courseExperiment = new CourseExperiment(course, experiment,
+                    Timestamp.valueOf(LocalDateTime.now()));
+            experiment.setActive(true);
+            experiment.setCourseExperiment(true);
+            course.setActive(true);
+            course.setLastChanged(courseExperiment.getAdded());
+            courseExperimentRepository.save(courseExperiment);
+            courseRepository.save(course);
+            experimentRepository.save(experiment);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the course or experiment when saving the course experiment data!", e);
+            throw new NotFoundException("Could not find the course or experiment when saving the course experiment "
+                    + "data!", e);
+        } catch (ConstraintViolationException e) {
+            logger.error("The given course experiment data does not meet the foreign key constraints!", e);
+            throw new StoreException("The given course experiment data does not meet the foreign key constraints!", e);
         }
     }
 

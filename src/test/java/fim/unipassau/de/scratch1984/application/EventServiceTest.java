@@ -112,7 +112,7 @@ public class EventServiceTest {
             "filetype", ResourceEventDTO.LibraryResource.TRUE);
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
-            GUI_URL);
+            false, GUI_URL);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
     private final CodesData codesData = new CodesData(ID, ID, 15);
     private final String[] blockEventDataHeader = {"id", "user", "experiment", "date", "eventType", "event",

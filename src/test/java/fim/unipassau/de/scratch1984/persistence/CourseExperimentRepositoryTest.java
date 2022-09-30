@@ -32,11 +32,11 @@ public class CourseExperimentRepositoryTest {
     private Course course2 = new Course(null, "Course 2", "Description 2", "", false, timestamp);
     private Course course3 = new Course(null, "Course 3", "Description 3", "", false, timestamp);
     private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
-            "Some postscript", false, "url");
+            "Some postscript", false, false, "url");
     private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
-            "Some postscript", true, "url");
+            "Some postscript", true, false, "url");
     private Experiment experiment3 = new Experiment(null, "Experiment 3", "Description for experiment 3", "Some info",
-            "Some postscript", false, "url");
+            "Some postscript", false, false, "url");
     private CourseExperiment courseExperiment1 = new CourseExperiment(course1, experiment1, timestamp);
     private CourseExperiment courseExperiment2 = new CourseExperiment(course1, experiment2, timestamp);
     private CourseExperiment courseExperiment3 = new CourseExperiment(course1, experiment3, timestamp);
