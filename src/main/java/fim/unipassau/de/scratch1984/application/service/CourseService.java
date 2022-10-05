@@ -202,6 +202,37 @@ public class CourseService {
     }
 
     /**
+     * Checks, whether a course participant entry exists for the user with the given id given the experiment with the
+     * passed id which is assumed to be an experiment belonging to a course. If a course experiment entry could be found
+     * for the experiment and the user with the given id is participating in that course, {@code true} is returned.
+     *
+     * @param experimentId The id of the experiment.
+     * @param userId The id of the user.
+     * @return {@code true} if such an entry exists, or {@code false} if not.
+     */
+    @Transactional
+    public boolean existsCourseParticipant(final int experimentId, final int userId) {
+        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
+            return false;
+        }
+
+        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getOne(userId);
+
+        try {
+            Optional<CourseExperiment> courseExperiment = courseExperimentRepository.findByExperiment(experiment);
+
+            if (courseExperiment.isEmpty()) {
+                return false;
+            } else {
+                return courseParticipantRepository.existsByCourseAndUser(courseExperiment.get().getCourse(), user);
+            }
+        } catch (EntityNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
      * Creates a new course or updates an existing one with the given parameters in the database. If the DTO contains
      * invalid attribute values, an {@link IncompleteDataException} is thrown. If the information could not be persisted
      * correctly, a {@link StoreException} is thrown instead.

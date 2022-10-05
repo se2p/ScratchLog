@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A repository providing functionality for retrieving information about experiments conducted in a course.
@@ -43,6 +44,14 @@ public interface CourseExperimentRepository extends JpaRepository<CourseExperime
      * @return The course experiment list.
      */
     List<CourseExperiment> findAllByExperiment(Experiment experiment);
+
+    /**
+     * Returns the {@link CourseExperiment} containing information to which course the given experiment belongs.
+     *
+     * @param experiment The {@link Experiment} to search for.
+     * @return The course experiment.
+     */
+    Optional<CourseExperiment> findByExperiment(Experiment experiment);
 
     /**
      * Returns a list of experiment information of all experiments that are part of the course.

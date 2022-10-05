@@ -189,7 +189,7 @@
                 <div class="mb-3">
                     <input id="add" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
                 </div>
-                <div class="mb-3">
+                <div class="mb-3" th:unless="${experimentDTO.courseExperiment}">
                     <a class="btn btn-secondary" th:href="@{/participant/add(id=${experimentDTO.id})}">
                         <span th:text="#{add_new_participant}"></span>
                     </a>

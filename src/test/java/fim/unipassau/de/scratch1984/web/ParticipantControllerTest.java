@@ -125,6 +125,7 @@ public class ParticipantControllerTest {
         userDTO.setActive(true);
         userDTO.setSecret("secret");
         experimentDTO.setActive(true);
+        experimentDTO.setCourseExperiment(false);
         experimentDTO.setInfo(INFO);
         participantDTO.setStart(null);
         participantDTO.setEnd(null);
@@ -158,6 +159,16 @@ public class ParticipantControllerTest {
     @Test
     public void testGetParticipantFormExperimentInactive() {
         experimentDTO.setActive(false);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(ERROR, participantController.getParticipantForm(ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).findLastId();
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetParticipantFormCourseExperiment() {
+        experimentDTO.setCourseExperiment(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         assertEquals(ERROR, participantController.getParticipantForm(ID_STRING, model));
         verify(experimentService).getExperiment(ID);

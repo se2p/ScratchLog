@@ -180,6 +180,22 @@ public class ParticipantControllerIntegrationTest {
     }
 
     @Test
+    public void testGetParticipantFormCourseExperiment() throws Exception {
+        experimentDTO.setCourseExperiment(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        mvc.perform(get("/participant/add")
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).findLastId();
+    }
+
+    @Test
     public void testGetParticipantFormExperimentIdInvalid() throws Exception {
         mvc.perform(get("/participant/add")
                 .param(ID_PARAM, "0")

@@ -288,6 +288,55 @@ public class CourseServiceTest {
     }
 
     @Test
+    public void testExistsCourseParticipantExperiment() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(courseExperimentRepository.findByExperiment(experiment)).thenReturn(Optional.of(courseExperiment));
+        when(courseParticipantRepository.existsByCourseAndUser(course, user)).thenReturn(true);
+        assertTrue(courseService.existsCourseParticipant(ID, ID));
+        verify(experimentRepository).getOne(ID);
+        verify(userRepository).getOne(ID);
+        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(courseParticipantRepository).existsByCourseAndUser(course, user);
+    }
+
+    @Test
+    public void testExistsCourseParticipantNoCourseExperiment() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(courseExperimentRepository.findByExperiment(experiment)).thenReturn(Optional.empty());
+        assertFalse(courseService.existsCourseParticipant(ID, ID));
+        verify(experimentRepository).getOne(ID);
+        verify(userRepository).getOne(ID);
+        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+    }
+
+    @Test
+    public void testExistsCourseParticipantExperimentEntityNotFound() {
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(courseExperimentRepository.findByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
+        assertFalse(courseService.existsCourseParticipant(ID, ID));
+        verify(experimentRepository).getOne(ID);
+        verify(userRepository).getOne(ID);
+        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+    }
+
+    @Test
+    public void testExistsCourseParticipantExperimentInvalidIds() {
+        assertAll(
+                () -> assertFalse(courseService.existsCourseParticipant(ID, 0)),
+                () -> assertFalse(courseService.existsCourseParticipant(-1, ID))
+        );
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(userRepository, never()).getOne(anyInt());
+        verify(courseExperimentRepository, never()).findByExperiment(any());
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+    }
+
+    @Test
     public void testSaveCourse() {
         when(courseRepository.save(any())).thenReturn(course);
         assertEquals(ID, courseService.saveCourse(courseDTO));

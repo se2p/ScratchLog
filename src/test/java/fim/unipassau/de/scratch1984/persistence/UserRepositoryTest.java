@@ -240,7 +240,8 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindParticipantSuggestionsUsername() {
-        List<UserProjection> users = userRepository.findParticipantSuggestions(USERNAME_SEARCH, experiment1.getId());
+        List<UserProjection> users = userRepository.findParticipantSuggestions(USERNAME_SEARCH, experiment1.getId(),
+                LIMIT);
         assertAll(
                 () -> assertEquals(5, users.size()),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
@@ -255,7 +256,8 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindParticipantSuggestionsEmail() {
-        List<UserProjection> users = userRepository.findParticipantSuggestions(EMAIL_SEARCH, experiment1.getId());
+        List<UserProjection> users = userRepository.findParticipantSuggestions(EMAIL_SEARCH, experiment1.getId(),
+                LIMIT);
         assertAll(
                 () -> assertEquals(5, users.size()),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
@@ -270,15 +272,35 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindParticipantSuggestionsEmpty() {
-        List<UserProjection> users = userRepository.findParticipantSuggestions(ADMIN1, experiment1.getId());
+        List<UserProjection> users = userRepository.findParticipantSuggestions(ADMIN1, experiment1.getId(), LIMIT);
         assertTrue(users.isEmpty());
+    }
+
+    @Test
+    public void testFindParticipantSuggestionsCourse() {
+        List<UserProjection> users = userRepository.findParticipantSuggestions(EMAIL_SEARCH, experiment1.getId(),
+                course1.getId(), LIMIT);
+        assertAll(
+                () -> assertEquals(2, users.size()),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user4.getUsername()))),
+                () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user5.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user6.getUsername()))),
+                () -> assertFalse(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername())))
+        );
+    }
+
+    @Test
+    public void testFindParticipantSuggestionsCourseEmpty() {
+        assertTrue(userRepository.findParticipantSuggestions(EMAIL_SEARCH, experiment1.getId(), course3.getId(),
+                LIMIT).isEmpty());
     }
 
     @Test
     public void testFindDeleteParticipantSuggestions() {
         Participant participant = new Participant(user4, experiment1, null, null);
         entityManager.persist(participant);
-        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment1.getId());
+        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment1.getId(),
+                LIMIT);
         assertAll(
                 () -> assertEquals(5, users.size()),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user3.getUsername()))),
@@ -292,7 +314,8 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindDeleteParticipantSuggestionsOne() {
-        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment2.getId());
+        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, experiment2.getId(),
+                LIMIT);
         assertAll(
                 () -> assertEquals(1, users.size()),
                 () -> assertTrue(users.stream().anyMatch(user -> user.getUsername().equals(user16.getUsername())))
@@ -301,7 +324,7 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindDeleteParticipantSuggestionsEmpty() {
-        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, 100);
+        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(EMAIL_SEARCH, 100, LIMIT);
         assertTrue(users.isEmpty());
     }
 

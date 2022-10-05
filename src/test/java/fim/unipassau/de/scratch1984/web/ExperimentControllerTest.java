@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.web;
 import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
@@ -71,6 +72,9 @@ public class ExperimentControllerTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private CourseService courseService;
 
     @Mock
     private ParticipantService participantService;
@@ -164,6 +168,7 @@ public class ExperimentControllerTest {
         userDTO.setSecret("secret1");
         participant.setEmail(EMAIL);
         experimentDTO.setActive(false);
+        experimentDTO.setCourseExperiment(false);
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
@@ -696,10 +701,29 @@ public class ExperimentControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING,
-                model, httpServletRequest));
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
+        verify(userService).updateUser(participant);
+        verify(participantService).saveParticipant(participant.getId(), ID);
+        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(any(), any());
+    }
+
+    @Test
+    public void testSearchForUserCourseExperiment() {
+        MailServerSetter.setMailServer(true);
+        experimentDTO.setActive(true);
+        experimentDTO.setCourseExperiment(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
+        when(courseService.existsCourseParticipant(ID, participant.getId())).thenReturn(true);
+        when(userService.updateUser(participant)).thenReturn(participant);
+        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
+        verify(courseService).existsCourseParticipant(ID, participant.getId());
         verify(userService).updateUser(participant);
         verify(participantService).saveParticipant(participant.getId(), ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
@@ -714,7 +738,7 @@ public class ExperimentControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
         assertEquals(REDIRECT_SECRET + participant.getId() + EXPERIMENT_PARAM + ID,
-                experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+                experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService).updateUser(participant);
@@ -732,7 +756,7 @@ public class ExperimentControllerTest {
         when(userService.updateUser(participant)).thenReturn(participant);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
         assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID_STRING,
-                model, httpServletRequest));
+                model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService).updateUser(participant);
@@ -748,7 +772,7 @@ public class ExperimentControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
-        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService).updateUser(participant);
@@ -765,7 +789,7 @@ public class ExperimentControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
-        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService).updateUser(participant);
@@ -781,7 +805,7 @@ public class ExperimentControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
         doThrow(NotFoundException.class).when(participantService).saveParticipant(participant.getId(), ID);
-        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService).updateUser(participant);
@@ -791,11 +815,28 @@ public class ExperimentControllerTest {
     }
 
     @Test
+    public void testSearchForUserNoCourseParticipant() {
+        experimentDTO.setActive(true);
+        experimentDTO.setCourseExperiment(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
+        when(model.getAttribute("error")).thenReturn("error");
+        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
+        verify(courseService).existsCourseParticipant(ID, participant.getId());
+        verify(userService, never()).updateUser(participant);
+        verify(participantService, never()).saveParticipant(participant.getId(), ID);
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
     public void testSearchForUserExperimentInactive() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService, never()).updateUser(participant);
@@ -810,8 +851,7 @@ public class ExperimentControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
-                httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService, never()).updateUser(participant);
@@ -826,8 +866,7 @@ public class ExperimentControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
         when(userService.existsParticipant(participant.getId(), ID)).thenReturn(true);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
-                httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService, never()).updateUser(participant);
@@ -841,7 +880,7 @@ public class ExperimentControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(USERNAME, ID_STRING, model, httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.searchForUser(USERNAME, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(userService, never()).updateUser(any());
@@ -854,8 +893,7 @@ public class ExperimentControllerTest {
     public void testSearchForUserNull() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model,
-                httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
         verify(userService, never()).updateUser(any());
@@ -867,7 +905,7 @@ public class ExperimentControllerTest {
     @Test
     public void testSearchForUserQueryInvalid() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        assertEquals(EXPERIMENT, experimentController.searchForUser(BLANK, ID_STRING, model, httpServletRequest));
+        assertEquals(EXPERIMENT, experimentController.searchForUser(BLANK, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(userService, never()).updateUser(any());
@@ -879,7 +917,7 @@ public class ExperimentControllerTest {
     @Test
     public void testSearchForUserExperimentNotFound() {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model, httpServletRequest));
+        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID_STRING, model));
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(userService, never()).updateUser(any());
@@ -890,7 +928,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserInvalidId() {
-        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, BLANK, model, httpServletRequest));
+        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, BLANK, model));
         verify(experimentService, never()).getExperiment(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(userService, never()).updateUser(any());

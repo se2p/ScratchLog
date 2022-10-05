@@ -145,7 +145,7 @@ public class ParticipantController {
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(id);
 
-            if (!experimentDTO.isActive()) {
+            if (!experimentDTO.isActive() || experimentDTO.isCourseExperiment()) {
                 return Constants.ERROR;
             }
         } catch (NotFoundException e) {

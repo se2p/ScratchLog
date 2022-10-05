@@ -122,30 +122,51 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     int getUserResultsCount(@Param("query") String query);
 
     /**
-     * Returns a list of the first five users whose email or username contain the given query value and who are not
-     * already participating in an experiment.
+     * Returns a list of the first users whose email or username contain the given query value up to the given limit who
+     * are not already participating in an experiment.
      *
      * @param query The username or email to search for.
      * @param experiment The id of the experiment.
+     * @param limit The maximum number of results to return.
      * @return A list of users.
      */
     @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.role = 'PARTICIPANT' AND u.id NOT IN "
-            + "(SELECT p.user_id FROM participant AS p WHERE p.experiment_id = :id) LIMIT 5;")
-    List<UserProjection> findParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
+            + "(SELECT p.user_id FROM participant AS p WHERE p.experiment_id = :id) LIMIT :limit")
+    List<UserProjection> findParticipantSuggestions(@Param("query") String query, @Param("id") int experiment,
+                                                    @Param("limit") int limit);
 
     /**
-     * Returns a list of the first five users whose email or username contain the given query value who are
-     * participating in the given experiment.
+     * Returns a list of the first users whose email or username contain the given query value up to the given limit who
+     * are not already participating in an experiment but are participant of the course with the given id.
      *
      * @param query The username or email to search for.
      * @param experiment The id of the experiment.
+     * @param course The id of the course.
+     * @param limit The maximum number of results to return.
+     * @return A list of users.
+     */
+    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+            + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.role = 'PARTICIPANT' AND u.id NOT IN "
+            + "(SELECT p.user_id FROM participant AS p WHERE p.experiment_id = :experiment) AND u.id IN "
+            + "(SELECT c.user_id from course_participant AS c WHERE c.course_id = :course) LIMIT :limit")
+    List<UserProjection> findParticipantSuggestions(@Param("query") String query, @Param("experiment") int experiment,
+                                                    @Param("course") int course, @Param("limit") int limit);
+
+    /**
+     * Returns a list of the first users whose email or username contain the given query value up to the given limit who
+     * are participating in the given experiment.
+     *
+     * @param query The username or email to search for.
+     * @param experiment The id of the experiment.
+     * @param limit The maximum number of results to return.
      * @return A list of users.
      */
     @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.id IN (SELECT p.user_id FROM participant AS p WHERE "
-            + "p.experiment_id = :id) LIMIT 5;")
-    List<UserProjection> findDeleteParticipantSuggestions(@Param("query") String query, @Param("id") int experiment);
+            + "p.experiment_id = :id) LIMIT :limit")
+    List<UserProjection> findDeleteParticipantSuggestions(@Param("query") String query, @Param("id") int experiment,
+                                                          @Param("limit") int limit);
 
     /**
      * Returns a list of the first users up to the given limit whose email or username contain the given query value and

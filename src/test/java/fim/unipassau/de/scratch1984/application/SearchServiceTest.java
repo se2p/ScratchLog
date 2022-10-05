@@ -1,9 +1,13 @@
 package fim.unipassau.de.scratch1984.application;
 
 import fim.unipassau.de.scratch1984.application.service.SearchService;
+import fim.unipassau.de.scratch1984.persistence.entity.Course;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseExperiment;
+import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
@@ -14,13 +18,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -38,6 +46,9 @@ public class SearchServiceTest {
 
     @Mock
     private CourseRepository courseRepository;
+
+    @Mock
+    private CourseExperimentRepository courseExperimentRepository;
 
     @Mock
     private ExperimentRepository experimentRepository;
@@ -59,6 +70,12 @@ public class SearchServiceTest {
     private static final int LIMIT = Constants.PAGE_SIZE;
     private static final int COUNT = 25;
     private static final int PAGE = 1;
+    private final Experiment experiment = new Experiment(ID, "My Experiment", "Some description", "", "", true, false,
+            "url");
+    private final Course course = new Course(ID, "title", "description", "content", true,
+            Timestamp.valueOf(LocalDateTime.now()));
+    private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment,
+            Timestamp.valueOf(LocalDateTime.now()));
     private final List<UserProjection> users = addUserSuggestions();
     private final List<ExperimentTableProjection> experiments = addExperimentSuggestions();
     private final List<CourseTableProjection> courses = addCourseSuggestions();
@@ -273,7 +290,9 @@ public class SearchServiceTest {
 
     @Test
     public void testGetUserSuggestions() {
-        when(userRepository.findParticipantSuggestions(QUERY, ID)).thenReturn(users);
+        experiment.setCourseExperiment(false);
+        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(userRepository.findParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS)).thenReturn(users);
         List<String[]> userInfo = searchService.getUserSuggestions(QUERY, ID);
         String[] firstUser = userInfo.get(0);
         String[] secondUser = userInfo.get(1);
@@ -287,19 +306,73 @@ public class SearchServiceTest {
                 () -> assertEquals(USERNAME3, thirdUser[0]),
                 () -> assertEquals(EMAIL3, thirdUser[1])
         );
-        verify(userRepository).findParticipantSuggestions(QUERY, ID);
+        verify(userRepository).findParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);
+        verify(courseExperimentRepository, never()).findByExperiment(any());
+        verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    public void testGetUserSuggestionsCourse() {
+        experiment.setCourseExperiment(true);
+        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(courseExperimentRepository.findByExperiment(experiment)).thenReturn(Optional.of(courseExperiment));
+        when(userRepository.findParticipantSuggestions(QUERY, ID, ID,
+                Constants.MAX_SUGGESTION_RESULTS)).thenReturn(users);
+        List<String[]> userInfo = searchService.getUserSuggestions(QUERY, ID);
+        String[] firstUser = userInfo.get(0);
+        String[] secondUser = userInfo.get(1);
+        String[] thirdUser = userInfo.get(2);
+        assertAll(
+                () -> assertEquals(3, userInfo.size()),
+                () -> assertEquals(USERNAME1, firstUser[0]),
+                () -> assertEquals(EMAIL1, firstUser[1]),
+                () -> assertEquals(USERNAME2, secondUser[0]),
+                () -> assertEquals(EMAIL2, secondUser[1]),
+                () -> assertEquals(USERNAME3, thirdUser[0]),
+                () -> assertEquals(EMAIL3, thirdUser[1])
+        );
+        verify(experimentRepository).findById(ID);
+        verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt());
+        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(userRepository).findParticipantSuggestions(QUERY, ID, ID, Constants.MAX_SUGGESTION_RESULTS);
+    }
+
+    @Test
+    public void testGetUserSuggestionsCourseExperimentEmpty() {
+        experiment.setCourseExperiment(true);
+        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(courseExperimentRepository.findByExperiment(experiment)).thenReturn(Optional.empty());
+        assertEquals(0, searchService.getUserSuggestions(QUERY, ID).size());
+        verify(experimentRepository).findById(ID);
+        verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt());
+        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsNone() {
+        experiment.setCourseExperiment(false);
+        when(experimentRepository.findById(ID)).thenReturn(experiment);
         List<String[]> userInfo = searchService.getUserSuggestions(QUERY, ID);
         assertEquals(0, userInfo.size());
-        verify(userRepository).findParticipantSuggestions(QUERY, ID);
+        verify(userRepository).findParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);
+        verify(courseExperimentRepository, never()).findByExperiment(any());
+        verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    public void testGetUserSuggestionsNoExperiment() {
+        assertTrue(searchService.getUserSuggestions(QUERY, ID).isEmpty());
+        verify(experimentRepository).findById(ID);
+        verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt());
+        verify(courseExperimentRepository, never()).findByExperiment(any());
+        verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt(), anyInt());
     }
 
     @Test
     public void testGetUserDeleteSuggestions() {
-        when(userRepository.findDeleteParticipantSuggestions(QUERY, ID)).thenReturn(users);
+        when(userRepository.findDeleteParticipantSuggestions(QUERY, ID,
+                Constants.MAX_SUGGESTION_RESULTS)).thenReturn(users);
         List<String[]> userInfo = searchService.getUserDeleteSuggestions(QUERY, ID);
         String[] firstUser = userInfo.get(0);
         String[] secondUser = userInfo.get(1);
@@ -313,14 +386,14 @@ public class SearchServiceTest {
                 () -> assertEquals(USERNAME3, thirdUser[0]),
                 () -> assertEquals(EMAIL3, thirdUser[1])
         );
-        verify(userRepository).findDeleteParticipantSuggestions(QUERY, ID);
+        verify(userRepository).findDeleteParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);
     }
 
     @Test
     public void testGetUserDeleteSuggestionsNone() {
         List<String[]> userInfo = searchService.getUserDeleteSuggestions(QUERY, ID);
         assertEquals(0, userInfo.size());
-        verify(userRepository).findDeleteParticipantSuggestions(QUERY, ID);
+        verify(userRepository).findDeleteParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);
     }
 
     @Test

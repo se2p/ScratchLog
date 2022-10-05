@@ -436,13 +436,12 @@ public class ExperimentController {
      * @param id The id of the experiment.
      * @param search The username or email address to search for.
      * @param model The model used to store the error messages.
-     * @param httpServletRequest The servlet request.
      * @return The experiment page on success, or the error page otherwise.
      */
     @RequestMapping("/search")
     @Secured(Constants.ROLE_ADMIN)
     public String searchForUser(@RequestParam("participant") final String search, @RequestParam(ID) final String id,
-                                final Model model, final HttpServletRequest httpServletRequest) {
+                                final Model model) {
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
@@ -886,6 +885,9 @@ public class ExperimentController {
             model.addAttribute(ERROR, resourceBundle.getString("participant_entry"));
         } else if (!experimentDTO.isActive()) {
             model.addAttribute(ERROR, resourceBundle.getString("experiment_closed"));
+        } else if (experimentDTO.isCourseExperiment() && !courseService.existsCourseParticipant(experimentDTO.getId(),
+                userDTO.getId())) {
+            model.addAttribute(ERROR, resourceBundle.getString("course_participant_not_found"));
         }
     }
 

@@ -1,8 +1,11 @@
 package fim.unipassau.de.scratch1984.application.service;
 
+import fim.unipassau.de.scratch1984.persistence.entity.CourseExperiment;
+import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
@@ -15,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A service providing methods related to search queries.
@@ -43,18 +47,26 @@ public class SearchService {
     private final CourseRepository courseRepository;
 
     /**
+     * The course experiment repository to use for database queries related to course experiment data.
+     */
+    private final CourseExperimentRepository courseExperimentRepository;
+
+    /**
      * Constructs a search service with the given dependencies.
      *
      * @param userRepository The {@link UserRepository} to use.
      * @param experimentRepository The {@link ExperimentRepository} to use.
      * @param courseRepository The {@link CourseRepository} to use.
+     * @param courseExperimentRepository The {@link CourseExperimentRepository} to use.
      */
     @Autowired
     public SearchService(final UserRepository userRepository, final ExperimentRepository experimentRepository,
-                         final CourseRepository courseRepository) {
+                         final CourseRepository courseRepository,
+                         final CourseExperimentRepository courseExperimentRepository) {
         this.userRepository = userRepository;
         this.experimentRepository = experimentRepository;
         this.courseRepository = courseRepository;
+        this.courseExperimentRepository = courseExperimentRepository;
     }
 
     /**
@@ -205,8 +217,18 @@ public class SearchService {
      */
     @Transactional
     public List<String[]> getUserSuggestions(final String query, final int id) {
-        List<UserProjection> users = userRepository.findParticipantSuggestions(query, id);
-        return addUserInfoSimple(users);
+        Experiment experiment = experimentRepository.findById(id);
+
+        if (experiment == null) {
+            return new ArrayList<>();
+        }
+
+        if (experiment.isCourseExperiment()) {
+            return addUserInfoSimple(findExperimentParticipantSuggestions(experiment, query));
+        } else {
+            return addUserInfoSimple(userRepository.findParticipantSuggestions(query, id,
+                    Constants.MAX_SUGGESTION_RESULTS));
+        }
     }
 
     /**
@@ -219,7 +241,8 @@ public class SearchService {
      */
     @Transactional
     public List<String[]> getUserDeleteSuggestions(final String query, final int id) {
-        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(query, id);
+        List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(query, id,
+                Constants.MAX_SUGGESTION_RESULTS);
         return addUserInfoSimple(users);
     }
 
@@ -328,6 +351,26 @@ public class SearchService {
         List<CourseTableProjection> projections = courseRepository.findCourseResults(query, Constants.PAGE_SIZE,
                 offset);
         return addCourseTableInfo(projections);
+    }
+
+    /**
+     * Retrieves a list of up to five usernames and emails where one of the two contain the search query string. Only
+     * users who are not already participating in the experiment with the given id and who are participating in the
+     * course the experiment belongs to are retrieved.
+     *
+     * @param experiment The {@link Experiment} to search for.
+     * @param query The username or email to search for.
+     * @return A list of usernames and emails, or an empty list, if no entries could be found.
+     */
+    private List<UserProjection> findExperimentParticipantSuggestions(final Experiment experiment, final String query) {
+        Optional<CourseExperiment> courseExperiment = courseExperimentRepository.findByExperiment(experiment);
+
+        if (courseExperiment.isEmpty()) {
+            return new ArrayList<>();
+        } else {
+            return userRepository.findParticipantSuggestions(query, experiment.getId(),
+                    courseExperiment.get().getCourse().getId(), Constants.MAX_SUGGESTION_RESULTS);
+        }
     }
 
     /**
