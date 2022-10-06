@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -256,6 +257,75 @@ public class CourseControllerTest {
         verify(bindingResult).addError(any());
         verify(courseService).existsCourse(ID, TITLE);
         verify(courseService, never()).saveCourse(any());
+    }
+
+    @Test
+    public void testChangeCourseStatus() {
+        when(courseService.changeCourseStatus(true, ID)).thenReturn(courseDTO);
+        assertEquals(COURSE, courseController.changeCourseStatus("open", ID_STRING, model));
+        verify(courseService).changeCourseStatus(true, ID);
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService).getLastCourseExperimentPage(ID);
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantCoursePage(ID);
+        verify(model, times(8)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testChangeCourseStatusClose() {
+        when(courseService.changeCourseStatus(false, ID)).thenReturn(courseDTO);
+        assertEquals(COURSE, courseController.changeCourseStatus("close", ID_STRING, model));
+        verify(courseService).changeCourseStatus(false, ID);
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService).getLastCourseExperimentPage(ID);
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantCoursePage(ID);
+        verify(model, times(8)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testChangeCourseStatusInvalidStatus() {
+        assertEquals(Constants.ERROR, courseController.changeCourseStatus("bla", ID_STRING, model));
+        verify(courseService, never()).changeCourseStatus(anyBoolean(), anyInt());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testChangeCourseStatusNotFound() {
+        when(courseService.changeCourseStatus(true, ID)).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, courseController.changeCourseStatus("open", ID_STRING, model));
+        verify(courseService).changeCourseStatus(true, ID);
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testChangeCourseStatusNull() {
+        assertEquals(Constants.ERROR, courseController.changeCourseStatus(null, ID_STRING, model));
+        verify(courseService, never()).changeCourseStatus(anyBoolean(), anyInt());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testChangeCourseStatusInvalidId() {
+        assertEquals(Constants.ERROR, courseController.changeCourseStatus("open", null, model));
+        verify(courseService, never()).changeCourseStatus(anyBoolean(), anyInt());
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test

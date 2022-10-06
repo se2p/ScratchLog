@@ -6,6 +6,7 @@ import fim.unipassau.de.scratch1984.application.exception.StoreException;
 import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.persistence.entity.Course;
 import fim.unipassau.de.scratch1984.persistence.entity.CourseExperiment;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseExperimentRepository;
@@ -14,6 +15,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -77,6 +81,7 @@ public class CourseServiceTest {
     private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "", "", false, false, "url");
     private final User user = new User(USERNAME, "email", "PARTICIPANT", "ENGLISH", "password", "secret");
     private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment, TIMESTAMP);
+    private final CourseParticipant courseParticipant = new CourseParticipant(user, course, TIMESTAMP);
 
     @BeforeEach
     public void setUp() {
@@ -915,6 +920,75 @@ public class CourseServiceTest {
                 () -> courseService.getCourse(-1)
         );
         verify(courseRepository, never()).findById(anyInt());
+    }
+
+    @Test
+    public void testChangeCourseStatus() {
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseParticipantRepository.findAllByCourse(course)).thenReturn(List.of(courseParticipant));
+        when(courseRepository.save(course)).thenReturn(course);
+        courseService.changeCourseStatus(true, ID);
+        assertAll(
+                () -> assertTrue(course.isActive()),
+                () -> assertTrue(course.getLastChanged().after(TIMESTAMP)),
+                () -> assertTrue(user.isActive())
+        );
+        verify(courseRepository).getOne(ID);
+        verify(courseParticipantRepository).findAllByCourse(course);
+        verify(courseExperimentRepository, never()).findAllByCourse(any());
+        verify(experimentRepository, never()).updateStatusById(anyInt(), anyBoolean());
+        verify(userRepository).save(user);
+        verify(courseRepository).save(course);
+    }
+
+    @Test
+    public void testChangeCourseStatusInactive() {
+        course.setActive(true);
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment));
+        when(courseParticipantRepository.findAllByCourse(course)).thenReturn(List.of(courseParticipant));
+        when(courseRepository.save(course)).thenReturn(course);
+        courseService.changeCourseStatus(false, ID);
+        assertAll(
+                () -> assertFalse(course.isActive()),
+                () -> assertTrue(course.getLastChanged().after(TIMESTAMP)),
+                () -> assertFalse(user.isActive()),
+                () -> assertNull(user.getSecret())
+        );
+        verify(courseRepository).getOne(ID);
+        verify(courseParticipantRepository).findAllByCourse(course);
+        verify(courseExperimentRepository).findAllByCourse(course);
+        verify(experimentRepository).updateStatusById(ID, false);
+        verify(userRepository).save(user);
+        verify(courseRepository).save(course);
+    }
+
+    @Test
+    public void testChangeCourseStatusEntityNotFound() {
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseParticipantRepository.findAllByCourse(course)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> courseService.changeCourseStatus(true, ID)
+        );
+        verify(courseRepository).getOne(ID);
+        verify(courseParticipantRepository).findAllByCourse(course);
+        verify(courseExperimentRepository, never()).findAllByCourse(any());
+        verify(experimentRepository, never()).updateStatusById(anyInt(), anyBoolean());
+        verify(userRepository, never()).save(any());
+        verify(courseRepository, never()).save(any());
+    }
+
+    @Test
+    public void testChangeCourseStatusInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.changeCourseStatus(true, 0)
+        );
+        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseParticipantRepository, never()).findAllByCourse(any());
+        verify(courseExperimentRepository, never()).findAllByCourse(any());
+        verify(experimentRepository, never()).updateStatusById(anyInt(), anyBoolean());
+        verify(userRepository, never()).save(any());
+        verify(courseRepository, never()).save(any());
     }
 
 }

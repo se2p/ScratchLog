@@ -92,6 +92,7 @@ public class CourseControllerIntegrationTest {
     private static final String PARTICIPANT_PARAM = "participant";
     private static final String PAGE_PARAM = "page";
     private static final String LAST_PAGE_PARAM = "lastPage";
+    private static final String STATUS_PARAM = "stat";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final int ID = 1;
     private static final int LAST_PAGE = 5;
@@ -314,6 +315,69 @@ public class CourseControllerIntegrationTest {
                 .andExpect(view().name(COURSE_EDIT));
         verify(courseService).existsCourse(ID, "");
         verify(courseService, never()).saveCourse(any());
+    }
+
+    @Test
+    public void testChangeCourseStatus() throws Exception {
+        when(courseService.changeCourseStatus(true, ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/status")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(STATUS_PARAM, "open")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(COURSE))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
+                .andExpect(model().attribute("experimentPage", is(1)))
+                .andExpect(model().attribute("participantPage", is(1)));
+        verify(courseService).changeCourseStatus(true, ID);
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService).getLastCourseExperimentPage(ID);
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantCoursePage(ID);
+    }
+
+    @Test
+    public void testChangeCourseStatusClose() throws Exception {
+        when(courseService.changeCourseStatus(false, ID)).thenReturn(courseDTO);
+        mvc.perform(get("/course/status")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(STATUS_PARAM, "close")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(COURSE))
+                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
+                .andExpect(model().attribute("experimentPage", is(1)))
+                .andExpect(model().attribute("participantPage", is(1)));
+        verify(courseService).changeCourseStatus(false, ID);
+        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService).getLastCourseExperimentPage(ID);
+        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantCoursePage(ID);
+    }
+
+    @Test
+    public void testChangeCourseStatusNotFound() throws Exception {
+        when(courseService.changeCourseStatus(false, ID)).thenThrow(NotFoundException.class);
+        mvc.perform(get("/course/status")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(STATUS_PARAM, "close")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(courseService).changeCourseStatus(false, ID);
+        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
     }
 
     @Test
