@@ -95,18 +95,30 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void testExistsCourseById() {
-        when(courseRepository.existsById(ID)).thenReturn(true, false);
-        assertAll(
-                () -> assertTrue(courseService.existsCourse(ID)),
-                () -> assertFalse(courseService.existsCourse(ID))
-        );
-        verify(courseRepository, times(2)).existsById(ID);
+    public void testExistsActiveCourse() {
+        course.setActive(true);
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        assertTrue(courseService.existsActiveCourse(ID));
+        verify(courseRepository).getOne(ID);
+    }
+
+    @Test
+    public void testExistsActiveCourseInactive() {
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        assertFalse(courseService.existsActiveCourse(ID));
+        verify(courseRepository).getOne(ID);
+    }
+
+    @Test
+    public void testExistsActiveCourseEntityNotFound() {
+        when(courseRepository.getOne(ID)).thenThrow(EntityNotFoundException.class);
+        assertFalse(courseService.existsActiveCourse(ID));
+        verify(courseRepository).getOne(ID);
     }
 
     @Test
     public void testExistsCourseByIdInvalid() {
-        assertFalse(courseService.existsCourse(0));
+        assertFalse(courseService.existsActiveCourse(0));
         verify(courseRepository, never()).existsById(anyInt());
     }
 

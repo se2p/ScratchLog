@@ -2,14 +2,19 @@ package fim.unipassau.de.scratch1984.application.service;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
+import fim.unipassau.de.scratch1984.persistence.entity.Course;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.ParticipantId;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseParticipantRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +51,16 @@ public class ParticipantService {
     private final ExperimentRepository experimentRepository;
 
     /**
+     * The course repository to use for database queries related to course data.
+     */
+    private final CourseRepository courseRepository;
+
+    /**
+     * The course participant repository to use for database queries related to course participant data.
+     */
+    private final CourseParticipantRepository courseParticipantRepository;
+
+    /**
      * The participant repository to use for database queries participation data.
      */
     private final ParticipantRepository participantRepository;
@@ -53,15 +68,21 @@ public class ParticipantService {
     /**
      * Constructs a participant service with the given dependencies.
      *
-     * @param userRepository The user repository to use.
-     * @param participantRepository The participant repository to use.
-     * @param experimentRepository The experiment repository to use.
+     * @param userRepository The {@link UserRepository} to use.
+     * @param participantRepository The {@link ParticipantRepository} to use.
+     * @param courseRepository The {@link CourseRepository} to use.
+     * @param courseParticipantRepository The {@link CourseParticipantRepository} to use.
+     * @param experimentRepository The {@link ExperimentRepository} to use.
      */
     @Autowired
     public ParticipantService(final UserRepository userRepository, final ParticipantRepository participantRepository,
+                              final CourseRepository courseRepository,
+                              final CourseParticipantRepository courseParticipantRepository,
                               final ExperimentRepository experimentRepository) {
         this.userRepository = userRepository;
         this.participantRepository = participantRepository;
+        this.courseRepository = courseRepository;
+        this.courseParticipantRepository = courseParticipantRepository;
         this.experimentRepository = experimentRepository;
     }
 
@@ -105,6 +126,51 @@ public class ParticipantService {
     }
 
     /**
+     * Adds the users participating in the course with the given id as participants to the experiment with the given id.
+     * If no corresponding course or experiment could be found, an {@link EntityNotFoundException} is thrown instead. If
+     * the user or experiment used to create a new participation violate the foreign key constraints of the participant
+     * table, a {@link ConstraintViolationException} is thrown. If the given ids are invalid, an
+     * {@link IllegalArgumentException} is thrown.
+     *
+     * @param experimentId The id of the experiment.
+     * @param courseId The id of the course.
+     */
+    @Transactional
+    public void saveParticipants(final int experimentId, final int courseId) {
+        if (experimentId < Constants.MIN_ID || courseId < Constants.MIN_ID) {
+            logger.error("Cannot add participants to course experiment with invalid experiment id " + experimentId
+                    + " or invalid course id " + courseId + "!");
+            throw new IllegalArgumentException("Cannot add participants to course experiment with invalid experiment "
+                    + "id " + experimentId + " or invalid course id " + courseId + "!");
+        }
+
+        Course course = courseRepository.getOne(courseId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            if (!course.isActive() || !experiment.isActive()) {
+                logger.error("Cannot add participants to inactive course or experiment!");
+                throw new IllegalStateException("Cannot add participants to inactive course or experiment!");
+            } else if (!experiment.isCourseExperiment()) {
+                logger.error("Cannot add course participants to experiment which is not part of the course!");
+                throw new IllegalStateException("Cannot add course participants to experiment which is not part of the "
+                        + "course!");
+            }
+
+            List<CourseParticipant> courseParticipants = courseParticipantRepository.findAllByCourse(course);
+            courseParticipants.forEach(courseParticipant -> addCourseParticipantToExperiment(courseParticipant,
+                    experiment));
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the course or experiment data when trying to save course participants!", e);
+            throw new NotFoundException("Could not find the course or experiment data when trying to save course "
+                    + "participants!", e);
+        } catch (ConstraintViolationException e) {
+            logger.error("The given participant data does not meet the foreign key constraints!", e);
+            throw new StoreException("The given participant data does not meet the foreign key constraints!", e);
+        }
+    }
+
+    /**
      * Creates a new participation for the given user and experiment in the database.
      *
      * @param userId The user id.
@@ -112,6 +178,13 @@ public class ParticipantService {
      */
     @Transactional
     public void saveParticipant(final int userId, final int experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            logger.error("Cannot add participant with invalid user id " + userId + " or invalid experiment id "
+                    + experimentId + "!");
+            throw new IllegalArgumentException("Cannot add participant with invalid user id " + userId
+                    + " or invalid experiment id " + experimentId + "!");
+        }
+
         User user = userRepository.getOne(userId);
         Experiment experiment = experimentRepository.getOne(experimentId);
 
@@ -275,6 +348,33 @@ public class ParticipantService {
         } catch (EntityNotFoundException e) {
             logger.error("Could not find participation entries for user with id " + userId + "!", e);
             throw new NotFoundException("Could not find participation entries for user with id " + userId + "!", e);
+        }
+    }
+
+    /**
+     * Adds the user provided by the given {@link CourseParticipant} as a participant to the given experiment.
+     *
+     * @param courseParticipant The {@link CourseParticipant} containing the user information.
+     * @param experiment The {@link Experiment} to which the user should be added.
+     */
+    private void addCourseParticipantToExperiment(final CourseParticipant courseParticipant,
+                                                  final Experiment experiment) {
+        User user = courseParticipant.getUser();
+        Participant participant = new Participant(user, experiment, null, null);
+        participantRepository.save(participant);
+        updateUser(user);
+    }
+
+    /**
+     * Generates a new secret for the given user and activates their user account, if their secret is null.
+     *
+     * @param user The {@link User} to update.
+     */
+    private void updateUser(final User user) {
+        if (user.getSecret() == null) {
+            user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
+            user.setActive(true);
+            userRepository.save(user);
         }
     }
 

@@ -72,63 +72,64 @@
         </div>
 
         <!-- The table of participants in the course and the buttons for adding and removing participants. -->
-        <div class="mb-5" th:fragment="course_participant_table" id="course_participant_table"
+        <div class="mb-3" th:fragment="course_participant_table" id="course_participant_table"
              sec:authorize="hasRole('ADMIN')">
             <h2 class="h3" th:text="#{heading_participants}"></h2>
-            <div class="col-12 mb-5">
-                <!-- The table containing the participant information. -->
-                <div class="table-container">
-                    <table class="table table-hover">
-                        <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col" th:text="#{username}"></th>
-                            <th class="text-center" scope="col" th:text="#{added}"></th>
-                        </tr>
-                        </thead>
-                        <tbody th:if="${participants.isEmpty()}">
-                        <tr>
-                            <td colspan="3" th:text="#{table_empty}"></td>
-                        </tr>
-                        </tbody>
-                        <tbody th:unless="${participants.isEmpty()}">
-                        <tr th:each="participant : ${participants}">
-                            <th scope="row">
-                                <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
-                                   th:text="${participant.user.id}"></a>
-                            </th>
-                            <td>
-                                <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
-                                   th:text="${participant.user.username}"></a>
-                            </td>
-                            <td class="text-center">
-                                <span th:text="${participant.added.toLocalDateTime().toLocalDate()}"></span>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- The navigation elements below the table. -->
-                <div class="text-center">
-                    <a id="participantsFirst" class="btn btn-outline-dark"
-                       th:style="${participantPage == 1 ? 'display:none' : ''}" th:aria-label="#{first_page_label}">
-                        <i aria-hidden="true" class="fas fa-angle-double-left"></i>
-                    </a>
-                    <a id="participantsPrev" class="btn btn-outline-dark"
-                       th:style="${participantPage == 1 ? 'display:none' : ''}" th:aria-label="#{previous_page_label}">
-                        <i aria-hidden="true" class="fas fa-angle-left"></i>
-                    </a>
-                    <a id="participantsNext" class="btn btn-outline-dark"
-                       th:style="${participantPage == lastParticipantPage ? 'display:none' : ''}"
-                       th:aria-label="#{next_page_label}">
-                        <i aria-hidden="true" class="fas fa-angle-right"></i>
-                    </a>
-                    <a id="participantsLast" class="btn btn-outline-dark"
-                       th:style="${participantPage == lastParticipantPage ? 'display:none' : ''}"
-                       th:aria-label="#{last_page_label}">
-                        <i aria-hidden="true" class="fas fa-angle-double-right"></i>
-                    </a>
-                </div>
+            <!-- The table containing the participant information. -->
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{username}"></th>
+                        <th class="text-center" scope="col" th:text="#{added}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${participants.isEmpty()}">
+                    <tr>
+                        <td colspan="3" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${participants.isEmpty()}">
+                    <tr th:each="participant : ${participants}">
+                        <th scope="row">
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                               th:text="${participant.user.id}"></a>
+                        </th>
+                        <td>
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                               th:text="${participant.user.username}"></a>
+                        </td>
+                        <td class="text-center">
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <span th:text="${participant.added.toLocalDateTime().toLocalDate()}"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- The navigation elements below the table. -->
+            <div class="text-center">
+                <a id="participantsFirst" class="btn btn-outline-dark"
+                   th:style="${participantPage == 1 ? 'display:none' : ''}" th:aria-label="#{first_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-double-left"></i>
+                </a>
+                <a id="participantsPrev" class="btn btn-outline-dark"
+                   th:style="${participantPage == 1 ? 'display:none' : ''}" th:aria-label="#{previous_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-left"></i>
+                </a>
+                <a id="participantsNext" class="btn btn-outline-dark"
+                   th:style="${participantPage == lastParticipantPage ? 'display:none' : ''}"
+                   th:aria-label="#{next_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-right"></i>
+                </a>
+                <a id="participantsLast" class="btn btn-outline-dark"
+                   th:style="${participantPage == lastParticipantPage ? 'display:none' : ''}"
+                   th:aria-label="#{last_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-double-right"></i>
+                </a>
             </div>
             <!-- The buttons for participant management. -->
             <div class="d-flex gap-3 flex-wrap" th:if="${courseDTO.active}">
@@ -142,14 +143,9 @@
             </div>
         </div>
 
-        <!-- The course content information. -->
-        <div class="row mb-5">
-            <div class="col-12" th:utext="${courseDTO.content}"></div>
-        </div>
-
         <!-- The experiment table containing experiments that are part of this course. -->
-        <div th:fragment="course_experiment_table" id="course_experiment_table">
-            <h2 class="mb-5" th:text="#{experiment_heading}"></h2>
+        <div class="mb-5" th:fragment="course_experiment_table" id="course_experiment_table">
+            <h2 class="h3" th:text="#{experiment_heading}"></h2>
             <!-- The table containing the experiment information. -->
             <div class="table-container">
                 <table class="table table-hover">
@@ -229,6 +225,11 @@
                     <input id="deleteExperiment" type="submit" class="btn btn-danger" th:value="#{delete_experiment}"/>
                 </div>
             </div>
+        </div>
+
+        <!-- The course content information. -->
+        <div class="row mb-5">
+            <div class="col-12" th:utext="${courseDTO.content}"></div>
         </div>
     </div>
 </div>

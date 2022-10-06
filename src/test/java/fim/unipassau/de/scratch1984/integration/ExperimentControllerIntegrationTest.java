@@ -13,6 +13,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -41,6 +42,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -169,6 +171,8 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setDescription(DESCRIPTION);
         experimentDTO.setPostscript(POSTSCRIPT);
         experimentDTO.setActive(false);
+        experimentDTO.setCourseExperiment(false);
+        experimentDTO.setCourse(null);
         participantDTO.setStart(null);
         passwordDTO.setPassword(PASSWORD);
     }
@@ -487,6 +491,51 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
         verify(experimentService).existsExperiment(TITLE, ID);
         verify(experimentService).saveExperiment(experimentDTO);
+    }
+
+    @Test
+    public void testEditExperimentCourse() throws Exception {
+        experimentDTO.setCourseExperiment(true);
+        experimentDTO.setCourse(ID);
+        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(courseService.existsActiveCourse(ID)).thenReturn(true);
+        mvc.perform(post("/experiment/update")
+                        .flashAttr(EXPERIMENT_DTO, experimentDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
+        verify(courseService).existsActiveCourse(ID);
+        verify(experimentService).existsExperiment(TITLE, ID);
+        verify(experimentService).saveExperiment(experimentDTO);
+        verify(courseService).saveCourseExperiment(ID, ID);
+        verify(participantService).saveParticipants(ID, ID);
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testEditExperimentCourseError() throws Exception {
+        experimentDTO.setCourseExperiment(true);
+        experimentDTO.setCourse(ID);
+        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(courseService.existsActiveCourse(ID)).thenReturn(true);
+        doThrow(ConstraintViolationException.class).when(courseService).saveCourseExperiment(ID, ID);
+        mvc.perform(post("/experiment/update")
+                        .flashAttr(EXPERIMENT_DTO, experimentDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(courseService).existsActiveCourse(ID);
+        verify(experimentService).existsExperiment(TITLE, ID);
+        verify(experimentService).saveExperiment(experimentDTO);
+        verify(courseService).saveCourseExperiment(ID, ID);
+        verify(participantService, never()).saveParticipants(anyInt(), anyInt());
+        verify(experimentService).deleteExperiment(anyInt());
     }
 
     @Test

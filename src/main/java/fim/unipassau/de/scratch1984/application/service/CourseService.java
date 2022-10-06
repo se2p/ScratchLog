@@ -102,18 +102,23 @@ public class CourseService {
     }
 
     /**
-     * Checks, whether a course with the given id already exists in the database.
+     * Checks, whether an active course with the given id already exists in the database.
      *
      * @param id The id to search for.
      * @return {@code true} iff a course with the given id was found.
      */
     @Transactional
-    public boolean existsCourse(final int id) {
+    public boolean existsActiveCourse(final int id) {
         if (id < Constants.MIN_ID) {
             return false;
         }
 
-        return courseRepository.existsById(id);
+        try {
+            Course course = courseRepository.getOne(id);
+            return course.isActive();
+        } catch (EntityNotFoundException e) {
+            return false;
+        }
     }
 
     /**
@@ -500,24 +505,15 @@ public class CourseService {
 
         try {
             if (!status) {
-                List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
-                courseExperiments.forEach(courseExperiment -> deactivateExperiments(courseExperiment.getExperiment()));
+                deactivateExperiments(course);
             }
 
             List<CourseParticipant> courseParticipants = courseParticipantRepository.findAllByCourse(course);
             courseParticipants.forEach(courseParticipant -> updateUserStatus(status, courseParticipant.getUser()));
             course.setActive(status);
             course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
-            courseRepository.save(course);
-            Optional<Course> updated = courseRepository.findById(id);
-
-            if (updated.isEmpty()) {
-                logger.error("The course with the id " + id + " can no longer be found after updating its status!");
-                throw new IllegalStateException("The course with the id " + id + " can no longer be found after "
-                        + "updating its status!");
-            } else {
-                return createCourseDTO(updated.get());
-            }
+            Course updated = courseRepository.save(course);
+            return createCourseDTO(updated);
         } catch (EntityNotFoundException e) {
             logger.error("Could not update the status for non-existent course with id " + id + "!");
             throw new NotFoundException("Could not update the status for non-existent course with id " + id + "!");
@@ -525,16 +521,14 @@ public class CourseService {
     }
 
     /**
-     * Deactivates the given experiment. If the experiment is part of multiple courses, it will not be deactivated.
+     * Deactivates all experiments belonging to the given course.
      *
-     * @param experiment The {@link Experiment} to update.
+     * @param course The {@link Course} to search for.
      */
-    private void deactivateExperiments(final Experiment experiment) {
-        List<CourseExperiment> courses = courseExperimentRepository.findAllByExperiment(experiment);
-
-        if (courses.size() <= 1) {
-            experimentRepository.updateStatusById(experiment.getId(), false);
-        }
+    private void deactivateExperiments(final Course course) {
+        List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+        courseExperiments.forEach(courseExperiment
+                -> experimentRepository.updateStatusById(courseExperiment.getExperiment().getId(), false));
     }
 
     /**

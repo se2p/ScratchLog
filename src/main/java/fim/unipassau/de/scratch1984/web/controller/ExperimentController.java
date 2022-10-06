@@ -288,7 +288,7 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String editExperiment(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO,
                                  final BindingResult bindingResult) {
-        if (experimentDTO.getCourse() != null && !courseService.existsCourse(experimentDTO.getCourse())) {
+        if (experimentDTO.getCourse() != null && !courseService.existsActiveCourse(experimentDTO.getCourse())) {
             return Constants.ERROR;
         }
 
@@ -296,38 +296,23 @@ public class ExperimentController {
                 LocaleContextHolder.getLocale());
         FieldErrorHandler.validateExperimentInput(experimentDTO.getTitle(), experimentDTO.getDescription(),
                 experimentDTO.getInfo(), bindingResult, resourceBundle);
-
-        if (experimentDTO.getPostscript() != null && !experimentDTO.getPostscript().trim().isBlank()) {
-            if (experimentDTO.getPostscript().length() > Constants.SMALL_AREA) {
-                FieldErrorHandler.addFieldError(bindingResult, "experimentDTO", "postscript", "long_string",
-                        resourceBundle);
-            }
-        }
-        if (experimentDTO.getId() == null) {
-            if (experimentService.existsExperiment(experimentDTO.getTitle())) {
-                logger.error("Experiment with same title exists!");
-                FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
-            }
-        } else {
-            if (experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())) {
-                logger.error("Experiment with same name but different id exists!");
-                FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
-            }
-        }
+        checkFieldErrors(experimentDTO, bindingResult, resourceBundle);
 
         if (bindingResult.hasErrors()) {
             return EXPERIMENT_EDIT;
         }
 
-        ExperimentDTO saved = experimentService.saveExperiment(experimentDTO);
+        ExperimentDTO saved;
 
         if (experimentDTO.getCourse() != null) {
-            try {
-                courseService.saveCourseExperiment(experimentDTO.getCourse(), saved.getId());
-            } catch (Exception e) {
-                experimentService.deleteExperiment(saved.getId());
+            experimentDTO.setActive(true);
+            saved = experimentService.saveExperiment(experimentDTO);
+
+            if (isErrorSavingCourseExperiment(experimentDTO.getCourse(), saved.getId())) {
                 return Constants.ERROR;
             }
+        } else {
+            saved = experimentService.saveExperiment(experimentDTO);
         }
 
         return REDIRECT_EXPERIMENT + saved.getId();
@@ -828,6 +813,55 @@ public class ExperimentController {
         model.addAttribute("passwordDTO", new PasswordDTO());
         model.addAttribute("participants", participants);
         return true;
+    }
+
+    /**
+     * Checks, if the input contained in the given experiment dto is valid. If not, a corresponding field error is added
+     * to the given binding result to be displayed on the experiment edit page.
+     *
+     * @param experimentDTO The {@link ExperimentDTO} to check.
+     * @param bindingResult The {@link BindingResult} for returning information on invalid user input.
+     * @param resourceBundle The {@link ResourceBundle} for fetching the error message in the desired language.
+     */
+    private void checkFieldErrors(final ExperimentDTO experimentDTO, final BindingResult bindingResult,
+                                  final ResourceBundle resourceBundle) {
+        if (experimentDTO.getPostscript() != null && !experimentDTO.getPostscript().trim().isBlank()) {
+            if (experimentDTO.getPostscript().length() > Constants.SMALL_AREA) {
+                FieldErrorHandler.addFieldError(bindingResult, "experimentDTO", "postscript", "long_string",
+                        resourceBundle);
+            }
+        }
+
+        if (experimentDTO.getId() == null) {
+            if (experimentService.existsExperiment(experimentDTO.getTitle())) {
+                logger.error("Experiment with same title exists!");
+                FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
+            }
+        } else {
+            if (experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())) {
+                logger.error("Experiment with same name but different id exists!");
+                FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
+            }
+        }
+    }
+
+    /**
+     * Tries to add the experiment with the given id to the course with the given id and adds all users as experiment
+     * participants who are part of that course.
+     *
+     * @param courseId The id of the course.
+     * @param experimentId The id of the experiment.
+     * @return {@code false} if the operation was successful, or {@code true} if an error occurred.
+     */
+    private boolean isErrorSavingCourseExperiment(final int courseId, final int experimentId) {
+        try {
+            courseService.saveCourseExperiment(courseId, experimentId);
+            participantService.saveParticipants(experimentId, courseId);
+            return false;
+        } catch (Exception e) {
+            experimentService.deleteExperiment(experimentId);
+            return true;
+        }
     }
 
     /**

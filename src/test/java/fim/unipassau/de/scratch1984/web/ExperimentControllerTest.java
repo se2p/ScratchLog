@@ -169,6 +169,7 @@ public class ExperimentControllerTest {
         participant.setEmail(EMAIL);
         experimentDTO.setActive(false);
         experimentDTO.setCourseExperiment(false);
+        experimentDTO.setCourse(null);
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
         experimentDTO.setDescription(DESCRIPTION);
@@ -411,6 +412,41 @@ public class ExperimentControllerTest {
     }
 
     @Test
+    public void testEditExperimentCourse() {
+        experimentDTO.setCourse(ID);
+        experimentDTO.setCourseExperiment(true);
+        when(courseService.existsActiveCourse(ID)).thenReturn(true);
+        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.editExperiment(experimentDTO,
+                bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(courseService).existsActiveCourse(ID);
+        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
+        verify(experimentService).saveExperiment(experimentDTO);
+        verify(courseService).saveCourseExperiment(ID, ID);
+        verify(participantService).saveParticipants(ID, ID);
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testEditExperimentCourseInvalid() {
+        experimentDTO.setCourse(ID);
+        experimentDTO.setCourseExperiment(true);
+        when(courseService.existsActiveCourse(ID)).thenReturn(true);
+        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        doThrow(NotFoundException.class).when(participantService).saveParticipants(ID, ID);
+        assertEquals(Constants.ERROR, experimentController.editExperiment(experimentDTO,
+                bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(courseService).existsActiveCourse(ID);
+        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
+        verify(experimentService).saveExperiment(experimentDTO);
+        verify(courseService).saveCourseExperiment(ID, ID);
+        verify(participantService).saveParticipants(ID, ID);
+        verify(experimentService).deleteExperiment(ID);
+    }
+
+    @Test
     public void testEditExperimentTitleExists() {
         when(experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
@@ -509,6 +545,16 @@ public class ExperimentControllerTest {
         assertEquals(EXPERIMENT_EDIT, experimentController.editExperiment(experimentDTO, bindingResult));
         verify(bindingResult).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
+        verify(experimentService, never()).saveExperiment(any());
+    }
+
+    @Test
+    public void testEditExperimentCourseExperimentNotExistent() {
+        experimentDTO.setCourse(ID);
+        assertEquals(Constants.ERROR, experimentController.editExperiment(experimentDTO, bindingResult));
+        verify(bindingResult, never()).addError(any());
+        verify(courseService).existsActiveCourse(ID);
+        verify(experimentService, never()).existsExperiment(anyString(), anyInt());
         verify(experimentService, never()).saveExperiment(any());
     }
 
