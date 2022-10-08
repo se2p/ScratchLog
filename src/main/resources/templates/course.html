@@ -16,6 +16,11 @@
 <div class="row" id="content" sec:authorize="hasRole('PARTICIPANT')">
     <div class="inside">
 
+        <!-- The error message shown at the top of the page when entering an invalid password. -->
+        <div class="row" th:if="${param.invalid != null}">
+            <div class="col-12 alert alert-danger" th:text="#{invalid_password}"></div>
+        </div>
+
         <!-- The error message shown at the top of the page when an error occurs. -->
         <div class="row" th:if="${error != null}">
             <div class="col-12 alert alert-danger" th:text="${error}"></div>

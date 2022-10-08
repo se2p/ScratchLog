@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.MailServerSetter;
+import fim.unipassau.de.scratch1984.StringCreator;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
@@ -105,8 +106,7 @@ public class ParticipantControllerTest {
     private static final String INFO = "info";
     private static final String POSTSCRIPT = "postscript";
     private static final String ERROR_ATTRIBUTE = "error";
-    private static final String LONG_INPUT = "looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong"
-            + "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiinput";
+    private static final String LONG_INPUT = StringCreator.createLongString(101);
     private static final int ID = 1;
     private final UserDTO newUser = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");

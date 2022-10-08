@@ -15,7 +15,6 @@ import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
-import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +27,6 @@ import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -422,6 +420,46 @@ public class CourseServiceTest {
                 () -> courseService.saveCourse(courseDTO)
         );
         verify(courseRepository, never()).save(any());
+    }
+
+    @Test
+    public void testDeleteCourse() {
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment));
+        assertDoesNotThrow(
+                () -> courseService.deleteCourse(ID)
+        );
+        verify(courseRepository).getOne(ID);
+        verify(courseExperimentRepository).findAllByCourse(course);
+        verify(courseExperimentRepository).deleteAll(any());
+        verify(experimentRepository).delete(courseExperiment.getExperiment());
+        verify(courseRepository).deleteById(ID);
+    }
+
+    @Test
+    public void testDeleteCourseEntityNotFound() {
+        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseExperimentRepository.findAllByCourse(course)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> courseService.deleteCourse(ID)
+        );
+        verify(courseRepository).getOne(ID);
+        verify(courseExperimentRepository).findAllByCourse(course);
+        verify(courseExperimentRepository, never()).deleteAll(any());
+        verify(experimentRepository, never()).delete(any());
+        verify(courseRepository, never()).deleteById(anyInt());
+    }
+
+    @Test
+    public void testDeleteCourseInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.deleteCourse(0)
+        );
+        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseExperimentRepository, never()).findAllByCourse(any());
+        verify(courseExperimentRepository, never()).deleteAll(any());
+        verify(experimentRepository, never()).delete(any());
+        verify(courseRepository, never()).deleteById(anyInt());
     }
 
     @Test

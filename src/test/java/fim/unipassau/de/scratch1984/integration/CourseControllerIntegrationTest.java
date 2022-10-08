@@ -12,6 +12,7 @@ import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
+import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -81,9 +83,12 @@ public class CourseControllerIntegrationTest {
     private static final String COURSE = "course";
     private static final String REDIRECT_COURSE = "redirect:/course?id=";
     private static final String COURSE_EDIT = "course-edit";
+    private static final String SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_INVALID = "redirect:/course?invalid=true&id=";
     private static final String EXPERIMENT_TABLE = "course::course_experiment_table";
     private static final String PARTICIPANT_TABLE = "course::course_participant_table";
     private static final String COURSE_DTO = "courseDTO";
+    private static final String PASSWORD_DTO = "passwordDTO";
     private static final String ID_STRING = "1";
     private static final String CURRENT = "3";
     private static final String LAST = "5";
@@ -100,10 +105,12 @@ public class CourseControllerIntegrationTest {
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
     private static final String USERNAME = "participant";
+    private static final String PASSWORD = "password";
     private static final LocalDateTime CHANGED = LocalDateTime.now();
+    private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
     private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", "secret");
+            UserDTO.Language.ENGLISH, PASSWORD, "secret");
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -315,6 +322,79 @@ public class CourseControllerIntegrationTest {
                 .andExpect(view().name(COURSE_EDIT));
         verify(courseService).existsCourse(ID, "");
         verify(courseService, never()).saveCourse(any());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = "ADMIN")
+    public void testDeleteCourse() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        mvc.perform(post("/course/delete")
+                        .flashAttr(PASSWORD_DTO, passwordDTO)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(SUCCESS));
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(courseService).deleteCourse(ID);
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = "ADMIN")
+    public void testDeleteCourseInvalidPassword() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        mvc.perform(post("/course/delete")
+                        .flashAttr(PASSWORD_DTO, passwordDTO)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_INVALID + ID));
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(courseService, never()).deleteCourse(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = USERNAME, roles = "ADMIN")
+    public void testDeleteCourseNotFound() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        doThrow(NotFoundException.class).when(courseService).deleteCourse(ID);
+        mvc.perform(post("/course/delete")
+                        .flashAttr(PASSWORD_DTO, passwordDTO)
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(courseService).deleteCourse(ID);
+    }
+
+    @Test
+    public void testDeleteCourseInvalidId() throws Exception {
+        mvc.perform(post("/course/delete")
+                        .flashAttr(PASSWORD_DTO, passwordDTO)
+                        .param(ID_PARAM, "0")
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(courseService, never()).deleteCourse(anyInt());
     }
 
     @Test

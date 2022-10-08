@@ -24,6 +24,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.query.Param;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -203,6 +205,53 @@ public class CourseController {
         courseDTO.setLastChanged(LocalDateTime.now());
         int savedId = courseService.saveCourse(courseDTO);
         return "redirect:/course?id=" + savedId;
+    }
+
+    /**
+     * Deletes the course with the given id and all experiments associated with it. On success, the user is redirected
+     * to the index page. If the entered password was invalid, the user returns to the course page where a corresponding
+     * error message is displayed. If anything else goes wrong, the user is redirected to the error page.
+     *
+     * @param passwordDTO The {@link PasswordDTO} containing the password necessary to perform the delete operation.
+     * @param id The id of the course to be deleted.
+     * @return The index page on success, the course page if the password was invalid, or the error page.
+     */
+    @PostMapping("/delete")
+    @Secured(Constants.ROLE_ADMIN)
+    public String deleteCourse(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
+                               @RequestParam(ID) final String id) {
+        if (id == null || passwordDTO.getPassword() == null) {
+            logger.error("Cannot delete course with id null or input password null!");
+            return Constants.ERROR;
+        }
+
+        int courseId = NumberParser.parseId(id);
+
+        if (courseId < Constants.MIN_ID) {
+            logger.error("Cannot delete the course with invalid id " + id + "!");
+            return Constants.ERROR;
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication.getName() == null) {
+            logger.error("An unauthenticated user tried to delete the course with id " + courseId + "!");
+            return Constants.ERROR;
+        }
+
+        try {
+            UserDTO currentUser = userService.getUser(authentication.getName());
+
+            if ((passwordDTO.getPassword().length() > Constants.SMALL_FIELD)
+                    || (!userService.matchesPassword(passwordDTO.getPassword(), currentUser.getPassword()))) {
+                return "redirect:/course?invalid=true&id=" + courseId;
+            }
+
+            courseService.deleteCourse(courseId);
+            return "redirect:/?success=true";
+        } catch (NotFoundException e) {
+            return Constants.ERROR;
+        }
     }
 
     /**

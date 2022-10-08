@@ -270,6 +270,35 @@ public class CourseService {
     }
 
     /**
+     * Deletes the course with the given id along with all its experiments. If the passed id is invalid, an
+     * {@link IllegalArgumentException} is thrown instead. If no corresponding course could be found, a
+     * {@link NotFoundException} is thrown.
+     *
+     * @param id The id of the course.
+     */
+    @Transactional
+    public void deleteCourse(final int id) {
+        if (id < Constants.MIN_ID) {
+            logger.error("Cannot delete course with invalid id " + id);
+            throw new IllegalArgumentException("Cannot delete course with invalid id " + id);
+        }
+
+        Course course = courseRepository.getOne(id);
+
+        try {
+            List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+            courseExperimentRepository.deleteAll(courseExperiments);
+            courseExperiments.forEach(experiment -> experimentRepository.delete(experiment.getExperiment()));
+            courseRepository.deleteById(id);
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the course when trying to delete the course experiments of course with id "
+                    + id + "!", e);
+            throw new NotFoundException("Could not find the course when trying to delete the course experiments of "
+                    + "course with id " + id + "!", e);
+        }
+    }
+
+    /**
      * Creates a new {@link CourseParticipant} entry for the course with the given id and the participant with the given
      * username or email. If the passed parameters are invalid, an {@link IllegalArgumentException} is thrown instead.
      * If corresponding user could be found, a {@link NotFoundException} is thrown. If the user is not a participant, an

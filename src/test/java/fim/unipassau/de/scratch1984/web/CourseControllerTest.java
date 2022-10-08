@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web;
 
+import fim.unipassau.de.scratch1984.StringCreator;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
@@ -11,16 +12,23 @@ import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjec
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
+import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.ModelAndView;
@@ -70,9 +78,18 @@ public class CourseControllerTest {
     @Mock
     private HttpServletRequest httpServletRequest;
 
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
+    private MockedStatic<SecurityContextHolder> securityContextHolder;
     private static final String COURSE = "course";
     private static final String REDIRECT_COURSE = "redirect:/course?id=";
     private static final String COURSE_EDIT = "course-edit";
+    private static final String SUCCESS = "redirect:/?success=true";
+    private static final String REDIRECT_INVALID = "redirect:/course?invalid=true&id=";
     private static final String EXPERIMENT_TABLE = "course::course_experiment_table";
     private static final String PARTICIPANT_TABLE = "course::course_participant_table";
     private static final String COURSE_DTO = "courseDTO";
@@ -85,12 +102,14 @@ public class CourseControllerTest {
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
     private static final String USERNAME = "participant";
+    private static final String PASSWORD = "password";
     private static final String MODEL_ERROR = "error";
     private static final String BLANK = "  ";
     private static final LocalDateTime CHANGED = LocalDateTime.now();
+    private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
     private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", "secret");
+            UserDTO.Language.ENGLISH, PASSWORD, "secret");
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(3));
     private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
@@ -103,6 +122,13 @@ public class CourseControllerTest {
         courseDTO.setActive(true);
         courseDTO.setLastChanged(CHANGED);
         userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        passwordDTO.setPassword(PASSWORD);
+        securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
+    }
+
+    @AfterEach
+    public void cleanup() {
+        securityContextHolder.close();
     }
 
     @Test
@@ -194,7 +220,7 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void tetUpdateCourse() {
+    public void testUpdateCourse() {
         when(courseService.saveCourse(courseDTO)).thenReturn(ID);
         assertAll(
                 () -> assertEquals(REDIRECT_COURSE + ID, courseController.updateCourse(courseDTO, bindingResult)),
@@ -206,7 +232,7 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void tetUpdateNewCourse() {
+    public void testUpdateNewCourse() {
         courseDTO.setId(null);
         when(courseService.saveCourse(courseDTO)).thenReturn(ID);
         assertAll(
@@ -219,7 +245,7 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void tetUpdateCourseExists() {
+    public void testUpdateCourseExists() {
         when(courseService.existsCourse(ID, TITLE)).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
         assertAll(
@@ -232,8 +258,8 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void tetUpdateCourseInvalidTitleAndDescription() {
-        String title = createLongString(200).toString();
+    public void testUpdateCourseInvalidTitleAndDescription() {
+        String title = StringCreator.createLongString(200);
         courseDTO.setTitle(title);
         courseDTO.setDescription("");
         when(bindingResult.hasErrors()).thenReturn(true);
@@ -247,8 +273,8 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void tetUpdateCourseContentTooLong() {
-        courseDTO.setContent(createLongString(60000).toString());
+    public void testUpdateCourseContentTooLong() {
+        courseDTO.setContent(StringCreator.createLongString(60000));
         when(bindingResult.hasErrors()).thenReturn(true);
         assertAll(
                 () -> assertEquals(COURSE_EDIT, courseController.updateCourse(courseDTO, bindingResult)),
@@ -257,6 +283,99 @@ public class CourseControllerTest {
         verify(bindingResult).addError(any());
         verify(courseService).existsCourse(ID, TITLE);
         verify(courseService, never()).saveCourse(any());
+    }
+
+    @Test
+    public void testDeleteCourse() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
+        assertEquals(SUCCESS, courseController.deleteCourse(passwordDTO, ID_STRING));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(courseService).deleteCourse(ID);
+    }
+
+    @Test
+    public void testDeleteCourseInvalidPassword() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        assertEquals(REDIRECT_INVALID + ID, courseController.deleteCourse(passwordDTO, ID_STRING));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(PASSWORD, PASSWORD);
+        verify(courseService, never()).deleteCourse(anyInt());
+    }
+
+    @Test
+    public void testDeleteCoursePasswordTooLong() {
+        passwordDTO.setPassword(StringCreator.createLongString(51));
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        assertEquals(REDIRECT_INVALID + ID, courseController.deleteCourse(passwordDTO, ID_STRING));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(courseService, never()).deleteCourse(anyInt());
+    }
+
+    @Test
+    public void testDeleteCourseNotFound() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(USERNAME);
+        when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
+        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID_STRING));
+        verify(authentication, times(2)).getName();
+        verify(userService).getUser(USERNAME);
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(courseService, never()).deleteCourse(anyInt());
+    }
+
+    @Test
+    public void testDeleteCourseAuthenticationNameNull() {
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID_STRING));
+        verify(authentication).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(courseService, never()).deleteCourse(anyInt());
+    }
+
+    @Test
+    public void testDeleteCourseInvalidId() {
+        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, PASSWORD));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(courseService, never()).deleteCourse(anyInt());
+    }
+
+    @Test
+    public void testDeleteCourseIdNull() {
+        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, null));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(courseService, never()).deleteCourse(anyInt());
+    }
+
+    @Test
+    public void testDeleteCoursePasswordNull() {
+        passwordDTO.setPassword(null);
+        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID_STRING));
+        verify(authentication, never()).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(courseService, never()).deleteCourse(anyInt());
     }
 
     @Test
@@ -724,12 +843,6 @@ public class CourseControllerTest {
         assertEquals(Constants.ERROR, courseController.getLastExperimentPage(ID_STRING, "-1").getViewName());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());
-    }
-
-    private StringBuilder createLongString(int length) {
-        StringBuilder longString = new StringBuilder();
-        longString.append("a".repeat(Math.max(0, length)));
-        return longString;
     }
 
     private List<CourseExperimentProjection> getCourseExperiments(int number) {

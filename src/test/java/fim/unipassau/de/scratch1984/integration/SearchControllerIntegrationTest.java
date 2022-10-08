@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.integration;
 
+import fim.unipassau.de.scratch1984.StringCreator;
 import fim.unipassau.de.scratch1984.application.service.SearchService;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
@@ -51,8 +52,7 @@ public class SearchControllerIntegrationTest {
     private SearchService searchService;
 
     private static final String QUERY = "query";
-    private static final String LONG_QUERY = "queeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-            + "eeeeeeeeeeeeeeeeeeeeeeeeeery";
+    private static final String LONG_QUERY = StringCreator.createLongString(101);
     private static final String BLANK = "  ";
     private static final String ADMIN = "ADMIN";
     private static final String PARTICIPANT = "PARTICIPANT";

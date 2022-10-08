@@ -224,17 +224,14 @@ public class PageService {
         }
 
         Experiment experiment = experimentRepository.getOne(id);
-        Page<Participant> participants;
 
         try {
-            participants = participantRepository.findAllByExperiment(experiment,
+            return participantRepository.findAllByExperiment(experiment,
                     PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("user").descending()));
         } catch (EntityNotFoundException e) {
             logger.error("Could not find experiment with id " + id + " in the database!", e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
-
-        return participants;
     }
 
     /**

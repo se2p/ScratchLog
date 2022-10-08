@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.MailServerSetter;
+import fim.unipassau.de.scratch1984.StringCreator;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.MailService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
@@ -107,9 +108,8 @@ public class UserControllerTest {
     private MockedStatic<SecurityContextHolder> securityContextHolder;
     private static final String USERNAME = "admin";
     private static final String NEW_USERNAME = "admin1";
-    private static final String LONG_USERNAME = "VeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongUsername";
-    private static final String LONG_EMAIL = "Veeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-            + "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongEmail";
+    private static final String LONG_USERNAME = StringCreator.createLongString(51);
+    private static final String LONG_EMAIL = StringCreator.createLongString(101);
     private static final String BLANK = "   ";
     private static final String PASSWORD = "adminPassword";
     private static final String VALID_PASSWORD = "V4l1d_P4ssw0rd!";

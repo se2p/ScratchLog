@@ -150,9 +150,9 @@ function updateCourseExperimentTable(data) {
  */
 function addModalOnclickFunctions() {
     let stopModal = document.getElementById("openStop");
+    let deleteModal = document.getElementById("openDelete");
     let addParticipantModal = document.getElementById("openAddParticipant");
     let deleteParticipantModal = document.getElementById("openDeleteParticipant");
-    let addExperimentModal = document.getElementById("openAddExperiment");
     let deleteExperimentModal = document.getElementById("openDeleteExperiment");
 
     document.getElementById("close").addEventListener("click", function () {
@@ -161,6 +161,12 @@ function addModalOnclickFunctions() {
     document.getElementById("abortStop").addEventListener("click", function () {
         closeModal(stopModal);
     })
+    document.getElementById("delete").addEventListener("click", function () {
+        openModal(deleteModal);
+    });
+    document.getElementById("abortDelete").addEventListener("click", function () {
+        closeModal(deleteModal);
+    });
     document.getElementById("addParticipant").addEventListener("click", function () {
         openModal(addParticipantModal);
     });
@@ -185,6 +191,8 @@ function addModalOnclickFunctions() {
  * Adds the event listeners to handle user clicks on the buttons of the course page.
  */
 function addEventListeners() {
+    addModalOnclickFunctions();
+    addKeyupFunctions();
     document.getElementById("participantsNext").addEventListener("click", loadNextCourseParticipantPage);
     document.getElementById("participantsPrev").addEventListener("click", loadPreviousCourseParticipantPage);
     document.getElementById("participantsFirst").addEventListener("click", loadFirstCourseParticipantPage);
@@ -193,6 +201,4 @@ function addEventListeners() {
     document.getElementById("experimentsPrev").addEventListener("click", loadPreviousCourseExperimentPage);
     document.getElementById("experimentsFirst").addEventListener("click", loadFirstCourseExperimentPage);
     document.getElementById("experimentsLast").addEventListener("click", loadLastCourseExperimentPage);
-    addModalOnclickFunctions();
-    addKeyupFunctions();
 }

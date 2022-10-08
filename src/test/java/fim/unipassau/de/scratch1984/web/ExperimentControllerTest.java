@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.MailServerSetter;
+import fim.unipassau.de.scratch1984.StringCreator;
 import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.CourseService;
@@ -137,7 +138,7 @@ public class ExperimentControllerTest {
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "password";
     private static final String EMAIL = "participant@part.de";
-    private static final String LONG_PASSWORD = "VeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongPassword";
+    private static final String LONG_PASSWORD = StringCreator.createLongString(55);
     private static final String PARTICIPANTS = "participants";
     private static final String CURRENT = "3";
     private static final String LAST = "4";
@@ -484,7 +485,7 @@ public class ExperimentControllerTest {
     @Test
     public void testEditExperimentTitleTooLong() {
         experimentDTO.setPostscript(null);
-        experimentDTO.setTitle(createLongString(200).toString());
+        experimentDTO.setTitle(StringCreator.createLongString(200));
         when(bindingResult.hasErrors()).thenReturn(true);
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(EXPERIMENT_EDIT, returnString);
@@ -519,7 +520,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testEditExperimentDescriptionTooLong() {
-        experimentDTO.setDescription(createLongString(2000).toString());
+        experimentDTO.setDescription(StringCreator.createLongString(2000));
         when(bindingResult.hasErrors()).thenReturn(true);
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(EXPERIMENT_EDIT, returnString);
@@ -530,7 +531,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testEditExperimentInfoTooLong() {
-        experimentDTO.setInfo(createLongString(60000).toString());
+        experimentDTO.setInfo(StringCreator.createLongString(60000));
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(EXPERIMENT_EDIT, experimentController.editExperiment(experimentDTO, bindingResult));
         verify(bindingResult).addError(any());
@@ -540,7 +541,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testEditExperimentPostscriptTooLong() {
-        experimentDTO.setPostscript(createLongString(1001).toString());
+        experimentDTO.setPostscript(StringCreator.createLongString(1001));
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(EXPERIMENT_EDIT, experimentController.editExperiment(experimentDTO, bindingResult));
         verify(bindingResult).addError(any());
@@ -1407,12 +1408,6 @@ public class ExperimentControllerTest {
     public void testDeleteProjectFileIdNull() {
         assertEquals(ERROR, experimentController.deleteProjectFile(null));
         verify(experimentService, never()).deleteSb3Project(anyInt());
-    }
-
-    private StringBuilder createLongString(int length) {
-        StringBuilder longString = new StringBuilder();
-        longString.append("a".repeat(Math.max(0, length)));
-        return longString;
     }
 
     private List<Participant> getParticipants(int number) {

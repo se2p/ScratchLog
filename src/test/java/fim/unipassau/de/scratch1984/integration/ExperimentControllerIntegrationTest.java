@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.MailServerSetter;
+import fim.unipassau.de.scratch1984.StringCreator;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.EventService;
@@ -136,7 +137,7 @@ public class ExperimentControllerIntegrationTest {
     private static final String FILENAME = "project.sb3";
     private static final String USERNAME = "user";
     private static final String PASSWORD = "password";
-    private static final String LONG_PASSWORD = "VeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongPassword";
+    private static final String LONG_PASSWORD = StringCreator.createLongString(108);
     private static final int FIRST_PAGE = 1;
     private static final int LAST_PAGE = 3;
     private static final int PREVIOUS = 2;
