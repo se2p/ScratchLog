@@ -307,6 +307,9 @@ public class ExperimentService {
             logger.error("Could not find experiment with " + id + " when trying to retrieve its sb3 file!");
             throw new NotFoundException("Could not find experiment with " + id + " when trying to retrieve its sb3 "
                     + "file!");
+        } else if (!projection.get().isActive()) {
+            logger.error("Tried to retrieve the sb3 file for inactive experiment " + id + "!");
+            throw new NotFoundException("Tried to retrieve the sb3 file for inactive experiment " + id + "!");
         }
 
         return projection.get();

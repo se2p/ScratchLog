@@ -319,13 +319,7 @@ public class EventService {
                     blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
             Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id " + userId
-                        + " and experiment with id " + experimentId + " when trying to load the last json code!");
-                return null;
-            } else if (projection == null) {
-                logger.info("No json code saved for user with id " + userId + " for experiment with id "
-                        + experimentId + ".");
+            if (!checkReturnFirstJson(participant, projection, user, experiment)) {
                 return null;
             }
 
@@ -746,11 +740,44 @@ public class EventService {
      * @return {@code true} if the given attributes are non-null values, or {@code false} otherwise.
      */
     private boolean isValidEvent(final User user, final Experiment experiment, final LocalDateTime date) {
-        if (user != null && experiment != null && date != null) {
-            return true;
-        } else {
+        if (user == null || experiment == null || date == null) {
             logger.error("Cannot save event to database with user, experiment or timestamp null!");
             return false;
+        } else if (!user.isActive() || !experiment.isActive()) {
+            logger.error("Cannot save event to database with user or experiment inactive!");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Checks, whether the latest JSON code should be retrieved for the given user and experiment. This is not the case
+     * if no corresponding participant could be found, no JSON code could be retrieved or the user or experiment are
+     * inactive.
+     *
+     * @param participant The {@link Participant} to check.
+     * @param projection The {@link BlockEventJSONProjection} to check.
+     * @param user The {@link User} for whom the code should be retrieved.
+     * @param experiment The {@link Experiment} during which the code was generated.
+     * @return {@code true} if the code should be returned, or {@code false} otherwise.
+     */
+    private boolean checkReturnFirstJson(final Participant participant, final BlockEventJSONProjection projection,
+                                         final User user, final Experiment experiment) {
+        if (participant == null) {
+            logger.error("No corresponding participant entry could be found for user with id " + user.getId()
+                    + " and experiment with id " + experiment.getId() + " when trying to load the last json code!");
+            return false;
+        } else if (projection == null) {
+            logger.info("No json code saved for user with id " + user.getId() + " for experiment with id "
+                    + experiment.getId() + ".");
+            return false;
+        } else if (!user.isActive() || !experiment.isActive()) {
+            logger.error("Tried to load json code for user with id " + user.getId() + " and experiment with id "
+                    + experiment.getId() + " with inactive user or experiment!");
+            return false;
+        } else {
+            return true;
         }
     }
 

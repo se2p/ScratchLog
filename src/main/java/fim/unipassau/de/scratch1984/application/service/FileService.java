@@ -97,14 +97,7 @@ public class FileService {
         try {
             Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id "
-                        + fileDTO.getUser() + " and experiment " + fileDTO.getExperiment()
-                        + " when trying to save a file!");
-                return;
-            } else if (participant.getEnd() != null) {
-                logger.error("Tried to save a file for participant " + fileDTO.getUser() + " during experiment "
-                        + fileDTO.getExperiment() + " who has already finished!");
+            if (isInvalidParticipant(participant, user, experiment, "file")) {
                 return;
             }
 
@@ -132,14 +125,7 @@ public class FileService {
         try {
             Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id "
-                        + sb3ZipDTO.getUser() + " and experiment " + sb3ZipDTO.getExperiment()
-                        + " when trying to save an sb3 zip file!");
-                return;
-            } else if (participant.getEnd() != null) {
-                logger.error("Tried to save a sb3 file for participant " + sb3ZipDTO.getUser() + " during experiment "
-                        + sb3ZipDTO.getExperiment() + " who has already finished!");
+            if (isInvalidParticipant(participant, user, experiment, "sb3 zip file")) {
                 return;
             }
 
@@ -371,6 +357,35 @@ public class FileService {
                     + experimentId + " could be found in the database!", e);
             throw new NotFoundException("Cannot download zip files as no user with id " + userId
                     + " or no experiment with id " + experimentId + " could be found in the database!", e);
+        }
+    }
+
+    /**
+     * Checks, whether the given participant data is valid. This is the case if no corresponding participant exists, the
+     * participant has already finished the experiment, or the user or experiment itself is inactive.
+     *
+     * @param participant The {@link Participant} to check.
+     * @param user The {@link User} participating in the experiment.
+     * @param experiment The {@link Experiment} in question.
+     * @param fileType The type of file that is to be saved.
+     * @return {@code true} if the participant data is invalid, or {@code false} otherwise.
+     */
+    private boolean isInvalidParticipant(final Participant participant, final User user, final Experiment experiment,
+                                         final String fileType) {
+        if (participant == null) {
+            logger.error("No corresponding participant entry could be found for user with id " + user.getId()
+                    + " and experiment " + experiment.getId() + " when trying to save a " + fileType + "!");
+            return true;
+        } else if (participant.getEnd() != null) {
+            logger.error("Tried to save a " + fileType + " for participant " + user.getId() + " during experiment "
+                    + experiment.getId() + " who has already finished!");
+            return true;
+        } else if (!user.isActive() || !experiment.isActive()) {
+            logger.error("Tried to save a " + fileType + " for participant " + user.getId() + " during experiment "
+                    + experiment.getId() + " with user or experiment inactive!");
+            return true;
+        } else {
+            return false;
         }
     }
 

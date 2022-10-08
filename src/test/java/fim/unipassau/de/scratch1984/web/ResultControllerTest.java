@@ -110,6 +110,11 @@ public class ResultControllerTest {
         }
 
         @Override
+        public boolean isActive() {
+            return true;
+        }
+
+        @Override
         public byte[] getProject() {
             return null;
         }
@@ -283,6 +288,11 @@ public class ResultControllerTest {
             @Override
             public Integer getId() {
                 return ID;
+            }
+
+            @Override
+            public boolean isActive() {
+                return true;
             }
 
             @Override
@@ -897,6 +907,11 @@ public class ResultControllerTest {
             }
 
             @Override
+            public boolean isActive() {
+                return true;
+            }
+
+            @Override
             public byte[] getProject() {
                 return b;
             }
@@ -1021,6 +1036,11 @@ public class ResultControllerTest {
             @Override
             public Integer getId() {
                 return ID;
+            }
+
+            @Override
+            public boolean isActive() {
+                return true;
             }
 
             @Override
@@ -1186,6 +1206,11 @@ public class ResultControllerTest {
             @Override
             public Integer getId() {
                 return ID;
+            }
+
+            @Override
+            public boolean isActive() {
+                return true;
             }
 
             @Override

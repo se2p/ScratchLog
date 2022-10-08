@@ -66,6 +66,11 @@ public class ExperimentServiceTest {
         }
 
         @Override
+        public boolean isActive() {
+            return true;
+        }
+
+        @Override
         public byte[] getProject() {
             return CONTENT;
         }
@@ -455,7 +460,7 @@ public class ExperimentServiceTest {
 
     @Test
     public void testGetSb3File() {
-        when(experimentRepository.findExperimentById(ID)).thenReturn(java.util.Optional.of(projection));
+        when(experimentRepository.findExperimentById(ID)).thenReturn(Optional.of(projection));
         ExperimentProjection experimentProjection = experimentService.getSb3File(ID);
         assertAll(
                 () -> assertEquals(ID, experimentProjection.getId()),
@@ -478,7 +483,31 @@ public class ExperimentServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> experimentService.getSb3File(0)
         );
-        verify(experimentRepository, never()).findExperimentById(ID);
+        verify(experimentRepository, never()).findExperimentById(anyInt());
+    }
+
+    @Test
+    public void testGetSb3FileInactive() {
+        when(experimentRepository.findExperimentById(ID)).thenReturn(Optional.of(new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return ID;
+            }
+
+            @Override
+            public boolean isActive() {
+                return false;
+            }
+
+            @Override
+            public byte[] getProject() {
+                return new byte[0];
+            }
+        }));
+        assertThrows(NotFoundException.class,
+                () -> experimentService.getSb3File(ID)
+        );
+        verify(experimentRepository).findExperimentById(ID);
     }
 
 }

@@ -93,7 +93,11 @@
 
         <!-- The table of participants in the experiment and the buttons for adding and removing participants. -->
         <div class="mb-5" sec:authorize="hasRole('ADMIN')">
-            <h2 class="h3" th:text="#{heading_participants}"></h2>
+            <div class="d-flex justify-content-between flex-wrap mb-3">
+                <h2 class="h3" th:text="#{heading_participants}"></h2>
+                <a class="btn btn-secondary" th:unless="${participants.isEmpty()}"
+                   th:href="@{/secret/list(experiment=${experimentDTO.id})}" th:text="#{show_secrets}"></a>
+            </div>
             <div class="col-12 mb-5">
                 <!-- The table containing the participant information. -->
                 <div class="table-container">
