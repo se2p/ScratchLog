@@ -10,12 +10,11 @@ CREATE TABLE IF NOT EXISTS `experiment` (
     `description` text,
     `postscript` text,
     `infotext` text,
-    `active` bit(1) NOT NULL DEFAULT 0,
+    `active` bit(1) NOT NULL DEFAULT b'0',
     `project` longblob NULL DEFAULT NULL,
-    `gui_url` varchar(2000) DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `title` (`title`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- scratch1984.`user` definition
@@ -27,13 +26,13 @@ CREATE TABLE IF NOT EXISTS `user` (
     `language` varchar(255) NOT NULL DEFAULT 'ENGLISH',
     `password` varchar(255) NULL DEFAULT NULL,
     `secret` varchar(255) NULL DEFAULT NULL,
-    `attempts` int NOT NULL DEFAULT 0,
-    `active` bit(1) NOT NULL DEFAULT 0,
+    `attempts` int NOT NULL DEFAULT '0',
+    `active` bit(1) NOT NULL DEFAULT b'0',
     `email` varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `username` (`username`),
     UNIQUE KEY `secret` (`secret`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- scratch1984.block_event definition
@@ -50,65 +49,11 @@ CREATE TABLE IF NOT EXISTS `block_event` (
     `xml` text,
     `json` text,
     PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`),
+    KEY `experiment_id` (`experiment_id`),
     CONSTRAINT `block_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
     CONSTRAINT `block_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
-);
-
--- scratch1984.click_event definition
-
-CREATE TABLE IF NOT EXISTS `click_event` (
-    `id` int NOT NULL AUTO_INCREMENT,
-    `user_id` int NOT NULL,
-    `experiment_id` int NOT NULL,
-    `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `event_type` varchar(255) NOT NULL,
-    `event` varchar(255) NOT NULL,
-    `metadata` varchar(255) DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    CONSTRAINT `click_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `click_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
-);
-
--- scratch1984.debugger_event definition
-
-CREATE TABLE IF NOT EXISTS `debugger_event` (
-    `id` int NOT NULL AUTO_INCREMENT,
-    `user_id` int NOT NULL,
-    `experiment_id` int NOT NULL,
-    `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `event_type` varchar(255) NOT NULL,
-    `event` varchar(255) NOT NULL,
-    `block_target_id` varchar(255) DEFAULT NULL,
-    `name_opcode` varchar(255) DEFAULT NULL,
-    `original` int DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    CONSTRAINT `debugger_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `debugger_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
-);
-
-
--- scratch1984.question_event definition
-
-CREATE TABLE IF NOT EXISTS `question_event` (
-    `id` int NOT NULL AUTO_INCREMENT,
-    `user_id` int NOT NULL,
-    `experiment_id` int NOT NULL,
-    `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `event_type` varchar(255) NOT NULL,
-    `event` varchar(255) NOT NULL,
-    `feedback` int DEFAULT NULL,
-    `q_type` varchar(255) DEFAULT NULL,
-    `q_values` varchar(255) DEFAULT NULL,
-    `category` varchar(255) DEFAULT NULL,
-    `form` varchar(255) DEFAULT NULL,
-    `block_id` varchar(255) DEFAULT NULL,
-    `opcode` varchar(255) DEFAULT NULL,
-    `execution` int DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    CONSTRAINT `question_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `question_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
-);
-
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- scratch1984.file definition
@@ -122,9 +67,11 @@ CREATE TABLE IF NOT EXISTS `file` (
     `type` varchar(255) NOT NULL,
     `content` longblob NOT NULL,
     PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`),
+    KEY `experiment_id` (`experiment_id`),
     CONSTRAINT `file_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
     CONSTRAINT `file_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- scratch1984.participant definition
@@ -135,9 +82,10 @@ CREATE TABLE IF NOT EXISTS `participant` (
     `start` timestamp NULL DEFAULT NULL,
     `finish` timestamp NULL DEFAULT NULL,
     PRIMARY KEY (`user_id`,`experiment_id`),
+    KEY `experiment_id` (`experiment_id`),
     CONSTRAINT `participant_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
     CONSTRAINT `participant_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
 -- scratch1984.resource_event definition
@@ -154,9 +102,11 @@ CREATE TABLE IF NOT EXISTS `resource_event` (
     `type` varchar(255) DEFAULT NULL,
     `library` int DEFAULT NULL,
     PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`),
+    KEY `experiment_id` (`experiment_id`),
     CONSTRAINT `resource_event_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
     CONSTRAINT `resource_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- scratch1984.token definition
 
@@ -167,8 +117,9 @@ CREATE TABLE IF NOT EXISTS `token` (
     `metadata` varchar(255) DEFAULT NULL,
     `user_id` int NOT NULL,
     PRIMARY KEY (`value`),
+    KEY `user_id` (`user_id`),
     CONSTRAINT `token_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- scratch1984.sb3_zip definition
 
@@ -180,9 +131,11 @@ CREATE TABLE IF NOT EXISTS `sb3_zip` (
     `name` varchar(255) NOT NULL,
     `content` longblob NOT NULL,
     PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`),
+    KEY `experiment_id` (`experiment_id`),
     CONSTRAINT `sb3_zip_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
     CONSTRAINT `sb3_zip_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /**************************
  *  Definition of views.  *
@@ -190,29 +143,14 @@ CREATE TABLE IF NOT EXISTS `sb3_zip` (
 
 -- scratch1984.user_num_block_events source
 
-CREATE OR REPLACE VIEW `user_num_block_events` (`user`, `experiment`, `count`, `event`) AS
+CREATE OR REPLACE VIEW `scratch1984`.`user_num_block_events` (`user`, `experiment`, `count`, `event`) AS
 select
     `b`.`user_id` AS `user_id`,
     `b`.`experiment_id` AS `experiment_id`,
     count(`b`.`event`) AS `COUNT(b.event)`,
     `b`.`event` AS `event`
 from
-    `block_event` `b`
-group by
-    `b`.`user_id`,
-    `b`.`experiment_id`,
-    `b`.`event`;
-
--- scratch1984.user_num_click_events source
-
-CREATE OR REPLACE VIEW `user_num_click_events` (`user`, `experiment`, `count`, `event`) AS
-select
-    `b`.`user_id` AS `user_id`,
-    `b`.`experiment_id` AS `experiment_id`,
-    count(`b`.`event`) AS `COUNT(b.event)`,
-    `b`.`event` AS `event`
-from
-    `click_event` `b`
+    `scratch1984`.`block_event` `b`
 group by
     `b`.`user_id`,
     `b`.`experiment_id`,
@@ -221,14 +159,14 @@ group by
 
 -- scratch1984.user_num_resource_events source
 
-CREATE OR REPLACE VIEW `user_num_resource_events` (`user`, `experiment`, `count`, `event`) AS
+CREATE OR REPLACE VIEW `scratch1984`.`user_num_resource_events` (`user`, `experiment`, `count`, `event`) AS
 select
     `r`.`user_id` AS `user_id`,
     `r`.`experiment_id` AS `experiment_id`,
     count(`r`.`event`) AS `COUNT(r.event)`,
     `r`.`event` AS `event`
 from
-    `resource_event` `r`
+    `scratch1984`.`resource_event` `r`
 group by
     `r`.`user_id`,
     `r`.`experiment_id`,

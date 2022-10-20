@@ -64,9 +64,11 @@ public class ParticipantServiceTest {
     private static final String EMAIL = "participant@participant.de";
     private static final String PARTICIPANT = "PARTICIPANT";
     private static final String SECRET = "secret";
+    private static final String GUI_URL = "scratch";
     private static final int ID = 1;
     private final User user = new User(USERNAME, EMAIL, PARTICIPANT, "ENGLISH", PASSWORD, SECRET);
-    private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true);
+    private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
+            GUI_URL);
     private final Participant participant = new Participant(user, experiment, null, null);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final List<Participant> participantList = getParticipants(5);

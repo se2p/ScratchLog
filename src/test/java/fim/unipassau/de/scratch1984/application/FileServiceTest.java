@@ -64,10 +64,12 @@ public class FileServiceTest {
     private Sb3ZipRepository sb3ZipRepository;
 
     private static final int ID = 1;
+    private static final String GUI_URL = "scratch";
     private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "png", new byte[]{1, 2, 3, 4});
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip", new byte[]{1, 2, 3, 4});
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
-    private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true);
+    private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
+            GUI_URL);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
     private final File file = new File(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "file", "type",
             new byte[]{1, 2, 3, 4});

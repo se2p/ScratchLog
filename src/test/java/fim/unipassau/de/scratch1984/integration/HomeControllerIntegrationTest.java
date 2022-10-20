@@ -76,11 +76,12 @@ public class HomeControllerIntegrationTest {
     private static final String THANKS = "thanks";
     private static final String EXPERIMENT = "experiment";
     private static final String USER = "user";
+    private static final String GUI_URL = "scratch";
     private final int pageNum = 3;
     private final int lastPage = 4;
     private static final int ID = 1;
     private static final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "My Experiment", "description",
-            "info", "postscript", true);
+            "info", "postscript", true, GUI_URL);
     private static final UserDTO userDTO = new UserDTO("participant", "email", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "");
     private final Page<ExperimentTableProjection> experimentPage = new PageImpl<>(getExperimentProjections(5));

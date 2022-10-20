@@ -128,6 +128,9 @@ public class ExperimentService {
         } else if (experimentDTO.getDescription() == null || experimentDTO.getDescription().trim().isBlank()) {
             logger.error("Cannot save experiment with empty description!");
             throw new IncompleteDataException("Cannot save experiment with empty description!");
+        } else if (experimentDTO.getGuiURL() == null || experimentDTO.getGuiURL().trim().isBlank()) {
+            logger.error("Cannot save experiment with empty GUI-URL!");
+            throw new IncompleteDataException("Cannot save experiment with empty description!");
         }
 
         Experiment experiment = createExperiment(experimentDTO);
@@ -482,6 +485,9 @@ public class ExperimentService {
         if (experimentDTO.getInfo() != null) {
             experiment.setInfo(experimentDTO.getInfo());
         }
+        if (experimentDTO.getGuiURL() != null) {
+            experiment.setGuiURL(experimentDTO.getGuiURL());
+        }
         experiment.setActive(experimentDTO.isActive());
 
         return experiment;
@@ -510,6 +516,9 @@ public class ExperimentService {
         }
         if (experiment.getInfo() != null) {
             experimentDTO.setInfo((experiment.getInfo()));
+        }
+        if (experiment.getGuiURL() != null) {
+            experimentDTO.setGuiURL(experiment.getGuiURL());
         }
         experimentDTO.setActive(experiment.isActive());
 

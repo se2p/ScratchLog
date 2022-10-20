@@ -8,7 +8,6 @@ import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
-import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ParticipantController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
@@ -75,10 +74,11 @@ public class ParticipantControllerIntegrationTest {
     @MockBean
     private MailService mailService;
 
+    private static final String GUI_URL = "scratch";
     private static final String ERROR = "redirect:/error";
     private static final String PARTICIPANT = "participant";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
-    private static final String REDIRECT_GUI = "redirect:" + ApplicationProperties.GUI_URL + "?uid=";
+    private static final String REDIRECT_GUI = "redirect:" + GUI_URL + "?uid=";
     private static final String REDIRECT_FINISH = "redirect:/finish?user=";
     private static final String REDIRECT_SECRET = "redirect:/secret?user=";
     private static final String EXP_ID = "&expid=";
@@ -102,7 +102,8 @@ public class ParticipantControllerIntegrationTest {
             UserDTO.Language.ENGLISH, "password", "secret");
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
-    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true);
+    private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true,
+            GUI_URL);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
@@ -791,6 +792,7 @@ public class ParticipantControllerIntegrationTest {
         participantDTO.setStart(LocalDateTime.now());
         participantDTO.setEnd(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         mvc.perform(get("/participant/restart")
@@ -803,6 +805,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_GUI + ID + EXP_ID + ID + RESTART));
         verify(userService).getUserById(ID);
+        verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).updateParticipant(participantDTO);
         verify(userService).updateUser(userDTO);
@@ -814,6 +817,7 @@ public class ParticipantControllerIntegrationTest {
         participantDTO.setStart(LocalDateTime.now());
         participantDTO.setEnd(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         mvc.perform(get("/participant/restart")
                         .param(USER_PARAM, ID_STRING)
@@ -825,6 +829,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
+        verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).updateParticipant(participantDTO);
         verify(userService, never()).updateUser(any());
@@ -833,6 +838,7 @@ public class ParticipantControllerIntegrationTest {
     @Test
     public void testRestartExperimentStartEndNull() throws Exception {
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         mvc.perform(get("/participant/restart")
                         .param(USER_PARAM, ID_STRING)
@@ -844,6 +850,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
+        verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -855,6 +862,7 @@ public class ParticipantControllerIntegrationTest {
         participantDTO.setStart(LocalDateTime.now());
         participantDTO.setEnd(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/participant/restart")
                         .param(USER_PARAM, ID_STRING)
@@ -866,6 +874,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
+        verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -884,6 +893,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUserById(anyInt());
+        verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());
@@ -901,6 +911,7 @@ public class ParticipantControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUserById(anyInt());
+        verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).updateParticipant(any());
         verify(userService, never()).updateUser(any());

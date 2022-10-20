@@ -97,6 +97,7 @@ public class EventServiceTest {
     private CodesDataRepository codesDataRepository;
 
     private static final int ID = 1;
+    private static final String GUI_URL = "scratch";
     private final BlockEventDTO blockEventDTO = new BlockEventDTO(1, 1, LocalDateTime.now(),
             BlockEventDTO.BlockEventType.CHANGE, BlockEventDTO.BlockEvent.CHANGE, "sprite", "meta", "xml", "json");
     private final ClickEventDTO clickEventDTO = new ClickEventDTO(1, 1, LocalDateTime.now(),
@@ -110,7 +111,8 @@ public class EventServiceTest {
             ResourceEventDTO.ResourceEventType.ADD, ResourceEventDTO.ResourceEvent.ADD_SOUND, "name", "hash",
             "filetype", ResourceEventDTO.LibraryResource.TRUE);
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
-    private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true);
+    private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
+            GUI_URL);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
     private final CodesData codesData = new CodesData(ID, ID, 15);
     private final String[] blockEventDataHeader = {"id", "user", "experiment", "date", "eventType", "event",

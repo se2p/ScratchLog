@@ -58,7 +58,9 @@ public class SecretControllerTest {
     private static final String STRING_ID = "1";
     private static final String SECRET = "secret";
     private static final String BLANK = " ";
-    private final ExperimentDTO experiment = new ExperimentDTO(ID, "experiment", "my experiment", "info", "no", true);
+    private static final String GUI_URL = "scratch";
+    private final ExperimentDTO experiment = new ExperimentDTO(ID, "experiment", "my experiment", "info", "no", true,
+            GUI_URL);
     private final UserDTO user1 = new UserDTO("participant1", "part1@part.de", UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password1", SECRET);
     private final UserDTO user2 = new UserDTO("participant2", "part2@part.de", UserDTO.Role.PARTICIPANT,
