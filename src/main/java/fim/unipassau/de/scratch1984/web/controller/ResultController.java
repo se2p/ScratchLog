@@ -245,8 +245,7 @@ public class ResultController {
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
         byte[] code = eventService.findJsonById(jsonId).getBytes(StandardCharsets.UTF_8);
 
-        try {
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "sb3");
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "sb3")) {
             Set<String> fileNames = new HashSet<>();
 
             if (projection.getProject() != null) {
@@ -326,9 +325,8 @@ public class ResultController {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        try {
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "projects")) {
             List<Sb3ZipDTO> sb3ZipDTOS = fileService.getZipFiles(userId, experimentId);
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "projects");
 
             for (Sb3ZipDTO sb3ZipDTO : sb3ZipDTOS) {
                 ZipEntry entry = new ZipEntry(sb3ZipDTO.getId() + sb3ZipDTO.getName());
@@ -375,9 +373,8 @@ public class ResultController {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        try {
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "xml")) {
             List<BlockEventXMLProjection> xml = eventService.getXMLForUser(userId, experimentId);
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "xml");
 
             for (BlockEventXMLProjection projection : xml) {
                 ZipEntry entry = new ZipEntry("xml" + projection.getId() + ".xml");
@@ -424,9 +421,8 @@ public class ResultController {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        try {
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json")) {
             List<BlockEventJSONProjection> json = eventService.getJsonForUser(userId, experimentId);
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json");
             writeCSVData(zos, json, Optional.empty(), false);
 
             for (BlockEventJSONProjection projection : json) {
@@ -587,29 +583,30 @@ public class ResultController {
             jsons = jsons.subList(startPosition - 1, endPosition);
         }
 
-        try {
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip");
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip")) {
             writeCSVData(zos, jsons, finalProject, includeFinalProject);
 
             for (int i = 0; i < jsons.size(); i++) {
                 BlockEventJSONProjection json = jsons.get(i);
                 ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
-                ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip));
-                Set<String> fileNames = new HashSet<>();
 
-                if (projection.getProject() != null) {
-                    writeInitialProjectData(innerZos, projection.getProject());
+                try (ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip))) {
+                    Set<String> fileNames = new HashSet<>();
+
+                    if (projection.getProject() != null) {
+                        writeInitialProjectData(innerZos, projection.getProject());
+                    }
+
+                    for (FileDTO fileDTO : fileDTOS) {
+                        writeFileData(innerZos, fileDTO, fileNames);
+                    }
+
+                    byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
+                    writeJsonData(innerZos, code);
+
+                    innerZos.flush();
                 }
 
-                for (FileDTO fileDTO : fileDTOS) {
-                    writeFileData(innerZos, fileDTO, fileNames);
-                }
-
-                byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
-                writeJsonData(innerZos, code);
-
-                innerZos.flush();
-                innerZos.close();
                 ZipEntry createdZip = new ZipEntry("project_" + json.getId() + "_" + i + ".sb3");
                 zos.putNextEntry(createdZip);
                 zos.write(innerZip.toByteArray());
@@ -689,23 +686,20 @@ public class ResultController {
      * @throws IOException if the file content could not be written correctly.
      */
     private void writeInitialProjectData(final ZipOutputStream zos, final byte[] project) throws IOException {
-        InputStream file = new ByteArrayInputStream(project);
-        ZipInputStream zin = new ZipInputStream(file);
-        ZipEntry ze;
+        try (InputStream file = new ByteArrayInputStream(project); ZipInputStream zin = new ZipInputStream(file)) {
+            ZipEntry ze;
 
-        while ((ze = zin.getNextEntry()) != null) {
-            if (!ze.getName().equals("project.json")) {
-                zos.putNextEntry(ze);
-                int current;
-                while ((current = zin.read()) >= 0) {
-                    zos.write(current);
+            while ((ze = zin.getNextEntry()) != null) {
+                if (!ze.getName().equals("project.json")) {
+                    zos.putNextEntry(ze);
+                    int current;
+                    while ((current = zin.read()) >= 0) {
+                        zos.write(current);
+                    }
+                    zos.closeEntry();
                 }
-                zos.closeEntry();
             }
         }
-
-        zin.close();
-        file.close();
     }
 
     /**
@@ -727,23 +721,21 @@ public class ResultController {
             zos.write(fileDTO.getContent());
             zos.closeEntry();
         } else {
-            InputStream file = new ByteArrayInputStream(fileDTO.getContent());
-            ZipInputStream zin = new ZipInputStream(file);
-            ZipEntry ze = zin.getNextEntry();
+            try (InputStream file = new ByteArrayInputStream(fileDTO.getContent());
+                 ZipInputStream zin = new ZipInputStream(file)) {
+                ZipEntry ze = zin.getNextEntry();
 
-            if (ze != null && !names.contains(ze.getName())) {
-                names.add(ze.getName());
-                ZipEntry entry = new ZipEntry(ze.getName());
-                zos.putNextEntry(entry);
-                int current;
-                while ((current = zin.read()) >= 0) {
-                    zos.write(current);
+                if (ze != null && !names.contains(ze.getName())) {
+                    names.add(ze.getName());
+                    ZipEntry entry = new ZipEntry(ze.getName());
+                    zos.putNextEntry(entry);
+                    int current;
+                    while ((current = zin.read()) >= 0) {
+                        zos.write(current);
+                    }
+                    zos.closeEntry();
                 }
-                zos.closeEntry();
             }
-
-            zin.close();
-            file.close();
         }
     }
 

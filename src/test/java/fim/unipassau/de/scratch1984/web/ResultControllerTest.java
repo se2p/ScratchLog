@@ -595,12 +595,11 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadAllZipsIO() throws IOException {
-        when(fileService.getZipFiles(ID, ID)).thenReturn(sb3ZipDTOs);
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertThrows(RuntimeException.class,
                 () -> resultController.downloadAllZips(ID_STRING, ID_STRING, httpServletResponse)
         );
-        verify(fileService).getZipFiles(ID, ID);
+        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
     }
@@ -680,7 +679,7 @@ public class ResultControllerTest {
         assertThrows(RuntimeException.class,
                 () -> resultController.downloadAllXmlFiles(ID_STRING, ID_STRING, httpServletResponse)
         );
-        verify(eventService).getXMLForUser(ID, ID);
+        verify(eventService, never()).getXMLForUser(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -770,7 +769,7 @@ public class ResultControllerTest {
         assertThrows(RuntimeException.class,
                 () -> resultController.downloadAllJsonFiles(ID_STRING, ID_STRING, httpServletResponse)
         );
-        verify(eventService).getJsonForUser(ID, ID);
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());

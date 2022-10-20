@@ -125,7 +125,7 @@ public class ExperimentService {
             throw new IncompleteDataException("Cannot save experiment with empty description!");
         } else if (experimentDTO.getGuiURL() == null || experimentDTO.getGuiURL().trim().isBlank()) {
             logger.error("Cannot save experiment with empty GUI-URL!");
-            throw new IncompleteDataException("Cannot save experiment with empty description!");
+            throw new IncompleteDataException("Cannot save experiment with empty GUI-URL!");
         }
 
         Experiment experiment = createExperiment(experimentDTO);
