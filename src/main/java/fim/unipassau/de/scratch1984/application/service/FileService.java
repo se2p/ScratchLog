@@ -102,6 +102,10 @@ public class FileService {
                         + fileDTO.getUser() + " and experiment " + fileDTO.getExperiment()
                         + " when trying to save a file!");
                 return;
+            } else if (participant.getEnd() != null) {
+                logger.error("Tried to save a file for participant " + fileDTO.getUser() + " during experiment "
+                        + fileDTO.getExperiment() + " who has already finished!");
+                return;
             }
 
             File file = createFile(fileDTO, user, experiment);
@@ -132,6 +136,10 @@ public class FileService {
                 logger.error("No corresponding participant entry could be found for user with id "
                         + sb3ZipDTO.getUser() + " and experiment " + sb3ZipDTO.getExperiment()
                         + " when trying to save an sb3 zip file!");
+                return;
+            } else if (participant.getEnd() != null) {
+                logger.error("Tried to save a sb3 file for participant " + sb3ZipDTO.getUser() + " during experiment "
+                        + sb3ZipDTO.getExperiment() + " who has already finished!");
                 return;
             }
 

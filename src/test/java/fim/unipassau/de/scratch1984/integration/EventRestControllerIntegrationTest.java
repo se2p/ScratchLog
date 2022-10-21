@@ -389,7 +389,7 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreFile() throws Exception {
+    public void testStoreFileEvent() throws Exception {
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -401,7 +401,7 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreFileJSON() throws Exception {
+    public void testStoreFileEventJSON() throws Exception {
         fileEventObject.put("user", "unicorn");
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
@@ -414,7 +414,7 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreFileIllegalArgument() throws Exception {
+    public void testStoreFileEventIllegalArgument() throws Exception {
         fileEventObject.put("file", "%");
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
@@ -427,7 +427,7 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreFileDateTimeParse() throws Exception {
+    public void testStoreFileEventDateTimeParse() throws Exception {
         fileEventObject.put("time", "%");
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())

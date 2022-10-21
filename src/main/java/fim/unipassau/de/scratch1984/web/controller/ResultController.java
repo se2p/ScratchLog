@@ -43,8 +43,10 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -245,13 +247,14 @@ public class ResultController {
 
         try {
             ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "sb3");
+            Set<String> fileNames = new HashSet<>();
 
             if (projection.getProject() != null) {
                 writeInitialProjectData(zos, projection.getProject());
             }
 
             for (FileDTO fileDTO : fileDTOS) {
-                writeFileDataNoZips(zos, fileDTO);
+                writeFileData(zos, fileDTO, fileNames);
             }
 
             writeJsonData(zos, code);
@@ -592,13 +595,14 @@ public class ResultController {
                 BlockEventJSONProjection json = jsons.get(i);
                 ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
                 ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip));
+                Set<String> fileNames = new HashSet<>();
 
                 if (projection.getProject() != null) {
                     writeInitialProjectData(innerZos, projection.getProject());
                 }
 
                 for (FileDTO fileDTO : fileDTOS) {
-                    writeFileDataNoZips(innerZos, fileDTO);
+                    writeFileData(innerZos, fileDTO, fileNames);
                 }
 
                 byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
@@ -710,15 +714,36 @@ public class ResultController {
      *
      * @param zos The {@link ZipOutputStream} returning the generated file to the user.
      * @param fileDTO The {@link FileDTO} containing the file data.
+     * @param names The names of the files already added as entries.
      * @throws IOException if the file content could not be written correctly.
      */
-    private void writeFileDataNoZips(final ZipOutputStream zos, final FileDTO fileDTO) throws IOException {
-        if (!fileDTO.getName().endsWith("zip")) {
-            ZipEntry entry = new ZipEntry(fileDTO.getId() + fileDTO.getName());
+    private void writeFileData(final ZipOutputStream zos, final FileDTO fileDTO,
+                               final Set<String> names) throws IOException {
+        if (!fileDTO.getName().endsWith("zip") && !names.contains(fileDTO.getName())) {
+            names.add(fileDTO.getName());
+            ZipEntry entry = new ZipEntry(fileDTO.getName());
             entry.setSize(fileDTO.getContent().length);
             zos.putNextEntry(entry);
             zos.write(fileDTO.getContent());
             zos.closeEntry();
+        } else {
+            InputStream file = new ByteArrayInputStream(fileDTO.getContent());
+            ZipInputStream zin = new ZipInputStream(file);
+            ZipEntry ze = zin.getNextEntry();
+
+            if (ze != null && !names.contains(ze.getName())) {
+                names.add(ze.getName());
+                ZipEntry entry = new ZipEntry(ze.getName());
+                zos.putNextEntry(entry);
+                int current;
+                while ((current = zin.read()) >= 0) {
+                    zos.write(current);
+                }
+                zos.closeEntry();
+            }
+
+            zin.close();
+            file.close();
         }
     }
 

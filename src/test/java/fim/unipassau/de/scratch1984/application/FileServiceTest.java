@@ -84,6 +84,7 @@ public class FileServiceTest {
     public void setup() {
         user.setId(ID);
         experiment.setId(ID);
+        participant.setEnd(null);
     }
 
     @Test
@@ -120,6 +121,21 @@ public class FileServiceTest {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        assertDoesNotThrow(
+                () -> fileService.saveFile(fileDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(fileRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveFileParticipantFinished() {
+        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -176,6 +192,21 @@ public class FileServiceTest {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        assertDoesNotThrow(
+                () -> fileService.saveSb3Zip(sb3ZipDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveSb3ZipParticipantFinished() {
+        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );

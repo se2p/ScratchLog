@@ -705,14 +705,14 @@ public class EventService {
     }
 
     /**
-     * Checks whether any participant entry exists for the user and experiment with the given id. If not even a user or
-     * experiment with the given id exist, {@code false} is returned.
+     * Checks whether any participant entry exists for the user and experiment with the given id. If no user or
+     * experiment with the given id exist, or the user has already finished the experiment, {@code false} is returned.
      *
      * @param user The user to search for.
      * @param experiment The experiment to search for.
      * @param userId The user id.
      * @param experimentId The experiment id.
-     * @return {@code true} if a participant entry could be found, or {@code false} otherwise.
+     * @return {@code true} if a valid participant entry could be found, or {@code false} otherwise.
      */
     private boolean isParticipant(final User user, final Experiment experiment, final int userId,
                                   final int experimentId) {
@@ -722,6 +722,10 @@ public class EventService {
             if (participant == null) {
                 logger.error("No corresponding participant entry could be found for user with id " + userId
                         + " and experiment " + experimentId + " when trying to save an event!");
+                return false;
+            } else if (participant.getEnd() != null) {
+                logger.error("Tried to insert an event for participant " + userId + " during experiment "
+                        + experimentId + " who has already finished!");
                 return false;
             }
 

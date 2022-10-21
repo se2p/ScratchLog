@@ -17,6 +17,7 @@ import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -101,7 +102,7 @@ public class ResultControllerTest {
     private final List<BlockEventXMLProjection> xmlProjections = getXmlProjections(3);
     private final List<BlockEventJSONProjection> jsonProjections = getJsonProjections(4);
     private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(2));
-    private final List<FileDTO> fileDTOS = new ArrayList<>();
+    private List<FileDTO> fileDTOS = new ArrayList<>();
     ExperimentProjection experimentProjection = new ExperimentProjection() {
         @Override
         public Integer getId() {
@@ -113,6 +114,12 @@ public class ResultControllerTest {
             return null;
         }
     };
+
+    @BeforeEach
+    public void setUp() {
+        fileDTOS = new ArrayList<>();
+        zip.setContent(new byte[]{1, 2, 3, 4});
+    }
 
     @Test
     public void testGetResult() {
@@ -325,6 +332,50 @@ public class ResultControllerTest {
         zip.setContent(b);
         fileDTOS.add(fileDTO);
         fileDTOS.add(zip);
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
+        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        assertDoesNotThrow(
+                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).findJsonById(ID);
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testGenerateZipFileSameName() throws IOException {
+        URL zipFile = getClass().getClassLoader().getResource("Taylor-b.zip");
+        File file = new File(zipFile.getFile());
+        byte[] b = new byte[(int) file.length()];
+        FileInputStream fileInputStream = new FileInputStream(file);
+        fileInputStream.read(b);
+        fileInputStream.close();
+        zip.setContent(b);
+        fileDTOS.add(fileDTO);
+        fileDTOS.add(new FileDTO(ID, ID, LocalDateTime.now(), "file", "type", new byte[]{1, 2, 3}));
+        fileDTOS.add(zip);
+        fileDTOS.add(new FileDTO(ID, ID, LocalDateTime.now(), "file.zip", "wav", zip.getContent()));
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
             public boolean isReady() {

@@ -36,7 +36,7 @@
             <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${files.isEmpty()}">
                 <li class="list-group-item" th:text="#{table_empty}"></li>
             </ul>
-            <ul class="list-group list-group-horizontal mx-3" th:unless="${files.isEmpty()}">
+            <ul class="list-group list-group-horizontal flex-wrap mx-3" th:unless="${files.isEmpty()}">
                 <li class="list-group-item" th:each="file : ${files}">
                     <a class="no_decoration" th:href="@{/result/file(id=${file.id})}" th:text="${file.name}"></a>
                 </li>
@@ -62,7 +62,7 @@
             <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${zips.isEmpty()}">
                 <li class="list-group-item" th:text="#{table_empty}"></li>
             </ul>
-            <ul class="list-group list-group-horizontal mx-3" th:unless="${zips.isEmpty()}">
+            <ul class="list-group list-group-horizontal flex-wrap mx-3" th:unless="${zips.isEmpty()}">
                 <li class="list-group-item" th:each="zip : ${zips}">
                     <a class="no_decoration" th:href="@{/result/zip(id=${zip})}" th:text="${zip}"></a>
                 </li>

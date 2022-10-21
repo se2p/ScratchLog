@@ -476,7 +476,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreFile() {
+    public void testStoreFileEvent() {
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
@@ -484,7 +484,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreFileJSON() throws JSONException {
+    public void testStoreFileEventJSON() throws JSONException {
         fileEventObject.put("user", "theGordon");
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
@@ -493,7 +493,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreFileIllegalArgument() throws JSONException {
+    public void testStoreFileEventIllegalArgument() throws JSONException {
         fileEventObject.put("file", "%");
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
@@ -502,7 +502,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreFileDateTimeParse() throws JSONException {
+    public void testStoreFileEventDateTimeParse() throws JSONException {
         fileEventObject.put("time", "%");
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
