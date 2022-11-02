@@ -211,14 +211,14 @@ public class ResultController {
      * Generates a sb3 file for the user and experiment with the given id with the project.json corresponding to the
      * json string saved during the block event with the given id and makes the file available for download. Apart
      * from the saved json string, all costumes and sounds present in the experiment project file are added to the sb3
-     * file as well as all files saved for the user during the experiment. If the passed parameters are invalid, an
-     * {@link IncompleteDataException} is thrown instead. If an IOException occurs during the creation of the sb3 file,
-     * a {@link RuntimeException} is thrown.
+     * file as well as all files saved for the user during the experiment.
      *
      * @param experiment The id of the experiment.
      * @param user The id of the user.
      * @param json The block event id to search for.
      * @param httpServletResponse The servlet response.
+     * @throws IncompleteDataException if the passed user, experiment or json ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs during the sb3 file creation.
      */
     @GetMapping("/generate")
     @Secured(Constants.ROLE_ADMIN)
@@ -297,12 +297,13 @@ public class ResultController {
 
     /**
      * Retrieves all zip files created for the given user during the given experiment and makes them available for
-     * download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown instead. If an
-     * {@link IOException} occurs, a {@link RuntimeException} is thrown.
+     * download in a zip file.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/zips")
     @Secured(Constants.ROLE_ADMIN)
@@ -345,12 +346,13 @@ public class ResultController {
 
     /**
      * Retrieves all the xml codes that were saved for the given user during the given experiment and makes them
-     * available for download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown
-     * instead. If an {@link IOException} occurs, a {@link RuntimeException} is thrown.
+     * available for download in a zip file.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/xmls")
     @Secured(Constants.ROLE_ADMIN)
@@ -393,12 +395,13 @@ public class ResultController {
 
     /**
      * Retrieves all the json strings that were saved for the given user during the given experiment and makes them
-     * available for download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown
-     * instead. If an {@link IOException} occurs, a {@link RuntimeException} is thrown.
+     * available for download in a zip file.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/jsons")
     @Secured(Constants.ROLE_ADMIN)
@@ -442,12 +445,13 @@ public class ResultController {
 
     /**
      * Loads a list of {@link BlockEventProjection}s for the given page number, user and experiment from the
-     * database. If the parameters are invalid an {@link IncompleteDataException} is thrown instead.
+     * database.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
      * @param page The current page number.
      * @return The list of block event projections.
+     * @throws IncompleteDataException if the passed user or experiment id or the page are invalid.
      */
     @GetMapping("/codes")
     @Secured(Constants.ROLE_ADMIN)
@@ -488,9 +492,7 @@ public class ResultController {
      * in a zip file as a project.json file together with all costumes and sounds present in the experiment project file
      * as well as all files saved for the user during the experiment that were not saved as zip files, meaning they are
      * not resources that can be loaded from the Scratch library. The resulting sb3 zip file is then written into
-     * another zip file made available for download containing all the created sb3 files. If the passed ids are invalid
-     * an {@link IncompleteDataException} is thrown instead. If an {@link IOException} occurs, a
-     * {@link RuntimeException} is thrown.
+     * another zip file made available for download containing all the created sb3 files.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
@@ -499,6 +501,8 @@ public class ResultController {
      * @param end The end of the interval in which all json files should be downloaded.
      * @param include Whether the final project should be included.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if any of the passed parameters are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/sb3s")
     @Secured(Constants.ROLE_ADMIN)

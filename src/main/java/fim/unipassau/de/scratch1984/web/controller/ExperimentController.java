@@ -596,12 +596,12 @@ public class ExperimentController {
 
     /**
      * Retrieves all block event, resource event, block and resource event counts, codes and experiment data for the
-     * given experiment and makes them available for download in a csv file. If the id is invalid an
-     * {@link IncompleteDataException} is thrown instead. If an {@link IOException} occurs, a {@link RuntimeException}
-     * is thrown.
+     * given experiment and makes them available for download in a csv file.
      *
      * @param id The experiment id to search for.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed id is null or invalid.
+     * @throws RuntimeException if an {@link IOException} occurs
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
