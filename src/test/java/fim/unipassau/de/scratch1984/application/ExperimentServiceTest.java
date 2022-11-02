@@ -101,13 +101,17 @@ public class ExperimentServiceTest {
 
     @Test
     public void testExistsExperimentTitleNull() {
-        assertFalse(experimentService.existsExperiment(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(null)
+        );
         verify(experimentRepository, never()).existsByTitle(TITLE);
     }
 
     @Test
     public void testExistsExperimentTitleBlank() {
-        assertFalse(experimentService.existsExperiment(BLANK));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(BLANK)
+        );
         verify(experimentRepository, never()).existsByTitle(TITLE);
     }
 
@@ -134,19 +138,25 @@ public class ExperimentServiceTest {
 
     @Test
     public void testExistsExperimentWithIdTitleNull() {
-        assertFalse(experimentService.existsExperiment(null, ID));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(null, ID)
+        );
         verify(experimentRepository, never()).findByTitle(TITLE);
     }
 
     @Test
     public void testExistsExperimentWithIdTitleBlank() {
-        assertFalse(experimentService.existsExperiment(BLANK, ID));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(BLANK, ID)
+        );
         verify(experimentRepository, never()).findByTitle(TITLE);
     }
 
     @Test
     public void testExistsExperimentWithIdInvalid() {
-        assertFalse(experimentService.existsExperiment(TITLE, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(TITLE, 0)
+        );
         verify(experimentRepository, never()).findByTitle(TITLE);
     }
 
@@ -165,7 +175,9 @@ public class ExperimentServiceTest {
 
     @Test
     public void testHasProjectFileInvalidId() {
-        assertFalse(experimentService.hasProjectFile(0));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.hasProjectFile(0)
+        );
         verify(experimentRepository, never()).existsByIdAndProjectIsNotNull(anyInt());
     }
 

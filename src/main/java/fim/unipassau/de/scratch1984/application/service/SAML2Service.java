@@ -68,6 +68,7 @@ public class SAML2Service {
      *
      * @param principal The {@link Saml2AuthenticatedPrincipal}.
      * @return The authentication token used to finish the authentication process.
+     * @throws IllegalStateException if a user logging in for the first time could not be persisted.
      */
     public Authentication handleAuthentication(final Saml2AuthenticatedPrincipal principal) {
         String username = substituteAttributes(properties.getUsernamePattern(), principal);

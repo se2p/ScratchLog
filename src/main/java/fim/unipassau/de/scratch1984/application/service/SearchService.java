@@ -76,6 +76,7 @@ public class SearchService {
      * @param query The username or email to search for.
      * @param limit The maximum amount of results to return.
      * @return A list of matching {@link UserProjection}s, or an empty list, if no entries could be found.
+     * @throws IllegalArgumentException if the query is null or blank or the passed limit is invalid.
      */
     @Transactional
     public List<UserProjection> getUserList(final String query, final int limit) {
@@ -97,6 +98,7 @@ public class SearchService {
      * @param query The title to search for.
      * @param limit The maximum amount of results to return.
      * @return A list of matching {@link ExperimentTableProjection}s, or an empty list, if no entries could be found.
+     * @throws IllegalArgumentException if the query is null or blank or the passed limit is invalid.
      */
     @Transactional
     public List<ExperimentTableProjection> getExperimentList(final String query, final int limit) {
@@ -120,6 +122,7 @@ public class SearchService {
      * @param query The title to search for.
      * @param limit The maximum amount of results to return.
      * @return A list of matching {@link CourseTableProjection}s, or an empty list, if no entries could be found.
+     * @throws IllegalArgumentException if the query is null or blank or the passed limit is invalid.
      */
     @Transactional
     public List<CourseTableProjection> getCourseList(final String query, final int limit) {
@@ -141,6 +144,7 @@ public class SearchService {
      *
      * @param query The username or email to search for.
      * @return The number of matching user results.
+     * @throws IllegalArgumentException if the query is null or blank.
      */
     @Transactional
     public int getUserCount(final String query) {
@@ -158,6 +162,7 @@ public class SearchService {
      *
      * @param query The title to search for.
      * @return The number of matching experiment results.
+     * @throws IllegalArgumentException if the query is null or blank.
      */
     @Transactional
     public int getExperimentCount(final String query) {
@@ -175,6 +180,7 @@ public class SearchService {
      *
      * @param query The title to search for.
      * @return The number of matching course results.
+     * @throws IllegalArgumentException if the query is null or blank.
      */
     @Transactional
     public int getCourseCount(final String query) {

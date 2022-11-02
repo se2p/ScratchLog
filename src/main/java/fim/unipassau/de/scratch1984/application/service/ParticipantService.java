@@ -87,12 +87,13 @@ public class ParticipantService {
     }
 
     /**
-     * Retrieves the participant information for the given experiment id and the given user id from the database. If no
-     * corresponding user, experiment or participant can be found, a {@link NotFoundException} is thrown instead.
+     * Retrieves the participant information for the given experiment id and the given user id from the database.
      *
      * @param experimentId The experiment id.
      * @param userId The user id.
      * @return The {@link ParticipantDTO} containing the participant information.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user, experiment or participant entry could be found.
      */
     @Transactional
     public ParticipantDTO getParticipant(final int experimentId, final int userId) {
@@ -127,13 +128,13 @@ public class ParticipantService {
 
     /**
      * Adds the users participating in the course with the given id as participants to the experiment with the given id.
-     * If no corresponding course or experiment could be found, an {@link EntityNotFoundException} is thrown instead. If
-     * the user or experiment used to create a new participation violate the foreign key constraints of the participant
-     * table, a {@link ConstraintViolationException} is thrown. If the given ids are invalid, an
-     * {@link IllegalArgumentException} is thrown.
      *
      * @param experimentId The id of the experiment.
      * @param courseId The id of the course.
+     * @throws IllegalArgumentException if the passed course or experiment ids are invalid.
+     * @throws IllegalStateException if the course or experiment are inactive or the experiment is not part of a course.
+     * @throws NotFoundException if no corresponding course or experiment entries could be found.
+     * @throws StoreException if adding a course participant to the experiment violated the foreign key constraints.
      */
     @Transactional
     public void saveParticipants(final int experimentId, final int courseId) {
@@ -175,6 +176,9 @@ public class ParticipantService {
      *
      * @param userId The user id.
      * @param experimentId The experiment id.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user or experiment entries could be found.
+     * @throws StoreException if adding the user as a participant violates the foreign key constraints.
      */
     @Transactional
     public void saveParticipant(final int userId, final int experimentId) {
@@ -205,6 +209,7 @@ public class ParticipantService {
      *
      * @param participantDTO The dto containing the updated participation information.
      * @return {@code true} if the information was persisted, or {@code false} if not.
+     * @throws IllegalArgumentException if the experiment or user ids of the {@link ParticipantDTO} are invalid.
      */
     @Transactional
     public boolean updateParticipant(final ParticipantDTO participantDTO) {
@@ -233,10 +238,12 @@ public class ParticipantService {
     }
 
     /**
-     * Retrieves a list of participant ids for the experiment with the given id. If no corresponding experiment exists
-     * in the database a {@link NotFoundException} is thrown instead.
+     * Retrieves a list of participant ids for the experiment with the given id.
      *
      * @param experimentId The experiment id.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment entry could be found.
+     * @throws IllegalStateException if no user entry could be found for a retrieved participant.
      */
     @Transactional
     public void deactivateParticipantAccounts(final int experimentId) {
@@ -276,10 +283,12 @@ public class ParticipantService {
 
     /**
      * Retrieves the experiment ids and titles of the experiments in which the user with the given user id is
-     * participating. If no corresponding user exists in the database a {@link NotFoundException} is thrown instead.
+     * participating.
      *
      * @param userId The user id.
      * @return The list of experiment ids.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public HashMap<Integer, String> getExperimentInfoForParticipant(final int userId) {
@@ -312,6 +321,7 @@ public class ParticipantService {
      *
      * @param userId The user id to search for.
      * @param experimentId The experiment id to search for.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      */
     @Transactional
     public void deleteParticipant(final int userId, final int experimentId) {
@@ -331,6 +341,8 @@ public class ParticipantService {
      *
      * @param userId The user id to search for.
      * @return {@code true}, if the user is participating in another experiment, or false otherwise.
+     * @throws IllegalArgumentException if the passed user id is invalid.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public boolean simultaneousParticipation(final int userId) {

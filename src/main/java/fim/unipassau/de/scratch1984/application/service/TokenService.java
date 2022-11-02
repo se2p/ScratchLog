@@ -73,15 +73,15 @@ public class TokenService {
     }
 
     /**
-     * Creates a new token with the given parameters. If crucial information needed to store the token is missing, an
-     * {@link IllegalArgumentException} is thrown instead. If no user with the given id could be found in the database,
-     * a {@link EntityNotFoundException} is thrown. If the information could not be persisted correctly, a
-     * {@link StoreException} is thrown instead.
+     * Creates a new token with the given parameters.
      *
      * @param type The {@link fim.unipassau.de.scratch1984.web.dto.TokenDTO.Type} of the token.
      * @param metadata Optional metadata for the token.
      * @param userId The user for whom this token is to be created.
      * @return The newly created token, if the information was persisted.
+     * @throws IllegalArgumentException if the passed token type is null or the user id is invalid.
+     * @throws NotFoundException if no corresponding user could be found.
+     * @throws StoreException if the created token could not be persisted.
      */
     @Transactional
     public TokenDTO generateToken(final TokenDTO.Type type, final String metadata, final int userId) {
@@ -114,11 +114,12 @@ public class TokenService {
     }
 
     /**
-     * Returns the {@link TokenDTO} with the given value. If no corresponding token exists in the database, a
-     * {@link NotFoundException} is thrown instead.
+     * Returns the {@link TokenDTO} with the given value.
      *
      * @param value The token value to search for.
      * @return The token dto.
+     * @throws IllegalArgumentException if the passed value is null or blank.
+     * @throws NotFoundException if no corresponding token could be found.
      */
     @Transactional
     public TokenDTO findToken(final String value) {
@@ -141,6 +142,7 @@ public class TokenService {
      * Deletes the token with the given value from the database.
      *
      * @param value The token value to search for.
+     * @throws IllegalArgumentException if the passed value is null or blank.
      */
     @Transactional
     public void deleteToken(final String value) {
@@ -156,6 +158,7 @@ public class TokenService {
      * Deletes all expired tokens from the database.
      *
      * @param localDateTime The current {@link LocalDateTime}.
+     * @throws IllegalArgumentException if the passed time is null.
      */
     @Transactional
     public void deleteExpiredTokens(final LocalDateTime localDateTime) {
@@ -171,6 +174,8 @@ public class TokenService {
      * Deletes the user accounts whose registration tokens have expired.
      *
      * @param localDateTime The current {@link LocalDateTime}.
+     * @throws IllegalArgumentException if the passed time is null.
+     * @throws IllegalStateException if the user referenced by the token does not exist.
      */
     @Transactional
     public void deleteExpiredAccounts(final LocalDateTime localDateTime) {
@@ -197,6 +202,9 @@ public class TokenService {
      * Reactivates the user accounts whose deactivated tokens have expired.
      *
      * @param localDateTime The current {@link LocalDateTime}.
+     * @throws IllegalArgumentException if the passed time is null.
+     * @throws IllegalStateException if the user referenced by the token does not exist.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public void reactivateUserAccounts(final LocalDateTime localDateTime) {

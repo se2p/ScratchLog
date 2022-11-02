@@ -144,6 +144,7 @@ public class PageService {
      * @param pageable The {@link Pageable} containing the page size and page number.
      * @param courseId The id of the course.
      * @return The course experiment page.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public Page<CourseExperimentProjection> getCourseExperimentPage(final Pageable pageable, final int courseId) {
@@ -173,6 +174,7 @@ public class PageService {
      * @param pageable The pageable containing the page size and page number.
      * @param userId The user id to search for.
      * @return The page of {@link ExperimentTableProjection}s.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public Page<ExperimentTableProjection> getExperimentParticipantPage(final Pageable pageable, final int userId) {
@@ -193,6 +195,7 @@ public class PageService {
      * @param pageable The {@link Pageable} containing the page size and page number.
      * @param userId The user id to search for.
      * @return The page of {@link CourseTableProjection}s.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     public Page<CourseTableProjection> getCourseParticipantPage(final Pageable pageable, final int userId) {
         if (userId < Constants.MIN_ID) {
@@ -206,12 +209,13 @@ public class PageService {
     }
 
     /**
-     * Retrieves a page of participants for the experiment with the given id. If no corresponding experiment exists in
-     * the database a {@link NotFoundException} is thrown instead.
+     * Retrieves a page of participants for the experiment with the given id.
      *
      * @param id The experiment id.
      * @param pageable The pageable containing the page size and page number.
      * @return The participant page.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment entry could be found.
      */
     @Transactional
     public Page<Participant> getParticipantPage(final int id, final Pageable pageable) {
@@ -235,13 +239,13 @@ public class PageService {
     }
 
     /**
-     * Retrieves a page of {@link CourseParticipant}s for the course with the given id. If no corresponding course
-     * exists in the database a {@link NotFoundException} is thrown instead. If any of the passed arguments is invalid,
-     * an {@link IllegalArgumentException} is thrown instead.
+     * Retrieves a page of {@link CourseParticipant}s for the course with the given id.
      *
      * @param id The course id.
      * @param pageable The pageable containing the page size and page number.
      * @return The course participant page.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding course entry could be found.
      */
     @Transactional
     public Page<CourseParticipant> getParticipantCoursePage(final int id, final Pageable pageable) {
@@ -289,6 +293,7 @@ public class PageService {
      *
      * @param courseId The id of the course.
      * @return The last page value.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public int getLastCourseExperimentPage(final int courseId) {
@@ -308,6 +313,7 @@ public class PageService {
      *
      * @param userId The user id of the participant.
      * @return The last page value.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public int getLastExperimentPage(final int userId) {
@@ -327,6 +333,7 @@ public class PageService {
      *
      * @param userId The user id of the participant.
      * @return The last page value.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public int getLastCoursePage(final int userId) {
@@ -363,6 +370,7 @@ public class PageService {
      *
      * @param id The id of the course.
      * @return The last page value.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public int getLastParticipantCoursePage(final int id) {
@@ -378,9 +386,10 @@ public class PageService {
 
     /**
      * Verifies, that the given pageable is not null and that its page size is set to the number defined in the
-     * {@link Constants} class. If the pageable is invalid, an {@link IllegalArgumentException} is thrown instead.
+     * {@link Constants} class.
      *
      * @param pageable The {@link Pageable} to check
+     * @throws IllegalArgumentException if the passed {@link Pageable} is invalid.
      */
     private void checkPageable(final Pageable pageable) {
         if (pageable == null) {

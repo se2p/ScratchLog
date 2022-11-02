@@ -60,11 +60,12 @@ public class ExperimentService {
      *
      * @param title The title to search for.
      * @return {@code true} if an experiment exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the passed title is null or blank.
      */
     @Transactional
     public boolean existsExperiment(final String title) {
         if (title == null || title.trim().isBlank()) {
-            return false;
+            throw new IllegalArgumentException("Cannot check if experiment exists with title null or blank!");
         }
 
         return experimentRepository.existsByTitle(title);
@@ -77,11 +78,13 @@ public class ExperimentService {
      * @param title The title to search for.
      * @param id The id to compare to.
      * @return {@code true} if such an experiment exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the passed title is null or blank or the id is invalid.
      */
     @Transactional
     public boolean existsExperiment(final String title, final int id) {
         if (title == null || title.trim().isBlank() || id < Constants.MIN_ID) {
-            return false;
+            throw new IllegalArgumentException("Cannot check if experiment exists with title null or blank or invalid "
+                    + "id " + id + "!");
         }
 
         Experiment experiment = experimentRepository.findByTitle(title);
@@ -98,22 +101,25 @@ public class ExperimentService {
      *
      * @param id The id to search for.
      * @return {@code true} if such an experiment exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public boolean hasProjectFile(final int id) {
         if (id < Constants.MIN_ID) {
-            return false;
+            throw new IllegalArgumentException("Cannot check if the experiment has a project file with invalid id "
+                    + id + "!");
         }
 
         return experimentRepository.existsByIdAndProjectIsNotNull(id);
     }
 
     /**
-     * Creates a new experiment or updates an existing one with the given parameters in the database. If the information
-     * could not be persisted correctly, a {@link StoreException} is thrown instead.
+     * Creates a new experiment or updates an existing one with the given parameters in the database.
      *
      * @param experimentDTO The dto containing the experiment information to set.
      * @return The newly created experiment, if the information was persisted.
+     * @throws IncompleteDataException if the experiment title, description or GUI URL are null or blank.
+     * @throws StoreException if the experiment could not be persisted.
      */
     @Transactional
     public ExperimentDTO saveExperiment(final ExperimentDTO experimentDTO) {
@@ -150,6 +156,8 @@ public class ExperimentService {
      *
      * @param id The id to search for.
      * @return The experiment, if it exists, {@code null} if no experiment with that id exists.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
     public ExperimentDTO getExperiment(final int id) {
@@ -172,6 +180,7 @@ public class ExperimentService {
      * Deletes the experiment with the given id from the database, if any such experiment exists.
      *
      * @param id The id to search for.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public void deleteExperiment(final int id) {
@@ -189,6 +198,7 @@ public class ExperimentService {
      * @param status The new status.
      * @param id The experiment id.
      * @return The updated experiment data.
+     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
     public ExperimentDTO changeExperimentStatus(final boolean status, final int id) {
@@ -203,11 +213,11 @@ public class ExperimentService {
     }
 
     /**
-     * Retrieves the experiment data for the experiment with the given ID as a list of string arrays. If the id is
-     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     * Retrieves the experiment data for the experiment with the given ID as a list of string arrays.
      *
      * @param id The experiment ID.
      * @return The list of string arrays.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public List<String[]> getExperimentData(final int id) {
@@ -234,11 +244,12 @@ public class ExperimentService {
 
     /**
      * Uploads the given byte array representing an sb3 project that is to be loaded when starting an experiment with
-     * the given id. If the parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no
-     * experiment with the corresponding id could be found, a {@link NotFoundException} is thrown.
+     * the given id.
      *
      * @param id The experiment ID.
      * @param project The sb3 project to upload.
+     * @throws IllegalArgumentException if the passed project is null or the id is invalid.
+     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
     public void uploadSb3Project(final int id, final byte[] project) {
@@ -262,11 +273,11 @@ public class ExperimentService {
     }
 
     /**
-     * Deletes the current sb3 project for the experiment with the given id. If the parameters are invalid, an
-     * {@link IllegalArgumentException} is thrown instead. If no experiment with the corresponding id could be found, a
-     * {@link NotFoundException} is thrown.
+     * Deletes the current sb3 project for the experiment with the given id.
      *
      * @param id The experiment ID.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
     public void deleteSb3Project(final int id) {
@@ -288,10 +299,12 @@ public class ExperimentService {
 
     /**
      * Retrieves an {@link ExperimentProjection} containing the experiment id and the current sb3 file from the
-     * database. If no experiment with the corresponding id could be found, a {@link NotFoundException} is thrown.
+     * database.
      *
      * @param id The experiment ID.
      * @return The experiment projection.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
     public ExperimentProjection getSb3File(final int id) {

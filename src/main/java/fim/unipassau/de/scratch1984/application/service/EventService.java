@@ -267,11 +267,12 @@ public class EventService {
     }
 
     /**
-     * Returns the json code of the block event with the given id. If no corresponding block event can be found, a
-     * {@link NotFoundException} is thrown instead.
+     * Returns the json code of the block event with the given id.
      *
      * @param id The block event id to search for.
      * @return The json string.
+     * @throws IllegalArgumentException if the passed id is invalid or the event does not have any JSON code.
+     * @throws NotFoundException if no corresponding block event could be found.
      */
     @Transactional
     public String findJsonById(final int id) {
@@ -295,12 +296,13 @@ public class EventService {
 
     /**
      * Returns the latest saved json code for the user with the given id during the experiment with the given id, if it
-     * exists and a participant entry could be found for the user. If no corresponding user or experiment could be
-     * found, a {@link NotFoundException} is thrown instead.
+     * exists and a participant entry could be found for the user.
      *
      * @param userId The user id to search for.
      * @param experimentId The experiment id to search for.
      * @return The json code, or {@code null}.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user or experiment entry could be found.
      */
     @Transactional
     public String findFirstJSON(final int userId, final int experimentId) {
@@ -338,6 +340,7 @@ public class EventService {
      * @param user The user id to search for.
      * @param experiment The experiment id to search for.
      * @return A list of event count DTOs with the block event counts.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      */
     @Transactional
     public List<EventCountDTO> getBlockEventCounts(final int user, final int experiment) {
@@ -358,6 +361,7 @@ public class EventService {
      * @param user The user id to search for.
      * @param experiment The experiment id to search for.
      * @return A list of event count DTOs with the click event counts.
+     * @throws IllegalArgumentException if the user or experiment ids are invalid.
      */
     @Transactional
     public List<EventCountDTO> getClickEventCounts(final int user, final int experiment) {
@@ -378,6 +382,7 @@ public class EventService {
      * @param user The user id to search for.
      * @param experiment The experiment id to search for.
      * @return A list of event count DTOs with the resource event counts.
+     * @throws IllegalArgumentException if the user or experiment ids are invalid.
      */
     @Transactional
     public List<EventCountDTO> getResourceEventCounts(final int user, final int experiment) {
@@ -400,6 +405,8 @@ public class EventService {
      * @param userId The user ID.
      * @param experimentId The experiment ID.
      * @return The list holding the data.
+     * @throws IllegalArgumentException if the user or experiment ids are invalid.
+     * @throws NotFoundException if no JSON data could be found or no corresponding user or experiment could be found.
      */
     @Transactional
     public List<BlockEventJSONProjection> getJsonForUser(final int userId, final int experimentId) {
@@ -440,6 +447,8 @@ public class EventService {
      * @param userId The user ID.
      * @param experimentId The experiment ID.
      * @return The list holding the data.
+     * @throws IllegalArgumentException if the user or experiment ids are invalid.
+     * @throws NotFoundException if no xml data could be found or no corresponding user or experiment could be found.
      */
     @Transactional
     public List<BlockEventXMLProjection> getXMLForUser(final int userId, final int experimentId) {
@@ -475,13 +484,14 @@ public class EventService {
 
     /**
      * Retrieves a page of {@link BlockEventProjection}s for the user with the given ID during the experiment with the
-     * given ID. If the given parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no
-     * corresponding user or experiment could be found, a {@link NotFoundException} is thrown.
+     * given ID.
      *
      * @param userId The user ID.
      * @param experimentId The experiment ID.
      * @param pageable The pageable containing the page size and page number.
      * @return The page of block event projections.
+     * @throws IllegalArgumentException if the user or experiment ids are invalid or the page size is invalid.
+     * @throws NotFoundException if no corresponding user or experiment could be found.
      */
     @Transactional
     public Page<BlockEventProjection> getCodesForUser(final int userId, final int experimentId,
@@ -517,12 +527,12 @@ public class EventService {
     }
 
     /**
-     * Retrieves the codes data for the user with the given ID during the experiment with the given ID. If the ids are
-     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     * Retrieves the codes data for the user with the given ID during the experiment with the given ID.
      *
      * @param user The user ID.
      * @param experiment The experiment ID.
      * @return The {@link CodesData}, or {@code null}, if no corresponding data could be found.
+     * @throws IllegalArgumentException if the user or experiment ids are invalid.
      */
     @Transactional
     public CodesDataDTO getCodesData(final int user, final int experiment) {
@@ -543,12 +553,12 @@ public class EventService {
     }
 
     /**
-     * Retrieves all block event data for the experiment with the given ID as a list of string arrays. If the id is
-     * invalid, an {@link IllegalArgumentException} is thrown instead. If no corresponding experiment could be found, a
-     * {@link NotFoundException} is thrown.
+     * Retrieves all block event data for the experiment with the given ID as a list of string arrays.
      *
      * @param id The experiment ID.
      * @return The list of string arrays.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment entry could be found.
      */
     @Transactional
     public List<String[]> getBlockEventData(final int id) {
@@ -570,12 +580,12 @@ public class EventService {
     }
 
     /**
-     * Retrieves all click event data for the experiment with the given ID as a list of string arrays. If the id is
-     * invalid, an {@link IllegalArgumentException} is thrown instead. If no corresponding experiment could be found, a
-     * {@link NotFoundException} is thrown.
+     * Retrieves all click event data for the experiment with the given ID as a list of string arrays.
      *
      * @param id The experiment ID.
      * @return The list of string arrays.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment entry could be found.
      */
     @Transactional
     public List<String[]> getClickEventData(final int id) {
@@ -597,12 +607,12 @@ public class EventService {
     }
 
     /**
-     * Retrieves all resource event data for the experiment with the given ID as a list of string arrays. If the id is
-     * invalid, an {@link IllegalArgumentException} is thrown instead. If no corresponding experiment could be found, a
-     * {@link NotFoundException} is thrown.
+     * Retrieves all resource event data for the experiment with the given ID as a list of string arrays.
      *
      * @param id The experiment ID.
      * @return The list of string arrays.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment entry could be found.
      */
     @Transactional
     public List<String[]> getResourceEventData(final int id) {
@@ -624,11 +634,11 @@ public class EventService {
     }
 
     /**
-     * Retrieves all block event counts for the experiment with the given ID as a list of string arrays. If the id is
-     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     * Retrieves all block event counts for the experiment with the given ID as a list of string arrays.
      *
      * @param id The experiment ID.
      * @return The list of string arrays.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public List<String[]> getBlockEventCount(final int id) {
@@ -643,11 +653,11 @@ public class EventService {
     }
 
     /**
-     * Retrieves all click event counts for the experiment with the given ID as a list of string arrays. If the id is
-     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     * Retrieves all click event counts for the experiment with the given ID as a list of string arrays.
      *
      * @param id The experiment ID.
      * @return The list of string arrays.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public List<String[]> getClickEventCount(final int id) {
@@ -662,11 +672,11 @@ public class EventService {
     }
 
     /**
-     * Retrieves all resource event counts for the experiment with the given ID as a list of string arrays. If the id is
-     * invalid, an {@link IllegalArgumentException} is thrown instead.
+     * Retrieves all resource event counts for the experiment with the given ID as a list of string arrays.
      *
      * @param id The experiment ID.
      * @return The list of string arrays.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public List<String[]> getResourceEventCount(final int id) {
@@ -681,11 +691,11 @@ public class EventService {
     }
 
     /**
-     * Retrieves all codes data for the experiment with the given ID as a list of string arrays. If the id is invalid,
-     * an {@link IllegalArgumentException} is thrown instead.
+     * Retrieves all codes data for the experiment with the given ID as a list of string arrays.
      *
      * @param id The experiment ID.
      * @return The list of string arrays.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public List<String[]> getCodesDataForExperiment(final int id) {
