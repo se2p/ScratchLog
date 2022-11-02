@@ -121,7 +121,9 @@ public class CourseServiceTest {
 
     @Test
     public void testExistsCourseByIdInvalid() {
-        assertFalse(courseService.existsActiveCourse(0));
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsActiveCourse(0)
+        );
         verify(courseRepository, never()).existsById(anyInt());
     }
 
@@ -137,10 +139,17 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void testExistsCourseByTitleInvalid() {
-        assertAll(
-                () -> assertFalse(courseService.existsCourse(null)),
-                () -> assertFalse(courseService.existsCourse(BLANK))
+    public void testExistsCourseByTitleBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourse(BLANK)
+        );
+        verify(courseRepository, never()).existsByTitle(anyString());
+    }
+
+    @Test
+    public void testExistsCourseByTitleNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourse(null)
         );
         verify(courseRepository, never()).existsByTitle(anyString());
     }
@@ -149,8 +158,8 @@ public class CourseServiceTest {
     public void testExistsCourseByTitleAndId() {
         when(courseRepository.findByTitle(TITLE)).thenReturn(Optional.of(course));
         assertAll(
-                () -> assertTrue(courseService.existsCourse(INVALID_ID, TITLE)),
-                () -> assertFalse(courseService.existsCourse(ID, TITLE))
+                () -> assertFalse(courseService.existsCourse(ID, TITLE)),
+                () -> assertTrue(courseService.existsCourse(2, TITLE))
         );
         verify(courseRepository, times(2)).findByTitle(TITLE);
     }
@@ -162,11 +171,25 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void testExistsCourseInvalidTitleAndId() {
-        assertAll(
-                () -> assertFalse(courseService.existsCourse(-1, TITLE)),
-                () -> assertFalse(courseService.existsCourse(ID, BLANK)),
-                () -> assertFalse(courseService.existsCourse(ID, null))
+    public void testExistsCourseByTitleAndIdTitleBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourse(ID, BLANK)
+        );
+        verify(courseRepository, never()).findByTitle(anyString());
+    }
+
+    @Test
+    public void testExistsCourseByTitleAndIdTitleNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourse(ID, null)
+        );
+        verify(courseRepository, never()).findByTitle(anyString());
+    }
+
+    @Test
+    public void testExistsCourseByTitleAndIdInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourse(-1, TITLE)
         );
         verify(courseRepository, never()).findByTitle(anyString());
     }
@@ -215,7 +238,9 @@ public class CourseServiceTest {
 
     @Test
     public void testExistsCourseExperimentInvalidId() {
-        assertFalse(courseService.existsCourseExperiment(0, TITLE));
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourseExperiment(0, TITLE)
+        );
         verify(courseRepository, never()).getOne(anyInt());
         verify(experimentRepository, never()).findByTitle(anyString());
         verify(courseExperimentRepository, never()).existsByCourseAndExperiment(any(), any());
@@ -223,7 +248,9 @@ public class CourseServiceTest {
 
     @Test
     public void testExistsCourseExperimentTitleBlank() {
-        assertFalse(courseService.existsCourseExperiment(ID, BLANK));
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourseExperiment(ID, BLANK)
+        );
         verify(courseRepository, never()).getOne(anyInt());
         verify(experimentRepository, never()).findByTitle(anyString());
         verify(courseExperimentRepository, never()).existsByCourseAndExperiment(any(), any());
@@ -231,7 +258,9 @@ public class CourseServiceTest {
 
     @Test
     public void testExistsCourseExperimentTitleNull() {
-        assertFalse(courseService.existsCourseExperiment(ID, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourseExperiment(ID, null)
+        );
         verify(courseRepository, never()).getOne(anyInt());
         verify(experimentRepository, never()).findByTitle(anyString());
         verify(courseExperimentRepository, never()).existsByCourseAndExperiment(any(), any());
@@ -280,7 +309,9 @@ public class CourseServiceTest {
 
     @Test
     public void testExistsCourseParticipantInvalidId() {
-        assertFalse(courseService.existsCourseParticipant(0, USERNAME));
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourseParticipant(0, USERNAME)
+        );
         verify(courseRepository, never()).getOne(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
@@ -288,7 +319,9 @@ public class CourseServiceTest {
 
     @Test
     public void testExistsCourseParticipantInputBlank() {
-        assertFalse(courseService.existsCourseParticipant(ID, BLANK));
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourseParticipant(ID, BLANK)
+        );
         verify(courseRepository, never()).getOne(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
@@ -296,7 +329,9 @@ public class CourseServiceTest {
 
     @Test
     public void testExistsCourseParticipantInputNull() {
-        assertFalse(courseService.existsCourseParticipant(ID, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourseParticipant(ID, null)
+        );
         verify(courseRepository, never()).getOne(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
@@ -340,10 +375,20 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void testExistsCourseParticipantExperimentInvalidIds() {
-        assertAll(
-                () -> assertFalse(courseService.existsCourseParticipant(ID, 0)),
-                () -> assertFalse(courseService.existsCourseParticipant(-1, ID))
+    public void testExistsCourseParticipantExperimentInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourseParticipant(0, ID)
+        );
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(userRepository, never()).getOne(anyInt());
+        verify(courseExperimentRepository, never()).findByExperiment(any());
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+    }
+
+    @Test
+    public void testExistsCourseParticipantExperimentInvalidUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsCourseParticipant(ID, -1)
         );
         verify(experimentRepository, never()).getOne(anyInt());
         verify(userRepository, never()).getOne(anyInt());

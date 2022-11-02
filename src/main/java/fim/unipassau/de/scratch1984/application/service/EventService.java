@@ -741,10 +741,10 @@ public class EventService {
      */
     private boolean isValidEvent(final User user, final Experiment experiment, final LocalDateTime date) {
         if (user == null || experiment == null || date == null) {
-            logger.error("Cannot save event to database with user, experiment or timestamp null!");
+            logger.info("Cannot save event to database with user, experiment or timestamp null!");
             return false;
         } else if (!user.isActive() || !experiment.isActive()) {
-            logger.error("Cannot save event to database with user or experiment inactive!");
+            logger.info("Cannot save event to database with user or experiment inactive!");
             return false;
         } else {
             return true;

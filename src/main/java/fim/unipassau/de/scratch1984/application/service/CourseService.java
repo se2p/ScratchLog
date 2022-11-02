@@ -106,11 +106,12 @@ public class CourseService {
      *
      * @param id The id to search for.
      * @return {@code true} iff a course with the given id was found.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public boolean existsActiveCourse(final int id) {
         if (id < Constants.MIN_ID) {
-            return false;
+            throw new IllegalArgumentException("Cannot check for existing course with invalid id " + id + "!");
         }
 
         try {
@@ -126,11 +127,12 @@ public class CourseService {
      *
      * @param title The title to search for.
      * @return {@code true} iff a course with the given title was found.
+     * @throws IllegalArgumentException if the passed title is null or blank.
      */
     @Transactional
     public boolean existsCourse(final String title) {
         if (title == null || title.trim().isBlank()) {
-            return false;
+            throw new IllegalArgumentException("Cannot check for existing course with title null or blank!");
         }
 
         return courseRepository.existsByTitle(title);
@@ -142,11 +144,13 @@ public class CourseService {
      * @param title The title to search for.
      * @param id The id to compare to.
      * @return {@code true} if such a course exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the passed title is null or blank or the id is invalid.
      */
     @Transactional
     public boolean existsCourse(final int id, final String title) {
         if (title == null || title.trim().isBlank() || id < Constants.MIN_ID) {
-            return false;
+            throw new IllegalArgumentException("Cannot check for existing course without a title or invalid id " + id
+                    + "!");
         }
 
         Optional<Course> course = courseRepository.findByTitle(title);
@@ -165,11 +169,13 @@ public class CourseService {
      * @param experimentTitle The title of the experiment.
      * @param courseId The id of the course.
      * @return {@code true} if such an entry exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the experiment title is null or blank or the course id is invalid.
      */
     @Transactional
     public boolean existsCourseExperiment(final int courseId, final String experimentTitle) {
         if (experimentTitle == null || experimentTitle.trim().isBlank() || courseId < Constants.MIN_ID) {
-            return false;
+            throw new IllegalArgumentException("Cannot check for an existing course experiment without an experiment "
+                    + "title or an invalid course id " + courseId + "!");
         }
 
         Course course = courseRepository.getOne(courseId);
@@ -189,11 +195,13 @@ public class CourseService {
      * @param input The username or email.
      * @param courseId The id of the course.
      * @return {@code true} if such an entry exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the given username or email is null or blank or the course id is invalid.
      */
     @Transactional
     public boolean existsCourseParticipant(final int courseId, final String input) {
         if (input == null || input.trim().isBlank() || courseId < Constants.MIN_ID) {
-            return false;
+            throw new IllegalArgumentException("Cannot check for existing course participant without an search string "
+                    + "or an invalid course id " + courseId + "!");
         }
 
         Course course = courseRepository.getOne(courseId);
@@ -214,11 +222,13 @@ public class CourseService {
      * @param experimentId The id of the experiment.
      * @param userId The id of the user.
      * @return {@code true} if such an entry exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the experiment or user ids are invalid.
      */
     @Transactional
     public boolean existsCourseParticipant(final int experimentId, final int userId) {
         if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            return false;
+            throw new IllegalArgumentException("Cannot check for existing course participant with invalid user id "
+                    + userId + " or invalid experiment id " + experimentId + "!");
         }
 
         Experiment experiment = experimentRepository.getOne(experimentId);
@@ -238,12 +248,12 @@ public class CourseService {
     }
 
     /**
-     * Creates a new course or updates an existing one with the given parameters in the database. If the DTO contains
-     * invalid attribute values, an {@link IncompleteDataException} is thrown. If the information could not be persisted
-     * correctly, a {@link StoreException} is thrown instead.
+     * Creates a new course or updates an existing one with the given parameters in the database.
      *
      * @param courseDTO The dto containing the course information to set.
      * @return The id of the newly created course, if the information was persisted.
+     * @throws IncompleteDataException if the {@link CourseDTO} contains invalid attribute values.
+     * @throws StoreException if the course information could not be persisted.
      */
     @Transactional
     public int saveCourse(final CourseDTO courseDTO) {
@@ -270,11 +280,11 @@ public class CourseService {
     }
 
     /**
-     * Deletes the course with the given id along with all its experiments. If the passed id is invalid, an
-     * {@link IllegalArgumentException} is thrown instead. If no corresponding course could be found, a
-     * {@link NotFoundException} is thrown.
+     * Deletes the course with the given id along with all its experiments.
      *
      * @param id The id of the course.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding course could be found.
      */
     @Transactional
     public void deleteCourse(final int id) {
@@ -300,14 +310,16 @@ public class CourseService {
 
     /**
      * Creates a new {@link CourseParticipant} entry for the course with the given id and the participant with the given
-     * username or email. If the passed parameters are invalid, an {@link IllegalArgumentException} is thrown instead.
-     * If corresponding user could be found, a {@link NotFoundException} is thrown. If the user is not a participant, an
-     * {@link IllegalStateException} is thrown. If no corresponding course entry could be found an
-     * {@link EntityNotFoundException} or a {@link ConstraintViolationException} is thrown instead.
+     * username or email.
      *
      * @param courseId The id of the course.
      * @param participant The username or email.
      * @return The id of the user.
+     * @throws IllegalArgumentException if the passed course id or participant string are invalid.
+     * @throws NotFoundException if no corresponding user could be found.
+     * @throws IllegalStateException if a user could be found who is not participating in the course.
+     * @throws EntityNotFoundException if no course could be found for the given id.
+     * @throws ConstraintViolationException if saving the course participant violated the foreign key constraints.
      */
     @Transactional
     public int saveCourseParticipant(final int courseId, final String participant) {
@@ -352,12 +364,13 @@ public class CourseService {
 
     /**
      * Removes the user with the given username or email as a participant of the course with the given id. Additionally,
-     * the user is removed as a participant from all experiments offered in the course. If no corresponding user could
-     * be found, a {@link NotFoundException} is thrown instead. If no corresponding course could be found, an
-     * {@link EntityNotFoundException} is thrown.
+     * the user is removed as a participant from all experiments offered in the course.
      *
      * @param courseId The id of the course.
      * @param participant The username or email of the participant to be removed.
+     * @throws IllegalArgumentException if the passed course id or participant string are invalid.
+     * @throws NotFoundException if no corresponding user entry could be found.
+     * @throws EntityNotFoundException if no course could be found for the given id.
      */
     @Transactional
     public void deleteCourseParticipant(final int courseId, final String participant) {
@@ -392,13 +405,13 @@ public class CourseService {
     }
 
     /**
-     * Creates a new {@link CourseExperiment} entry for the course and experiment with the given ids. If the passed
-     * parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no corresponding course or
-     * experiment entry could be found an {@link EntityNotFoundException} or a {@link ConstraintViolationException}
-     * is thrown instead.
+     * Creates a new {@link CourseExperiment} entry for the course and experiment with the given ids.
      *
      * @param courseId The id of the course.
      * @param experimentId The id of the experiment.
+     * @throws IllegalArgumentException if the passed course id or participant string are invalid.
+     * @throws EntityNotFoundException if no corresponding course or experiment entries could be found.
+     * @throws ConstraintViolationException if saving the course experiment violated the foreign key constraints.
      */
     @Transactional
     public void saveCourseExperiment(final int courseId, final int experimentId) {
@@ -416,11 +429,12 @@ public class CourseService {
 
     /**
      * Deletes the course experiment entry for the course with the given id and the experiment with the given title from
-     * the database. If the passed parameters are invalid, an {@link IllegalArgumentException} is thrown instead. If no
-     * corresponding course or experiment entry could be found an {@link EntityNotFoundException} is thrown.
+     * the database.
      *
      * @param courseId The id of the course.
      * @param experimentTitle The title of the experiment.
+     * @throws IllegalArgumentException if the passed course or experiment ids are invalid.
+     * @throws EntityNotFoundException if no corresponding course or experiment entry could be found.
      */
     @Transactional
     public void deleteCourseExperiment(final int courseId, final String experimentTitle) {
@@ -453,11 +467,12 @@ public class CourseService {
 
     /**
      * Adds the course participant with the given id as a participant to all experiments offered as part of that course.
-     * If no course or user corresponding to the given ids could be found, an {@link EntityNotFoundException} or a
-     * {@link ConstraintViolationException} is thrown instead.
      *
      * @param courseId The id of the course.
      * @param userId The id of the user.
+     * @throws IllegalArgumentException if the passed course or user ids are invalid.
+     * @throws EntityNotFoundException if no corresponding course or user entry could be found.
+     * @throws ConstraintViolationException if saving any experiment participation violated a foreign key constraint.
      */
     @Transactional
     public void addParticipantToCourseExperiments(final int courseId, final int userId) {
@@ -492,11 +507,12 @@ public class CourseService {
     }
 
     /**
-     * Returns a {@link CourseDTO} containing the information about the course with the specified id. If no such course
-     * exists, a {@link NotFoundException} is thrown instead.
+     * Returns a {@link CourseDTO} containing the information about the course with the specified id.
      *
      * @param id The id to search for.
      * @return The course information, if it exists.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding course entry could be found.
      */
     @Transactional
     public CourseDTO getCourse(final int id) {
@@ -517,11 +533,14 @@ public class CourseService {
 
     /**
      * Changes the status of the course with the given id to the given status value. Additionally, the status of all
-     * experiments that are part of the course and all users participating in the course is updated accordingly.
+     * users participating in the course is updated accordingly. If the course is deactivated, all experiments that are
+     * part of the course are deactivated as well.
      *
      * @param status The new status.
      * @param id The course id.
      * @return The updated course data.
+     * @throws IllegalArgumentException if the passed status or id are invalid.
+     * @throws NotFoundException if no corresponding course entry could be found.
      */
     @Transactional
     public CourseDTO changeCourseStatus(final boolean status, final int id) {
@@ -534,7 +553,10 @@ public class CourseService {
 
         try {
             if (!status) {
-                deactivateExperiments(course);
+                courseExperimentRepository.findAllByCourse(course).stream()
+                        .map(CourseExperiment::getExperiment).map(Experiment::getId)
+                        .forEach(experimentId -> experimentRepository.updateStatusById(experimentId, false));
+
             }
 
             List<CourseParticipant> courseParticipants = courseParticipantRepository.findAllByCourse(course);
@@ -547,17 +569,6 @@ public class CourseService {
             logger.error("Could not update the status for non-existent course with id " + id + "!");
             throw new NotFoundException("Could not update the status for non-existent course with id " + id + "!");
         }
-    }
-
-    /**
-     * Deactivates all experiments belonging to the given course.
-     *
-     * @param course The {@link Course} to search for.
-     */
-    private void deactivateExperiments(final Course course) {
-        List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
-        courseExperiments.forEach(courseExperiment
-                -> experimentRepository.updateStatusById(courseExperiment.getExperiment().getId(), false));
     }
 
     /**
@@ -578,17 +589,17 @@ public class CourseService {
     }
 
     /**
-     * Adds the given user as a participant to the given experiment. If a participation entry already exists, an
-     * {@link IllegalStateException} is thrown instead.
+     * Adds the given user as a participant to the given experiment.
      *
      * @param user The {@link User} to be added as a participant.
      * @param experiment The {@link Experiment} in which the user should participate.
+     * @throws IllegalStateException if the user is already participating in the experiment.
      */
     private void addExperimentParticipant(final User user, final Experiment experiment) {
         if (participantRepository.existsByUserAndExperiment(user, experiment)) {
-            logger.error("A participant entry for th user with id " + user.getId() + " and experiment with id "
+            logger.error("A participant entry for the user with id " + user.getId() + " and experiment with id "
                     + experiment.getId() + " already exists!");
-            throw new IllegalStateException("A participant entry for th user with id " + user.getId()
+            throw new IllegalStateException("A participant entry for the user with id " + user.getId()
                     + " and experiment with id " + experiment.getId() + " already exists!");
         }
 
@@ -611,11 +622,12 @@ public class CourseService {
 
     /**
      * Creates a new {@link CourseExperiment} relation between the given course and experiment and updates the last
-     * changed attribute of the course. If no corresponding course or experiment entry could be found an
-     * {@link EntityNotFoundException} or a {@link ConstraintViolationException} is thrown instead.
+     * changed attribute of the course.
      *
      * @param course The course.
      * @param experiment The experiment.
+     * @throws EntityNotFoundException if the given course and experiment do not exist.
+     * @throws ConstraintViolationException if saving the {@link CourseExperiment} violated the foreign key constraint.
      */
     private void persistCourseExperiment(final Course course, final Experiment experiment) {
         try {
