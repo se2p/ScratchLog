@@ -168,14 +168,12 @@ public class SecretController {
                                            @RequestParam(required = false, value = "user") final String user,
                                            final HttpServletResponse httpServletResponse) {
         if (experiment == null || experiment.trim().isBlank()) {
-            logger.error("Cannot download participation links for experiment id null or blank!");
             throw new IncompleteDataException("Cannot download participation links for experiment id null or blank!");
         }
 
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download participation links for experiment with invalid id " + experiment + "!");
             throw new IncompleteDataException("Cannot download participation links for experiment with invalid id "
                     + experiment + "!");
         }
@@ -191,8 +189,7 @@ public class SecretController {
             CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
             csvWriter.writeAll(users);
         } catch (IOException e) {
-            logger.error("Could not download participation links due to IOException!", e);
-            throw new RuntimeException("Could not download participation links due to IOException!");
+            throw new RuntimeException("Could not download participation links due to IOException!", e);
         }
     }
 
@@ -221,7 +218,6 @@ public class SecretController {
             int userId = NumberParser.parseNumber(user);
 
             if (userId < Constants.MIN_ID) {
-                logger.error("Cannot download participation link for user with invalid id " + user + "!");
                 throw new IncompleteDataException("Cannot download participation link for user with invalid id "
                         + user + "!");
             }

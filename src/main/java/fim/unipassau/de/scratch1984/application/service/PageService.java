@@ -149,7 +149,6 @@ public class PageService {
     @Transactional
     public Page<CourseExperimentProjection> getCourseExperimentPage(final Pageable pageable, final int courseId) {
         if (courseId < Constants.MIN_ID) {
-            logger.error("Cannot return course experiment page for course with invalid id " + courseId + "!");
             throw new IllegalArgumentException("Cannot return course experiment page for course with invalid id "
                     + courseId + "!");
         }
@@ -179,7 +178,6 @@ public class PageService {
     @Transactional
     public Page<ExperimentTableProjection> getExperimentParticipantPage(final Pageable pageable, final int userId) {
         if (userId < Constants.MIN_ID) {
-            logger.error("Cannot return participant experiment page for user with invalid id " + userId + "!");
             throw new IllegalArgumentException("Cannot return participant experiment page for user with invalid id "
                     + userId + "!");
         }
@@ -199,7 +197,6 @@ public class PageService {
      */
     public Page<CourseTableProjection> getCourseParticipantPage(final Pageable pageable, final int userId) {
         if (userId < Constants.MIN_ID) {
-            logger.error("Cannot return participant course page for user with invalid id " + userId + "!");
             throw new IllegalArgumentException("Cannot return participant course page for user with invalid id "
                     + userId + "!");
         }
@@ -222,7 +219,6 @@ public class PageService {
         checkPageable(pageable);
 
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot find participant data for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot find participant data for experiment with invalid id " + id
                     + "!");
         }
@@ -250,7 +246,6 @@ public class PageService {
     @Transactional
     public Page<CourseParticipant> getParticipantCoursePage(final int id, final Pageable pageable) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot find participant data for course with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot find participant data for course with invalid id " + id + "!");
         }
 
@@ -298,8 +293,6 @@ public class PageService {
     @Transactional
     public int getLastCourseExperimentPage(final int courseId) {
         if (courseId < Constants.MIN_ID) {
-            logger.error("Cannot calculate the last course experiment page for course with invalid id " + courseId
-                    + "!");
             throw new IllegalArgumentException("Cannot calculate the last course experiment page for course with "
                     + "invalid id " + courseId + "!");
         }
@@ -318,8 +311,6 @@ public class PageService {
     @Transactional
     public int getLastExperimentPage(final int userId) {
         if (userId < Constants.MIN_ID) {
-            logger.error("Cannot calculate the last participant experiment page for user with invalid id " + userId
-                    + "!");
             throw new IllegalArgumentException("Cannot calculate the last participant experiment page for user with "
                     + "invalid id " + userId + "!");
         }
@@ -338,7 +329,6 @@ public class PageService {
     @Transactional
     public int getLastCoursePage(final int userId) {
         if (userId < Constants.MIN_ID) {
-            logger.error("Cannot calculate the last participant course page for user with invalid id " + userId + "!");
             throw new IllegalArgumentException("Cannot calculate the last participant course page for user with "
                     + "invalid id " + userId + "!");
         }
@@ -375,7 +365,6 @@ public class PageService {
     @Transactional
     public int getLastParticipantCoursePage(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot calculate the last course participant page for course with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot calculate the last course participant page for course with "
                     + "invalid id " + id + "!");
         }
@@ -393,10 +382,8 @@ public class PageService {
      */
     private void checkPageable(final Pageable pageable) {
         if (pageable == null) {
-            logger.error("Cannot return a page with pageable null!");
             throw new IllegalArgumentException("Cannot return a page with pageable null!");
         } else if (pageable.getPageSize() != Constants.PAGE_SIZE) {
-            logger.error("Cannot return a page with invalid page size of " + pageable.getPageSize() + "!");
             throw new IllegalArgumentException("Cannot return a page with invalid page size of "
                     + pageable.getPageSize() + "!");
         }

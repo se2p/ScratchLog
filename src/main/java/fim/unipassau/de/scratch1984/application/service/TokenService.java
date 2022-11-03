@@ -86,10 +86,8 @@ public class TokenService {
     @Transactional
     public TokenDTO generateToken(final TokenDTO.Type type, final String metadata, final int userId) {
         if (userId < Constants.MIN_ID) {
-            logger.error("Cannot generate token with invalid user id " + userId + "!");
             throw new IllegalArgumentException("Cannot generate token with invalid user id " + userId + "!");
         } else if (type == null) {
-            logger.error("Cannot generate token with type null " + "!");
             throw new IllegalArgumentException("Cannot generate token with type null " + "!");
         }
 
@@ -106,7 +104,6 @@ public class TokenService {
         }
 
         if (token.getValue() == null) {
-            logger.error("Failed to store token for user with id " + tokenDTO.getUser() + "!");
             throw new StoreException("Failed to store token for user with id " + tokenDTO.getUser() + "!");
         }
 
@@ -124,7 +121,6 @@ public class TokenService {
     @Transactional
     public TokenDTO findToken(final String value) {
         if (value == null || value.trim().isBlank()) {
-            logger.error("Cannot search for token with null or empty value!");
             throw new IllegalArgumentException("Cannot search for token with null or empty value!");
         }
 
@@ -147,7 +143,6 @@ public class TokenService {
     @Transactional
     public void deleteToken(final String value) {
         if (value == null || value.trim().isBlank()) {
-            logger.error("Cannot search for token with null or empty value!");
             throw new IllegalArgumentException("Cannot search for token with null or empty value!");
         }
 
@@ -163,7 +158,6 @@ public class TokenService {
     @Transactional
     public void deleteExpiredTokens(final LocalDateTime localDateTime) {
         if (localDateTime == null) {
-            logger.error("Cannot delete expired tokens with timestamp null!");
             throw new IllegalArgumentException("Cannot delete expired tokens with timestamp null!");
         }
 
@@ -180,7 +174,6 @@ public class TokenService {
     @Transactional
     public void deleteExpiredAccounts(final LocalDateTime localDateTime) {
         if (localDateTime == null) {
-            logger.error("Cannot delete expired accounts with timestamp null!");
             throw new IllegalArgumentException("Cannot delete expired accounts with timestamp null!");
         }
 
@@ -189,7 +182,6 @@ public class TokenService {
 
         for (Token token : expiredRegistrations) {
             if (token.getUser() == null) {
-                logger.error("Cannot delete expired user account from token " + token.getValue() + " with user null!");
                 throw new IllegalStateException("Cannot delete expired user account from token " + token.getValue()
                         + " with user null!");
             }
@@ -209,7 +201,6 @@ public class TokenService {
     @Transactional
     public void reactivateUserAccounts(final LocalDateTime localDateTime) {
         if (localDateTime == null) {
-            logger.error("Cannot reactivate user accounts with timestamp null!");
             throw new IllegalArgumentException("Cannot reactivate user accounts with timestamp null!");
         }
 
@@ -218,7 +209,6 @@ public class TokenService {
 
         for (Token token : deactivatedAccounts) {
             if (token.getUser() == null || token.getUser().getId() == null) {
-                logger.error("Cannot reactivate user account from token " + token.getValue() + " with user null!");
                 throw new IllegalStateException("Cannot reactivate user from token " + token.getValue()
                         + " with user null!");
             }

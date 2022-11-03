@@ -153,8 +153,6 @@ public class FileService {
     @Transactional
     public List<FileProjection> getFiles(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot get file ids and names for user with invalid id " + userId + " or experiment with "
-                    + "invalid id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot get file ids and names for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -183,8 +181,6 @@ public class FileService {
      */
     public List<FileDTO> getFileDTOs(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot get files for user with invalid id " + userId + " or experiment with invalid id "
-                    + experimentId + "!");
             throw new IllegalArgumentException("Cannot get files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -216,8 +212,6 @@ public class FileService {
     @Transactional
     public List<Integer> getZipIds(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot get zip file ids for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot get zip file ids for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -246,7 +240,6 @@ public class FileService {
     @Transactional
     public FileDTO findFile(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for file with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for file with invalid id " + id + "!");
         }
 
@@ -271,7 +264,6 @@ public class FileService {
     @Transactional
     public Sb3ZipDTO findZip(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for zip file with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for zip file with invalid id " + id + "!");
         }
 
@@ -298,8 +290,6 @@ public class FileService {
     @Transactional
     public Optional<Sb3ZipDTO> findFinalProject(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot search for final project for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot search for final project for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -339,8 +329,6 @@ public class FileService {
     @Transactional
     public List<Sb3ZipDTO> getZipFiles(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download zip files for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot download zip files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }

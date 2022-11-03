@@ -10,8 +10,6 @@ import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +23,6 @@ import java.util.Optional;
  */
 @Service
 public class SearchService {
-
-    /**
-     * The log instance associated with this class for logging purposes.
-     */
-    private static final Logger logger = LoggerFactory.getLogger(SearchService.class);
 
     /**
      * The user repository to use for database queries related to user data.
@@ -81,10 +74,8 @@ public class SearchService {
     @Transactional
     public List<UserProjection> getUserList(final String query, final int limit) {
         if (query == null || query.trim().isBlank()) {
-            logger.error("Cannot search for users with invalid query string null or blank!");
             throw new IllegalArgumentException("Cannot search for users with invalid query string null or blank!");
         } else if (limit < Constants.PAGE_SIZE) {
-            logger.error("Cannot search for users with invalid search result limit " + limit);
             throw new IllegalArgumentException("Cannot search for users with invalid search result limit " + limit);
         }
 
@@ -103,11 +94,9 @@ public class SearchService {
     @Transactional
     public List<ExperimentTableProjection> getExperimentList(final String query, final int limit) {
         if (query == null || query.trim().isBlank()) {
-            logger.error("Cannot search for experiments with invalid query string null or blank!");
             throw new IllegalArgumentException("Cannot search for experiments with invalid query string null or "
                     + "blank!");
         } else if (limit < Constants.PAGE_SIZE) {
-            logger.error("Cannot search for experiments with invalid search result limit " + limit);
             throw new IllegalArgumentException("Cannot search for experiments with invalid search result limit "
                     + limit);
         }
@@ -127,11 +116,9 @@ public class SearchService {
     @Transactional
     public List<CourseTableProjection> getCourseList(final String query, final int limit) {
         if (query == null || query.trim().isBlank()) {
-            logger.error("Cannot search for courses with invalid query string null or blank!");
             throw new IllegalArgumentException("Cannot search for courses with invalid query string null or "
                     + "blank!");
         } else if (limit < Constants.PAGE_SIZE) {
-            logger.error("Cannot search for courses with invalid search result limit " + limit);
             throw new IllegalArgumentException("Cannot search for courses with invalid search result limit "
                     + limit);
         }
@@ -149,7 +136,6 @@ public class SearchService {
     @Transactional
     public int getUserCount(final String query) {
         if (query == null || query.trim().isBlank()) {
-            logger.error("Cannot get the number of user results with invalid query string null or blank!");
             throw new IllegalArgumentException("Cannot get the number of user results with invalid query string null or"
                     + " blank!");
         }
@@ -167,7 +153,6 @@ public class SearchService {
     @Transactional
     public int getExperimentCount(final String query) {
         if (query == null || query.trim().isBlank()) {
-            logger.error("Cannot get the number of experiment results with invalid query string null or blank!");
             throw new IllegalArgumentException("Cannot get the number of experiment results with invalid query string "
                     + "null or blank!");
         }
@@ -185,7 +170,6 @@ public class SearchService {
     @Transactional
     public int getCourseCount(final String query) {
         if (query == null || query.trim().isBlank()) {
-            logger.error("Cannot get the number of course results with invalid query string null or blank!");
             throw new IllegalArgumentException("Cannot get the number of course results with invalid query string "
                     + "null or blank!");
         }

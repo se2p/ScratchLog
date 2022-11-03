@@ -226,7 +226,6 @@ public class ResultController {
                                 @RequestParam(USER) final String user, @RequestParam("json") final String json,
                                 final HttpServletResponse httpServletResponse) {
         if (json == null || experiment == null || user == null) {
-            logger.error("Cannot generate zip file with JSON, experiment or user null!");
             throw new IncompleteDataException("Cannot generate zip file with JSON, experiment or user null!");
         }
 
@@ -235,8 +234,6 @@ public class ResultController {
         int jsonId = NumberParser.parseNumber(json);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID || jsonId < Constants.MIN_ID) {
-            logger.error("Cannot generate zip file for user with invalid id " + user + " or experiment with invalid "
-                    + "id " + experiment + "or json with invalid id " + json + "!");
             throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + user
                     + " or experiment with invalid id " + experiment + "or json with invalid id " + json + "!");
         }
@@ -259,8 +256,7 @@ public class ResultController {
             writeJsonData(zos, code);
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not generate zip file due to IOException!", e);
-            throw new RuntimeException("Could not generate zip file due to IOException!");
+            throw new RuntimeException("Could not generate zip file due to IOException!", e);
         }
     }
 
@@ -311,7 +307,6 @@ public class ResultController {
                                 @RequestParam(USER) final String user,
                                 final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
-            logger.error("Cannot download zip files for user with id null or experiment with id null!");
             throw new IncompleteDataException("Cannot download zip files for user with id null or experiment with id "
                     + "null!");
         }
@@ -320,8 +315,6 @@ public class ResultController {
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download zip files for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IncompleteDataException("Cannot download zip files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -339,8 +332,7 @@ public class ResultController {
 
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not download zip files due to IOException!", e);
-            throw new RuntimeException("Could not download zip files due to IOException!");
+            throw new RuntimeException("Could not download zip files due to IOException!", e);
         }
     }
 
@@ -360,7 +352,6 @@ public class ResultController {
                                     @RequestParam(USER) final String user,
                                     final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
-            logger.error("Cannot download xml files for user with id null or experiment with id null!");
             throw new IncompleteDataException("Cannot download xml files for user with id null or experiment with id "
                     + "null!");
         }
@@ -369,8 +360,6 @@ public class ResultController {
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download xml files for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IncompleteDataException("Cannot download xml files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -388,8 +377,7 @@ public class ResultController {
 
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not download xml files due to IOException!", e);
-            throw new RuntimeException("Could not download xml files due to IOException!");
+            throw new RuntimeException("Could not download xml files due to IOException!", e);
         }
     }
 
@@ -409,7 +397,6 @@ public class ResultController {
                                      @RequestParam(USER) final String user,
                                      final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
-            logger.error("Cannot download json files for user with id null or experiment with id null!");
             throw new IncompleteDataException("Cannot download json files for user with id null or experiment with id "
                     + "null!");
         }
@@ -418,8 +405,6 @@ public class ResultController {
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download json files for user with invalid id " + userId + " or experiment with "
-                    + "invalid id " + experimentId + "!");
             throw new IncompleteDataException("Cannot download json files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -438,8 +423,7 @@ public class ResultController {
 
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not download json files due to IOException!", e);
-            throw new RuntimeException("Could not download json files due to IOException!");
+            throw new RuntimeException("Could not download json files due to IOException!", e);
         }
     }
 
@@ -460,7 +444,6 @@ public class ResultController {
                                                @RequestParam(USER) final String user,
                                                @RequestParam("page") final String page) {
         if (user == null || experiment == null || page == null) {
-            logger.error("Cannot get codes for user with id null or experiment with id null or page null!");
             throw new IncompleteDataException("Cannot get codes for user with id null or experiment with id null or "
                     + "page null!");
         }
@@ -470,14 +453,11 @@ public class ResultController {
         int currentPage = NumberParser.parseNumber(page);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot get codes for user with invalid id " + userId + " or experiment with invalid id "
-                    + experimentId + "or invalid page number" + page + "!");
             throw new IncompleteDataException("Cannot get codes for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "or invalid page number" + page + "!");
         }
 
         if (currentPage < 0) {
-            logger.error("Cannot get codes for invalid page number " + currentPage + "!");
             throw new IncompleteDataException("Cannot get codes for invalid page number " + currentPage + "!");
         }
 
@@ -514,16 +494,12 @@ public class ResultController {
                                  @RequestParam(value = "include", required = false) final String include,
                                  final HttpServletResponse httpServletResponse) {
         if (experiment == null || user == null) {
-            logger.error("Cannot generate zip file with experiment or user null!");
             throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
         } else if ((start != null || end != null || include != null)
                 && (start == null || end == null || include == null)) {
-            logger.error("Cannot generate zip file in a set interval if not all of the needed parameters start, end "
-                    + "and include are specified!");
             throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
                     + "parameters start, end and include are specified!");
         } else if (start != null && step != null) {
-            logger.error("Cannot generate zip file if both step and start, end and include parameters are specified!");
             throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
                     + "parameters are specified!");
         }
@@ -539,7 +515,6 @@ public class ResultController {
             steps = NumberParser.parseNumber(step);
 
             if (steps < 1) {
-                logger.error("Cannot generate zip file for invalid step interval " + step + "!");
                 throw new IncompleteDataException("Cannot generate zip file for invalid step interval " + step + "!");
             }
         } else if (start != null) {
@@ -548,21 +523,15 @@ public class ResultController {
             includeFinalProject = !include.equals("false");
 
             if (startPosition < 1 || endPosition < 1) {
-                logger.error("Cannot generate zip file for invalid start position " + start
-                        + " or invalid end position " + end + "!");
                 throw new IncompleteDataException("Cannot generate zip file for invalid start position " + start
                         + " or invalid end position " + end + "!");
             } else if (startPosition > endPosition) {
-                logger.error("Cannot generate zip file for start position " + start + " bigger than end position "
-                        + end + "!");
                 throw new IncompleteDataException("Cannot generate zip file for start position " + start
                         + " bigger than end position " + end + "!");
             }
         }
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot generate zip file for user with invalid id " + user + " or experiment with invalid "
-                    + "id " + experiment + "!");
             throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + user
                     + " or experiment with invalid id " + experiment + "!");
         }
@@ -578,8 +547,6 @@ public class ResultController {
             jsons = filterProjectionsByStep(jsons, steps, lastTimestamp);
         } else if (startPosition > 0) {
             if (endPosition > jsons.size()) {
-                logger.error("Cannot generate zip file with invalid end position " + endPosition + " bigger than the "
-                        + "amount of saved json strings " + jsons.size() + "!");
                 throw new IncompleteDataException("Cannot generate zip file with invalid end position " + endPosition
                         + " bigger than the amount of saved json strings " + jsons.size() + "!");
             }
@@ -623,8 +590,7 @@ public class ResultController {
 
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not generate zip file due to IOException!", e);
-            throw new RuntimeException("Could not generate zip file due to IOException!");
+            throw new RuntimeException("Could not generate zip file due to IOException!", e);
         }
     }
 

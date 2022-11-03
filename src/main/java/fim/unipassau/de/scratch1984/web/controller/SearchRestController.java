@@ -3,8 +3,6 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.service.SearchService;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.NumberParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,11 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/search")
 public class SearchRestController {
-
-    /**
-     * The log instance associated with this class for logging purposes.
-     */
-    private static final Logger logger = LoggerFactory.getLogger(SearchRestController.class);
 
     /**
      * The search service to use for search query management.

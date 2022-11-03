@@ -140,14 +140,12 @@ public class UserService {
     @Transactional
     public UserDTO saveUser(final UserDTO userDTO) {
         if (userDTO.getUsername() == null || userDTO.getUsername().trim().isBlank()) {
-            logger.error("Cannot create user with username null or blank!");
             throw new IllegalArgumentException("Cannot create user with username null or blank!");
         }
 
         User user = userRepository.save(createUser(userDTO));
 
         if (user.getId() == null) {
-            logger.error("Failed to save user with username " + userDTO.getUsername());
             throw new StoreException("Failed to save user with username " + userDTO.getUsername());
         }
 
@@ -165,7 +163,6 @@ public class UserService {
     @Transactional
     public UserDTO getUser(final String username) {
         if (username == null || username.trim().isBlank()) {
-            logger.error("The username cannot be null or blank!");
             throw new IllegalArgumentException("The username cannot be null or blank!");
         }
 
@@ -190,7 +187,6 @@ public class UserService {
     @Transactional
     public UserDTO getUserById(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for user with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for user with invalid id " + id + "!");
         }
 
@@ -215,7 +211,6 @@ public class UserService {
     @Transactional
     public UserDTO getUserByEmail(final String email) {
         if (email == null || email.trim().isBlank()) {
-            logger.error("Cannot find user with email null or blank!");
             throw new IllegalArgumentException("Cannot find user with email null or blank!");
         }
 
@@ -240,7 +235,6 @@ public class UserService {
     @Transactional
     public UserDTO getUserByUsernameOrEmail(final String search) {
         if (search == null || search.trim().isBlank()) {
-            logger.error("Cannot search for with search string null or blank!");
             throw new IllegalArgumentException("Cannot search for with search string null or blank!");
         }
 
@@ -294,7 +288,6 @@ public class UserService {
     @Transactional
     public UserDTO authenticateUser(final String secret) {
         if (secret == null || secret.trim().isBlank()) {
-            logger.error("Cannot search for user with secret null or blank!");
             throw new IllegalArgumentException("Cannot search for user with secret null or blank!");
         }
 
@@ -320,7 +313,6 @@ public class UserService {
     @Transactional
     public UserDTO updateUser(final UserDTO userDTO) {
         if (userDTO.getId() == null || userDTO.getId() < Constants.MIN_ID) {
-            logger.error("Cannot save user with invalid id " + userDTO.getId() + "!");
             throw new IllegalArgumentException("Cannot save user with invalid id " + userDTO.getId() + "!");
         }
 
@@ -339,10 +331,8 @@ public class UserService {
     @Transactional
     public void updateEmail(final int id, final String email) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for user with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for user with invalid id " + id + "!");
         } else if (email == null || email.trim().isBlank()) {
-            logger.error("Cannot update email for user with id " + id + " with email null or blank!");
             throw new IllegalArgumentException("Cannot update email for user with id " + id
                     + " with email null or blank!");
         }
@@ -373,7 +363,6 @@ public class UserService {
     @Transactional
     public List<UserDTO> reactivateUserAccounts(final int experimentId) {
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot search for user with invalid experiment id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot search for user with invalid experiment id " + experimentId
                     + "!");
         }
@@ -393,8 +382,6 @@ public class UserService {
     @Transactional
     public List<UserDTO> findUnfinishedUsers(final int experimentId) {
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot search for reactivated user accounts with invalid experiment id " + experimentId
-                    + "!");
             throw new IllegalArgumentException("Cannot search for reactivated user accounts with invalid experiment id "
                     + experimentId + "!");
         }
@@ -414,7 +401,6 @@ public class UserService {
         List<User> admins = userRepository.findAllByRole(UserDTO.Role.ADMIN.toString());
 
         if (admins.size() < 1) {
-            logger.error("There are no users with administrator status in the database!");
             throw new IllegalStateException("There are no users with administrator status in the database!");
         }
 
@@ -430,7 +416,6 @@ public class UserService {
     @Transactional
     public void deleteUser(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot delete user with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot delete user with invalid id " + id + "!");
         }
 
@@ -448,7 +433,6 @@ public class UserService {
         User user = userRepository.findFirstByOrderByIdDesc();
 
         if (user == null) {
-            logger.error("There are no users in database!");
             throw new IllegalStateException("There are no users in database!");
         }
 
@@ -467,7 +451,6 @@ public class UserService {
     @Transactional
     public int findValidNumberForUsername(final String username) {
         if (username == null || username.isBlank()) {
-            logger.error("Cannot search for matching username with username null or blank!");
             throw new IllegalArgumentException("Cannot search for matching username with username null or blank!");
         }
 
@@ -535,8 +518,6 @@ public class UserService {
         User user = participant.getUser();
 
         if (user.getId() == null) {
-            logger.error("Could not find corresponding user for participant entry for experiment with id "
-                    + experimentId + "!");
             throw new IllegalStateException("Could not find corresponding user for participant entry for experiment"
                     + " with id " + experimentId + "!");
         }

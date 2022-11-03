@@ -258,13 +258,10 @@ public class CourseService {
     @Transactional
     public int saveCourse(final CourseDTO courseDTO) {
         if (courseDTO.getTitle() == null || courseDTO.getTitle().trim().isBlank()) {
-            logger.error("Cannot save a course with an empty title!");
             throw new IncompleteDataException("Cannot save a course with an empty title!");
         } else if (courseDTO.getDescription() == null || courseDTO.getDescription().trim().isBlank()) {
-            logger.error("Cannot save a course with an empty description!");
             throw new IncompleteDataException("Cannot save a course with an empty description!");
         } else if (courseDTO.getLastChanged() == null) {
-            logger.error("Cannot save a course with last changed null!");
             throw new IncompleteDataException("Cannot save a course with last changed null!");
         }
 
@@ -272,7 +269,6 @@ public class CourseService {
         course = courseRepository.save(course);
 
         if (course.getId() == null || course.getId() < Constants.MIN_ID) {
-            logger.error("Failed to store course with title " + course.getTitle() + "!");
             throw new StoreException("Failed to store course with title " + course.getTitle() + "!");
         }
 
@@ -289,7 +285,6 @@ public class CourseService {
     @Transactional
     public void deleteCourse(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot delete course with invalid id " + id);
             throw new IllegalArgumentException("Cannot delete course with invalid id " + id);
         }
 
@@ -324,7 +319,6 @@ public class CourseService {
     @Transactional
     public int saveCourseParticipant(final int courseId, final String participant) {
         if (participant == null || participant.trim().isBlank() || courseId < Constants.MIN_ID) {
-            logger.error("Cannot save course participant with participant null or blank or invalid course id!");
             throw new IllegalArgumentException("Cannot save course experiment with participant null or blank or "
                     + "invalid course id!");
         }
@@ -339,8 +333,6 @@ public class CourseService {
                 throw new NotFoundException("Could not find the user with username or email " + participant
                         + " when trying to add a course participant!");
             } else if (!user.getRole().equals(UserDTO.Role.PARTICIPANT.toString())) {
-                logger.error("Tried to add administrator with username or email " + participant + " as a course "
-                        + "participant!");
                 throw new IllegalStateException("Tried to add administrator with username or email " + participant
                         + " as a course participant!");
             }
@@ -357,7 +349,6 @@ public class CourseService {
             logger.error("Could not find the course when saving the course participant data!", e);
             throw new NotFoundException("Could not find the course when saving the course participant data!", e);
         } catch (ConstraintViolationException e) {
-            logger.error("The given course participant data does not meet the foreign key constraints!", e);
             throw new StoreException("The given course participant data does not meet the foreign key constraints!", e);
         }
     }
@@ -375,7 +366,6 @@ public class CourseService {
     @Transactional
     public void deleteCourseParticipant(final int courseId, final String participant) {
         if (participant == null || participant.trim().isBlank() || courseId < Constants.MIN_ID) {
-            logger.error("Cannot delete course participant with participant null or blank or invalid course id!");
             throw new IllegalArgumentException("Cannot delete course experiment with participant null or blank or "
                     + "invalid course id!");
         }
@@ -416,8 +406,6 @@ public class CourseService {
     @Transactional
     public void saveCourseExperiment(final int courseId, final int experimentId) {
         if (courseId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot save course experiment with invalid course id " + courseId + " or experiment id "
-                    + experimentId + "!");
             throw new IllegalArgumentException("Cannot save course experiment with invalid course id " + courseId
                     + " or experiment id " + experimentId + "!");
         }
@@ -439,7 +427,6 @@ public class CourseService {
     @Transactional
     public void deleteCourseExperiment(final int courseId, final String experimentTitle) {
         if (experimentTitle == null || experimentTitle.trim().isBlank() || courseId < Constants.MIN_ID) {
-            logger.error("Cannot delete course experiment with experiment title null or blank or invalid course id!");
             throw new IllegalArgumentException("Cannot delete course experiment with experiment title null or blank or "
                     + "invalid course id!");
         }
@@ -477,8 +464,6 @@ public class CourseService {
     @Transactional
     public void addParticipantToCourseExperiments(final int courseId, final int userId) {
         if (courseId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            logger.error("Cannot add participant to course experiment with invalid course id " + courseId
-                    + " or invalid user id " + userId);
             throw new IllegalArgumentException("Cannot add participant to course experiment with invalid course id "
                     + courseId + " or invalid user id " + userId);
         }
@@ -500,7 +485,6 @@ public class CourseService {
             throw new NotFoundException("Could not find the course or user when adding course participants to course "
                     + "experiments!", e);
         } catch (ConstraintViolationException e) {
-            logger.error("The given experiment participant data does not meet the foreign key constraints!", e);
             throw new StoreException("The given experiment participant data does not meet the foreign key constraints!",
                     e);
         }
@@ -517,7 +501,6 @@ public class CourseService {
     @Transactional
     public CourseDTO getCourse(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for course with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for course with invalid id " + id + "!");
         }
 
@@ -545,7 +528,6 @@ public class CourseService {
     @Transactional
     public CourseDTO changeCourseStatus(final boolean status, final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot update status for course with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot update status for course with invalid id " + id + "!");
         }
 
@@ -597,8 +579,6 @@ public class CourseService {
      */
     private void addExperimentParticipant(final User user, final Experiment experiment) {
         if (participantRepository.existsByUserAndExperiment(user, experiment)) {
-            logger.error("A participant entry for the user with id " + user.getId() + " and experiment with id "
-                    + experiment.getId() + " already exists!");
             throw new IllegalStateException("A participant entry for the user with id " + user.getId()
                     + " and experiment with id " + experiment.getId() + " already exists!");
         }
@@ -645,7 +625,6 @@ public class CourseService {
             throw new NotFoundException("Could not find the course or experiment when saving the course experiment "
                     + "data!", e);
         } catch (ConstraintViolationException e) {
-            logger.error("The given course experiment data does not meet the foreign key constraints!", e);
             throw new StoreException("The given course experiment data does not meet the foreign key constraints!", e);
         }
     }

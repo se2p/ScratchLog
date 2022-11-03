@@ -124,13 +124,10 @@ public class ExperimentService {
     @Transactional
     public ExperimentDTO saveExperiment(final ExperimentDTO experimentDTO) {
         if (experimentDTO.getTitle() == null || experimentDTO.getTitle().trim().isBlank()) {
-            logger.error("Cannot save experiment with empty title!");
             throw new IncompleteDataException("Cannot save experiment with empty title!");
         } else if (experimentDTO.getDescription() == null || experimentDTO.getDescription().trim().isBlank()) {
-            logger.error("Cannot save experiment with empty description!");
             throw new IncompleteDataException("Cannot save experiment with empty description!");
         } else if (experimentDTO.getGuiURL() == null || experimentDTO.getGuiURL().trim().isBlank()) {
-            logger.error("Cannot save experiment with empty GUI-URL!");
             throw new IncompleteDataException("Cannot save experiment with empty GUI-URL!");
         }
 
@@ -144,7 +141,6 @@ public class ExperimentService {
         Experiment saved = experimentRepository.save(experiment);
 
         if (saved.getId() == null) {
-            logger.error("Failed to store experiment with title " + experimentDTO.getTitle());
             throw new StoreException("Failed to store experiment with title " + experimentDTO.getTitle());
         }
 
@@ -162,7 +158,6 @@ public class ExperimentService {
     @Transactional
     public ExperimentDTO getExperiment(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for experiment with invalid id " + id + "!");
         }
 
@@ -222,7 +217,6 @@ public class ExperimentService {
     @Transactional
     public List<String[]> getExperimentData(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot retrieve experiment data for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve experiment data for experiment with invalid id " + id
                     + "!");
         }
@@ -254,10 +248,8 @@ public class ExperimentService {
     @Transactional
     public void uploadSb3Project(final int id, final byte[] project) {
         if (project == null) {
-            logger.error("Cannot upload sb3 project null!");
             throw new IllegalArgumentException("Cannot upload sb3 project null!");
         } else if (id < Constants.MIN_ID) {
-            logger.error("Cannot upload sb3 project for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot upload sb3 project for experiment with invalid id " + id + "!");
         }
 
@@ -282,7 +274,6 @@ public class ExperimentService {
     @Transactional
     public void deleteSb3Project(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot delete sb3 project for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot delete sb3 project for experiment with invalid id " + id + "!");
         }
 
@@ -309,7 +300,6 @@ public class ExperimentService {
     @Transactional
     public ExperimentProjection getSb3File(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot retrieve sb3 project for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve sb3 project for experiment with invalid id " + id
                     + "!");
         }

@@ -277,7 +277,6 @@ public class EventService {
     @Transactional
     public String findJsonById(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot find block event with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot find block event with invalid id " + id + "!");
         }
 
@@ -287,7 +286,6 @@ public class EventService {
             logger.error("Could not find block event with id " + id + "!");
             throw new NotFoundException("Could not find block event with id " + id + "!");
         } else if (projection.get().getCode() == null) {
-            logger.error("No json string could be found for the block event with id " + id + "!");
             throw new IllegalArgumentException("No json string could be found for the block event with id " + id + "!");
         }
 
@@ -307,8 +305,6 @@ public class EventService {
     @Transactional
     public String findFirstJSON(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot retrieve the last saved json code for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot retrieve the last saved json code for user with invalid id "
                     + userId + " or experiment with invalid id " + experimentId + "!");
         }
@@ -345,8 +341,6 @@ public class EventService {
     @Transactional
     public List<EventCountDTO> getBlockEventCounts(final int user, final int experiment) {
         if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
-            logger.error("Cannot retrieve block event count for user with invalid id " + user + " or experiment with "
-                    + "invalid id " + experiment + "!");
             throw new IllegalArgumentException("Cannot retrieve block event count for user with invalid id " + user
                     + " or experiment with invalid id " + experiment + "!");
         }
@@ -366,8 +360,6 @@ public class EventService {
     @Transactional
     public List<EventCountDTO> getClickEventCounts(final int user, final int experiment) {
         if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
-            logger.error("Cannot retrieve click event count for user with invalid id " + user + " or experiment with "
-                    + "invalid id " + experiment + "!");
             throw new IllegalArgumentException("Cannot retrieve click event count for user with invalid id " + user
                     + " or experiment with invalid id " + experiment + "!");
         }
@@ -387,8 +379,6 @@ public class EventService {
     @Transactional
     public List<EventCountDTO> getResourceEventCounts(final int user, final int experiment) {
         if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
-            logger.error("Cannot retrieve resource event count for user with invalid id " + user + " or experiment with"
-                    + " invalid id " + experiment + "!");
             throw new IllegalArgumentException("Cannot retrieve resource event count for user with invalid id " + user
                     + " or experiment with invalid id " + experiment + "!");
         }
@@ -411,8 +401,6 @@ public class EventService {
     @Transactional
     public List<BlockEventJSONProjection> getJsonForUser(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot retrieve json data for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot retrieve json data for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -453,8 +441,6 @@ public class EventService {
     @Transactional
     public List<BlockEventXMLProjection> getXMLForUser(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot retrieve xml data for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot retrieve xml data for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -497,8 +483,6 @@ public class EventService {
     public Page<BlockEventProjection> getCodesForUser(final int userId, final int experimentId,
                                                       final Pageable pageable) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot retrieve codes data for user with invalid id " + userId + " or experiment with invalid"
-                    + " id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot retrieve codes data for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -507,7 +491,6 @@ public class EventService {
         int currentPage = pageable.getPageNumber();
 
         if (pageSize != Constants.PAGE_SIZE) {
-            logger.error("Cannot return block event projection page with invalid page size of " + pageSize + "!");
             throw new IllegalArgumentException("Cannot return block event projection page with invalid page size of "
                     + pageSize + "!");
         }
@@ -537,8 +520,6 @@ public class EventService {
     @Transactional
     public CodesDataDTO getCodesData(final int user, final int experiment) {
         if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
-            logger.error("Cannot retrieve codes data for user with invalid id " + user + " or experiment with invalid "
-                    + "id " + experiment + "!");
             throw new IllegalArgumentException("Cannot retrieve codes data for user with invalid id " + user
                     + " or experiment with invalid id " + experiment + "!");
         }
@@ -563,7 +544,6 @@ public class EventService {
     @Transactional
     public List<String[]> getBlockEventData(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot retrieve block event data for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve block event data for experiment with invalid id " + id
                     + "!");
         }
@@ -590,7 +570,6 @@ public class EventService {
     @Transactional
     public List<String[]> getClickEventData(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot retrieve click event data for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve click event data for experiment with invalid id " + id
                     + "!");
         }
@@ -617,7 +596,6 @@ public class EventService {
     @Transactional
     public List<String[]> getResourceEventData(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot retrieve resource event data for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve resource event data for experiment with invalid id "
                     + id + "!");
         }
@@ -643,7 +621,6 @@ public class EventService {
     @Transactional
     public List<String[]> getBlockEventCount(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot retrieve block event count data for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve block event count data for experiment with invalid id "
                     + id + "!");
         }
@@ -662,7 +639,6 @@ public class EventService {
     @Transactional
     public List<String[]> getClickEventCount(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot retrieve click event count data for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve click event count data for experiment with invalid id "
                     + id + "!");
         }
@@ -681,7 +657,6 @@ public class EventService {
     @Transactional
     public List<String[]> getResourceEventCount(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot retrieve resource event count data for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve resource event count data for experiment with invalid "
                     + "id " + id + "!");
         }
@@ -700,7 +675,6 @@ public class EventService {
     @Transactional
     public List<String[]> getCodesDataForExperiment(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot retrieve codes data for experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve codes data for experiment with invalid id " + id + "!");
         }
 
@@ -751,10 +725,10 @@ public class EventService {
      */
     private boolean isValidEvent(final User user, final Experiment experiment, final LocalDateTime date) {
         if (user == null || experiment == null || date == null) {
-            logger.info("Cannot save event to database with user, experiment or timestamp null!");
+            logger.error("Cannot save event to database with user, experiment or timestamp null!");
             return false;
         } else if (!user.isActive() || !experiment.isActive()) {
-            logger.info("Cannot save event to database with user or experiment inactive!");
+            logger.error("Cannot save event to database with user or experiment inactive!");
             return false;
         } else {
             return true;
