@@ -23,7 +23,7 @@ Checkstyle:
 Compile:
   stage: build
   script:
-    - "mvn package"
+    - "mvn compile"
 
 Unit-Tests:
   stage: test
