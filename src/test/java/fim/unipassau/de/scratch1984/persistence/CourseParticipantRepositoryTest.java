@@ -43,6 +43,9 @@ public class CourseParticipantRepositoryTest {
 
     @BeforeEach
     public void setUp() {
+        user1.setLastLogin(LocalDateTime.now());
+        user2.setLastLogin(LocalDateTime.now());
+        user3.setLastLogin(LocalDateTime.now());
         course1 = entityManager.persist(course1);
         course2 = entityManager.persist(course2);
         course3 = entityManager.persist(course3);

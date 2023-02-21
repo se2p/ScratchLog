@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -59,6 +60,7 @@ public class UserInitialization {
             user.setRole("ADMIN");
             user.setLanguage("ENGLISH");
             user.setPassword(passwordEncoder.encode("!ISeeYou!"));
+            user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
             logger.info("User admin:admin was added to the database as a first administrator.");
         }

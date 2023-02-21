@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `user` (
     `attempts` int NOT NULL DEFAULT 0,
     `active` bit(1) NOT NULL DEFAULT 0,
     `email` varchar(255) DEFAULT NULL,
+    `last_login` DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (`id`),
     UNIQUE KEY `username` (`username`),
     UNIQUE KEY `secret` (`secret`)

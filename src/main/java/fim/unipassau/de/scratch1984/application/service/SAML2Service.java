@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,6 +82,9 @@ public class SAML2Service {
                 logger.error("Could not save new user " + username + " authenticated with SAML2!");
                 throw new IllegalStateException("Could not save new user " + username + " authenticated with SAML2!");
             }
+        } else {
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
         }
 
         return new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
@@ -101,6 +105,7 @@ public class SAML2Service {
         user.setActive(true);
         user.setRole(UserDTO.Role.PARTICIPANT.name());
         user.setLanguage(UserDTO.Language.ENGLISH.name());
+        user.setLastLogin(LocalDateTime.now());
         return userRepository.save(user);
     }
 

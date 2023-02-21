@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import javax.persistence.Column;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -91,6 +93,12 @@ public class UserDTO {
      * Boolean indicating whether the user is active and thus able to use certain functions of the application.
      */
     private boolean active;
+
+    /**
+     * The last time the user logged in to use the application.
+     */
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     /**
      * Default constructor for the user dto.
@@ -314,6 +322,24 @@ public class UserDTO {
      */
     public void setActive(final boolean active) {
         this.active = active;
+    }
+
+    /**
+     * Returns the date and time at which the user last logged in.
+     *
+     * @return The last login time.
+     */
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    /**
+     * Sets the last login time for the user.
+     *
+     * @param lastLogin The time to be set.
+     */
+    public void setLastLogin(final LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
     }
 
     /**

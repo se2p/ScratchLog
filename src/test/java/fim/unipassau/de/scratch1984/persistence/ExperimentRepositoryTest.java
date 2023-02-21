@@ -72,6 +72,7 @@ public class ExperimentRepositoryTest {
 
     @BeforeEach
     public void setup() {
+        user.setLastLogin(LocalDateTime.now());
         pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
         user = entityManager.persist(user);
         course1 = entityManager.persist(course1);

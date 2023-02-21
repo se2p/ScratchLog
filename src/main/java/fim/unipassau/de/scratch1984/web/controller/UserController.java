@@ -38,6 +38,7 @@ import org.springframework.web.servlet.LocaleResolver;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -334,6 +335,7 @@ public class UserController {
             return USER;
         }
 
+        userDTO.setLastLogin(LocalDateTime.now());
         UserDTO saved = userService.saveUser(userDTO);
 
         if (!ApplicationProperties.MAIL_SERVER) {
@@ -411,6 +413,7 @@ public class UserController {
                 UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, UserDTO.Role.PARTICIPANT,
                         userBulkDTO.getLanguage(), null, null);
                 userDTO.setActive(true);
+                userDTO.setLastLogin(LocalDateTime.now());
                 userService.saveUser(userDTO);
             }
 

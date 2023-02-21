@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -70,6 +72,26 @@ public class SAML2ServiceTest {
         verify(principal, times(2)).getAttributes();
         verify(attributes, times(2)).keySet();
         verify(principal, times(2)).getFirstAttribute(VALUE);
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    public void testHandleAuthenticationUserPresent() {
+        when(properties.getUsernamePattern()).thenReturn(VALUE);
+        when(principal.getAttributes()).thenReturn(attributes);
+        when(attributes.keySet()).thenReturn(keySet);
+        when(principal.getFirstAttribute(VALUE)).thenReturn(VALUE);
+        when(userRepository.findUserByUsername(VALUE)).thenReturn(user);
+        when(userRepository.save(any())).thenReturn(user);
+        Authentication authentication = saml2Service.handleAuthentication(principal);
+        assertAll(
+                () -> assertEquals(authentication.getName(), user.getUsername()),
+                () -> assertNotNull(user.getLastLogin())
+        );
+        verify(properties).getUsernamePattern();
+        verify(principal).getAttributes();
+        verify(attributes).keySet();
+        verify(principal).getFirstAttribute(VALUE);
         verify(userRepository).save(any());
     }
 
@@ -129,20 +151,4 @@ public class SAML2ServiceTest {
         verify(userRepository).save(any());
     }
 
-    @Test
-    public void testHandleAuthenticationUserExists() {
-        when(properties.getUsernamePattern()).thenReturn(VALUE);
-        when(principal.getAttributes()).thenReturn(attributes);
-        when(attributes.keySet()).thenReturn(keySet);
-        when(principal.getFirstAttribute(VALUE)).thenReturn(VALUE);
-        when(userRepository.findUserByUsername(anyString())).thenReturn(user);
-        Authentication authentication = saml2Service.handleAuthentication(principal);
-        assertEquals(authentication.getName(), user.getUsername());
-        verify(properties).getUsernamePattern();
-        verify(principal).getAttributes();
-        verify(attributes).keySet();
-        verify(principal).getFirstAttribute(VALUE);
-        verify(userRepository).findUserByUsername(anyString());
-        verify(userRepository, never()).save(any());
-    }
 }

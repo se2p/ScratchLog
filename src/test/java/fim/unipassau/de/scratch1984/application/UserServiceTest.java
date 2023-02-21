@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.persistence.EntityNotFoundException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -66,8 +67,9 @@ public class UserServiceTest {
     private static final String EMAIL = "admin1@admin.de";
     private static final String ADMIN = "ADMIN";
     private static final String SECRET = "secret";
-    private static final int ID = 1;
     private static final String GUI_URL = "scratch";
+    private static final int ID = 1;
+    private static final long INACTIVE_DAYS = 90;
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
     private final User user1 = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, SECRET);
@@ -98,6 +100,10 @@ public class UserServiceTest {
         participants.add(participant3);
         user1.setId(ID);
         user1.setAttempts(0);
+        user1.setLastLogin(LocalDateTime.now());
+        user2.setActive(false);
+        user2.setSecret(SECRET);
+        user2.setLastLogin(null);
         userDTO.setId(ID);
         userDTO.setUsername(USERNAME);
         userDTO.setPassword(PASSWORD);
@@ -387,11 +393,13 @@ public class UserServiceTest {
     @Test
     public void testLoginUser() {
         user1.setAttempts(2);
+        LocalDateTime lastLogin = user1.getLastLogin();
         when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         assertAll(
                 () -> assertTrue(userService.loginUser(userDTO)),
-                () -> assertEquals(0, user1.getAttempts())
+                () -> assertEquals(0, user1.getAttempts()),
+                () -> assertTrue(user1.getLastLogin().isAfter(lastLogin))
         );
         verify(userRepository).findUserByUsername(USERNAME);
         verify(passwordEncoder).matches(anyString(), anyString());
@@ -435,6 +443,7 @@ public class UserServiceTest {
 
     @Test
     public void testAuthenticateUser() {
+        LocalDateTime lastLogin = user1.getLastLogin();
         when(userRepository.findUserBySecret(SECRET)).thenReturn(user1);
         when(userRepository.save(user1)).thenReturn(user1);
         UserDTO authenticated = userService.authenticateUser(SECRET);
@@ -446,6 +455,7 @@ public class UserServiceTest {
                 () -> assertEquals(user1.getSecret(), authenticated.getSecret()),
                 () -> assertEquals(user1.getRole(), authenticated.getRole().toString()),
                 () -> assertEquals(user1.getLanguage(), authenticated.getLanguage().toString()),
+                () -> assertTrue(user1.getLastLogin().isAfter(lastLogin)),
                 () -> assertTrue(authenticated.isActive())
         );
         verify(userRepository).findUserBySecret(SECRET);
@@ -553,6 +563,20 @@ public class UserServiceTest {
                 () -> userService.updateEmail(0, EMAIL)
         );
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testDeactivateOldParticipantAccounts() {
+        user2.setActive(true);
+        user2.setLastLogin(LocalDateTime.now().minusDays(INACTIVE_DAYS));
+        when(userRepository.findAllByRoleAndLastLoginBefore(anyString(), any())).thenReturn(List.of(user2));
+        userService.deactivateOldParticipantAccounts();
+        assertAll(
+                () -> assertFalse(user2.isActive()),
+                () -> assertNull(user2.getSecret())
+        );
+        verify(userRepository).findAllByRoleAndLastLoginBefore(anyString(), any());
+        verify(userRepository).save(user2);
     }
 
     @Test

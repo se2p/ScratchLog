@@ -113,4 +113,9 @@ public final class Constants {
      */
     public static final int MAX_SUGGESTION_RESULTS = 5;
 
+    /**
+     * The maximum amount of days since last login time for participants before their account is deactivated.
+     */
+    public static final long PARTICIPANT_INACTIVE_DAYS = 90;
+
 }
