@@ -76,9 +76,10 @@ public class CourseServiceTest {
     private static final Timestamp TIMESTAMP = Timestamp.valueOf(LocalDateTime.now());
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, false, LocalDateTime.now());
     private final Course course = new Course(ID, TITLE, DESCRIPTION, CONTENT, false, TIMESTAMP);
-    private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "", "", false, false, "url");
+    private final Experiment experiment1 = new Experiment(ID, TITLE, DESCRIPTION, "", "", false, false, "url");
+    private final Experiment experiment2 = new Experiment(ID, TITLE, DESCRIPTION, "", "", false, true, "url");
     private final User user = new User(USERNAME, "email", "PARTICIPANT", "ENGLISH", "password", "secret");
-    private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment, TIMESTAMP);
+    private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment2, TIMESTAMP);
     private final CourseParticipant courseParticipant = new CourseParticipant(user, course, TIMESTAMP);
 
     @BeforeEach
@@ -89,8 +90,7 @@ public class CourseServiceTest {
         courseDTO.setLastChanged(LocalDateTime.now());
         course.setId(ID);
         course.setLastChanged(TIMESTAMP);
-        experiment.setActive(false);
-        experiment.setCourseExperiment(false);
+        experiment1.setActive(false);
         user.setRole("PARTICIPANT");
         user.setId(ID);
         user.setActive(false);
@@ -197,34 +197,34 @@ public class CourseServiceTest {
     @Test
     public void testExistsCourseExperiment() {
         when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment);
-        when(courseExperimentRepository.existsByCourseAndExperiment(course, experiment)).thenReturn(true);
+        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment1);
+        when(courseExperimentRepository.existsByCourseAndExperiment(course, experiment1)).thenReturn(true);
         assertTrue(courseService.existsCourseExperiment(ID, TITLE));
         verify(courseRepository).getOne(ID);
         verify(experimentRepository).findByTitle(TITLE);
-        verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment);
+        verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment1);
     }
 
     @Test
     public void testExistsCourseExperimentNoEntry() {
         when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment);
+        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment1);
         assertFalse(courseService.existsCourseExperiment(ID, TITLE));
         verify(courseRepository).getOne(ID);
         verify(experimentRepository).findByTitle(TITLE);
-        verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment);
+        verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment1);
     }
 
     @Test
     public void testExistsCourseExperimentEntityNotFound() {
         when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment);
-        when(courseExperimentRepository.existsByCourseAndExperiment(course, experiment)).thenThrow(
+        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment1);
+        when(courseExperimentRepository.existsByCourseAndExperiment(course, experiment1)).thenThrow(
                 EntityNotFoundException.class);
         assertFalse(courseService.existsCourseExperiment(ID, TITLE));
         verify(courseRepository).getOne(ID);
         verify(experimentRepository).findByTitle(TITLE);
-        verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment);
+        verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment1);
     }
 
     @Test
@@ -339,38 +339,38 @@ public class CourseServiceTest {
 
     @Test
     public void testExistsCourseParticipantExperiment() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
         when(userRepository.getOne(ID)).thenReturn(user);
-        when(courseExperimentRepository.findByExperiment(experiment)).thenReturn(Optional.of(courseExperiment));
+        when(courseExperimentRepository.findByExperiment(experiment1)).thenReturn(Optional.of(courseExperiment));
         when(courseParticipantRepository.existsByCourseAndUser(course, user)).thenReturn(true);
         assertTrue(courseService.existsCourseParticipant(ID, ID));
         verify(experimentRepository).getOne(ID);
         verify(userRepository).getOne(ID);
-        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(courseExperimentRepository).findByExperiment(experiment1);
         verify(courseParticipantRepository).existsByCourseAndUser(course, user);
     }
 
     @Test
     public void testExistsCourseParticipantNoCourseExperiment() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
         when(userRepository.getOne(ID)).thenReturn(user);
-        when(courseExperimentRepository.findByExperiment(experiment)).thenReturn(Optional.empty());
+        when(courseExperimentRepository.findByExperiment(experiment1)).thenReturn(Optional.empty());
         assertFalse(courseService.existsCourseParticipant(ID, ID));
         verify(experimentRepository).getOne(ID);
         verify(userRepository).getOne(ID);
-        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(courseExperimentRepository).findByExperiment(experiment1);
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
 
     @Test
     public void testExistsCourseParticipantExperimentEntityNotFound() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
         when(userRepository.getOne(ID)).thenReturn(user);
-        when(courseExperimentRepository.findByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
+        when(courseExperimentRepository.findByExperiment(experiment1)).thenThrow(EntityNotFoundException.class);
         assertFalse(courseService.existsCourseParticipant(ID, ID));
         verify(experimentRepository).getOne(ID);
         verify(userRepository).getOne(ID);
-        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(courseExperimentRepository).findByExperiment(experiment1);
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
 
@@ -623,13 +623,13 @@ public class CourseServiceTest {
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
                 courseExperiment));
-        when(participantRepository.existsByUserAndExperiment(user, experiment)).thenReturn(true, false);
+        when(participantRepository.existsByUserAndExperiment(user, experiment2)).thenReturn(true, false);
         courseService.deleteCourseParticipant(ID, USERNAME);
         assertTrue(course.getLastChanged().after(TIMESTAMP));
         verify(courseRepository).getOne(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseExperimentRepository).findAllByCourse(course);
-        verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment);
+        verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment2);
         verify(participantRepository).deleteById(any());
         verify(courseParticipantRepository).deleteById(any());
         verify(courseRepository).save(course);
@@ -712,11 +712,10 @@ public class CourseServiceTest {
     @Test
     public void testSaveCourseExperiment() {
         when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.getOne(INVALID_ID)).thenReturn(experiment);
+        when(experimentRepository.getOne(INVALID_ID)).thenReturn(experiment1);
         courseService.saveCourseExperiment(ID, INVALID_ID);
         assertAll(
-                () -> assertTrue(experiment.isActive()),
-                () -> assertTrue(experiment.isCourseExperiment()),
+                () -> assertTrue(experiment1.isActive()),
                 () -> assertTrue(course.isActive()),
                 () -> assertTrue(course.getLastChanged().after(TIMESTAMP))
         );
@@ -724,13 +723,13 @@ public class CourseServiceTest {
         verify(experimentRepository).getOne(INVALID_ID);
         verify(courseExperimentRepository).save(any());
         verify(courseRepository).save(course);
-        verify(experimentRepository).save(experiment);
+        verify(experimentRepository).save(experiment1);
     }
 
     @Test
     public void testSaveCourseExperimentConstraintViolation() {
         when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.getOne(INVALID_ID)).thenReturn(experiment);
+        when(experimentRepository.getOne(INVALID_ID)).thenReturn(experiment1);
         when(courseExperimentRepository.save(any())).thenThrow(ConstraintViolationException.class);
         assertThrows(StoreException.class,
                 () -> courseService.saveCourseExperiment(ID, INVALID_ID)
@@ -745,7 +744,7 @@ public class CourseServiceTest {
     @Test
     public void testSaveCourseExperimentEntityNotFound() {
         when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.getOne(INVALID_ID)).thenReturn(experiment);
+        when(experimentRepository.getOne(INVALID_ID)).thenReturn(experiment1);
         when(courseExperimentRepository.save(any())).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> courseService.saveCourseExperiment(ID, INVALID_ID)
@@ -784,7 +783,7 @@ public class CourseServiceTest {
     @Test
     public void testDeleteCourseExperiment() {
         when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment);
+        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment1);
         courseService.deleteCourseExperiment(ID, TITLE);
         assertTrue(course.getLastChanged().toLocalDateTime().isAfter(TIMESTAMP.toLocalDateTime()));
         verify(courseRepository).getOne(ID);
@@ -796,7 +795,7 @@ public class CourseServiceTest {
     @Test
     public void testDeleteCourseExperimentEntityNotFound() {
         when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment);
+        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment1);
         when(courseRepository.save(course)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> courseService.deleteCourseExperiment(ID, TITLE)
@@ -863,7 +862,7 @@ public class CourseServiceTest {
         verify(courseRepository).getOne(ID);
         verify(userRepository).getOne(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
-        verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment);
+        verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment2);
         verify(participantRepository, times(2)).save(any());
         verify(userRepository).save(user);
     }
@@ -878,7 +877,7 @@ public class CourseServiceTest {
         verify(courseRepository).getOne(ID);
         verify(userRepository).getOne(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
-        verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment);
+        verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment2);
         verify(participantRepository, times(2)).save(any());
         verify(userRepository, never()).save(any());
     }
@@ -902,14 +901,14 @@ public class CourseServiceTest {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
                 courseExperiment));
-        when(participantRepository.existsByUserAndExperiment(user, experiment)).thenReturn(true);
+        when(participantRepository.existsByUserAndExperiment(user, experiment2)).thenReturn(true);
         assertThrows(IllegalStateException.class,
                 () -> courseService.addParticipantToCourseExperiments(ID, ID)
         );
         verify(courseRepository).getOne(ID);
         verify(userRepository).getOne(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
-        verify(participantRepository).existsByUserAndExperiment(user, experiment);
+        verify(participantRepository).existsByUserAndExperiment(user, experiment2);
         verify(participantRepository, never()).save(any());
         verify(userRepository, never()).save(any());
     }
@@ -927,7 +926,7 @@ public class CourseServiceTest {
         verify(courseRepository).getOne(ID);
         verify(userRepository).getOne(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
-        verify(participantRepository).existsByUserAndExperiment(user, experiment);
+        verify(participantRepository).existsByUserAndExperiment(user, experiment2);
         verify(participantRepository).save(any());
         verify(userRepository, never()).save(any());
     }

@@ -8,6 +8,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.ParticipantId;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
@@ -56,6 +57,11 @@ public class ParticipantService {
     private final CourseRepository courseRepository;
 
     /**
+     * The course experiment repository to use for database queries related to course experiment data.
+     */
+    private final CourseExperimentRepository courseExperimentRepository;
+
+    /**
      * The course participant repository to use for database queries related to course participant data.
      */
     private final CourseParticipantRepository courseParticipantRepository;
@@ -71,17 +77,20 @@ public class ParticipantService {
      * @param userRepository The {@link UserRepository} to use.
      * @param participantRepository The {@link ParticipantRepository} to use.
      * @param courseRepository The {@link CourseRepository} to use.
+     * @param courseExperimentRepository The {@link CourseExperimentRepository} to use.
      * @param courseParticipantRepository The {@link CourseParticipantRepository} to use.
      * @param experimentRepository The {@link ExperimentRepository} to use.
      */
     @Autowired
     public ParticipantService(final UserRepository userRepository, final ParticipantRepository participantRepository,
                               final CourseRepository courseRepository,
+                              final CourseExperimentRepository courseExperimentRepository,
                               final CourseParticipantRepository courseParticipantRepository,
                               final ExperimentRepository experimentRepository) {
         this.userRepository = userRepository;
         this.participantRepository = participantRepository;
         this.courseRepository = courseRepository;
+        this.courseExperimentRepository = courseExperimentRepository;
         this.courseParticipantRepository = courseParticipantRepository;
         this.experimentRepository = experimentRepository;
     }
@@ -147,7 +156,7 @@ public class ParticipantService {
         try {
             if (!course.isActive() || !experiment.isActive()) {
                 throw new IllegalStateException("Cannot add participants to inactive course or experiment!");
-            } else if (!experiment.isCourseExperiment()) {
+            } else if (!courseExperimentRepository.existsByCourseAndExperiment(course, experiment)) {
                 throw new IllegalStateException("Cannot add course participants to experiment which is not part of the "
                         + "course!");
             }

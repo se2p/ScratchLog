@@ -42,7 +42,7 @@ public class ExperimentRepositoryTest {
     private static final String NO_RESULTS = "description";
     private static final String GUI_URL = "scratch";
     private static final int LIMIT = 5;
-    private static final int SMALL_LIMIT = 3;
+    private static final int SMALL_LIMIT = 2;
     private static final Timestamp TIMESTAMP = Timestamp.valueOf(LocalDateTime.now());
     private PageRequest pageRequest;
     private User user = new User("user", "email", "PARTICIPANT", "ENGLISH", "password", "secret");
@@ -67,7 +67,7 @@ public class ExperimentRepositoryTest {
     private Participant participant3 = new Participant(user, experiment3, null, null);
     private Participant participant4 = new Participant(user, experiment4, null, null);
     private CourseExperiment courseExperiment1 = new CourseExperiment(course1, experiment1, TIMESTAMP);
-    private CourseExperiment courseExperiment2 = new CourseExperiment(course2, experiment1, TIMESTAMP);
+    private CourseExperiment courseExperiment2 = new CourseExperiment(course2, experiment3, TIMESTAMP);
     private CourseExperiment courseExperiment3 = new CourseExperiment(course1, experiment2, TIMESTAMP);
 
     @BeforeEach
@@ -165,13 +165,11 @@ public class ExperimentRepositoryTest {
         List<ExperimentTableProjection> experiments = repository.findCourseExperimentSuggestions(SHORT_QUERY,
                 course2.getId(), SMALL_LIMIT);
         assertAll(
-                () -> assertEquals(3, experiments.size()),
+                () -> assertEquals(2, experiments.size()),
                 () -> assertTrue(experiments.stream().anyMatch(experiment
                         -> experiment.getTitle().equals(experiment2.getTitle()))),
                 () -> assertTrue(experiments.stream().anyMatch(experiment
-                        -> experiment.getTitle().equals(experiment3.getTitle()))),
-                () -> assertTrue(experiments.stream().anyMatch(experiment
-                        -> experiment.getTitle().equals(experiment4.getTitle())))
+                        -> experiment.getTitle().equals(experiment1.getTitle())))
         );
     }
 

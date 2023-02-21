@@ -39,8 +39,7 @@ public class CourseExperimentRepositoryTest {
             "Some postscript", false, false, "url");
     private CourseExperiment courseExperiment1 = new CourseExperiment(course1, experiment1, timestamp);
     private CourseExperiment courseExperiment2 = new CourseExperiment(course1, experiment2, timestamp);
-    private CourseExperiment courseExperiment3 = new CourseExperiment(course1, experiment3, timestamp);
-    private CourseExperiment courseExperiment4 = new CourseExperiment(course2, experiment1, timestamp);
+    private CourseExperiment courseExperiment3 = new CourseExperiment(course2, experiment3, timestamp);
 
     @BeforeEach
     public void setUp() {
@@ -53,13 +52,12 @@ public class CourseExperimentRepositoryTest {
         courseExperiment1 = entityManager.persist(courseExperiment1);
         courseExperiment2 = entityManager.persist(courseExperiment2);
         courseExperiment3 = entityManager.persist(courseExperiment3);
-        courseExperiment4 = entityManager.persist(courseExperiment4);
     }
 
     @Test
     public void testGetCourseExperimentRowCount() {
         assertAll(
-                () -> assertEquals(3, repository.getCourseExperimentRowCount(course1.getId())),
+                () -> assertEquals(2, repository.getCourseExperimentRowCount(course1.getId())),
                 () -> assertEquals(1, repository.getCourseExperimentRowCount(course2.getId())),
                 () -> assertEquals(0, repository.getCourseExperimentRowCount(course3.getId()))
         );

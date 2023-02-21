@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS `experiment` (
     `active` bit(1) NOT NULL DEFAULT 0,
     `project` longblob NULL DEFAULT NULL,
     `gui_url` varchar(2000) DEFAULT NULL,
-    `course_experiment` bit(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY `experiment_title` (`title`)
 );
@@ -216,6 +215,7 @@ CREATE TABLE IF NOT EXISTS `course_experiment` (
     `experiment_id` int NOT NULL,
     `added` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`course_id`,`experiment_id`),
+    UNIQUE KEY `experiment_id` (`experiment_id`),
     CONSTRAINT `course_experiment_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `course` (`id`) ON DELETE CASCADE,
     CONSTRAINT `course_experiment_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 );

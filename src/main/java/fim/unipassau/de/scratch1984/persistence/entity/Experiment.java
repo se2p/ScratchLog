@@ -6,6 +6,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import org.hibernate.annotations.Formula;
+
 /**
  * An entity representing an experiment.
  */
@@ -53,7 +55,7 @@ public class Experiment {
     /**
      * Boolean indicating whether the experiment is part of a course.
      */
-    @Column(name = "course_experiment")
+    @Formula("(SELECT EXISTS(SELECT c.experiment_id FROM course_experiment AS c WHERE c.experiment_id = id))")
     private boolean courseExperiment;
 
     /**
@@ -213,15 +215,6 @@ public class Experiment {
      */
     public boolean isCourseExperiment() {
         return courseExperiment;
-    }
-
-    /**
-     * Sets the experiment course status.
-     *
-     * @param courseExperiment The status.
-     */
-    public void setCourseExperiment(final boolean courseExperiment) {
-        this.courseExperiment = courseExperiment;
     }
 
     /**

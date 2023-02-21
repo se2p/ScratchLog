@@ -859,6 +859,7 @@ public class ExperimentController {
             participantService.saveParticipants(experimentId, courseId);
             return false;
         } catch (Exception e) {
+            logger.error("Could not save course experiment!", e);
             experimentService.deleteExperiment(experimentId);
             return true;
         }

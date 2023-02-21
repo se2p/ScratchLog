@@ -614,7 +614,6 @@ public class CourseService {
             CourseExperiment courseExperiment = new CourseExperiment(course, experiment,
                     Timestamp.valueOf(LocalDateTime.now()));
             experiment.setActive(true);
-            experiment.setCourseExperiment(true);
             course.setActive(true);
             course.setLastChanged(courseExperiment.getAdded());
             courseExperimentRepository.save(courseExperiment);

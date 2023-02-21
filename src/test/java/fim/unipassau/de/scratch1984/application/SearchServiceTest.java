@@ -70,11 +70,13 @@ public class SearchServiceTest {
     private static final int LIMIT = Constants.PAGE_SIZE;
     private static final int COUNT = 25;
     private static final int PAGE = 1;
-    private final Experiment experiment = new Experiment(ID, "My Experiment", "Some description", "", "", true, false,
+    private final Experiment experiment1 = new Experiment(ID, "My Experiment", "Some description", "", "", true, false,
+            "url");
+    private final Experiment experiment2 = new Experiment(ID, "My Experiment", "Some description", "", "", true, true,
             "url");
     private final Course course = new Course(ID, "title", "description", "content", true,
             Timestamp.valueOf(LocalDateTime.now()));
-    private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment,
+    private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment2,
             Timestamp.valueOf(LocalDateTime.now()));
     private final List<UserProjection> users = addUserSuggestions();
     private final List<ExperimentTableProjection> experiments = addExperimentSuggestions();
@@ -290,8 +292,7 @@ public class SearchServiceTest {
 
     @Test
     public void testGetUserSuggestions() {
-        experiment.setCourseExperiment(false);
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(experimentRepository.findById(ID)).thenReturn(experiment1);
         when(userRepository.findParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS)).thenReturn(users);
         List<String[]> userInfo = searchService.getUserSuggestions(QUERY, ID);
         String[] firstUser = userInfo.get(0);
@@ -313,9 +314,8 @@ public class SearchServiceTest {
 
     @Test
     public void testGetUserSuggestionsCourse() {
-        experiment.setCourseExperiment(true);
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
-        when(courseExperimentRepository.findByExperiment(experiment)).thenReturn(Optional.of(courseExperiment));
+        when(experimentRepository.findById(ID)).thenReturn(experiment2);
+        when(courseExperimentRepository.findByExperiment(experiment2)).thenReturn(Optional.of(courseExperiment));
         when(userRepository.findParticipantSuggestions(QUERY, ID, ID,
                 Constants.MAX_SUGGESTION_RESULTS)).thenReturn(users);
         List<String[]> userInfo = searchService.getUserSuggestions(QUERY, ID);
@@ -333,26 +333,24 @@ public class SearchServiceTest {
         );
         verify(experimentRepository).findById(ID);
         verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt());
-        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(courseExperimentRepository).findByExperiment(experiment2);
         verify(userRepository).findParticipantSuggestions(QUERY, ID, ID, Constants.MAX_SUGGESTION_RESULTS);
     }
 
     @Test
     public void testGetUserSuggestionsCourseExperimentEmpty() {
-        experiment.setCourseExperiment(true);
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
-        when(courseExperimentRepository.findByExperiment(experiment)).thenReturn(Optional.empty());
+        when(experimentRepository.findById(ID)).thenReturn(experiment2);
+        when(courseExperimentRepository.findByExperiment(experiment2)).thenReturn(Optional.empty());
         assertEquals(0, searchService.getUserSuggestions(QUERY, ID).size());
         verify(experimentRepository).findById(ID);
         verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt());
-        verify(courseExperimentRepository).findByExperiment(experiment);
+        verify(courseExperimentRepository).findByExperiment(experiment2);
         verify(userRepository, never()).findParticipantSuggestions(anyString(), anyInt(), anyInt(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsNone() {
-        experiment.setCourseExperiment(false);
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(experimentRepository.findById(ID)).thenReturn(experiment1);
         List<String[]> userInfo = searchService.getUserSuggestions(QUERY, ID);
         assertEquals(0, userInfo.size());
         verify(userRepository).findParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);

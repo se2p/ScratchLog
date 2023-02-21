@@ -347,7 +347,6 @@ public class ExperimentService {
         }
 
         experiment.setActive(experimentDTO.isActive());
-        experiment.setCourseExperiment(experimentDTO.isCourseExperiment());
         return experiment;
     }
 
