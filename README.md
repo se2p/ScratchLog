@@ -51,6 +51,16 @@ easily be committed by accident, some sections have been commented out. You shou
 to the `.gitignore` file and the *spring.profiles.active* configuration in the `application.properties` file has been
 set accordingly for spring to automatically pick up the configurations.
 
+#### Using Flyway
+
+The application uses `Flyway` for database versioning. As `Flyway` will need to create and alter tables, it will require
+more access privileges than the standard database user. Therefore, it is recommended to create a separate database user
+used by `Flyway`. This user can be specified in the matching section in the `application.properties` file. If you wish
+to use `Flyway`, make sure to at least copy or uncomment the `spring.flyway.create-schemas` line. If you do not wish to
+use any database versioning, you can set the `spring.flyway.enabled` property to false. The `schema.sql` file contains
+the latest database version and is updated accordingly with every new migration. You can simply create the database
+tables using the schema. However, you will then have to incorporate subsequent updates to the database manually.
+
 #### Configuring multiple Scratch GUI instances
 
 Since the URL to the instrumented Scratch-GUI instance is saved per experiment, it is possible to use different Scratch
@@ -99,7 +109,7 @@ available.
 
 Please note that username or email changes from the IDP side are not propagated to the application. This means that if a
 user has been authenticated via SSO once and the user has been added to the database, if the user changes their name and
-authenticates via SSO again, a new user profile will be created in this case.
+authenticates via SSO again, a new user profile will be created.
 
 ## Build and Deployment
 
