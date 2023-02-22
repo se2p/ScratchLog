@@ -73,6 +73,7 @@ public class CourseServiceTest {
     private static final String BLANK = "    ";
     private static final int ID = 1;
     private static final int INVALID_ID = 2;
+    private static final long MAX_DAYS = 180;
     private static final Timestamp TIMESTAMP = Timestamp.valueOf(LocalDateTime.now());
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, false, LocalDateTime.now());
     private final Course course = new Course(ID, TITLE, DESCRIPTION, CONTENT, false, TIMESTAMP);
@@ -89,8 +90,10 @@ public class CourseServiceTest {
         courseDTO.setDescription(DESCRIPTION);
         courseDTO.setLastChanged(LocalDateTime.now());
         course.setId(ID);
+        course.setActive(false);
         course.setLastChanged(TIMESTAMP);
         experiment1.setActive(false);
+        experiment2.setActive(false);
         user.setRole("PARTICIPANT");
         user.setId(ID);
         user.setActive(false);
@@ -1070,6 +1073,58 @@ public class CourseServiceTest {
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(experimentRepository, never()).updateStatusById(anyInt(), anyBoolean());
         verify(userRepository, never()).save(any());
+        verify(courseRepository, never()).save(any());
+    }
+
+    @Test
+    public void testDeactivateInactiveCourses() {
+        course.setActive(true);
+        course.setLastChanged(Timestamp.valueOf(LocalDateTime.now().minusDays(MAX_DAYS)));
+        when(courseRepository.findAllByActiveIsTrue()).thenReturn(List.of(course));
+        when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
+                courseExperiment));
+        courseService.deactivateInactiveCourses();
+        assertFalse(course.isActive());
+        verify(courseRepository).findAllByActiveIsTrue();
+        verify(courseExperimentRepository).findAllByCourse(course);
+        verify(courseRepository).save(course);
+    }
+
+    @Test
+    public void testDeactivateInactiveCoursesLastChanged() {
+        course.setActive(true);
+        when(courseRepository.findAllByActiveIsTrue()).thenReturn(List.of(course));
+        when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment));
+        courseService.deactivateInactiveCourses();
+        assertTrue(course.isActive());
+        verify(courseRepository).findAllByActiveIsTrue();
+        verify(courseExperimentRepository).findAllByCourse(course);
+        verify(courseRepository, never()).save(any());
+    }
+
+    @Test
+    public void testDeactivateInactiveCoursesExperimentActive() {
+        course.setActive(true);
+        course.setLastChanged(Timestamp.valueOf(LocalDateTime.now().minusDays(MAX_DAYS)));
+        experiment2.setActive(true);
+        when(courseRepository.findAllByActiveIsTrue()).thenReturn(List.of(course));
+        when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment));
+        courseService.deactivateInactiveCourses();
+        assertTrue(course.isActive());
+        verify(courseRepository).findAllByActiveIsTrue();
+        verify(courseExperimentRepository).findAllByCourse(course);
+        verify(courseRepository, never()).save(any());
+    }
+
+    @Test
+    public void testDeactivateInactiveCoursesNoExperiments() {
+        course.setActive(true);
+        course.setLastChanged(Timestamp.valueOf(LocalDateTime.now().minusDays(MAX_DAYS)));
+        when(courseRepository.findAllByActiveIsTrue()).thenReturn(List.of(course));
+        courseService.deactivateInactiveCourses();
+        assertTrue(course.isActive());
+        verify(courseRepository).findAllByActiveIsTrue();
+        verify(courseExperimentRepository).findAllByCourse(course);
         verify(courseRepository, never()).save(any());
     }
 

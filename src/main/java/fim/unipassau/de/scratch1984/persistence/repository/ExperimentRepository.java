@@ -75,6 +75,13 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
     Page<ExperimentTableProjection> findAllProjectedBy(Pageable pageable);
 
     /**
+     * Returns a list of all active experiments, if any exist.
+     *
+     * @return The list of active experiments.
+     */
+    List<Experiment> findAllByActiveIsTrue();
+
+    /**
      * Deletes the experiment with the given id from the database, if existent.
      *
      * @param id The experiment id.

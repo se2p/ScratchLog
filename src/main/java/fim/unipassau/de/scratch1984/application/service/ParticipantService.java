@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -354,6 +355,16 @@ public class ParticipantService {
     }
 
     /**
+     * Deactivates all experiments where participants have not started or finished the experiment for a specified number
+     * of days. Only the experiment itself is deactivated, the status of the participant accounts does not change.
+     */
+    @Transactional
+    public void deactivateInactiveExperiments() {
+        List<Experiment> experiments = experimentRepository.findAllByActiveIsTrue();
+        experiments.forEach(this::checkDeactivateExperiment);
+    }
+
+    /**
      * Adds the user provided by the given {@link CourseParticipant} as a participant to the given experiment.
      *
      * @param courseParticipant The {@link CourseParticipant} containing the user information.
@@ -377,6 +388,31 @@ public class ParticipantService {
             user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
             user.setActive(true);
             userRepository.save(user);
+        }
+    }
+
+    /**
+     * Checks whether an experiment should be deactivated due to inactivity. An experiment is considered inactive if no
+     * participant has started or finished it for a specified number of days. If the experiment is considered to be
+     * inactive, it is deactivated.
+     *
+     * @param experiment The {@link Experiment} to check.
+     */
+    private void checkDeactivateExperiment(final Experiment experiment) {
+        List<Participant> participants = participantRepository.findAllByExperiment(experiment);
+
+        if (participants.size() > 0) {
+            LocalDateTime maxInactiveTime = LocalDateTime.now().minusDays(Constants.EXPERIMENT_INACTIVE_DAYS);
+            LocalDateTime lastStart = participants.stream().filter(participant -> participant.getStart() != null).map(
+                    participant -> participant.getStart().toLocalDateTime()).max(LocalDateTime::compareTo).orElse(null);
+            LocalDateTime lastEnd = participants.stream().filter(participant -> participant.getEnd() != null).map(
+                    participant -> participant.getEnd().toLocalDateTime()).max(LocalDateTime::compareTo).orElse(null);
+            boolean inactiveStart = lastStart != null && lastStart.isBefore(maxInactiveTime);
+            boolean inactiveEnd = lastEnd != null && lastEnd.isBefore(maxInactiveTime);
+            if (inactiveStart || inactiveEnd) {
+                experiment.setActive(false);
+                experimentRepository.save(experiment);
+            }
         }
     }
 

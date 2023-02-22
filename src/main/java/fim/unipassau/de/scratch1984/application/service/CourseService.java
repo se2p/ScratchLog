@@ -554,6 +554,15 @@ public class CourseService {
     }
 
     /**
+     * Deactivates all courses in which all experiments are deactivated and which have not been updated for a specific
+     * time. Only the course itself is deactivated, the status of the participant accounts does not change.
+     */
+    @Transactional
+    public void deactivateInactiveCourses() {
+        courseRepository.findAllByActiveIsTrue().forEach(this::checkDeactivateCourse);
+    }
+
+    /**
      * Changes the activation status of the user with the given id according to the passed status.
      *
      * @param status The status to change to.
@@ -625,6 +634,25 @@ public class CourseService {
                     + "data!", e);
         } catch (ConstraintViolationException e) {
             throw new StoreException("The given course experiment data does not meet the foreign key constraints!", e);
+        }
+    }
+
+    /**
+     * Checks whether a course should be deactivated due to inactivity. A course is considered to be inactive if all its
+     * experiments are inactive, and it hasn't been updated for a specified time. If the course is considered to be
+     * inactive, it is deactivated.
+     *
+     * @param course The {@link Course} to check.
+     */
+    private void checkDeactivateCourse(final Course course) {
+        List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+        boolean experimentsInactive = !courseExperiments.isEmpty() && courseExperiments.stream().noneMatch(
+                courseExperiment -> courseExperiment.getExperiment().isActive());
+
+        if (experimentsInactive && course.getLastChanged().toLocalDateTime().isBefore(LocalDateTime.now().minusDays(
+                Constants.COURSE_INACTIVE_DAYS))) {
+            course.setActive(false);
+            courseRepository.save(course);
         }
     }
 
