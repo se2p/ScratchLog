@@ -355,6 +355,46 @@ public class ParticipantService {
     }
 
     /**
+     * Checks, whether the user with the given id is participating in the experiment with the given id and has the
+     * given secret.
+     *
+     * @param userId The id of the user.
+     * @param experimentId The id of the experiment.
+     * @param secret The user's secret.
+     * @return {@code true} if the user is a participant with the given secret or {@code false} otherwise.
+     * @throws IllegalArgumentException if the passed secret, user or experiment id are invalid.
+     */
+    @Transactional
+    public boolean isInvalidParticipant(final int userId, final int experimentId, final String secret) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            throw new IllegalArgumentException("Cannot verify participant with invalid user id " + userId
+                    + " or invalid experiment id " + experimentId + "!");
+        } else if (secret == null || secret.trim().isBlank()) {
+            throw new IllegalArgumentException("Cannot verify participant with secret null or blank!");
+        }
+
+        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+
+            if (participant == null) {
+                logger.error("Cannot save event data for participant null!");
+                return true;
+            } else if (!user.isActive() || !experiment.isActive()) {
+                logger.error("Cannot save event data for inactive experiment or user!");
+                return true;
+            } else {
+                return !user.getSecret().equals(secret);
+            }
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find user or experiment when trying to verify a participant!", e);
+            return true;
+        }
+    }
+
+    /**
      * Deactivates all experiments where participants have not started or finished the experiment for a specified number
      * of days. Only the experiment itself is deactivated, the status of the participant accounts does not change.
      */

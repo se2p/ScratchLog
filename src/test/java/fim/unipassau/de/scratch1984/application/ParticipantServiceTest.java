@@ -96,6 +96,7 @@ public class ParticipantServiceTest {
         participantDTO.setUser(ID);
         participantDTO.setExperiment(ID);
         user.setId(ID);
+        user.setActive(false);
         course.setActive(true);
         experiment1.setActive(true);
         experiment2.setActive(true);
@@ -523,6 +524,115 @@ public class ParticipantServiceTest {
         );
         verify(userRepository, never()).getOne(anyInt());
         verify(participantRepository, never()).findAllByEndIsNullAndUser(any());
+    }
+
+    @Test
+    public void testIsInvalidParticipant() {
+        user.setActive(true);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        assertFalse(participantService.isInvalidParticipant(ID, ID, SECRET));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment1);
+    }
+
+    @Test
+    public void testIsInvalidParticipantSecretNotMatching() {
+        user.setActive(true);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        assertTrue(participantService.isInvalidParticipant(ID, ID, PASSWORD));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment1);
+    }
+
+    @Test
+    public void testIsInvalidParticipantUserInactive() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment1);
+    }
+
+    @Test
+    public void testIsInvalidParticipantExperimentInactive() {
+        user.setActive(true);
+        experiment1.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment1);
+    }
+
+    @Test
+    public void testIsInvalidParticipantNoParticipant() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
+        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment1);
+    }
+
+    @Test
+    public void testIsInvalidParticipantEntityNotFound() {
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenThrow(EntityNotFoundException.class);
+        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment1);
+    }
+
+    @Test
+    public void testIsInvalidParticipantSecretBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.isInvalidParticipant(ID, ID, " ")
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testIsInvalidParticipantSecretNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.isInvalidParticipant(ID, ID, null)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testIsInvalidParticipantInvalidExperimentId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.isInvalidParticipant(ID, 0, SECRET)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
+    }
+
+    @Test
+    public void testIsInvalidParticipantInvalidUserId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.isInvalidParticipant(-9, ID, SECRET)
+        );
+        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getOne(anyInt());
+        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
     }
 
     @Test

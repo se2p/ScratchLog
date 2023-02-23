@@ -3,6 +3,7 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.PageService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
@@ -58,6 +59,11 @@ public class HomeController {
     private final UserService userService;
 
     /**
+     * The participant service to use for participant management.
+     */
+    private final ParticipantService participantService;
+
+    /**
      * String corresponding to the name of the model attribute containing the current page number or the corresponding
      * request parameter.
      */
@@ -69,13 +75,15 @@ public class HomeController {
      * @param experimentService The {@link ExperimentService} to use.
      * @param pageService The {@link PageService} to use.
      * @param userService The {@link UserService} to use.
+     * @param participantService The {@link ParticipantService} to use.
      */
     @Autowired
     public HomeController(final ExperimentService experimentService, final PageService pageService,
-                          final UserService userService) {
+                          final UserService userService, final ParticipantService participantService) {
         this.experimentService = experimentService;
         this.pageService = pageService;
         this.userService = userService;
+        this.participantService = participantService;
     }
 
     /**
@@ -318,26 +326,21 @@ public class HomeController {
      *
      * @param user The user id of the participant.
      * @param experiment The experiment id.
+     * @param secret The user's secret.
      * @param model The model used to store the message to be displayed on the page.
      * @return The experiment finish page.
      */
     @GetMapping("/finish")
     public String getExperimentFinishPage(@RequestParam("user") final String user,
                                           @RequestParam("experiment") final String experiment,
+                                          @RequestParam("secret") final String secret,
                                           final Model model) {
-        if (experiment == null || user == null || experiment.trim().isBlank() || user.trim().isBlank()) {
-            logger.error("Cannot load experiment finish page of experiment or user with id null or blank!");
-            return Constants.ERROR;
-        }
-
-        int experimentId = NumberParser.parseNumber(experiment);
-        int userId = NumberParser.parseNumber(user);
+        int experimentId = NumberParser.parseId(experiment);
+        int userId = NumberParser.parseId(user);
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
 
-        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            logger.error("Cannot load experiment finish page for invalid experiment id " + experiment
-                    + " or invalid user id " + user + "!");
+        if (isInvalidFinishParams(experimentId, userId, secret)) {
             return Constants.ERROR;
         }
 
@@ -345,6 +348,7 @@ public class HomeController {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
             model.addAttribute("thanks", experimentDTO.getPostscript() != null ? experimentDTO.getPostscript()
                     : resourceBundle.getString("thanks"));
+            model.addAttribute("secret", secret);
             model.addAttribute("user", userId);
             model.addAttribute("experiment", experimentId);
         } catch (NotFoundException e) {
@@ -513,6 +517,27 @@ public class HomeController {
                                      final int currentBoundary, final boolean isNext) {
         return lastPageInformation == null || PageUtils.isInvalidCurrentPage(current, currentBoundary,
                 lastPageInformation.getFirst(), isNext);
+    }
+
+    /**
+     * Checks if the passed ids and secret are valid parameters and match a participant and user in the database.
+     *
+     * @param experimentId The id of the experiment.
+     * @param userId The id of the user.
+     * @param secret The user's secret.
+     * @return {@code true} if the passed parameters are invalid or {@code false} otherwise.
+     */
+    private boolean isInvalidFinishParams(final int experimentId, final int userId, final String secret) {
+        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
+            logger.error("Cannot finish experiment with invalid experiment id " + experimentId + " or invalid user id "
+                    + userId + "!");
+            return true;
+        } else if (secret == null || secret.isBlank()) {
+            logger.error("Cannot finish experiment with secret null or blank!");
+            return true;
+        } else {
+            return participantService.isInvalidParticipant(userId, experimentId, secret);
+        }
     }
 
     /**

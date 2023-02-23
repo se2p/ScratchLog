@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.PageService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
@@ -67,6 +68,9 @@ public class HomeControllerIntegrationTest {
     @MockBean
     private UserService userService;
 
+    @MockBean
+    private ParticipantService participantService;
+
     private static final String INDEX = "index";
     private static final String INDEX_EXPERIMENT = "index::experiment_table";
     private static final String INDEX_COURSE = "index::course_table";
@@ -84,6 +88,7 @@ public class HomeControllerIntegrationTest {
     private static final String EXPERIMENTS = "experiments";
     private static final String COURSES = "courses";
     private static final String ID_STRING = "1";
+    private static final String SECRET = "secret";
     private static final String THANKS = "thanks";
     private static final String EXPERIMENT = "experiment";
     private static final String USER = "user";
@@ -766,6 +771,7 @@ public class HomeControllerIntegrationTest {
         mvc.perform(get("/finish")
                         .param(EXPERIMENT, ID_STRING)
                         .param(USER, ID_STRING)
+                        .param(SECRET, SECRET)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
@@ -775,6 +781,7 @@ public class HomeControllerIntegrationTest {
                 .andExpect(model().attribute(EXPERIMENT, is(ID)))
                 .andExpect(model().attribute(USER, is(ID)))
                 .andExpect(view().name(FINISH));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(experimentService).getExperiment(ID);
     }
 
@@ -784,6 +791,7 @@ public class HomeControllerIntegrationTest {
         mvc.perform(get("/finish")
                         .param(EXPERIMENT, ID_STRING)
                         .param(USER, ID_STRING)
+                        .param(SECRET, SECRET)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
@@ -791,6 +799,7 @@ public class HomeControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(model().attribute(THANKS, nullValue()))
                 .andExpect(view().name(Constants.ERROR));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(experimentService).getExperiment(ID);
     }
 
@@ -799,6 +808,7 @@ public class HomeControllerIntegrationTest {
         mvc.perform(get("/finish")
                         .param(EXPERIMENT, INVALID_NUMBER)
                         .param(USER, ID_STRING)
+                        .param(SECRET, SECRET)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
@@ -806,6 +816,7 @@ public class HomeControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(model().attribute(THANKS, nullValue()))
                 .andExpect(view().name(Constants.ERROR));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(experimentService, never()).getExperiment(anyInt());
     }
 
@@ -814,6 +825,7 @@ public class HomeControllerIntegrationTest {
         mvc.perform(get("/finish")
                         .param(EXPERIMENT, ID_STRING)
                         .param(USER, BLANK)
+                        .param(SECRET, SECRET)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
@@ -821,6 +833,7 @@ public class HomeControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(model().attribute(THANKS, nullValue()))
                 .andExpect(view().name(Constants.ERROR));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(experimentService, never()).getExperiment(anyInt());
     }
 
