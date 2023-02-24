@@ -11,10 +11,11 @@ $(document).ready(function () {
  * Loads the next course page and updates the course table with the new value.
  */
 function loadNextCoursePage() {
+    const PAGE = coursePage + 1;
     $.ajax({
         type: 'get',
-        url: contextPath + "/next/course",
-        data: {page: coursePage},
+        url: contextPath + "/page/course",
+        data: {page: PAGE},
         success: function(data) {
             updateCourseTable(data);
             coursePage++;
@@ -26,10 +27,11 @@ function loadNextCoursePage() {
  * Loads the previous course page and updates the course table with the new value.
  */
 function loadPreviousCoursePage() {
+    const PAGE = coursePage - 1;
     $.ajax({
         type: 'get',
-        url: contextPath + "/previous/course",
-        data: {page: coursePage},
+        url: contextPath + "/page/course",
+        data: {page: PAGE},
         success: function(data) {
             updateCourseTable(data);
             coursePage--;
@@ -43,10 +45,11 @@ function loadPreviousCoursePage() {
 function loadFirstCoursePage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/first/course",
+        url: contextPath + "/page/course",
+        data: {page: 0},
         success: function(data) {
             updateCourseTable(data);
-            coursePage = 1;
+            coursePage = 0;
         },
     });
 }
@@ -57,7 +60,8 @@ function loadFirstCoursePage() {
 function loadLastCoursePage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/last/course",
+        url: contextPath + "/page/course",
+        data: {page: lastCoursePage},
         success: function(data) {
             updateCourseTable(data);
             coursePage = lastCoursePage;
@@ -69,10 +73,11 @@ function loadLastCoursePage() {
  * Loads the next experiment page and updates the experiment table with the new value.
  */
 function loadNextExperimentPage() {
+    const PAGE = experimentPage + 1;
     $.ajax({
         type: 'get',
-        url: contextPath + "/next/experiment",
-        data: {page: experimentPage},
+        url: contextPath + "/page/experiment",
+        data: {page: PAGE},
         success: function(data) {
             updateExperimentTable(data);
             experimentPage++;
@@ -84,10 +89,11 @@ function loadNextExperimentPage() {
  * Loads the previous experiment page and updates the experiment table with the new value.
  */
 function loadPreviousExperimentPage() {
+    const PAGE = experimentPage - 1;
     $.ajax({
         type: 'get',
-        url: contextPath + "/previous/experiment",
-        data: {page: experimentPage},
+        url: contextPath + "/page/experiment",
+        data: {page: PAGE},
         success: function(data) {
             updateExperimentTable(data);
             experimentPage--;
@@ -101,10 +107,11 @@ function loadPreviousExperimentPage() {
 function loadFirstExperimentPage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/first/experiment",
+        url: contextPath + "/page/experiment",
+        data: {page: 0},
         success: function(data) {
             updateExperimentTable(data);
-            experimentPage = 1;
+            experimentPage = 0;
         },
     });
 }
@@ -115,7 +122,8 @@ function loadFirstExperimentPage() {
 function loadLastExperimentPage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/last/experiment",
+        url: contextPath + "/page/experiment",
+        data: {page: lastExperimentPage},
         success: function(data) {
             updateExperimentTable(data);
             experimentPage = lastExperimentPage;

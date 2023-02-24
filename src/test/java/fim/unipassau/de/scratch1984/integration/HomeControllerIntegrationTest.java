@@ -77,7 +77,6 @@ public class HomeControllerIntegrationTest {
     private static final String FINISH = "experiment-finish";
     private static final String PASSWORD_RESET = "password-reset";
     private static final String CURRENT = "3";
-    private static final String LAST = "4";
     private static final String BLANK = "   ";
     private static final String INVALID_NUMBER = "-5";
     private static final String PAGE_PARAM = "page";
@@ -97,10 +96,8 @@ public class HomeControllerIntegrationTest {
     private static final String PREV_COURSE = "/previous/course";
     private static final String FIRST_COURSE = "/first/course";
     private static final String LAST_COURSE = "/last/course";
-    private static final String NEXT_EXPERIMENT = "/next/experiment";
-    private static final String PREV_EXPERIMENT = "/previous/experiment";
-    private static final String FIRST_EXPERIMENT = "/first/experiment";
-    private static final String LAST_EXPERIMENT = "/last/experiment";
+    private static final String PAGE_COURSE = "/page/course";
+    private static final String PAGE_EXPERIMENT = "/page/experiment";
     private final int pageNum = 3;
     private final int lastPage = 4;
     private static final int ID = 1;
@@ -153,11 +150,11 @@ public class HomeControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(1)))
+                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(EXPERIMENT_PAGE, is(0)))
                 .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage)))
-                .andExpect(model().attribute(COURSE_PAGE, is(1)))
+                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(COURSE_PAGE, is(0)))
                 .andExpect(view().name(INDEX));
         verify(userService, never()).getUser(anyString());
         verify(pageService).computeLastExperimentPage();
@@ -182,11 +179,11 @@ public class HomeControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(1)))
+                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(EXPERIMENT_PAGE, is(0)))
                 .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage)))
-                .andExpect(model().attribute(COURSE_PAGE, is(1)))
+                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(COURSE_PAGE, is(0)))
                 .andExpect(view().name(INDEX));
         verify(userService).getUser(userDTO.getUsername());
         verify(pageService).getLastExperimentPage(userDTO.getId());
@@ -215,10 +212,10 @@ public class HomeControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetNextCoursePage() throws Exception {
+    public void testGetCoursePage() throws Exception {
         when(pageService.computeLastCoursePage()).thenReturn(lastPage);
         when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
-        mvc.perform(get(NEXT_COURSE)
+        mvc.perform(get(PAGE_COURSE)
                         .param(PAGE_PARAM, CURRENT)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -226,8 +223,8 @@ public class HomeControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage)))
-                .andExpect(model().attribute(COURSE_PAGE, is(pageNum + 1)))
+                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(COURSE_PAGE, is(pageNum)))
                 .andExpect(view().name(INDEX_COURSE));
         verify(pageService).computeLastCoursePage();
         verify(pageService).getCoursePage(any(PageRequest.class));
@@ -237,11 +234,11 @@ public class HomeControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetNextCoursePageParticipant() throws Exception {
+    public void testGetCoursePageParticipant() throws Exception {
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(pageService.getLastCoursePage(userDTO.getId())).thenReturn(lastPage);
         when(pageService.getCourseParticipantPage(any(PageRequest.class), anyInt())).thenReturn(coursePage);
-        mvc.perform(get(NEXT_COURSE)
+        mvc.perform(get(PAGE_COURSE)
                         .param(PAGE_PARAM, CURRENT)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -249,8 +246,8 @@ public class HomeControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage)))
-                .andExpect(model().attribute(COURSE_PAGE, is(pageNum + 1)))
+                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(COURSE_PAGE, is(pageNum)))
                 .andExpect(view().name(INDEX_COURSE));
         verify(pageService, never()).computeLastCoursePage();
         verify(userService).getUser(userDTO.getUsername());
@@ -260,248 +257,10 @@ public class HomeControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetNextCoursePageParticipantNotFound() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
-        mvc.perform(get(NEXT_COURSE)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).computeLastCoursePage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService, never()).getLastCoursePage(anyInt());
-        verify(pageService, never()).getCourseParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetPreviousCoursePage() throws Exception {
-        when(pageService.computeLastCoursePage()).thenReturn(lastPage);
-        when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
-        mvc.perform(get(PREV_COURSE)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage)))
-                .andExpect(model().attribute(COURSE_PAGE, is(pageNum - 1)))
-                .andExpect(view().name(INDEX_COURSE));
-        verify(pageService).computeLastCoursePage();
-        verify(pageService).getCoursePage(any(PageRequest.class));
-        verify(userService, never()).getUser(anyString());
-        verify(pageService, never()).getLastCoursePage(anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetPreviousCoursePageParticipant() throws Exception {
+    public void testGetCoursePagePageInvalid() throws Exception {
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(pageService.getLastCoursePage(userDTO.getId())).thenReturn(lastPage);
-        when(pageService.getCourseParticipantPage(any(PageRequest.class), anyInt())).thenReturn(coursePage);
-        mvc.perform(get(PREV_COURSE)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage)))
-                .andExpect(model().attribute(COURSE_PAGE, is(pageNum - 1)))
-                .andExpect(view().name(INDEX_COURSE));
-        verify(pageService, never()).computeLastCoursePage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getLastCoursePage(userDTO.getId());
-        verify(pageService).getCourseParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetFirstCoursePage() throws Exception {
-        when(pageService.computeLastCoursePage()).thenReturn(lastPage);
-        when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
-        mvc.perform(get(FIRST_COURSE)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage)))
-                .andExpect(model().attribute(COURSE_PAGE, is(1)))
-                .andExpect(view().name(INDEX_COURSE));
-        verify(pageService).computeLastCoursePage();
-        verify(pageService).getCoursePage(any(PageRequest.class));
-        verify(userService, never()).getUser(anyString());
-        verify(pageService, never()).getLastCoursePage(anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetFirstCoursePageParticipantNotFound() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
-        mvc.perform(get(FIRST_COURSE)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).computeLastCoursePage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService, never()).getLastCoursePage(anyInt());
-        verify(pageService, never()).getCourseParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetLastCoursePageParticipant() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(pageService.getLastCoursePage(userDTO.getId())).thenReturn(lastPage);
-        when(pageService.getCourseParticipantPage(any(PageRequest.class), anyInt())).thenReturn(coursePage);
-        mvc.perform(get(LAST_COURSE)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage)))
-                .andExpect(model().attribute(COURSE_PAGE, is(lastPage)))
-                .andExpect(view().name(INDEX_COURSE));
-        verify(pageService, never()).computeLastCoursePage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getLastCoursePage(userDTO.getId());
-        verify(pageService).getCourseParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetLastCoursePageParticipantNotFound() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
-        mvc.perform(get(LAST_COURSE)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).computeLastCoursePage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService, never()).getLastCoursePage(anyInt());
-        verify(pageService, never()).getCourseParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetNextExperimentPage() throws Exception {
-        when(pageService.computeLastExperimentPage()).thenReturn(lastPage);
-        when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        mvc.perform(get(NEXT_EXPERIMENT)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(pageNum + 1)))
-                .andExpect(view().name(INDEX_EXPERIMENT));
-        verify(pageService).computeLastExperimentPage();
-        verify(pageService).getExperimentPage(any(PageRequest.class));
-        verify(userService, never()).getUser(anyString());
-    }
-
-    @Test
-    @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetNextExperimentPageCurrentBiggerLast() throws Exception {
-        when(pageService.computeLastExperimentPage()).thenReturn(2);
-        mvc.perform(get(NEXT_EXPERIMENT)
-                        .param(PAGE_PARAM, LAST)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService).computeLastExperimentPage();
-        verify(pageService, never()).getExperimentPage(any(PageRequest.class));
-        verify(userService, never()).getUser(anyString());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetNextExperimentPageParticipant() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(lastPage);
-        when(pageService.getExperimentParticipantPage(any(PageRequest.class), anyInt())).thenReturn(experimentPage);
-        mvc.perform(get(NEXT_EXPERIMENT)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(pageNum + 1)))
-                .andExpect(view().name(INDEX_EXPERIMENT));
-        verify(pageService, never()).computeLastExperimentPage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getLastExperimentPage(userDTO.getId());
-        verify(pageService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetNextExperimentPageParticipantCurrentBiggerLast() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(2);
-        mvc.perform(get(NEXT_EXPERIMENT)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).computeLastExperimentPage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getLastExperimentPage(userDTO.getId());
-        verify(pageService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetNextExperimentPageParticipantNotFound() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
-        mvc.perform(get(NEXT_EXPERIMENT)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).computeLastExperimentPage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService, never()).getLastExperimentPage(userDTO.getId());
-        verify(pageService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetNextExperimentPageParamInvalid() throws Exception {
-        when(pageService.computeLastExperimentPage()).thenReturn(lastPage);
-        mvc.perform(get(NEXT_EXPERIMENT)
+        mvc.perform(get(PAGE_COURSE)
                         .param(PAGE_PARAM, INVALID_NUMBER)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -509,17 +268,18 @@ public class HomeControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(pageService).computeLastExperimentPage();
-        verify(pageService, never()).getExperimentPage(any(PageRequest.class));
-        verify(userService, never()).getUser(anyString());
+        verify(pageService, never()).computeLastCoursePage();
+        verify(userService).getUser(userDTO.getUsername());
+        verify(pageService).getLastCoursePage(userDTO.getId());
+        verify(pageService, never()).getCourseParticipantPage(any(PageRequest.class), anyInt());
     }
 
     @Test
     @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetPreviousExperimentPage() throws Exception {
+    public void testGetExperimentPage() throws Exception {
         when(pageService.computeLastExperimentPage()).thenReturn(lastPage);
         when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        mvc.perform(get(PREV_EXPERIMENT)
+        mvc.perform(get(PAGE_EXPERIMENT)
                         .param(PAGE_PARAM, CURRENT)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -527,8 +287,8 @@ public class HomeControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(pageNum - 1)))
+                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(EXPERIMENT_PAGE, is(pageNum)))
                 .andExpect(view().name(INDEX_EXPERIMENT));
         verify(pageService).computeLastExperimentPage();
         verify(pageService).getExperimentPage(any(PageRequest.class));
@@ -536,30 +296,12 @@ public class HomeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetPreviousExperimentPageLastSmallerCurrent() throws Exception {
-        when(pageService.computeLastExperimentPage()).thenReturn(2);
-        mvc.perform(get(PREV_EXPERIMENT)
-                        .param(PAGE_PARAM, LAST)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService).computeLastExperimentPage();
-        verify(pageService, never()).getExperimentPage(any(PageRequest.class));
-        verify(userService, never()).getUser(anyString());
-    }
-
-    @Test
     @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetPreviousExperimentPageParticipant() throws Exception {
+    public void testGetExperimentPageParticipant() throws Exception {
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(lastPage);
-        when(pageService.getExperimentParticipantPage(any(PageRequest.class),
-                anyInt())).thenReturn(experimentPage);
-        mvc.perform(get(PREV_EXPERIMENT)
+        when(pageService.getExperimentParticipantPage(any(PageRequest.class), anyInt())).thenReturn(experimentPage);
+        mvc.perform(get(PAGE_EXPERIMENT)
                         .param(PAGE_PARAM, CURRENT)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -567,8 +309,8 @@ public class HomeControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(pageNum - 1)))
+                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(EXPERIMENT_PAGE, is(pageNum)))
                 .andExpect(view().name(INDEX_EXPERIMENT));
         verify(pageService, never()).computeLastExperimentPage();
         verify(userService).getUser(userDTO.getUsername());
@@ -578,10 +320,10 @@ public class HomeControllerIntegrationTest {
 
     @Test
     @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetPreviousExperimentPageParticipantLastSmallerCurrent() throws Exception {
+    public void testGetExperimentPageCurrentBiggerLast() throws Exception {
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(1);
-        mvc.perform(get(PREV_EXPERIMENT)
+        when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(pageNum);
+        mvc.perform(get(PAGE_EXPERIMENT)
                         .param(PAGE_PARAM, CURRENT)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -590,16 +332,16 @@ public class HomeControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(pageService, never()).computeLastExperimentPage();
-        verify(userService).getUser(userDTO.getUsername());
         verify(pageService).getLastExperimentPage(userDTO.getId());
-        verify(pageService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
+        verify(pageService, never()).getExperimentPage(any(PageRequest.class));
+        verify(userService).getUser(userDTO.getUsername());
     }
 
     @Test
     @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetPreviousExperimentPageParticipantNotFound() throws Exception {
+    public void testGetExperimentPageParticipantNotFound() throws Exception {
         when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
-        mvc.perform(get(PREV_EXPERIMENT)
+        mvc.perform(get(PAGE_EXPERIMENT)
                         .param(PAGE_PARAM, CURRENT)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -614,155 +356,20 @@ public class HomeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = {"ADMIN"})
-    public void testGetPreviousExperimentPageCurrentFirstPage() throws Exception {
-        when(pageService.computeLastExperimentPage()).thenReturn(lastPage);
-        mvc.perform(get(PREV_EXPERIMENT)
-                        .param(PAGE_PARAM, "1")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService).computeLastExperimentPage();
-        verify(pageService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetPreviousExperimentPageParamInvalid() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(lastPage);
-        mvc.perform(get(PREV_EXPERIMENT)
-                        .param(PAGE_PARAM, BLANK)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService).getLastExperimentPage(userDTO.getId());
-        verify(pageService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
     @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetFirstExperimentPage() throws Exception {
+    public void testGetExperimentPageParamInvalid() throws Exception {
         when(pageService.computeLastExperimentPage()).thenReturn(lastPage);
-        when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        mvc.perform(get(FIRST_EXPERIMENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(1)))
-                .andExpect(view().name(INDEX_EXPERIMENT));
-        verify(pageService).computeLastExperimentPage();
-        verify(pageService).getExperimentPage(any(PageRequest.class));
-        verify(userService, never()).getUser(anyString());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetFirstExperimentPageParticipant() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(lastPage);
-        when(pageService.getExperimentParticipantPage(any(PageRequest.class),
-                anyInt())).thenReturn(experimentPage);
-        mvc.perform(get(FIRST_EXPERIMENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(1)))
-                .andExpect(view().name(INDEX_EXPERIMENT));
-        verify(pageService, never()).computeLastExperimentPage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getLastExperimentPage(userDTO.getId());
-        verify(pageService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetFirstExperimentPageParticipantNotFound() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
-        mvc.perform(get(FIRST_EXPERIMENT)
+        mvc.perform(get(PAGE_EXPERIMENT)
+                        .param(PAGE_PARAM, PAGE_PARAM)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).computeLastExperimentPage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService, never()).getLastExperimentPage(anyInt());
-        verify(pageService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "user", roles = {"ADMIN"})
-    public void testGetLastExperimentPage() throws Exception {
-        when(pageService.computeLastExperimentPage()).thenReturn(lastPage);
-        when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        mvc.perform(get(LAST_EXPERIMENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(view().name(INDEX_EXPERIMENT));
         verify(pageService).computeLastExperimentPage();
-        verify(pageService).getExperimentPage(any(PageRequest.class));
+        verify(pageService, never()).getExperimentPage(any(PageRequest.class));
         verify(userService, never()).getUser(anyString());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetLastExperimentPageParticipant() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(lastPage);
-        when(pageService.getExperimentParticipantPage(any(PageRequest.class), anyInt())).thenReturn(experimentPage);
-        mvc.perform(get(LAST_EXPERIMENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(lastPage)))
-                .andExpect(view().name(INDEX_EXPERIMENT));
-        verify(pageService, never()).computeLastExperimentPage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getLastExperimentPage(userDTO.getId());
-        verify(pageService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
-    public void testGetLastExperimentPageParticipantNotFound() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
-        mvc.perform(get(LAST_EXPERIMENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).computeLastExperimentPage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService, never()).getLastExperimentPage(anyInt());
-        verify(pageService, never()).getExperimentParticipantPage(any(PageRequest.class), anyInt());
     }
 
     @Test

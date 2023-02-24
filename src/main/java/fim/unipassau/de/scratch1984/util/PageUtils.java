@@ -61,4 +61,20 @@ public final class PageUtils {
         }
     }
 
+    /**
+     * Checks, whether the given page is within the tolerated boundaries. The lower boundary for any page number is
+     * zero, while the upper boundary depends on the given last page number.
+     *
+     * @param page The page number to check.
+     * @param lastPage The number of the last page.
+     * @return {@code true} if the page number is invalid, or {@code false} otherwise.
+     */
+    public static boolean isInvalidPageNumber(final int page, final int lastPage) {
+        if (page < 0) {
+            return true;
+        } else {
+            return page >= lastPage;
+        }
+    }
+
 }
