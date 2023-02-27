@@ -167,22 +167,23 @@
                 </div>
                 <!-- The navigation elements below the table. -->
                 <div class="text-center">
-                    <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                       th:href="@{/experiment/first(id=${experimentDTO.id})}" th:aria-label="#{first_page_label}">
+                    <a class="btn btn-outline-dark" th:style="${page == 0 ? 'display:none' : ''}"
+                       th:href="@{/experiment/page(id=${experimentDTO.id}, page=0)}"
+                       th:aria-label="#{first_page_label}">
                         <i aria-hidden="true" class="fas fa-angle-double-left"></i>
                     </a>
-                    <a class="btn btn-outline-dark" th:style="${page == 1 ? 'display:none' : ''}"
-                       th:href="@{/experiment/previous(id=${experimentDTO.id}, page=${page})}"
+                    <a class="btn btn-outline-dark" th:style="${page == 0 ? 'display:none' : ''}"
+                       th:href="@{/experiment/page(id=${experimentDTO.id}, page=${page}-1)}"
                        th:aria-label="#{previous_page_label}">
                         <i aria-hidden="true" class="fas fa-angle-left"></i>
                     </a>
                     <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
-                       th:href="@{/experiment/next(id=${experimentDTO.id}, page=${page})}"
+                       th:href="@{/experiment/page(id=${experimentDTO.id}, page=${page}+1)}"
                        th:aria-label="#{next_page_label}">
                         <i aria-hidden="true" class="fas fa-angle-right"></i>
                     </a>
                     <a class="btn btn-outline-dark" th:style="${page == lastPage ? 'display:none' : ''}"
-                       th:href="@{/experiment/last(id=${experimentDTO.id})}"
+                       th:href="@{/experiment/page(id=${experimentDTO.id}, page=${lastPage})}"
                        th:aria-label="#{last_page_label}">
                         <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                     </a>
