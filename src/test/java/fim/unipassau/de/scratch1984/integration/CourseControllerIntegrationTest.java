@@ -151,11 +151,11 @@ public class CourseControllerIntegrationTest {
                 .andExpect(view().name(COURSE))
                 .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("experiments", is(experiments)))
-                .andExpect(model().attribute("experimentPage", is(1)))
-                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)))
+                .andExpect(model().attribute("experimentPage", is(0)))
+                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE - 1)))
                 .andExpect(model().attribute("participants", is(participants)))
-                .andExpect(model().attribute("participantPage", is(1)))
-                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE)));
+                .andExpect(model().attribute("participantPage", is(0)))
+                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE - 1)));
         verify(courseService).getCourse(ID);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
@@ -179,11 +179,11 @@ public class CourseControllerIntegrationTest {
                 .andExpect(view().name(COURSE))
                 .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("experiments", is(experiments)))
-                .andExpect(model().attribute("experimentPage", is(1)))
-                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)))
+                .andExpect(model().attribute("experimentPage", is(0)))
+                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE - 1)))
                 .andExpect(model().attribute("participants", is(empty())))
-                .andExpect(model().attribute("participantPage", is(1)))
-                .andExpect(model().attribute("lastParticipantPage", is(1)));
+                .andExpect(model().attribute("participantPage", is(0)))
+                .andExpect(model().attribute("lastParticipantPage", is(0)));
         verify(courseService).getCourse(ID);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
@@ -410,8 +410,8 @@ public class CourseControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
                 .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-                .andExpect(model().attribute("experimentPage", is(1)))
-                .andExpect(model().attribute("participantPage", is(1)));
+                .andExpect(model().attribute("experimentPage", is(0)))
+                .andExpect(model().attribute("participantPage", is(0)));
         verify(courseService).changeCourseStatus(true, ID);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
@@ -432,8 +432,8 @@ public class CourseControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
                 .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-                .andExpect(model().attribute("experimentPage", is(1)))
-                .andExpect(model().attribute("participantPage", is(1)));
+                .andExpect(model().attribute("experimentPage", is(0)))
+                .andExpect(model().attribute("participantPage", is(0)));
         verify(courseService).changeCourseStatus(false, ID);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
@@ -636,12 +636,13 @@ public class CourseControllerIntegrationTest {
     }
 
     @Test
-    public void testGetNextParticipantPage() throws Exception {
+    public void testGetParticipantPage() throws Exception {
+        courseDTO.setContent(null);
+        when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/next/participant")
+        mvc.perform(get("/course/page/participant")
                         .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, LAST)
                         .param(PAGE_PARAM, CURRENT)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -651,55 +652,17 @@ public class CourseControllerIntegrationTest {
                 .andExpect(view().name(PARTICIPANT_TABLE))
                 .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("participants", is(participants)))
-                .andExpect(model().attribute("participantPage", is(4)))
-                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE)));
+                .andExpect(model().attribute("participantPage", is(3)))
+                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE - 1)));
+        verify(pageService).getLastParticipantCoursePage(ID);
         verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService).getCourse(ID);
     }
 
     @Test
-    public void testGetNextParticipantPageError() throws Exception {
-        mvc.perform(get("/course/next/participant")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, TITLE)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetPreviousParticipantPage() throws Exception {
-        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/previous/participant")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(PARTICIPANT_TABLE))
-                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-                .andExpect(model().attribute("participants", is(participants)))
-                .andExpect(model().attribute("participantPage", is(2)))
-                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE)));
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetPreviousParticipantPageError() throws Exception {
-        mvc.perform(get("/course/previous/participant")
+    public void testGetParticipantPageError() throws Exception {
+        mvc.perform(get("/course/page/participant")
                         .param(ID_PARAM, "0")
-                        .param(LAST_PAGE_PARAM, LAST)
                         .param(PAGE_PARAM, CURRENT)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -707,89 +670,18 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
+        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
         verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService, never()).getCourse(anyInt());
     }
 
     @Test
-    public void testGetFirstParticipantPage() throws Exception {
-        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/first/participant")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(PARTICIPANT_TABLE))
-                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-                .andExpect(model().attribute("participants", is(participants)))
-                .andExpect(model().attribute("participantPage", is(1)))
-                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE)));
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetFirstParticipantPageError() throws Exception {
-        mvc.perform(get("/course/first/participant")
-                        .param(ID_PARAM, TITLE)
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetLastParticipantPage() throws Exception {
-        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/last/participant")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(PARTICIPANT_TABLE))
-                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-                .andExpect(model().attribute("participants", is(participants)))
-                .andExpect(model().attribute("participantPage", is(LAST_PAGE)))
-                .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE)));
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetLastParticipantPageError() throws Exception {
-        mvc.perform(get("/course/last/participant")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, " ")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetNextExperimentPage() throws Exception {
+    public void testGetExperimentPage() throws Exception {
+        when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/next/experiment")
+        mvc.perform(get("/course/page/experiment")
                         .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, LAST)
                         .param(PAGE_PARAM, CURRENT)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -799,134 +691,26 @@ public class CourseControllerIntegrationTest {
                 .andExpect(view().name(EXPERIMENT_TABLE))
                 .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("experiments", is(experiments)))
-                .andExpect(model().attribute("experimentPage", is(4)))
-                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
+                .andExpect(model().attribute("experimentPage", is(3)))
+                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE - 1)));
+        verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService).getCourse(ID);
     }
 
     @Test
-    public void testGetNextExperimentPageError() throws Exception {
-        mvc.perform(get("/course/next/experiment")
-                        .param(ID_PARAM, "0")
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .param(PAGE_PARAM, CURRENT)
+    public void testGetNextExperimentInvalidPage() throws Exception {
+        when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
+        mvc.perform(get("/course/page/experiment")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(PAGE_PARAM, "-1")
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetPreviousExperimentPage() throws Exception {
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/previous/experiment")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(EXPERIMENT_TABLE))
-                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-                .andExpect(model().attribute("experiments", is(experiments)))
-                .andExpect(model().attribute("experimentPage", is(2)))
-                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetPreviousExperimentPageError() throws Exception {
-        mvc.perform(get("/course/previous/experiment")
-                        .param(ID_PARAM, "  ")
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetFirstExperimentPage() throws Exception {
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/first/experiment")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(EXPERIMENT_TABLE))
-                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-                .andExpect(model().attribute("experiments", is(experiments)))
-                .andExpect(model().attribute("experimentPage", is(1)))
-                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetFirstExperimentPageError() throws Exception {
-        mvc.perform(get("/course/first/experiment")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, "-1")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetLastExperimentPage() throws Exception {
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/last/experiment")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(EXPERIMENT_TABLE))
-                .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-                .andExpect(model().attribute("experiments", is(experiments)))
-                .andExpect(model().attribute("experimentPage", is(LAST_PAGE)))
-                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE)));
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetLastExperimentPageError() throws Exception {
-        mvc.perform(get("/course/last/experiment")
-                        .param(ID_PARAM, "  ")
-                        .param(LAST_PAGE_PARAM, LAST)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+        verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());
     }
@@ -935,30 +719,25 @@ public class CourseControllerIntegrationTest {
         List<CourseExperimentProjection> experiments = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             int id = i + 1;
-            CourseExperimentProjection projection = new CourseExperimentProjection() {
+            CourseExperimentProjection projection = () -> new ExperimentTableProjection() {
                 @Override
-                public ExperimentTableProjection getExperiment() {
-                    return new ExperimentTableProjection() {
-                        @Override
-                        public Integer getId() {
-                            return id;
-                        }
+                public Integer getId() {
+                    return id;
+                }
 
-                        @Override
-                        public String getTitle() {
-                            return "Experiment " + id;
-                        }
+                @Override
+                public String getTitle() {
+                    return "Experiment " + id;
+                }
 
-                        @Override
-                        public String getDescription() {
-                            return "Some description";
-                        }
+                @Override
+                public String getDescription() {
+                    return "Some description";
+                }
 
-                        @Override
-                        public boolean isActive() {
-                            return false;
-                        }
-                    };
+                @Override
+                public boolean isActive() {
+                    return false;
                 }
             };
             experiments.add(projection);

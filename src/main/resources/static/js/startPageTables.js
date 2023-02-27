@@ -1,3 +1,5 @@
+import {redirectErrorPage} from "./errorRedirect.js";
+
 /**
  * Readies the functions to retrieve a different experiment or course page upon clicking the respective buttons.
  */
@@ -20,6 +22,9 @@ function loadNextCoursePage() {
             updateCourseTable(data);
             coursePage++;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -36,6 +41,9 @@ function loadPreviousCoursePage() {
             updateCourseTable(data);
             coursePage--;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -51,6 +59,9 @@ function loadFirstCoursePage() {
             updateCourseTable(data);
             coursePage = 0;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -66,6 +77,9 @@ function loadLastCoursePage() {
             updateCourseTable(data);
             coursePage = lastCoursePage;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -82,6 +96,9 @@ function loadNextExperimentPage() {
             updateExperimentTable(data);
             experimentPage++;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -98,6 +115,9 @@ function loadPreviousExperimentPage() {
             updateExperimentTable(data);
             experimentPage--;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -113,6 +133,9 @@ function loadFirstExperimentPage() {
             updateExperimentTable(data);
             experimentPage = 0;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -128,6 +151,9 @@ function loadLastExperimentPage() {
             updateExperimentTable(data);
             experimentPage = lastExperimentPage;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 

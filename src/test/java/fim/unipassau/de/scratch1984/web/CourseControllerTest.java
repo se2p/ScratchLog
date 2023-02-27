@@ -646,201 +646,70 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testGetNextParticipantPage() {
+    public void testGetParticipantPage() {
+        when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getNextParticipantPage(ID_STRING, LAST, CURRENT);
+        ModelAndView mv = courseController.getParticipantPage(ID_STRING, CURRENT);
         assertAll(
                 () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
                 () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastParticipantPage")),
-                () -> assertEquals(4, mv.getModel().get("participantPage"))
+                () -> assertEquals(LAST_PAGE - 1, mv.getModel().get("lastParticipantPage")),
+                () -> assertEquals(3, mv.getModel().get("participantPage"))
         );
+        verify(pageService).getLastParticipantCoursePage(ID);
         verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService).getCourse(ID);
     }
 
     @Test
-    public void testGetNextParticipantPageInvalidInfo() {
-        assertEquals(Constants.ERROR, courseController.getNextParticipantPage(ID_STRING, LAST, "-1").getViewName());
+    public void testGetParticipantPageInvalidPageNumber() {
+        when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
+        assertEquals(Constants.ERROR, courseController.getParticipantPage(ID_STRING, LAST).getViewName());
+        verify(pageService).getLastParticipantCoursePage(ID);
         verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService, never()).getCourse(anyInt());
     }
 
     @Test
-    public void testGetPreviousParticipantPage() {
+    public void testGetParticipantPageInvalidId() {
+        assertEquals(Constants.ERROR, courseController.getParticipantPage(BLANK, LAST).getViewName());
+        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(courseService, never()).getCourse(anyInt());
+    }
+
+    @Test
+    public void testGetExperimentPage() {
         courseDTO.setContent(null);
-        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getPreviousParticipantPage(ID_STRING, LAST, CURRENT);
-        assertAll(
-                () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastParticipantPage")),
-                () -> assertEquals(2, mv.getModel().get("participantPage"))
-        );
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetPreviousParticipantPageInvalidInfo() {
-        assertEquals(Constants.ERROR, courseController.getPreviousParticipantPage(ID_STRING, LAST,
-                ID_STRING).getViewName());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetFirstParticipantPage() {
-        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getFirstParticipantPage(ID_STRING, LAST);
-        assertAll(
-                () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastParticipantPage")),
-                () -> assertEquals(1, mv.getModel().get("participantPage"))
-        );
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetFirstParticipantPageInvalidInfo() {
-        assertEquals(Constants.ERROR, courseController.getFirstParticipantPage(ID_STRING, null).getViewName());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetLastParticipantPage() {
-        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getLastParticipantPage(ID_STRING, LAST);
-        assertAll(
-                () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastParticipantPage")),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("participantPage"))
-        );
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetLastParticipantPageInvalidInfo() {
-        assertEquals(Constants.ERROR, courseController.getLastParticipantPage(ID_STRING, "-1").getViewName());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetNextExperimentPage() {
-        courseDTO.setContent(null);
+        when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getNextExperimentPage(ID_STRING, LAST, CURRENT);
+        ModelAndView mv = courseController.getExperimentPage(ID_STRING, CURRENT);
         assertAll(
                 () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
                 () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
-                () -> assertEquals(4, mv.getModel().get("experimentPage"))
+                () -> assertEquals(LAST_PAGE - 1, mv.getModel().get("lastExperimentPage")),
+                () -> assertEquals(3, mv.getModel().get("experimentPage"))
         );
+        verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService).getCourse(ID);
     }
 
     @Test
-    public void testGetNextExperimentPageInvalidCurrent() {
-        assertEquals(Constants.ERROR, courseController.getNextExperimentPage(ID_STRING, LAST, LAST).getViewName());
+    public void testGetExperimentPageInvalidPage() {
+        when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
+        assertEquals(Constants.ERROR, courseController.getExperimentPage(ID_STRING, null).getViewName());
+        verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());
     }
 
     @Test
-    public void testGetNextExperimentPageInvalidParams() {
-        assertEquals(Constants.ERROR, courseController.getNextExperimentPage(ID_STRING, BLANK, LAST).getViewName());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetPreviousExperimentPage() {
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getPreviousExperimentPage(ID_STRING, LAST, CURRENT);
-        assertAll(
-                () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
-                () -> assertEquals(2, mv.getModel().get("experimentPage"))
-        );
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetPreviousExperimentPageInvalidCurrent() {
-        assertEquals(Constants.ERROR, courseController.getPreviousExperimentPage(ID_STRING, LAST, "1").getViewName());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetPreviousExperimentPageInvalidParams() {
-        assertEquals(Constants.ERROR, courseController.getPreviousExperimentPage(ID_STRING, null, LAST).getViewName());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetPreviousExperimentPageInvalidParamsCurrent() {
-        assertEquals(Constants.ERROR, courseController.getPreviousExperimentPage(ID_STRING, LAST, BLANK).getViewName());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetFirstExperimentPage() {
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getFirstExperimentPage(ID_STRING, LAST);
-        assertAll(
-                () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
-                () -> assertEquals(1, mv.getModel().get("experimentPage"))
-        );
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetFirstExperimentPageInvalidParams() {
-        assertEquals(Constants.ERROR, courseController.getFirstExperimentPage(BLANK, LAST).getViewName());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetLastExperimentPage() {
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getLastExperimentPage(ID_STRING, LAST);
-        assertAll(
-                () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
-                () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("lastExperimentPage")),
-                () -> assertEquals(LAST_PAGE, mv.getModel().get("experimentPage"))
-        );
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetLastExperimentPageInvalidParams() {
-        assertEquals(Constants.ERROR, courseController.getLastExperimentPage(ID_STRING, "-1").getViewName());
+    public void testGetExperimentPageInvalidId() {
+        assertEquals(Constants.ERROR, courseController.getExperimentPage("0", CURRENT).getViewName());
+        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());
     }

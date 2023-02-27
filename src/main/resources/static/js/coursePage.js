@@ -1,4 +1,5 @@
 import {closeModal, openModal} from "./modals.js";
+import {redirectErrorPage} from "./errorRedirect.js";
 
 /**
  * Readies all necessary event listeners for buttons on the course page.
@@ -11,14 +12,18 @@ $(document).ready(function () {
  * Loads the next course participant page and updates the course participant table with the new data.
  */
 function loadNextCourseParticipantPage() {
+    const PAGE = participantPage + 1;
     $.ajax({
         type: 'get',
-        url: contextPath + "/course/next/participant",
-        data: {id: courseId, lastPage: lastParticipantPage, page: participantPage},
+        url: contextPath + "/course/page/participant",
+        data: {id: courseId, page: PAGE},
         success: function(data) {
             updateCourseParticipantTable(data);
             participantPage++;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -26,14 +31,18 @@ function loadNextCourseParticipantPage() {
  * Loads the previous course participant page and updates the course participant table with the new data.
  */
 function loadPreviousCourseParticipantPage() {
+    const PAGE = participantPage - 1;
     $.ajax({
         type: 'get',
-        url: contextPath + "/course/previous/participant",
-        data: {id: courseId, lastPage: lastParticipantPage, page: participantPage},
+        url: contextPath + "/course/page/participant",
+        data: {id: courseId, page: PAGE},
         success: function(data) {
             updateCourseParticipantTable(data);
             participantPage--;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -43,12 +52,15 @@ function loadPreviousCourseParticipantPage() {
 function loadFirstCourseParticipantPage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/course/first/participant",
-        data: {id: courseId, lastPage: lastParticipantPage},
+        url: contextPath + "/course/page/participant",
+        data: {id: courseId, page: 0},
         success: function(data) {
             updateCourseParticipantTable(data);
-            participantPage = 1;
+            participantPage = 0;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -58,12 +70,15 @@ function loadFirstCourseParticipantPage() {
 function loadLastCourseParticipantPage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/course/last/participant",
-        data: {id: courseId, lastPage: lastParticipantPage},
+        url: contextPath + "/course/page/participant",
+        data: {id: courseId, page: lastParticipantPage},
         success: function(data) {
             updateCourseParticipantTable(data);
             participantPage = lastParticipantPage;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -71,14 +86,18 @@ function loadLastCourseParticipantPage() {
  * Loads the next course experiment page and updates the course experiment table with the new data.
  */
 function loadNextCourseExperimentPage() {
+    const PAGE = experimentPage + 1;
     $.ajax({
         type: 'get',
-        url: contextPath + "/course/next/experiment",
-        data: {id: courseId, lastPage: lastExperimentPage, page: experimentPage},
+        url: contextPath + "/course/page/experiment",
+        data: {id: courseId, page: PAGE},
         success: function(data) {
             updateCourseExperimentTable(data);
             experimentPage++;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -86,14 +105,18 @@ function loadNextCourseExperimentPage() {
  * Loads the previous course experiment page and updates the course experiment table with the new data.
  */
 function loadPreviousCourseExperimentPage() {
+    const PAGE = experimentPage - 1;
     $.ajax({
         type: 'get',
-        url: contextPath + "/course/previous/experiment",
-        data: {id: courseId, lastPage: lastExperimentPage, page: experimentPage},
+        url: contextPath + "/course/page/experiment",
+        data: {id: courseId, page: PAGE},
         success: function(data) {
             updateCourseExperimentTable(data);
             experimentPage--;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -103,12 +126,15 @@ function loadPreviousCourseExperimentPage() {
 function loadFirstCourseExperimentPage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/course/first/experiment",
-        data: {id: courseId, lastPage: lastExperimentPage},
+        url: contextPath + "/course/page/experiment",
+        data: {id: courseId, page: 0},
         success: function(data) {
             updateCourseExperimentTable(data);
-            experimentPage = 1;
+            experimentPage = 0;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -118,12 +144,15 @@ function loadFirstCourseExperimentPage() {
 function loadLastCourseExperimentPage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/course/last/experiment",
-        data: {id: courseId, lastPage: lastExperimentPage},
+        url: contextPath + "/course/page/experiment",
+        data: {id: courseId, page: lastExperimentPage},
         success: function(data) {
             updateCourseExperimentTable(data);
             experimentPage = lastExperimentPage;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 

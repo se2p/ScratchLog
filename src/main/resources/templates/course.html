@@ -118,11 +118,11 @@
             <!-- The navigation elements below the table. -->
             <div class="text-center">
                 <a id="participantsFirst" class="btn btn-outline-dark"
-                   th:style="${participantPage == 1 ? 'display:none' : ''}" th:aria-label="#{first_page_label}">
+                   th:style="${participantPage == 0 ? 'display:none' : ''}" th:aria-label="#{first_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-left"></i>
                 </a>
                 <a id="participantsPrev" class="btn btn-outline-dark"
-                   th:style="${participantPage == 1 ? 'display:none' : ''}" th:aria-label="#{previous_page_label}">
+                   th:style="${participantPage == 0 ? 'display:none' : ''}" th:aria-label="#{previous_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-left"></i>
                 </a>
                 <a id="participantsNext" class="btn btn-outline-dark"
@@ -202,11 +202,11 @@
             <!-- The navigation elements below the table. -->
             <div class="text-center" th:unless="${experiments.isEmpty()}">
                 <a id="experimentsFirst" class="btn btn-outline-dark"
-                   th:style="${experimentPage == 1 ? 'display:none' : ''}" th:aria-label="#{first_page_label}">
+                   th:style="${experimentPage == 0 ? 'display:none' : ''}" th:aria-label="#{first_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-double-left"></i>
                 </a>
                 <a id="experimentsPrev" class="btn btn-outline-dark"
-                   th:style="${experimentPage == 1 ? 'display:none' : ''}" th:aria-label="#{previous_page_label}">
+                   th:style="${experimentPage == 0 ? 'display:none' : ''}" th:aria-label="#{previous_page_label}">
                     <i aria-hidden="true" class="fas fa-angle-left"></i>
                 </a>
                 <a id="experimentsNext" class="btn btn-outline-dark"
