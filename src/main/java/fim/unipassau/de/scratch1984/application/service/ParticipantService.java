@@ -2,22 +2,24 @@ package fim.unipassau.de.scratch1984.application.service;
 
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.exception.StoreException;
+import fim.unipassau.de.scratch1984.persistence.entity.Course;
+import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.ParticipantId;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseExperimentRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseParticipantRepository;
+import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +52,21 @@ public class ParticipantService {
     private final ExperimentRepository experimentRepository;
 
     /**
+     * The course repository to use for database queries related to course data.
+     */
+    private final CourseRepository courseRepository;
+
+    /**
+     * The course experiment repository to use for database queries related to course experiment data.
+     */
+    private final CourseExperimentRepository courseExperimentRepository;
+
+    /**
+     * The course participant repository to use for database queries related to course participant data.
+     */
+    private final CourseParticipantRepository courseParticipantRepository;
+
+    /**
      * The participant repository to use for database queries participation data.
      */
     private final ParticipantRepository participantRepository;
@@ -57,31 +74,39 @@ public class ParticipantService {
     /**
      * Constructs a participant service with the given dependencies.
      *
-     * @param userRepository The user repository to use.
-     * @param participantRepository The participant repository to use.
-     * @param experimentRepository The experiment repository to use.
+     * @param userRepository The {@link UserRepository} to use.
+     * @param participantRepository The {@link ParticipantRepository} to use.
+     * @param courseRepository The {@link CourseRepository} to use.
+     * @param courseExperimentRepository The {@link CourseExperimentRepository} to use.
+     * @param courseParticipantRepository The {@link CourseParticipantRepository} to use.
+     * @param experimentRepository The {@link ExperimentRepository} to use.
      */
     @Autowired
     public ParticipantService(final UserRepository userRepository, final ParticipantRepository participantRepository,
+                              final CourseRepository courseRepository,
+                              final CourseExperimentRepository courseExperimentRepository,
+                              final CourseParticipantRepository courseParticipantRepository,
                               final ExperimentRepository experimentRepository) {
         this.userRepository = userRepository;
         this.participantRepository = participantRepository;
+        this.courseRepository = courseRepository;
+        this.courseExperimentRepository = courseExperimentRepository;
+        this.courseParticipantRepository = courseParticipantRepository;
         this.experimentRepository = experimentRepository;
     }
 
     /**
-     * Retrieves the participant information for the given experiment id and the given user id from the database. If no
-     * corresponding user, experiment or participant can be found, a {@link NotFoundException} is thrown instead.
+     * Retrieves the participant information for the given experiment id and the given user id from the database.
      *
      * @param experimentId The experiment id.
      * @param userId The user id.
      * @return The {@link ParticipantDTO} containing the participant information.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user, experiment or participant entry could be found.
      */
     @Transactional
     public ParticipantDTO getParticipant(final int experimentId, final int userId) {
         if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            logger.error("Cannot search for participant with invalid experiment id " + experimentId
-                    + " or invalid user id " + userId + "!");
             throw new IllegalArgumentException("Cannot search for participant with invalid experiment id "
                     + experimentId + " or invalid user id " + userId + "!");
         }
@@ -109,13 +134,61 @@ public class ParticipantService {
     }
 
     /**
+     * Adds the users participating in the course with the given id as participants to the experiment with the given id.
+     *
+     * @param experimentId The id of the experiment.
+     * @param courseId The id of the course.
+     * @throws IllegalArgumentException if the passed course or experiment ids are invalid.
+     * @throws IllegalStateException if the course or experiment are inactive or the experiment is not part of a course.
+     * @throws NotFoundException if no corresponding course or experiment entries could be found.
+     * @throws StoreException if adding a course participant to the experiment violated the foreign key constraints.
+     */
+    @Transactional
+    public void saveParticipants(final int experimentId, final int courseId) {
+        if (experimentId < Constants.MIN_ID || courseId < Constants.MIN_ID) {
+            throw new IllegalArgumentException("Cannot add participants to course experiment with invalid experiment "
+                    + "id " + experimentId + " or invalid course id " + courseId + "!");
+        }
+
+        Course course = courseRepository.getOne(courseId);
+        Experiment experiment = experimentRepository.getOne(experimentId);
+
+        try {
+            if (!course.isActive() || !experiment.isActive()) {
+                throw new IllegalStateException("Cannot add participants to inactive course or experiment!");
+            } else if (!courseExperimentRepository.existsByCourseAndExperiment(course, experiment)) {
+                throw new IllegalStateException("Cannot add course participants to experiment which is not part of the "
+                        + "course!");
+            }
+
+            List<CourseParticipant> courseParticipants = courseParticipantRepository.findAllByCourse(course);
+            courseParticipants.forEach(courseParticipant -> addCourseParticipantToExperiment(courseParticipant,
+                    experiment));
+        } catch (EntityNotFoundException e) {
+            logger.error("Could not find the course or experiment data when trying to save course participants!", e);
+            throw new NotFoundException("Could not find the course or experiment data when trying to save course "
+                    + "participants!", e);
+        } catch (ConstraintViolationException e) {
+            throw new StoreException("The given participant data does not meet the foreign key constraints!", e);
+        }
+    }
+
+    /**
      * Creates a new participation for the given user and experiment in the database.
      *
      * @param userId The user id.
      * @param experimentId The experiment id.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user or experiment entries could be found.
+     * @throws StoreException if adding the user as a participant violates the foreign key constraints.
      */
     @Transactional
     public void saveParticipant(final int userId, final int experimentId) {
+        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
+            throw new IllegalArgumentException("Cannot add participant with invalid user id " + userId
+                    + " or invalid experiment id " + experimentId + "!");
+        }
+
         User user = userRepository.getOne(userId);
         Experiment experiment = experimentRepository.getOne(experimentId);
 
@@ -126,7 +199,6 @@ public class ParticipantService {
             logger.error("Could not find the user or experiment when saving the participant data!", e);
             throw new NotFoundException("Could not find the user or experiment when saving the participant data!", e);
         } catch (ConstraintViolationException e) {
-            logger.error("The given participant data does not meet the foreign key constraints!", e);
             throw new StoreException("The given participant data does not meet the foreign key constraints!", e);
         }
     }
@@ -136,12 +208,11 @@ public class ParticipantService {
      *
      * @param participantDTO The dto containing the updated participation information.
      * @return {@code true} if the information was persisted, or {@code false} if not.
+     * @throws IllegalArgumentException if the experiment or user ids of the {@link ParticipantDTO} are invalid.
      */
     @Transactional
     public boolean updateParticipant(final ParticipantDTO participantDTO) {
         if (participantDTO.getExperiment() < Constants.MIN_ID || participantDTO.getUser() < Constants.MIN_ID) {
-            logger.error("Cannot search for participant with invalid experiment id " + participantDTO.getExperiment()
-                    + " or invalid user id " + participantDTO.getUser() + "!");
             throw new IllegalArgumentException("Cannot search for participant with invalid experiment id "
                     + participantDTO.getExperiment() + " or invalid user id " + participantDTO.getUser() + "!");
         }
@@ -164,52 +235,16 @@ public class ParticipantService {
     }
 
     /**
-     * Retrieves a page of participants for the experiment with the given id. If no corresponding experiment exists in
-     * the database a {@link NotFoundException} is thrown instead.
-     *
-     * @param id The experiment id.
-     * @param pageable The pageable containing the page size and page number.
-     * @return The participant page.
-     */
-    @Transactional
-    public Page<Participant> getParticipantPage(final int id, final Pageable pageable) {
-        int pageSize = pageable.getPageSize();
-        int currentPage = pageable.getPageNumber();
-
-        if (id < Constants.MIN_ID) {
-            logger.error("Cannot find participant data for experiment with invalid id " + id + "!");
-            throw new IllegalArgumentException("Cannot find participant data for experiment with invalid id " + id
-                    + "!");
-        } else if (pageSize != Constants.PAGE_SIZE) {
-            logger.error("Cannot return participant page with invalid page size of " + pageSize + "!");
-            throw new IllegalArgumentException("Cannot return experiment page with invalid page size of " + pageSize
-                    + "!");
-        }
-
-        Experiment experiment = experimentRepository.getOne(id);
-        Page<Participant> participants;
-
-        try {
-            participants = participantRepository.findAllByExperiment(experiment, PageRequest.of(currentPage, pageSize,
-                    Sort.by("user").descending()));
-        } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + id + " in the database!", e);
-            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
-        }
-
-        return participants;
-    }
-
-    /**
-     * Retrieves a list of participant ids for the experiment with the given id. If no corresponding experiment exists
-     * in the database a {@link NotFoundException} is thrown instead.
+     * Retrieves a list of participant ids for the experiment with the given id.
      *
      * @param experimentId The experiment id.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment entry could be found.
+     * @throws IllegalStateException if no user entry could be found for a retrieved participant.
      */
     @Transactional
     public void deactivateParticipantAccounts(final int experimentId) {
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot find participant data for experiment with invalid id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot find participant data for experiment with invalid id "
                     + experimentId + "!");
         }
@@ -228,8 +263,6 @@ public class ParticipantService {
             Optional<User> user = userRepository.findById(participant.getUser().getId());
 
             if (user.isEmpty()) {
-                logger.error("No user entry could be found for user with id " + participant.getUser().getId()
-                        + " corresponding to the participant entry for experiment with id " + experimentId + "!");
                 throw new IllegalStateException("No user entry could be found for user with id "
                         + participant.getUser().getId() + " corresponding to the participant entry for experiment with "
                         + "id " + experimentId + "!");
@@ -244,15 +277,16 @@ public class ParticipantService {
 
     /**
      * Retrieves the experiment ids and titles of the experiments in which the user with the given user id is
-     * participating. If no corresponding user exists in the database a {@link NotFoundException} is thrown instead.
+     * participating.
      *
      * @param userId The user id.
      * @return The list of experiment ids.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public HashMap<Integer, String> getExperimentInfoForParticipant(final int userId) {
         if (userId < Constants.MIN_ID) {
-            logger.error("Cannot find participant data for user with invalid id " + userId + "!");
             throw new IllegalArgumentException("Cannot find participant data for user with invalid id "
                     + userId + "!");
         }
@@ -280,12 +314,11 @@ public class ParticipantService {
      *
      * @param userId The user id to search for.
      * @param experimentId The experiment id to search for.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      */
     @Transactional
     public void deleteParticipant(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot delete participant with invalid user id " + userId + " or invalid experiment id "
-                    + experimentId + "!");
             throw new IllegalArgumentException("Cannot delete participant with invalid user id " + userId
                     + " or invalid experiment id " + experimentId + "!");
         }
@@ -299,11 +332,12 @@ public class ParticipantService {
      *
      * @param userId The user id to search for.
      * @return {@code true}, if the user is participating in another experiment, or false otherwise.
+     * @throws IllegalArgumentException if the passed user id is invalid.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public boolean simultaneousParticipation(final int userId) {
         if (userId < Constants.MIN_ID) {
-            logger.error("Cannot search for experiment participation for user with invalid id " + userId + "!");
             throw new IllegalArgumentException("Cannot search for experiment participation for user with invalid id "
                     + userId + "!");
         }
@@ -316,6 +350,33 @@ public class ParticipantService {
         } catch (EntityNotFoundException e) {
             logger.error("Could not find participation entries for user with id " + userId + "!", e);
             throw new NotFoundException("Could not find participation entries for user with id " + userId + "!", e);
+        }
+    }
+
+    /**
+     * Adds the user provided by the given {@link CourseParticipant} as a participant to the given experiment.
+     *
+     * @param courseParticipant The {@link CourseParticipant} containing the user information.
+     * @param experiment The {@link Experiment} to which the user should be added.
+     */
+    private void addCourseParticipantToExperiment(final CourseParticipant courseParticipant,
+                                                  final Experiment experiment) {
+        User user = courseParticipant.getUser();
+        Participant participant = new Participant(user, experiment, null, null);
+        participantRepository.save(participant);
+        updateUser(user);
+    }
+
+    /**
+     * Generates a new secret for the given user and activates their user account, if their secret is null.
+     *
+     * @param user The {@link User} to update.
+     */
+    private void updateUser(final User user) {
+        if (user.getSecret() == null) {
+            user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
+            user.setActive(true);
+            userRepository.save(user);
         }
     }
 

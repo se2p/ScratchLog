@@ -97,14 +97,7 @@ public class FileService {
         try {
             Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id "
-                        + fileDTO.getUser() + " and experiment " + fileDTO.getExperiment()
-                        + " when trying to save a file!");
-                return;
-            } else if (participant.getEnd() != null) {
-                logger.error("Tried to save a file for participant " + fileDTO.getUser() + " during experiment "
-                        + fileDTO.getExperiment() + " who has already finished!");
+            if (isInvalidParticipant(participant, user, experiment, "file")) {
                 return;
             }
 
@@ -132,14 +125,7 @@ public class FileService {
         try {
             Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id "
-                        + sb3ZipDTO.getUser() + " and experiment " + sb3ZipDTO.getExperiment()
-                        + " when trying to save an sb3 zip file!");
-                return;
-            } else if (participant.getEnd() != null) {
-                logger.error("Tried to save a sb3 file for participant " + sb3ZipDTO.getUser() + " during experiment "
-                        + sb3ZipDTO.getExperiment() + " who has already finished!");
+            if (isInvalidParticipant(participant, user, experiment, "sb3 zip file")) {
                 return;
             }
 
@@ -156,18 +142,17 @@ public class FileService {
 
     /**
      * Returns the file names and ids of all {@link File}s the user with the given id uploaded during the experiment
-     * with the given id. If no corresponding user or experiment can be found, a {@link NotFoundException} is thrown
-     * instead.
+     * with the given id.
      *
      * @param userId The user id to search for.
      * @param experimentId The experiment id to search for.
      * @return A {@link List} containing the file ids and names.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user or experiment could be found.
      */
     @Transactional
     public List<FileProjection> getFiles(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot get file ids and names for user with invalid id " + userId + " or experiment with "
-                    + "invalid id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot get file ids and names for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -186,17 +171,16 @@ public class FileService {
     }
 
     /**
-     * Returns all files the user with the given id uploaded during the experiment with the given id. If no
-     * corresponding user or experiment can be found, a {@link NotFoundException} is thrown instead.
+     * Returns all files the user with the given id uploaded during the experiment with the given id.
      *
      * @param userId The user id to search for.
      * @param experimentId The experiment id to search for.
      * @return A {@link List} containing the files.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user or experiment could be found.
      */
     public List<FileDTO> getFileDTOs(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot get files for user with invalid id " + userId + " or experiment with invalid id "
-                    + experimentId + "!");
             throw new IllegalArgumentException("Cannot get files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -217,18 +201,17 @@ public class FileService {
 
     /**
      * Returns the zip file ids of all {@link Sb3Zip}s that were created for the user with the given id during the
-     * experiment with the given id. If no corresponding user or experiment can be found, a {@link NotFoundException} is
-     * thrown instead.
+     * experiment with the given id.
      *
      * @param userId The user id to search for.
      * @param experimentId The experiment id to search for.
      * @return A {@link List} containing the file ids and names.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user or experiment could be found.
      */
     @Transactional
     public List<Integer> getZipIds(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot get zip file ids for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot get zip file ids for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -247,16 +230,16 @@ public class FileService {
     }
 
     /**
-     * Returns a {@link FileDTO} with the specified ID. If no such file exists, a {@link NotFoundException} is thrown
-     * instead.
+     * Returns a {@link FileDTO} with the specified ID.
      *
      * @param id The file ID to search for.
      * @return The file, if it exists.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding file could be found.
      */
     @Transactional
     public FileDTO findFile(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for file with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for file with invalid id " + id + "!");
         }
 
@@ -271,16 +254,16 @@ public class FileService {
     }
 
     /**
-     * Returns a {@link Sb3ZipDTO} with the specified ID. If no such file exists, a {@link NotFoundException} is thrown
-     * instead.
+     * Returns a {@link Sb3ZipDTO} with the specified ID.
      *
      * @param id The zip file ID to search for.
      * @return The zip file, if it exists.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding sb3 zip could be found.
      */
     @Transactional
     public Sb3ZipDTO findZip(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for zip file with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for zip file with invalid id " + id + "!");
         }
 
@@ -296,18 +279,17 @@ public class FileService {
 
     /**
      * Returns the final project {@link Sb3ZipDTO} for the user with the given id during the experiment with the given
-     * id. If no such file exists, an empty {@link Optional} dto is returned instead. If no corresponding user or
-     * experiment could be found, a {@link NotFoundException} is thrown instead.
+     * id. If no such file exists, an empty {@link Optional} dto is returned instead.
      *
      * @param userId The user ID to search for.
      * @param experimentId The experiment ID to search for.
      * @return The zip file, if it exists, or an empty optional.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user or experiment could be found.
      */
     @Transactional
     public Optional<Sb3ZipDTO> findFinalProject(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot search for final project for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot search for final project for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -336,18 +318,17 @@ public class FileService {
 
     /**
      * Returns a list of all {@link Sb3ZipDTO}s that were created for the user with the given id during the experiment
-     * with the given id. If no corresponding user, experiment or zip files could be found, a {@link NotFoundException}
-     * is thrown instead.
+     * with the given id.
      *
      * @param userId The user id to search for.
      * @param experimentId The experiment id to search for.
      * @return A list of zip files.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     * @throws NotFoundException if no corresponding user or experiment could be found.
      */
     @Transactional
     public List<Sb3ZipDTO> getZipFiles(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download zip files for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot download zip files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
@@ -371,6 +352,35 @@ public class FileService {
                     + experimentId + " could be found in the database!", e);
             throw new NotFoundException("Cannot download zip files as no user with id " + userId
                     + " or no experiment with id " + experimentId + " could be found in the database!", e);
+        }
+    }
+
+    /**
+     * Checks, whether the given participant data is valid. This is the case if no corresponding participant exists, the
+     * participant has already finished the experiment, or the user or experiment itself is inactive.
+     *
+     * @param participant The {@link Participant} to check.
+     * @param user The {@link User} participating in the experiment.
+     * @param experiment The {@link Experiment} in question.
+     * @param fileType The type of file that is to be saved.
+     * @return {@code true} if the participant data is invalid, or {@code false} otherwise.
+     */
+    private boolean isInvalidParticipant(final Participant participant, final User user, final Experiment experiment,
+                                         final String fileType) {
+        if (participant == null) {
+            logger.error("No corresponding participant entry could be found for user with id " + user.getId()
+                    + " and experiment " + experiment.getId() + " when trying to save a " + fileType + "!");
+            return true;
+        } else if (participant.getEnd() != null) {
+            logger.error("Tried to save a " + fileType + " for participant " + user.getId() + " during experiment "
+                    + experiment.getId() + " who has already finished!");
+            return true;
+        } else if (!user.isActive() || !experiment.isActive()) {
+            logger.error("Tried to save a " + fileType + " for participant " + user.getId() + " during experiment "
+                    + experiment.getId() + " with user or experiment inactive!");
+            return true;
+        } else {
+            return false;
         }
     }
 

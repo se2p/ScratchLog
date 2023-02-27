@@ -114,6 +114,11 @@ public class ResultControllerIntegrationTest {
         }
 
         @Override
+        public boolean isActive() {
+            return true;
+        }
+
+        @Override
         public byte[] getProject() {
             return null;
         }
@@ -323,6 +328,11 @@ public class ResultControllerIntegrationTest {
             @Override
             public Integer getId() {
                 return ID;
+            }
+
+            @Override
+            public boolean isActive() {
+                return true;
             }
 
             @Override
@@ -686,6 +696,11 @@ public class ResultControllerIntegrationTest {
             @Override
             public Integer getId() {
                 return ID;
+            }
+
+            @Override
+            public boolean isActive() {
+                return true;
             }
 
             @Override

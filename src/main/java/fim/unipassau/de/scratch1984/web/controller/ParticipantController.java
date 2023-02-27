@@ -3,16 +3,16 @@ package fim.unipassau.de.scratch1984.web.controller;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
-import fim.unipassau.de.scratch1984.util.NumberParser;
+import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
+import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.Secrets;
-import fim.unipassau.de.scratch1984.util.validation.EmailValidator;
-import fim.unipassau.de.scratch1984.util.validation.UsernameValidator;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -28,7 +28,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -71,6 +70,11 @@ public class ParticipantController {
     private final ParticipantService participantService;
 
     /**
+     * The page service to use for retrieving pageable tables.
+     */
+    private final PageService pageService;
+
+    /**
      * The mail service to use for sending emails.
      */
     private final MailService mailService;
@@ -101,14 +105,17 @@ public class ParticipantController {
      * @param experimentService The experiment service to use.
      * @param userService The user service to use.
      * @param participantService The participant service to use.
+     * @param pageService The page service to use.
      * @param mailService The mail service to use.
      */
     @Autowired
     public ParticipantController(final UserService userService, final ExperimentService experimentService,
-                                 final ParticipantService participantService, final MailService mailService) {
+                                 final ParticipantService participantService, final PageService pageService,
+                                 final MailService mailService) {
         this.userService = userService;
         this.experimentService = experimentService;
         this.participantService = participantService;
+        this.pageService = pageService;
         this.mailService = mailService;
     }
 
@@ -138,7 +145,7 @@ public class ParticipantController {
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(id);
 
-            if (!experimentDTO.isActive()) {
+            if (!experimentDTO.isActive() || experimentDTO.isCourseExperiment()) {
                 return Constants.ERROR;
             }
         } catch (NotFoundException e) {
@@ -506,9 +513,9 @@ public class ParticipantController {
             experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
         }
 
-        int last = experimentService.getLastParticipantPage(experimentDTO.getId()) + 1;
+        int last = pageService.getLastParticipantPage(experimentDTO.getId()) + 1;
 
-        Page<Participant> participants = participantService.getParticipantPage(experimentDTO.getId(),
+        Page<Participant> participants = pageService.getParticipantPage(experimentDTO.getId(),
                 PageRequest.of(0, Constants.PAGE_SIZE));
         model.addAttribute("page", 1);
         model.addAttribute("lastPage", last);
@@ -525,12 +532,10 @@ public class ParticipantController {
      */
     private void validateUsername(final String username, final BindingResult bindingResult,
                                   final ResourceBundle resourceBundle) {
-        String usernameValidation = UsernameValidator.validate(username);
+        String usernameValidation = FieldErrorHandler.validateUsername(username, bindingResult, resourceBundle);
 
-        if (usernameValidation != null) {
-            bindingResult.addError(createFieldError("userDTO", "username", usernameValidation, resourceBundle));
-        } else if (userService.existsUser(username)) {
-            bindingResult.addError(createFieldError("userDTO", "username", "username_exists", resourceBundle));
+        if (usernameValidation == null && userService.existsUser(username)) {
+            FieldErrorHandler.addFieldError(bindingResult, "userDTO", "username", "username_exists", resourceBundle);
         }
     }
 
@@ -543,27 +548,11 @@ public class ParticipantController {
      */
     private void validateUpdateEmail(final String email, final BindingResult bindingResult,
                                      final ResourceBundle resourceBundle) {
-        String emailValidation = EmailValidator.validate(email);
+        String emailValidation = FieldErrorHandler.validateEmail(email, bindingResult, resourceBundle);
 
-        if (emailValidation != null) {
-            bindingResult.addError(createFieldError("userDTO", "email", emailValidation, resourceBundle));
-        } else if (userService.existsEmail(email)) {
-            bindingResult.addError(createFieldError("userDTO", "email", "email_exists", resourceBundle));
+        if (emailValidation == null && userService.existsEmail(email)) {
+            FieldErrorHandler.addFieldError(bindingResult, "userDTO", "email", "email_exists", resourceBundle);
         }
-    }
-
-    /**
-     * Creates a new field error with the given parameters.
-     *
-     * @param objectName The name of the object.
-     * @param field The field to which the error applies.
-     * @param error The error message string.
-     * @param resourceBundle The resource bundle to retrieve the error message in the current language.
-     * @return The new field error.
-     */
-    private FieldError createFieldError(final String objectName, final String field, final String error,
-                                        final ResourceBundle resourceBundle) {
-        return new FieldError(objectName, field, resourceBundle.getString(error));
     }
 
     /**

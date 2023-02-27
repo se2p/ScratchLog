@@ -7,10 +7,8 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
-import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
-import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,12 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import javax.persistence.EntityNotFoundException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -61,16 +55,19 @@ public class ExperimentServiceTest {
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private static final String GUI_URL = "scratch";
     private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "Some info text", "Some postscript",
-            false, GUI_URL);
+            false, true, GUI_URL);
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, "Some info text",
-            "Some postscript", false, GUI_URL);
+            "Some postscript", false, true, GUI_URL);
     private final ExperimentData experimentData = new ExperimentData(ID, 5, 3, 2);
-    private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
-    private Page<ExperimentTableProjection> experimentPage;
     private final ExperimentProjection projection = new ExperimentProjection() {
         @Override
         public Integer getId() {
             return ID;
+        }
+
+        @Override
+        public boolean isActive() {
+            return true;
         }
 
         @Override
@@ -104,13 +101,17 @@ public class ExperimentServiceTest {
 
     @Test
     public void testExistsExperimentTitleNull() {
-        assertFalse(experimentService.existsExperiment(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(null)
+        );
         verify(experimentRepository, never()).existsByTitle(TITLE);
     }
 
     @Test
     public void testExistsExperimentTitleBlank() {
-        assertFalse(experimentService.existsExperiment(BLANK));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(BLANK)
+        );
         verify(experimentRepository, never()).existsByTitle(TITLE);
     }
 
@@ -137,19 +138,25 @@ public class ExperimentServiceTest {
 
     @Test
     public void testExistsExperimentWithIdTitleNull() {
-        assertFalse(experimentService.existsExperiment(null, ID));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(null, ID)
+        );
         verify(experimentRepository, never()).findByTitle(TITLE);
     }
 
     @Test
     public void testExistsExperimentWithIdTitleBlank() {
-        assertFalse(experimentService.existsExperiment(BLANK, ID));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(BLANK, ID)
+        );
         verify(experimentRepository, never()).findByTitle(TITLE);
     }
 
     @Test
     public void testExistsExperimentWithIdInvalid() {
-        assertFalse(experimentService.existsExperiment(TITLE, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.existsExperiment(TITLE, 0)
+        );
         verify(experimentRepository, never()).findByTitle(TITLE);
     }
 
@@ -168,7 +175,9 @@ public class ExperimentServiceTest {
 
     @Test
     public void testHasProjectFileInvalidId() {
-        assertFalse(experimentService.hasProjectFile(0));
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentService.hasProjectFile(0)
+        );
         verify(experimentRepository, never()).existsByIdAndProjectIsNotNull(anyInt());
     }
 
@@ -183,6 +192,7 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experimentDTO.getDescription(), saved.getDescription()),
                 () -> assertEquals(experimentDTO.getInfo(), saved.getInfo()),
                 () -> assertFalse(experimentDTO.isActive()),
+                () -> assertTrue(experimentDTO.isCourseExperiment()),
                 () -> assertEquals(experimentDTO.getGuiURL(), experiment.getGuiURL())
         );
         verify(experimentRepository).save(any());
@@ -199,6 +209,7 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experimentDTO.getDescription(), saved.getDescription()),
                 () -> assertEquals(experimentDTO.getInfo(), saved.getInfo()),
                 () -> assertFalse(experimentDTO.isActive()),
+                () -> assertTrue(experimentDTO.isCourseExperiment()),
                 () -> assertEquals(experimentDTO.getGuiURL(), experiment.getGuiURL())
         );
         verify(experimentRepository).save(any());
@@ -278,6 +289,7 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experiment.getDescription(), found.getDescription()),
                 () -> assertEquals(experiment.getInfo(), found.getInfo()),
                 () -> assertFalse(found.isActive()),
+                () -> assertTrue(found.isCourseExperiment()),
                 () -> assertEquals(experiment.getGuiURL(), found.getGuiURL())
         );
         verify(experimentRepository).findById(ID);
@@ -300,86 +312,6 @@ public class ExperimentServiceTest {
     }
 
     @Test
-    public void testGetExperimentPage() {
-        List<ExperimentTableProjection> experiments = getExperimentProjections(5);
-        experimentPage = new PageImpl<>(experiments);
-        when(experimentRepository.findAllProjectedBy(any(PageRequest.class))).thenReturn(experimentPage);
-        Page<ExperimentTableProjection> getPage = experimentService.getExperimentPage(pageRequest);
-        assertAll(
-                () -> assertEquals(experimentPage.getTotalElements(), getPage.getTotalElements()),
-                () -> assertEquals(experimentPage.stream().findFirst(), getPage.stream().findFirst()),
-                () -> assertEquals(experimentPage.getSize(), getPage.getSize())
-        );
-        verify(experimentRepository).findAllProjectedBy(any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentPageEmpty() {
-        experimentPage = new PageImpl<>(new ArrayList<>());
-        when(experimentRepository.findAllProjectedBy(any(PageRequest.class))).thenReturn(experimentPage);
-        Page<ExperimentTableProjection> getPage = experimentService.getExperimentPage(pageRequest);
-        assertTrue(getPage.isEmpty());
-        verify(experimentRepository).findAllProjectedBy(any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentPageWrongPageSize() {
-        PageRequest wrongPageSize = PageRequest.of(0, 20);
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getExperimentPage(wrongPageSize)
-        );
-        verify(experimentRepository, never()).findAllProjectedBy(any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentPagePageableNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getExperimentPage(null)
-        );
-        verify(experimentRepository, never()).findAllProjectedBy(any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentParticipantPage() {
-        List<ExperimentTableProjection> experiments = getExperimentProjections(4);
-        experimentPage = new PageImpl<>(experiments);
-        when(experimentRepository.findExperimentsByParticipant(anyInt(),
-                any(PageRequest.class))).thenReturn(experimentPage);
-        Page<ExperimentTableProjection> getPage = experimentService.getExperimentParticipantPage(pageRequest, ID);
-        assertAll(
-                () -> assertEquals(experimentPage.getTotalElements(), getPage.getTotalElements()),
-                () -> assertEquals(experimentPage.stream().findFirst(), getPage.stream().findFirst()),
-                () -> assertEquals(experimentPage.getSize(), getPage.getSize())
-        );
-        verify(experimentRepository).findExperimentsByParticipant(anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentParticipantPageWrongPageSize() {
-        PageRequest wrongPageSize = PageRequest.of(0, 11);
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getExperimentParticipantPage(wrongPageSize, ID)
-        );
-        verify(experimentRepository, never()).findExperimentsByParticipant(anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentParticipantPagePageableNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getExperimentParticipantPage(null, ID)
-        );
-        verify(experimentRepository, never()).findExperimentsByParticipant(anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentParticipantPageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getExperimentParticipantPage(pageRequest, 0)
-        );
-        verify(experimentRepository, never()).findExperimentsByParticipant(anyInt(), any(PageRequest.class));
-    }
-
-    @Test
     public void testDeleteExperiment() {
         experimentService.deleteExperiment(ID);
         verify(experimentRepository).deleteById(ID);
@@ -394,77 +326,6 @@ public class ExperimentServiceTest {
     }
 
     @Test
-    public void testGetLastPage() {
-        when(experimentRepository.count()).thenReturn((long) Constants.PAGE_SIZE);
-        assertEquals(1, experimentService.getLastPage());
-        verify(experimentRepository).count();
-    }
-
-    @Test
-    public void testGetLastPage4() {
-        when(experimentRepository.count()).thenReturn((long) 50);
-        assertEquals(5, experimentService.getLastPage());
-        verify(experimentRepository).count();
-    }
-
-    @Test
-    public void testGetLastPage5() {
-        when(experimentRepository.count()).thenReturn((long) 51);
-        assertEquals(6, experimentService.getLastPage());
-        verify(experimentRepository).count();
-    }
-
-    @Test
-    public void testGetLastPageTooManyRows() {
-        when(experimentRepository.count()).thenReturn(Long.MAX_VALUE);
-        assertEquals(214748365, experimentService.getLastPage());
-        verify(experimentRepository).count();
-    }
-
-    @Test
-    public void testGetLastExperimentPage() {
-        when(experimentRepository.getParticipantPageCount(ID)).thenReturn(Constants.PAGE_SIZE);
-        assertEquals(1, experimentService.getLastExperimentPage(ID));
-        verify(experimentRepository).getParticipantPageCount(ID);
-    }
-
-    @Test
-    public void testGetLastExperimentPageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getLastExperimentPage(-1)
-        );
-    }
-
-    @Test
-    public void testGetLastParticipantPage() {
-        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
-        assertEquals(0, experimentService.getLastParticipantPage(ID));
-        verify(experimentDataRepository).findByExperiment(ID);
-    }
-
-    @Test
-    public void testGetLastParticipantPage3() {
-        experimentData.setParticipants(40);
-        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
-        assertEquals(3, experimentService.getLastParticipantPage(ID));
-        verify(experimentDataRepository).findByExperiment(ID);
-    }
-
-    @Test
-    public void testGetLastParticipantPage4() {
-        experimentData.setParticipants(41);
-        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
-        assertEquals(4, experimentService.getLastParticipantPage(ID));
-        verify(experimentDataRepository).findByExperiment(ID);
-    }
-
-    @Test
-    public void testGetLastParticipantPageNull() {
-        assertEquals(0, experimentService.getLastParticipantPage(ID));
-        verify(experimentDataRepository).findByExperiment(ID);
-    }
-
-    @Test
     public void testChangeExperimentStatus() {
         experiment.setActive(true);
         when(experimentRepository.existsById(ID)).thenReturn(true);
@@ -476,6 +337,7 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experiment.getDescription(), changedStatus.getDescription()),
                 () -> assertEquals(experiment.getInfo(), changedStatus.getInfo()),
                 () -> assertTrue(changedStatus.isActive()),
+                () -> assertTrue(changedStatus.isCourseExperiment()),
                 () -> assertEquals(experiment.getGuiURL(), changedStatus.getGuiURL())
         );
         verify(experimentRepository).existsById(ID);
@@ -494,6 +356,7 @@ public class ExperimentServiceTest {
                 () -> assertEquals(experiment.getDescription(), changedStatus.getDescription()),
                 () -> assertEquals(experiment.getInfo(), changedStatus.getInfo()),
                 () -> assertFalse(changedStatus.isActive()),
+                () -> assertTrue(changedStatus.isCourseExperiment()),
                 () -> assertEquals(experiment.getGuiURL(), changedStatus.getGuiURL())
         );
         verify(experimentRepository).existsById(ID);
@@ -609,7 +472,7 @@ public class ExperimentServiceTest {
 
     @Test
     public void testGetSb3File() {
-        when(experimentRepository.findExperimentById(ID)).thenReturn(java.util.Optional.of(projection));
+        when(experimentRepository.findExperimentById(ID)).thenReturn(Optional.of(projection));
         ExperimentProjection experimentProjection = experimentService.getSb3File(ID);
         assertAll(
                 () -> assertEquals(ID, experimentProjection.getId()),
@@ -632,36 +495,31 @@ public class ExperimentServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> experimentService.getSb3File(0)
         );
-        verify(experimentRepository, never()).findExperimentById(ID);
+        verify(experimentRepository, never()).findExperimentById(anyInt());
     }
 
-    private List<ExperimentTableProjection> getExperimentProjections(int number) {
-        List<ExperimentTableProjection> experiments = new ArrayList<>();
-        for (int i = 0; i < number; i++) {
-            int finalI = i;
-            ExperimentTableProjection projection = new ExperimentTableProjection() {
-                @Override
-                public Integer getId() {
-                    return finalI;
-                }
+    @Test
+    public void testGetSb3FileInactive() {
+        when(experimentRepository.findExperimentById(ID)).thenReturn(Optional.of(new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return ID;
+            }
 
-                @Override
-                public String getTitle() {
-                    return "Experiment " + finalI;
-                }
+            @Override
+            public boolean isActive() {
+                return false;
+            }
 
-                @Override
-                public String getDescription() {
-                    return "Description for experiment " + finalI;
-                }
-
-                @Override
-                public boolean isActive() {
-                    return false;
-                }
-            };
-            experiments.add(projection);
-        }
-        return experiments;
+            @Override
+            public byte[] getProject() {
+                return new byte[0];
+            }
+        }));
+        assertThrows(NotFoundException.class,
+                () -> experimentService.getSb3File(ID)
+        );
+        verify(experimentRepository).findExperimentById(ID);
     }
+
 }

@@ -69,7 +69,7 @@ public class UserServiceTest {
     private static final int ID = 1;
     private static final String GUI_URL = "scratch";
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
-            GUI_URL);
+            false, GUI_URL);
     private final User user1 = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, SECRET);
     private final User user2 = new User("participant1", "part1@part.de", "PARTICIPANT", "ENGLISH",
             PASSWORD, SECRET);
@@ -118,13 +118,17 @@ public class UserServiceTest {
 
     @Test
     public void testExistsUserUsernameNull() {
-        assertFalse(userService.existsUser(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.existsUser(null)
+        );
         verify(userRepository, never()).existsByUsername(USERNAME);
     }
 
     @Test
     public void testExistsUserUsernameBlank() {
-        assertFalse(userService.existsUser(BLANK));
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.existsUser(BLANK)
+        );
         verify(userRepository, never()).existsByUsername(USERNAME);
     }
 
@@ -143,13 +147,17 @@ public class UserServiceTest {
 
     @Test
     public void testExistsEmailNull() {
-        assertFalse(userService.existsEmail(null));
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.existsEmail(null)
+        );
         verify(userRepository, never()).existsByEmail(EMAIL);
     }
 
     @Test
     public void testExistsEmailBlank() {
-        assertFalse(userService.existsEmail(BLANK));
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.existsEmail(BLANK)
+        );
         verify(userRepository, never()).existsByEmail(EMAIL);
     }
 
@@ -173,7 +181,9 @@ public class UserServiceTest {
 
     @Test
     public void testExistsParticipantUserIdInvalid() {
-        assertFalse(userService.existsParticipant(-1, ID));
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.existsParticipant(-1, ID)
+        );
         verify(userRepository, never()).getOne(ID);
         verify(experimentRepository, never()).getOne(ID);
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
@@ -181,7 +191,9 @@ public class UserServiceTest {
 
     @Test
     public void testExistsParticipantExperimentIdInvalid() {
-        assertFalse(userService.existsParticipant(ID, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.existsParticipant(ID, 0)
+        );
         verify(userRepository, never()).getOne(ID);
         verify(experimentRepository, never()).getOne(ID);
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());

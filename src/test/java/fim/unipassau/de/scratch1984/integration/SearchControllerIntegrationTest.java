@@ -1,6 +1,8 @@
 package fim.unipassau.de.scratch1984.integration;
 
+import fim.unipassau.de.scratch1984.StringCreator;
 import fim.unipassau.de.scratch1984.application.service.SearchService;
+import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
@@ -50,21 +52,24 @@ public class SearchControllerIntegrationTest {
     private SearchService searchService;
 
     private static final String QUERY = "query";
-    private static final String LONG_QUERY = "queeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-            + "eeeeeeeeeeeeeeeeeeeeeeeeeery";
+    private static final String LONG_QUERY = StringCreator.createLongString(101);
     private static final String BLANK = "  ";
     private static final String ADMIN = "ADMIN";
     private static final String PARTICIPANT = "PARTICIPANT";
     private static final String USERS = "users";
     private static final String EXPERIMENTS = "experiments";
+    private static final String COURSES = "courses";
     private static final String USER_COUNT = "userCount";
     private static final String EXPERIMENT_COUNT = "experimentCount";
+    private static final String COURSE_COUNT = "courseCount";
     private static final String LIMIT = "limit";
     private static final String SEARCH = "search";
     private static final String ERROR = "redirect:/error";
+    private static final String PATH = "/search/result";
     private static final int COUNT = 25;
     private List<UserProjection> users;
     private List<ExperimentTableProjection> experiments;
+    private List<CourseTableProjection> courses;
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -76,11 +81,14 @@ public class SearchControllerIntegrationTest {
     public void testGetSearchPage() throws Exception {
         users = getUsers(Constants.PAGE_SIZE);
         experiments = getExperiments(Constants.PAGE_SIZE);
+        courses = new ArrayList<>();
         when(searchService.getUserCount(QUERY)).thenReturn(COUNT);
         when(searchService.getExperimentCount(QUERY)).thenReturn(COUNT);
+        when(searchService.getCourseCount(QUERY)).thenReturn(COUNT);
         when(searchService.getUserList(QUERY, Constants.PAGE_SIZE)).thenReturn(users);
         when(searchService.getExperimentList(QUERY, Constants.PAGE_SIZE)).thenReturn(experiments);
-        mvc.perform(get("/search/result")
+        when(searchService.getCourseList(QUERY, Constants.PAGE_SIZE)).thenReturn(courses);
+        mvc.perform(get(PATH)
                 .param(QUERY, QUERY)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -88,21 +96,25 @@ public class SearchControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(model().attribute(USERS, is(users)))
                 .andExpect(model().attribute(EXPERIMENTS, is(experiments)))
+                .andExpect(model().attribute(COURSES, is(courses)))
                 .andExpect(model().attribute(USER_COUNT, is(COUNT)))
                 .andExpect(model().attribute(EXPERIMENT_COUNT, is(COUNT)))
+                .andExpect(model().attribute(COURSE_COUNT, is(COUNT)))
                 .andExpect(model().attribute(LIMIT, is(Constants.PAGE_SIZE)))
                 .andExpect(model().attribute(QUERY, is(QUERY)))
                 .andExpect(status().isOk())
                 .andExpect(view().name(SEARCH));
         verify(searchService).getUserCount(QUERY);
         verify(searchService).getExperimentCount(QUERY);
+        verify(searchService).getCourseCount(QUERY);
         verify(searchService).getUserList(QUERY, Constants.PAGE_SIZE);
         verify(searchService).getExperimentList(QUERY, Constants.PAGE_SIZE);
+        verify(searchService).getCourseList(QUERY, Constants.PAGE_SIZE);
     }
 
     @Test
     public void testGetSearchPageQueryBlank() throws Exception {
-        mvc.perform(get("/search/result")
+        mvc.perform(get(PATH)
                 .param(QUERY, BLANK)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -110,21 +122,25 @@ public class SearchControllerIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(model().attribute(USERS, is(empty())))
                 .andExpect(model().attribute(EXPERIMENTS, is(empty())))
+                .andExpect(model().attribute(COURSES, is(empty())))
                 .andExpect(model().attribute(USER_COUNT, is(0)))
                 .andExpect(model().attribute(EXPERIMENT_COUNT, is(0)))
+                .andExpect(model().attribute(COURSE_COUNT, is(0)))
                 .andExpect(model().attribute(LIMIT, is(10)))
                 .andExpect(model().attribute(QUERY, is("")))
                 .andExpect(status().isOk())
                 .andExpect(view().name(SEARCH));
         verify(searchService, never()).getUserCount(anyString());
         verify(searchService, never()).getExperimentCount(anyString());
+        verify(searchService, never()).getCourseCount(anyString());
         verify(searchService, never()).getUserList(anyString(), anyInt());
         verify(searchService, never()).getExperimentList(anyString(), anyInt());
+        verify(searchService, never()).getCourseList(anyString(), anyInt());
     }
 
     @Test
     public void testGetSearchPageQueryTooLong() throws Exception {
-        mvc.perform(get("/search/result")
+        mvc.perform(get(PATH)
                 .param(QUERY, LONG_QUERY)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
@@ -134,8 +150,10 @@ public class SearchControllerIntegrationTest {
                 .andExpect(view().name(ERROR));
         verify(searchService, never()).getUserCount(anyString());
         verify(searchService, never()).getExperimentCount(anyString());
+        verify(searchService, never()).getCourseCount(anyString());
         verify(searchService, never()).getUserList(anyString(), anyInt());
         verify(searchService, never()).getExperimentList(anyString(), anyInt());
+        verify(searchService, never()).getCourseList(anyString(), anyInt());
     }
 
     private List<UserProjection> getUsers(int number) {

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{course_title}"></title>
+    <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/style.css}">
+</head>
+<body>
+<!-- Navigation bar -->
+<header th:insert="header :: header"></header>
+
+<!-- Page content -->
+<div class="row" id="content" sec:authorize="hasRole('PARTICIPANT')">
+    <div class="inside">
+
+        <!-- The error message shown at the top of the page when entering an invalid password. -->
+        <div class="row" th:if="${param.invalid != null}">
+            <div class="col-12 alert alert-danger" th:text="#{invalid_password}"></div>
+        </div>
+
+        <!-- The error message shown at the top of the page when an error occurs. -->
+        <div class="row" th:if="${error != null}">
+            <div class="col-12 alert alert-danger" th:text="${error}"></div>
+        </div>
+
+        <!-- The course title along with edit and delete buttons. -->
+        <div class="d-flex justify-content-between flex-wrap mb-3">
+            <!-- The course title. -->
+            <h1 class="mb-3 h2" th:text="${courseDTO.title}"></h1>
+            <!-- The buttons for editing and deleting the course. -->
+            <div sec:authorize="hasRole('ADMIN')">
+                <a class="btn btn-secondary" th:href="@{/course/edit(id=${courseDTO.id})}">
+                    <i aria-hidden="true" class="fas fa-edit fa-inverse" th:title="#{edit}"></i>
+                    <span th:text="#{edit}"></span>
+                </a>
+                <a id="delete" class="btn btn-danger">
+                    <i aria-hidden="true" class="fas fa-trash-alt fa-inverse" th:title="#{delete}"></i>
+                    <span th:text="#{delete}"></span>
+                </a>
+            </div>
+        </div>
+
+        <!-- The course description. -->
+        <div class="row">
+            <div class="col-12 mb-5" th:text="${courseDTO.description}"></div>
+        </div>
+
+        <div class="controls d-flex flex-row gap-5 justify-content-between mb-5 flex-wrap"
+             sec:authorize="hasRole('ADMIN')">
+
+            <!-- The course status and the button to start or stop the course. -->
+            <div>
+                <div>
+                    <h2 class="h5">
+                        <i aria-hidden="true" th:class="${courseDTO.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
+                           title="Course status"></i>
+                        <span th:text="#{status} + ':'"></span>
+                        <span th:if="${courseDTO.active}" th:text="#{opened}"></span>
+                        <span th:unless="${courseDTO.active}" th:text="#{closed}"></span>
+                    </h2>
+                </div>
+                <a id="open" class="btn btn-primary" type="submit" th:text="#{start_course}"
+                   th:unless="${courseDTO.active}" th:href="@{/course/status(id=${courseDTO.id}, stat='open')}"></a>
+                <input th:if="${courseDTO.active}" id="close" class="btn btn-secondary" type="submit"
+                       th:value="#{stop_course}">
+            </div>
+
+            <!-- The timestamp of the last change operation to the course. -->
+            <div class="text-muted">
+                <span th:text="#{last_changed}"></span>
+                <span th:text="${courseDTO.lastChanged.toLocalDate()}"></span>
+                <span th:text="${courseDTO.lastChanged.toLocalTime()}"></span>
+            </div>
+        </div>
+
+        <!-- The table of participants in the course and the buttons for adding and removing participants. -->
+        <div class="mb-3" th:fragment="course_participant_table" id="course_participant_table"
+             sec:authorize="hasRole('ADMIN')">
+            <h2 class="h3" th:text="#{heading_participants}"></h2>
+            <!-- The table containing the participant information. -->
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{username}"></th>
+                        <th class="text-center" scope="col" th:text="#{added}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${participants.isEmpty()}">
+                    <tr>
+                        <td colspan="3" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody th:unless="${participants.isEmpty()}">
+                    <tr th:each="participant : ${participants}">
+                        <th scope="row">
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                               th:text="${participant.user.id}"></a>
+                        </th>
+                        <td>
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                               th:text="${participant.user.username}"></a>
+                        </td>
+                        <td class="text-center">
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <span th:text="${participant.added.toLocalDateTime().toLocalDate()}"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- The navigation elements below the table. -->
+            <div class="text-center">
+                <a id="participantsFirst" class="btn btn-outline-dark"
+                   th:style="${participantPage == 1 ? 'display:none' : ''}" th:aria-label="#{first_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-double-left"></i>
+                </a>
+                <a id="participantsPrev" class="btn btn-outline-dark"
+                   th:style="${participantPage == 1 ? 'display:none' : ''}" th:aria-label="#{previous_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-left"></i>
+                </a>
+                <a id="participantsNext" class="btn btn-outline-dark"
+                   th:style="${participantPage == lastParticipantPage ? 'display:none' : ''}"
+                   th:aria-label="#{next_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-right"></i>
+                </a>
+                <a id="participantsLast" class="btn btn-outline-dark"
+                   th:style="${participantPage == lastParticipantPage ? 'display:none' : ''}"
+                   th:aria-label="#{last_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-double-right"></i>
+                </a>
+            </div>
+            <!-- The buttons for participant management. -->
+            <div class="d-flex gap-3 flex-wrap" th:if="${courseDTO.active}">
+                <div class="mb-3">
+                    <input id="addParticipant" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
+                </div>
+                <div class="mb-3">
+                    <input id="deleteParticipant" type="submit" class="btn btn-danger"
+                           th:value="#{delete_participant}"/>
+                </div>
+            </div>
+        </div>
+
+        <!-- The experiment table containing experiments that are part of this course. -->
+        <div class="mb-5" th:fragment="course_experiment_table" id="course_experiment_table">
+            <h2 class="h3" th:text="#{experiment_heading}"></h2>
+            <!-- The table containing the experiment information. -->
+            <div class="table-container">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" th:text="#{title}"></th>
+                        <th scope="col" th:text="#{description}"></th>
+                        <th class="text-center" scope="col" th:text="#{status}"></th>
+                    </tr>
+                    </thead>
+                    <tbody th:if="${experiments.isEmpty()}">
+                    <tr>
+                        <td colspan="5" th:text="#{table_empty}"></td>
+                    </tr>
+                    </tbody>
+                    <tbody>
+                    <!--suppress ThymeleafVariablesResolveInspection -->
+                    <tr th:unless="${experiments.isEmpty()}" th:each="experimentProjection : ${experiments}"
+                        th:with="experiment = ${experimentProjection.getExperiment()}">
+                        <th scope="row">
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                               th:text="${experiment.id}"></a>
+                        </th>
+                        <td>
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                               th:text="${experiment.title}"></a>
+                        </td>
+                        <td>
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                               th:text="${experiment.description}"></a>
+                        </td>
+                        <td class="text-center">
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <i aria-hidden="true" th:class="${experiment.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
+                               title="Experiment active status"></i>
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <span class="sr-only" th:if="${experiment.active}" th:text="#{opened}"></span>
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <span class="sr-only" th:unless="${experiment.active}" th:text="#{closed}"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- The navigation elements below the table. -->
+            <div class="text-center" th:unless="${experiments.isEmpty()}">
+                <a id="experimentsFirst" class="btn btn-outline-dark"
+                   th:style="${experimentPage == 1 ? 'display:none' : ''}" th:aria-label="#{first_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-double-left"></i>
+                </a>
+                <a id="experimentsPrev" class="btn btn-outline-dark"
+                   th:style="${experimentPage == 1 ? 'display:none' : ''}" th:aria-label="#{previous_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-left"></i>
+                </a>
+                <a id="experimentsNext" class="btn btn-outline-dark"
+                   th:style="${experimentPage == lastExperimentPage ? 'display:none' : ''}"
+                   th:aria-label="#{next_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-right"></i>
+                </a>
+                <a id="experimentsLast" class="btn btn-outline-dark"
+                   th:style="${experimentPage == lastExperimentPage ? 'display:none' : ''}"
+                   th:aria-label="#{last_page_label}">
+                    <i aria-hidden="true" class="fas fa-angle-double-right"></i>
+                </a>
+            </div>
+            <!-- The buttons for experiment management. -->
+            <div class="d-flex gap-3 flex-wrap" th:if="${courseDTO.active}">
+                <div class="mb-3">
+                    <a class="btn btn-secondary" th:href="@{/experiment/create(course=${courseDTO.id})}"
+                       th:text="#{add_experiment}"></a>
+                </div>
+                <div class="mb-3">
+                    <input id="deleteExperiment" type="submit" class="btn btn-danger" th:value="#{delete_experiment}"/>
+                </div>
+            </div>
+        </div>
+
+        <!-- The course content information. -->
+        <div class="row mb-5">
+            <div class="col-12" th:utext="${courseDTO.content}"></div>
+        </div>
+    </div>
+</div>
+
+<!-- The popup dialog to delete the course. -->
+<div id="openDelete" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{delete_course}"></h2>
+        <div class="mb-3" th:text="#{delete_course_warn}"></div>
+        <form th:action="@{/course/delete}" th:object="${passwordDTO}" th:name="passwordDTO" method="post">
+            <input type="hidden" name="id" th:value="${courseDTO.id}"/>
+            <div class="col-12 mb-5 form-group position-relative">
+                <label class="form-label" for="password" th:text="#{password}"></label>
+                <div class="input-group">
+                        <span class="input-group-text">
+                            <i aria-hidden="true" class="fa fa-key" title="Enter password"></i>
+                            <span class="sr-only" th:text="#{password}"></span>
+                        </span>
+                    <input th:name="password" id="password" type="password" th:placeholder="#{password}"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                           th:field="*{password}" th:class="${#fields.hasErrors('password')
+                               ? 'form-control is-invalid' : 'form-control'}" required/>
+                </div>
+                <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a id="abortDelete" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input class="btn btn-danger" type="submit" th:value="#{delete}">
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- The popup dialog to stop the course. -->
+<div id="openStop" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{close_course}"></h2>
+        <div class="mb-3" th:text="#{close_course_warn}"></div>
+        <div class="d-flex justify-content-between">
+            <input id="abortStop" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <a class="btn btn-danger" th:text="#{stop_course}" th:href="@{/course/status(id=${courseDTO.id},
+            stat='close')}"></a>
+        </div>
+    </div>
+</div>
+
+<!-- The popup dialog to add an existing participant to the course. -->
+<div id="openAddParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{add_participant}"></h2>
+        <div class="mb-3" th:text="#{add_course_participant_info}"></div>
+        <form th:action="@{/course/participant/add}">
+            <div class="mb-3 form-group position-relative">
+                <input id="addParticipantId" type="hidden" th:name="id" th:value="${courseDTO.id}">
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" th:name="add" id="experimentParticipant">
+                    <label class="form-check-label" for="experimentParticipant" th:text="#{add_experiment_participant}">
+                    </label>
+                </div>
+                <div class="input-group">
+                    <input class="form-control" type="text" th:name="participant" id="participantInput"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                </div>
+                <div id="participantResults"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a id="abortAddParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input class="btn btn-primary" type="submit" th:value="#{add}"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- The popup dialog to delete a course participant. -->
+<div id="openDeleteParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{delete_participant}"></h2>
+        <div class="mb-3" th:text="#{delete_course_participant_info}"></div>
+        <form th:action="@{/course/participant/delete}">
+            <div class="mb-3 form-group position-relative">
+                <input id="deleteParticipantId" type="hidden" th:name="id" th:value="${courseDTO.id}">
+                <div class="input-group">
+                    <input class="form-control" type="text" th:name="participant" id="deleteParticipantInput"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                </div>
+                <div id="deleteParticipantResults"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a id="abortDeleteParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input class="btn btn-primary" type="submit" th:value="#{delete}"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- The popup dialog to remove an experiment. -->
+<div id="openDeleteExperiment" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{remove_experiment}"></h2>
+        <div class="mb-3" th:text="#{remove_experiment_info}"></div>
+        <form th:action="@{/course/experiment/delete}">
+            <div class="mb-3 form-group position-relative">
+                <input id="deleteExperimentId" type="hidden" th:name="id" th:value="${courseDTO.id}">
+                <div class="input-group">
+                    <input class="form-control" type="text" th:name="title" id="deleteExperimentInput"
+                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                </div>
+                <div id="deleteExperimentResults"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a id="abortDeleteExperiment" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input class="btn btn-primary" type="submit" th:value="#{delete}"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Script to update the experiment and course tables on user interactions with the respective buttons. -->
+<script type="module" th:src="@{/js/coursePage.js}"></script>
+
+<!-- Script to fetch the course experiment and participant suggestions. -->
+<script type="text/javascript" th:src="@{/js/courseSuggestions.js}"></script>
+
+<!-- Let Thymeleaf fetch the current and the last experiment and participant page numbers. -->
+<script>
+    let courseId = [[${courseDTO.id}]];
+    let participantPage = [[${participantPage}]];
+    let lastParticipantPage = [[${lastParticipantPage}]];
+    let experimentPage = [[${experimentPage}]];
+    let lastExperimentPage = [[${lastExperimentPage}]];
+</script>
+
+<!-- Footer -->
+<div th:insert="footer :: footer"></div>
+</body>
+</html>

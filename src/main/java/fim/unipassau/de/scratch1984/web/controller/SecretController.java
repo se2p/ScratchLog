@@ -154,13 +154,13 @@ public class SecretController {
 
     /**
      * Retrieves all participation links for users participating in the experiment with the given id or only that for
-     * the particular user with the given id and makes the information available for download in a CSV file. If the
-     * passed parameters are invalid an {@link IncompleteDataException} is thrown instead. If an {@link IOException}
-     * occurs, a {@link RuntimeException} is thrown.
+     * the particular user with the given id and makes the information available for download in a CSV file.
      *
      * @param experiment The id of the experiment.
      * @param user The (optional) id of the user.
      * @param httpServletResponse The {@link HttpServletResponse} returning the file.
+     * @throws IncompleteDataException if the passed experiment id is invalid.
+     * @throws RuntimeException if an {@link IOException} occurred.
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
@@ -168,14 +168,12 @@ public class SecretController {
                                            @RequestParam(required = false, value = "user") final String user,
                                            final HttpServletResponse httpServletResponse) {
         if (experiment == null || experiment.trim().isBlank()) {
-            logger.error("Cannot download participation links for experiment id null or blank!");
             throw new IncompleteDataException("Cannot download participation links for experiment id null or blank!");
         }
 
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download participation links for experiment with invalid id " + experiment + "!");
             throw new IncompleteDataException("Cannot download participation links for experiment with invalid id "
                     + experiment + "!");
         }
@@ -191,8 +189,7 @@ public class SecretController {
             CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
             csvWriter.writeAll(users);
         } catch (IOException e) {
-            logger.error("Could not download participation links due to IOException!", e);
-            throw new RuntimeException("Could not download participation links due to IOException!");
+            throw new RuntimeException("Could not download participation links due to IOException!", e);
         }
     }
 
@@ -208,20 +205,19 @@ public class SecretController {
 
     /**
      * Prepares the data to be written to the CSV file for the experiment with the given id. If the passed user string
-     * represents a valid user id, only the information of that single user is returned. If the user id is not null, but
-     * an invalid id, an {@link IncompleteDataException} is thrown instead. Otherwise, information on all users who have
-     * not yet finished the experiment is returned.
+     * represents a valid user id, only the information of that single user is returned. Otherwise, information on all
+     * users who have not yet finished the experiment is returned.
      *
      * @param experimentId The id of the experiment.
      * @param user The id of the user or null.
      * @return A list of string arrays containing the information.
+     * @throws IncompleteDataException if the passed user id is invalid.
      */
     private List<String[]> prepareCSVData(final int experimentId, final String user) {
         if (user != null) {
             int userId = NumberParser.parseNumber(user);
 
             if (userId < Constants.MIN_ID) {
-                logger.error("Cannot download participation link for user with invalid id " + user + "!");
                 throw new IncompleteDataException("Cannot download participation link for user with invalid id "
                         + user + "!");
             }

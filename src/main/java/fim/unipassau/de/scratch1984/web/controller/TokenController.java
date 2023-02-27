@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -14,7 +15,6 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -139,7 +139,7 @@ public class TokenController {
         String passwordValidation = PasswordValidator.validate(userDTO.getPassword(), userDTO.getConfirmPassword());
 
         if (passwordValidation != null) {
-            bindingResult.addError(createFieldError("userDTO", "password", passwordValidation, resourceBundle));
+            FieldErrorHandler.addFieldError(bindingResult, "userDTO", "password", passwordValidation, resourceBundle);
             model.addAttribute("token", token);
             return PASSWORD_SET;
         }
@@ -155,20 +155,6 @@ public class TokenController {
         } catch (NotFoundException e) {
             return Constants.ERROR;
         }
-    }
-
-    /**
-     * Creates a new field error with the given parameters.
-     *
-     * @param objectName The name of the object.
-     * @param field The field to which the error applies.
-     * @param error The error message string.
-     * @param resourceBundle The resource bundle to retrieve the error message in the current language.
-     * @return The new field error.
-     */
-    private FieldError createFieldError(final String objectName, final String field, final String error,
-                                        final ResourceBundle resourceBundle) {
-        return new FieldError(objectName, field, resourceBundle.getString(error));
     }
 
 }

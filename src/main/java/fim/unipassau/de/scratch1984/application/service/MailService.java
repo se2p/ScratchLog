@@ -84,8 +84,7 @@ public class MailService {
     }
 
     /**
-     * Sends a new template message to the given addresses with the content specified in the given template. If the
-     * email could not be sent, a {@link MessagingException} is thrown instead.
+     * Sends a new template message to the given addresses with the content specified in the given template.
      *
      * @param to The recipient of the email.
      * @param cc The address to which a copy of this email should be send.
@@ -94,7 +93,7 @@ public class MailService {
      * @param subject The subject of this email.
      * @param templateModel The template model containing additional properties.
      * @param template The name of the mail template to use.
-     * @throws MessagingException If the email could not be sent.
+     * @throws MessagingException if the email could not be sent.
      */
     public void sendTemplateMessage(final String to, final String cc, final String bcc, final String replyTo,
                                     final String subject, final Map<String, Object> templateModel,
@@ -108,8 +107,7 @@ public class MailService {
     }
 
     /**
-     * Sends the given html message to the given addresses. If the email could not be sent, a {@link MessagingException}
-     * is thrown instead.
+     * Sends the given html message to the given addresses.
      *
      * @param to The recipient of the email.
      * @param cc The address to which a copy of this email should be send.
@@ -117,7 +115,7 @@ public class MailService {
      * @param replyTo The reply to address.
      * @param subject The subject of this email.
      * @param htmlBody The html representation of the mail template.
-     * @throws MessagingException If the email could not be sent.
+     * @throws MessagingException if the email could not be sent.
      */
     private void sendHtmlMessage(final String to, final String cc, final String bcc, final String replyTo,
                                  final String subject, final String htmlBody) throws MessagingException {

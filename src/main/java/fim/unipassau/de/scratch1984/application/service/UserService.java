@@ -77,11 +77,12 @@ public class UserService {
      *
      * @param username The username to search for.
      * @return {@code true} if a user exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the passed username is null or blank.
      */
     @Transactional
     public boolean existsUser(final String username) {
         if (username == null || username.trim().isBlank()) {
-            return false;
+            throw new IllegalArgumentException("Cannot search for a user with username null or blank!");
         }
 
         return userRepository.existsByUsername(username);
@@ -92,11 +93,12 @@ public class UserService {
      *
      * @param email The email to search for.
      * @return {@code true} if a user exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the passed email is null or blank.
      */
     @Transactional
     public boolean existsEmail(final String email) {
         if (email == null || email.trim().isBlank()) {
-            return false;
+            throw new IllegalArgumentException("Cannot search for a user with email null or blank!");
         }
 
         return userRepository.existsByEmail(email);
@@ -108,11 +110,13 @@ public class UserService {
      * @param userId The user id to search for.
      * @param experimentId The experiment id to search for.
      * @return {@code true} if a user exists, or {@code false} if not.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      */
     @Transactional
     public boolean existsParticipant(final int userId, final int experimentId) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            return false;
+            throw new IllegalArgumentException("Cannot search for a participant with invalid user id " + userId
+                    + " or invalid experiment id " + experimentId + "!");
         }
 
         User user = userRepository.getOne(userId);
@@ -130,18 +134,18 @@ public class UserService {
      *
      * @param userDTO The dto containing the user information to set.
      * @return The newly created user, if the information was persisted, or {@code null} if not.
+     * @throws IllegalArgumentException if the username is null or blank.
+     * @throws StoreException if the user could not be persisted.
      */
     @Transactional
     public UserDTO saveUser(final UserDTO userDTO) {
         if (userDTO.getUsername() == null || userDTO.getUsername().trim().isBlank()) {
-            logger.error("Cannot create user with username null or blank!");
             throw new IllegalArgumentException("Cannot create user with username null or blank!");
         }
 
         User user = userRepository.save(createUser(userDTO));
 
         if (user.getId() == null) {
-            logger.error("Failed to save user with username " + userDTO.getUsername());
             throw new StoreException("Failed to save user with username " + userDTO.getUsername());
         }
 
@@ -149,16 +153,16 @@ public class UserService {
     }
 
     /**
-     * Returns the user with the specified username. If no such user exists, a {@link NotFoundException} is thrown
-     * instead.
+     * Returns the user with the specified username.
      *
      * @param username The username to search for.
      * @return The user, if they exist.
+     * @throws IllegalArgumentException if the passed username is null or blank.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public UserDTO getUser(final String username) {
         if (username == null || username.trim().isBlank()) {
-            logger.error("The username cannot be null or blank!");
             throw new IllegalArgumentException("The username cannot be null or blank!");
         }
 
@@ -173,15 +177,16 @@ public class UserService {
     }
 
     /**
-     * Returns the user with the specified id. If no such user exists, a {@link NotFoundException} is thrown instead.
+     * Returns the user with the specified id.
      *
      * @param id The id to search for.
      * @return The user, if they exist.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public UserDTO getUserById(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for user with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for user with invalid id " + id + "!");
         }
 
@@ -196,15 +201,16 @@ public class UserService {
     }
 
     /**
-     * Returns the user with the specified email. If no such user exists, a {@link NotFoundException} is thrown instead.
+     * Returns the user with the specified email.
      *
      * @param email The email to search for.
      * @return The user, if they exist.
+     * @throws IllegalArgumentException if the passed email is null or blank.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public UserDTO getUserByEmail(final String email) {
         if (email == null || email.trim().isBlank()) {
-            logger.error("Cannot find user with email null or blank!");
             throw new IllegalArgumentException("Cannot find user with email null or blank!");
         }
 
@@ -224,11 +230,11 @@ public class UserService {
      *
      * @param search The username or email to search for.
      * @return The user, if they exist.
+     * @throws IllegalArgumentException if the passed search query is null or blank.
      */
     @Transactional
     public UserDTO getUserByUsernameOrEmail(final String search) {
         if (search == null || search.trim().isBlank()) {
-            logger.error("Cannot search for with search string null or blank!");
             throw new IllegalArgumentException("Cannot search for with search string null or blank!");
         }
 
@@ -244,10 +250,10 @@ public class UserService {
 
     /**
      * Verifies the given user's credentials on login and returns a {@link UserDTO} containing the user's information.
-     * If no user with matching username and password could be found, a {@link NotFoundException} is thrown instead.
      *
      * @param userDTO The {@link UserDTO} containing the username and password entered in the login form.
      * @return A new {@link UserDTO} containing the user's information stored in the database.
+     * @throws NotFoundException if no corresponding user with matching username could be found.
      */
     @Transactional
     public boolean loginUser(final UserDTO userDTO) {
@@ -272,16 +278,16 @@ public class UserService {
 
     /**
      * Searches for the user with the given secret, activates their account, and returns a {@link UserDTO} containing
-     * the user's information. If no user with matching secret could be found, a {@link NotFoundException} is thrown
-     * instead.
+     * the user's information.
      *
      * @param secret The secret to search for.
      * @return A new {@link UserDTO} containing the user's information stored in the database.
+     * @throws IllegalArgumentException if the passed secret is null or blank.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public UserDTO authenticateUser(final String secret) {
         if (secret == null || secret.trim().isBlank()) {
-            logger.error("Cannot search for user with secret null or blank!");
             throw new IllegalArgumentException("Cannot search for user with secret null or blank!");
         }
 
@@ -302,11 +308,11 @@ public class UserService {
      *
      * @param userDTO The {@link UserDTO} containing the updated user information.
      * @return The updated user information.
+     * @throws IllegalArgumentException if the id of the user is null or invalid.
      */
     @Transactional
     public UserDTO updateUser(final UserDTO userDTO) {
         if (userDTO.getId() == null || userDTO.getId() < Constants.MIN_ID) {
-            logger.error("Cannot save user with invalid id " + userDTO.getId() + "!");
             throw new IllegalArgumentException("Cannot save user with invalid id " + userDTO.getId() + "!");
         }
 
@@ -315,19 +321,18 @@ public class UserService {
     }
 
     /**
-     * Updates the email of the user with the given id to the given value. If no corresponding user exists, a
-     * {@link NotFoundException} is thrown instead.
+     * Updates the email of the user with the given id to the given value.
      *
      * @param id The user's id.
      * @param email The new email to be set.
+     * @throws IllegalArgumentException if the passed id is invalid or the email is null or blank.
+     * @throws NotFoundException if no corresponding user entry could be found.
      */
     @Transactional
     public void updateEmail(final int id, final String email) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot search for user with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot search for user with invalid id " + id + "!");
         } else if (email == null || email.trim().isBlank()) {
-            logger.error("Cannot update email for user with id " + id + " with email null or blank!");
             throw new IllegalArgumentException("Cannot update email for user with id " + id
                     + " with email null or blank!");
         }
@@ -348,16 +353,16 @@ public class UserService {
      * Reactivates the accounts of participants who have not finished an experiment when it is being reopened. If the
      * participant is not currently participating in a different experiment, their account is activated and a secret
      * generated. The list of the updated and reactivated users is then passed to the controller to send out new
-     * invitation mails. If no experiment with the corresponding id could be found, a {@link NotFoundException} is
-     * thrown instead.
+     * invitation mails.
      *
      * @param experimentId The experiment id to search for.
      * @return A list of {@link UserDTO}s.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
     public List<UserDTO> reactivateUserAccounts(final int experimentId) {
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot search for user with invalid experiment id " + experimentId + "!");
             throw new IllegalArgumentException("Cannot search for user with invalid experiment id " + experimentId
                     + "!");
         }
@@ -367,17 +372,16 @@ public class UserService {
     }
 
     /**
-     * Retrieves a list of {@link UserDTO}s who have not yet finished the experiment with the given id. If no experiment
-     * with a corresponding id could be found, a {@link NotFoundException} is thrown instead.
+     * Retrieves a list of {@link UserDTO}s who have not yet finished the experiment with the given id.
      *
      * @param experimentId The experiment id to search for.
      * @return The list of users.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
     public List<UserDTO> findUnfinishedUsers(final int experimentId) {
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot search for reactivated user accounts with invalid experiment id " + experimentId
-                    + "!");
             throw new IllegalArgumentException("Cannot search for reactivated user accounts with invalid experiment id "
                     + experimentId + "!");
         }
@@ -387,17 +391,16 @@ public class UserService {
     }
 
     /**
-     * Verifies how many users with administrator status are currently registered. If no administrator can be found an
-     * {@link IllegalStateException} is thrown instead.
+     * Verifies how many users with administrator status are currently registered.
      *
      * @return {@code true} if only one administrator remains in the database, or {@code false} otherwise.
+     * @throws IllegalStateException if no administrator could be found.
      */
     @Transactional
     public boolean isLastAdmin() {
         List<User> admins = userRepository.findAllByRole(UserDTO.Role.ADMIN.toString());
 
         if (admins.size() < 1) {
-            logger.error("There are no users with administrator status in the database!");
             throw new IllegalStateException("There are no users with administrator status in the database!");
         }
 
@@ -408,11 +411,11 @@ public class UserService {
      * Deletes the user with the given id from the database, if any such user exists.
      *
      * @param id The id to search for.
+     * @throws IllegalArgumentException if the passed id is invalid.
      */
     @Transactional
     public void deleteUser(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot delete user with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot delete user with invalid id " + id + "!");
         }
 
@@ -423,13 +426,13 @@ public class UserService {
      * Returns the current highest user id value.
      *
      * @return The id.
+     * @throws IllegalStateException if no users could be found.
      */
     @Transactional
     public int findLastId() {
         User user = userRepository.findFirstByOrderByIdDesc();
 
         if (user == null) {
-            logger.error("There are no users in database!");
             throw new IllegalStateException("There are no users in database!");
         }
 
@@ -443,11 +446,11 @@ public class UserService {
      *
      * @param username The username pattern to search for.
      * @return The number at the end of the retrieved username, or 1.
+     * @throws IllegalArgumentException if the passed username is null or blank.
      */
     @Transactional
     public int findValidNumberForUsername(final String username) {
         if (username == null || username.isBlank()) {
-            logger.error("Cannot search for matching username with username null or blank!");
             throw new IllegalArgumentException("Cannot search for matching username with username null or blank!");
         }
 
@@ -504,19 +507,17 @@ public class UserService {
 
     /**
      * Activates the user account linked to the given {@link Participant} and generates a secret, if the user does not
-     * yet have one. Finally, the updated {@link UserDTO} is returned. If the user id is null, an
-     * {@link IllegalStateException} is thrown instead.
+     * yet have one. Finally, the updated {@link UserDTO} is returned.
      *
      * @param participant The participant whose account is to be activated.
      * @param experimentId The id of the experiment in which the user is participating.
      * @return The updated user information.
+     * @throws IllegalStateException if the id of the user is null.
      */
     private UserDTO activateParticipantAccount(final Participant participant, final int experimentId) {
         User user = participant.getUser();
 
         if (user.getId() == null) {
-            logger.error("Could not find corresponding user for participant entry for experiment with id "
-                    + experimentId + "!");
             throw new IllegalStateException("Could not find corresponding user for participant entry for experiment"
                     + " with id " + experimentId + "!");
         }
@@ -531,11 +532,11 @@ public class UserService {
     }
 
     /**
-     * Returns a list of all participants who have not yet finished the experiment with the given id. If no experiment
-     * with a corresponding id could be found, a {@link NotFoundException} is thrown instead.
+     * Returns a list of all participants who have not yet finished the experiment with the given id.
      *
      * @param experimentId The id of the experiment.
      * @return The list of participants.
+     * @throws NotFoundException if no corresponding experiment could be found.
      */
     private List<Participant> findUnfinishedParticipants(final int experimentId) {
         Experiment experiment = experimentRepository.getOne(experimentId);

@@ -73,6 +73,11 @@ public class EventRestControllerIntegrationTest {
         }
 
         @Override
+        public boolean isActive() {
+            return true;
+        }
+
+        @Override
         public byte[] getProject() {
             return new byte[]{1, 2, 3};
         }
@@ -509,6 +514,11 @@ public class EventRestControllerIntegrationTest {
             @Override
             public Integer getId() {
                 return null;
+            }
+
+            @Override
+            public boolean isActive() {
+                return true;
             }
 
             @Override

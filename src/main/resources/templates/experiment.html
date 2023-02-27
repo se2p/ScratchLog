@@ -93,7 +93,11 @@
 
         <!-- The table of participants in the experiment and the buttons for adding and removing participants. -->
         <div class="mb-5" sec:authorize="hasRole('ADMIN')">
-            <h2 class="h3" th:text="#{heading_participants}"></h2>
+            <div class="d-flex justify-content-between flex-wrap mb-3">
+                <h2 class="h3" th:text="#{heading_participants}"></h2>
+                <a class="btn btn-secondary" th:unless="${participants.isEmpty()}"
+                   th:href="@{/secret/list(experiment=${experimentDTO.id})}" th:text="#{show_secrets}"></a>
+            </div>
             <div class="col-12 mb-5">
                 <!-- The table containing the participant information. -->
                 <div class="table-container">
@@ -115,10 +119,12 @@
                         <tbody th:unless="${participants.isEmpty()}">
                         <tr th:each="participant : ${participants}">
                             <th scope="row">
+                                <!--suppress ThymeleafVariablesResolveInspection -->
                                 <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
                                    th:text="${participant.user.id}"></a>
                             </th>
                             <td>
+                                <!--suppress ThymeleafVariablesResolveInspection -->
                                 <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
                                    th:text="${participant.user.username}"></a>
                             </td>
@@ -148,6 +154,7 @@
                                     <span class="sr-only" th:text="#{table_empty}"></span>
                                 </span>
                                 <span th:unless="${participant.start == null}">
+                                    <!--suppress ThymeleafVariablesResolveInspection -->
                                     <a class="no_decoration" th:aria-label="#{result_label}"
                                        th:href="@{/result(experiment=${experimentDTO.id}, user=${participant.user.id})}">
                                         <i aria-hidden="true" class="far fa-chart-bar"></i>
@@ -186,7 +193,7 @@
                 <div class="mb-3">
                     <input id="add" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
                 </div>
-                <div class="mb-3">
+                <div class="mb-3" th:unless="${experimentDTO.courseExperiment}">
                     <a class="btn btn-secondary" th:href="@{/participant/add(id=${experimentDTO.id})}">
                         <span th:text="#{add_new_participant}"></span>
                     </a>
@@ -317,7 +324,7 @@
 <script th:src="@{/webjars/jquery/3.5.1/jquery.min.js}"></script>
 
 <!-- Script to open and close the delete and add modals. -->
-<script type="text/javascript" th:src="@{/js/experimentModals.js}"></script>
+<script type="module" th:src="@{/js/experimentModals.js}"></script>
 
 <!-- Script to fetch the participant suggestions. -->
 <script type="text/javascript" th:src="@{/js/participantSuggestions.js}"></script>

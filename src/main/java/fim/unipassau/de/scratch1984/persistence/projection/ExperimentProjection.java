@@ -14,6 +14,13 @@ public interface ExperimentProjection {
     Integer getId();
 
     /**
+     * Returns whether the experiment is currently running.
+     *
+     * @return The experiment status.
+     */
+    boolean isActive();
+
+    /**
      * Returns the current sb3 project.
      *
      * @return The sb3 project.

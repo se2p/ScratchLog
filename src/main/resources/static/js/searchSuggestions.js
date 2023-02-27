@@ -28,8 +28,9 @@ function getSuggestions() {
             html += `
             <li class="list-group-item list-group-item-action">
                 <a class="no_decoration"
-                onclick="setHref(this.firstChild.innerText)"><span class="me-2">${sanitize(element[0])}</span>
-                    <span>${sanitize(element[1])}</span>
+                onclick="setHref(this.firstChild.innerText)"><span style="display: none">${sanitize(element[0])}</span>
+                    <span class="me-2">${sanitize(element[1])}</span>
+                    <span>${sanitize(element[2])}</span>
                 </a>
             </li>
             `
@@ -40,19 +41,12 @@ function getSuggestions() {
 }
 
 /**
- * Sets link location value to redirect the user to the corresponding profile or experiment page depending on whether
- * the value passed consists only of numbers and is thus an experiment id, or not.
+ * Sets link location value to redirect the user to the corresponding profile, experiment or course.
  *
- * @param value The experiment id or user name.
+ * @param value The course or experiment id or the username.
  */
 function setHref(value) {
-    let regex=/^[0-9]+$/;
-
-    if (value.match(regex)) {
-        location.href = contextPath + "/experiment?id=" + value;
-    } else {
-        location.href = contextPath + "/users/profile?name=" + value;
-    }
+   location.href = contextPath + value;
 }
 
 /**

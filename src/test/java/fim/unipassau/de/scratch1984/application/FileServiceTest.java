@@ -69,7 +69,7 @@ public class FileServiceTest {
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip", new byte[]{1, 2, 3, 4});
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
-            GUI_URL);
+            false, GUI_URL);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
     private final File file = new File(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "file", "type",
             new byte[]{1, 2, 3, 4});
@@ -83,7 +83,9 @@ public class FileServiceTest {
     @BeforeEach
     public void setup() {
         user.setId(ID);
+        user.setActive(true);
         experiment.setId(ID);
+        experiment.setActive(true);
         participant.setEnd(null);
     }
 
@@ -159,6 +161,36 @@ public class FileServiceTest {
     }
 
     @Test
+    public void testSaveFileUserInactive() {
+        user.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> fileService.saveFile(fileDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(fileRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveFileExperimentInactive() {
+        experiment.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> fileService.saveFile(fileDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(fileRepository, never()).save(any());
+    }
+
+    @Test
     public void testSaveSb3Zip() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
@@ -220,6 +252,36 @@ public class FileServiceTest {
     public void testSaveSb3ZipParticipantNull() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        assertDoesNotThrow(
+                () -> fileService.saveSb3Zip(sb3ZipDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveSb3ZipUserInactive() {
+        user.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> fileService.saveSb3Zip(sb3ZipDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveSb3ZipExperimentInactive() {
+        experiment.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );

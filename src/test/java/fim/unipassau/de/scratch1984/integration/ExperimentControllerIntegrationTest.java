@@ -1,16 +1,20 @@
 package fim.unipassau.de.scratch1984.integration;
 
 import fim.unipassau.de.scratch1984.MailServerSetter;
+import fim.unipassau.de.scratch1984.StringCreator;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -39,6 +43,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import javax.validation.ConstraintViolationException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -85,7 +90,13 @@ public class ExperimentControllerIntegrationTest {
     private UserService userService;
 
     @MockBean
+    private CourseService courseService;
+
+    @MockBean
     private ParticipantService participantService;
+
+    @MockBean
+    private PageService pageService;
 
     @MockBean
     private MailService mailService;
@@ -126,7 +137,7 @@ public class ExperimentControllerIntegrationTest {
     private static final String FILENAME = "project.sb3";
     private static final String USERNAME = "user";
     private static final String PASSWORD = "password";
-    private static final String LONG_PASSWORD = "VeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeryLongPassword";
+    private static final String LONG_PASSWORD = StringCreator.createLongString(108);
     private static final int FIRST_PAGE = 1;
     private static final int LAST_PAGE = 3;
     private static final int PREVIOUS = 2;
@@ -134,7 +145,7 @@ public class ExperimentControllerIntegrationTest {
     private static final int ID = 1;
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false,
-            GUI_URL);
+            false, GUI_URL);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
             UserDTO.Language.ENGLISH, PASSWORD, "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANT, "participant@part.de", UserDTO.Role.PARTICIPANT,
@@ -161,6 +172,8 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setDescription(DESCRIPTION);
         experimentDTO.setPostscript(POSTSCRIPT);
         experimentDTO.setActive(false);
+        experimentDTO.setCourseExperiment(false);
+        experimentDTO.setCourse(null);
         participantDTO.setStart(null);
         passwordDTO.setPassword(PASSWORD);
     }
@@ -174,8 +187,8 @@ public class ExperimentControllerIntegrationTest {
     @WithMockUser(username = "user", roles = {"ADMIN"})
     public void testGetExperiment() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -197,8 +210,8 @@ public class ExperimentControllerIntegrationTest {
                 )))
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService).getLastParticipantPage(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantPage(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(experimentService).hasProjectFile(ID);
     }
 
@@ -206,8 +219,8 @@ public class ExperimentControllerIntegrationTest {
     @WithMockUser(username = "user", roles = {"ADMIN"})
     public void testGetExperimentHasProject() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         when(experimentService.hasProjectFile(ID)).thenReturn(true);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
@@ -231,8 +244,8 @@ public class ExperimentControllerIntegrationTest {
                 )))
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService).getLastParticipantPage(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantPage(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(experimentService).hasProjectFile(ID);
     }
 
@@ -258,7 +271,7 @@ public class ExperimentControllerIntegrationTest {
         when(userService.getUser(anyString())).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -282,7 +295,7 @@ public class ExperimentControllerIntegrationTest {
         verify(userService).getUser(anyString());
         verify(participantService).getParticipant(ID, ID);
         verify(experimentService).getExperiment(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -293,7 +306,7 @@ public class ExperimentControllerIntegrationTest {
         when(userService.getUser(anyString())).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment")
                         .param(ID_PARAM, ID_STRING)
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -317,7 +330,7 @@ public class ExperimentControllerIntegrationTest {
         verify(userService).getUser(anyString());
         verify(participantService).getParticipant(ID, ID);
         verify(experimentService).getExperiment(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -389,24 +402,43 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testGetExperimentForm() throws  Exception {
         mvc.perform(get("/experiment/create")
-                .flashAttr(EXPERIMENT_DTO, new ExperimentDTO())
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
                 .andExpect(status().isOk())
-                .andExpect(view().name(EXPERIMENT_EDIT));
+                .andExpect(view().name(EXPERIMENT_EDIT))
+                .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
+                        hasProperty("courseExperiment", is(false)),
+                        hasProperty("course", nullValue())
+                )));
+    }
+
+    @Test
+    public void testGetExperimentFormCourse() throws  Exception {
+        mvc.perform(get("/experiment/create")
+                        .param("course", ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT_EDIT))
+                .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
+                        hasProperty("courseExperiment", is(true)),
+                        hasProperty("course", is(ID))
+                )));
     }
 
     @Test
     public void testGetEditExperimentForm() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/experiment/edit")
-                .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENT_DTO, allOf(
                         hasProperty("id", is(ID)),
@@ -424,11 +456,11 @@ public class ExperimentControllerIntegrationTest {
     public void testGetEditExperimentFormNotFound() throws Exception {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/experiment/edit")
-                .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).getExperiment(ID);
@@ -437,11 +469,11 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testGetExperimentFormInvalidId() throws Exception {
         mvc.perform(get("/experiment/edit")
-                .param(ID_PARAM, INFO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
+                        .param(ID_PARAM, INFO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService, never()).getExperiment(ID);
@@ -460,6 +492,51 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
         verify(experimentService).existsExperiment(TITLE, ID);
         verify(experimentService).saveExperiment(experimentDTO);
+    }
+
+    @Test
+    public void testEditExperimentCourse() throws Exception {
+        experimentDTO.setCourseExperiment(true);
+        experimentDTO.setCourse(ID);
+        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(courseService.existsActiveCourse(ID)).thenReturn(true);
+        mvc.perform(post("/experiment/update")
+                        .flashAttr(EXPERIMENT_DTO, experimentDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
+        verify(courseService).existsActiveCourse(ID);
+        verify(experimentService).existsExperiment(TITLE, ID);
+        verify(experimentService).saveExperiment(experimentDTO);
+        verify(courseService).saveCourseExperiment(ID, ID);
+        verify(participantService).saveParticipants(ID, ID);
+        verify(experimentService, never()).deleteExperiment(anyInt());
+    }
+
+    @Test
+    public void testEditExperimentCourseError() throws Exception {
+        experimentDTO.setCourseExperiment(true);
+        experimentDTO.setCourse(ID);
+        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(courseService.existsActiveCourse(ID)).thenReturn(true);
+        doThrow(ConstraintViolationException.class).when(courseService).saveCourseExperiment(ID, ID);
+        mvc.perform(post("/experiment/update")
+                        .flashAttr(EXPERIMENT_DTO, experimentDTO)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(Constants.ERROR));
+        verify(courseService).existsActiveCourse(ID);
+        verify(experimentService).existsExperiment(TITLE, ID);
+        verify(experimentService).saveExperiment(experimentDTO);
+        verify(courseService).saveCourseExperiment(ID, ID);
+        verify(participantService, never()).saveParticipants(anyInt(), anyInt());
+        verify(experimentService).deleteExperiment(anyInt());
     }
 
     @Test
@@ -626,8 +703,8 @@ public class ExperimentControllerIntegrationTest {
         userDTOS.add(participant);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(ID)).thenReturn(userDTOS);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, "open")
                 .param(ID_PARAM, ID_STRING)
@@ -652,8 +729,8 @@ public class ExperimentControllerIntegrationTest {
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(experimentService).getLastParticipantPage(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantPage(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -676,15 +753,15 @@ public class ExperimentControllerIntegrationTest {
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(experimentService, never()).getLastParticipantPage(ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantPage(ID);
+        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
     public void testChangeExperimentStatusClose() throws Exception {
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, "close")
                 .param(ID_PARAM, ID_STRING)
@@ -708,7 +785,7 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -817,8 +894,8 @@ public class ExperimentControllerIntegrationTest {
     public void testSearchForUserExperimentInactive() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/search")
                 .param(PARTICIPANT, PARTICIPANT)
                 .param(ID_PARAM, ID_STRING)
@@ -847,8 +924,8 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
         when(userService.existsParticipant(participant.getId(), ID)).thenReturn(true);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/search")
                         .param(PARTICIPANT, PARTICIPANT)
                         .param(ID_PARAM, ID_STRING)
@@ -876,8 +953,8 @@ public class ExperimentControllerIntegrationTest {
     public void testSearchForUserParticipantNull() throws Exception {
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/search")
                         .param(PARTICIPANT, PARTICIPANT)
                         .param(ID_PARAM, ID_STRING)
@@ -904,8 +981,8 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testSearchForUserInvalidQuery() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/search")
                 .param(PARTICIPANT, BLANK)
                 .param(ID_PARAM, ID_STRING)
@@ -950,8 +1027,8 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testGetNextPage() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/next")
                 .param(ID_PARAM, ID_STRING)
                 .param(PAGE_PARAM, CURRENT)
@@ -974,8 +1051,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService).getLastParticipantPage(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantPage(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -991,8 +1068,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService, never()).getLastParticipantPage(ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantPage(ID);
+        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -1008,8 +1085,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService, never()).getExperiment(ID);
-        verify(experimentService, never()).getLastParticipantPage(ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantPage(ID);
+        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -1025,15 +1102,15 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService, never()).getExperiment(ID);
-        verify(experimentService, never()).getLastParticipantPage(ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantPage(ID);
+        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
     public void testGetPreviousPage() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/previous")
                 .param(ID_PARAM, ID_STRING)
                 .param(PAGE_PARAM, CURRENT)
@@ -1056,8 +1133,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService).getLastParticipantPage(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantPage(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -1073,8 +1150,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService, never()).getLastParticipantPage(ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantPage(ID);
+        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -1089,8 +1166,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService, never()).getExperiment(ID);
-        verify(experimentService, never()).getLastParticipantPage(ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantPage(ID);
+        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -1105,15 +1182,15 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService, never()).getExperiment(ID);
-        verify(experimentService, never()).getLastParticipantPage(ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantPage(ID);
+        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
     public void testGetFirstPage() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/first")
                 .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -1135,8 +1212,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService).getLastParticipantPage(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantPage(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -1151,15 +1228,15 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService, never()).getLastParticipantPage(ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantPage(ID);
+        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
     public void testGetLastPage() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment/last")
                 .param(ID_PARAM, ID_STRING)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -1181,8 +1258,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService, times(2)).getLastParticipantPage(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, times(2)).getLastParticipantPage(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -1197,8 +1274,8 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService, never()).getLastParticipantPage(ID);
-        verify(participantService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getLastParticipantPage(ID);
+        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -1292,7 +1369,7 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService).getLastParticipantPage(ID);
+        verify(pageService).getLastParticipantPage(ID);
         verify(experimentService).hasProjectFile(ID);
         verify(experimentService, never()).uploadSb3Project(anyInt(), any());
     }
@@ -1311,7 +1388,7 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).getExperiment(ID);
-        verify(experimentService).getLastParticipantPage(ID);
+        verify(pageService).getLastParticipantPage(ID);
         verify(experimentService).hasProjectFile(ID);
         verify(experimentService, never()).uploadSb3Project(anyInt(), any());
     }

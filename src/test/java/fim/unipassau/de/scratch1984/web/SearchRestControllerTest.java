@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -40,6 +41,7 @@ public class SearchRestControllerTest {
     private List<String[]> userProjectionData;
     private List<String[]> experimentData;
     private List<String[]> experimentTableData;
+    private List<String[]> courseTableData;
 
     @BeforeEach
     public void setup() {
@@ -48,6 +50,7 @@ public class SearchRestControllerTest {
         experimentData.addAll(userData);
         addUserProjectionData(2);
         addExperimentTableData(2);
+        addCourseTableData(3);
     }
 
     @Test
@@ -103,6 +106,25 @@ public class SearchRestControllerTest {
     }
 
     @Test
+    public void testGetMoreCourses() {
+        when(searchService.getNextCourses(QUERY, PAGE)).thenReturn(courseTableData);
+        assertEquals(3, searchRestController.getMoreCourses(QUERY, PAGE_STRING).size());
+        verify(searchService).getNextCourses(QUERY, PAGE);
+    }
+
+    @Test
+    public void testGetMoreCoursesPageBlank() {
+        assertTrue(searchRestController.getMoreCourses(QUERY, BLANK).isEmpty());
+        verify(searchService, never()).getNextCourses(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetMoreCoursesPageNull() {
+        assertTrue(searchRestController.getMoreCourses(QUERY, null).isEmpty());
+        verify(searchService, never()).getNextCourses(anyString(), anyInt());
+    }
+
+    @Test
     public void testGetUserSuggestions() {
         when(searchService.getUserSuggestions(QUERY, ID)).thenReturn(userData);
         List<String[]> data = searchRestController.getUserSuggestions(QUERY, ID_STRING);
@@ -154,6 +176,60 @@ public class SearchRestControllerTest {
         verify(searchService, never()).getUserDeleteSuggestions(anyString(), anyInt());
     }
 
+    @Test
+    public void testGetCourseExperimentSuggestions() {
+        when(searchService.getCourseExperimentSuggestions(QUERY, ID)).thenReturn(experimentTableData);
+        List<String[]> data = searchRestController.getCourseExperimentSuggestions(QUERY, ID_STRING);
+        assertEquals(2, data.size());
+        verify(searchService).getCourseExperimentSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseExperimentSuggestionsInvalidParams() {
+        assertTrue(searchRestController.getCourseExperimentSuggestions(null, ID_STRING).isEmpty());
+        verify(searchService, never()).getCourseExperimentSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseParticipantSuggestions() {
+        when(searchService.getCourseParticipantSuggestions(QUERY, ID)).thenReturn(userData);
+        assertEquals(5, searchRestController.getCourseParticipantSuggestions(QUERY, ID_STRING).size());
+        verify(searchService).getCourseParticipantSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseParticipantSuggestionsInvalidParams() {
+        assertTrue(searchRestController.getCourseParticipantSuggestions(QUERY, BLANK).isEmpty());
+        verify(searchService, never()).getCourseParticipantSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseExperimentDeleteSuggestions() {
+        when(searchService.getCourseExperimentDeleteSuggestions(QUERY, ID)).thenReturn(experimentTableData);
+        List<String[]> data = searchRestController.getCourseExperimentDeleteSuggestions(QUERY, ID_STRING);
+        assertEquals(2, data.size());
+        verify(searchService).getCourseExperimentDeleteSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseExperimentDeleteSuggestionsInvalidParams() {
+        assertTrue(searchRestController.getCourseExperimentDeleteSuggestions(QUERY, QUERY).isEmpty());
+        verify(searchService, never()).getCourseExperimentDeleteSuggestions(anyString(), anyInt());
+    }
+
+    @Test
+    public void testGetCourseParticipantDeleteSuggestions() {
+        when(searchService.getCourseParticipantDeleteSuggestions(QUERY, ID)).thenReturn(userData);
+        assertEquals(5, searchRestController.getCourseParticipantDeleteSuggestions(QUERY, ID_STRING).size());
+        verify(searchService).getCourseParticipantDeleteSuggestions(QUERY, ID);
+    }
+
+    @Test
+    public void testGetCourseParticipantDeleteSuggestionsInvalidParams() {
+        assertTrue(searchRestController.getCourseParticipantDeleteSuggestions(BLANK, ID_STRING).isEmpty());
+        verify(searchService, never()).getCourseParticipantDeleteSuggestions(anyString(), anyInt());
+    }
+
     private void addUserData(int number) {
         userData = new ArrayList<>();
         for (int i = 0; i < number; i++) {
@@ -183,8 +259,17 @@ public class SearchRestControllerTest {
     private void addExperimentTableData(int number) {
         experimentTableData = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            String[] userInfo = new String[]{String.valueOf(i), "experiment" + i, "description" + i};
-            experimentTableData.add(userInfo);
+            String[] experimentInfo = new String[]{String.valueOf(i), "experiment" + i, "description" + i};
+            experimentTableData.add(experimentInfo);
         }
     }
+
+    private void addCourseTableData(int number) {
+        courseTableData = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            String[] courseInfo = new String[]{String.valueOf(i), "course" + i, "description" + i};
+            courseTableData.add(courseInfo);
+        }
+    }
+
 }

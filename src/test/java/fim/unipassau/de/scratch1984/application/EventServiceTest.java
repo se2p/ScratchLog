@@ -112,7 +112,7 @@ public class EventServiceTest {
             "filetype", ResourceEventDTO.LibraryResource.TRUE);
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
-            GUI_URL);
+            false, GUI_URL);
     private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
     private final CodesData codesData = new CodesData(ID, ID, 15);
     private final String[] blockEventDataHeader = {"id", "user", "experiment", "date", "eventType", "event",
@@ -161,6 +161,8 @@ public class EventServiceTest {
     @BeforeEach
     public void setup() {
         user.setId(ID);
+        user.setActive(true);
+        experiment.setActive(true);
         resourceEventDTO.setLibraryResource(ResourceEventDTO.LibraryResource.TRUE);
         blockEvent.setCode(JSON);
         participant.setEnd(null);
@@ -252,6 +254,36 @@ public class EventServiceTest {
     }
 
     @Test
+    public void testSaveBlockEventUserInactive() {
+        user.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(any(), any())).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveBlockEvent(blockEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(blockEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveBlockEventExperimentInactive() {
+        experiment.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(any(), any())).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveBlockEvent(blockEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(blockEventRepository, never()).save(any());
+    }
+
+    @Test
     public void testSaveBlockEventConstraintViolation() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
@@ -303,6 +335,21 @@ public class EventServiceTest {
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
         verify(participantRepository).findByUserAndExperiment(any(), any());
+        verify(clickEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveClickEventUserInactive() {
+        user.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveClickEvent(clickEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
         verify(clickEventRepository, never()).save(any());
     }
 
@@ -407,6 +454,21 @@ public class EventServiceTest {
     @Test
     public void testSaveQuestionEventInvalidEvent() {
         questionEventDTO.setDate(null);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveQuestionEvent(questionEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(questionEventRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveQuestionEventExperimentInactive() {
+        experiment.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
@@ -538,6 +600,21 @@ public class EventServiceTest {
     }
 
     @Test
+    public void testSaveResourceEventUserInactive() {
+        user.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertDoesNotThrow(
+                () -> eventService.saveResourceEvent(resourceEventDTO)
+        );
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+        verify(resourceEventRepository, never()).save(any());
+    }
+
+    @Test
     public void testFindJsonById() {
         when(blockEventRepository.findById(ID)).thenReturn(java.util.Optional.of(blockEvent));
         assertEquals(JSON, eventService.findJsonById(ID));
@@ -603,6 +680,36 @@ public class EventServiceTest {
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment))
                 .thenReturn(projection);
+        assertNull(eventService.findFirstJSON(ID, ID));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testFindFirstJSONUserInactive() {
+        user.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment))
+                .thenReturn(projection);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        assertNull(eventService.findFirstJSON(ID, ID));
+        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getOne(ID);
+        verify(blockEventRepository).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
+        verify(participantRepository).findByUserAndExperiment(user, experiment);
+    }
+
+    @Test
+    public void testFindFirstJSONExperimentInactive() {
+        experiment.setActive(false);
+        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment))
+                .thenReturn(projection);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
         assertNull(eventService.findFirstJSON(ID, ID));
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);

@@ -134,7 +134,7 @@ public class ParticipantDTO {
         }
 
         ParticipantDTO that = (ParticipantDTO) other;
-        return user.equals(that.user) && experiment.equals(that.experiment);
+        return Objects.equals(user, that.user) && Objects.equals(experiment, that.experiment);
     }
 
     /**

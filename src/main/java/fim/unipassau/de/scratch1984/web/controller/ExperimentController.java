@@ -3,17 +3,22 @@ package fim.unipassau.de.scratch1984.web.controller;
 import com.opencsv.CSVWriter;
 import fim.unipassau.de.scratch1984.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
+import fim.unipassau.de.scratch1984.application.service.CourseService;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
+import fim.unipassau.de.scratch1984.util.PageUtils;
 import fim.unipassau.de.scratch1984.util.Secrets;
+import fim.unipassau.de.scratch1984.util.validation.StringValidator;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
@@ -30,7 +35,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -70,9 +74,19 @@ public class ExperimentController {
     private final ExperimentService experimentService;
 
     /**
+     * The course service to use for course management.
+     */
+    private final CourseService courseService;
+
+    /**
      * The participant service to use for participant management.
      */
     private final ParticipantService participantService;
+
+    /**
+     * The page service to use for retrieving pageable tables.
+     */
+    private final PageService pageService;
 
     /**
      * The mail service to use for sending emails.
@@ -132,19 +146,24 @@ public class ExperimentController {
     /**
      * Constructs a new experiment controller with the given dependencies.
      *
-     * @param experimentService The experiment service to use.
-     * @param userService The user service to use.
-     * @param participantService The participant service to use.
-     * @param mailService The mail service to use.
-     * @param eventService The event service to use.
+     * @param experimentService The {@link ExperimentService} to use.
+     * @param userService The {@link UserService} to use.
+     * @param courseService The {@link CourseService} to use.
+     * @param participantService The {@link ParticipantService} to use.
+     * @param pageService The {@link PageService} to use.
+     * @param mailService The {@link MailService} to use.
+     * @param eventService The {@link EventService} to use.
      */
     @Autowired
     public ExperimentController(final ExperimentService experimentService, final UserService userService,
-                                final ParticipantService participantService, final MailService mailService,
+                                final CourseService courseService, final ParticipantService participantService,
+                                final PageService pageService, final MailService mailService,
                                 final EventService eventService) {
         this.experimentService = experimentService;
         this.userService = userService;
+        this.courseService = courseService;
         this.participantService = participantService;
+        this.pageService = pageService;
         this.mailService = mailService;
         this.eventService = eventService;
     }
@@ -163,9 +182,10 @@ public class ExperimentController {
     @Secured(Constants.ROLE_PARTICIPANT)
     public String getExperiment(@RequestParam(ID) final String id, final Model model,
                                 final HttpServletRequest httpServletRequest) {
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot return the experiment page with an invalid id parameter!");
             return Constants.ERROR;
         }
 
@@ -203,12 +223,28 @@ public class ExperimentController {
     /**
      * Returns the form used to create or edit an experiment.
      *
-     * @param experimentDTO The {@link ExperimentDTO} in which the information will be stored.
+     * @param course The ID of the course to which the new experiment should be added, if applicable.
+     * @param model The {@link Model} used to store the information.
      * @return A new empty form.
      */
     @GetMapping("/create")
     @Secured(Constants.ROLE_ADMIN)
-    public String getExperimentForm(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO) {
+    public String getExperimentForm(@RequestParam(required = false, name = "course") final String course,
+                                    final Model model) {
+        ExperimentDTO experimentDTO = new ExperimentDTO();
+
+        if (course != null) {
+            int courseId = NumberParser.parseId(course);
+
+            if (courseId < Constants.MIN_ID) {
+                return Constants.ERROR;
+            } else {
+                experimentDTO.setCourse(courseId);
+                experimentDTO.setCourseExperiment(true);
+            }
+        }
+
+        model.addAttribute("experimentDTO", experimentDTO);
         return EXPERIMENT_EDIT;
     }
 
@@ -223,9 +259,10 @@ public class ExperimentController {
     @GetMapping("/edit")
     @Secured(Constants.ROLE_ADMIN)
     public String getEditExperimentForm(@RequestParam(ID) final String id, final Model model) {
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot return the experiment edit page with an invalid id parameter!");
             return Constants.ERROR;
         }
 
@@ -251,43 +288,32 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String editExperiment(@ModelAttribute("experimentDTO") final ExperimentDTO experimentDTO,
                                  final BindingResult bindingResult) {
+        if (experimentDTO.getCourse() != null && !courseService.existsActiveCourse(experimentDTO.getCourse())) {
+            return Constants.ERROR;
+        }
+
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
-        String titleValidation = validateInput(experimentDTO.getTitle(), Constants.LARGE_FIELD);
-        String descriptionValidation = validateInput(experimentDTO.getDescription(), Constants.SMALL_AREA);
-
-        if (titleValidation != null) {
-            bindingResult.addError(createFieldError("title", titleValidation, resourceBundle));
-        }
-        if (descriptionValidation != null) {
-            bindingResult.addError(createFieldError("description", descriptionValidation,
-                    resourceBundle));
-        }
-        if (experimentDTO.getInfo().length() > Constants.LARGE_AREA) {
-            bindingResult.addError(createFieldError("info", "long_string", resourceBundle));
-        }
-        if (experimentDTO.getPostscript() != null && !experimentDTO.getPostscript().trim().isBlank()) {
-            if (experimentDTO.getPostscript().length() > Constants.SMALL_AREA) {
-                bindingResult.addError(createFieldError("postscript", "long_string", resourceBundle));
-            }
-        }
-        if (experimentDTO.getId() == null) {
-            if (experimentService.existsExperiment(experimentDTO.getTitle())) {
-                logger.error("Experiment with same title exists!");
-                bindingResult.addError(createFieldError("title", "title_exists", resourceBundle));
-            }
-        } else {
-            if (experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())) {
-                logger.error("Experiment with same name but different id exists!");
-                bindingResult.addError(createFieldError("title", "title_exists", resourceBundle));
-            }
-        }
+        FieldErrorHandler.validateExperimentInput(experimentDTO.getTitle(), experimentDTO.getDescription(),
+                experimentDTO.getInfo(), bindingResult, resourceBundle);
+        checkFieldErrors(experimentDTO, bindingResult, resourceBundle);
 
         if (bindingResult.hasErrors()) {
             return EXPERIMENT_EDIT;
         }
 
-        ExperimentDTO saved = experimentService.saveExperiment(experimentDTO);
+        ExperimentDTO saved;
+
+        if (experimentDTO.getCourse() != null) {
+            experimentDTO.setActive(true);
+            saved = experimentService.saveExperiment(experimentDTO);
+
+            if (isErrorSavingCourseExperiment(experimentDTO.getCourse(), saved.getId())) {
+                return Constants.ERROR;
+            }
+        } else {
+            saved = experimentService.saveExperiment(experimentDTO);
+        }
 
         return REDIRECT_EXPERIMENT + saved.getId();
     }
@@ -308,9 +334,10 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot delete the experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
@@ -345,16 +372,16 @@ public class ExperimentController {
      * @param id The id of the experiment.
      * @param status The new status of the experiment.
      * @param model The model to hold the information.
-     * @param httpServletRequest The {@link HttpServletRequest}.
      * @return The experiment page.
      */
     @GetMapping("/status")
     @Secured(Constants.ROLE_ADMIN)
     public String changeExperimentStatus(@RequestParam("stat") final String status, @RequestParam(ID) final String id,
-                                         final Model model, final HttpServletRequest httpServletRequest) {
-        int experimentId = parseId(id);
+                                         final Model model) {
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID || status == null) {
+            logger.error("Cannot change the status of the experiment with invalid id or status parameters!");
             return Constants.ERROR;
         }
 
@@ -368,7 +395,7 @@ public class ExperimentController {
                 if (!ApplicationProperties.MAIL_SERVER) {
                     return REDIRECT_SECRET_LIST + experimentId;
                 } else {
-                    userDTOS.forEach(userDTO -> sendEmail(userDTO, id, httpServletRequest));
+                    userDTOS.forEach(userDTO -> sendEmail(userDTO, id));
                 }
             } else if (status.equals("close")) {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
@@ -394,16 +421,16 @@ public class ExperimentController {
      * @param id The id of the experiment.
      * @param search The username or email address to search for.
      * @param model The model used to store the error messages.
-     * @param httpServletRequest The servlet request.
      * @return The experiment page on success, or the error page otherwise.
      */
     @RequestMapping("/search")
     @Secured(Constants.ROLE_ADMIN)
     public String searchForUser(@RequestParam("participant") final String search, @RequestParam(ID) final String id,
-                                final Model model, final HttpServletRequest httpServletRequest) {
-        int experimentId = parseId(id);
+                                final Model model) {
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
+            logger.error("Cannot search for a user to add as participant with an invalid experiment id!");
             return Constants.ERROR;
         }
 
@@ -441,7 +468,7 @@ public class ExperimentController {
 
         if (!ApplicationProperties.MAIL_SERVER) {
             return REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + experimentId;
-        } else if (sendEmail(userDTO, id, httpServletRequest)) {
+        } else if (sendEmail(userDTO, id)) {
             return REDIRECT_EXPERIMENT + id;
         } else {
             return Constants.ERROR;
@@ -461,16 +488,12 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String getNextPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
                               final Model model) {
-        if (currentPage == null) {
+        if (PageUtils.isInvalidParams(id, currentPage)) {
             return Constants.ERROR;
         }
 
         int current = NumberParser.parseNumber(currentPage);
-        int experimentId = parseId(id);
-
-        if (experimentId < Constants.MIN_ID || current <= -1) {
-            return Constants.ERROR;
-        }
+        int experimentId = NumberParser.parseId(id);
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
@@ -497,16 +520,12 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String getPreviousPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
                                   final Model model) {
-        if (currentPage == null) {
+        if (PageUtils.isInvalidParams(id, currentPage)) {
             return Constants.ERROR;
         }
 
         int current = NumberParser.parseNumber(currentPage);
-        int experimentId = parseId(id);
-
-        if (experimentId < Constants.MIN_ID || current <= -1) {
-            return Constants.ERROR;
-        }
+        int experimentId = NumberParser.parseId(id);
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
@@ -531,7 +550,7 @@ public class ExperimentController {
     @GetMapping("/first")
     @Secured(Constants.ROLE_ADMIN)
     public String getFirstPage(@RequestParam(ID) final String id, final Model model) {
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             return Constants.ERROR;
@@ -558,7 +577,7 @@ public class ExperimentController {
     @GetMapping("/last")
     @Secured(Constants.ROLE_ADMIN)
     public String getLastPage(@RequestParam(ID) final String id, final Model model) {
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             return Constants.ERROR;
@@ -566,7 +585,7 @@ public class ExperimentController {
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            int page = experimentService.getLastParticipantPage(experimentId);
+            int page = pageService.getLastParticipantPage(experimentId);
             addModelInfo(page, experimentDTO, model);
         } catch (NotFoundException e) {
             return Constants.ERROR;
@@ -577,12 +596,12 @@ public class ExperimentController {
 
     /**
      * Retrieves all block event, resource event, block and resource event counts, codes and experiment data for the
-     * given experiment and makes them available for download in a csv file. If the id is invalid an
-     * {@link IncompleteDataException} is thrown instead. If an {@link IOException} occurs, a {@link RuntimeException}
-     * is thrown.
+     * given experiment and makes them available for download in a csv file.
      *
      * @param id The experiment id to search for.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed id is null or invalid.
+     * @throws RuntimeException if an {@link IOException} occurs
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
@@ -592,7 +611,7 @@ public class ExperimentController {
             throw new IncompleteDataException("Cannot download CSV file for experiment with id null!");
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot download CSV file for experiment with invalid id " + id + "!");
@@ -649,7 +668,7 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot upload project file for experiment with invalid id " + id + "!");
@@ -702,7 +721,7 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        int experimentId = parseId(id);
+        int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
             logger.error("Cannot delete project file for experiment with invalid id " + id + "!");
@@ -723,17 +742,15 @@ public class ExperimentController {
      *
      * @param userDTO The user to whom the email should be sent.
      * @param experimentId The id of the experiment in which the user is participating.
-     * @param httpServletRequest The {@link HttpServletRequest}.
      * @return {@code true} if the message has been sent successfully or {@code false} otherwise.
      */
-    private boolean sendEmail(final UserDTO userDTO, final String experimentId,
-                              final HttpServletRequest httpServletRequest) {
+    private boolean sendEmail(final UserDTO userDTO, final String experimentId) {
         if (userDTO.getEmail() == null) {
             logger.error("Cannot send invitation mail to user with email null!");
             return false;
         }
 
-        Map<String, Object> templateModel = getTemplateModel(experimentId, userDTO.getSecret(), httpServletRequest);
+        Map<String, Object> templateModel = getTemplateModel(experimentId, userDTO.getSecret());
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
@@ -752,11 +769,9 @@ public class ExperimentController {
      *
      * @param id The id of the experiment.
      * @param secret The user's secret.
-     * @param httpServletRequest The servlet request.
      * @return The map containing the base URL and the experiment URL.
      */
-    private Map<String, Object> getTemplateModel(final String id, final String secret,
-                                                 final HttpServletRequest httpServletRequest) {
+    private Map<String, Object> getTemplateModel(final String id, final String secret) {
         String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
                 + "/users/authenticate?id=" + id + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();
@@ -779,13 +794,13 @@ public class ExperimentController {
             experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
         }
 
-        int last = experimentService.getLastParticipantPage(experimentDTO.getId()) + 1;
+        int last = pageService.getLastParticipantPage(experimentDTO.getId()) + 1;
 
         if (page >= last) {
             return false;
         }
 
-        Page<Participant> participants = participantService.getParticipantPage(experimentDTO.getId(),
+        Page<Participant> participants = pageService.getParticipantPage(experimentDTO.getId(),
                 PageRequest.of(page, Constants.PAGE_SIZE));
 
         if (experimentService.hasProjectFile(experimentDTO.getId())) {
@@ -801,57 +816,53 @@ public class ExperimentController {
     }
 
     /**
-     * Parses the given string to a number, or returns -1, if the id is null or an invalid number.
+     * Checks, if the input contained in the given experiment dto is valid. If not, a corresponding field error is added
+     * to the given binding result to be displayed on the experiment edit page.
      *
-     * @param id The id to check.
-     * @return The number corresponding to the id, if it is a valid number, or -1 otherwise.
+     * @param experimentDTO The {@link ExperimentDTO} to check.
+     * @param bindingResult The {@link BindingResult} for returning information on invalid user input.
+     * @param resourceBundle The {@link ResourceBundle} for fetching the error message in the desired language.
      */
-    private int parseId(final String id) {
-        if (id == null) {
-            logger.debug("Cannot return the corresponding experiment page for experiment with id null!");
-            return -1;
+    private void checkFieldErrors(final ExperimentDTO experimentDTO, final BindingResult bindingResult,
+                                  final ResourceBundle resourceBundle) {
+        if (experimentDTO.getPostscript() != null && !experimentDTO.getPostscript().trim().isBlank()) {
+            if (experimentDTO.getPostscript().length() > Constants.SMALL_AREA) {
+                FieldErrorHandler.addFieldError(bindingResult, "experimentDTO", "postscript", "long_string",
+                        resourceBundle);
+            }
         }
 
-        int experimentId = NumberParser.parseNumber(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            logger.debug("Cannot return the corresponding experiment page for experiment with invalid id "
-                    + experimentId + "!");
+        if (experimentDTO.getId() == null) {
+            if (experimentService.existsExperiment(experimentDTO.getTitle())) {
+                logger.error("Experiment with same title exists!");
+                FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
+            }
+        } else {
+            if (experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())) {
+                logger.error("Experiment with same name but different id exists!");
+                FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
+            }
         }
-
-        return experimentId;
     }
 
     /**
-     * Checks, whether the given input string matches the general requirements and returns a custom error message
-     * string if the it does not, or {@code null} if everything is fine.
+     * Tries to add the experiment with the given id to the course with the given id and adds all users as experiment
+     * participants who are part of that course.
      *
-     * @param input The input string to check.
-     * @param maxLength The maximum string length allowed for the field.
-     * @return The custom error message string or {@code null}.
+     * @param courseId The id of the course.
+     * @param experimentId The id of the experiment.
+     * @return {@code false} if the operation was successful, or {@code true} if an error occurred.
      */
-    private String validateInput(final String input, final int maxLength) {
-        if (input == null || input.trim().isBlank()) {
-            return "empty_string";
+    private boolean isErrorSavingCourseExperiment(final int courseId, final int experimentId) {
+        try {
+            courseService.saveCourseExperiment(courseId, experimentId);
+            participantService.saveParticipants(experimentId, courseId);
+            return false;
+        } catch (Exception e) {
+            logger.error("Could not save course experiment!", e);
+            experimentService.deleteExperiment(experimentId);
+            return true;
         }
-
-        if (input.length() > maxLength) {
-            return "long_string";
-        }
-
-        return null;
-    }
-
-    /**
-     * Creates a new field error with the given parameters.
-     *
-     * @param field The field to which the error applies.
-     * @param error The error message string.
-     * @param resourceBundle The resource bundle to retrieve the error message in the current language.
-     * @return The new field error.
-     */
-    private FieldError createFieldError(final String field, final String error, final ResourceBundle resourceBundle) {
-        return new FieldError("experimentDTO", field, resourceBundle.getString(error));
     }
 
     /**
@@ -879,7 +890,7 @@ public class ExperimentController {
      */
     private boolean isValidSearch(final String search, final ExperimentDTO experimentDTO,
                                   final ResourceBundle resourceBundle, final Model model) {
-        String validateSearch = validateInput(search, Constants.LARGE_FIELD);
+        String validateSearch = StringValidator.validate(search, Constants.LARGE_FIELD);
 
         if (validateSearch != null) {
             model.addAttribute(ERROR, resourceBundle.getString(validateSearch));
@@ -900,7 +911,7 @@ public class ExperimentController {
      * @param model The {@link Model} to store the error messages.
      */
     private void validateUser(final UserDTO userDTO, final ExperimentDTO experimentDTO,
-                           final ResourceBundle resourceBundle, final Model model) {
+                              final ResourceBundle resourceBundle, final Model model) {
         if (userDTO == null) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
         } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
@@ -909,6 +920,9 @@ public class ExperimentController {
             model.addAttribute(ERROR, resourceBundle.getString("participant_entry"));
         } else if (!experimentDTO.isActive()) {
             model.addAttribute(ERROR, resourceBundle.getString("experiment_closed"));
+        } else if (experimentDTO.isCourseExperiment() && !courseService.existsCourseParticipant(experimentDTO.getId(),
+                userDTO.getId())) {
+            model.addAttribute(ERROR, resourceBundle.getString("course_participant_not_found"));
         }
     }
 

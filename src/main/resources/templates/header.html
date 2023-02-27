@@ -24,7 +24,7 @@
                         <i aria-hidden="true" class="fas fa-home fa-lg"></i>
                     </a>
                 </li>
-                <!-- The dropdown menu to add new users or experiments. -->
+                <!-- The dropdown menu to add new users, experiments or courses. -->
                 <li class="nav-item my-auto dropdown ms-2" sec:authorize="hasRole('ADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" role="button" id="addMenu"
                        data-bs-toggle="dropdown" aria-expanded="false" th:aria-label="#{add_label}">
@@ -33,6 +33,9 @@
                     <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="addMenu">
                         <li>
                             <a class="dropdown-item" th:href="@{/experiment/create}" th:text="#{new_experiment}"></a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/course/create}" th:text="#{new_course}"></a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/users/add}" th:text="#{new_user}"></a>

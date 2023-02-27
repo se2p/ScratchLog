@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
@@ -72,6 +73,9 @@ public class ParticipantControllerIntegrationTest {
     private ParticipantService participantService;
 
     @MockBean
+    private PageService pageService;
+
+    @MockBean
     private MailService mailService;
 
     private static final String GUI_URL = "scratch";
@@ -103,7 +107,7 @@ public class ParticipantControllerIntegrationTest {
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true,
-            GUI_URL);
+            false, GUI_URL);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
@@ -169,6 +173,22 @@ public class ParticipantControllerIntegrationTest {
                 .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).findLastId();
+    }
+
+    @Test
+    public void testGetParticipantFormCourseExperiment() throws Exception {
+        experimentDTO.setCourseExperiment(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        mvc.perform(get("/participant/add")
+                        .param(ID_PARAM, ID_STRING)
+                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
+                        .param(csrfToken.getParameterName(), csrfToken.getToken())
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).getExperiment(ID);
@@ -424,8 +444,8 @@ public class ParticipantControllerIntegrationTest {
         List<Participant> list = new ArrayList<>();
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
-        when(experimentService.getLastParticipantPage(ID)).thenReturn(ID);
-        when(participantService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(new PageImpl<>(list));
+        when(pageService.getLastParticipantPage(ID)).thenReturn(ID);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(new PageImpl<>(list));
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
                 .param(PARTICIPANT, PARTICIPANT)
@@ -442,8 +462,8 @@ public class ParticipantControllerIntegrationTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
-        verify(experimentService).getLastParticipantPage(ID);
-        verify(participantService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getLastParticipantPage(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
         verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
@@ -465,7 +485,7 @@ public class ParticipantControllerIntegrationTest {
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(experimentService, never()).getLastParticipantPage(anyInt());
+        verify(pageService, never()).getLastParticipantPage(anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
@@ -485,7 +505,7 @@ public class ParticipantControllerIntegrationTest {
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(experimentService, never()).getLastParticipantPage(anyInt());
+        verify(pageService, never()).getLastParticipantPage(anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).deleteParticipant(anyInt(), anyInt());

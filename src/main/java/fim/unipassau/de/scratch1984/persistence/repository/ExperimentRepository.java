@@ -92,14 +92,44 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
     void updateStatusById(@Param("id") int id, @Param("change") boolean change);
 
     /**
-     * Returns a list of the first five experiments whose title contains the given query value.
+     * Returns a list of the first experiments up to the given limit whose title contains the given query value.
      *
      * @param query The title to search for.
+     * @param limit The maximum number of results to return.
      * @return A list of {@link ExperimentTableProjection}s.
      */
     @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%')"
-            + " LIMIT 5")
-    List<ExperimentTableProjection> findExperimentSuggestions(@Param("query") String query);
+            + " LIMIT :limit")
+    List<ExperimentTableProjection> findExperimentSuggestions(@Param("query") String query, @Param("limit") int limit);
+
+    /**
+     * Returns a list of the first experiments up to the given limit whose titles contain the given query value which
+     * are not yet part of this course.
+     *
+     * @param query The experiment title to search for.
+     * @param course The id of the course.
+     * @param limit The maximum number of results to return.
+     * @return A list of {@link ExperimentTableProjection}s.
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%') AND"
+            + " e.id NOT IN (SELECT c.experiment_id FROM course_experiment AS c WHERE c.course_id = :id) LIMIT :limit")
+    List<ExperimentTableProjection> findCourseExperimentSuggestions(@Param("query") String query,
+                                                                    @Param("id") int course, @Param("limit") int limit);
+
+    /**
+     * Returns a list of the first experiments up to the given limit whose titles contain the given query value which
+     * are part of the course with the given id.
+     *
+     * @param query The experiment title to search for.
+     * @param course The id of the course.
+     * @param limit The maximum number of results to return.
+     * @return A list of {@link ExperimentTableProjection}s.
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM experiment AS e WHERE e.title LIKE CONCAT('%', :query, '%') AND"
+            + " e.id IN (SELECT c.experiment_id FROM course_experiment AS c WHERE c.course_id = :id) LIMIT :limit")
+    List<ExperimentTableProjection> findCourseExperimentDeleteSuggestions(@Param("query") String query,
+                                                                          @Param("id") int course,
+                                                                          @Param("limit") int limit);
 
     /**
      * Returns a list of at most as many experiments as the given limit with the given offset whose title contains the

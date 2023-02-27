@@ -211,14 +211,14 @@ public class ResultController {
      * Generates a sb3 file for the user and experiment with the given id with the project.json corresponding to the
      * json string saved during the block event with the given id and makes the file available for download. Apart
      * from the saved json string, all costumes and sounds present in the experiment project file are added to the sb3
-     * file as well as all files saved for the user during the experiment. If the passed parameters are invalid, an
-     * {@link IncompleteDataException} is thrown instead. If an IOException occurs during the creation of the sb3 file,
-     * a {@link RuntimeException} is thrown.
+     * file as well as all files saved for the user during the experiment.
      *
      * @param experiment The id of the experiment.
      * @param user The id of the user.
      * @param json The block event id to search for.
      * @param httpServletResponse The servlet response.
+     * @throws IncompleteDataException if the passed user, experiment or json ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs during the sb3 file creation.
      */
     @GetMapping("/generate")
     @Secured(Constants.ROLE_ADMIN)
@@ -226,7 +226,6 @@ public class ResultController {
                                 @RequestParam(USER) final String user, @RequestParam("json") final String json,
                                 final HttpServletResponse httpServletResponse) {
         if (json == null || experiment == null || user == null) {
-            logger.error("Cannot generate zip file with JSON, experiment or user null!");
             throw new IncompleteDataException("Cannot generate zip file with JSON, experiment or user null!");
         }
 
@@ -235,8 +234,6 @@ public class ResultController {
         int jsonId = NumberParser.parseNumber(json);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID || jsonId < Constants.MIN_ID) {
-            logger.error("Cannot generate zip file for user with invalid id " + user + " or experiment with invalid "
-                    + "id " + experiment + "or json with invalid id " + json + "!");
             throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + user
                     + " or experiment with invalid id " + experiment + "or json with invalid id " + json + "!");
         }
@@ -245,8 +242,7 @@ public class ResultController {
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
         byte[] code = eventService.findJsonById(jsonId).getBytes(StandardCharsets.UTF_8);
 
-        try {
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "sb3");
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "sb3")) {
             Set<String> fileNames = new HashSet<>();
 
             if (projection.getProject() != null) {
@@ -260,8 +256,7 @@ public class ResultController {
             writeJsonData(zos, code);
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not generate zip file due to IOException!", e);
-            throw new RuntimeException("Could not generate zip file due to IOException!");
+            throw new RuntimeException("Could not generate zip file due to IOException!", e);
         }
     }
 
@@ -298,12 +293,13 @@ public class ResultController {
 
     /**
      * Retrieves all zip files created for the given user during the given experiment and makes them available for
-     * download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown instead. If an
-     * {@link IOException} occurs, a {@link RuntimeException} is thrown.
+     * download in a zip file.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/zips")
     @Secured(Constants.ROLE_ADMIN)
@@ -311,7 +307,6 @@ public class ResultController {
                                 @RequestParam(USER) final String user,
                                 final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
-            logger.error("Cannot download zip files for user with id null or experiment with id null!");
             throw new IncompleteDataException("Cannot download zip files for user with id null or experiment with id "
                     + "null!");
         }
@@ -320,15 +315,12 @@ public class ResultController {
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download zip files for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IncompleteDataException("Cannot download zip files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        try {
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "projects")) {
             List<Sb3ZipDTO> sb3ZipDTOS = fileService.getZipFiles(userId, experimentId);
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "projects");
 
             for (Sb3ZipDTO sb3ZipDTO : sb3ZipDTOS) {
                 ZipEntry entry = new ZipEntry(sb3ZipDTO.getId() + sb3ZipDTO.getName());
@@ -340,19 +332,19 @@ public class ResultController {
 
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not download zip files due to IOException!", e);
-            throw new RuntimeException("Could not download zip files due to IOException!");
+            throw new RuntimeException("Could not download zip files due to IOException!", e);
         }
     }
 
     /**
      * Retrieves all the xml codes that were saved for the given user during the given experiment and makes them
-     * available for download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown
-     * instead. If an {@link IOException} occurs, a {@link RuntimeException} is thrown.
+     * available for download in a zip file.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/xmls")
     @Secured(Constants.ROLE_ADMIN)
@@ -360,7 +352,6 @@ public class ResultController {
                                     @RequestParam(USER) final String user,
                                     final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
-            logger.error("Cannot download xml files for user with id null or experiment with id null!");
             throw new IncompleteDataException("Cannot download xml files for user with id null or experiment with id "
                     + "null!");
         }
@@ -369,15 +360,12 @@ public class ResultController {
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download xml files for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
             throw new IncompleteDataException("Cannot download xml files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        try {
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "xml")) {
             List<BlockEventXMLProjection> xml = eventService.getXMLForUser(userId, experimentId);
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "xml");
 
             for (BlockEventXMLProjection projection : xml) {
                 ZipEntry entry = new ZipEntry("xml" + projection.getId() + ".xml");
@@ -389,19 +377,19 @@ public class ResultController {
 
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not download xml files due to IOException!", e);
-            throw new RuntimeException("Could not download xml files due to IOException!");
+            throw new RuntimeException("Could not download xml files due to IOException!", e);
         }
     }
 
     /**
      * Retrieves all the json strings that were saved for the given user during the given experiment and makes them
-     * available for download in a zip file. If the ids are invalid an {@link IncompleteDataException} is thrown
-     * instead. If an {@link IOException} occurs, a {@link RuntimeException} is thrown.
+     * available for download in a zip file.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/jsons")
     @Secured(Constants.ROLE_ADMIN)
@@ -409,7 +397,6 @@ public class ResultController {
                                      @RequestParam(USER) final String user,
                                      final HttpServletResponse httpServletResponse) {
         if (user == null || experiment == null) {
-            logger.error("Cannot download json files for user with id null or experiment with id null!");
             throw new IncompleteDataException("Cannot download json files for user with id null or experiment with id "
                     + "null!");
         }
@@ -418,15 +405,12 @@ public class ResultController {
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download json files for user with invalid id " + userId + " or experiment with "
-                    + "invalid id " + experimentId + "!");
             throw new IncompleteDataException("Cannot download json files for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        try {
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json")) {
             List<BlockEventJSONProjection> json = eventService.getJsonForUser(userId, experimentId);
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json");
             writeCSVData(zos, json, Optional.empty(), false);
 
             for (BlockEventJSONProjection projection : json) {
@@ -439,19 +423,19 @@ public class ResultController {
 
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not download json files due to IOException!", e);
-            throw new RuntimeException("Could not download json files due to IOException!");
+            throw new RuntimeException("Could not download json files due to IOException!", e);
         }
     }
 
     /**
      * Loads a list of {@link BlockEventProjection}s for the given page number, user and experiment from the
-     * database. If the parameters are invalid an {@link IncompleteDataException} is thrown instead.
+     * database.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
      * @param page The current page number.
      * @return The list of block event projections.
+     * @throws IncompleteDataException if the passed user or experiment id or the page are invalid.
      */
     @GetMapping("/codes")
     @Secured(Constants.ROLE_ADMIN)
@@ -460,7 +444,6 @@ public class ResultController {
                                                @RequestParam(USER) final String user,
                                                @RequestParam("page") final String page) {
         if (user == null || experiment == null || page == null) {
-            logger.error("Cannot get codes for user with id null or experiment with id null or page null!");
             throw new IncompleteDataException("Cannot get codes for user with id null or experiment with id null or "
                     + "page null!");
         }
@@ -470,14 +453,11 @@ public class ResultController {
         int currentPage = NumberParser.parseNumber(page);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot get codes for user with invalid id " + userId + " or experiment with invalid id "
-                    + experimentId + "or invalid page number" + page + "!");
             throw new IncompleteDataException("Cannot get codes for user with invalid id " + userId
                     + " or experiment with invalid id " + experimentId + "or invalid page number" + page + "!");
         }
 
         if (currentPage < 0) {
-            logger.error("Cannot get codes for invalid page number " + currentPage + "!");
             throw new IncompleteDataException("Cannot get codes for invalid page number " + currentPage + "!");
         }
 
@@ -492,9 +472,7 @@ public class ResultController {
      * in a zip file as a project.json file together with all costumes and sounds present in the experiment project file
      * as well as all files saved for the user during the experiment that were not saved as zip files, meaning they are
      * not resources that can be loaded from the Scratch library. The resulting sb3 zip file is then written into
-     * another zip file made available for download containing all the created sb3 files. If the passed ids are invalid
-     * an {@link IncompleteDataException} is thrown instead. If an {@link IOException} occurs, a
-     * {@link RuntimeException} is thrown.
+     * another zip file made available for download containing all the created sb3 files.
      *
      * @param experiment The experiment id to search for.
      * @param user The user id to search for.
@@ -503,6 +481,8 @@ public class ResultController {
      * @param end The end of the interval in which all json files should be downloaded.
      * @param include Whether the final project should be included.
      * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if any of the passed parameters are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/sb3s")
     @Secured(Constants.ROLE_ADMIN)
@@ -514,16 +494,12 @@ public class ResultController {
                                  @RequestParam(value = "include", required = false) final String include,
                                  final HttpServletResponse httpServletResponse) {
         if (experiment == null || user == null) {
-            logger.error("Cannot generate zip file with experiment or user null!");
             throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
         } else if ((start != null || end != null || include != null)
                 && (start == null || end == null || include == null)) {
-            logger.error("Cannot generate zip file in a set interval if not all of the needed parameters start, end "
-                    + "and include are specified!");
             throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
                     + "parameters start, end and include are specified!");
         } else if (start != null && step != null) {
-            logger.error("Cannot generate zip file if both step and start, end and include parameters are specified!");
             throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
                     + "parameters are specified!");
         }
@@ -539,7 +515,6 @@ public class ResultController {
             steps = NumberParser.parseNumber(step);
 
             if (steps < 1) {
-                logger.error("Cannot generate zip file for invalid step interval " + step + "!");
                 throw new IncompleteDataException("Cannot generate zip file for invalid step interval " + step + "!");
             }
         } else if (start != null) {
@@ -548,21 +523,15 @@ public class ResultController {
             includeFinalProject = !include.equals("false");
 
             if (startPosition < 1 || endPosition < 1) {
-                logger.error("Cannot generate zip file for invalid start position " + start
-                        + " or invalid end position " + end + "!");
                 throw new IncompleteDataException("Cannot generate zip file for invalid start position " + start
                         + " or invalid end position " + end + "!");
             } else if (startPosition > endPosition) {
-                logger.error("Cannot generate zip file for start position " + start + " bigger than end position "
-                        + end + "!");
                 throw new IncompleteDataException("Cannot generate zip file for start position " + start
                         + " bigger than end position " + end + "!");
             }
         }
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot generate zip file for user with invalid id " + user + " or experiment with invalid "
-                    + "id " + experiment + "!");
             throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + user
                     + " or experiment with invalid id " + experiment + "!");
         }
@@ -578,8 +547,6 @@ public class ResultController {
             jsons = filterProjectionsByStep(jsons, steps, lastTimestamp);
         } else if (startPosition > 0) {
             if (endPosition > jsons.size()) {
-                logger.error("Cannot generate zip file with invalid end position " + endPosition + " bigger than the "
-                        + "amount of saved json strings " + jsons.size() + "!");
                 throw new IncompleteDataException("Cannot generate zip file with invalid end position " + endPosition
                         + " bigger than the amount of saved json strings " + jsons.size() + "!");
             }
@@ -587,29 +554,30 @@ public class ResultController {
             jsons = jsons.subList(startPosition - 1, endPosition);
         }
 
-        try {
-            ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip");
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip")) {
             writeCSVData(zos, jsons, finalProject, includeFinalProject);
 
             for (int i = 0; i < jsons.size(); i++) {
                 BlockEventJSONProjection json = jsons.get(i);
                 ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
-                ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip));
-                Set<String> fileNames = new HashSet<>();
 
-                if (projection.getProject() != null) {
-                    writeInitialProjectData(innerZos, projection.getProject());
+                try (ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip))) {
+                    Set<String> fileNames = new HashSet<>();
+
+                    if (projection.getProject() != null) {
+                        writeInitialProjectData(innerZos, projection.getProject());
+                    }
+
+                    for (FileDTO fileDTO : fileDTOS) {
+                        writeFileData(innerZos, fileDTO, fileNames);
+                    }
+
+                    byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
+                    writeJsonData(innerZos, code);
+
+                    innerZos.flush();
                 }
 
-                for (FileDTO fileDTO : fileDTOS) {
-                    writeFileData(innerZos, fileDTO, fileNames);
-                }
-
-                byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
-                writeJsonData(innerZos, code);
-
-                innerZos.flush();
-                innerZos.close();
                 ZipEntry createdZip = new ZipEntry("project_" + json.getId() + "_" + i + ".sb3");
                 zos.putNextEntry(createdZip);
                 zos.write(innerZip.toByteArray());
@@ -622,8 +590,7 @@ public class ResultController {
 
             zos.finish();
         } catch (IOException e) {
-            logger.error("Could not generate zip file due to IOException!", e);
-            throw new RuntimeException("Could not generate zip file due to IOException!");
+            throw new RuntimeException("Could not generate zip file due to IOException!", e);
         }
     }
 
@@ -689,23 +656,20 @@ public class ResultController {
      * @throws IOException if the file content could not be written correctly.
      */
     private void writeInitialProjectData(final ZipOutputStream zos, final byte[] project) throws IOException {
-        InputStream file = new ByteArrayInputStream(project);
-        ZipInputStream zin = new ZipInputStream(file);
-        ZipEntry ze;
+        try (InputStream file = new ByteArrayInputStream(project); ZipInputStream zin = new ZipInputStream(file)) {
+            ZipEntry ze;
 
-        while ((ze = zin.getNextEntry()) != null) {
-            if (!ze.getName().equals("project.json")) {
-                zos.putNextEntry(ze);
-                int current;
-                while ((current = zin.read()) >= 0) {
-                    zos.write(current);
+            while ((ze = zin.getNextEntry()) != null) {
+                if (!ze.getName().equals("project.json")) {
+                    zos.putNextEntry(ze);
+                    int current;
+                    while ((current = zin.read()) >= 0) {
+                        zos.write(current);
+                    }
+                    zos.closeEntry();
                 }
-                zos.closeEntry();
             }
         }
-
-        zin.close();
-        file.close();
     }
 
     /**
@@ -727,23 +691,21 @@ public class ResultController {
             zos.write(fileDTO.getContent());
             zos.closeEntry();
         } else {
-            InputStream file = new ByteArrayInputStream(fileDTO.getContent());
-            ZipInputStream zin = new ZipInputStream(file);
-            ZipEntry ze = zin.getNextEntry();
+            try (InputStream file = new ByteArrayInputStream(fileDTO.getContent());
+                 ZipInputStream zin = new ZipInputStream(file)) {
+                ZipEntry ze = zin.getNextEntry();
 
-            if (ze != null && !names.contains(ze.getName())) {
-                names.add(ze.getName());
-                ZipEntry entry = new ZipEntry(ze.getName());
-                zos.putNextEntry(entry);
-                int current;
-                while ((current = zin.read()) >= 0) {
-                    zos.write(current);
+                if (ze != null && !names.contains(ze.getName())) {
+                    names.add(ze.getName());
+                    ZipEntry entry = new ZipEntry(ze.getName());
+                    zos.putNextEntry(entry);
+                    int current;
+                    while ((current = zin.read()) >= 0) {
+                        zos.write(current);
+                    }
+                    zos.closeEntry();
                 }
-                zos.closeEntry();
             }
-
-            zin.close();
-            file.close();
         }
     }
 

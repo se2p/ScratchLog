@@ -1,9 +1,11 @@
 package fim.unipassau.de.scratch1984.web;
 
 import fim.unipassau.de.scratch1984.MailServerSetter;
+import fim.unipassau.de.scratch1984.StringCreator;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.MailService;
+import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
@@ -62,6 +64,9 @@ public class ParticipantControllerTest {
     private ParticipantService participantService;
 
     @Mock
+    private PageService pageService;
+
+    @Mock
     private MailService mailService;
 
     @Mock
@@ -101,15 +106,14 @@ public class ParticipantControllerTest {
     private static final String INFO = "info";
     private static final String POSTSCRIPT = "postscript";
     private static final String ERROR_ATTRIBUTE = "error";
-    private static final String LONG_INPUT = "looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong"
-            + "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiinput";
+    private static final String LONG_INPUT = StringCreator.createLongString(101);
     private static final int ID = 1;
     private final UserDTO newUser = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
             UserDTO.Language.ENGLISH, "password", "secret");
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true,
-            GUI_URL);
+            false, GUI_URL);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
 
     @BeforeEach
@@ -121,6 +125,7 @@ public class ParticipantControllerTest {
         userDTO.setActive(true);
         userDTO.setSecret("secret");
         experimentDTO.setActive(true);
+        experimentDTO.setCourseExperiment(false);
         experimentDTO.setInfo(INFO);
         participantDTO.setStart(null);
         participantDTO.setEnd(null);
@@ -154,6 +159,16 @@ public class ParticipantControllerTest {
     @Test
     public void testGetParticipantFormExperimentInactive() {
         experimentDTO.setActive(false);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        assertEquals(ERROR, participantController.getParticipantForm(ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).findLastId();
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetParticipantFormCourseExperiment() {
+        experimentDTO.setCourseExperiment(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         assertEquals(ERROR, participantController.getParticipantForm(ID_STRING, model));
         verify(experimentService).getExperiment(ID);
