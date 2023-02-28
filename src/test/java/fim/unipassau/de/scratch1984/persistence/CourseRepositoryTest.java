@@ -53,6 +53,8 @@ public class CourseRepositoryTest {
 
     @BeforeEach
     public void setUp() {
+        user1.setLastLogin(LocalDateTime.now());
+        user2.setLastLogin(LocalDateTime.now());
         pageRequest = PageRequest.of(0, LIMIT);
         user1 = entityManager.persist(user1);
         user2 = entityManager.persist(user2);

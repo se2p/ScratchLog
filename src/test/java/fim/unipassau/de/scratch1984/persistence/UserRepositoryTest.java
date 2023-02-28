@@ -85,6 +85,23 @@ public class UserRepositoryTest {
 
     @BeforeEach
     public void setup() {
+        user1.setLastLogin(LocalDateTime.now());
+        user2.setLastLogin(LocalDateTime.now());
+        user3.setLastLogin(LocalDateTime.now());
+        user4.setLastLogin(LocalDateTime.now());
+        user5.setLastLogin(LocalDateTime.now());
+        user6.setLastLogin(LocalDateTime.now());
+        user7.setLastLogin(LocalDateTime.now());
+        user8.setLastLogin(LocalDateTime.now());
+        user9.setLastLogin(LocalDateTime.now());
+        user10.setLastLogin(LocalDateTime.now());
+        user11.setLastLogin(LocalDateTime.now());
+        user12.setLastLogin(LocalDateTime.now());
+        user13.setLastLogin(LocalDateTime.now());
+        user14.setLastLogin(LocalDateTime.now());
+        user15.setLastLogin(LocalDateTime.now());
+        user16.setLastLogin(LocalDateTime.now());
+        user17.setLastLogin(LocalDateTime.now());
         user1 = entityManager.persist(user1);
         user2 = entityManager.persist(user2);
         user3 = entityManager.persist(user3);
@@ -413,6 +430,7 @@ public class UserRepositoryTest {
     public void testFindLastUsernameAddUser() {
         String username = "user18";
         User user = new User(username, "part6@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+        user.setLastLogin(LocalDateTime.now());
         user = entityManager.persist(user);
         Optional<UserProjection> findUser = userRepository.findLastUsername(USERNAME_SEARCH);
         entityManager.remove(user);

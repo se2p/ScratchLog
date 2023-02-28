@@ -8,6 +8,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.LocalDateTime;
 
+/**
+ * Class performing scheduled tasks to clean up expired tokens and any changes associated with them.
+ */
 @Configuration
 public class TokenCleaner {
 
@@ -40,7 +43,7 @@ public class TokenCleaner {
      */
     @Scheduled(fixedRate = CLEANER_INTERVAL)
     public void cleanOldTokens() {
-        logger.debug("Starting scheduled task to delete expired tokens.");
+        logger.info("Starting scheduled task to delete expired tokens.");
         LocalDateTime time = LocalDateTime.now();
         tokenService.deleteExpiredAccounts(time);
         tokenService.reactivateUserAccounts(time);

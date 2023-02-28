@@ -68,6 +68,8 @@ public class EventCountRepositoryTest {
 
     @BeforeEach
     public void setup() {
+        user1.setLastLogin(LocalDateTime.now());
+        user2.setLastLogin(LocalDateTime.now());
         user1 = testEntityManager.persist(user1);
         user2 = testEntityManager.persist(user2);
         experiment1 = testEntityManager.persist(experiment1);

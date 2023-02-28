@@ -49,6 +49,13 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
     Page<CourseTableProjection> findAllProjectedBy(Pageable pageable);
 
     /**
+     * Returns all courses that are currently active, if any exist.
+     *
+     * @return The list of courses.
+     */
+    List<Course> findAllByActiveIsTrue();
+
+    /**
      * Returns a list of the first courses up to the given limit whose title contains the given query value.
      *
      * @param query The title to search for.

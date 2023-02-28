@@ -209,6 +209,7 @@ public class ParticipantController {
         String secret = Secrets.generateRandomBytes(Constants.SECRET_LENGTH);
         userDTO.setRole(UserDTO.Role.PARTICIPANT);
         userDTO.setSecret(secret);
+        userDTO.setLastLogin(LocalDateTime.now());
         UserDTO saved = userService.saveUser(userDTO);
 
         try {

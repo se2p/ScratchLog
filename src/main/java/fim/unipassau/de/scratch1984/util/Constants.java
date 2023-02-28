@@ -113,4 +113,19 @@ public final class Constants {
      */
     public static final int MAX_SUGGESTION_RESULTS = 5;
 
+    /**
+     * The maximum number of days since last login time for participants before their account is deactivated.
+     */
+    public static final long PARTICIPANT_INACTIVE_DAYS = 90;
+
+    /**
+     * The maximum number of days during which no user starts or finishes an experiment before it is deactivated.
+     */
+    public static final long EXPERIMENT_INACTIVE_DAYS = 90;
+
+    /**
+     * The maximum number of days a course can be inactive before it is deactivated.
+     */
+    public static final long COURSE_INACTIVE_DAYS = 180;
+
 }

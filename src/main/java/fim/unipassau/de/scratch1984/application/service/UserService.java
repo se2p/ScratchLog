@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -262,6 +263,7 @@ public class UserService {
         if (user != null) {
             if ((userDTO.getPassword() != null) && (matchesPassword(userDTO.getPassword(), user.getPassword()))) {
                 user.setAttempts(0);
+                user.setLastLogin(LocalDateTime.now());
                 userRepository.save(user);
                 return true;
             } else {
@@ -299,6 +301,7 @@ public class UserService {
         }
 
         user.setActive(true);
+        user.setLastLogin(LocalDateTime.now());
         User saved = userRepository.save(user);
         return createUserDTO(saved);
     }
@@ -347,6 +350,21 @@ public class UserService {
         User found = user.get();
         found.setEmail(email);
         userRepository.save(found);
+    }
+
+    /**
+     * Deactivates all participant accounts where participants have not logged in for a specified number of days.
+     */
+    @Transactional
+    public void deactivateOldParticipantAccounts() {
+        List<User> inactiveUsers = userRepository.findAllByRoleAndLastLoginBefore(UserDTO.Role.PARTICIPANT.toString(),
+                LocalDateTime.now().minusDays(Constants.PARTICIPANT_INACTIVE_DAYS));
+
+        for (User user : inactiveUsers) {
+            user.setActive(false);
+            user.setSecret(null);
+            userRepository.save(user);
+        }
     }
 
     /**
@@ -582,6 +600,9 @@ public class UserService {
         if (userDTO.getSecret() != null) {
             user.setSecret(userDTO.getSecret());
         }
+        if (userDTO.getLastLogin() != null) {
+            user.setLastLogin(userDTO.getLastLogin());
+        }
 
         user.setActive(userDTO.isActive());
         user.setAttempts(userDTO.getAttempts());
@@ -618,6 +639,9 @@ public class UserService {
         }
         if (user.getSecret() != null) {
             userDTO.setSecret(user.getSecret());
+        }
+        if (user.getLastLogin() != null) {
+            userDTO.setLastLogin(user.getLastLogin());
         }
 
         userDTO.setAttempts(user.getAttempts());

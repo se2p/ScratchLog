@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a user.
@@ -67,6 +68,12 @@ public class User {
      */
     @Column(name = "active")
     private boolean active;
+
+    /**
+     * The last time the user logged in to use the application.
+     */
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     /**
      * Default constructor for the user entity.
@@ -254,6 +261,24 @@ public class User {
      */
     public void setActive(final boolean active) {
         this.active = active;
+    }
+
+    /**
+     * Returns the date and time at which the user last logged in.
+     *
+     * @return The last login time.
+     */
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    /**
+     * Sets the last login time for the user.
+     *
+     * @param lastLogin The time to be set.
+     */
+    public void setLastLogin(final LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
     }
 
 }

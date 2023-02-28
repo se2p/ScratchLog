@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,6 +79,16 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @return A list of users.
      */
     List<User> findAllByRole(String role);
+
+    /**
+     * Returns a list of users with the given role who have last logged in before the given date and time, or an empty
+     * list, if no such user exists.
+     *
+     * @param role The user role to search for.
+     * @param lastLogin The last login time to search for.
+     * @return A list of users.
+     */
+    List<User> findAllByRoleAndLastLoginBefore(String role, LocalDateTime lastLogin);
 
     /**
      * Returns the user with the highest user id currently existing in the database.
