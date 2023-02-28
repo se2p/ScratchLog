@@ -102,7 +102,7 @@ function loadCourseParticipantPage(page) {
 function updateLastCourseParticipantPage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/page/course/participant",
+        url: contextPath + "/pages/course/participant",
         data: {id: courseId},
         success: function(data) {
             lastParticipantPage = data;
@@ -148,7 +148,7 @@ function loadCourseExperimentPage(page) {
 function updateLastCourseExperimentPage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/page/course/experiment",
+        url: contextPath + "/pages/course/experiment",
         data: {id: courseId},
         success: function(data) {
             lastExperimentPage = data;
