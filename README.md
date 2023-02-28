@@ -57,9 +57,10 @@ The application uses `Flyway` for database versioning. As `Flyway` will need to 
 more access privileges than the standard database user. Therefore, it is recommended to create a separate database user
 used by `Flyway`. This user can be specified in the matching section in the `application.properties` file. If you wish
 to use `Flyway`, make sure to at least copy or uncomment the `spring.flyway.create-schemas` line. If you do not wish to
-use any database versioning, you can set the `spring.flyway.enabled` property to false. The `schema.sql` file contains
-the latest database version and is updated accordingly with every new migration. You can simply create the database
-tables using the schema. However, you will then have to incorporate subsequent updates to the database manually.
+use any database versioning, you can set the `spring.flyway.enabled` property to false and
+`spring.datasource.initialization-mode=never`. The `schema.sql` file contains the latest database version and is updated
+accordingly with every new migration. You can simply create the database tables using the schema. However, you will then
+have to incorporate subsequent updates to the database manually.
 
 #### Configuring multiple Scratch GUI instances
 
