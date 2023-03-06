@@ -325,16 +325,15 @@ public class ExperimentService {
      * @return The new experiment containing the information passed in the DTO.
      */
     private Experiment createExperiment(final ExperimentDTO experimentDTO) {
-        Experiment experiment = new Experiment();
+        Experiment experiment = Experiment.builder()
+                .title(experimentDTO.getTitle())
+                .description(experimentDTO.getDescription())
+                .guiURL(experimentDTO.getGuiURL())
+                .active(experimentDTO.isActive())
+                .build();
 
         if (experimentDTO.getId() != null) {
             experiment.setId(experimentDTO.getId());
-        }
-        if (experimentDTO.getTitle() != null) {
-            experiment.setTitle(experimentDTO.getTitle());
-        }
-        if (experimentDTO.getDescription() != null) {
-            experiment.setDescription(experimentDTO.getDescription());
         }
         if (experimentDTO.getPostscript() != null && !experimentDTO.getPostscript().trim().isBlank()) {
             experiment.setPostscript(experimentDTO.getPostscript());
@@ -342,11 +341,7 @@ public class ExperimentService {
         if (experimentDTO.getInfo() != null) {
             experiment.setInfo(experimentDTO.getInfo());
         }
-        if (experimentDTO.getGuiURL() != null) {
-            experiment.setGuiURL(experimentDTO.getGuiURL());
-        }
 
-        experiment.setActive(experimentDTO.isActive());
         return experiment;
     }
 
@@ -357,16 +352,16 @@ public class ExperimentService {
      * @return The new experiment DTO containing the information passed in the experiment object.
      */
     private ExperimentDTO createExperimentDTO(final Experiment experiment) {
-        ExperimentDTO experimentDTO = new ExperimentDTO();
+        ExperimentDTO experimentDTO = ExperimentDTO.builder()
+                .title(experiment.getTitle())
+                .description(experiment.getDescription())
+                .guiURL(experiment.getGuiURL())
+                .active(experiment.isActive())
+                .courseExperiment(experiment.isCourseExperiment())
+                .build();
 
         if (experiment.getId() != null) {
             experimentDTO.setId(experiment.getId());
-        }
-        if (experiment.getTitle() != null) {
-            experimentDTO.setTitle(experiment.getTitle());
-        }
-        if (experiment.getDescription() != null) {
-            experimentDTO.setDescription(experiment.getDescription());
         }
         if (experiment.getPostscript() != null) {
             experimentDTO.setPostscript(experiment.getPostscript());
@@ -374,12 +369,7 @@ public class ExperimentService {
         if (experiment.getInfo() != null) {
             experimentDTO.setInfo((experiment.getInfo()));
         }
-        if (experiment.getGuiURL() != null) {
-            experimentDTO.setGuiURL(experiment.getGuiURL());
-        }
 
-        experimentDTO.setActive(experiment.isActive());
-        experimentDTO.setCourseExperiment(experiment.isCourseExperiment());
         return experimentDTO;
     }
 

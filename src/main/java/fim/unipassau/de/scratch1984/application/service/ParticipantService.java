@@ -467,14 +467,11 @@ public class ParticipantService {
      */
     private Participant createParticipant(final ParticipantDTO participantDTO, final User user,
                                           final Experiment experiment) {
-        Participant participant = new Participant();
+        Participant participant = Participant.builder()
+                .user(user)
+                .experiment(experiment)
+                .build();
 
-        if (user != null) {
-            participant.setUser(user);
-        }
-        if (experiment != null) {
-            participant.setExperiment(experiment);
-        }
         if (participantDTO.getStart() != null) {
             participant.setStart(Timestamp.valueOf(participantDTO.getStart()));
         }
@@ -492,14 +489,11 @@ public class ParticipantService {
      * @return The new participant DTO containing the information passed in the participant object.
      */
     private ParticipantDTO createParticipantDTO(final Participant participant) {
-        ParticipantDTO participantDTO = new ParticipantDTO();
+        ParticipantDTO participantDTO = ParticipantDTO.builder()
+                .user(participant.getUser().getId())
+                .experiment(participant.getExperiment().getId())
+                .build();
 
-        if (participant.getUser().getId() != null) {
-            participantDTO.setUser(participant.getUser().getId());
-        }
-        if (participant.getExperiment().getId() != null) {
-            participantDTO.setExperiment(participant.getExperiment().getId());
-        }
         if (participant.getStart() != null) {
             participantDTO.setStart(participant.getStart().toLocalDateTime());
         }

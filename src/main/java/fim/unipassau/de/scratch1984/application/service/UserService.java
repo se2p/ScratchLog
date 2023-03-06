@@ -577,22 +577,19 @@ public class UserService {
      * @return The new user containing the information passed in the DTO.
      */
     private User createUser(final UserDTO userDTO) {
-        User user = new User();
+        User user = User.builder()
+                .username(userDTO.getUsername())
+                .role(userDTO.getRole().toString())
+                .language(userDTO.getLanguage().toString())
+                .active(userDTO.isActive())
+                .attempts(userDTO.getAttempts())
+                .build();
 
         if (userDTO.getId() != null) {
             user.setId(userDTO.getId());
         }
-        if (userDTO.getUsername() != null) {
-            user.setUsername(userDTO.getUsername());
-        }
         if (userDTO.getEmail() != null) {
             user.setEmail(userDTO.getEmail());
-        }
-        if (userDTO.getRole() != null) {
-            user.setRole(userDTO.getRole().toString());
-        }
-        if (userDTO.getLanguage() != null) {
-            user.setLanguage(userDTO.getLanguage().toString());
         }
         if (userDTO.getPassword() != null) {
             user.setPassword(userDTO.getPassword());
@@ -604,9 +601,6 @@ public class UserService {
             user.setLastLogin(userDTO.getLastLogin());
         }
 
-        user.setActive(userDTO.isActive());
-        user.setAttempts(userDTO.getAttempts());
-
         return user;
     }
 
@@ -617,22 +611,19 @@ public class UserService {
      * @return The new user DTO containing the information passed in the user object.
      */
     private UserDTO createUserDTO(final User user) {
-        UserDTO userDTO = new UserDTO();
+        UserDTO userDTO = UserDTO.builder()
+                .username(user.getUsername())
+                .role(UserDTO.Role.valueOf(user.getRole()))
+                .language(UserDTO.Language.valueOf(user.getLanguage()))
+                .active(user.isActive())
+                .attempts(user.getAttempts())
+                .build();
 
         if (user.getId() != null) {
             userDTO.setId(user.getId());
         }
-        if (user.getUsername() != null) {
-            userDTO.setUsername(user.getUsername());
-        }
         if (user.getEmail() != null) {
             userDTO.setEmail(user.getEmail());
-        }
-        if (user.getRole() != null) {
-            userDTO.setRole(UserDTO.Role.valueOf(user.getRole()));
-        }
-        if (user.getLanguage() != null) {
-            userDTO.setLanguage(UserDTO.Language.valueOf(user.getLanguage()));
         }
         if (user.getPassword() != null) {
             userDTO.setPassword(user.getPassword());
@@ -643,9 +634,6 @@ public class UserService {
         if (user.getLastLogin() != null) {
             userDTO.setLastLogin(user.getLastLogin());
         }
-
-        userDTO.setAttempts(user.getAttempts());
-        userDTO.setActive(user.isActive());
 
         return userDTO;
     }

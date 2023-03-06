@@ -253,16 +253,13 @@ public class TokenService {
      * @return The new token containing the information passed in the DTO.
      */
     private Token createToken(final TokenDTO tokenDTO) {
-        Token token = new Token();
+        Token token = Token.builder()
+                .type(tokenDTO.getType().toString())
+                .date(Timestamp.valueOf(tokenDTO.getExpirationDate()))
+                .build();
 
         if (tokenDTO.getValue() != null) {
             token.setValue(tokenDTO.getValue());
-        }
-        if (tokenDTO.getType() != null) {
-            token.setType(tokenDTO.getType().toString());
-        }
-        if (tokenDTO.getExpirationDate() != null) {
-            token.setDate(Timestamp.valueOf(tokenDTO.getExpirationDate()));
         }
         if (tokenDTO.getMetadata() != null) {
             token.setMetadata(tokenDTO.getMetadata());
@@ -278,22 +275,17 @@ public class TokenService {
      * @return The new token DTO containing the information passed in the token object.
      */
     private TokenDTO createTokenDTO(final Token token) {
-        TokenDTO tokenDTO = new TokenDTO();
+        TokenDTO tokenDTO = TokenDTO.builder()
+                .type(TokenDTO.Type.valueOf(token.getType()))
+                .expirationDate(token.getDate().toLocalDateTime())
+                .user(token.getUser().getId())
+                .build();
 
         if (token.getValue() != null) {
             tokenDTO.setValue(token.getValue());
         }
-        if (token.getType() != null) {
-            tokenDTO.setType(TokenDTO.Type.valueOf(token.getType()));
-        }
-        if (token.getDate() != null) {
-            tokenDTO.setExpirationDate(token.getDate().toLocalDateTime());
-        }
         if (token.getMetadata() != null) {
             tokenDTO.setMetadata(token.getMetadata());
-        }
-        if ((token.getUser() != null) && (token.getUser().getId() != null)) {
-            tokenDTO.setUser(token.getUser().getId());
         }
 
         return tokenDTO;

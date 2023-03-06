@@ -795,17 +795,11 @@ public class EventService {
      * @return The new codes data dto containing the information passed in the entity.
      */
     private CodesDataDTO createCodesDataDTO(final CodesData codesData) {
-        CodesDataDTO codesDataDTO = new CodesDataDTO();
-
-        if (codesData.getUser() != null) {
-            codesDataDTO.setUser(codesData.getUser());
-        }
-        if (codesData.getExperiment() != null) {
-            codesDataDTO.setExperiment(codesData.getExperiment());
-        }
-        codesDataDTO.setCount(codesData.getCount());
-
-        return codesDataDTO;
+        return CodesDataDTO.builder()
+                .user(codesData.getUser())
+                .experiment(codesData.getExperiment())
+                .count(codesData.getCount())
+                .build();
     }
 
     /**
@@ -972,20 +966,12 @@ public class EventService {
      * @return The new event count DTO containing the information passed in the entity.
      */
     private EventCountDTO createEventCountDTO(final EventCount eventCount) {
-        EventCountDTO eventCountDTO = new EventCountDTO();
-
-        if (eventCount.getUser() != null) {
-            eventCountDTO.setUser(eventCount.getUser());
-        }
-        if (eventCount.getExperiment() != null) {
-            eventCountDTO.setExperiment(eventCount.getExperiment());
-        }
-        if (eventCount.getEvent() != null) {
-            eventCountDTO.setEvent(eventCount.getEvent());
-        }
-
-        eventCountDTO.setCount(eventCount.getCount());
-        return eventCountDTO;
+        return EventCountDTO.builder()
+                .user(eventCount.getUser())
+                .experiment(eventCount.getExperiment())
+                .event(eventCount.getEvent())
+                .count(eventCount.getCount())
+                .build();
     }
 
     /**

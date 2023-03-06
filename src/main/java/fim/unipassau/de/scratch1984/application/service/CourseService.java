@@ -663,25 +663,19 @@ public class CourseService {
      * @return The new course containing the information passed in the DTO.
      */
     private Course createCourse(final CourseDTO courseDTO) {
-        Course course = new Course();
+        Course course = Course.builder()
+                .title(courseDTO.getTitle())
+                .description(courseDTO.getDescription())
+                .content(courseDTO.getContent())
+                .lastChanged(Timestamp.valueOf(courseDTO.getLastChanged()))
+                .active(courseDTO.isActive())
+                .build();
 
         if (courseDTO.getId() != null) {
             course.setId(courseDTO.getId());
         }
-        if (courseDTO.getTitle() != null) {
-            course.setTitle(courseDTO.getTitle());
-        }
-        if (courseDTO.getDescription() != null) {
-            course.setDescription(courseDTO.getDescription());
-        }
-        if (courseDTO.getContent() != null) {
-            course.setContent(courseDTO.getContent());
-        }
-        if (courseDTO.getLastChanged() != null) {
-            course.setLastChanged(Timestamp.valueOf(courseDTO.getLastChanged()));
-        }
-        course.setActive(courseDTO.isActive());
 
+        course.setActive(courseDTO.isActive());
         return course;
     }
 
@@ -692,25 +686,19 @@ public class CourseService {
      * @return The new course DTO.
      */
     private CourseDTO createCourseDTO(final Course course) {
-        CourseDTO courseDTO = new CourseDTO();
+        CourseDTO courseDTO = CourseDTO.builder()
+                .title(course.getTitle())
+                .description(course.getDescription())
+                .content(course.getContent())
+                .lastChanged(course.getLastChanged().toLocalDateTime())
+                .active(course.isActive())
+                .build();
 
         if (course.getId() != null) {
             courseDTO.setId(course.getId());
         }
-        if (course.getTitle() != null) {
-            courseDTO.setTitle(course.getTitle());
-        }
-        if (course.getDescription() != null) {
-            courseDTO.setDescription(course.getDescription());
-        }
-        if (course.getContent() != null) {
-            courseDTO.setContent(course.getContent());
-        }
-        if (course.getLastChanged() != null) {
-            courseDTO.setLastChanged(course.getLastChanged().toLocalDateTime());
-        }
-        courseDTO.setActive(course.isActive());
 
+        courseDTO.setActive(course.isActive());
         return courseDTO;
     }
 
