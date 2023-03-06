@@ -1,8 +1,24 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * A DTO representing a token.
+ */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class TokenDTO {
 
     /**
@@ -56,12 +72,6 @@ public class TokenDTO {
     private Integer user;
 
     /**
-     * Default constructor for the token dto.
-     */
-    public TokenDTO() {
-    }
-
-    /**
      * Constructs a new token dto with the given attributes.
      *
      * @param type The type of the token.
@@ -73,96 +83,6 @@ public class TokenDTO {
         this.type = type;
         this.expirationDate = expirationDate;
         this.metadata = metadata;
-        this.user = user;
-    }
-
-    /**
-     * Returns the value of the token.
-     *
-     * @return The respective value.
-     */
-    public String getValue() {
-        return value;
-    }
-
-    /**
-     * Sets the value of the token.
-     *
-     * @param value The value to be set.
-     */
-    public void setValue(final String value) {
-        this.value = value;
-    }
-
-    /**
-     * Returns the type of the token.
-     *
-     * @return The respective type.
-     */
-    public Type getType() {
-        return type;
-    }
-
-    /**
-     * Sets the type of the token.
-     *
-     * @param type The type to be set.
-     */
-    public void setType(final Type type) {
-        this.type = type;
-    }
-
-    /**
-     * Returns the expiration date of the token.
-     *
-     * @return The respective date.
-     */
-    public LocalDateTime getExpirationDate() {
-        return expirationDate;
-    }
-
-    /**
-     * Sets the expiration date of the token.
-     *
-     * @param expirationDate The expiration date to be set.
-     */
-    public void setExpirationDate(final LocalDateTime expirationDate) {
-        this.expirationDate = expirationDate;
-    }
-
-    /**
-     * Returns the metadata of the token.
-     *
-     * @return The respective metadata.
-     */
-    public String getMetadata() {
-        return metadata;
-    }
-
-    /**
-     * Sets the metadata of the token.
-     *
-     * @param metadata The metadata to be set.
-     */
-    public void setMetadata(final String metadata) {
-        this.metadata = metadata;
-    }
-
-    /**
-     * Returns the id of the user to whom this token belongs.
-     *
-     * @return The respective user id.
-     */
-    public Integer getUser() {
-        return user;
-    }
-
-    /**
-     * Sets the id of the user to whom this token belongs.
-     *
-     * @param user The user id to be set.
-     */
-    public void setUser(final Integer user) {
         this.user = user;
     }
 
@@ -195,22 +115,6 @@ public class TokenDTO {
     @Override
     public int hashCode() {
         return Objects.hash(value);
-    }
-
-    /**
-     * Converts the token DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the token DTO.
-     */
-    @Override
-    public String toString() {
-        return "TokenDTO{"
-                + "value='" + value + '\''
-                + ", type=" + type
-                + ", expirationDate=" + expirationDate
-                + ", metadata='" + metadata + '\''
-                + ", user=" + user
-                + '}';
     }
 
 }

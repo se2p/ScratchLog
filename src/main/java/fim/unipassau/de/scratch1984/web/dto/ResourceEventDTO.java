@@ -1,5 +1,12 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -7,6 +14,12 @@ import java.util.Objects;
  * A DTO representing a resource event that resulted from a user adding, renaming or deleting a resource in the Scratch
  * GUI.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class ResourceEventDTO implements EventDTO {
 
     /**
@@ -140,12 +153,6 @@ public class ResourceEventDTO implements EventDTO {
     private LibraryResource libraryResource;
 
     /**
-     * Default constructor for the block event dto.
-     */
-    public ResourceEventDTO() {
-    }
-
-    /**
      * Constructs a new resource event dto with the given attributes.
      *
      * @param user The id of the user who caused the event.
@@ -169,194 +176,6 @@ public class ResourceEventDTO implements EventDTO {
         this.name = name;
         this.md5 = md5;
         this.filetype = filetype;
-        this.libraryResource = libraryResource;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event ID.
-     */
-    @Override
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param id The event ID to be set.
-     */
-    @Override
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The user's ID.
-     */
-    @Override
-    public Integer getUser() {
-        return user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param user The user ID to be set.
-     */
-    @Override
-    public void setUser(final Integer user) {
-        this.user = user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The experiment ID.
-     */
-    @Override
-    public Integer getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param experiment The experiment ID to be set.
-     */
-    @Override
-    public void setExperiment(final Integer experiment) {
-        this.experiment = experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event time.
-     */
-    @Override
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param date The time to be set.
-     */
-    @Override
-    public void setDate(final LocalDateTime date) {
-        this.date = date;
-    }
-
-    /**
-     * Returns the type of the event.
-     *
-     * @return The event type.
-     */
-    public ResourceEventType getEventType() {
-        return eventType;
-    }
-
-    /**
-     * Sets the type of the event.
-     *
-     * @param eventType The event type to be set.
-     */
-    public void setEventType(final ResourceEventType eventType) {
-        this.eventType = eventType;
-    }
-
-    /**
-     * Returns the specific event that occurred.
-     *
-     * @return The event.
-     */
-    public ResourceEvent getEvent() {
-        return event;
-    }
-
-    /**
-     * Sets the specific event that occurred.
-     *
-     * @param event The event to be set.
-     */
-    public void setEvent(final ResourceEvent event) {
-        this.event = event;
-    }
-
-    /**
-     * Returns the name of the resource.
-     *
-     * @return The resource name.
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Sets the name of the resource.
-     *
-     * @param name The name to be set.
-     */
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    /**
-     * Returns the md5 hash value of the resource.
-     *
-     * @return The hash value.
-     */
-    public String getMd5() {
-        return md5;
-    }
-
-    /**
-     * Sets the md5 hash value of the resource.
-     *
-     * @param md5 The value to be set.
-     */
-    public void setMd5(final String md5) {
-        this.md5 = md5;
-    }
-
-    /**
-     * Returns the filetype of the resource.
-     *
-     * @return The filetype.
-     */
-    public String getFiletype() {
-        return filetype;
-    }
-
-    /**
-     * Sets the filetype of the resource.
-     *
-     * @param filetype The filetype to be set.
-     */
-    public void setFiletype(final String filetype) {
-        this.filetype = filetype;
-    }
-
-    /**
-     * Returns the library status of the resource.
-     *
-     * @return The library status.
-     */
-    public LibraryResource getLibraryResource() {
-        return libraryResource;
-    }
-
-    /**
-     * Sets the library status of the resource.
-     *
-     * @param libraryResource The status to be set.
-     */
-    public void setLibraryResource(final LibraryResource libraryResource) {
         this.libraryResource = libraryResource;
     }
 
@@ -389,27 +208,6 @@ public class ResourceEventDTO implements EventDTO {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    /**
-     * Converts the resource event DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the resource event DTO.
-     */
-    @Override
-    public String toString() {
-        return "ResourceEventDTO{"
-                + "id=" + id
-                + ", user=" + user
-                + ", experiment=" + experiment
-                + ", date=" + date
-                + ", eventType=" + eventType
-                + ", event=" + event
-                + ", name='" + name + '\''
-                + ", md5='" + md5 + '\''
-                + ", filetype='" + filetype + '\''
-                + ", libraryResource=" + libraryResource
-                + '}';
     }
 
 }

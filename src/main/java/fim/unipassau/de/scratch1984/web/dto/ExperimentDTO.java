@@ -1,10 +1,23 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.util.Objects;
 
 /**
  * A DTO representing an experiment.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class ExperimentDTO {
 
     /**
@@ -53,12 +66,6 @@ public class ExperimentDTO {
     private String guiURL;
 
     /**
-     * Default constructor for the experiment dto.
-     */
-    public ExperimentDTO() {
-    }
-
-    /**
      * Constructs a new experiment dto with the given attributes.
      *
      * @param id The experiment id.
@@ -80,168 +87,6 @@ public class ExperimentDTO {
         this.postscript = postscript;
         this.active = active;
         this.courseExperiment = courseExperiment;
-        this.guiURL = guiURL;
-    }
-
-    /**
-     * Returns the ID of the experiment.
-     *
-     * @return The experiment ID.
-     */
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * Sets the ID of the experiment.
-     *
-     * @param id The experiment ID to be set.
-     */
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * Returns the ID of the course.
-     *
-     * @return The course ID.
-     */
-    public Integer getCourse() {
-        return course;
-    }
-
-    /**
-     * Sets the ID of the course.
-     *
-     * @param course The course ID to be set.
-     */
-    public void setCourse(final Integer course) {
-        this.course = course;
-    }
-
-    /**
-     * Returns the title of the experiment.
-     *
-     * @return The experiment title.
-     */
-    public String getTitle() {
-        return title;
-    }
-
-    /**
-     * Sets the title of the experiment.
-     *
-     * @param title The title to be set.
-     */
-    public void setTitle(final String title) {
-        this.title = title;
-    }
-
-    /**
-     * Returns the description for the experiment.
-     *
-     * @return The description text.
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Sets the description for the experiment.
-     *
-     * @param description The description to be set.
-     */
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
-    /**
-     * Returns the information text for the experiment.
-     *
-     * @return The information text.
-     */
-    public String getInfo() {
-        return info;
-    }
-
-    /**
-     * Sets the information text for the experiment.
-     *
-     * @param info The text to be set.
-     */
-    public void setInfo(final String info) {
-        this.info = info;
-    }
-
-    /**
-     * Returns the postscript of the experiment.
-     *
-     * @return The postscript text.
-     */
-    public String getPostscript() {
-        return postscript;
-    }
-
-    /**
-     * Sets the text shown after the user has finished the experiment.
-     *
-     * @param postscript The postscript to be set.
-     */
-    public void setPostscript(final String postscript) {
-        this.postscript = postscript;
-    }
-
-    /**
-     * Returns whether the experiment is currently running.
-     *
-     * @return The experiment status.
-     */
-    public boolean isActive() {
-        return active;
-    }
-
-    /**
-     * Sets the running status of the experiment.
-     *
-     * @param active The status.
-     */
-    public void setActive(final boolean active) {
-        this.active = active;
-    }
-
-    /**
-     * Returns whether the experiment is part of a course.
-     *
-     * @return The experiment course status.
-     */
-    public boolean isCourseExperiment() {
-        return courseExperiment;
-    }
-
-    /**
-     * Sets the experiment course status.
-     *
-     * @param courseExperiment The status.
-     */
-    public void setCourseExperiment(final boolean courseExperiment) {
-        this.courseExperiment = courseExperiment;
-    }
-
-    /**
-     * Returns whether the GUI-URL of the experiment.
-     *
-     * @return The GUI-URL.
-     */
-    public String getGuiURL() {
-        return guiURL;
-    }
-
-    /**
-     * Sets the GUI_URL of the experiment.
-     *
-     * @param guiURL The GUI_URL.
-     */
-    public void setGuiURL(final String guiURL) {
         this.guiURL = guiURL;
     }
 
@@ -274,25 +119,6 @@ public class ExperimentDTO {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    /**
-     * Converts the experiment DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the experiment DTO.
-     */
-    @Override
-    public String toString() {
-        return "ExperimentDTO{"
-                + "id=" + id
-                + ", title='" + title + '\''
-                + ", description='" + description + '\''
-                + ", postscript='" + postscript + '\''
-                + ", info='" + info + '\''
-                + ", active='" + active + '\''
-                + ", courseExperiment='" + courseExperiment + '\''
-                + ", url='" + guiURL + '\''
-                + '}';
     }
 
 }

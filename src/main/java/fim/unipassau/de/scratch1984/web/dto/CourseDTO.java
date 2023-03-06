@@ -1,11 +1,22 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
  * A DTO representing an experiment.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
 public class CourseDTO {
 
     /**
@@ -39,12 +50,6 @@ public class CourseDTO {
     private LocalDateTime lastChanged;
 
     /**
-     * Default constructor for the experiment dto.
-     */
-    public CourseDTO() {
-    }
-
-    /**
      * Constructs a new course dto with the given attributes.
      *
      * @param id The course id.
@@ -61,114 +66,6 @@ public class CourseDTO {
         this.description = description;
         this.content = content;
         this.active = active;
-        this.lastChanged = lastChanged;
-    }
-
-    /**
-     * Returns the ID of the course.
-     *
-     * @return The course ID.
-     */
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * Sets the ID of the course.
-     *
-     * @param id The course ID to be set.
-     */
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * Returns the title of the course.
-     *
-     * @return The course title.
-     */
-    public String getTitle() {
-        return title;
-    }
-
-    /**
-     * Sets the title of the course.
-     *
-     * @param name The course title to be set.
-     */
-    public void setTitle(final String name) {
-        this.title = name;
-    }
-
-    /**
-     * Returns the description of the course.
-     *
-     * @return The course description text.
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Sets the description of the course.
-     *
-     * @param description The course description to be set.
-     */
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
-    /**
-     * Returns the content of the course.
-     *
-     * @return The course content text.
-     */
-    public String getContent() {
-        return content;
-    }
-
-    /**
-     * Sets the content of the course.
-     *
-     * @param content The course content to be set.
-     */
-    public void setContent(final String content) {
-        this.content = content;
-    }
-
-    /**
-     * Returns whether the course is currently being conducted.
-     *
-     * @return The course status.
-     */
-    public boolean isActive() {
-        return active;
-    }
-
-    /**
-     * Sets the status of the course.
-     *
-     * @param active The status.
-     */
-    public void setActive(final boolean active) {
-        this.active = active;
-    }
-
-    /**
-     * Returns the time at which the course has last been updated.
-     *
-     * @return The {@link LocalDateTime}.
-     */
-    public LocalDateTime getLastChanged() {
-        return lastChanged;
-    }
-
-    /**
-     * Sets the time of the last change to the course.
-     *
-     * @param lastChanged The {@link LocalDateTime} to be set.
-     */
-    public void setLastChanged(final LocalDateTime lastChanged) {
         this.lastChanged = lastChanged;
     }
 
@@ -201,23 +98,6 @@ public class CourseDTO {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    /**
-     * Converts the course DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the course DTO.
-     */
-    @Override
-    public String toString() {
-        return "CourseDTO{"
-                + "id=" + id
-                + ", title='" + title + '\''
-                + ", description='" + description + '\''
-                + ", content='" + content + '\''
-                + ", active=" + active
-                + ", lastChanged=" + lastChanged
-                + '}';
     }
 
 }
