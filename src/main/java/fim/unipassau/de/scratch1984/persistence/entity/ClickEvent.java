@@ -1,5 +1,11 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -13,6 +19,11 @@ import java.sql.Timestamp;
 /**
  * An entity representing a click event that resulted from user interaction with a button, icon, or similar event.
  */
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
 public class ClickEvent implements Event {
 
@@ -63,12 +74,6 @@ public class ClickEvent implements Event {
     private String metadata;
 
     /**
-     * Default constructor for the click event entity.
-     */
-    public ClickEvent() {
-    }
-
-    /**
      * Constructs a new click event with the given attributes.
      *
      * @param user The user who caused the event.
@@ -85,144 +90,6 @@ public class ClickEvent implements Event {
         this.date = date;
         this.eventType = eventType;
         this.event = event;
-        this.metadata = metadata;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event ID.
-     */
-    @Override
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param id The event ID to be set.
-     */
-    @Override
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The respective user.
-     */
-    @Override
-    public User getUser() {
-        return user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param user The event user to be set.
-     */
-    @Override
-    public void setUser(final User user) {
-        this.user = user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The respective experiment.
-     */
-    @Override
-    public Experiment getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param experiment The event experiment to be set.
-     */
-    @Override
-    public void setExperiment(final Experiment experiment) {
-        this.experiment = experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The respective timestamp.
-     */
-    @Override
-    public Timestamp getDate() {
-        return date;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param date The event timestamp to be set.
-     */
-    @Override
-    public void setDate(final Timestamp date) {
-        this.date = date;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event type.
-     */
-    @Override
-    public String getEventType() {
-        return eventType;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param eventType The event type to be set.
-     */
-    @Override
-    public void setEventType(final String eventType) {
-        this.eventType = eventType;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The respective event.
-     */
-    @Override
-    public String getEvent() {
-        return event;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param event The event to be set.
-     */
-    @Override
-    public void setEvent(final String event) {
-        this.event = event;
-    }
-
-    /**
-     * Returns the metadata of the event.
-     *
-     * @return The metadata.
-     */
-    public String getMetadata() {
-        return metadata;
-    }
-
-    /**
-     * Sets the metadata of the event.
-     *
-     * @param metadata The metadata to be set.
-     */
-    public void setMetadata(final String metadata) {
         this.metadata = metadata;
     }
 
