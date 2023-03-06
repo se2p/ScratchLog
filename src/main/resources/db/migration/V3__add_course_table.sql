@@ -1,4 +1,4 @@
--- scratch1984.course definition
+-- course table definition
 
 CREATE TABLE IF NOT EXISTS `course` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `course` (
     UNIQUE KEY `course_title` (`title`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- scratch1984.course_participant definition
+-- course_participant table definition
 
 CREATE TABLE IF NOT EXISTS `course_participant` (
     `user_id` int NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS `course_participant` (
     CONSTRAINT `course_participant_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `course` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- scratch1984.course_experiment definition
+-- course_experiment table definition
 
 CREATE TABLE IF NOT EXISTS `course_experiment` (
     `course_id` int NOT NULL,

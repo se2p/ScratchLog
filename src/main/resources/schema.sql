@@ -2,7 +2,7 @@
  *  Definition of tables.  *
  **************************/
 
--- scratch1984.experiment definition
+-- experiment table definition
 
 CREATE TABLE IF NOT EXISTS `experiment` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `experiment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.`user` definition
+-- `user` table definition
 
 CREATE TABLE IF NOT EXISTS `user` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.block_event definition
+-- block_event table definition
 
 CREATE TABLE IF NOT EXISTS `block_event` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `block_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.click_event definition
+-- click_event table definition
 
 CREATE TABLE IF NOT EXISTS `click_event` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `click_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.debugger_event definition
+-- debugger_event table definition
 
 CREATE TABLE IF NOT EXISTS `debugger_event` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS `debugger_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.question_event definition
+-- question_event table definition
 
 CREATE TABLE IF NOT EXISTS `question_event` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS `question_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.file definition
+-- file table definition
 
 CREATE TABLE IF NOT EXISTS `file` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `file` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.participant definition
+-- participant table definition
 
 CREATE TABLE IF NOT EXISTS `participant` (
     `user_id` int NOT NULL,
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS `participant` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.resource_event definition
+-- resource_event table definition
 
 CREATE TABLE IF NOT EXISTS `resource_event` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -173,7 +173,7 @@ CREATE TABLE IF NOT EXISTS `resource_event` (
     CONSTRAINT `resource_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- scratch1984.token definition
+-- token table definition
 
 CREATE TABLE IF NOT EXISTS `token` (
     `value` varchar(255) NOT NULL,
@@ -186,7 +186,7 @@ CREATE TABLE IF NOT EXISTS `token` (
     CONSTRAINT `token_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- scratch1984.sb3_zip definition
+-- sb3_zip table definition
 
 CREATE TABLE IF NOT EXISTS `sb3_zip` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS `sb3_zip` (
     CONSTRAINT `sb3_zip_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- scratch1984.course definition
+-- course table definition
 
 CREATE TABLE IF NOT EXISTS `course` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -215,7 +215,7 @@ CREATE TABLE IF NOT EXISTS `course` (
     UNIQUE KEY `course_title` (`title`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- scratch1984.course_participant definition
+-- course_participant table definition
 
 CREATE TABLE IF NOT EXISTS `course_participant` (
     `user_id` int NOT NULL,
@@ -227,7 +227,7 @@ CREATE TABLE IF NOT EXISTS `course_participant` (
     CONSTRAINT `course_participant_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `course` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- scratch1984.course_experiment definition
+-- course_experiment table definition
 
 CREATE TABLE IF NOT EXISTS `course_experiment` (
     `course_id` int NOT NULL,
@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS `course_experiment` (
  *  Definition of views.  *
  **************************/
 
--- scratch1984.user_num_block_events source
+-- user_num_block_events view source
 
 CREATE OR REPLACE VIEW `user_num_block_events` (`user`, `experiment`, `count`, `event`) AS
 select
@@ -259,7 +259,7 @@ group by
     `b`.`event`;
 
 
--- scratch1984.user_num_click_events source
+-- user_num_click_events view source
 
 CREATE OR REPLACE VIEW `user_num_click_events` (`user`, `experiment`, `count`, `event`) AS
 select
@@ -275,7 +275,7 @@ group by
     `b`.`event`;
 
 
--- scratch1984.user_num_resource_events source
+-- user_num_resource_events view source
 
 CREATE OR REPLACE VIEW `user_num_resource_events` (`user`, `experiment`, `count`, `event`) AS
 select
@@ -290,7 +290,7 @@ group by
     `r`.`experiment_id`,
     `r`.`event`;
 
--- scratch1984.active_experiments source
+-- experiment_data view source
 
 CREATE OR REPLACE VIEW `experiment_data` (`experiment`, `participants`, `started`, `finished`) AS
 select
@@ -306,7 +306,7 @@ where
 group by
     `p`.`experiment_id`;
 
--- scratch1984.user_num_codes source
+-- codes_data view source
 
 CREATE OR REPLACE VIEW `codes_data` (`user`, `experiment`, `count`) AS
 select

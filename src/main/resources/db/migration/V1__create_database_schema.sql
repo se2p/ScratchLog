@@ -2,7 +2,7 @@
  *  Definition of tables.  *
  **************************/
 
--- scratch1984.experiment definition
+-- experiment table definition
 
 CREATE TABLE IF NOT EXISTS `experiment` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `experiment` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.`user` definition
+-- user table definition
 
 CREATE TABLE IF NOT EXISTS `user` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.block_event definition
+-- block_event table definition
 
 CREATE TABLE IF NOT EXISTS `block_event` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS `block_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.file definition
+-- file table definition
 
 CREATE TABLE IF NOT EXISTS `file` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS `file` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.participant definition
+-- participant table definition
 
 CREATE TABLE IF NOT EXISTS `participant` (
     `user_id` int NOT NULL,
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS `participant` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
--- scratch1984.resource_event definition
+-- resource_event table definition
 
 CREATE TABLE IF NOT EXISTS `resource_event` (
     `id` int NOT NULL AUTO_INCREMENT,
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `resource_event` (
     CONSTRAINT `resource_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- scratch1984.token definition
+-- token table definition
 
 CREATE TABLE IF NOT EXISTS `token` (
     `value` varchar(255) NOT NULL,
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS `token` (
     CONSTRAINT `token_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- scratch1984.sb3_zip definition
+-- sb3_zip table definition
 
 CREATE TABLE IF NOT EXISTS `sb3_zip` (
     `id` int NOT NULL AUTO_INCREMENT,

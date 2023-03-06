@@ -27,7 +27,7 @@ public class V2__add_url_column extends BaseJavaMigration {
     public void migrate(final Context context) throws Exception {
         Connection connection = context.getConnection();
         Statement st = connection.createStatement();
-        st.execute("ALTER TABLE scratch1984.experiment ADD gui_url varchar(2000) NULL;");
+        st.execute("ALTER TABLE experiment ADD gui_url varchar(2000) NULL;");
         st.close();
         PreparedStatement stmt = connection.prepareStatement("UPDATE experiment SET gui_url = ?;");
         stmt.setString(1, ApplicationProperties.GUI_URL[0]);
