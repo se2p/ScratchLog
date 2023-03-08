@@ -54,7 +54,8 @@ build:
 
 Unit-Tests:
   stage: test
-  needs: ["Compile"]
+  needs:
+    - build
   script:
     - "mvn $MAVEN_ARGS -DskipCheckstyle test"
   after_script:
