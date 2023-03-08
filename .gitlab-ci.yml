@@ -8,6 +8,7 @@ stages:
   - validate
   - build
   - test
+  - visualize
 
 default:
   image: maven:3-jdk-11
@@ -73,3 +74,17 @@ secret_detection:
   stage: test
   needs: []
   cache: []
+
+# See: https://docs.gitlab.com/ee/user/project/merge_requests/test_coverage_visualization.html#java-and-kotlin-examples
+Visualize-Coverage:
+  stage: visualize
+  image: registry.gitlab.com/haynes/jacoco2cobertura:1.0.7
+  script:
+    # Convert report from jacoco to cobertura, using relative project path
+    - python /opt/cover2cover.py target/site/jacoco/jacoco.xml $CI_PROJECT_DIR/src/main/java/ > target/cobertura.xml
+  needs: ["Unit-Tests"]
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: target/cobertura.xml
