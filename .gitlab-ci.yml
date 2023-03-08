@@ -69,7 +69,7 @@ Unit-Tests:
 
 ### Analysis (Secret detection)
 
-Secret-Detection:
+secret_detection:
   stage: test
   needs: []
   cache: []
