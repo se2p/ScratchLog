@@ -76,8 +76,7 @@ Unit-Tests:
 
 spotbugs-sast:
   stage: test
-  needs:
-    - build
+  needs: ["Compile"]
   variables:
     # We target Java 11
     SAST_JAVA_VERSION: 11
