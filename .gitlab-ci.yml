@@ -8,6 +8,12 @@ include:
   # This includes the GitLab provided secret detection job
   - template: Security/Secret-Detection.gitlab-ci.yml
 
+# Allows the pipeline to be executed as a merge request pipeline and after merges
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH
+
 stages:
   - validate
   - build
@@ -94,8 +100,8 @@ spotbugs-sast:
     reports:
       sast: gl-sast-report.json
   rules:
-    # Exclude job for merge request pipelines and trigger it otherwise
-    - if: $CI_PIPELINE_SOURCE != 'merge_request_event'
+    # Exclude job for Draft merge requests and trigger it otherwise
+    - if: '$CI_MERGE_REQUEST_TITLE !~ /^Draft:/'
 
 gemnasium-maven-dependency_scanning:
   stage: test
