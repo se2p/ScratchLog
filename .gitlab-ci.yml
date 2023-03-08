@@ -1,6 +1,10 @@
 include:
   # This includes the GitLab provided license scanning job
   - template: Security/License-Scanning.gitlab-ci.yml
+  # This includes the GitLab provided dependency scanning jobs
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  # This includes the GitLab provided SAST jobs.
+  - template: Security/SAST.gitlab-ci.yml
   # This includes the GitLab provided secret detection job
   - template: Security/Secret-Detection.gitlab-ci.yml
 
@@ -70,7 +74,43 @@ Unit-Tests:
 
 ### Analysis (Secret detection)
 
+spotbugs-sast:
+  stage: test
+  needs:
+    - build
+  variables:
+    # We target Java 11
+    SAST_JAVA_VERSION: 11
+    # We already have a compiled version of the project, no need to recompile it
+    COMPILE: 'false'
+    # GitLab Spotbugs uses MAVEN_CLI_OPTS for additional CLI flags
+    MAVEN_CLI_OPTS: '$MAVEN_ARGS -DskipCheckstyle -DskipTests'
+    # Needs to be set explicitly even if it's set via $MAVEN_ARGS/$MAVEN_CLI_OPTS above, to prevent a fatal spotbugs
+    # error: 'lstat /root/.m2/repository: no such file or directory'. There exists an upstream issue for a similar error
+    # https://gitlab.com/gitlab-org/gitlab/-/issues/334854 but the upstream issue is for maven multi-module projects.
+    MAVEN_REPO_PATH: '.m2/repository'
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+  rules:
+    # Exclude job for Draft merge requests and trigger it otherwise
+    - if: '$CI_MERGE_REQUEST_TITLE !~ /^Draft:/'
+
+gemnasium-maven-dependency_scanning:
+  stage: test
+  needs: []
+  variables:
+    MAVEN_CLI_OPTS: "$MAVEN_ARGS -DskipCheckstyle -DskipTests"
+  rules:
+    # Exclude job for Draft merge requests
+    - if: '$CI_MERGE_REQUEST_TITLE !~ /^Draft:/'
+
 secret_detection:
+  stage: test
+  needs: []
+  cache: []
+
+semgrep-sast:
   stage: test
   needs: []
   cache: []
