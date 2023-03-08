@@ -1,37 +1,75 @@
+include:
+  # This includes the GitLab provided license scanning job
+  - template: Security/License-Scanning.gitlab-ci.yml
+  # This includes the GitLab provided secret detection job
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
 stages:
   - validate
   - build
   - test
 
-image: maven:3-jdk-14
+default:
+  image: maven:3-jdk-11
+  cache:
+    paths:
+      - .m2/repository/
+    when: always
+  artifacts:
+    # Expire all artifacts already after 36 hours. (Default is around 30 days/4 weeks)
+    expire_in: 36 hours
 
-before_script:
-  - mvn -v
-  - mvn dependency:resolve -B
+variables:
+  # Arguments passed to maven before CLI arguments, only used from Maven 4 onward
+  MAVEN_ARGS: '--no-transfer-progress -Dmaven.repo.local=.m2/repository -Dmaven.compiler.useIncrementalCompilation=false -Prelease'
+  GIT_STRATEGY: fetch
 
 ############################### JOBS ###############################
 
 Validate:
   stage: validate
-  script: "mvn validate"
+  needs: []
+  script:
+    - "mvn $MAVEN_ARGS validate"
 
 Checkstyle:
   stage: validate
+  needs: []
   script:
-    - "mvn checkstyle:check"
+    - "mvn $MAVEN_ARGS checkstyle:check"
 
 Compile:
   stage: build
+  needs: []
   script:
-    - "mvn compile"
+    - "mvn $MAVEN_ARGS -DskipCheckstyle -DskipTests package"
+  artifacts:
+    paths:
+      - target/
 
 Unit-Tests:
   stage: test
+  needs: ["Compile"]
   script:
-    - "mvn verify"
+    - "mvn $MAVEN_ARGS -DskipCheckstyle test"
+  after_script:
+    - mvn $MAVEN_ARGS jacoco:report
+    # Print summary line, so GitLab can extract code coverage
+    - cat target/site/jacoco/index.html | grep -o '<tfoot>.*</tfoot>'
+    # Regex for extracting a coverage percentage, project wide configuration is planned to be deprecated at some point
+  coverage: '/Total.*?([0-9]{1,3})%/'
   artifacts:
-    when: always
+    paths:
+      - target/jacoco.exec
+      - target/site/jacoco/jacoco.xml
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
         - target/failsafe-reports/TEST-*.xml
+
+### Analysis (Secret detection)
+
+Secret-Detection:
+  stage: test
+  needs: []
+  cache: []
