@@ -45,7 +45,7 @@ Checkstyle:
   script:
     - "mvn $MAVEN_ARGS checkstyle:check"
 
-build:
+Compile:
   stage: build
   needs: []
   script:
@@ -56,8 +56,7 @@ build:
 
 Unit-Tests:
   stage: test
-  needs:
-    - build
+  needs: ["Compile"]
   script:
     - "mvn $MAVEN_ARGS -DskipCheckstyle test"
   after_script:
@@ -79,9 +78,9 @@ Unit-Tests:
 
 spotbugs-sast:
   stage: test
-  needs:
-    - build
+  needs: ["Compile"]
   variables:
+    # We target Java 11
     SAST_JAVA_VERSION: 11
     # We already have a compiled version of the project, no need to recompile it
     COMPILE: 'false'
