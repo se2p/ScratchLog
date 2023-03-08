@@ -80,7 +80,6 @@ spotbugs-sast:
   needs:
     - build
   variables:
-    # We target Java 11
     SAST_JAVA_VERSION: 11
     # We already have a compiled version of the project, no need to recompile it
     COMPILE: 'false'
