@@ -94,8 +94,8 @@ spotbugs-sast:
     reports:
       sast: gl-sast-report.json
   rules:
-    # Exclude job for Draft merge requests and trigger it otherwise
-    - if: '$CI_MERGE_REQUEST_TITLE !~ /^Draft:/'
+    # Exclude job for merge request pipelines and trigger it otherwise
+    - if: $CI_PIPELINE_SOURCE != 'merge_request_event'
 
 gemnasium-maven-dependency_scanning:
   stage: test
