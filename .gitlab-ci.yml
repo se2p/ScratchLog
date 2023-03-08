@@ -43,7 +43,7 @@ Checkstyle:
   script:
     - "mvn $MAVEN_ARGS checkstyle:check"
 
-Compile:
+build:
   stage: build
   needs: []
   script:
@@ -76,7 +76,8 @@ Unit-Tests:
 
 spotbugs-sast:
   stage: test
-  needs: ["Compile"]
+  needs:
+    - build
   variables:
     # We target Java 11
     SAST_JAVA_VERSION: 11
