@@ -28,6 +28,8 @@ variables:
   # Arguments passed to maven before CLI arguments, only used from Maven 4 onward
   MAVEN_ARGS: '--no-transfer-progress -Dmaven.repo.local=.m2/repository -Dmaven.compiler.useIncrementalCompilation=false -Prelease'
   GIT_STRATEGY: fetch
+  # Disable all SAST jobs by default, since we manually enable/configure those
+  SAST_DISABLED: 'true'
 
 ############################### JOBS ###############################
 
