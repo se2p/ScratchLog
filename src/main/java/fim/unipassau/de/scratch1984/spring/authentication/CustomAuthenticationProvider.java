@@ -3,8 +3,6 @@ package fim.unipassau.de.scratch1984.spring.authentication;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
