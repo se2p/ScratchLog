@@ -95,7 +95,7 @@ public class FileService {
         Experiment experiment = experimentRepository.getOne(fileDTO.getExperiment());
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
             if (isInvalidParticipant(participant, user, experiment, "file")) {
                 return;
@@ -123,7 +123,7 @@ public class FileService {
         Experiment experiment = experimentRepository.getOne(sb3ZipDTO.getExperiment());
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
             if (isInvalidParticipant(participant, user, experiment, "sb3 zip file")) {
                 return;
@@ -365,13 +365,13 @@ public class FileService {
      * @param fileType The type of file that is to be saved.
      * @return {@code true} if the participant data is invalid, or {@code false} otherwise.
      */
-    private boolean isInvalidParticipant(final Participant participant, final User user, final Experiment experiment,
-                                         final String fileType) {
-        if (participant == null) {
+    private boolean isInvalidParticipant(final Optional<Participant> participant, final User user,
+                                         final Experiment experiment, final String fileType) {
+        if (participant.isEmpty()) {
             LOGGER.error("No corresponding participant entry could be found for user with id " + user.getId()
                     + " and experiment " + experiment.getId() + " when trying to save a " + fileType + "!");
             return true;
-        } else if (participant.getEnd() != null) {
+        } else if (participant.get().getEnd() != null) {
             LOGGER.error("Tried to save a " + fileType + " for participant " + user.getId() + " during experiment "
                     + experiment.getId() + " who has already finished!");
             return true;

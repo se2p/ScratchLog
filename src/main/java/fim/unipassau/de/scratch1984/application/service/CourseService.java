@@ -179,10 +179,11 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        Experiment experiment = experimentRepository.findByTitle(experimentTitle);
+        Optional<Experiment> experiment = experimentRepository.findByTitle(experimentTitle);
 
         try {
-            return experiment != null && courseExperimentRepository.existsByCourseAndExperiment(course, experiment);
+            return experiment.isPresent() && courseExperimentRepository.existsByCourseAndExperiment(course,
+                    experiment.get());
         } catch (EntityNotFoundException e) {
             return false;
         }
@@ -205,10 +206,10 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        User user = userRepository.findUserByUsernameOrEmail(input, input);
+        Optional<User> user = userRepository.findUserByUsernameOrEmail(input, input);
 
         try {
-            return user != null && courseParticipantRepository.existsByCourseAndUser(course, user);
+            return user.isPresent() && courseParticipantRepository.existsByCourseAndUser(course, user.get());
         } catch (EntityNotFoundException e) {
             return false;
         }
@@ -324,19 +325,20 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        User user = userRepository.findUserByUsernameOrEmail(participant, participant);
+        Optional<User> optionalUser = userRepository.findUserByUsernameOrEmail(participant, participant);
 
         try {
-            if (user == null) {
+            if (optionalUser.isEmpty()) {
                 LOGGER.error("Could not find the user with username or email " + participant + " when trying to add a "
                         + "course participant!");
                 throw new NotFoundException("Could not find the user with username or email " + participant
                         + " when trying to add a course participant!");
-            } else if (!user.getRole().equals(UserDTO.Role.PARTICIPANT.toString())) {
+            } else if (!optionalUser.get().getRole().equals(UserDTO.Role.PARTICIPANT.toString())) {
                 throw new IllegalStateException("Tried to add administrator with username or email " + participant
                         + " as a course participant!");
             }
 
+            User user = optionalUser.get();
             CourseParticipant courseParticipant = new CourseParticipant(user, course,
                     Timestamp.valueOf(LocalDateTime.now()));
             course.setLastChanged(courseParticipant.getAdded());
@@ -371,20 +373,20 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        User user = userRepository.findUserByUsernameOrEmail(participant, participant);
+        Optional<User> user = userRepository.findUserByUsernameOrEmail(participant, participant);
 
         try {
-            if (user == null) {
+            if (user.isEmpty()) {
                 LOGGER.error("Could not find the user with username or email " + participant + " when trying to delete "
                         + "a course participant!");
                 throw new NotFoundException("Could not find the user with username or email " + participant + " when "
                         + "trying to delete a course participant!");
             }
 
-            CourseParticipantId courseParticipantId = new CourseParticipantId(user.getId(), courseId);
+            CourseParticipantId courseParticipantId = new CourseParticipantId(user.get().getId(), courseId);
             List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
             course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
-            courseExperiments.forEach(courseExperiment -> deleteExperimentParticipant(user,
+            courseExperiments.forEach(courseExperiment -> deleteExperimentParticipant(user.get(),
                     courseExperiment.getExperiment()));
             courseParticipantRepository.deleteById(courseParticipantId);
             courseRepository.save(course);
@@ -432,17 +434,17 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        Experiment experiment = experimentRepository.findByTitle(experimentTitle);
+        Optional<Experiment> experiment = experimentRepository.findByTitle(experimentTitle);
 
         try {
-            if (experiment == null) {
+            if (experiment.isEmpty()) {
                 LOGGER.error("Could not find the experiment with title " + experimentTitle + " when trying to delete a "
                         + "course experiment!");
                 throw new NotFoundException("Could not find the experiment with title " + experimentTitle
                         + " when trying to delete a course experiment!");
             }
 
-            CourseExperimentId courseExperimentId = new CourseExperimentId(courseId, experiment.getId());
+            CourseExperimentId courseExperimentId = new CourseExperimentId(courseId, experiment.get().getId());
             course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
             courseExperimentRepository.deleteById(courseExperimentId);
             courseRepository.save(course);

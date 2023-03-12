@@ -20,6 +20,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -177,7 +178,7 @@ public class TokenServiceTest {
 
     @Test
     public void testFindToken() {
-        when(tokenRepository.findByValue(VALUE)).thenReturn(token);
+        when(tokenRepository.findByValue(VALUE)).thenReturn(Optional.of(token));
         TokenDTO tokenDTO = tokenService.findToken(VALUE);
         assertAll(
                 () -> assertEquals(VALUE, tokenDTO.getValue()),

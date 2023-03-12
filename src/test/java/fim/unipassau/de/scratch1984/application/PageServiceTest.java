@@ -32,6 +32,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -407,7 +408,7 @@ public class PageServiceTest {
 
     @Test
     public void testGetLastParticipantPage() {
-        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
+        when(experimentDataRepository.findByExperiment(ID)).thenReturn(Optional.of(experimentData));
         assertEquals(0, pageService.getLastParticipantPage(ID));
         verify(experimentDataRepository).findByExperiment(ID);
     }
@@ -415,7 +416,7 @@ public class PageServiceTest {
     @Test
     public void testGetLastParticipantPage3() {
         experimentData.setParticipants(40);
-        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
+        when(experimentDataRepository.findByExperiment(ID)).thenReturn(Optional.of(experimentData));
         assertEquals(3, pageService.getLastParticipantPage(ID));
         verify(experimentDataRepository).findByExperiment(ID);
     }
@@ -423,7 +424,7 @@ public class PageServiceTest {
     @Test
     public void testGetLastParticipantPage4() {
         experimentData.setParticipants(41);
-        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
+        when(experimentDataRepository.findByExperiment(ID)).thenReturn(Optional.of(experimentData));
         assertEquals(4, pageService.getLastParticipantPage(ID));
         verify(experimentDataRepository).findByExperiment(ID);
     }

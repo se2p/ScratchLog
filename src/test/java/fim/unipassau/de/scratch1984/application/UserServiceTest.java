@@ -251,7 +251,7 @@ public class UserServiceTest {
 
     @Test
     public void testGetUser() {
-        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(Optional.of(user1));
         UserDTO userDTO = userService.getUser(USERNAME);
         assertAll(
                 () -> assertEquals(userDTO.getUsername(), user1.getUsername()),
@@ -358,7 +358,7 @@ public class UserServiceTest {
 
     @Test
     public void testGetUserByUsernameOrEmail() {
-        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(user1);
+        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user1));
         UserDTO found = userService.getUserByUsernameOrEmail(USERNAME);
         assertAll(
                 () -> assertEquals(user1.getId(), found.getId()),
@@ -394,7 +394,7 @@ public class UserServiceTest {
     public void testLoginUser() {
         user1.setAttempts(2);
         LocalDateTime lastLogin = user1.getLastLogin();
-        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(Optional.of(user1));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         assertAll(
                 () -> assertTrue(userService.loginUser(userDTO)),
@@ -408,7 +408,7 @@ public class UserServiceTest {
 
     @Test
     public void testLoginUserPasswordNotMatching() {
-        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(Optional.of(user1));
         assertAll(
                 () -> assertFalse(userService.loginUser(userDTO)),
                 () -> assertEquals(1, user1.getAttempts())
@@ -421,7 +421,7 @@ public class UserServiceTest {
     @Test
     public void testLoginUserPasswordNull() {
         userDTO.setPassword(null);
-        when(userRepository.findUserByUsername(USERNAME)).thenReturn(user1);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(Optional.of(user1));
         assertAll(
                 () -> assertFalse(userService.loginUser(userDTO)),
                 () -> assertEquals(1, user1.getAttempts())
@@ -444,7 +444,7 @@ public class UserServiceTest {
     @Test
     public void testAuthenticateUser() {
         LocalDateTime lastLogin = user1.getLastLogin();
-        when(userRepository.findUserBySecret(SECRET)).thenReturn(user1);
+        when(userRepository.findUserBySecret(SECRET)).thenReturn(Optional.of(user1));
         when(userRepository.save(user1)).thenReturn(user1);
         UserDTO authenticated = userService.authenticateUser(SECRET);
         assertAll(
@@ -719,7 +719,7 @@ public class UserServiceTest {
 
     @Test
     public void testFindLastId() {
-        when(userRepository.findFirstByOrderByIdDesc()).thenReturn(user1);
+        when(userRepository.findFirstByOrderByIdDesc()).thenReturn(Optional.of(user1));
         assertEquals(user1.getId(), userService.findLastId());
         verify(userRepository).findFirstByOrderByIdDesc();
     }

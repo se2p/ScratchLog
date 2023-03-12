@@ -18,6 +18,7 @@ import javax.persistence.EntityNotFoundException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A service providing methods related to tokens.
@@ -124,14 +125,14 @@ public class TokenService {
             throw new IllegalArgumentException("Cannot search for token with null or empty value!");
         }
 
-        Token token = tokenRepository.findByValue(value);
+        Optional<Token> token = tokenRepository.findByValue(value);
 
-        if (token == null) {
+        if (token.isEmpty()) {
             LOGGER.error("Could not find token with value " + value + " in the database!");
             throw new NotFoundException("Could not find token with value " + value + " in the database!");
         }
 
-        return createTokenDTO(token);
+        return createTokenDTO(token.get());
     }
 
     /**

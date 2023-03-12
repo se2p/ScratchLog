@@ -37,7 +37,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param username The username to search for.
      * @return The user data or {@code null}, if no user could be found.
      */
-    User findUserByUsername(String username);
+    Optional<User> findUserByUsername(String username);
 
     /**
      * Returns the user with the given secret, if one exists.
@@ -45,7 +45,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param secret The secret to search for.
      * @return The user data, or {@code null}, if no user could be found.
      */
-    User findUserBySecret(String secret);
+    Optional<User> findUserBySecret(String secret);
 
     /**
      * Returns the user identified by the given username or email address, if one exists.
@@ -54,7 +54,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param email The email to search for.
      * @return The user data, or {@code null}, if no user could be found.
      */
-    User findUserByUsernameOrEmail(String username, String email);
+    Optional<User> findUserByUsernameOrEmail(String username, String email);
 
     /**
      * Returns the user identified by the given id, if one exists.
@@ -95,7 +95,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      *
      * @return The user.
      */
-    User findFirstByOrderByIdDesc();
+    Optional<User> findFirstByOrderByIdDesc();
 
     /**
      * Returns a list of the first users up to the given limit whose email or username contain the given query value.

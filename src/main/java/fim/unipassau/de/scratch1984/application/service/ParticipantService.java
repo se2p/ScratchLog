@@ -116,16 +116,16 @@ public class ParticipantService {
         Experiment experiment = experimentRepository.getOne(experimentId);
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
+            if (participant.isEmpty()) {
                 LOGGER.error("Could not find any participant entry for user with id " + userId + " for experiment with "
                         + "id " + experimentId + "!");
                 throw new NotFoundException("Could not find any participant entry for user with id " + userId
                         + " for experiment with id " + experimentId + "!");
             }
 
-            return createParticipantDTO(participant);
+            return createParticipantDTO(participant.get());
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
                     + " in the database!", e);
@@ -377,9 +377,9 @@ public class ParticipantService {
         Experiment experiment = experimentRepository.getOne(experimentId);
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
+            if (participant.isEmpty()) {
                 LOGGER.error("Cannot save event data for participant null!");
                 return true;
             } else if (!user.isActive() || !experiment.isActive()) {

@@ -148,8 +148,8 @@ public class UserRepositoryTest {
     @Test
     public void testFindUserByUsername() {
         assertAll(
-                () -> assertEquals(user1.getId(), userRepository.findUserByUsername(ADMIN1).getId()),
-                () -> assertNull(userRepository.findUserByUsername(ADMIN1 + 1))
+                () -> assertEquals(user1.getId(), userRepository.findUserByUsername(ADMIN1).get().getId()),
+                () -> assertEquals(Optional.empty(), userRepository.findUserByUsername(ADMIN1 + 1))
         );
     }
 

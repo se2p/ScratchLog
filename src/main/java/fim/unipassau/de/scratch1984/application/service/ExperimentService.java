@@ -87,12 +87,12 @@ public class ExperimentService {
                     + "id " + id + "!");
         }
 
-        Experiment experiment = experimentRepository.findByTitle(title);
+        Optional<Experiment> experiment = experimentRepository.findByTitle(title);
 
-        if (experiment == null) {
+        if (experiment.isEmpty()) {
             return false;
         } else {
-            return experiment.getId() != id;
+            return experiment.get().getId() != id;
         }
     }
 
@@ -221,15 +221,15 @@ public class ExperimentService {
                     + "!");
         }
 
-        ExperimentData experimentData = experimentDataRepository.findByExperiment(id);
+        Optional<ExperimentData> experimentData = experimentDataRepository.findByExperiment(id);
         List<String[]> list = new ArrayList<>();
         String[] header = {"experiment", "participants", "started", "finished"};
         list.add(header);
 
-        if (experimentData != null) {
-            String[] data = {experimentData.getExperiment().toString(),
-                    String.valueOf(experimentData.getParticipants()), String.valueOf(experimentData.getStarted()),
-                    String.valueOf(experimentData.getFinished())};
+        if (experimentData.isPresent()) {
+            ExperimentData expData = experimentData.get();
+            String[] data = {expData.getExperiment().toString(), String.valueOf(expData.getParticipants()),
+                    String.valueOf(expData.getStarted()), String.valueOf(expData.getFinished())};
             list.add(data);
         }
 

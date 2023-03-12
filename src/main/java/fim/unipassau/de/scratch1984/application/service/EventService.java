@@ -315,7 +315,7 @@ public class EventService {
         try {
             BlockEventJSONProjection projection =
                     blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
             if (!checkReturnFirstJson(participant, projection, user, experiment)) {
                 return null;
@@ -524,13 +524,13 @@ public class EventService {
                     + " or experiment with invalid id " + experiment + "!");
         }
 
-        CodesData codesData = codesDataRepository.findByUserAndExperiment(user, experiment);
+        Optional<CodesData> codesData = codesDataRepository.findByUserAndExperiment(user, experiment);
 
-        if (codesData == null) {
+        if (codesData.isEmpty()) {
             return new CodesDataDTO();
         }
 
-        return createCodesDataDTO(codesData);
+        return createCodesDataDTO(codesData.get());
     }
 
     /**
@@ -695,13 +695,13 @@ public class EventService {
     private boolean isParticipant(final User user, final Experiment experiment, final int userId,
                                   final int experimentId) {
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
+            if (participant.isEmpty()) {
                 LOGGER.error("No corresponding participant entry could be found for user with id " + userId
                         + " and experiment " + experimentId + " when trying to save an event!");
                 return false;
-            } else if (participant.getEnd() != null) {
+            } else if (participant.get().getEnd() != null) {
                 LOGGER.error("Tried to insert an event for participant " + userId + " during experiment "
                         + experimentId + " who has already finished!");
                 return false;
@@ -746,9 +746,10 @@ public class EventService {
      * @param experiment The {@link Experiment} during which the code was generated.
      * @return {@code true} if the code should be returned, or {@code false} otherwise.
      */
-    private boolean checkReturnFirstJson(final Participant participant, final BlockEventJSONProjection projection,
+    private boolean checkReturnFirstJson(final Optional<Participant> participant,
+                                         final BlockEventJSONProjection projection,
                                          final User user, final Experiment experiment) {
-        if (participant == null) {
+        if (participant.isEmpty()) {
             LOGGER.error("No corresponding participant entry could be found for user with id " + user.getId()
                     + " and experiment with id " + experiment.getId() + " when trying to load the last json code!");
             return false;

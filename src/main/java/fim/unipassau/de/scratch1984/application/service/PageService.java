@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.Optional;
 
 /**
  * A service providing methods related to loading information to be displayed in tables with multiple pages.
@@ -345,12 +346,12 @@ public class PageService {
      */
     @Transactional
     public int getLastParticipantPage(final int id) {
-        ExperimentData experimentData = experimentDataRepository.findByExperiment(id);
+        Optional<ExperimentData> experimentData = experimentDataRepository.findByExperiment(id);
 
-        if (experimentData == null) {
+        if (experimentData.isEmpty()) {
             return 0;
         } else {
-            int participants = experimentData.getParticipants();
+            int participants = experimentData.get().getParticipants();
             return computeLastPage(participants);
         }
     }

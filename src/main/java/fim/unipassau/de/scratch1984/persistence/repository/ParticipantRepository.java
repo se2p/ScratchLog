@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A repository providing functionality for retrieving participant information for an experiment.
@@ -32,7 +33,7 @@ public interface ParticipantRepository extends JpaRepository<Participant, Partic
      * @param experiment The experiment to search for.
      * @return The participation data or {@code null}, if no entry could be found.
      */
-    Participant findByUserAndExperiment(User user, Experiment experiment);
+    Optional<Participant> findByUserAndExperiment(User user, Experiment experiment);
 
     /**
      * Returns a page of participants for the given experiment, if any entries exist.

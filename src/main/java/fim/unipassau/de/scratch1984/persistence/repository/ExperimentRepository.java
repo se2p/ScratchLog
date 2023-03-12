@@ -48,7 +48,7 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * @param title The title to search for.
      * @return The experiment data or {@code null}, if no entry could be found.
      */
-    Experiment findByTitle(String title);
+    Optional<Experiment> findByTitle(String title);
 
     /**
      * Returns the experiment identified by the given id, if one exists.

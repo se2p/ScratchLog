@@ -117,21 +117,21 @@ public class ExperimentServiceTest {
 
     @Test
     public void testExistsExperimentWithId() {
-        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment);
+        when(experimentRepository.findByTitle(TITLE)).thenReturn(Optional.of(experiment));
         assertTrue(experimentService.existsExperiment(TITLE, INVALID_ID));
         verify(experimentRepository).findByTitle(TITLE);
     }
 
     @Test
     public void testExistsExperimentWithIdFalse() {
-        when(experimentRepository.findByTitle(TITLE)).thenReturn(experiment);
+        when(experimentRepository.findByTitle(TITLE)).thenReturn(Optional.of(experiment));
         assertFalse(experimentService.existsExperiment(TITLE, experiment.getId()));
         verify(experimentRepository).findByTitle(TITLE);
     }
 
     @Test
     public void testExistsExperimentNull() {
-        when(experimentRepository.findByTitle(TITLE)).thenReturn(null);
+        when(experimentRepository.findByTitle(TITLE)).thenReturn(Optional.empty());
         assertFalse(experimentService.existsExperiment(TITLE, experiment.getId()));
         verify(experimentRepository).findByTitle(TITLE);
     }
@@ -377,7 +377,7 @@ public class ExperimentServiceTest {
         String[] dataArray = {experimentData.getExperiment().toString(),
                 String.valueOf(experimentData.getParticipants()), String.valueOf(experimentData.getStarted()),
                 String.valueOf(experimentData.getFinished())};
-        when(experimentDataRepository.findByExperiment(ID)).thenReturn(experimentData);
+        when(experimentDataRepository.findByExperiment(ID)).thenReturn(Optional.of(experimentData));
         List<String[]> data = experimentService.getExperimentData(ID);
         assertAll(
                 () -> assertEquals(2, data.size()),

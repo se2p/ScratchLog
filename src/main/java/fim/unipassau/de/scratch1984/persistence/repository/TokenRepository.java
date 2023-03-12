@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 public interface TokenRepository extends JpaRepository<Token, String> {
 
@@ -14,7 +15,7 @@ public interface TokenRepository extends JpaRepository<Token, String> {
      * @param value The value to search for.
      * @return The token data or {@code null}, if no token could be found.
      */
-    Token findByValue(String value);
+    Optional<Token> findByValue(String value);
 
     /**
      * Deletes all expired tokens from the database.

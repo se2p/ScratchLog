@@ -167,14 +167,14 @@ public class UserService {
             throw new IllegalArgumentException("The username cannot be null or blank!");
         }
 
-        User user = userRepository.findUserByUsername(username);
+        Optional<User> user = userRepository.findUserByUsername(username);
 
-        if (user == null) {
+        if (user.isEmpty()) {
             LOGGER.error("Could not find user with username " + username + ".");
             throw new NotFoundException("Could not find user with username " + username + ".");
         }
 
-        return createUserDTO(user);
+        return createUserDTO(user.get());
     }
 
     /**
@@ -239,14 +239,14 @@ public class UserService {
             throw new IllegalArgumentException("Cannot search for with search string null or blank!");
         }
 
-        User user = userRepository.findUserByUsernameOrEmail(search, search);
+        Optional<User> user = userRepository.findUserByUsernameOrEmail(search, search);
 
-        if (user == null) {
+        if (user.isEmpty()) {
             LOGGER.debug("Could not find user with username or email " + search + "!");
             return null;
         }
 
-        return createUserDTO(user);
+        return createUserDTO(user.get());
     }
 
     /**
@@ -258,9 +258,10 @@ public class UserService {
      */
     @Transactional
     public boolean loginUser(final UserDTO userDTO) {
-        User user = userRepository.findUserByUsername(userDTO.getUsername());
+        Optional<User> optionalUser = userRepository.findUserByUsername(userDTO.getUsername());
 
-        if (user != null) {
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
             if ((userDTO.getPassword() != null) && (matchesPassword(userDTO.getPassword(), user.getPassword()))) {
                 user.setAttempts(0);
                 user.setLastLogin(LocalDateTime.now());
@@ -293,13 +294,14 @@ public class UserService {
             throw new IllegalArgumentException("Cannot search for user with secret null or blank!");
         }
 
-        User user = userRepository.findUserBySecret(secret);
+        Optional<User> optionalUser = userRepository.findUserBySecret(secret);
 
-        if (user == null) {
+        if (optionalUser.isEmpty()) {
             LOGGER.error("Could not find any user with the secret " + secret + " in the database!");
             throw new NotFoundException("Could not find any user with the secret " + secret + " in the database!");
         }
 
+        User user = optionalUser.get();
         user.setActive(true);
         user.setLastLogin(LocalDateTime.now());
         User saved = userRepository.save(user);
@@ -448,13 +450,13 @@ public class UserService {
      */
     @Transactional
     public int findLastId() {
-        User user = userRepository.findFirstByOrderByIdDesc();
+        Optional<User> user = userRepository.findFirstByOrderByIdDesc();
 
-        if (user == null) {
-            throw new IllegalStateException("There are no users in database!");
+        if (user.isEmpty()) {
+            throw new IllegalStateException("There are no users in the database!");
         }
 
-        return user.getId();
+        return user.get().getId();
     }
 
     /**

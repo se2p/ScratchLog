@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,9 +74,10 @@ public class SAML2Service {
      */
     public Authentication handleAuthentication(final Saml2AuthenticatedPrincipal principal) {
         String username = substituteAttributes(properties.getUsernamePattern(), principal);
-        User user = userRepository.findUserByUsername(username);
+        Optional<User> optionalUser = userRepository.findUserByUsername(username);
+        User user;
 
-        if (user == null) {
+        if (optionalUser.isEmpty()) {
             user = createUserFromAuth(username, principal);
 
             if (user.getId() == null) {
@@ -83,6 +85,7 @@ public class SAML2Service {
                 throw new IllegalStateException("Could not save new user " + username + " authenticated with SAML2!");
             }
         } else {
+            user = optionalUser.get();
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
         }

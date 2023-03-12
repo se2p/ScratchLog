@@ -93,7 +93,7 @@ public class FileServiceTest {
     public void testSaveFile() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -107,7 +107,7 @@ public class FileServiceTest {
     public void testSaveFileConstraintViolation() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         when(fileRepository.save(any())).thenThrow(ConstraintViolationException.class);
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
@@ -137,7 +137,7 @@ public class FileServiceTest {
         participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -165,7 +165,7 @@ public class FileServiceTest {
         user.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -180,7 +180,7 @@ public class FileServiceTest {
         experiment.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -194,7 +194,7 @@ public class FileServiceTest {
     public void testSaveSb3Zip() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );
@@ -208,7 +208,7 @@ public class FileServiceTest {
     public void testSaveSb3ZipConstraintViolation() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         when(sb3ZipRepository.save(any())).thenThrow(ConstraintViolationException.class);
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
@@ -238,7 +238,7 @@ public class FileServiceTest {
         participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );
@@ -266,7 +266,7 @@ public class FileServiceTest {
         user.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );
@@ -281,7 +281,7 @@ public class FileServiceTest {
         experiment.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );

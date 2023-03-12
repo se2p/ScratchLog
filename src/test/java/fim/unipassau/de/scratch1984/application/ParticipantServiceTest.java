@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -108,7 +109,7 @@ public class ParticipantServiceTest {
     public void testGetParticipant() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         ParticipantDTO participantDTO = participantService.getParticipant(ID, ID);
         assertAll(
                 () -> assertEquals(ID, participantDTO.getExperiment()),
@@ -531,7 +532,7 @@ public class ParticipantServiceTest {
         user.setActive(true);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         assertFalse(participantService.isInvalidParticipant(ID, ID, SECRET));
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
@@ -543,7 +544,7 @@ public class ParticipantServiceTest {
         user.setActive(true);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         assertTrue(participantService.isInvalidParticipant(ID, ID, PASSWORD));
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
@@ -554,7 +555,7 @@ public class ParticipantServiceTest {
     public void testIsInvalidParticipantUserInactive() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
@@ -567,7 +568,7 @@ public class ParticipantServiceTest {
         experiment1.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
