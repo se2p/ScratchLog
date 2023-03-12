@@ -28,7 +28,7 @@ public class SearchController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(SearchController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchController.class);
 
     /**
      * The search service to use for search query management.
@@ -63,7 +63,7 @@ public class SearchController {
     @Secured(Constants.ROLE_ADMIN)
     public String getSearchPage(@RequestParam("query") final String query, final Model model) {
         if (query == null || query.length() > Constants.LARGE_FIELD) {
-            logger.error("Cannot search for results for query string null or query string too long!");
+            LOGGER.error("Cannot search for results for query string null or query string too long!");
             return Constants.ERROR;
         }
 

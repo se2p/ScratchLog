@@ -28,7 +28,7 @@ public class PageRestController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(PageRestController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PageRestController.class);
 
     /**
      * The page service to use for retrieving page information.
@@ -66,7 +66,7 @@ public class PageRestController {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
-            logger.error("Cannot retrieve last course participant page for invalid course id " + id + "!");
+            LOGGER.error("Cannot retrieve last course participant page for invalid course id " + id + "!");
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return -1;
         }
@@ -89,7 +89,7 @@ public class PageRestController {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
-            logger.error("Cannot retrieve last course experiment page for invalid course id " + id + "!");
+            LOGGER.error("Cannot retrieve last course experiment page for invalid course id " + id + "!");
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return -1;
         }
@@ -159,7 +159,7 @@ public class PageRestController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
-            logger.error("Can't fetch the last page for an unauthenticated user!");
+            LOGGER.error("Can't fetch the last page for an unauthenticated user!");
             return -1;
         }
 

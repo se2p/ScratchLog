@@ -50,7 +50,7 @@ public class CourseController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(CourseController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CourseController.class);
 
     /**
      * The course service to use for course management.
@@ -121,7 +121,7 @@ public class CourseController {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
-            logger.error("Cannot return the course page with an invalid id parameter!");
+            LOGGER.error("Cannot return the course page with an invalid id parameter!");
             return Constants.ERROR;
         }
 
@@ -160,7 +160,7 @@ public class CourseController {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
-            logger.error("Cannot return the course edit page with an invalid id parameter!");
+            LOGGER.error("Cannot return the course edit page with an invalid id parameter!");
             return Constants.ERROR;
         }
 
@@ -192,7 +192,7 @@ public class CourseController {
                 bindingResult, resourceBundle);
 
         if (existsCourseTitle(courseDTO.getId(), courseDTO.getTitle())) {
-            logger.error("Cannot save the course as a course with the title " + courseDTO.getTitle()
+            LOGGER.error("Cannot save the course as a course with the title " + courseDTO.getTitle()
                     + " already exists!");
             FieldErrorHandler.addTitleExistsError(bindingResult, COURSE_DTO, resourceBundle);
         }
@@ -220,21 +220,21 @@ public class CourseController {
     public String deleteCourse(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
                                @RequestParam(ID) final String id) {
         if (id == null || passwordDTO.getPassword() == null) {
-            logger.error("Cannot delete course with id null or input password null!");
+            LOGGER.error("Cannot delete course with id null or input password null!");
             return Constants.ERROR;
         }
 
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
-            logger.error("Cannot delete the course with invalid id " + id + "!");
+            LOGGER.error("Cannot delete the course with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
-            logger.error("An unauthenticated user tried to delete the course with id " + courseId + "!");
+            LOGGER.error("An unauthenticated user tried to delete the course with id " + courseId + "!");
             return Constants.ERROR;
         }
 
@@ -269,7 +269,7 @@ public class CourseController {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID || status == null) {
-            logger.error("Cannot change the status of the course with invalid id or status parameters!");
+            LOGGER.error("Cannot change the status of the course with invalid id or status parameters!");
             return Constants.ERROR;
         }
 
@@ -281,7 +281,7 @@ public class CourseController {
             } else if (status.equals("close")) {
                 courseDTO = courseService.changeCourseStatus(false, courseId);
             } else {
-                logger.debug("Cannot return the corresponding course page for requested status change " + status + "!");
+                LOGGER.debug("Cannot return the corresponding course page for requested status change " + status + "!");
                 return Constants.ERROR;
             }
 
@@ -314,7 +314,7 @@ public class CourseController {
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
         if (courseDTO == null) {
-            logger.error("Cannot add a new participant with an invalid course id parameter!");
+            LOGGER.error("Cannot add a new participant with an invalid course id parameter!");
             return Constants.ERROR;
         }
 
@@ -355,7 +355,7 @@ public class CourseController {
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
         if (courseDTO == null) {
-            logger.error("Cannot delete a participant with an invalid course id parameter!");
+            LOGGER.error("Cannot delete a participant with an invalid course id parameter!");
             return Constants.ERROR;
         }
 
@@ -392,7 +392,7 @@ public class CourseController {
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
         if (courseDTO == null) {
-            logger.error("Cannot remove an experiment with an invalid course id parameter!");
+            LOGGER.error("Cannot remove an experiment with an invalid course id parameter!");
             return Constants.ERROR;
         }
 
@@ -419,7 +419,7 @@ public class CourseController {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
-            logger.error("Cannot fetch course participant page for invalid course id " + id + "!");
+            LOGGER.error("Cannot fetch course participant page for invalid course id " + id + "!");
             return new ModelAndView(Constants.ERROR);
         }
 
@@ -427,7 +427,7 @@ public class CourseController {
         int page = NumberParser.parseId(pageNumber);
 
         if (PageUtils.isInvalidPageNumber(page, lastPage)) {
-            logger.error("Cannot fetch course participant page for invalid page number " + pageNumber
+            LOGGER.error("Cannot fetch course participant page for invalid page number " + pageNumber
                     + " with last page " + lastPage + "!");
             return new ModelAndView(Constants.ERROR);
         }
@@ -451,7 +451,7 @@ public class CourseController {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
-            logger.error("Cannot fetch course experiment page for invalid course id " + courseId + "!");
+            LOGGER.error("Cannot fetch course experiment page for invalid course id " + courseId + "!");
             return new ModelAndView(Constants.ERROR);
         }
 
@@ -459,7 +459,7 @@ public class CourseController {
         int page = NumberParser.parseId(pageNumber);
 
         if (PageUtils.isInvalidPageNumber(page, lastPage)) {
-            logger.error("Cannot fetch course experiment page for invalid page number " + pageNumber
+            LOGGER.error("Cannot fetch course experiment page for invalid page number " + pageNumber
                     + " with last page " + lastPage + "!");
             return new ModelAndView(Constants.ERROR);
         }

@@ -29,7 +29,7 @@ public class SAML2Service {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(SAML2Service.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SAML2Service.class);
 
     /**
      * The user repository to use for user queries.
@@ -79,7 +79,7 @@ public class SAML2Service {
             user = createUserFromAuth(username, principal);
 
             if (user.getId() == null) {
-                logger.error("Could not save new user " + username + " authenticated with SAML2!");
+                LOGGER.error("Could not save new user " + username + " authenticated with SAML2!");
                 throw new IllegalStateException("Could not save new user " + username + " authenticated with SAML2!");
             }
         } else {

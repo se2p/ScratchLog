@@ -41,7 +41,7 @@ public class HomeController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HomeController.class);
 
     /**
      * The experiment service to use for retrieving experiment information.
@@ -108,7 +108,7 @@ public class HomeController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication == null || authentication.getName() == null) {
-                logger.error("Can't show the participant experiment page for an unauthenticated user!");
+                LOGGER.error("Can't show the participant experiment page for an unauthenticated user!");
                 return Constants.ERROR;
             }
 
@@ -270,14 +270,14 @@ public class HomeController {
      */
     private int getPageNumber(final String pageNumber) {
         if (pageNumber == null) {
-            logger.error("Cannot return a page for page number null!");
+            LOGGER.error("Cannot return a page for page number null!");
             return -1;
         }
 
         int page = NumberParser.parseNumber(pageNumber);
 
         if (page <= -1) {
-            logger.error("Cannot return a page for invalid page number " + pageNumber + "!");
+            LOGGER.error("Cannot return a page for invalid page number " + pageNumber + "!");
         }
 
         return page;
@@ -360,7 +360,7 @@ public class HomeController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
-            logger.error("Can't show the participant experiment page for an unauthenticated user!");
+            LOGGER.error("Can't show the participant experiment page for an unauthenticated user!");
             return null;
         }
 
@@ -381,11 +381,11 @@ public class HomeController {
      */
     private boolean isInvalidFinishParams(final int experimentId, final int userId, final String secret) {
         if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            logger.error("Cannot finish experiment with invalid experiment id " + experimentId + " or invalid user id "
+            LOGGER.error("Cannot finish experiment with invalid experiment id " + experimentId + " or invalid user id "
                     + userId + "!");
             return true;
         } else if (secret == null || secret.isBlank()) {
-            logger.error("Cannot finish experiment with secret null or blank!");
+            LOGGER.error("Cannot finish experiment with secret null or blank!");
             return true;
         } else {
             return participantService.isInvalidParticipant(userId, experimentId, secret);

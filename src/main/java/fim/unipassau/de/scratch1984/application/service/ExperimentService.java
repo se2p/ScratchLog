@@ -30,7 +30,7 @@ public class ExperimentService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ExperimentService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExperimentService.class);
 
     /**
      * The experiment repository to use for database queries related to experiment data.
@@ -164,7 +164,7 @@ public class ExperimentService {
         Experiment experiment = experimentRepository.findById(id);
 
         if (experiment == null) {
-            logger.error("Could not find experiment with id " + id + " in the database");
+            LOGGER.error("Could not find experiment with id " + id + " in the database");
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!");
         }
 
@@ -180,7 +180,7 @@ public class ExperimentService {
     @Transactional
     public void deleteExperiment(final int id) {
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot delete experiment with invalid id " + id + "!");
+            LOGGER.error("Cannot delete experiment with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot delete experiment with invalid id " + id + "!");
         }
 
@@ -198,7 +198,7 @@ public class ExperimentService {
     @Transactional
     public ExperimentDTO changeExperimentStatus(final boolean status, final int id) {
         if (!experimentRepository.existsById(id)) {
-            logger.error("Could not update the status for non-existent experiment with id " + id + "!");
+            LOGGER.error("Could not update the status for non-existent experiment with id " + id + "!");
             throw new NotFoundException("Could not update the status for non-existent experiment with id " + id + "!");
         }
 
@@ -258,7 +258,7 @@ public class ExperimentService {
             experiment.setProject(project);
             experimentRepository.save(experiment);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + id + " when trying to upload an sb3 project!", e);
+            LOGGER.error("Could not find experiment with id " + id + " when trying to upload an sb3 project!", e);
             throw new NotFoundException("Could not find experiment with id " + id + " when trying to upload an sb3 "
                     + "project!", e);
         }
@@ -282,7 +282,7 @@ public class ExperimentService {
             experiment.setProject(null);
             experimentRepository.save(experiment);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + id + " when trying to delete an sb3 project!", e);
+            LOGGER.error("Could not find experiment with id " + id + " when trying to delete an sb3 project!", e);
             throw new NotFoundException("Could not find experiment with id " + id + " when trying to delete an sb3 "
                     + "project!", e);
         }
@@ -307,11 +307,11 @@ public class ExperimentService {
         Optional<ExperimentProjection> projection = experimentRepository.findExperimentById(id);
 
         if (projection.isEmpty()) {
-            logger.error("Could not find experiment with " + id + " when trying to retrieve its sb3 file!");
+            LOGGER.error("Could not find experiment with " + id + " when trying to retrieve its sb3 file!");
             throw new NotFoundException("Could not find experiment with " + id + " when trying to retrieve its sb3 "
                     + "file!");
         } else if (!projection.get().isActive()) {
-            logger.error("Tried to retrieve the sb3 file for inactive experiment " + id + "!");
+            LOGGER.error("Tried to retrieve the sb3 file for inactive experiment " + id + "!");
             throw new NotFoundException("Tried to retrieve the sb3 file for inactive experiment " + id + "!");
         }
 

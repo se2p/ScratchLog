@@ -28,7 +28,7 @@ public class TokenService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(TokenService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TokenService.class);
 
     /**
      * The user repository to use for database queries related to user data.
@@ -99,7 +99,7 @@ public class TokenService {
             token.setUser(user);
             token = tokenRepository.save(token);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + tokenDTO.getUser() + "!", e);
+            LOGGER.error("Could not find user with id " + tokenDTO.getUser() + "!", e);
             throw new NotFoundException("Could not find user with id " + tokenDTO.getUser() + "!", e);
         }
 
@@ -127,7 +127,7 @@ public class TokenService {
         Token token = tokenRepository.findByValue(value);
 
         if (token == null) {
-            logger.error("Could not find token with value " + value + " in the database!");
+            LOGGER.error("Could not find token with value " + value + " in the database!");
             throw new NotFoundException("Could not find token with value " + value + " in the database!");
         }
 
@@ -220,7 +220,7 @@ public class TokenService {
                 user.setActive(true);
                 userRepository.save(user);
             } catch (EntityNotFoundException e) {
-                logger.error("Cannot reactivate user account for user with id " + user.getId() + "!", e);
+                LOGGER.error("Cannot reactivate user account for user with id " + user.getId() + "!", e);
                 throw new NotFoundException("Cannot reactivate user account for user with id " + user.getId() + "!", e);
             }
         }

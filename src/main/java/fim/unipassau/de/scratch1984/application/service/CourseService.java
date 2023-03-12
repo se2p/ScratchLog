@@ -44,7 +44,7 @@ public class CourseService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(CourseService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CourseService.class);
 
     /**
      * The course repository to use for database queries related to course data.
@@ -296,7 +296,7 @@ public class CourseService {
             courseExperiments.forEach(experiment -> experimentRepository.delete(experiment.getExperiment()));
             courseRepository.deleteById(id);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course when trying to delete the course experiments of course with id "
+            LOGGER.error("Could not find the course when trying to delete the course experiments of course with id "
                     + id + "!", e);
             throw new NotFoundException("Could not find the course when trying to delete the course experiments of "
                     + "course with id " + id + "!", e);
@@ -328,7 +328,7 @@ public class CourseService {
 
         try {
             if (user == null) {
-                logger.error("Could not find the user with username or email " + participant + " when trying to add a "
+                LOGGER.error("Could not find the user with username or email " + participant + " when trying to add a "
                         + "course participant!");
                 throw new NotFoundException("Could not find the user with username or email " + participant
                         + " when trying to add a course participant!");
@@ -346,7 +346,7 @@ public class CourseService {
             userRepository.save(user);
             return user.getId();
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course when saving the course participant data!", e);
+            LOGGER.error("Could not find the course when saving the course participant data!", e);
             throw new NotFoundException("Could not find the course when saving the course participant data!", e);
         } catch (ConstraintViolationException e) {
             throw new StoreException("The given course participant data does not meet the foreign key constraints!", e);
@@ -375,7 +375,7 @@ public class CourseService {
 
         try {
             if (user == null) {
-                logger.error("Could not find the user with username or email " + participant + " when trying to delete "
+                LOGGER.error("Could not find the user with username or email " + participant + " when trying to delete "
                         + "a course participant!");
                 throw new NotFoundException("Could not find the user with username or email " + participant + " when "
                         + "trying to delete a course participant!");
@@ -389,7 +389,7 @@ public class CourseService {
             courseParticipantRepository.deleteById(courseParticipantId);
             courseRepository.save(course);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course when deleting the course participant data!", e);
+            LOGGER.error("Could not find the course when deleting the course participant data!", e);
             throw new NotFoundException("Could not find the course when deleting the course participant data!", e);
         }
     }
@@ -436,7 +436,7 @@ public class CourseService {
 
         try {
             if (experiment == null) {
-                logger.error("Could not find the experiment with title " + experimentTitle + " when trying to delete a "
+                LOGGER.error("Could not find the experiment with title " + experimentTitle + " when trying to delete a "
                         + "course experiment!");
                 throw new NotFoundException("Could not find the experiment with title " + experimentTitle
                         + " when trying to delete a course experiment!");
@@ -447,7 +447,7 @@ public class CourseService {
             courseExperimentRepository.deleteById(courseExperimentId);
             courseRepository.save(course);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course when deleting the course experiment data!", e);
+            LOGGER.error("Could not find the course when deleting the course experiment data!", e);
             throw new NotFoundException("Could not find the course when deleting the course experiment data!", e);
         }
     }
@@ -481,7 +481,7 @@ public class CourseService {
                 userRepository.save(user);
             }
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course or user when adding course participants to course experiments!", e);
+            LOGGER.error("Could not find the course or user when adding course participants to course experiments!", e);
             throw new NotFoundException("Could not find the course or user when adding course participants to course "
                     + "experiments!", e);
         } catch (ConstraintViolationException e) {
@@ -507,7 +507,7 @@ public class CourseService {
         Optional<Course> course = courseRepository.findById(id);
 
         if (course.isEmpty()) {
-            logger.error("Could not find course with id " + id + " in the database!");
+            LOGGER.error("Could not find course with id " + id + " in the database!");
             throw new NotFoundException("Could not find course with id " + id + " in the database!");
         }
 
@@ -548,7 +548,7 @@ public class CourseService {
             Course updated = courseRepository.save(course);
             return createCourseDTO(updated);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not update the status for non-existent course with id " + id + "!");
+            LOGGER.error("Could not update the status for non-existent course with id " + id + "!");
             throw new NotFoundException("Could not update the status for non-existent course with id " + id + "!");
         }
     }
@@ -629,7 +629,7 @@ public class CourseService {
             courseRepository.save(course);
             experimentRepository.save(experiment);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course or experiment when saving the course experiment data!", e);
+            LOGGER.error("Could not find the course or experiment when saving the course experiment data!", e);
             throw new NotFoundException("Could not find the course or experiment when saving the course experiment "
                     + "data!", e);
         } catch (ConstraintViolationException e) {

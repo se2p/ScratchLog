@@ -24,11 +24,6 @@ import java.util.Set;
 public class CustomAuthenticationProvider implements AuthenticationProvider {
 
     /**
-     * The log instance associated with this class for logging purposes.
-     */
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationProvider.class);
-
-    /**
      * The user service for accessing user information.
      */
     private final UserService userService;

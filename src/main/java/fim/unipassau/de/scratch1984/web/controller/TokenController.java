@@ -34,7 +34,7 @@ public class TokenController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(TokenController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TokenController.class);
 
     /**
      * The token service to use for generating tokens.
@@ -86,7 +86,7 @@ public class TokenController {
         LocalDateTime localDateTime = LocalDateTime.now();
 
         if (localDateTime.isAfter(tokenDTO.getExpirationDate())) {
-            logger.debug("The token for the user with id " + tokenDTO.getUser() + " has already expired!");
+            LOGGER.debug("The token for the user with id " + tokenDTO.getUser() + " has already expired!");
             return "redirect:/?error=true";
         }
 
@@ -127,10 +127,10 @@ public class TokenController {
                                final Model model) {
         if (userDTO == null || userDTO.getId() == null || userDTO.getPassword() == null
                 || userDTO.getConfirmPassword() == null) {
-            logger.error("Cannot register user with id null, or passwords null!");
+            LOGGER.error("Cannot register user with id null, or passwords null!");
             return Constants.ERROR;
         } else if (token == null || token.trim().isBlank()) {
-            logger.error("Cannot register user with token null or blank!");
+            LOGGER.error("Cannot register user with token null or blank!");
             return Constants.ERROR;
         }
 

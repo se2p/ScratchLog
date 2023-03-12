@@ -62,7 +62,7 @@ public class ExperimentController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ExperimentController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExperimentController.class);
 
     /**
      * The user service to use for user management.
@@ -186,7 +186,7 @@ public class ExperimentController {
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot return the experiment page with an invalid id parameter!");
+            LOGGER.error("Cannot return the experiment page with an invalid id parameter!");
             return Constants.ERROR;
         }
 
@@ -198,7 +198,7 @@ public class ExperimentController {
                 UserDTO userDTO = userService.getUser(authentication.getName());
 
                 if (!userDTO.isActive()) {
-                    logger.debug("Cannot display experiment page for user with id " + userDTO.getId() + " since their "
+                    LOGGER.debug("Cannot display experiment page for user with id " + userDTO.getId() + " since their "
                             + "account is inactive!");
                     return Constants.ERROR;
                 } else if (userDTO.getSecret() == null) {
@@ -214,7 +214,7 @@ public class ExperimentController {
 
             return EXPERIMENT;
         } catch (NotFoundException e) {
-            logger.error("Could not retrieve experiment page!", e);
+            LOGGER.error("Could not retrieve experiment page!", e);
             return Constants.ERROR;
         }
     }
@@ -261,7 +261,7 @@ public class ExperimentController {
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot return the experiment edit page with an invalid id parameter!");
+            LOGGER.error("Cannot return the experiment edit page with an invalid id parameter!");
             return Constants.ERROR;
         }
 
@@ -329,21 +329,21 @@ public class ExperimentController {
     public String deleteExperiment(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
                                    @RequestParam(ID) final String id) {
         if (id == null || passwordDTO.getPassword() == null) {
-            logger.error("Cannot delete experiment with id null or input password null!");
+            LOGGER.error("Cannot delete experiment with id null or input password null!");
             return Constants.ERROR;
         }
 
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot delete the experiment with invalid id " + id + "!");
+            LOGGER.error("Cannot delete the experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
-            logger.error("An unauthenticated user tried to delete experiment with id " + experimentId + "!");
+            LOGGER.error("An unauthenticated user tried to delete experiment with id " + experimentId + "!");
             return Constants.ERROR;
         }
 
@@ -380,7 +380,7 @@ public class ExperimentController {
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID || status == null) {
-            logger.error("Cannot change the status of the experiment with invalid id or status parameters!");
+            LOGGER.error("Cannot change the status of the experiment with invalid id or status parameters!");
             return Constants.ERROR;
         }
 
@@ -400,7 +400,7 @@ public class ExperimentController {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
                 participantService.deactivateParticipantAccounts(experimentId);
             } else {
-                logger.debug("Cannot return the corresponding experiment page for requested status change " + status
+                LOGGER.debug("Cannot return the corresponding experiment page for requested status change " + status
                         + "!");
                 return Constants.ERROR;
             }
@@ -429,7 +429,7 @@ public class ExperimentController {
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot search for a user to add as participant with an invalid experiment id!");
+            LOGGER.error("Cannot search for a user to add as participant with an invalid experiment id!");
             return Constants.ERROR;
         }
 
@@ -488,7 +488,7 @@ public class ExperimentController {
     public String getPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String pageNumber,
                           final Model model) {
         if (PageUtils.isInvalidParams(id, pageNumber)) {
-            logger.error("Cannot fetch participant page for invalid id " + id + " or invalid page number "
+            LOGGER.error("Cannot fetch participant page for invalid id " + id + " or invalid page number "
                     + pageNumber + "!");
             return Constants.ERROR;
         }
@@ -517,14 +517,14 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public void downloadCSVFile(@RequestParam(ID) final String id, final HttpServletResponse httpServletResponse) {
         if (id == null) {
-            logger.error("Cannot download CSV file for experiment with id null!");
+            LOGGER.error("Cannot download CSV file for experiment with id null!");
             throw new IncompleteDataException("Cannot download CSV file for experiment with id null!");
         }
 
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot download CSV file for experiment with invalid id " + id + "!");
+            LOGGER.error("Cannot download CSV file for experiment with invalid id " + id + "!");
             throw new IncompleteDataException("Cannot download CSV file for experiment with invalid id " + id + "!");
         }
 
@@ -553,7 +553,7 @@ public class ExperimentController {
             csvWriter.writeAll(codesData);
             csvWriter.writeAll(experimentData);
         } catch (IOException e) {
-            logger.error("Could not download csv file due to IOException!", e);
+            LOGGER.error("Could not download csv file due to IOException!", e);
             throw new RuntimeException("Could not download csv file due to IOException!");
         }
     }
@@ -574,14 +574,14 @@ public class ExperimentController {
     public String uploadProjectFile(@RequestParam("file") final MultipartFile file,
                                     @RequestParam(ID) final String id, final Model model) {
         if (id == null || file == null) {
-            logger.error("Cannot upload file for experiment with id null or with file null!");
+            LOGGER.error("Cannot upload file for experiment with id null or with file null!");
             return Constants.ERROR;
         }
 
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot upload project file for experiment with invalid id " + id + "!");
+            LOGGER.error("Cannot upload project file for experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
@@ -589,13 +589,13 @@ public class ExperimentController {
                 LocaleContextHolder.getLocale());
 
         if (file.isEmpty()) {
-            logger.error("Cannot upload empty file for experiment with id " + id + "!");
+            LOGGER.error("Cannot upload empty file for experiment with id " + id + "!");
             model.addAttribute(ERROR, resourceBundle.getString("file_empty"));
         } else if (file.getContentType() == null || !file.getContentType().equals("application/octet-stream")) {
-            logger.error("Cannot upload file with invalid content type " + file.getContentType() + "!");
+            LOGGER.error("Cannot upload file with invalid content type " + file.getContentType() + "!");
             model.addAttribute(ERROR, resourceBundle.getString("file_type"));
         } else if (file.getOriginalFilename() == null || !file.getOriginalFilename().endsWith(Constants.SB3)) {
-            logger.error("Cannot upload file with invalid filename " + file.getOriginalFilename() + "!");
+            LOGGER.error("Cannot upload file with invalid filename " + file.getOriginalFilename() + "!");
             model.addAttribute(ERROR, resourceBundle.getString("file_name"));
         }
 
@@ -611,7 +611,7 @@ public class ExperimentController {
         } catch (NotFoundException e) {
             return Constants.ERROR;
         } catch (IOException e) {
-            logger.error("Could not upload file due to IOException", e);
+            LOGGER.error("Could not upload file due to IOException", e);
             return Constants.ERROR;
         }
     }
@@ -627,14 +627,14 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String deleteProjectFile(@RequestParam(ID) final String id) {
         if (id == null) {
-            logger.error("Cannot delete file for experiment with id null!");
+            LOGGER.error("Cannot delete file for experiment with id null!");
             return Constants.ERROR;
         }
 
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot delete project file for experiment with invalid id " + id + "!");
+            LOGGER.error("Cannot delete project file for experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
@@ -656,7 +656,7 @@ public class ExperimentController {
      */
     private boolean sendEmail(final UserDTO userDTO, final String experimentId) {
         if (userDTO.getEmail() == null) {
-            logger.error("Cannot send invitation mail to user with email null!");
+            LOGGER.error("Cannot send invitation mail to user with email null!");
             return false;
         }
 
@@ -666,7 +666,7 @@ public class ExperimentController {
 
         if (!mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
-            logger.error("Could not send invitation mail to user with email " + userDTO.getEmail() + ".");
+            LOGGER.error("Could not send invitation mail to user with email " + userDTO.getEmail() + ".");
             return false;
         }
 
@@ -765,12 +765,12 @@ public class ExperimentController {
 
         if (experimentDTO.getId() == null) {
             if (experimentService.existsExperiment(experimentDTO.getTitle())) {
-                logger.error("Experiment with same title exists!");
+                LOGGER.error("Experiment with same title exists!");
                 FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
             }
         } else {
             if (experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())) {
-                logger.error("Experiment with same name but different id exists!");
+                LOGGER.error("Experiment with same name but different id exists!");
                 FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
             }
         }
@@ -790,7 +790,7 @@ public class ExperimentController {
             participantService.saveParticipants(experimentId, courseId);
             return false;
         } catch (Exception e) {
-            logger.error("Could not save course experiment!", e);
+            LOGGER.error("Could not save course experiment!", e);
             experimentService.deleteExperiment(experimentId);
             return true;
         }

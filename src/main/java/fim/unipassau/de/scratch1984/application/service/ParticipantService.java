@@ -40,7 +40,7 @@ public class ParticipantService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ParticipantService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParticipantService.class);
 
     /**
      * The user repository to use for database queries related to user data.
@@ -119,7 +119,7 @@ public class ParticipantService {
             Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
 
             if (participant == null) {
-                logger.error("Could not find any participant entry for user with id " + userId + " for experiment with "
+                LOGGER.error("Could not find any participant entry for user with id " + userId + " for experiment with "
                         + "id " + experimentId + "!");
                 throw new NotFoundException("Could not find any participant entry for user with id " + userId
                         + " for experiment with id " + experimentId + "!");
@@ -127,7 +127,7 @@ public class ParticipantService {
 
             return createParticipantDTO(participant);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
                     + " in the database!", e);
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " in the database!", e);
@@ -166,7 +166,7 @@ public class ParticipantService {
             courseParticipants.forEach(courseParticipant -> addCourseParticipantToExperiment(courseParticipant,
                     experiment));
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course or experiment data when trying to save course participants!", e);
+            LOGGER.error("Could not find the course or experiment data when trying to save course participants!", e);
             throw new NotFoundException("Could not find the course or experiment data when trying to save course "
                     + "participants!", e);
         } catch (ConstraintViolationException e) {
@@ -197,7 +197,7 @@ public class ParticipantService {
             Participant participant = new Participant(user, experiment, null, null);
             participantRepository.save(participant);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the user or experiment when saving the participant data!", e);
+            LOGGER.error("Could not find the user or experiment when saving the participant data!", e);
             throw new NotFoundException("Could not find the user or experiment when saving the participant data!", e);
         } catch (ConstraintViolationException e) {
             throw new StoreException("The given participant data does not meet the foreign key constraints!", e);
@@ -225,10 +225,10 @@ public class ParticipantService {
             participantRepository.save(createParticipant(participantDTO, user, experiment));
             return true;
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the user with id " + participantDTO.getUser() + " or experiment with id "
+            LOGGER.error("Could not find the user with id " + participantDTO.getUser() + " or experiment with id "
                     + participantDTO.getExperiment() + " when trying to update a participant!", e);
         } catch (ConstraintViolationException e) {
-            logger.error("No participant entry could be found for user with id " + participantDTO.getUser()
+            LOGGER.error("No participant entry could be found for user with id " + participantDTO.getUser()
                     + " for experiment with id " + participantDTO.getExperiment() + "!", e);
         }
 
@@ -256,7 +256,7 @@ public class ParticipantService {
         try {
             participants = participantRepository.findAllByExperiment(experiment);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + experimentId + "!");
+            LOGGER.error("Could not find experiment with id " + experimentId + "!");
             throw new NotFoundException("Could not find experiment with id " + experimentId + "!");
         }
 
@@ -299,7 +299,7 @@ public class ParticipantService {
         try {
             participants = participantRepository.findAllByUser(user);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + userId + "!");
+            LOGGER.error("Could not find user with id " + userId + "!");
             throw new NotFoundException("Could not find user with id " + userId + "!");
         }
 
@@ -349,7 +349,7 @@ public class ParticipantService {
             List<Participant> participation = participantRepository.findAllByEndIsNullAndUser(user);
             return participation.size() > 1;
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find participation entries for user with id " + userId + "!", e);
+            LOGGER.error("Could not find participation entries for user with id " + userId + "!", e);
             throw new NotFoundException("Could not find participation entries for user with id " + userId + "!", e);
         }
     }
@@ -380,16 +380,16 @@ public class ParticipantService {
             Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
 
             if (participant == null) {
-                logger.error("Cannot save event data for participant null!");
+                LOGGER.error("Cannot save event data for participant null!");
                 return true;
             } else if (!user.isActive() || !experiment.isActive()) {
-                logger.error("Cannot save event data for inactive experiment or user!");
+                LOGGER.error("Cannot save event data for inactive experiment or user!");
                 return true;
             } else {
                 return !user.getSecret().equals(secret);
             }
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user or experiment when trying to verify a participant!", e);
+            LOGGER.error("Could not find user or experiment when trying to verify a participant!", e);
             return true;
         }
     }

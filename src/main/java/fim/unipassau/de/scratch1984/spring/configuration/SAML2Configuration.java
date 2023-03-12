@@ -43,7 +43,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private final Logger logger = LoggerFactory.getLogger(SAML2Configuration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SAML2Configuration.class);
 
     /**
      * The SAML2 properties for communicating with the IdP and extracting the necessary user information from the SAML2
@@ -96,7 +96,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
                     readPublicCert(config.getCertFile()));
             credentialsSink.add(credentials);
         } catch (IOException | CertificateException e) {
-            logger.error(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
@@ -117,7 +117,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
                     readPublicCert(config.getCertFile()));
             credentialsSink.add(credentials);
         } catch (IOException | CertificateException e) {
-            logger.error(e.getMessage(), e);
+            LOGGER.error(e.getMessage(), e);
         }
     }
 
@@ -130,7 +130,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
     private boolean filesNotExistent(final SAML2Properties config) {
         if (config.getCertFile() == null || config.getKeyFile() == null || config.getCertFile().isBlank()
                 || config.getKeyFile().isBlank()) {
-            logger.debug("No Config for SAML2");
+            LOGGER.debug("No Config for SAML2");
             return true;
         }
 
@@ -138,7 +138,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         File certFile = new File(config.getCertFile());
 
         if (!keyFile.exists() || !certFile.exists()) {
-            logger.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getIdpName());
+            LOGGER.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getIdpName());
             return true;
         }
 

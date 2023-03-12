@@ -30,7 +30,7 @@ public class SAML2Controller {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(SAML2Controller.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SAML2Controller.class);
 
     /**
      * The SAML2 service, if SAML2 authentication has been configured, or empty.
@@ -67,7 +67,7 @@ public class SAML2Controller {
     @GetMapping("/login")
     public String authorizeSAML2(final HttpServletRequest httpServletRequest) {
         if (saml2Service.isEmpty() || !ApplicationProperties.SAML_AUTHENTICATION) {
-            logger.error("Cannot authenticate SAML2 users when SAML2 is disabled!");
+            LOGGER.error("Cannot authenticate SAML2 users when SAML2 is disabled!");
             clearSecurityContext(httpServletRequest);
             return Constants.ERROR;
         }
@@ -76,7 +76,7 @@ public class SAML2Controller {
 
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof Saml2AuthenticatedPrincipal)) {
-            logger.error("Cannot authenticate SAML2 users with illegal authentication!");
+            LOGGER.error("Cannot authenticate SAML2 users with illegal authentication!");
             clearSecurityContext(httpServletRequest);
             return Constants.ERROR;
         }

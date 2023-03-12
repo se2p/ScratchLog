@@ -25,7 +25,7 @@ public class MailService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(MailService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MailService.class);
 
     /**
      * The email address to use for sending emails as defined in the application properties file.
@@ -76,7 +76,7 @@ public class MailService {
                 return true;
             } catch (MessagingException e) {
                 tries++;
-                logger.error("Failed to send message to address " + to + " on try #" + tries + "!", e);
+                LOGGER.error("Failed to send message to address " + to + " on try #" + tries + "!", e);
             }
         }
 
@@ -119,7 +119,7 @@ public class MailService {
      */
     private void sendHtmlMessage(final String to, final String cc, final String bcc, final String replyTo,
                                  final String subject, final String htmlBody) throws MessagingException {
-        logger.debug("Sending email to " + to + " with subject " + subject);
+        LOGGER.debug("Sending email to " + to + " with subject " + subject);
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         helper.setFrom(email);

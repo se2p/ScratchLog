@@ -46,7 +46,7 @@ public class EventRestController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(EventRestController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventRestController.class);
 
     /**
      * The event service to use to save the received event data.
@@ -235,7 +235,7 @@ public class EventRestController {
         } catch (NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
-            logger.error("Could not retrieve sb3 file for experiment with id " + experimentId + " due to IOException!",
+            LOGGER.error("Could not retrieve sb3 file for experiment with id " + experimentId + " due to IOException!",
                     e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
@@ -275,7 +275,7 @@ public class EventRestController {
         } catch (NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
-            logger.error("Could not retrieve the last saved json code for user with id " + ids.get(1)
+            LOGGER.error("Could not retrieve the last saved json code for user with id " + ids.get(1)
                     + " during experiment with id " + ids.get(0) + " due to IOException!", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
@@ -364,7 +364,7 @@ public class EventRestController {
             }
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
-            logger.error("The block event data sent to the server was incomplete!", e);
+            LOGGER.error("The block event data sent to the server was incomplete!", e);
             return null;
         }
 
@@ -393,7 +393,7 @@ public class EventRestController {
             }
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
-            logger.error("The click event data sent to the server was incomplete!", e);
+            LOGGER.error("The click event data sent to the server was incomplete!", e);
             return null;
         }
 
@@ -434,7 +434,7 @@ public class EventRestController {
             }
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
-            logger.error("The debugger event data sent to the server was incomplete!", e);
+            LOGGER.error("The debugger event data sent to the server was incomplete!", e);
             return null;
         }
 
@@ -489,7 +489,7 @@ public class EventRestController {
             return dto;
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
-            logger.error("The question event data sent to the server was incomplete!", e);
+            LOGGER.error("The question event data sent to the server was incomplete!", e);
             return null;
         }
     }
@@ -525,7 +525,7 @@ public class EventRestController {
             }
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
-            logger.error("The resource event data sent to the server was incomplete!", e);
+            LOGGER.error("The resource event data sent to the server was incomplete!", e);
             return null;
         }
 
@@ -549,7 +549,7 @@ public class EventRestController {
             dto.setContent(Base64.getDecoder().decode(object.getString("file")));
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
-            logger.error("The file data sent to the server was incomplete!", e);
+            LOGGER.error("The file data sent to the server was incomplete!", e);
             return null;
         }
 
@@ -572,7 +572,7 @@ public class EventRestController {
             dto.setContent(Base64.getDecoder().decode(object.getString("zip")));
         } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
                 | JSONException e) {
-            logger.error("The sb3 zip file data sent to the server was incomplete!", e);
+            LOGGER.error("The sb3 zip file data sent to the server was incomplete!", e);
             return null;
         }
 

@@ -34,7 +34,7 @@ public class UserService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
     /**
      * The user repository to use for database queries related to user data.
@@ -170,7 +170,7 @@ public class UserService {
         User user = userRepository.findUserByUsername(username);
 
         if (user == null) {
-            logger.error("Could not find user with username " + username + ".");
+            LOGGER.error("Could not find user with username " + username + ".");
             throw new NotFoundException("Could not find user with username " + username + ".");
         }
 
@@ -194,7 +194,7 @@ public class UserService {
         Optional<User> user = userRepository.findById(id);
 
         if (user.isEmpty()) {
-            logger.error("Could not find user with id " + id + ".");
+            LOGGER.error("Could not find user with id " + id + ".");
             throw new NotFoundException("Could not find user with id " + id + ".");
         }
 
@@ -218,7 +218,7 @@ public class UserService {
         Optional<User> user = userRepository.findByEmail(email);
 
         if (user.isEmpty()) {
-            logger.error("Could not find user with email " + email + ".");
+            LOGGER.error("Could not find user with email " + email + ".");
             throw new NotFoundException("Could not find user with email " + email + ".");
         }
 
@@ -242,7 +242,7 @@ public class UserService {
         User user = userRepository.findUserByUsernameOrEmail(search, search);
 
         if (user == null) {
-            logger.debug("Could not find user with username or email " + search + "!");
+            LOGGER.debug("Could not find user with username or email " + search + "!");
             return null;
         }
 
@@ -274,7 +274,7 @@ public class UserService {
             }
         }
 
-        logger.error("Could not find user with username " + userDTO.getUsername() + " in the database.");
+        LOGGER.error("Could not find user with username " + userDTO.getUsername() + " in the database.");
         throw new NotFoundException("Incorrect username or password!");
     }
 
@@ -296,7 +296,7 @@ public class UserService {
         User user = userRepository.findUserBySecret(secret);
 
         if (user == null) {
-            logger.error("Could not find any user with the secret " + secret + " in the database!");
+            LOGGER.error("Could not find any user with the secret " + secret + " in the database!");
             throw new NotFoundException("Could not find any user with the secret " + secret + " in the database!");
         }
 
@@ -343,7 +343,7 @@ public class UserService {
         Optional<User> user = userRepository.findById(id);
 
         if (user.isEmpty()) {
-            logger.error("Could not find user with id " + id + " in the database!");
+            LOGGER.error("Could not find user with id " + id + " in the database!");
             throw new NotFoundException("Could not find user with id " + id + " in the database!");
         }
 
@@ -475,7 +475,7 @@ public class UserService {
         Optional<UserProjection> user = userRepository.findLastUsername(username);
 
         if (user.isEmpty()) {
-            logger.debug("Couldn't find username starting with " + username + ".");
+            LOGGER.debug("Couldn't find username starting with " + username + ".");
             return 1;
         } else {
             String name = user.get().getUsername();
@@ -563,7 +563,7 @@ public class UserService {
         try {
             participants = participantRepository.findAllByExperimentAndEnd(experiment, null);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + experimentId + "!", e);
+            LOGGER.error("Could not find experiment with id " + experimentId + "!", e);
             throw new NotFoundException("Could not find experiment with id " + experimentId + "!", e);
         }
 

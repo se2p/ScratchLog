@@ -61,7 +61,7 @@ public class ResultController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ResultController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResultController.class);
 
     /**
      * The user service to use for user management.
@@ -135,7 +135,7 @@ public class ResultController {
     public ModelAndView getResult(@RequestParam(EXPERIMENT) final String experiment,
                                   @RequestParam(USER) final String user, final Model model) {
         if (user == null || experiment == null) {
-            logger.error("Cannot return result page for user with id null or experiment with id null!");
+            LOGGER.error("Cannot return result page for user with id null or experiment with id null!");
             return new ModelAndView(Constants.ERROR);
         }
 
@@ -143,12 +143,12 @@ public class ResultController {
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot return result page for user with invalid id " + userId + " or experiment with invalid "
+            LOGGER.error("Cannot return result page for user with invalid id " + userId + " or experiment with invalid "
                     + "id " + experimentId + "!");
             return new ModelAndView(Constants.ERROR);
         }
         if (!userService.existsParticipant(userId, experimentId)) {
-            logger.error("Could not find participant entry for user with id " + userId + " for experiment with id "
+            LOGGER.error("Could not find participant entry for user with id " + userId + " for experiment with id "
                     + experimentId);
             return new ModelAndView(Constants.ERROR);
         }
@@ -187,14 +187,14 @@ public class ResultController {
     @Secured(Constants.ROLE_ADMIN)
     public Object downloadFile(@RequestParam(ID) final String id) {
         if (id == null) {
-            logger.error("Cannot download file with invalid id null!");
+            LOGGER.error("Cannot download file with invalid id null!");
             return Constants.ERROR;
         }
 
         int fileId = NumberParser.parseNumber(id);
 
         if (fileId < Constants.MIN_ID) {
-            logger.error("Cannot download file with invalid id " + fileId + "!");
+            LOGGER.error("Cannot download file with invalid id " + fileId + "!");
             return Constants.ERROR;
         }
 
@@ -271,14 +271,14 @@ public class ResultController {
     @Secured(Constants.ROLE_ADMIN)
     public Object downloadZip(@RequestParam(ID) final String id) {
         if (id == null) {
-            logger.error("Cannot download zip file with invalid id null!");
+            LOGGER.error("Cannot download zip file with invalid id null!");
             return Constants.ERROR;
         }
 
         int zipId = NumberParser.parseNumber(id);
 
         if (zipId < Constants.MIN_ID) {
-            logger.error("Cannot download zip file with invalid id " + zipId + "!");
+            LOGGER.error("Cannot download zip file with invalid id " + zipId + "!");
             return Constants.ERROR;
         }
 
