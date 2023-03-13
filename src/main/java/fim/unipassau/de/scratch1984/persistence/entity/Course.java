@@ -11,7 +11,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a course.
@@ -57,9 +57,9 @@ public class Course {
     private boolean active;
 
     /**
-     * The timestamp at which the course information was last updated or an experiment or participant added.
+     * The datetime at which the course information was last updated or an experiment or participant added.
      */
     @Column(name = "last_changed")
-    private Timestamp lastChanged;
+    private LocalDateTime lastChanged;
 
 }

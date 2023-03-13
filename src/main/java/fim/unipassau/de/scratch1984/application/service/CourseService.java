@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -339,9 +338,9 @@ public class CourseService {
             }
 
             User user = optionalUser.get();
-            CourseParticipant courseParticipant = new CourseParticipant(user, course,
-                    Timestamp.valueOf(LocalDateTime.now()));
-            course.setLastChanged(courseParticipant.getAdded());
+            LocalDateTime now = LocalDateTime.now();
+            CourseParticipant courseParticipant = new CourseParticipant(user, course, now);
+            course.setLastChanged(now);
             user.setActive(true);
             courseParticipantRepository.save(courseParticipant);
             courseRepository.save(course);
@@ -385,7 +384,7 @@ public class CourseService {
 
             CourseParticipantId courseParticipantId = new CourseParticipantId(user.get().getId(), courseId);
             List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
-            course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
+            course.setLastChanged(LocalDateTime.now());
             courseExperiments.forEach(courseExperiment -> deleteExperimentParticipant(user.get(),
                     courseExperiment.getExperiment()));
             courseParticipantRepository.deleteById(courseParticipantId);
@@ -445,7 +444,7 @@ public class CourseService {
             }
 
             CourseExperimentId courseExperimentId = new CourseExperimentId(courseId, experiment.get().getId());
-            course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
+            course.setLastChanged(LocalDateTime.now());
             courseExperimentRepository.deleteById(courseExperimentId);
             courseRepository.save(course);
         } catch (EntityNotFoundException e) {
@@ -546,7 +545,7 @@ public class CourseService {
             List<CourseParticipant> courseParticipants = courseParticipantRepository.findAllByCourse(course);
             courseParticipants.forEach(courseParticipant -> updateUserStatus(status, courseParticipant.getUser()));
             course.setActive(status);
-            course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
+            course.setLastChanged(LocalDateTime.now());
             Course updated = courseRepository.save(course);
             return createCourseDTO(updated);
         } catch (EntityNotFoundException e) {
@@ -622,11 +621,11 @@ public class CourseService {
      */
     private void persistCourseExperiment(final Course course, final Experiment experiment) {
         try {
-            CourseExperiment courseExperiment = new CourseExperiment(course, experiment,
-                    Timestamp.valueOf(LocalDateTime.now()));
+            LocalDateTime now = LocalDateTime.now();
+            CourseExperiment courseExperiment = new CourseExperiment(course, experiment, now);
             experiment.setActive(true);
             course.setActive(true);
-            course.setLastChanged(courseExperiment.getAdded());
+            course.setLastChanged(now);
             courseExperimentRepository.save(courseExperiment);
             courseRepository.save(course);
             experimentRepository.save(experiment);
@@ -651,7 +650,7 @@ public class CourseService {
         boolean experimentsInactive = !courseExperiments.isEmpty() && courseExperiments.stream().noneMatch(
                 courseExperiment -> courseExperiment.getExperiment().isActive());
 
-        if (experimentsInactive && course.getLastChanged().toLocalDateTime().isBefore(LocalDateTime.now().minusDays(
+        if (experimentsInactive && course.getLastChanged().isBefore(LocalDateTime.now().minusDays(
                 Constants.COURSE_INACTIVE_DAYS))) {
             course.setActive(false);
             courseRepository.save(course);
@@ -669,7 +668,7 @@ public class CourseService {
                 .title(courseDTO.getTitle())
                 .description(courseDTO.getDescription())
                 .content(courseDTO.getContent())
-                .lastChanged(Timestamp.valueOf(courseDTO.getLastChanged()))
+                .lastChanged(courseDTO.getLastChanged())
                 .active(courseDTO.isActive())
                 .build();
 
@@ -692,7 +691,7 @@ public class CourseService {
                 .title(course.getTitle())
                 .description(course.getDescription())
                 .content(course.getContent())
-                .lastChanged(course.getLastChanged().toLocalDateTime())
+                .lastChanged(course.getLastChanged())
                 .active(course.isActive())
                 .build();
 

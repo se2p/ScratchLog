@@ -13,7 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a participation in an experiment.
@@ -44,15 +44,15 @@ public class Participant {
     private Experiment experiment;
 
     /**
-     * The timestamp at which the user started the experiment.
+     * The datetime at which the user started the experiment.
      */
     @Column(name = "start")
-    private Timestamp start;
+    private LocalDateTime start;
 
     /**
-     * The timestamp at which the user finished the experiment.
+     * The datetime at which the user finished the experiment.
      */
     @Column(name = "finish")
-    private Timestamp end;
+    private LocalDateTime end;
 
 }

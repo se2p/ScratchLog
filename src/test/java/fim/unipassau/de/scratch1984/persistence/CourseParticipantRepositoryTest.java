@@ -11,7 +11,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -27,19 +26,19 @@ public class CourseParticipantRepositoryTest {
     @Autowired
     private CourseParticipantRepository repository;
 
-    private static final Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+    private static final LocalDateTime DATE = LocalDateTime.now();
     private static final String ROLE_PARTICIPANT = "PARTICIPANT";
     private static final String LANGUAGE = "ENGLISH";
-    private Course course1 = new Course(null, "Course 1", "Description 1", "", false, timestamp);
-    private Course course2 = new Course(null, "Course 2", "Description 2", "", false, timestamp);
-    private Course course3 = new Course(null, "Course 3", "Description 3", "", false, timestamp);
+    private Course course1 = new Course(null, "Course 1", "Description 1", "", false, DATE);
+    private Course course2 = new Course(null, "Course 2", "Description 2", "", false, DATE);
+    private Course course3 = new Course(null, "Course 3", "Description 3", "", false, DATE);
     private User user1 = new User("user1", "part1@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
     private User user2 = new User("user2", "part2@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", "secret4");
     private User user3 = new User("user3", "part3@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private CourseParticipant participant1 = new CourseParticipant(user1, course1, timestamp);
-    private CourseParticipant participant2 = new CourseParticipant(user2, course1, timestamp);
-    private CourseParticipant participant3 = new CourseParticipant(user3, course1, timestamp);
-    private CourseParticipant participant4 = new CourseParticipant(user1, course2, timestamp);
+    private CourseParticipant participant1 = new CourseParticipant(user1, course1, DATE);
+    private CourseParticipant participant2 = new CourseParticipant(user2, course1, DATE);
+    private CourseParticipant participant3 = new CourseParticipant(user3, course1, DATE);
+    private CourseParticipant participant4 = new CourseParticipant(user1, course2, DATE);
 
     @BeforeEach
     public void setUp() {

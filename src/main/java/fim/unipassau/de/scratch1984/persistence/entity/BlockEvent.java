@@ -14,7 +14,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a block event that resulted from user interaction with a Scratch block or a sprite rename.
@@ -50,10 +50,10 @@ public class BlockEvent implements Event {
     private Experiment experiment;
 
     /**
-     * The timestamp at which the block event occurred.
+     * The datetime at which the block event occurred.
      */
     @Column(name = "date")
-    private Timestamp date;
+    private LocalDateTime date;
 
     /**
      * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.BlockEventDTO.BlockEventType}.
@@ -104,7 +104,7 @@ public class BlockEvent implements Event {
      * @param xml The current xml.
      * @param code The current json.
      */
-    public BlockEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
+    public BlockEvent(final User user, final Experiment experiment, final LocalDateTime date, final String eventType,
                       final String event, final String sprite, final String metadata, final String xml,
                       final String code) {
         this.user = user;

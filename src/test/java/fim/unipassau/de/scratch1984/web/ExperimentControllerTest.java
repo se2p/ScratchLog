@@ -43,7 +43,6 @@ import org.springframework.web.servlet.LocaleResolver;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -1289,7 +1288,7 @@ public class ExperimentControllerTest {
     private List<Participant> getParticipants(int number) {
         List<Participant> participants = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            participants.add(new Participant(new User(), new Experiment(), Timestamp.valueOf(LocalDateTime.now()), null));
+            participants.add(new Participant(new User(), new Experiment(), LocalDateTime.now(), null));
         }
         return participants;
     }

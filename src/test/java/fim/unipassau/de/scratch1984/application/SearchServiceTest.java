@@ -18,7 +18,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,10 +73,8 @@ public class SearchServiceTest {
             "url");
     private final Experiment experiment2 = new Experiment(ID, "My Experiment", "Some description", "", "", true, true,
             "url");
-    private final Course course = new Course(ID, "title", "description", "content", true,
-            Timestamp.valueOf(LocalDateTime.now()));
-    private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment2,
-            Timestamp.valueOf(LocalDateTime.now()));
+    private final Course course = new Course(ID, "title", "description", "content", true, LocalDateTime.now());
+    private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment2, LocalDateTime.now());
     private final List<UserProjection> users = addUserSuggestions();
     private final List<ExperimentTableProjection> experiments = addExperimentSuggestions();
     private final List<CourseTableProjection> courses = addCourseSuggestions();

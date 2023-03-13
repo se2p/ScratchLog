@@ -25,7 +25,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,7 +77,7 @@ public class ParticipantServiceTest {
     private static final String GUI_URL = "scratch";
     private static final int ID = 1;
     private static final long MAX_DAYS = 90;
-    private static final Timestamp MAX_TIME = Timestamp.valueOf(LocalDateTime.now().minusDays(MAX_DAYS));
+    private static final LocalDateTime MAX_TIME = LocalDateTime.now().minusDays(MAX_DAYS);
     private final User user = new User(USERNAME, EMAIL, PARTICIPANT, "ENGLISH", PASSWORD, SECRET);
     private final Experiment experiment1 = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
@@ -88,7 +87,7 @@ public class ParticipantServiceTest {
     private final Participant participant2 = new Participant(user, experiment2, MAX_TIME, MAX_TIME);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final Course course = new Course(ID, "title", "description", "content", true,
-            Timestamp.valueOf(LocalDateTime.now()));
+            LocalDateTime.now());
     private final List<Participant> participantList = getParticipants(5);
     private final List<CourseParticipant> courseParticipants = getCourseParticipants(3);
 
@@ -654,7 +653,7 @@ public class ParticipantServiceTest {
 
     @Test
     public void testDeactivateInactiveExperimentsLastStart() {
-        participant2.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        participant2.setEnd(LocalDateTime.now());
         when(experimentRepository.findAllByActiveIsTrue()).thenReturn(List.of(experiment1, experiment2));
         when(participantRepository.findAllByExperiment(experiment1)).thenReturn(new ArrayList<>());
         when(participantRepository.findAllByExperiment(experiment2)).thenReturn(List.of(participant2));
@@ -671,7 +670,7 @@ public class ParticipantServiceTest {
 
     @Test
     public void testDeactivateInactiveExperimentsLastEnd() {
-        participant2.setStart(Timestamp.valueOf(LocalDateTime.now()));
+        participant2.setStart(LocalDateTime.now());
         when(experimentRepository.findAllByActiveIsTrue()).thenReturn(List.of(experiment2));
         when(participantRepository.findAllByExperiment(experiment2)).thenReturn(List.of(participant2));
         participantService.deactivateInactiveExperiments();
@@ -689,7 +688,7 @@ public class ParticipantServiceTest {
             Experiment experiment = new Experiment();
             experiment.setId(i + 1);
             experiment.setTitle("Title " + i);
-            participants.add(new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null));
+            participants.add(new Participant(user, experiment, LocalDateTime.now(), null));
         }
         return participants;
     }
@@ -705,7 +704,7 @@ public class ParticipantServiceTest {
                 user.setActive(true);
             }
 
-            participants.add(new CourseParticipant(user, course, Timestamp.valueOf(LocalDateTime.now())));
+            participants.add(new CourseParticipant(user, course, LocalDateTime.now()));
         }
         return participants;
     }

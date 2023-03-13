@@ -71,8 +71,7 @@
             <!-- The timestamp of the last change operation to the course. -->
             <div class="text-muted">
                 <span th:text="#{last_changed}"></span>
-                <span th:text="${courseDTO.lastChanged.toLocalDate()}"></span>
-                <span th:text="${courseDTO.lastChanged.toLocalTime()}"></span>
+                <span th:text="${courseDTO.lastChanged}"></span>
             </div>
         </div>
 
@@ -109,7 +108,7 @@
                         </td>
                         <td class="text-center">
                             <!--suppress ThymeleafVariablesResolveInspection -->
-                            <span th:text="${participant.added.toLocalDateTime().toLocalDate()}"></span>
+                            <span th:text="${participant.added.toLocalDate()}"></span>
                         </td>
                     </tr>
                     </tbody>

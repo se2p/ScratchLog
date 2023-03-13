@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -162,7 +161,7 @@ public class TokenService {
             throw new IllegalArgumentException("Cannot delete expired tokens with timestamp null!");
         }
 
-        tokenRepository.deleteAllByDateBefore(Timestamp.valueOf(localDateTime));
+        tokenRepository.deleteAllByDateBefore(localDateTime);
     }
 
     /**
@@ -178,7 +177,7 @@ public class TokenService {
             throw new IllegalArgumentException("Cannot delete expired accounts with timestamp null!");
         }
 
-        List<Token> expiredRegistrations = tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(localDateTime),
+        List<Token> expiredRegistrations = tokenRepository.findAllByDateBeforeAndType(localDateTime,
                 TokenDTO.Type.REGISTER.toString());
 
         for (Token token : expiredRegistrations) {
@@ -205,7 +204,7 @@ public class TokenService {
             throw new IllegalArgumentException("Cannot reactivate user accounts with timestamp null!");
         }
 
-        List<Token> deactivatedAccounts = tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(localDateTime),
+        List<Token> deactivatedAccounts = tokenRepository.findAllByDateBeforeAndType(localDateTime,
                 TokenDTO.Type.DEACTIVATED.toString());
 
         for (Token token : deactivatedAccounts) {
@@ -256,7 +255,7 @@ public class TokenService {
     private Token createToken(final TokenDTO tokenDTO) {
         Token token = Token.builder()
                 .type(tokenDTO.getType().toString())
-                .date(Timestamp.valueOf(tokenDTO.getExpirationDate()))
+                .date(tokenDTO.getExpirationDate())
                 .build();
 
         if (tokenDTO.getValue() != null) {
@@ -278,7 +277,7 @@ public class TokenService {
     private TokenDTO createTokenDTO(final Token token) {
         TokenDTO tokenDTO = TokenDTO.builder()
                 .type(TokenDTO.Type.valueOf(token.getType()))
-                .expirationDate(token.getDate().toLocalDateTime())
+                .expirationDate(token.getDate())
                 .user(token.getUser().getId())
                 .build();
 

@@ -24,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,11 +69,9 @@ public class FileServiceTest {
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
-    private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
-    private final File file = new File(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "file", "type",
-            new byte[]{1, 2, 3, 4});
-    private final Sb3Zip sb3Zip = new Sb3Zip(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "zip",
-            new byte[]{1, 2, 3, 4});
+    private final Participant participant = new Participant(user, experiment, LocalDateTime.now(), null);
+    private final File file = new File(user, experiment, LocalDateTime.now(), "file", "type", new byte[]{1, 2, 3, 4});
+    private final Sb3Zip sb3Zip = new Sb3Zip(user, experiment, LocalDateTime.now(), "zip", new byte[]{1, 2, 3, 4});
     private final List<FileProjection> fileProjections = getFileProjections(5);
     private final List<File> files = getFiles(2);
     private final List<Integer> zips = Arrays.asList(1, 4, 10, 18);
@@ -134,7 +131,7 @@ public class FileServiceTest {
 
     @Test
     public void testSaveFileParticipantFinished() {
-        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        participant.setEnd(LocalDateTime.now());
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
@@ -235,7 +232,7 @@ public class FileServiceTest {
 
     @Test
     public void testSaveSb3ZipParticipantFinished() {
-        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        participant.setEnd(LocalDateTime.now());
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
@@ -439,7 +436,7 @@ public class FileServiceTest {
         assertAll(
                 () -> assertEquals(file.getUser().getId(), fileDTO.getUser()),
                 () -> assertEquals(file.getExperiment().getId(), fileDTO.getExperiment()),
-                () -> assertEquals(file.getDate().toLocalDateTime(), fileDTO.getDate()),
+                () -> assertEquals(file.getDate(), fileDTO.getDate()),
                 () -> assertEquals(file.getFiletype(), fileDTO.getFiletype()),
                 () -> assertEquals(file.getName(), fileDTO.getName()),
                 () -> assertEquals(file.getContent(), fileDTO.getContent())
@@ -470,7 +467,7 @@ public class FileServiceTest {
         assertAll(
                 () -> assertEquals(sb3Zip.getUser().getId(), sb3ZipDTO.getUser()),
                 () -> assertEquals(sb3Zip.getExperiment().getId(), sb3ZipDTO.getExperiment()),
-                () -> assertEquals(sb3Zip.getDate().toLocalDateTime(), sb3ZipDTO.getDate()),
+                () -> assertEquals(sb3Zip.getDate(), sb3ZipDTO.getDate()),
                 () -> assertEquals(sb3Zip.getName(), sb3ZipDTO.getName()),
                 () -> assertEquals(sb3Zip.getContent(), sb3ZipDTO.getContent())
         );
@@ -634,7 +631,7 @@ public class FileServiceTest {
 
     private List<File> getFiles(int number) {
         List<File> files = new ArrayList<>();
-        Timestamp time = Timestamp.valueOf(LocalDateTime.now());
+        LocalDateTime time = LocalDateTime.now();
         for (int i = 0; i < number; i++) {
             File file = new File(user, experiment, time, "name" + i, "type", new byte[]{1, 2, 3, 4});
             file.setId(i + 1);
@@ -646,7 +643,7 @@ public class FileServiceTest {
     private List<Sb3Zip> getSb3ZipFiles(int number) {
         List<Sb3Zip> sb3Zips = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            sb3Zips.add(new Sb3Zip(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "file" + i,
+            sb3Zips.add(new Sb3Zip(user, experiment, LocalDateTime.now(), "file" + i,
                     new byte[] {1, 2, 3, 4}));
         }
         return sb3Zips;

@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.persistence.EntityNotFoundException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,10 +54,10 @@ public class TokenServiceTest {
     private static final String BLANK = "   ";
     private static final int ID = 1;
     private final User user = new User();
-    private final Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
-    private final Token token = new Token(CHANGE_EMAIL, Timestamp.valueOf(LocalDateTime.now()), EMAIL, user);
-    private final Token registerToken1 = new Token(REGISTER, timestamp, null, user);
-    private final Token registerToken2 = new Token(REGISTER, timestamp, null, user);
+    private final LocalDateTime date = LocalDateTime.now();
+    private final Token token = new Token(CHANGE_EMAIL, LocalDateTime.now(), EMAIL, user);
+    private final Token registerToken1 = new Token(REGISTER, date, null, user);
+    private final Token registerToken2 = new Token(REGISTER, date, null, user);
     private final List<Token> registerTokens = new ArrayList<>();
 
     @BeforeEach
@@ -252,12 +251,11 @@ public class TokenServiceTest {
     @Test
     public void testDeleteExpiredAccounts() {
         LocalDateTime dateTime = LocalDateTime.now();
-        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
-                REGISTER)).thenReturn(registerTokens);
+        when(tokenRepository.findAllByDateBeforeAndType(dateTime, REGISTER)).thenReturn(registerTokens);
         assertDoesNotThrow(
                 () -> tokenService.deleteExpiredAccounts(dateTime)
         );
-        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), REGISTER);
+        verify(tokenRepository).findAllByDateBeforeAndType(dateTime, REGISTER);
         verify(userRepository, times(2)).deleteById(ID);
     }
 
@@ -265,12 +263,11 @@ public class TokenServiceTest {
     public void testDeleteExpiredAccountsUserNull() {
         registerToken1.setUser(null);
         LocalDateTime dateTime = LocalDateTime.now();
-        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
-                REGISTER)).thenReturn(registerTokens);
+        when(tokenRepository.findAllByDateBeforeAndType(dateTime, REGISTER)).thenReturn(registerTokens);
         assertThrows(IllegalStateException.class,
                 () -> tokenService.deleteExpiredAccounts(dateTime)
         );
-        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), REGISTER);
+        verify(tokenRepository).findAllByDateBeforeAndType(dateTime, REGISTER);
         verify(userRepository, never()).deleteById(anyInt());
     }
 
@@ -286,15 +283,14 @@ public class TokenServiceTest {
     @Test
     public void testReactivateUserAccounts() {
         LocalDateTime dateTime = LocalDateTime.now();
-        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
-                DEACTIVATED)).thenReturn(registerTokens);
+        when(tokenRepository.findAllByDateBeforeAndType(dateTime, DEACTIVATED)).thenReturn(registerTokens);
         when(userRepository.getOne(ID)).thenReturn(user);
         tokenService.reactivateUserAccounts(dateTime);
         assertAll(
                 () -> assertTrue(user.isActive()),
                 () -> assertEquals(0, user.getAttempts())
         );
-        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), DEACTIVATED);
+        verify(tokenRepository).findAllByDateBeforeAndType(dateTime, DEACTIVATED);
         verify(userRepository, times(2)).getOne(ID);
         verify(userRepository, times(2)).save(user);
     }
@@ -302,14 +298,13 @@ public class TokenServiceTest {
     @Test
     public void testReactivateUserAccountsEntityNotFound() {
         LocalDateTime dateTime = LocalDateTime.now();
-        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
-                DEACTIVATED)).thenReturn(registerTokens);
+        when(tokenRepository.findAllByDateBeforeAndType(dateTime, DEACTIVATED)).thenReturn(registerTokens);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(userRepository.save(user)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> tokenService.reactivateUserAccounts(dateTime)
         );
-        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), DEACTIVATED);
+        verify(tokenRepository).findAllByDateBeforeAndType(dateTime, DEACTIVATED);
         verify(userRepository).getOne(ID);
         verify(userRepository).save(user);
     }
@@ -318,12 +313,11 @@ public class TokenServiceTest {
     public void testReactivateUserAccountsIdNull() {
         user.setId(null);
         LocalDateTime dateTime = LocalDateTime.now();
-        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
-                DEACTIVATED)).thenReturn(registerTokens);
+        when(tokenRepository.findAllByDateBeforeAndType(dateTime, DEACTIVATED)).thenReturn(registerTokens);
         assertThrows(IllegalStateException.class,
                 () -> tokenService.reactivateUserAccounts(dateTime)
         );
-        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), DEACTIVATED);
+        verify(tokenRepository).findAllByDateBeforeAndType(dateTime, DEACTIVATED);
         verify(userRepository, never()).getOne(anyInt());
         verify(userRepository, never()).save(any());
     }
@@ -332,12 +326,11 @@ public class TokenServiceTest {
     public void testReactivateUserAccountsUserNull() {
         registerToken1.setUser(null);
         LocalDateTime dateTime = LocalDateTime.now();
-        when(tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(dateTime),
-                DEACTIVATED)).thenReturn(registerTokens);
+        when(tokenRepository.findAllByDateBeforeAndType(dateTime, DEACTIVATED)).thenReturn(registerTokens);
         assertThrows(IllegalStateException.class,
                 () -> tokenService.reactivateUserAccounts(dateTime)
         );
-        verify(tokenRepository).findAllByDateBeforeAndType(Timestamp.valueOf(dateTime), DEACTIVATED);
+        verify(tokenRepository).findAllByDateBeforeAndType(dateTime, DEACTIVATED);
         verify(userRepository, never()).getOne(anyInt());
         verify(userRepository, never()).save(any());
     }

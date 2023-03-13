@@ -44,7 +44,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -1282,7 +1281,7 @@ public class ExperimentControllerIntegrationTest {
     private List<Participant> getParticipants(int number) {
         List<Participant> participants = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            participants.add(new Participant(new User(), new Experiment(), Timestamp.valueOf(LocalDateTime.now()), null));
+            participants.add(new Participant(new User(), new Experiment(), LocalDateTime.now(), null));
         }
         return participants;
     }

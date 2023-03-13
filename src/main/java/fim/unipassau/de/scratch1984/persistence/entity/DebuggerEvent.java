@@ -14,7 +14,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a debugger event that resulted from user interaction with the Scratch debugger,
@@ -51,10 +51,10 @@ public class DebuggerEvent implements Event {
     private Experiment experiment;
 
     /**
-     * The timestamp at which the debugger event occurred.
+     * The datetime at which the debugger event occurred.
      */
     @Column(name = "date")
-    private Timestamp date;
+    private LocalDateTime date;
 
     /**
      * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO.DebuggerEventType}.

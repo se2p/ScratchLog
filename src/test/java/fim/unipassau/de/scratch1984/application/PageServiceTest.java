@@ -28,7 +28,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
 import javax.persistence.EntityNotFoundException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,8 +69,7 @@ public class PageServiceTest {
 
     private static final int ID = 1;
     private final ExperimentData experimentData = new ExperimentData(ID, 5, 3, 2);
-    private final Course course = new Course(ID, "My course", "Description", "no", false,
-            Timestamp.valueOf(LocalDateTime.now()));
+    private final Course course = new Course(ID, "My course", "Description", "no", false, LocalDateTime.now());
     private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
     private Page<ExperimentTableProjection> experimentPage;
     private Page<CourseTableProjection> coursePage;
@@ -552,7 +550,7 @@ public class PageServiceTest {
             user.setId(i + 1);
             Course course = new Course();
             course.setId(i + 1);
-            participants.add(new CourseParticipant(user, course, Timestamp.valueOf(LocalDateTime.now())));
+            participants.add(new CourseParticipant(user, course, LocalDateTime.now()));
         }
         return participants;
     }
@@ -565,7 +563,7 @@ public class PageServiceTest {
             Experiment experiment = new Experiment();
             experiment.setId(i + 1);
             experiment.setTitle("Title " + i);
-            participants.add(new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null));
+            participants.add(new Participant(user, experiment, LocalDateTime.now(), null));
         }
         return participants;
     }

@@ -14,7 +14,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a click event that resulted from user interaction with a button, icon, or similar event.
@@ -50,10 +50,10 @@ public class ClickEvent implements Event {
     private Experiment experiment;
 
     /**
-     * The timestamp at which the click event occurred.
+     * The datetime at which the click event occurred.
      */
     @Column(name = "date")
-    private Timestamp date;
+    private LocalDateTime date;
 
     /**
      * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ClickEventDTO.ClickEventType}.
@@ -83,7 +83,7 @@ public class ClickEvent implements Event {
      * @param event The specific event.
      * @param metadata The metadata.
      */
-    public ClickEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
+    public ClickEvent(final User user, final Experiment experiment, final LocalDateTime date, final String eventType,
                       final String event, final String metadata) {
         this.user = user;
         this.experiment = experiment;

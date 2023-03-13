@@ -46,7 +46,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -784,7 +783,7 @@ public class EventService {
 
         event.setUser(user);
         event.setExperiment(experiment);
-        event.setDate(Timestamp.valueOf(eventDTO.getDate()));
+        event.setDate(eventDTO.getDate());
         event.setEventType(eventType);
         event.setEvent(eventName);
     }

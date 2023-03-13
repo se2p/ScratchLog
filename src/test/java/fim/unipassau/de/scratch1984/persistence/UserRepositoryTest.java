@@ -15,7 +15,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +22,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
@@ -46,7 +44,7 @@ public class UserRepositoryTest {
     private static final String QUERY = "a";
     private static final String GUI_URL = "scratch";
     private static final int LIMIT = 5;
-    private static final Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+    private static final LocalDateTime DATE = LocalDateTime.now();
     private User user1 = new User(ADMIN1, "admin1@test.de", ROLE_ADMIN, LANGUAGE, "admin1", "secret1");
     private User user2 = new User("admin2", "admin2@test.com", ROLE_ADMIN, LANGUAGE, "admin2", "secret2");
     private User user3 = new User("user1", "part1@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
@@ -68,20 +66,20 @@ public class UserRepositoryTest {
             GUI_URL);
     private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", "", true, false,
             GUI_URL);
-    private Course course1 = new Course(null, "Course 1", "Description 1", "", false, timestamp);
-    private Course course2 = new Course(null, "Course 2", "Description 2", "", false, timestamp);
-    private Course course3 = new Course(null, "Course 3", "Description 3", "", false, timestamp);
+    private Course course1 = new Course(null, "Course 1", "Description 1", "", false, DATE);
+    private Course course2 = new Course(null, "Course 2", "Description 2", "", false, DATE);
+    private Course course3 = new Course(null, "Course 3", "Description 3", "", false, DATE);
     private Participant participant1 = new Participant(user3, experiment1, null, null);
     private Participant participant2 = new Participant(user12, experiment1, null, null);
     private Participant participant3 = new Participant(user13, experiment1, null, null);
     private Participant participant4 = new Participant(user14, experiment1, null, null);
     private Participant participant5 = new Participant(user15, experiment1, null, null);
     private Participant participant6 = new Participant(user16, experiment2, null, null);
-    private CourseParticipant courseParticipant1 = new CourseParticipant(user3, course1, timestamp);
-    private CourseParticipant courseParticipant2 = new CourseParticipant(user3, course2, timestamp);
-    private CourseParticipant courseParticipant3 = new CourseParticipant(user4, course1, timestamp);
-    private CourseParticipant courseParticipant4 = new CourseParticipant(user5, course1, timestamp);
-    private CourseParticipant courseParticipant5 = new CourseParticipant(user6, course1, timestamp);
+    private CourseParticipant courseParticipant1 = new CourseParticipant(user3, course1, DATE);
+    private CourseParticipant courseParticipant2 = new CourseParticipant(user3, course2, DATE);
+    private CourseParticipant courseParticipant3 = new CourseParticipant(user4, course1, DATE);
+    private CourseParticipant courseParticipant4 = new CourseParticipant(user5, course1, DATE);
+    private CourseParticipant courseParticipant5 = new CourseParticipant(user6, course1, DATE);
 
     @BeforeEach
     public void setup() {

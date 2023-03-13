@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -413,7 +412,7 @@ public class FileService {
         File file = File.builder()
                 .user(user)
                 .experiment(experiment)
-                .date(Timestamp.valueOf(fileDTO.getDate()))
+                .date(fileDTO.getDate())
                 .name(fileDTO.getName())
                 .filetype(fileDTO.getFiletype())
                 .content(fileDTO.getContent())
@@ -437,7 +436,7 @@ public class FileService {
                 .user(file.getUser().getId())
                 .experiment(file.getExperiment().getId())
                 .filetype(file.getFiletype())
-                .date(file.getDate().toLocalDateTime())
+                .date(file.getDate())
                 .name(file.getName())
                 .content(file.getContent())
                 .build();
@@ -478,7 +477,7 @@ public class FileService {
         Sb3Zip sb3Zip = Sb3Zip.builder()
                 .user(user)
                 .experiment(experiment)
-                .date(Timestamp.valueOf(sb3ZipDTO.getDate()))
+                .date(sb3ZipDTO.getDate())
                 .name(sb3ZipDTO.getName())
                 .content(sb3ZipDTO.getContent())
                 .build();
@@ -501,7 +500,7 @@ public class FileService {
                 .user(sb3Zip.getUser().getId())
                 .experiment(sb3Zip.getExperiment().getId())
                 .name(sb3Zip.getName())
-                .date(sb3Zip.getDate().toLocalDateTime())
+                .date(sb3Zip.getDate())
                 .content(sb3Zip.getContent())
                 .build();
 

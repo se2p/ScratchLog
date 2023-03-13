@@ -14,7 +14,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a resource event being the result of a user adding costumes or sounds in the Scratch GUI.
@@ -50,10 +50,10 @@ public class ResourceEvent implements Event {
     private Experiment experiment;
 
     /**
-     * The timestamp at which the resource event occurred.
+     * The datetime at which the resource event occurred.
      */
     @Column(name = "date")
-    private Timestamp date;
+    private LocalDateTime date;
 
     /**
      * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO.ResourceEventType}.
@@ -104,7 +104,7 @@ public class ResourceEvent implements Event {
      * @param resourceType The filetype of the resource.
      * @param libraryResource Whether the resource is from the Scratch library or not.
      */
-    public ResourceEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
+    public ResourceEvent(final User user, final Experiment experiment, final LocalDateTime date, final String eventType,
                          final String event, final String resourceName, final String hash, final String resourceType,
                          final Integer libraryResource) {
         this.user = user;

@@ -25,10 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -443,10 +443,10 @@ public class ParticipantService {
 
         if (participants.size() > 0) {
             LocalDateTime maxInactiveTime = LocalDateTime.now().minusDays(Constants.EXPERIMENT_INACTIVE_DAYS);
-            LocalDateTime lastStart = participants.stream().filter(participant -> participant.getStart() != null).map(
-                    participant -> participant.getStart().toLocalDateTime()).max(LocalDateTime::compareTo).orElse(null);
-            LocalDateTime lastEnd = participants.stream().filter(participant -> participant.getEnd() != null).map(
-                    participant -> participant.getEnd().toLocalDateTime()).max(LocalDateTime::compareTo).orElse(null);
+            LocalDateTime lastStart = participants.stream().map(
+                    Participant::getStart).filter(Objects::nonNull).max(LocalDateTime::compareTo).orElse(null);
+            LocalDateTime lastEnd = participants.stream().map(
+                    Participant::getEnd).filter(Objects::nonNull).max(LocalDateTime::compareTo).orElse(null);
             boolean inactiveStart = lastStart != null && lastStart.isBefore(maxInactiveTime);
             boolean inactiveEnd = lastEnd != null && lastEnd.isBefore(maxInactiveTime);
             if (inactiveStart || inactiveEnd) {
@@ -473,10 +473,10 @@ public class ParticipantService {
                 .build();
 
         if (participantDTO.getStart() != null) {
-            participant.setStart(Timestamp.valueOf(participantDTO.getStart()));
+            participant.setStart(participantDTO.getStart());
         }
         if (participantDTO.getEnd() != null) {
-            participant.setEnd(Timestamp.valueOf(participantDTO.getEnd()));
+            participant.setEnd(participantDTO.getEnd());
         }
 
         return participant;
@@ -495,10 +495,10 @@ public class ParticipantService {
                 .build();
 
         if (participant.getStart() != null) {
-            participantDTO.setStart(participant.getStart().toLocalDateTime());
+            participantDTO.setStart(participant.getStart());
         }
         if (participant.getEnd() != null) {
-            participantDTO.setEnd(participant.getEnd().toLocalDateTime());
+            participantDTO.setEnd(participant.getEnd());
         }
 
         return participantDTO;

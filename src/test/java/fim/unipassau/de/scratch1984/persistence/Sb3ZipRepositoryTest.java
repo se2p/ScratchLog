@@ -11,7 +11,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,7 +29,7 @@ public class Sb3ZipRepositoryTest {
     @Autowired
     private Sb3ZipRepository sb3ZipRepository;
 
-    private final Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+    private final LocalDateTime date = LocalDateTime.now();
     private static final String GUI_URL = "scratch";
     private User user1 = new User("participant1", "part1@part.de", "PARTICIPANT", "GERMAN", "password", "secret1");
     private User user2 = new User("participant2", "part2@part.de", "PARTICIPANT", "GERMAN", "password", "secret2");
@@ -38,11 +37,11 @@ public class Sb3ZipRepositoryTest {
             false, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "experiment2", "description", "info", "postscript", true,
             false, GUI_URL);
-    private Sb3Zip sb3Zip1 = new Sb3Zip(user1, experiment1, timestamp, "zip1", new byte[]{1, 2, 3});
-    private Sb3Zip sb3Zip2 = new Sb3Zip(user1, experiment1, timestamp, "zip2", new byte[]{1, 2, 3});
-    private Sb3Zip sb3Zip3 = new Sb3Zip(user1, experiment1, timestamp, "zip3", new byte[]{1, 2, 3});
-    private Sb3Zip sb3Zip4 = new Sb3Zip(user2, experiment1, timestamp, "zip4", new byte[]{1, 2, 3});
-    private Sb3Zip sb3Zip5 = new Sb3Zip(user1, experiment2, timestamp, "zip5", new byte[]{1, 2, 3});
+    private Sb3Zip sb3Zip1 = new Sb3Zip(user1, experiment1, date, "zip1", new byte[]{1, 2, 3});
+    private Sb3Zip sb3Zip2 = new Sb3Zip(user1, experiment1, date, "zip2", new byte[]{1, 2, 3});
+    private Sb3Zip sb3Zip3 = new Sb3Zip(user1, experiment1, date, "zip3", new byte[]{1, 2, 3});
+    private Sb3Zip sb3Zip4 = new Sb3Zip(user2, experiment1, date, "zip4", new byte[]{1, 2, 3});
+    private Sb3Zip sb3Zip5 = new Sb3Zip(user1, experiment2, date, "zip5", new byte[]{1, 2, 3});
 
     @BeforeEach
     public void setup() {

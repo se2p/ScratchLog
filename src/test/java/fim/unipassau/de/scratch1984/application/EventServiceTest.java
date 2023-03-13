@@ -43,7 +43,6 @@ import org.springframework.data.domain.PageRequest;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -114,7 +113,7 @@ public class EventServiceTest {
     private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
-    private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
+    private final Participant participant = new Participant(user, experiment, LocalDateTime.now(), null);
     private final CodesData codesData = new CodesData(ID, ID, 15);
     private final String[] blockEventDataHeader = {"id", "user", "experiment", "date", "eventType", "event",
             "spritename", "metadata", "xml", "json"};
@@ -124,7 +123,7 @@ public class EventServiceTest {
             "md5", "filetype", "library"};
     private final String[] eventCountDataHeader = {"user", "experiment", "count", "event"};
     private final String[] codesDataHeader = {"user", "experiment", "count"};
-    private final BlockEvent blockEvent = new BlockEvent(user, experiment, Timestamp.valueOf(LocalDateTime.now()),
+    private final BlockEvent blockEvent = new BlockEvent(user, experiment, LocalDateTime.now(),
             "CREATE", "CREATE", "sprite", "", "xml", "json");
     private static final String JSON = "json";
     private final List<EventCount> blockEvents = getEventCounts(8, "CREATE");
@@ -149,8 +148,8 @@ public class EventServiceTest {
         }
 
         @Override
-        public Timestamp getDate() {
-            return Timestamp.valueOf(LocalDateTime.now());
+        public LocalDateTime getDate() {
+            return LocalDateTime.now();
         }
 
         @Override
@@ -558,7 +557,7 @@ public class EventServiceTest {
 
     @Test
     public void testSaveResourceEventParticipantFinished() {
-        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        participant.setEnd(LocalDateTime.now());
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
@@ -1291,8 +1290,8 @@ public class EventServiceTest {
                 }
 
                 @Override
-                public Timestamp getDate() {
-                    return Timestamp.valueOf(LocalDateTime.now());
+                public LocalDateTime getDate() {
+                    return LocalDateTime.now();
                 }
 
                 @Override
@@ -1325,7 +1324,7 @@ public class EventServiceTest {
                 }
 
                 @Override
-                public Timestamp getDate() {
+                public LocalDateTime getDate() {
                     return null;
                 }
 
@@ -1341,7 +1340,7 @@ public class EventServiceTest {
     private List<BlockEvent> getBlockEvents(int number) {
         List<BlockEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            BlockEvent blockEvent = new BlockEvent(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "eventType",
+            BlockEvent blockEvent = new BlockEvent(user, experiment,LocalDateTime.now(), "eventType",
                     "event" + i, "sprite", "meta", "xml" + i, "json" + i);
             blockEvent.setId(i);
             events.add(blockEvent);
@@ -1352,7 +1351,7 @@ public class EventServiceTest {
     private List<ClickEvent> getClickEvents(int number) {
         List<ClickEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            ClickEvent clickEvent = new ClickEvent(user, experiment, Timestamp.valueOf(LocalDateTime.now()),
+            ClickEvent clickEvent = new ClickEvent(user, experiment, LocalDateTime.now(),
                     "type", "event", "meta");
             clickEvent.setId(i);
             events.add(clickEvent);
@@ -1363,7 +1362,7 @@ public class EventServiceTest {
     private List<ResourceEvent> getResourceEvents(int number) {
         List<ResourceEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            ResourceEvent resourceEvent = new ResourceEvent(user, experiment, Timestamp.valueOf(LocalDateTime.now()),
+            ResourceEvent resourceEvent = new ResourceEvent(user, experiment, LocalDateTime.now(),
                     "eventType", "event", "name", "hash", "type", i == 0 ? 1 : null);
             resourceEvent.setId(i);
             events.add(resourceEvent);

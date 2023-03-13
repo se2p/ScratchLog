@@ -14,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,7 +31,7 @@ public class EventCountRepositoryTest {
     @Autowired
     private EventCountRepository eventCountRepository;
 
-    private final Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+    private final LocalDateTime date = LocalDateTime.now();
     private static final String GUI_URL = "scratch";
     private User user1 = new User("participant1", "part1@part.de", "PARTICIPANT", "GERMAN", "password", "secret1");
     private User user2 = new User("participant2", "part2@part.de", "PARTICIPANT", "GERMAN", "password", "secret2");
@@ -40,30 +39,30 @@ public class EventCountRepositoryTest {
             false, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "experiment2", "description", "info", "postscript", true,
             false, GUI_URL);
-    private BlockEvent blockEvent1 = new BlockEvent(user1, experiment1, timestamp, "CREATE", "CREATE", "Figur1",
+    private BlockEvent blockEvent1 = new BlockEvent(user1, experiment1, date, "CREATE", "CREATE", "Figur1",
             null, "xml", "json");
-    private BlockEvent blockEvent2 = new BlockEvent(user1, experiment1, timestamp, "DRAG", "ENDDRAG", "Figur1",
+    private BlockEvent blockEvent2 = new BlockEvent(user1, experiment1, date, "DRAG", "ENDDRAG", "Figur1",
             null, null, null);
-    private BlockEvent blockEvent3 = new BlockEvent(user1, experiment2, timestamp, "MOVE", "MOVE", "Figur1",
+    private BlockEvent blockEvent3 = new BlockEvent(user1, experiment2, date, "MOVE", "MOVE", "Figur1",
             null, null, null);
-    private BlockEvent blockEvent4 = new BlockEvent(user2, experiment1, timestamp, "CLICK", "GREENFLAG", "Figur1",
+    private BlockEvent blockEvent4 = new BlockEvent(user2, experiment1, date, "CLICK", "GREENFLAG", "Figur1",
             null, null, null);
-    private BlockEvent blockEvent5 = new BlockEvent(user1, experiment1, timestamp, "DRAG", "ENDDRAG", "Figur1",
+    private BlockEvent blockEvent5 = new BlockEvent(user1, experiment1, date, "DRAG", "ENDDRAG", "Figur1",
             null, null, null);
-    private ClickEvent clickEvent1 = new ClickEvent(user1, experiment1, timestamp, "ICON", "GREENFLAG", "");
-    private ClickEvent clickEvent2 = new ClickEvent(user1, experiment1, timestamp, "CODE", "STACKCLICK", "");
-    private ClickEvent clickEvent3 = new ClickEvent(user1, experiment1, timestamp, "CODE", "STACKCLICK", "");
-    private ClickEvent clickEvent4 = new ClickEvent(user1, experiment2, timestamp, "CODE", "STACKCLICK", "");
-    private ClickEvent clickEvent5 = new ClickEvent(user2, experiment1, timestamp, "ICON", "GREENFLAG", "");
-    private ResourceEvent resourceEvent1 = new ResourceEvent(user1, experiment1, timestamp, "ADD", "ADD_SOUND", "Miau",
+    private ClickEvent clickEvent1 = new ClickEvent(user1, experiment1, date, "ICON", "GREENFLAG", "");
+    private ClickEvent clickEvent2 = new ClickEvent(user1, experiment1, date, "CODE", "STACKCLICK", "");
+    private ClickEvent clickEvent3 = new ClickEvent(user1, experiment1, date, "CODE", "STACKCLICK", "");
+    private ClickEvent clickEvent4 = new ClickEvent(user1, experiment2, date, "CODE", "STACKCLICK", "");
+    private ClickEvent clickEvent5 = new ClickEvent(user2, experiment1, date, "ICON", "GREENFLAG", "");
+    private ResourceEvent resourceEvent1 = new ResourceEvent(user1, experiment1, date, "ADD", "ADD_SOUND", "Miau",
             "hash", "wav", 0);
-    private ResourceEvent resourceEvent2 = new ResourceEvent(user1, experiment1, timestamp, "DELETE", "DELETE_SOUND",
+    private ResourceEvent resourceEvent2 = new ResourceEvent(user1, experiment1, date, "DELETE", "DELETE_SOUND",
             "Miau", "hash", "wav", null);
-    private ResourceEvent resourceEvent3 = new ResourceEvent(user1, experiment1, timestamp, "ADD", "ADD_SOUND", "Miau2",
+    private ResourceEvent resourceEvent3 = new ResourceEvent(user1, experiment1, date, "ADD", "ADD_SOUND", "Miau2",
             "hash", "wav", 0);
-    private ResourceEvent resourceEvent4 = new ResourceEvent(user1, experiment2, timestamp, "ADD", "ADD_COSTUME", "image",
+    private ResourceEvent resourceEvent4 = new ResourceEvent(user1, experiment2, date, "ADD", "ADD_COSTUME", "image",
             "hash", "jpg", 0);
-    private ResourceEvent resourceEvent5 = new ResourceEvent(user2, experiment1, timestamp, "ADD", "ADD_COSTUME", "image",
+    private ResourceEvent resourceEvent5 = new ResourceEvent(user2, experiment1, date, "ADD", "ADD_COSTUME", "image",
             "hash", "jpg", 0);
 
     @BeforeEach
