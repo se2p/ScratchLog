@@ -1,5 +1,9 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import fim.unipassau.de.scratch1984.util.enums.LibraryResource;
 import fim.unipassau.de.scratch1984.util.enums.ResourceEventSpecific;
 import fim.unipassau.de.scratch1984.util.enums.ResourceEventType;
@@ -23,6 +27,7 @@ import java.util.Objects;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ResourceEventDTO implements EventDTO {
 
     /**
@@ -43,11 +48,14 @@ public class ResourceEventDTO implements EventDTO {
     /**
      * The local date time at which the block interaction occurred in the Scratch GUI.
      */
+    @JsonProperty("time")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime date;
 
     /**
      * The type of resource event that occurred.
      */
+    @JsonProperty("type")
     private ResourceEventType eventType;
 
     /**
@@ -68,6 +76,7 @@ public class ResourceEventDTO implements EventDTO {
     /**
      * The filetype of the resource.
      */
+    @JsonProperty("dataFormat")
     private String filetype;
 
     /**

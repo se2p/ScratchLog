@@ -1,5 +1,9 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import fim.unipassau.de.scratch1984.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratch1984.util.enums.BlockEventType;
 import lombok.AllArgsConstructor;
@@ -22,6 +26,7 @@ import java.util.Objects;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockEventDTO implements EventDTO {
 
     /**
@@ -42,11 +47,14 @@ public class BlockEventDTO implements EventDTO {
     /**
      * The local date time at which the block interaction occurred in the Scratch GUI.
      */
+    @JsonProperty("time")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime date;
 
     /**
      * The type of block event that occurred.
      */
+    @JsonProperty("type")
     private BlockEventType eventType;
 
     /**
@@ -57,6 +65,7 @@ public class BlockEventDTO implements EventDTO {
     /**
      * The name of the sprite on which the event occurred.
      */
+    @JsonProperty("spritename")
     private String sprite;
 
     /**
@@ -72,6 +81,7 @@ public class BlockEventDTO implements EventDTO {
     /**
      * The Scratch project state after the event saved in a json format.
      */
+    @JsonProperty("json")
     private String code;
 
     /**

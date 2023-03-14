@@ -1,5 +1,10 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import fim.unipassau.de.scratch1984.util.ByteArrayDeserializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +24,7 @@ import java.util.Objects;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FileDTO implements EventDTO {
 
     /**
@@ -39,6 +45,8 @@ public class FileDTO implements EventDTO {
     /**
      * The local date time at which the file was uploaded in the Scratch GUI.
      */
+    @JsonProperty("time")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime date;
 
     /**
@@ -49,11 +57,14 @@ public class FileDTO implements EventDTO {
     /**
      * The filetype.
      */
+    @JsonProperty("type")
     private String filetype;
 
     /**
      * The file content itself.
      */
+    @JsonProperty("file")
+    @JsonDeserialize(using = ByteArrayDeserializer.class)
     private byte[] content;
 
     /**

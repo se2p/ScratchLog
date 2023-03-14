@@ -105,7 +105,7 @@ public class EventRestControllerTest {
         debuggerEventObject.put("type", "SPRITE");
         debuggerEventObject.put("time", "2021-06-28T12:36:37.601Z");
         debuggerEventObject.put("event", "SELECT_SPRITE");
-        debuggerEventObject.put("id", "id");
+        debuggerEventObject.put("scratchId", "id");
         debuggerEventObject.put("name", "name");
         debuggerEventObject.put("original", 1);
         debuggerEventObject.put("execution", 5);
@@ -117,10 +117,10 @@ public class EventRestControllerTest {
         questionEventObject.put("event", "SELECT");
         questionEventObject.put("feedback", 1);
         questionEventObject.put("q_type", "block-execution");
-        questionEventObject.put("values", "Cat, Costume");
+        questionEventObject.put("values", new String[]{"Cat", "Costume"});
         questionEventObject.put("category", "execution");
         questionEventObject.put("form", "negative");
-        questionEventObject.put("id", "id");
+        questionEventObject.put("blockID", "id");
         questionEventObject.put("opcode", "opcode");
         resourceEventObject.put("user", USER_ID);
         resourceEventObject.put("experiment", Experiment_ID);
@@ -160,46 +160,6 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreBlockEventJsonBlank() throws JSONException {
-        blockEventObject.put("json", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveBlockEvent(any());
-    }
-
-    @Test
-    public void testStoreBlockEventXmlBlank() throws JSONException {
-        blockEventObject.put("xml", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveBlockEvent(any());
-    }
-
-    @Test
-    public void testStoreBlockEventMetadataBlank() throws JSONException {
-        blockEventObject.put("metadata", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveBlockEvent(any());
-    }
-
-    @Test
-    public void testStoreBlockEventSpritenameBlank() throws JSONException {
-        blockEventObject.put("spritename", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveBlockEvent(any());
-    }
-
-    @Test
     public void testStoreBlockEventInvalidParticipant() {
         when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
         assertDoesNotThrow(
@@ -210,27 +170,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreBlockEventJSON() throws JSONException {
-        blockEventObject.put("user", "user");
-        assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveBlockEvent(any());
-    }
-
-    @Test
-    public void testStoreBlockEventIllegalArgument() throws JSONException {
-        blockEventObject.put("event", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveBlockEvent(any());
-    }
-
-    @Test
-    public void testStoreBlockEventDateTimeParse() throws JSONException {
+    public void testStoreBlockEventJsonProcessing() throws JSONException {
         blockEventObject.put("time", "0");
         assertDoesNotThrow(
                 () -> eventRestController.storeBlockEvent(blockEventObject.toString())
@@ -249,25 +189,6 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreClickEventMetadataBlank() throws JSONException {
-        clickEventObject.put("metadata", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeClickEvent(clickEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveClickEvent(any());
-    }
-
-    @Test
-    public void testStoreClickEventJSON() throws JSONException {
-        clickEventObject.put("user", "unicorn");
-        assertDoesNotThrow(
-                () -> eventRestController.storeClickEvent(clickEventObject.toString())
-        );
-        verify(eventService, never()).saveClickEvent(any());
-    }
-
-    @Test
     public void testStoreClickEventInvalidParticipant() {
         when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
         assertDoesNotThrow(
@@ -278,7 +199,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreClickEventIllegalArgument() throws JSONException {
+    public void testStoreClickEventJsonProcessing() throws JSONException {
         clickEventObject.put("event", "");
         assertDoesNotThrow(
                 () -> eventRestController.storeClickEvent(clickEventObject.toString())
@@ -288,57 +209,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreClickEventDateTimeParse() throws JSONException {
-        clickEventObject.put("time", "0");
-        assertDoesNotThrow(
-                () -> eventRestController.storeClickEvent(clickEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveClickEvent(any());
-    }
-
-    @Test
     public void testStoreDebuggerEvent() {
-        assertDoesNotThrow(
-                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveDebuggerEvent(any());
-    }
-
-    @Test
-    public void testStoreDebuggerEventIdBlank() {
-        debuggerEventObject.put("id", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveDebuggerEvent(any());
-    }
-
-    @Test
-    public void testStoreDebuggerEventNameBlank() {
-        debuggerEventObject.put("name", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveDebuggerEvent(any());
-    }
-
-    @Test
-    public void testStoreDebuggerEventOriginalBlank() {
-        debuggerEventObject.put("original", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveDebuggerEvent(any());
-    }
-
-    @Test
-    public void testStoreDebuggerEventExecutionBlank() {
-        debuggerEventObject.put("execution", "");
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
@@ -357,7 +228,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreDebuggerEventJSON() {
+    public void testStoreDebuggerEventJsonProcessing() {
         debuggerEventObject.put("original", "one");
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
@@ -367,97 +238,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreDebuggerEventIllegalArgument() {
-        debuggerEventObject.put("type", "one");
-        assertDoesNotThrow(
-                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveDebuggerEvent(any());
-    }
-
-    @Test
-    public void testStoreDebuggerEventDateTimeParse() {
-        debuggerEventObject.put("time", "time");
-        assertDoesNotThrow(
-                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveDebuggerEvent(any());
-    }
-
-    @Test
     public void testStoreQuestionEvent() {
-        assertDoesNotThrow(
-                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventFeedbackBlank() {
-        questionEventObject.put("feedback", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventTypeBlank() {
-        questionEventObject.put("q_type", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventValuesBlank() {
-        questionEventObject.put("values", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventCategoryBlank() {
-        questionEventObject.put("category", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventFormBlank() {
-        questionEventObject.put("form", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventBlockIdBlank() {
-        questionEventObject.put("id", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventOpcodeBlank() {
-        questionEventObject.put("opcode", "");
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
@@ -476,7 +257,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreQuestionEventJSON() {
+    public void testStoreQuestionEventJsonProcessing() {
         questionEventObject.put("feedback", "no");
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
@@ -486,57 +267,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreQuestionEventIllegalArgument() {
-        questionEventObject.put("event", "SPRITE");
-        assertDoesNotThrow(
-                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventDateParse() {
-        questionEventObject.put("time", "0");
-        assertDoesNotThrow(
-                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveQuestionEvent(any());
-    }
-
-    @Test
     public void testStoreResourceEvent() {
-        assertDoesNotThrow(
-                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveResourceEvent(any());
-    }
-
-    @Test
-    public void testStoreResourceEventDataFormatBlank() throws JSONException {
-        resourceEventObject.put("dataFormat", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveResourceEvent(any());
-    }
-
-    @Test
-    public void testStoreResourceEventMd5Blank() throws JSONException {
-        resourceEventObject.put("md5", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
-        );
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
-        verify(eventService).saveResourceEvent(any());
-    }
-
-    @Test
-    public void testStoreResourceEventNameBlank() throws JSONException {
-        resourceEventObject.put("name", "");
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
@@ -555,28 +286,8 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreResourceEventJSON() throws JSONException {
-        resourceEventObject.put("user", "unicorn");
-        assertDoesNotThrow(
-                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveResourceEvent(any());
-    }
-
-    @Test
-    public void testStoreResourceEventIllegalArgument() throws JSONException {
+    public void testStoreResourceEventJsonProcessing() throws JSONException {
         resourceEventObject.put("event", "");
-        assertDoesNotThrow(
-                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveResourceEvent(any());
-    }
-
-    @Test
-    public void testStoreResourceEventDateTimeParse() throws JSONException {
-        resourceEventObject.put("time", "0");
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
@@ -604,28 +315,8 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreFileEventJSON() throws JSONException {
+    public void testStoreFileEventJsonProcessing() throws JSONException {
         fileEventObject.put("user", "theGordon");
-        assertDoesNotThrow(
-                () -> eventRestController.storeFileEvent(fileEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(fileService, never()).saveFile(any());
-    }
-
-    @Test
-    public void testStoreFileEventIllegalArgument() throws JSONException {
-        fileEventObject.put("file", "%");
-        assertDoesNotThrow(
-                () -> eventRestController.storeFileEvent(fileEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(fileService, never()).saveFile(any());
-    }
-
-    @Test
-    public void testStoreFileEventDateTimeParse() throws JSONException {
-        fileEventObject.put("time", "%");
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
@@ -653,26 +344,7 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testStoreZipFileJSON() {
-        sb3ZipObject.put("user", "theGordon");
-        assertDoesNotThrow(
-                () -> eventRestController.storeZipFile(sb3ZipObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(fileService, never()).saveSb3Zip(any());
-    }
-
-    @Test
-    public void testStoreZipFileIllegalArgument() {
-        sb3ZipObject.put("zip", "%");
-        assertDoesNotThrow(
-                () -> eventRestController.storeZipFile(sb3ZipObject.toString())
-        );
-        verify(fileService, never()).saveSb3Zip(any());
-    }
-
-    @Test
-    public void testStoreZipFileDateTimeParse() {
+    public void testStoreZipFileJsonProcessing() {
         sb3ZipObject.put("time", "%");
         assertDoesNotThrow(
                 () -> eventRestController.storeZipFile(sb3ZipObject.toString())

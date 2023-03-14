@@ -1,5 +1,9 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import fim.unipassau.de.scratch1984.util.enums.DebuggerEventSpecific;
 import fim.unipassau.de.scratch1984.util.enums.DebuggerEventType;
 import lombok.AllArgsConstructor;
@@ -22,6 +26,7 @@ import java.util.Objects;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DebuggerEventDTO implements EventDTO {
 
     /**
@@ -42,11 +47,14 @@ public class DebuggerEventDTO implements EventDTO {
     /**
      * The local date time at which the debugger interaction occurred in the Scratch GUI.
      */
+    @JsonProperty("time")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime date;
 
     /**
      * The type of debugger event that occurred.
      */
+    @JsonProperty("type")
     private DebuggerEventType eventType;
 
     /**
@@ -57,11 +65,13 @@ public class DebuggerEventDTO implements EventDTO {
     /**
      * The block or target id of the debugger event.
      */
+    @JsonProperty("scratchId")
     private String blockOrTargetID;
 
     /**
      * The target name or block opcode of the debugger event.
      */
+    @JsonProperty("name")
     private String nameOrOpcode;
 
     /**
