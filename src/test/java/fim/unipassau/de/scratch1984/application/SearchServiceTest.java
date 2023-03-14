@@ -12,6 +12,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -572,8 +573,8 @@ public class SearchServiceTest {
                 }
 
                 @Override
-                public String getRole() {
-                    return PARTICIPANT;
+                public Role getRole() {
+                    return Role.PARTICIPANT;
                 }
             };
 

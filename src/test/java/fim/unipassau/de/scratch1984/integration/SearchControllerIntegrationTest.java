@@ -7,6 +7,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjec
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.SearchController;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -54,8 +55,6 @@ public class SearchControllerIntegrationTest {
     private static final String QUERY = "query";
     private static final String LONG_QUERY = StringCreator.createLongString(101);
     private static final String BLANK = "  ";
-    private static final String ADMIN = "ADMIN";
-    private static final String PARTICIPANT = "PARTICIPANT";
     private static final String USERS = "users";
     private static final String EXPERIMENTS = "experiments";
     private static final String COURSES = "courses";
@@ -179,8 +178,8 @@ public class SearchControllerIntegrationTest {
                 }
 
                 @Override
-                public String getRole() {
-                    return id == 1 ? ADMIN : PARTICIPANT;
+                public Role getRole() {
+                    return id == 1 ? Role.ADMIN : Role.PARTICIPANT;
                 }
             };
 

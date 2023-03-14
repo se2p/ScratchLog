@@ -13,6 +13,8 @@ import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.Secrets;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -226,7 +228,7 @@ public class ParticipantController {
         }
 
         String secret = Secrets.generateRandomBytes(Constants.SECRET_LENGTH);
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         userDTO.setSecret(secret);
         userDTO.setLastLogin(LocalDateTime.now());
         UserDTO saved = userService.saveUser(userDTO);
@@ -298,7 +300,7 @@ public class ParticipantController {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
             addModelInfo(experimentDTO, model);
             return "experiment";
-        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+        } else if (!userDTO.getRole().equals(Role.PARTICIPANT)) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
         } else if (!userService.existsParticipant(userDTO.getId(), experimentId)) {
             model.addAttribute(ERROR, resourceBundle.getString("no_participant_entry"));
@@ -569,8 +571,8 @@ public class ParticipantController {
      * @param language The user's preferred language.
      * @return The corresponding locale, or English as a default value.
      */
-    private Locale getLocaleFromLanguage(final UserDTO.Language language) {
-        if (language == UserDTO.Language.GERMAN) {
+    private Locale getLocaleFromLanguage(final Language language) {
+        if (language == Language.GERMAN) {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;

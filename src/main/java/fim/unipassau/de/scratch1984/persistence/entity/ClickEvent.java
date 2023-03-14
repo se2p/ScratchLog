@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
+import fim.unipassau.de.scratch1984.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ClickEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,6 +10,8 @@ import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -56,16 +60,18 @@ public class ClickEvent implements Event {
     private LocalDateTime date;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ClickEventDTO.ClickEventType}.
+     * The type of click event that occurred.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "event_type")
-    private String eventType;
+    private ClickEventType eventType;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ClickEventDTO.ClickEvent}.
+     * The specific event that occurred.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "event")
-    private String event;
+    private ClickEventSpecific event;
 
     /**
      * Additional information about the event.
@@ -83,8 +89,8 @@ public class ClickEvent implements Event {
      * @param event The specific event.
      * @param metadata The metadata.
      */
-    public ClickEvent(final User user, final Experiment experiment, final LocalDateTime date, final String eventType,
-                      final String event, final String metadata) {
+    public ClickEvent(final User user, final Experiment experiment, final LocalDateTime date,
+                      final ClickEventType eventType, final ClickEventSpecific event, final String metadata) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;

@@ -13,6 +13,8 @@ import fim.unipassau.de.scratch1984.persistence.repository.FileRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.Sb3ZipRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,7 +68,7 @@ public class FileServiceTest {
     private static final String GUI_URL = "scratch";
     private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "png", new byte[]{1, 2, 3, 4});
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip", new byte[]{1, 2, 3, 4});
-    private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
+    private final User user = new User("participant", "email", Role.PARTICIPANT, Language.GERMAN, "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
     private final Participant participant = new Participant(user, experiment, LocalDateTime.now(), null);

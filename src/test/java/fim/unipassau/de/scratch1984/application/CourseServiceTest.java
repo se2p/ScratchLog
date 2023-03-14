@@ -15,6 +15,8 @@ import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,7 +80,7 @@ public class CourseServiceTest {
     private final Course course = new Course(ID, TITLE, DESCRIPTION, CONTENT, false, DATE);
     private final Experiment experiment1 = new Experiment(ID, TITLE, DESCRIPTION, "", "", false, false, "url");
     private final Experiment experiment2 = new Experiment(ID, TITLE, DESCRIPTION, "", "", false, true, "url");
-    private final User user = new User(USERNAME, "email", "PARTICIPANT", "ENGLISH", "password", "secret");
+    private final User user = new User(USERNAME, "email", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
     private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment2, DATE);
     private final CourseParticipant courseParticipant = new CourseParticipant(user, course, DATE);
 
@@ -93,7 +95,7 @@ public class CourseServiceTest {
         course.setLastChanged(DATE);
         experiment1.setActive(false);
         experiment2.setActive(false);
-        user.setRole("PARTICIPANT");
+        user.setRole(Role.PARTICIPANT);
         user.setId(ID);
         user.setActive(false);
         user.setSecret("secret");
@@ -557,7 +559,7 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseParticipantAdmin() {
-        user.setRole("ADMIN");
+        user.setRole(Role.ADMIN);
         when(courseRepository.getOne(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         assertThrows(IllegalStateException.class,

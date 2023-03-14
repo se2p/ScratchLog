@@ -4,6 +4,8 @@ import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Sb3Zip;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.Sb3ZipRepository;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +33,8 @@ public class Sb3ZipRepositoryTest {
 
     private final LocalDateTime date = LocalDateTime.now();
     private static final String GUI_URL = "scratch";
-    private User user1 = new User("participant1", "part1@part.de", "PARTICIPANT", "GERMAN", "password", "secret1");
-    private User user2 = new User("participant2", "part2@part.de", "PARTICIPANT", "GERMAN", "password", "secret2");
+    private User user1 = new User("participant1", "part1@part.de", Role.PARTICIPANT, Language.GERMAN, "password", "secret1");
+    private User user2 = new User("participant2", "part2@part.de", Role.PARTICIPANT, Language.GERMAN, "password", "secret2");
     private Experiment experiment1 = new Experiment(null, "experiment1", "description", "info", "postscript", true,
             false, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "experiment2", "description", "info", "postscript", true,

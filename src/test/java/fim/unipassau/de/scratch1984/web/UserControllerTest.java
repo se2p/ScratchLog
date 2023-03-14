@@ -9,6 +9,9 @@ import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.web.controller.UserController;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
@@ -135,12 +138,10 @@ public class UserControllerTest {
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final int ID = 1;
     private static final int AMOUNT = 5;
-    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
-            PASSWORD, SECRET);
-    private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
-            PASSWORD, SECRET);
-    private final UserBulkDTO userBulkDTO = new UserBulkDTO(AMOUNT, UserDTO.Language.ENGLISH, USERNAME, false);
-    private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
+    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
+    private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
+    private final UserBulkDTO userBulkDTO = new UserBulkDTO(AMOUNT, Language.ENGLISH, USERNAME, false);
+    private final TokenDTO tokenDTO = new TokenDTO(TokenType.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
 
     @BeforeEach
@@ -153,14 +154,14 @@ public class UserControllerTest {
         userDTO.setUsername(USERNAME);
         userDTO.setPassword(PASSWORD);
         userDTO.setEmail(EMAIL);
-        userDTO.setRole(UserDTO.Role.ADMIN);
+        userDTO.setRole(Role.ADMIN);
         userDTO.setNewPassword("");
         userDTO.setConfirmPassword("");
         userDTO.setActive(true);
         userDTO.setSecret(SECRET);
         userDTO.setAttempts(0);
         userBulkDTO.setAmount(AMOUNT);
-        userBulkDTO.setLanguage(UserDTO.Language.ENGLISH);
+        userBulkDTO.setLanguage(Language.ENGLISH);
         userBulkDTO.setUsername(USERNAME);
         userBulkDTO.setStartAtOne(false);
         passwordDTO.setPassword(PASSWORD);
@@ -302,7 +303,7 @@ public class UserControllerTest {
                 bindingResult));
         verify(userService).getUser(USERNAME);
         verify(userService).updateUser(userDTO);
-        verify(tokenService).generateToken(TokenDTO.Type.DEACTIVATED, "", userDTO.getId());
+        verify(tokenService).generateToken(TokenType.DEACTIVATED, "", userDTO.getId());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).loginUser(any());
         verify(model).addAttribute(anyString(), anyString());
@@ -445,14 +446,14 @@ public class UserControllerTest {
         MailServerSetter.setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
         assertEquals(REDIRECT_SUCCESS, userController.addUser(userDTO, bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(userService).existsEmail(userDTO.getEmail());
         verify(userService).existsUser(userDTO.getUsername());
         verify(userService).saveUser(userDTO);
-        verify(tokenService).generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId());
+        verify(tokenService).generateToken(TokenType.REGISTER, null, oldDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
@@ -461,13 +462,13 @@ public class UserControllerTest {
         MailServerSetter.setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
         assertEquals(Constants.ERROR, userController.addUser(userDTO, bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(userService).existsEmail(userDTO.getEmail());
         verify(userService).existsUser(userDTO.getUsername());
         verify(userService).saveUser(userDTO);
-        verify(tokenService).generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId());
+        verify(tokenService).generateToken(TokenType.REGISTER, null, oldDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
@@ -689,12 +690,12 @@ public class UserControllerTest {
         MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
-        when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
         assertEquals(REDIRECT_INFO, userController.passwordReset(userDTO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
-        verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
+        verify(tokenService).generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
@@ -703,11 +704,11 @@ public class UserControllerTest {
         MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
-        when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
         assertEquals(REDIRECT_INFO, userController.passwordReset(userDTO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
-        verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
+        verify(tokenService).generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
@@ -830,7 +831,7 @@ public class UserControllerTest {
     public void testGetProfileParticipant() {
         HashMap<Integer, String> experiments = new HashMap<>();
         experiments.put(ID, "Title");
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
@@ -1125,7 +1126,7 @@ public class UserControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
-        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(EMAIL_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
@@ -1134,7 +1135,7 @@ public class UserControllerTest {
         verify(authentication).getName();
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
-        verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(tokenService).generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
         verify(httpServletRequest, never()).getSession(false);
     }
@@ -1149,7 +1150,7 @@ public class UserControllerTest {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
@@ -1158,7 +1159,7 @@ public class UserControllerTest {
         verify(authentication).getName();
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
-        verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(tokenService).generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID);
         verify(httpServletRequest, never()).getSession(false);
     }
 
@@ -1172,7 +1173,7 @@ public class UserControllerTest {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenThrow(NotFoundException.class);
+        when(tokenService.generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID)).thenThrow(NotFoundException.class);
         when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         assertEquals(PROFILE_REDIRECT + USERNAME, userController.updateUser(userDTO, bindingResult,
                 httpServletRequest, httpServletResponse));
@@ -1181,7 +1182,7 @@ public class UserControllerTest {
         verify(authentication).getName();
         verify(userService).updateUser(oldDTO);
         verify(userService).existsEmail(NEW_EMAIL);
-        verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(tokenService).generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
         verify(httpServletRequest, never()).getSession(false);
     }
@@ -1464,7 +1465,7 @@ public class UserControllerTest {
     @Test
     public void testDeleteUserParticipant() {
         oldDTO.setId(ID + 1);
-        oldDTO.setRole(UserDTO.Role.PARTICIPANT);
+        oldDTO.setRole(Role.PARTICIPANT);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
@@ -1616,7 +1617,7 @@ public class UserControllerTest {
 
     @Test
     public void testChangeActiveStatusDeactivate() {
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         when(userService.getUserById(ID)).thenReturn(userDTO);
         assertAll(
                 () -> assertEquals(PROFILE_REDIRECT + userDTO.getUsername(),
@@ -1630,7 +1631,7 @@ public class UserControllerTest {
 
     @Test
     public void testChangeActiveStatusActivate() {
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         userDTO.setActive(false);
         userDTO.setAttempts(3);
         when(userService.getUserById(ID)).thenReturn(userDTO);

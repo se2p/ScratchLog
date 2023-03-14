@@ -14,6 +14,8 @@ import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,7 +80,7 @@ public class ParticipantServiceTest {
     private static final int ID = 1;
     private static final long MAX_DAYS = 90;
     private static final LocalDateTime MAX_TIME = LocalDateTime.now().minusDays(MAX_DAYS);
-    private final User user = new User(USERNAME, EMAIL, PARTICIPANT, "ENGLISH", PASSWORD, SECRET);
+    private final User user = new User(USERNAME, EMAIL, Role.PARTICIPANT, Language.ENGLISH, PASSWORD, SECRET);
     private final Experiment experiment1 = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
     private final Experiment experiment2 = new Experiment(ID, "title", "description", "info", "postscript", true,

@@ -3,7 +3,8 @@ package fim.unipassau.de.scratch1984.application.service;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.spring.configuration.SAML2Properties;
-import fim.unipassau.de.scratch1984.web.dto.UserDTO;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,8 +107,8 @@ public class SAML2Service {
         user.setUsername(username);
         user.setEmail(substituteAttributes(properties.getEmailPattern(), principal));
         user.setActive(true);
-        user.setRole(UserDTO.Role.PARTICIPANT.name());
-        user.setLanguage(UserDTO.Language.ENGLISH.name());
+        user.setRole(Role.PARTICIPANT);
+        user.setLanguage(Language.ENGLISH);
         user.setLastLogin(LocalDateTime.now());
         return userRepository.save(user);
     }

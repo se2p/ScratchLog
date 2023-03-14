@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -90,15 +91,14 @@ public class TokenController {
             return "redirect:/?error=true";
         }
 
-        if (tokenDTO.getType() == TokenDTO.Type.CHANGE_EMAIL) {
+        if (tokenDTO.getType() == TokenType.CHANGE_EMAIL) {
             try {
                 userService.updateEmail(tokenDTO.getUser(), tokenDTO.getMetadata());
                 tokenService.deleteToken(tokenDTO.getValue());
             } catch (NotFoundException e) {
                 return Constants.ERROR;
             }
-        } else if (tokenDTO.getType() == TokenDTO.Type.REGISTER || tokenDTO.getType()
-                == TokenDTO.Type.FORGOT_PASSWORD) {
+        } else if (tokenDTO.getType() == TokenType.REGISTER || tokenDTO.getType() == TokenType.FORGOT_PASSWORD) {
             UserDTO userDTO = userService.getUserById(tokenDTO.getUser());
             model.addAttribute("userDTO", userDTO);
             model.addAttribute("token", tokenDTO.getValue());

@@ -11,6 +11,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.Secrets;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -359,7 +360,7 @@ public class UserService {
      */
     @Transactional
     public void deactivateOldParticipantAccounts() {
-        List<User> inactiveUsers = userRepository.findAllByRoleAndLastLoginBefore(UserDTO.Role.PARTICIPANT.toString(),
+        List<User> inactiveUsers = userRepository.findAllByRoleAndLastLoginBefore(Role.PARTICIPANT,
                 LocalDateTime.now().minusDays(Constants.PARTICIPANT_INACTIVE_DAYS));
 
         for (User user : inactiveUsers) {
@@ -418,7 +419,7 @@ public class UserService {
      */
     @Transactional
     public boolean isLastAdmin() {
-        List<User> admins = userRepository.findAllByRole(UserDTO.Role.ADMIN.toString());
+        List<User> admins = userRepository.findAllByRole(Role.ADMIN);
 
         if (admins.size() < 1) {
             throw new IllegalStateException("There are no users with administrator status in the database!");
@@ -581,8 +582,8 @@ public class UserService {
     private User createUser(final UserDTO userDTO) {
         User user = User.builder()
                 .username(userDTO.getUsername())
-                .role(userDTO.getRole().toString())
-                .language(userDTO.getLanguage().toString())
+                .role(userDTO.getRole())
+                .language(userDTO.getLanguage())
                 .active(userDTO.isActive())
                 .attempts(userDTO.getAttempts())
                 .build();
@@ -615,8 +616,8 @@ public class UserService {
     private UserDTO createUserDTO(final User user) {
         UserDTO userDTO = UserDTO.builder()
                 .username(user.getUsername())
-                .role(UserDTO.Role.valueOf(user.getRole()))
-                .language(UserDTO.Language.valueOf(user.getLanguage()))
+                .role(user.getRole())
+                .language(user.getLanguage())
                 .active(user.isActive())
                 .attempts(user.getAttempts())
                 .build();

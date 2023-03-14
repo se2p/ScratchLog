@@ -4,6 +4,8 @@ import fim.unipassau.de.scratch1984.application.service.SAML2Service;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.spring.configuration.SAML2Properties;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +47,7 @@ public class SAML2ServiceTest {
 
     private static final String VALUE = "value";
     private Set<String> keySet = Set.of(VALUE);
-    private final User user = new User("user", "email", "role", "lang", "password", "secret");
+    private final User user = new User("user", "email", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
 
     @BeforeEach
     public void setup() {

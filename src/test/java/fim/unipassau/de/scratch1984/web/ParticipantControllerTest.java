@@ -9,6 +9,8 @@ import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.ParticipantController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -110,10 +112,10 @@ public class ParticipantControllerTest {
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String LONG_INPUT = StringCreator.createLongString(101);
     private static final int ID = 1;
-    private final UserDTO newUser = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", "secret");
-    private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", "secret");
+    private final UserDTO newUser = new UserDTO(PARTICIPANT, EMAIL, Role.PARTICIPANT, Language.ENGLISH, "password",
+            "secret");
+    private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, Role.PARTICIPANT, Language.ENGLISH, "password",
+            "secret");
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true,
             false, GUI_URL);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
@@ -123,7 +125,7 @@ public class ParticipantControllerTest {
         userDTO.setId(ID);
         userDTO.setUsername(PARTICIPANT);
         userDTO.setEmail(EMAIL);
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         userDTO.setActive(true);
         userDTO.setSecret("secret");
         experimentDTO.setActive(true);
@@ -425,7 +427,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testDeleteParticipantUserAdmin() {
-        userDTO.setRole(UserDTO.Role.ADMIN);
+        userDTO.setRole(Role.ADMIN);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);

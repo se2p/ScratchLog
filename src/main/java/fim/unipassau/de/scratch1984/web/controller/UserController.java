@@ -10,6 +10,9 @@ import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.util.validation.StringValidator;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
@@ -242,7 +245,7 @@ public class UserController {
             } else if (findUser.getAttempts() >= Constants.MAX_LOGIN_ATTEMPTS) {
                 findUser.setActive(false);
                 userService.updateUser(findUser);
-                tokenService.generateToken(TokenDTO.Type.DEACTIVATED, "", findUser.getId());
+                tokenService.generateToken(TokenType.DEACTIVATED, "", findUser.getId());
                 LOGGER.info("Deactivated account of user with username " + userDTO.getUsername()
                         + " due to exceeding the maximum number of login attempts!");
                 model.addAttribute("error", resourceBundle.getString("account_deactivated"));
@@ -341,7 +344,7 @@ public class UserController {
         if (!ApplicationProperties.MAIL_SERVER) {
             return "redirect:/users/profile?name=" + saved.getUsername();
         } else {
-            TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.REGISTER, null, saved.getId());
+            TokenDTO tokenDTO = tokenService.generateToken(TokenType.REGISTER, null, saved.getId());
 
             if (sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
                     resourceBundle)) {
@@ -410,7 +413,7 @@ public class UserController {
             if (userService.existsUser(username)) {
                 invalidUsernames.add(username);
             } else {
-                UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, UserDTO.Role.PARTICIPANT,
+                UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, Role.PARTICIPANT,
                         userBulkDTO.getLanguage(), null, null);
                 userDTO.setActive(true);
                 userDTO.setLastLogin(LocalDateTime.now());
@@ -458,7 +461,7 @@ public class UserController {
             UserDTO findEmail = userService.getUserByEmail(userDTO.getEmail());
 
             if (findEmail.equals(findUsername)) {
-                TokenDTO tokenDTO = tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, findEmail.getId());
+                TokenDTO tokenDTO = tokenService.generateToken(TokenType.FORGOT_PASSWORD, null, findEmail.getId());
                 sendEmail(userDTO.getEmail(), tokenDTO.getValue(), "password_set", "password-set-email.html",
                         resourceBundle);
             }
@@ -510,7 +513,7 @@ public class UserController {
             }
         }
 
-        if (userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+        if (userDTO.getRole().equals(Role.PARTICIPANT)) {
             experiments = participantService.getExperimentInfoForParticipant(userDTO.getId());
         }
 
@@ -706,7 +709,7 @@ public class UserController {
             if ((passwordDTO.getPassword().length() > Constants.SMALL_FIELD)
                     || (!userService.matchesPassword(passwordDTO.getPassword(), currentUser.getPassword()))) {
                 return "redirect:/users/profile?invalid=true&name=" + userDTO.getUsername();
-            } else if (userDTO.getRole().equals(UserDTO.Role.ADMIN) && userService.isLastAdmin()) {
+            } else if (userDTO.getRole().equals(Role.ADMIN) && userService.isLastAdmin()) {
                 return "redirect:/users/profile?lastAdmin=true";
             }
 
@@ -749,7 +752,7 @@ public class UserController {
         try {
             UserDTO userDTO = userService.getUserById(userId);
 
-            if (userDTO.getRole().equals(UserDTO.Role.ADMIN)) {
+            if (userDTO.getRole().equals(Role.ADMIN)) {
                 LOGGER.error("Cannot deactivate an administrator profile!");
                 return Constants.ERROR;
             }
@@ -965,7 +968,7 @@ public class UserController {
         TokenDTO tokenDTO;
 
         try {
-            tokenDTO = tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, email, id);
+            tokenDTO = tokenService.generateToken(TokenType.CHANGE_EMAIL, email, id);
         } catch (NotFoundException e) {
             return false;
         }
@@ -1028,8 +1031,8 @@ public class UserController {
      * @param language The user's preferred language.
      * @return The corresponding locale, or English as a default value.
      */
-    private Locale getLocaleFromLanguage(final UserDTO.Language language) {
-        if (language == UserDTO.Language.GERMAN) {
+    private Locale getLocaleFromLanguage(final Language language) {
+        if (language == Language.GERMAN) {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;

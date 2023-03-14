@@ -7,6 +7,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.TokenRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +76,7 @@ public class TokenService {
     /**
      * Creates a new token with the given parameters.
      *
-     * @param type The {@link fim.unipassau.de.scratch1984.web.dto.TokenDTO.Type} of the token.
+     * @param type The {@link TokenType} of the token.
      * @param metadata Optional metadata for the token.
      * @param userId The user for whom this token is to be created.
      * @return The newly created token, if the information was persisted.
@@ -84,7 +85,7 @@ public class TokenService {
      * @throws StoreException if the created token could not be persisted.
      */
     @Transactional
-    public TokenDTO generateToken(final TokenDTO.Type type, final String metadata, final int userId) {
+    public TokenDTO generateToken(final TokenType type, final String metadata, final int userId) {
         if (userId < Constants.MIN_ID) {
             throw new IllegalArgumentException("Cannot generate token with invalid user id " + userId + "!");
         } else if (type == null) {
@@ -178,7 +179,7 @@ public class TokenService {
         }
 
         List<Token> expiredRegistrations = tokenRepository.findAllByDateBeforeAndType(localDateTime,
-                TokenDTO.Type.REGISTER.toString());
+                TokenType.REGISTER);
 
         for (Token token : expiredRegistrations) {
             if (token.getUser() == null) {
@@ -205,7 +206,7 @@ public class TokenService {
         }
 
         List<Token> deactivatedAccounts = tokenRepository.findAllByDateBeforeAndType(localDateTime,
-                TokenDTO.Type.DEACTIVATED.toString());
+                TokenType.DEACTIVATED);
 
         for (Token token : deactivatedAccounts) {
             if (token.getUser() == null || token.getUser().getId() == null) {
@@ -229,17 +230,17 @@ public class TokenService {
     /**
      * Returns the {@link LocalDateTime} expiration date for a token with the given type.
      *
-     * @param type The {@link fim.unipassau.de.scratch1984.web.dto.TokenDTO.Type}.
+     * @param type The {@link TokenType}.
      * @return The computed expiration date.
      */
-    private LocalDateTime computeExpirationDate(final TokenDTO.Type type) {
+    private LocalDateTime computeExpirationDate(final TokenType type) {
         LocalDateTime dateTime = LocalDateTime.now();
 
-        if (type == TokenDTO.Type.CHANGE_EMAIL) {
+        if (type == TokenType.CHANGE_EMAIL) {
             return dateTime.plusHours(EMAIL_TOKEN_EXPIRES);
-        } else if (type == TokenDTO.Type.FORGOT_PASSWORD) {
+        } else if (type == TokenType.FORGOT_PASSWORD) {
             return dateTime.plusHours(PASSWORD_TOKEN_EXPIRES);
-        } else if (type == TokenDTO.Type.DEACTIVATED) {
+        } else if (type == TokenType.DEACTIVATED) {
             return dateTime.plusHours(DEACTIVATED_TOKEN_EXPIRES);
         } else {
             return dateTime.plusDays(REGISTER_TOKEN_EXPIRES);
@@ -254,7 +255,7 @@ public class TokenService {
      */
     private Token createToken(final TokenDTO tokenDTO) {
         Token token = Token.builder()
-                .type(tokenDTO.getType().toString())
+                .type(tokenDTO.getType())
                 .date(tokenDTO.getExpirationDate())
                 .build();
 
@@ -276,7 +277,7 @@ public class TokenService {
      */
     private TokenDTO createTokenDTO(final Token token) {
         TokenDTO tokenDTO = TokenDTO.builder()
-                .type(TokenDTO.Type.valueOf(token.getType()))
+                .type(token.getType())
                 .expirationDate(token.getDate())
                 .user(token.getUser().getId())
                 .build();

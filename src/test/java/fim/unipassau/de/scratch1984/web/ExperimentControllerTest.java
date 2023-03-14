@@ -15,6 +15,8 @@ import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -150,10 +152,10 @@ public class ExperimentControllerTest {
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false,
             false, GUI_URL);
-    private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, PASSWORD, "secret1");
-    private final UserDTO participant = new UserDTO(PARTICIPANTS, EMAIL, UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "user", null);
+    private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", Role.ADMIN, Language.ENGLISH, PASSWORD,
+            "secret1");
+    private final UserDTO participant = new UserDTO(PARTICIPANTS, EMAIL, Role.PARTICIPANT, Language.ENGLISH, "user",
+            null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final List<UserDTO> userDTOS = new ArrayList<>();
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);

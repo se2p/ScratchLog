@@ -7,6 +7,14 @@ import fim.unipassau.de.scratch1984.persistence.entity.Experiment;
 import fim.unipassau.de.scratch1984.persistence.entity.ResourceEvent;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.EventCountRepository;
+import fim.unipassau.de.scratch1984.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.BlockEventType;
+import fim.unipassau.de.scratch1984.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ClickEventType;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventType;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,37 +41,42 @@ public class EventCountRepositoryTest {
 
     private final LocalDateTime date = LocalDateTime.now();
     private static final String GUI_URL = "scratch";
-    private User user1 = new User("participant1", "part1@part.de", "PARTICIPANT", "GERMAN", "password", "secret1");
-    private User user2 = new User("participant2", "part2@part.de", "PARTICIPANT", "GERMAN", "password", "secret2");
+    private User user1 = new User("participant1", "part1@part.de", Role.PARTICIPANT, Language.GERMAN, "password", "secret1");
+    private User user2 = new User("participant2", "part2@part.de", Role.PARTICIPANT, Language.GERMAN, "password", "secret2");
     private Experiment experiment1 = new Experiment(null, "experiment1", "description", "info", "postscript", true,
             false, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "experiment2", "description", "info", "postscript", true,
             false, GUI_URL);
-    private BlockEvent blockEvent1 = new BlockEvent(user1, experiment1, date, "CREATE", "CREATE", "Figur1",
-            null, "xml", "json");
-    private BlockEvent blockEvent2 = new BlockEvent(user1, experiment1, date, "DRAG", "ENDDRAG", "Figur1",
-            null, null, null);
-    private BlockEvent blockEvent3 = new BlockEvent(user1, experiment2, date, "MOVE", "MOVE", "Figur1",
-            null, null, null);
-    private BlockEvent blockEvent4 = new BlockEvent(user2, experiment1, date, "CLICK", "GREENFLAG", "Figur1",
-            null, null, null);
-    private BlockEvent blockEvent5 = new BlockEvent(user1, experiment1, date, "DRAG", "ENDDRAG", "Figur1",
-            null, null, null);
-    private ClickEvent clickEvent1 = new ClickEvent(user1, experiment1, date, "ICON", "GREENFLAG", "");
-    private ClickEvent clickEvent2 = new ClickEvent(user1, experiment1, date, "CODE", "STACKCLICK", "");
-    private ClickEvent clickEvent3 = new ClickEvent(user1, experiment1, date, "CODE", "STACKCLICK", "");
-    private ClickEvent clickEvent4 = new ClickEvent(user1, experiment2, date, "CODE", "STACKCLICK", "");
-    private ClickEvent clickEvent5 = new ClickEvent(user2, experiment1, date, "ICON", "GREENFLAG", "");
-    private ResourceEvent resourceEvent1 = new ResourceEvent(user1, experiment1, date, "ADD", "ADD_SOUND", "Miau",
-            "hash", "wav", 0);
-    private ResourceEvent resourceEvent2 = new ResourceEvent(user1, experiment1, date, "DELETE", "DELETE_SOUND",
-            "Miau", "hash", "wav", null);
-    private ResourceEvent resourceEvent3 = new ResourceEvent(user1, experiment1, date, "ADD", "ADD_SOUND", "Miau2",
-            "hash", "wav", 0);
-    private ResourceEvent resourceEvent4 = new ResourceEvent(user1, experiment2, date, "ADD", "ADD_COSTUME", "image",
-            "hash", "jpg", 0);
-    private ResourceEvent resourceEvent5 = new ResourceEvent(user2, experiment1, date, "ADD", "ADD_COSTUME", "image",
-            "hash", "jpg", 0);
+    private BlockEvent blockEvent1 = new BlockEvent(user1, experiment1, date, BlockEventType.CREATE,
+            BlockEventSpecific.CREATE, "Figur1", null, "xml", "json");
+    private BlockEvent blockEvent2 = new BlockEvent(user1, experiment1, date, BlockEventType.DRAG,
+            BlockEventSpecific.ENDDRAG, "Figur1", null, null, null);
+    private BlockEvent blockEvent3 = new BlockEvent(user1, experiment2, date, BlockEventType.MOVE,
+            BlockEventSpecific.MOVE, "Figur1", null, null, null);
+    private BlockEvent blockEvent4 = new BlockEvent(user2, experiment1, date, BlockEventType.CLICK,
+            BlockEventSpecific.GREENFLAG, "Figur1", null, null, null);
+    private BlockEvent blockEvent5 = new BlockEvent(user1, experiment1, date, BlockEventType.DRAG,
+            BlockEventSpecific.ENDDRAG, "Figur1", null, null, null);
+    private ClickEvent clickEvent1 = new ClickEvent(user1, experiment1, date, ClickEventType.ICON,
+            ClickEventSpecific.GREENFLAG, "");
+    private ClickEvent clickEvent2 = new ClickEvent(user1, experiment1, date, ClickEventType.CODE,
+            ClickEventSpecific.STACKCLICK, "");
+    private ClickEvent clickEvent3 = new ClickEvent(user1, experiment1, date, ClickEventType.CODE,
+            ClickEventSpecific.STACKCLICK, "");
+    private ClickEvent clickEvent4 = new ClickEvent(user1, experiment2, date, ClickEventType.CODE,
+            ClickEventSpecific.STACKCLICK, "");
+    private ClickEvent clickEvent5 = new ClickEvent(user2, experiment1, date, ClickEventType.ICON,
+            ClickEventSpecific.GREENFLAG, "");
+    private ResourceEvent resourceEvent1 = new ResourceEvent(user1, experiment1, date, ResourceEventType.ADD,
+            ResourceEventSpecific.ADD_SOUND, "Miau", "hash", "wav", 0);
+    private ResourceEvent resourceEvent2 = new ResourceEvent(user1, experiment1, date, ResourceEventType.DELETE,
+            ResourceEventSpecific.DELETE_SOUND, "Miau", "hash", "wav", null);
+    private ResourceEvent resourceEvent3 = new ResourceEvent(user1, experiment1, date, ResourceEventType.ADD,
+            ResourceEventSpecific.ADD_SOUND, "Miau2", "hash", "wav", 0);
+    private ResourceEvent resourceEvent4 = new ResourceEvent(user1, experiment2, date, ResourceEventType.ADD,
+            ResourceEventSpecific.ADD_COSTUME, "image", "hash", "jpg", 0);
+    private ResourceEvent resourceEvent5 = new ResourceEvent(user2, experiment1, date, ResourceEventType.ADD,
+            ResourceEventSpecific.ADD_COSTUME, "image", "hash", "jpg", 0);
 
     @BeforeEach
     public void setup() {
@@ -96,9 +109,9 @@ public class EventCountRepositoryTest {
                 experiment1.getId());
         assertAll(
                 () -> assertEquals(2, eventCounts.size()),
-                () -> assertEquals(blockEvent1.getEvent(), eventCounts.get(0).getEvent()),
+                () -> assertEquals(blockEvent1.getEvent().toString(), eventCounts.get(0).getEvent()),
                 () -> assertEquals(1, eventCounts.get(0).getCount()),
-                () -> assertEquals(blockEvent2.getEvent(), eventCounts.get(1).getEvent()),
+                () -> assertEquals(blockEvent2.getEvent().toString(), eventCounts.get(1).getEvent()),
                 () -> assertEquals(2, eventCounts.get(1).getCount())
         );
     }
@@ -122,9 +135,9 @@ public class EventCountRepositoryTest {
                 experiment1.getId());
         assertAll(
                 () -> assertEquals(2, eventCounts.size()),
-                () -> assertEquals(clickEvent1.getEvent(), eventCounts.get(0).getEvent()),
+                () -> assertEquals(clickEvent1.getEvent().toString(), eventCounts.get(0).getEvent()),
                 () -> assertEquals(1, eventCounts.get(0).getCount()),
-                () -> assertEquals(clickEvent2.getEvent(), eventCounts.get(1).getEvent()),
+                () -> assertEquals(clickEvent2.getEvent().toString(), eventCounts.get(1).getEvent()),
                 () -> assertEquals(2, eventCounts.get(1).getCount())
         );
     }
@@ -148,9 +161,9 @@ public class EventCountRepositoryTest {
                 experiment1.getId());
         assertAll(
                 () -> assertEquals(2, eventCounts.size()),
-                () -> assertEquals(resourceEvent1.getEvent(), eventCounts.get(0).getEvent()),
+                () -> assertEquals(resourceEvent1.getEvent().toString(), eventCounts.get(0).getEvent()),
                 () -> assertEquals(2, eventCounts.get(0).getCount()),
-                () -> assertEquals(resourceEvent2.getEvent(), eventCounts.get(1).getEvent()),
+                () -> assertEquals(resourceEvent2.getEvent().toString(), eventCounts.get(1).getEvent()),
                 () -> assertEquals(1, eventCounts.get(1).getCount())
         );
     }

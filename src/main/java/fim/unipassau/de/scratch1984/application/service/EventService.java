@@ -26,6 +26,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.QuestionEventReposito
 import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.LibraryResource;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
@@ -771,12 +772,10 @@ public class EventService {
      * @param event The event for which the properties are to be set.
      * @param user The {@link User} who caused the event.
      * @param experiment The {@link Experiment} during which the even occurred.
-     * @param eventType The event type to be set.
-     * @param eventName The concrete event to be set.
      * @param eventDTO The {@link EventDTO} containing additional information.
      */
-    private void setEventData(final Event event, final User user, final Experiment experiment, final String eventType,
-                              final String eventName, final EventDTO eventDTO) {
+    private void setEventData(final Event event, final User user, final Experiment experiment,
+                              final EventDTO eventDTO) {
         if (eventDTO.getId() != null) {
             event.setId(eventDTO.getId());
         }
@@ -784,8 +783,6 @@ public class EventService {
         event.setUser(user);
         event.setExperiment(experiment);
         event.setDate(eventDTO.getDate());
-        event.setEventType(eventType);
-        event.setEvent(eventName);
     }
 
     /**
@@ -828,8 +825,9 @@ public class EventService {
             blockEvent.setCode(blockEventDTO.getCode());
         }
 
-        setEventData(blockEvent, user, experiment, blockEventDTO.getEventType().toString(),
-                blockEventDTO.getEvent().toString(), blockEventDTO);
+        blockEvent.setEventType(blockEventDTO.getEventType());
+        blockEvent.setEvent(blockEventDTO.getEvent());
+        setEventData(blockEvent, user, experiment, blockEventDTO);
         return blockEvent;
     }
 
@@ -850,8 +848,9 @@ public class EventService {
             clickEvent.setMetadata(clickEventDTO.getMetadata());
         }
 
-        setEventData(clickEvent, user, experiment, clickEventDTO.getEventType().toString(),
-                clickEventDTO.getEvent().toString(), clickEventDTO);
+        clickEvent.setEventType(clickEventDTO.getEventType());
+        clickEvent.setEvent(clickEventDTO.getEvent());
+        setEventData(clickEvent, user, experiment, clickEventDTO);
         return clickEvent;
     }
 
@@ -881,8 +880,9 @@ public class EventService {
             debuggerEvent.setExecution(debuggerEventDTO.getExecution());
         }
 
-        setEventData(debuggerEvent, user, experiment, debuggerEventDTO.getEventType().toString(),
-                debuggerEventDTO.getEvent().toString(), debuggerEventDTO);
+        debuggerEvent.setEventType(debuggerEventDTO.getEventType());
+        debuggerEvent.setEvent(debuggerEventDTO.getEvent());
+        setEventData(debuggerEvent, user, experiment, debuggerEventDTO);
         return debuggerEvent;
     }
 
@@ -921,8 +921,9 @@ public class EventService {
             questionEvent.setOpcode(questionEventDTO.getOpcode());
         }
 
-        setEventData(questionEvent, user, experiment, questionEventDTO.getEventType().toString(),
-                questionEventDTO.getEvent().toString(), questionEventDTO);
+        questionEvent.setEventType(questionEventDTO.getEventType());
+        questionEvent.setEvent(questionEventDTO.getEvent());
+        setEventData(questionEvent, user, experiment, questionEventDTO);
         return questionEvent;
     }
 
@@ -948,14 +949,15 @@ public class EventService {
         if (resourceEventDTO.getFiletype() != null) {
             resourceEvent.setResourceType(resourceEventDTO.getFiletype());
         }
-        if (resourceEventDTO.getLibraryResource().equals(ResourceEventDTO.LibraryResource.TRUE)) {
+        if (resourceEventDTO.getLibraryResource().equals(LibraryResource.TRUE)) {
             resourceEvent.setLibraryResource(1);
-        } else if (resourceEventDTO.getLibraryResource().equals(ResourceEventDTO.LibraryResource.FALSE)) {
+        } else if (resourceEventDTO.getLibraryResource().equals(LibraryResource.FALSE)) {
             resourceEvent.setLibraryResource(0);
         }
 
-        setEventData(resourceEvent, user, experiment, resourceEventDTO.getEventType().toString(),
-                resourceEventDTO.getEvent().toString(), resourceEventDTO);
+        resourceEvent.setEventType(resourceEventDTO.getEventType());
+        resourceEvent.setEvent(resourceEventDTO.getEvent());
+        setEventData(resourceEvent, user, experiment, resourceEventDTO);
         return resourceEvent;
     }
 
@@ -1006,8 +1008,8 @@ public class EventService {
         for (BlockEvent blockEvent : blockEvents) {
             String[] data = {blockEvent.getId().toString(), blockEvent.getUser().getId().toString(),
                     blockEvent.getExperiment().getId().toString(), blockEvent.getDate().toString(),
-                    blockEvent.getEventType(), blockEvent.getEvent(), blockEvent.getSprite(), blockEvent.getMetadata(),
-                    blockEvent.getXml(), blockEvent.getCode()};
+                    blockEvent.getEventType().toString(), blockEvent.getEvent().toString(), blockEvent.getSprite(),
+                    blockEvent.getMetadata(), blockEvent.getXml(), blockEvent.getCode()};
             events.add(data);
         }
 
@@ -1028,7 +1030,7 @@ public class EventService {
         for (ClickEvent clickEvent : clickEvents) {
             String[] data = {clickEvent.getId().toString(), clickEvent.getUser().getId().toString(),
                     clickEvent.getExperiment().getId().toString(), clickEvent.getDate().toString(),
-                    clickEvent.getEventType(), clickEvent.getEvent(), clickEvent.getMetadata()};
+                    clickEvent.getEventType().toString(), clickEvent.getEvent().toString(), clickEvent.getMetadata()};
             events.add(data);
         }
 
@@ -1050,8 +1052,9 @@ public class EventService {
         for (ResourceEvent resourceEvent : resourceEvents) {
             String[] data = {resourceEvent.getId().toString(), resourceEvent.getUser().getId().toString(),
                     resourceEvent.getExperiment().getId().toString(), resourceEvent.getDate().toString(),
-                    resourceEvent.getEventType(), resourceEvent.getEvent(), resourceEvent.getResourceName(),
-                    resourceEvent.getHash(), resourceEvent.getResourceType(), resourceEvent.getLibraryResource() == null
+                    resourceEvent.getEventType().toString(), resourceEvent.getEvent().toString(),
+                    resourceEvent.getResourceName(), resourceEvent.getHash(), resourceEvent.getResourceType(),
+                    resourceEvent.getLibraryResource() == null
                     ? "null" : resourceEvent.getLibraryResource().toString()};
             events.add(data);
         }

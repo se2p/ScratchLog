@@ -8,6 +8,8 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +36,6 @@ public class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    private static final String ROLE_ADMIN = "ADMIN";
-    private static final String ROLE_PARTICIPANT = "PARTICIPANT";
     private static final String LANGUAGE = "ENGLISH";
     private static final String ADMIN1 = "admin1";
     private static final String USERNAME_SEARCH = "user";
@@ -45,23 +45,23 @@ public class UserRepositoryTest {
     private static final String GUI_URL = "scratch";
     private static final int LIMIT = 5;
     private static final LocalDateTime DATE = LocalDateTime.now();
-    private User user1 = new User(ADMIN1, "admin1@test.de", ROLE_ADMIN, LANGUAGE, "admin1", "secret1");
-    private User user2 = new User("admin2", "admin2@test.com", ROLE_ADMIN, LANGUAGE, "admin2", "secret2");
-    private User user3 = new User("user1", "part1@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user4 = new User("user2", "part2@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", "secret4");
-    private User user5 = new User("user3", "part3@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user6 = new User("user4", "part4@test.de", ROLE_ADMIN, LANGUAGE, "user", null);
-    private User user7 = new User("user5", "part5@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user8 = new User("user6", "part6@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user9 = new User("part1", "part7@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user10 = new User("part2", "part8@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user11 = new User("part3", "part9@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user12 = new User("part4", "part10@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user13 = new User("part5", "part11@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user14 = new User("part6", "part12@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user15 = new User("part7", "part13@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user16 = new User("part8", "part14@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
-    private User user17 = new User("user17", "part17@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+    private User user1 = new User(ADMIN1, "admin1@test.de", Role.ADMIN, Language.ENGLISH, "admin1", "secret1");
+    private User user2 = new User("admin2", "admin2@test.com", Role.ADMIN, Language.ENGLISH, "admin2", "secret2");
+    private User user3 = new User("user1", "part1@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user4 = new User("user2", "part2@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", "secret4");
+    private User user5 = new User("user3", "part3@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user6 = new User("user4", "part4@test.de", Role.ADMIN, Language.ENGLISH, "user", null);
+    private User user7 = new User("user5", "part5@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user8 = new User("user6", "part6@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user9 = new User("part1", "part7@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user10 = new User("part2", "part8@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user11 = new User("part3", "part9@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user12 = new User("part4", "part10@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user13 = new User("part5", "part11@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user14 = new User("part6", "part12@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user15 = new User("part7", "part13@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user16 = new User("part8", "part14@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
+    private User user17 = new User("user17", "part17@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
     private Experiment experiment1 = new Experiment(null, "My Experiment", "Some description", "", "", true, false,
             GUI_URL);
     private Experiment experiment2 = new Experiment(null, "New Experiment", "Some description", "", "", true, false,
@@ -153,7 +153,7 @@ public class UserRepositoryTest {
 
     @Test
     public void testFindUserByRole() {
-        List<User> admins = userRepository.findAllByRole(ROLE_ADMIN);
+        List<User> admins = userRepository.findAllByRole(Role.ADMIN);
         assertEquals(3, admins.size());
     }
 
@@ -427,7 +427,7 @@ public class UserRepositoryTest {
     @Test
     public void testFindLastUsernameAddUser() {
         String username = "user18";
-        User user = new User(username, "part6@test.de", ROLE_PARTICIPANT, LANGUAGE, "user", null);
+        User user = new User(username, "part6@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
         user.setLastLogin(LocalDateTime.now());
         user = entityManager.persist(user);
         Optional<UserProjection> findUser = userRepository.findLastUsername(USERNAME_SEARCH);

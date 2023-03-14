@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,6 +10,8 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -37,10 +40,11 @@ public class Token {
     private String value;
 
     /**
-     * A string representing the {@link fim.unipassau.de.scratch1984.web.dto.TokenDTO.Type}.
+     * The type of the token.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "type")
-    private String type;
+    private TokenType type;
 
     /**
      * The expiration date of the token.
@@ -69,7 +73,7 @@ public class Token {
      * @param metadata Optional metadata for the token.
      * @param user The user to whom this token belongs.
      */
-    public Token(final String type, final LocalDateTime date, final String metadata, final User user) {
+    public Token(final TokenType type, final LocalDateTime date, final String metadata, final User user) {
         this.type = type;
         this.date = date;
         this.metadata = metadata;

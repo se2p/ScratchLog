@@ -63,32 +63,4 @@ public interface Event {
      */
     void setDate(LocalDateTime date);
 
-    /**
-     * Returns the type of the event.
-     *
-     * @return The event type.
-     */
-    String getEventType();
-
-    /**
-     * Sets the type of the event.
-     *
-     * @param eventType The event type to be set.
-     */
-    void setEventType(String eventType);
-
-    /**
-     * Returns the concrete event that occurred.
-     *
-     * @return The respective event.
-     */
-    String getEvent();
-
-    /**
-     * Sets the concrete event that occurred.
-     *
-     * @param event The event to be set.
-     */
-    void setEvent(String event);
-
 }

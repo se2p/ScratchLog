@@ -9,6 +9,8 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.HomeController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -107,8 +109,8 @@ public class HomeControllerTest {
     private static final int ID = 1;
     private static final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "My Experiment", "description",
             "info", "postscript", true, false, GUI_URL);
-    private static final UserDTO userDTO = new UserDTO("participant", "email", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", "");
+    private static final UserDTO userDTO = new UserDTO("participant", "email", Role.PARTICIPANT, Language.ENGLISH, "password",
+            "");
     private final Page<ExperimentTableProjection> experimentPage = new PageImpl<>(getExperimentProjections(5));
     private final Page<CourseTableProjection> coursePage = new PageImpl<>(getCourseTableProjections(3));
 

@@ -9,6 +9,9 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.web.controller.UserController;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
@@ -108,13 +111,11 @@ public class UserControllerIntegrationTest {
     private static final String SECRET = "secret";
     private static final int ID = 1;
     private static final int AMOUNT = 5;
-    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
-            PASSWORD, SECRET);
-    private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH, PASSWORD,
-            SECRET);
-    private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
+    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
+    private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
+    private final TokenDTO tokenDTO = new TokenDTO(TokenType.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
-    private final UserBulkDTO userBulkDTO = new UserBulkDTO(AMOUNT, UserDTO.Language.ENGLISH, USERNAME, true);
+    private final UserBulkDTO userBulkDTO = new UserBulkDTO(AMOUNT, Language.ENGLISH, USERNAME, true);
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -126,14 +127,14 @@ public class UserControllerIntegrationTest {
         oldDTO.setPassword(PASSWORD);
         oldDTO.setUsername(USERNAME);
         oldDTO.setEmail(EMAIL);
-        oldDTO.setRole(UserDTO.Role.ADMIN);
+        oldDTO.setRole(Role.ADMIN);
         userDTO.setId(ID);
         userDTO.setActive(true);
         userDTO.setPassword(PASSWORD);
         userDTO.setUsername(USERNAME);
         userDTO.setEmail(EMAIL);
         userDTO.setSecret(SECRET);
-        userDTO.setRole(UserDTO.Role.ADMIN);
+        userDTO.setRole(Role.ADMIN);
         userDTO.setNewPassword("");
         userDTO.setConfirmPassword("");
         userDTO.setAttempts(0);
@@ -279,7 +280,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(view().name(LOGIN));
         verify(userService).getUser(USERNAME);
         verify(userService).updateUser(userDTO);
-        verify(tokenService).generateToken(TokenDTO.Type.DEACTIVATED, "", userDTO.getId());
+        verify(tokenService).generateToken(TokenType.DEACTIVATED, "", userDTO.getId());
         verify(userService, never()).loginUser(any());
     }
 
@@ -359,7 +360,7 @@ public class UserControllerIntegrationTest {
         MailServerSetter.setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/users/add")
                 .flashAttr(USER_DTO, userDTO)
@@ -371,7 +372,7 @@ public class UserControllerIntegrationTest {
         verify(userService).existsUser(userDTO.getUsername());
         verify(userService).existsEmail(userDTO.getEmail());
         verify(userService).saveUser(userDTO);
-        verify(tokenService).generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId());
+        verify(tokenService).generateToken(TokenType.REGISTER, null, oldDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
@@ -380,7 +381,7 @@ public class UserControllerIntegrationTest {
         MailServerSetter.setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
         mvc.perform(post("/users/add")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -391,7 +392,7 @@ public class UserControllerIntegrationTest {
         verify(userService).existsUser(userDTO.getUsername());
         verify(userService).existsEmail(userDTO.getEmail());
         verify(userService).saveUser(userDTO);
-        verify(tokenService).generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId());
+        verify(tokenService).generateToken(TokenType.REGISTER, null, oldDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
@@ -400,7 +401,7 @@ public class UserControllerIntegrationTest {
         MailServerSetter.setMailServer(false);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/users/add")
                         .flashAttr(USER_DTO, userDTO)
@@ -552,7 +553,7 @@ public class UserControllerIntegrationTest {
         MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
-        when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/users/reset")
                 .flashAttr(USER_DTO, userDTO)
@@ -563,7 +564,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
-        verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
+        verify(tokenService).generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
@@ -572,7 +573,7 @@ public class UserControllerIntegrationTest {
         MailServerSetter.setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
-        when(tokenService.generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
         mvc.perform(post("/users/reset")
                 .flashAttr(USER_DTO, userDTO)
                 .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -582,7 +583,7 @@ public class UserControllerIntegrationTest {
                 .andExpect(view().name(REDIRECT_INFO));
         verify(userService).getUser(userDTO.getUsername());
         verify(userService).getUserByEmail(userDTO.getEmail());
-        verify(tokenService).generateToken(TokenDTO.Type.FORGOT_PASSWORD, null, userDTO.getId());
+        verify(tokenService).generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId());
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
@@ -663,7 +664,7 @@ public class UserControllerIntegrationTest {
     public void testGetProfileParticipant() throws Exception {
         HashMap<Integer, String> experiments = new HashMap<>();
         experiments.put(ID, "Title");
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(participantService.getExperimentInfoForParticipant(userDTO.getId())).thenReturn(experiments);
         mvc.perform(get("/users/profile")
@@ -954,7 +955,7 @@ public class UserControllerIntegrationTest {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
@@ -971,7 +972,7 @@ public class UserControllerIntegrationTest {
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).updateUser(oldDTO);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
-        verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(tokenService).generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID);
         verify(userService).getUser(PROFILE);
     }
 
@@ -982,7 +983,7 @@ public class UserControllerIntegrationTest {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
@@ -1014,7 +1015,7 @@ public class UserControllerIntegrationTest {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
         when(userService.encodePassword(VALID_PASSWORD)).thenReturn(VALID_PASSWORD);
@@ -1032,7 +1033,7 @@ public class UserControllerIntegrationTest {
         verify(authenticationProvider).authenticate(any());
         verify(userService).updateUser(oldDTO);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
-        verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(tokenService).generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID);
         verify(userService, never()).getUser(anyString());
     }
 
@@ -1043,7 +1044,7 @@ public class UserControllerIntegrationTest {
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
-        when(tokenService.generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
+        when(tokenService.generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID)).thenReturn(tokenDTO);
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
@@ -1059,7 +1060,7 @@ public class UserControllerIntegrationTest {
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).updateUser(oldDTO);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
-        verify(tokenService).generateToken(TokenDTO.Type.CHANGE_EMAIL, NEW_EMAIL, ID);
+        verify(tokenService).generateToken(TokenType.CHANGE_EMAIL, NEW_EMAIL, ID);
         verify(userService).getUser(PROFILE);
     }
 
@@ -1250,7 +1251,7 @@ public class UserControllerIntegrationTest {
     @WithMockUser(username = USERNAME, roles = {"ADMIN"})
     public void testDeleteUser() throws Exception {
         oldDTO.setId(ID + 1);
-        oldDTO.setRole(UserDTO.Role.PARTICIPANT);
+        oldDTO.setRole(Role.PARTICIPANT);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
@@ -1371,7 +1372,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testChangeActiveStatusDeactivate() throws Exception {
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/users/active")
                 .param("id", ID_STRING)
@@ -1386,7 +1387,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testChangeActiveStatusActivate() throws Exception {
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         userDTO.setActive(false);
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/users/active")

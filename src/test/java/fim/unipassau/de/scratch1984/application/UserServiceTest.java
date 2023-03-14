@@ -10,6 +10,8 @@ import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,22 +67,20 @@ public class UserServiceTest {
     private static final String BLANK = "   ";
     private static final String PASSWORD = "admin1";
     private static final String EMAIL = "admin1@admin.de";
-    private static final String ADMIN = "ADMIN";
     private static final String SECRET = "secret";
     private static final String GUI_URL = "scratch";
     private static final int ID = 1;
     private static final long INACTIVE_DAYS = 90;
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
-    private final User user1 = new User(USERNAME, EMAIL, "ADMIN", "ENGLISH", PASSWORD, SECRET);
-    private final User user2 = new User("participant1", "part1@part.de", "PARTICIPANT", "ENGLISH",
+    private final User user1 = new User(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
+    private final User user2 = new User("participant1", "part1@part.de", Role.PARTICIPANT, Language.ENGLISH,
             PASSWORD, SECRET);
-    private final User user3 = new User("participant2", "part2@part.de", "PARTICIPANT", "ENGLISH",
+    private final User user3 = new User("participant2", "part2@part.de", Role.PARTICIPANT, Language.ENGLISH,
             PASSWORD, null);
-    private final User user4 = new User("participant3", "part3@part.de", "PARTICIPANT", "ENGLISH",
+    private final User user4 = new User("participant3", "part3@part.de", Role.PARTICIPANT, Language.ENGLISH,
             PASSWORD, null);
-    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, UserDTO.Role.ADMIN, UserDTO.Language.ENGLISH,
-            PASSWORD, SECRET);
+    private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
     private final Participant participant1 = new Participant(user2, experiment, null, null);
     private final Participant participant2 = new Participant(user3, experiment, null, null);
     private final Participant participant3 = new Participant(user4, experiment, null, null);
@@ -215,8 +215,8 @@ public class UserServiceTest {
                 () -> assertEquals(user1.getEmail(), saved.getEmail()),
                 () -> assertEquals(user1.getPassword(), saved.getPassword()),
                 () -> assertEquals(user1.getSecret(), saved.getSecret()),
-                () -> assertEquals(user1.getRole(), saved.getRole().toString()),
-                () -> assertEquals(user1.getLanguage(), saved.getLanguage().toString())
+                () -> assertEquals(user1.getRole(), saved.getRole()),
+                () -> assertEquals(user1.getLanguage(), saved.getLanguage())
         );
         verify(userRepository).save(any());
     }
@@ -256,8 +256,8 @@ public class UserServiceTest {
         assertAll(
                 () -> assertEquals(userDTO.getUsername(), user1.getUsername()),
                 () -> assertEquals(userDTO.getEmail(), user1.getEmail()),
-                () -> assertEquals(userDTO.getRole(), UserDTO.Role.valueOf(user1.getRole())),
-                () -> assertEquals(userDTO.getLanguage(), UserDTO.Language.valueOf(user1.getLanguage())),
+                () -> assertEquals(userDTO.getRole(), user1.getRole()),
+                () -> assertEquals(userDTO.getLanguage(), user1.getLanguage()),
                 () -> assertEquals(userDTO.getPassword(), user1.getPassword()),
                 () -> assertEquals(userDTO.getSecret(), user1.getSecret())
         );
@@ -296,8 +296,8 @@ public class UserServiceTest {
                 () -> assertEquals(USERNAME, found.getUsername()),
                 () -> assertEquals(EMAIL, found.getEmail()),
                 () -> assertEquals(PASSWORD, found.getPassword()),
-                () -> assertEquals(UserDTO.Role.ADMIN, found.getRole()),
-                () -> assertEquals(UserDTO.Language.ENGLISH, found.getLanguage())
+                () -> assertEquals(Role.ADMIN, found.getRole()),
+                () -> assertEquals(Language.ENGLISH, found.getLanguage())
         );
         verify(userRepository).findById(ID);
     }
@@ -326,8 +326,8 @@ public class UserServiceTest {
                 () -> assertEquals(USERNAME, found.getUsername()),
                 () -> assertEquals(EMAIL, found.getEmail()),
                 () -> assertEquals(PASSWORD, found.getPassword()),
-                () -> assertEquals(UserDTO.Role.ADMIN, found.getRole()),
-                () -> assertEquals(UserDTO.Language.ENGLISH, found.getLanguage())
+                () -> assertEquals(Role.ADMIN, found.getRole()),
+                () -> assertEquals(Language.ENGLISH, found.getLanguage())
         );
         verify(userRepository).findByEmail(EMAIL);
     }
@@ -453,8 +453,8 @@ public class UserServiceTest {
                 () -> assertEquals(user1.getEmail(), authenticated.getEmail()),
                 () -> assertEquals(user1.getPassword(), authenticated.getPassword()),
                 () -> assertEquals(user1.getSecret(), authenticated.getSecret()),
-                () -> assertEquals(user1.getRole(), authenticated.getRole().toString()),
-                () -> assertEquals(user1.getLanguage(), authenticated.getLanguage().toString()),
+                () -> assertEquals(user1.getRole(), authenticated.getRole()),
+                () -> assertEquals(user1.getLanguage(), authenticated.getLanguage()),
                 () -> assertTrue(user1.getLastLogin().isAfter(lastLogin)),
                 () -> assertTrue(authenticated.isActive())
         );
@@ -569,13 +569,13 @@ public class UserServiceTest {
     public void testDeactivateOldParticipantAccounts() {
         user2.setActive(true);
         user2.setLastLogin(LocalDateTime.now().minusDays(INACTIVE_DAYS));
-        when(userRepository.findAllByRoleAndLastLoginBefore(anyString(), any())).thenReturn(List.of(user2));
+        when(userRepository.findAllByRoleAndLastLoginBefore(any(), any())).thenReturn(List.of(user2));
         userService.deactivateOldParticipantAccounts();
         assertAll(
                 () -> assertFalse(user2.isActive()),
                 () -> assertNull(user2.getSecret())
         );
-        verify(userRepository).findAllByRoleAndLastLoginBefore(anyString(), any());
+        verify(userRepository).findAllByRoleAndLastLoginBefore(any(), any());
         verify(userRepository).save(user2);
     }
 
@@ -682,25 +682,25 @@ public class UserServiceTest {
     @Test
     public void testIsLastAdmin() {
         admins.add(new User());
-        when(userRepository.findAllByRole(ADMIN)).thenReturn(admins);
+        when(userRepository.findAllByRole(Role.ADMIN)).thenReturn(admins);
         assertFalse(userService.isLastAdmin());
-        verify(userRepository).findAllByRole(ADMIN);
+        verify(userRepository).findAllByRole(Role.ADMIN);
     }
 
     @Test
     public void testIsLastAdminTrue() {
-        when(userRepository.findAllByRole(ADMIN)).thenReturn(admins);
+        when(userRepository.findAllByRole(Role.ADMIN)).thenReturn(admins);
         assertTrue(userService.isLastAdmin());
-        verify(userRepository).findAllByRole(ADMIN);
+        verify(userRepository).findAllByRole(Role.ADMIN);
     }
 
     @Test
     public void testIsLastAdminNoAdmins() {
-        when(userRepository.findAllByRole(ADMIN)).thenReturn(new ArrayList<>());
+        when(userRepository.findAllByRole(Role.ADMIN)).thenReturn(new ArrayList<>());
         assertThrows(IllegalStateException.class,
                 () -> userService.isLastAdmin()
         );
-        verify(userRepository).findAllByRole(ADMIN);
+        verify(userRepository).findAllByRole(Role.ADMIN);
     }
 
     @Test
@@ -760,8 +760,8 @@ public class UserServiceTest {
             }
 
             @Override
-            public String getRole() {
-                return ADMIN;
+            public Role getRole() {
+                return Role.ADMIN;
             }
         };
         when(userRepository.findLastUsername(USERNAME)).thenReturn(java.util.Optional.of(projection));
@@ -818,8 +818,8 @@ public class UserServiceTest {
             }
 
             @Override
-            public String getRole() {
-                return ADMIN;
+            public Role getRole() {
+                return Role.ADMIN;
             }
         };
     }

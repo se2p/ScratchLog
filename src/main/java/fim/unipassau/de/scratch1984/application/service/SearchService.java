@@ -426,7 +426,7 @@ public class SearchService {
     private List<String[]> addUserProjectionInfo(final List<UserProjection> projections) {
         List<String[]> userInfo = new ArrayList<>();
         projections.forEach(projection -> userInfo.add(new String[] {String.valueOf(projection.getId()),
-                projection.getUsername(), projection.getEmail(), projection.getRole()}));
+                projection.getUsername(), projection.getEmail(), projection.getRole().toString()}));
         return userInfo;
     }
 

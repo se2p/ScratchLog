@@ -82,7 +82,7 @@
                     </span>
                     <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
                         <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="lang : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Language).values()}"
+                        <option th:each="lang : ${T(fim.unipassau.de.scratch1984.util.enums.Language).values()}"
                                 th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
                     </select>
                 </div>

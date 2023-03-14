@@ -10,6 +10,8 @@ import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
@@ -108,8 +110,8 @@ public class CourseControllerTest {
     private static final LocalDateTime CHANGED = LocalDateTime.now();
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
-    private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, PASSWORD, "secret");
+    private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", Role.PARTICIPANT, Language.ENGLISH, PASSWORD,
+            "secret");
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(3));
     private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
@@ -121,7 +123,7 @@ public class CourseControllerTest {
         courseDTO.setContent(CONTENT);
         courseDTO.setActive(true);
         courseDTO.setLastChanged(CHANGED);
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         passwordDTO.setPassword(PASSWORD);
         securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class);
     }
@@ -506,7 +508,7 @@ public class CourseControllerTest {
 
     @Test
     public void testAddParticipantAdmin() {
-        userDTO.setRole(UserDTO.Role.ADMIN);
+        userDTO.setRole(Role.ADMIN);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(model.getAttribute(MODEL_ERROR)).thenReturn(USERNAME);

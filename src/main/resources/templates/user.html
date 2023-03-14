@@ -72,7 +72,7 @@
                     </span>
                     <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
                         <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="lang : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Language).values()}"
+                        <option th:each="lang : ${T(fim.unipassau.de.scratch1984.util.enums.Language).values()}"
                                 th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
                     </select>
                 </div>
@@ -87,7 +87,7 @@
                     </span>
                     <select id="role" class="form-select" th:aria-label="#{role}" th:field="*{role}">
                         <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="userRole : ${T(fim.unipassau.de.scratch1984.web.dto.UserDTO.Role).values()}"
+                        <option th:each="userRole : ${T(fim.unipassau.de.scratch1984.util.enums.Role).values()}"
                                 th:value="${userRole}" th:text="#{${userRole.toString().toLowerCase()}}"></option>
                     </select>
                 </div>

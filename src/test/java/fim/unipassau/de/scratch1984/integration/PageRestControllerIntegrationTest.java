@@ -3,6 +3,8 @@ package fim.unipassau.de.scratch1984.integration;
 import fim.unipassau.de.scratch1984.application.service.PageService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.PageRestController;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.junit.jupiter.api.Test;
@@ -43,8 +45,8 @@ public class PageRestControllerIntegrationTest {
     private final String PAGE_STRING = "2";
     private final int ID = 1;
     private final int LAST_PAGE = 3;
-    private final UserDTO userDTO = new UserDTO("participant", "email", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", "");
+    private final UserDTO userDTO = new UserDTO("participant", "email", Role.PARTICIPANT, Language.ENGLISH, "password",
+            "");
 
     @Test
     public void testGetLastCourseParticipantPage() throws Exception {

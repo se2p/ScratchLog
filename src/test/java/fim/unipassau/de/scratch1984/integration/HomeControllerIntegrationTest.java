@@ -10,6 +10,8 @@ import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.HomeController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -92,10 +94,6 @@ public class HomeControllerIntegrationTest {
     private static final String EXPERIMENT = "experiment";
     private static final String USER = "user";
     private static final String GUI_URL = "scratch";
-    private static final String NEXT_COURSE = "/next/course";
-    private static final String PREV_COURSE = "/previous/course";
-    private static final String FIRST_COURSE = "/first/course";
-    private static final String LAST_COURSE = "/last/course";
     private static final String PAGE_COURSE = "/page/course";
     private static final String PAGE_EXPERIMENT = "/page/experiment";
     private final int pageNum = 3;
@@ -103,8 +101,8 @@ public class HomeControllerIntegrationTest {
     private static final int ID = 1;
     private static final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "My Experiment", "description",
             "info", "postscript", true, false, GUI_URL);
-    private static final UserDTO userDTO = new UserDTO("participant", "email", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", "");
+    private static final UserDTO userDTO = new UserDTO("participant", "email", Role.PARTICIPANT, Language.ENGLISH,
+            "password", "");
     private final Page<ExperimentTableProjection> experimentPage = new PageImpl<>(getExperimentProjections(5));
     private final Page<CourseTableProjection> coursePage = new PageImpl<>(getCourseTableProjections(3));
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";

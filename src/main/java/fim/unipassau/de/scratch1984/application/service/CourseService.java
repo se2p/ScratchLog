@@ -20,8 +20,8 @@ import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.Secrets;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
-import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -332,7 +332,7 @@ public class CourseService {
                         + "course participant!");
                 throw new NotFoundException("Could not find the user with username or email " + participant
                         + " when trying to add a course participant!");
-            } else if (!optionalUser.get().getRole().equals(UserDTO.Role.PARTICIPANT.toString())) {
+            } else if (!optionalUser.get().getRole().equals(Role.PARTICIPANT)) {
                 throw new IllegalStateException("Tried to add administrator with username or email " + participant
                         + " as a course participant!");
             }

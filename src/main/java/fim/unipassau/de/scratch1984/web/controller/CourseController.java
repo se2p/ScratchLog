@@ -12,6 +12,7 @@ import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.PageUtils;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.util.validation.StringValidator;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
@@ -582,7 +583,7 @@ public class CourseController {
 
         if (userDTO == null) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
-        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+        } else if (!userDTO.getRole().equals(Role.PARTICIPANT)) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
         } else if (isAdd && courseService.existsCourseParticipant(courseId, input)) {
             model.addAttribute(ERROR, resourceBundle.getString("course_participant_exists"));

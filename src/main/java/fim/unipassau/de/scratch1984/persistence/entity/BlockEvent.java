@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
+import fim.unipassau.de.scratch1984.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.BlockEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,6 +10,8 @@ import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -56,16 +60,18 @@ public class BlockEvent implements Event {
     private LocalDateTime date;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.BlockEventDTO.BlockEventType}.
+     * The type of block event that occurred.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "event_type")
-    private String eventType;
+    private BlockEventType eventType;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.BlockEventDTO.BlockEvent}.
+     * The specific event that occurred.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "event")
-    private String event;
+    private BlockEventSpecific event;
 
     /**
      * The name of the sprite on which the event occurred.
@@ -104,9 +110,9 @@ public class BlockEvent implements Event {
      * @param xml The current xml.
      * @param code The current json.
      */
-    public BlockEvent(final User user, final Experiment experiment, final LocalDateTime date, final String eventType,
-                      final String event, final String sprite, final String metadata, final String xml,
-                      final String code) {
+    public BlockEvent(final User user, final Experiment experiment, final LocalDateTime date,
+                      final BlockEventType eventType, final BlockEventSpecific event, final String sprite,
+                      final String metadata, final String xml, final String code) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;

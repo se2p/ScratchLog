@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,31 +23,6 @@ import java.util.Objects;
 public class TokenDTO {
 
     /**
-     * The available token types.
-     */
-    public enum Type {
-        /**
-         * A token for registration.
-         */
-        REGISTER,
-
-        /**
-         * A token for resetting the password.
-         */
-        FORGOT_PASSWORD,
-
-        /**
-         * A token for changing the e-mail address.
-         */
-        CHANGE_EMAIL,
-
-        /**
-         * A token for a temporarily deactivated user account.
-         */
-        DEACTIVATED
-    }
-
-    /**
      * The unique value of the token.
      */
     private String value;
@@ -54,7 +30,7 @@ public class TokenDTO {
     /**
      * The type of the token.
      */
-    private Type type;
+    private TokenType type;
 
     /**
      * The expiration date of the token.
@@ -79,7 +55,8 @@ public class TokenDTO {
      * @param metadata Optional metadata for the token.
      * @param user The id of the user for whom this token is to be created.
      */
-    public TokenDTO(final Type type, final LocalDateTime expirationDate, final String metadata, final Integer user) {
+    public TokenDTO(final TokenType type, final LocalDateTime expirationDate, final String metadata,
+                    final Integer user) {
         this.type = type;
         this.expirationDate = expirationDate;
         this.metadata = metadata;

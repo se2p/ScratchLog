@@ -24,6 +24,19 @@ import fim.unipassau.de.scratch1984.persistence.repository.QuestionEventReposito
 import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.BlockEventType;
+import fim.unipassau.de.scratch1984.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ClickEventType;
+import fim.unipassau.de.scratch1984.util.enums.DebuggerEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.DebuggerEventType;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.LibraryResource;
+import fim.unipassau.de.scratch1984.util.enums.QuestionEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.QuestionEventType;
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventType;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
@@ -98,19 +111,19 @@ public class EventServiceTest {
 
     private static final int ID = 1;
     private static final String GUI_URL = "scratch";
-    private final BlockEventDTO blockEventDTO = new BlockEventDTO(1, 1, LocalDateTime.now(),
-            BlockEventDTO.BlockEventType.CHANGE, BlockEventDTO.BlockEvent.CHANGE, "sprite", "meta", "xml", "json");
+    private final BlockEventDTO blockEventDTO = new BlockEventDTO(1, 1, LocalDateTime.now(), BlockEventType.CHANGE,
+            BlockEventSpecific.CHANGE, "sprite", "meta", "xml", "json");
     private final ClickEventDTO clickEventDTO = new ClickEventDTO(1, 1, LocalDateTime.now(),
-            ClickEventDTO.ClickEventType.CODE, ClickEventDTO.ClickEvent.STACKCLICK, "meta");
+            ClickEventType.CODE, ClickEventSpecific.STACKCLICK, "meta");
     private final DebuggerEventDTO debuggerEventDTO = new DebuggerEventDTO(1, 1, LocalDateTime.now(),
-            DebuggerEventDTO.DebuggerEventType.BLOCK, DebuggerEventDTO.DebuggerEvent.OPEN_BLOCK, "id", "name", 0, 5);
+            DebuggerEventType.BLOCK, DebuggerEventSpecific.OPEN_BLOCK, "id", "name", 0, 5);
     private final QuestionEventDTO questionEventDTO = new QuestionEventDTO(1, 1, LocalDateTime.now(),
-            QuestionEventDTO.QuestionEventType.QUESTION, QuestionEventDTO.QuestionEvent.RATE, 0, "type",
+            QuestionEventType.QUESTION, QuestionEventSpecific.RATE, 0, "type",
             new String[]{"value1", "value2"}, "category", "form", "id", "opcode");
     private final ResourceEventDTO resourceEventDTO = new ResourceEventDTO(1, 1, LocalDateTime.now(),
-            ResourceEventDTO.ResourceEventType.ADD, ResourceEventDTO.ResourceEvent.ADD_SOUND, "name", "hash",
-            "filetype", ResourceEventDTO.LibraryResource.TRUE);
-    private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
+            ResourceEventType.ADD, ResourceEventSpecific.ADD_SOUND, "name", "hash",
+            "filetype", LibraryResource.TRUE);
+    private final User user = new User("participant", "email", Role.PARTICIPANT, Language.GERMAN, "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
     private final Participant participant = new Participant(user, experiment, LocalDateTime.now(), null);
@@ -123,8 +136,8 @@ public class EventServiceTest {
             "md5", "filetype", "library"};
     private final String[] eventCountDataHeader = {"user", "experiment", "count", "event"};
     private final String[] codesDataHeader = {"user", "experiment", "count"};
-    private final BlockEvent blockEvent = new BlockEvent(user, experiment, LocalDateTime.now(),
-            "CREATE", "CREATE", "sprite", "", "xml", "json");
+    private final BlockEvent blockEvent = new BlockEvent(user, experiment, LocalDateTime.now(), BlockEventType.CREATE,
+            BlockEventSpecific.CREATE, "sprite", "", "xml", "json");
     private static final String JSON = "json";
     private final List<EventCount> blockEvents = getEventCounts(8, "CREATE");
     private final List<EventCount> clickEvents = getEventCounts(2, "GREENFLAG");
@@ -163,7 +176,7 @@ public class EventServiceTest {
         user.setId(ID);
         user.setActive(true);
         experiment.setActive(true);
-        resourceEventDTO.setLibraryResource(ResourceEventDTO.LibraryResource.TRUE);
+        resourceEventDTO.setLibraryResource(LibraryResource.TRUE);
         blockEvent.setCode(JSON);
         participant.setEnd(null);
         blockEventDTO.setDate(LocalDateTime.now());
@@ -512,7 +525,7 @@ public class EventServiceTest {
 
     @Test
     public void testSaveResourceEventLibraryResourceFalse() {
-        resourceEventDTO.setLibraryResource(ResourceEventDTO.LibraryResource.FALSE);
+        resourceEventDTO.setLibraryResource(LibraryResource.FALSE);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
@@ -527,7 +540,7 @@ public class EventServiceTest {
 
     @Test
     public void testSaveResourceEventLibraryResourceUnknown() {
-        resourceEventDTO.setLibraryResource(ResourceEventDTO.LibraryResource.UNKNOWN);
+        resourceEventDTO.setLibraryResource(LibraryResource.UNKNOWN);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
         when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
@@ -1340,8 +1353,8 @@ public class EventServiceTest {
     private List<BlockEvent> getBlockEvents(int number) {
         List<BlockEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            BlockEvent blockEvent = new BlockEvent(user, experiment,LocalDateTime.now(), "eventType",
-                    "event" + i, "sprite", "meta", "xml" + i, "json" + i);
+            BlockEvent blockEvent = new BlockEvent(user, experiment,LocalDateTime.now(), BlockEventType.CLICK,
+                    BlockEventSpecific.STOPALL, "sprite", "meta", "xml" + i, "json" + i);
             blockEvent.setId(i);
             events.add(blockEvent);
         }
@@ -1352,7 +1365,7 @@ public class EventServiceTest {
         List<ClickEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             ClickEvent clickEvent = new ClickEvent(user, experiment, LocalDateTime.now(),
-                    "type", "event", "meta");
+                    ClickEventType.BUTTON, ClickEventSpecific.CLOSE_DEBUGGER, "meta");
             clickEvent.setId(i);
             events.add(clickEvent);
         }
@@ -1363,7 +1376,7 @@ public class EventServiceTest {
         List<ResourceEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             ResourceEvent resourceEvent = new ResourceEvent(user, experiment, LocalDateTime.now(),
-                    "eventType", "event", "name", "hash", "type", i == 0 ? 1 : null);
+                    ResourceEventType.ADD, ResourceEventSpecific.ADD_SOUND, "name", "hash", "type", i == 0 ? 1 : null);
             resourceEvent.setId(i);
             events.add(resourceEvent);
         }

@@ -18,6 +18,8 @@ import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.PageUtils;
 import fim.unipassau.de.scratch1984.util.Secrets;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.util.validation.StringValidator;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -802,8 +804,8 @@ public class ExperimentController {
      * @param language The user's preferred language.
      * @return The corresponding locale, or English as a default value.
      */
-    private Locale getLocaleFromLanguage(final UserDTO.Language language) {
-        if (language == UserDTO.Language.GERMAN) {
+    private Locale getLocaleFromLanguage(final Language language) {
+        if (language == Language.GERMAN) {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;
@@ -845,7 +847,7 @@ public class ExperimentController {
                               final ResourceBundle resourceBundle, final Model model) {
         if (userDTO == null) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
-        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+        } else if (!userDTO.getRole().equals(Role.PARTICIPANT)) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
         } else if (userService.existsParticipant(userDTO.getId(), experimentDTO.getId())) {
             model.addAttribute(ERROR, resourceBundle.getString("participant_entry"));

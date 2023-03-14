@@ -1,5 +1,6 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import fim.unipassau.de.scratch1984.util.enums.Language;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,9 +25,9 @@ public class UserBulkDTO {
     private int amount;
 
     /**
-     * One of the available languages in {@link UserDTO.Language}.
+     * One of the available languages.
      */
-    private UserDTO.Language language;
+    private Language language;
 
     /**
      * The username pattern.
@@ -47,8 +48,7 @@ public class UserBulkDTO {
      * @param username The username pattern.
      * @param startAtOne Whether the username numbering should start at one.
      */
-    public UserBulkDTO(final int amount, final UserDTO.Language language, final String username,
-                       final boolean startAtOne) {
+    public UserBulkDTO(final int amount, final Language language, final String username, final boolean startAtOne) {
         this.amount = amount;
         this.language = language;
         this.username = username;

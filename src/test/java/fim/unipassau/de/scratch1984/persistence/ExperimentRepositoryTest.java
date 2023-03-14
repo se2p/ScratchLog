@@ -8,6 +8,8 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +46,7 @@ public class ExperimentRepositoryTest {
     private static final int SMALL_LIMIT = 2;
     private static final LocalDateTime DATE = LocalDateTime.now();
     private PageRequest pageRequest;
-    private User user = new User("user", "email", "PARTICIPANT", "ENGLISH", "password", "secret");
+    private User user = new User("user", "email", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
     private Course course1 = new Course(null, "Course 1", "Description for my course", "No info", true,
             DATE);
     private Course course2 = new Course(null, "Course 2", "Description for my course", "No info", true,

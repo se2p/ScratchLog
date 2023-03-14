@@ -6,6 +6,17 @@ import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
 import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
+import fim.unipassau.de.scratch1984.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.BlockEventType;
+import fim.unipassau.de.scratch1984.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ClickEventType;
+import fim.unipassau.de.scratch1984.util.enums.DebuggerEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.DebuggerEventType;
+import fim.unipassau.de.scratch1984.util.enums.LibraryResource;
+import fim.unipassau.de.scratch1984.util.enums.QuestionEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.QuestionEventType;
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventType;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
@@ -347,8 +358,8 @@ public class EventRestController {
             String json = object.getString("json");
 
             setEventDTOData(dto, object);
-            dto.setEventType(BlockEventDTO.BlockEventType.valueOf(object.getString("type")));
-            dto.setEvent(BlockEventDTO.BlockEvent.valueOf(object.getString("event")));
+            dto.setEventType(BlockEventType.valueOf(object.getString("type")));
+            dto.setEvent(BlockEventSpecific.valueOf(object.getString("event")));
 
             if (!spritename.trim().isBlank()) {
                 dto.setSprite(object.getString("spritename"));
@@ -385,8 +396,8 @@ public class EventRestController {
             String metadata = object.getString("metadata");
 
             setEventDTOData(dto, object);
-            dto.setEventType(ClickEventDTO.ClickEventType.valueOf(object.getString("type")));
-            dto.setEvent(ClickEventDTO.ClickEvent.valueOf(object.getString("event")));
+            dto.setEventType(ClickEventType.valueOf(object.getString("type")));
+            dto.setEvent(ClickEventSpecific.valueOf(object.getString("event")));
 
             if (!metadata.trim().isBlank()) {
                 dto.setMetadata(metadata);
@@ -417,8 +428,8 @@ public class EventRestController {
             String execution = object.get("execution").toString();
 
             setEventDTOData(dto, object);
-            dto.setEventType(DebuggerEventDTO.DebuggerEventType.valueOf(object.getString("type")));
-            dto.setEvent(DebuggerEventDTO.DebuggerEvent.valueOf(object.getString("event")));
+            dto.setEventType(DebuggerEventType.valueOf(object.getString("type")));
+            dto.setEvent(DebuggerEventSpecific.valueOf(object.getString("event")));
 
             if (!id.trim().isBlank()) {
                 dto.setBlockOrTargetID(id);
@@ -461,8 +472,8 @@ public class EventRestController {
             String opcode = object.getString("opcode");
 
             setEventDTOData(dto, object);
-            dto.setEventType(QuestionEventDTO.QuestionEventType.valueOf(object.getString("type")));
-            dto.setEvent(QuestionEventDTO.QuestionEvent.valueOf(object.getString("event")));
+            dto.setEventType(QuestionEventType.valueOf(object.getString("type")));
+            dto.setEvent(QuestionEventSpecific.valueOf(object.getString("event")));
 
             if (!feedback.trim().isBlank()) {
                 dto.setFeedback(object.getInt("feedback"));
@@ -510,9 +521,9 @@ public class EventRestController {
             String dataFormat = object.getString("dataFormat");
 
             setEventDTOData(dto, object);
-            dto.setEventType(ResourceEventDTO.ResourceEventType.valueOf(object.getString("type")));
-            dto.setEvent(ResourceEventDTO.ResourceEvent.valueOf(object.getString("event")));
-            dto.setLibraryResource(ResourceEventDTO.LibraryResource.valueOf(object.getString("libraryResource")));
+            dto.setEventType(ResourceEventType.valueOf(object.getString("type")));
+            dto.setEvent(ResourceEventSpecific.valueOf(object.getString("event")));
+            dto.setLibraryResource(LibraryResource.valueOf(object.getString("libraryResource")));
 
             if (!name.trim().isBlank()) {
                 dto.setName(name);
