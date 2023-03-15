@@ -493,17 +493,7 @@ public class ResultController {
                                  @RequestParam(value = "end", required = false) final String end,
                                  @RequestParam(value = "include", required = false) final String include,
                                  final HttpServletResponse httpServletResponse) {
-        if (experiment == null || user == null) {
-            throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
-        } else if ((start != null || end != null || include != null)
-                && (start == null || end == null || include == null)) {
-            throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
-                    + "parameters start, end and include are specified!");
-        } else if (start != null && step != null) {
-            throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
-                    + "parameters are specified!");
-        }
-
+        checkDownloadParameters(experiment, user, step, start, end, include);
         int userId = NumberParser.parseNumber(user);
         int experimentId = NumberParser.parseNumber(experiment);
         int steps = 0;
@@ -512,20 +502,13 @@ public class ResultController {
         boolean includeFinalProject = true;
 
         if (step != null) {
-            steps = NumberParser.parseNumber(step);
-
-            if (steps < 1) {
-                throw new IncompleteDataException("Cannot generate zip file for invalid step interval " + step + "!");
-            }
+            steps = getNumberFromString(step, "step interval");
         } else if (start != null) {
-            startPosition = NumberParser.parseNumber(start);
-            endPosition = NumberParser.parseNumber(end);
+            startPosition = getNumberFromString(start, "start position");
+            endPosition = getNumberFromString(end, "end position");
             includeFinalProject = !include.equals("false");
 
-            if (startPosition < 1 || endPosition < 1) {
-                throw new IncompleteDataException("Cannot generate zip file for invalid start position " + start
-                        + " or invalid end position " + end + "!");
-            } else if (startPosition > endPosition) {
+            if (startPosition > endPosition) {
                 throw new IncompleteDataException("Cannot generate zip file for start position " + start
                         + " bigger than end position " + end + "!");
             }
@@ -538,50 +521,15 @@ public class ResultController {
 
         ExperimentProjection projection = experimentService.getSb3File(experimentId);
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
-        List<BlockEventJSONProjection> jsons = eventService.getJsonForUser(userId, experimentId);
         Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
-
-        if (steps > 0) {
-            LocalDateTime lastDateTime = finalProject.isPresent() ? finalProject.get().getDate()
-                    : jsons.get(jsons.size() - 1).getDate();
-            jsons = filterProjectionsByStep(jsons, steps, lastDateTime);
-        } else if (startPosition > 0) {
-            if (endPosition > jsons.size()) {
-                throw new IncompleteDataException("Cannot generate zip file with invalid end position " + endPosition
-                        + " bigger than the amount of saved json strings " + jsons.size() + "!");
-            }
-
-            jsons = jsons.subList(startPosition - 1, endPosition);
-        }
+        List<BlockEventJSONProjection> jsons = filterJsons(steps, startPosition, endPosition, userId, experimentId,
+                finalProject);
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip")) {
             writeCSVData(zos, jsons, finalProject, includeFinalProject);
 
             for (int i = 0; i < jsons.size(); i++) {
-                BlockEventJSONProjection json = jsons.get(i);
-                ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
-
-                try (ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip))) {
-                    Set<String> fileNames = new HashSet<>();
-
-                    if (projection.getProject() != null) {
-                        writeInitialProjectData(innerZos, projection.getProject());
-                    }
-
-                    for (FileDTO fileDTO : fileDTOS) {
-                        writeFileData(innerZos, fileDTO, fileNames);
-                    }
-
-                    byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
-                    writeJsonData(innerZos, code);
-
-                    innerZos.flush();
-                }
-
-                ZipEntry createdZip = new ZipEntry("project_" + json.getId() + "_" + i + ".sb3");
-                zos.putNextEntry(createdZip);
-                zos.write(innerZip.toByteArray());
-                zos.closeEntry();
+                createSb3File(jsons.get(i), zos, i, projection, fileDTOS);
             }
 
             if (finalProject.isPresent() && includeFinalProject) {
@@ -592,6 +540,127 @@ public class ResultController {
         } catch (IOException e) {
             throw new RuntimeException("Could not generate zip file due to IOException!", e);
         }
+    }
+
+    /**
+     * Checks, whether the parameters for downloading sb3 files are valid. For the parameters to be valid, both the
+     * experiment and user ids have to be specified. If sb3 files in a certain range are to be downloaded, the start,
+     * end and include parameters need to be present. If sb3 files are downloaded in minute intervals, the start
+     * parameter cannot be specified.
+     *
+     * @param experiment The id of the experiment.
+     * @param user The id of the user.
+     * @param step The step interval in minutes.
+     * @param start The start of the interval in which all json files should be downloaded.
+     * @param end The end of the interval in which all json files should be downloaded.
+     * @param include Whether the final project should be included.
+     * @throws IncompleteDataException if the required parameters are not specified.
+     */
+    private void checkDownloadParameters(final String experiment, final String user, final String step,
+                                         final String start, final String end, final String include) {
+        if (experiment == null || user == null) {
+            throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
+        } else if ((start != null || end != null || include != null)
+                && (start == null || end == null || include == null)) {
+            throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
+                    + "parameters start, end and include are specified!");
+        } else if (start != null && step != null) {
+            throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
+                    + "parameters are specified!");
+        }
+    }
+
+    /**
+     * Parses the given string to a number and checks if it is larger than one.
+     *
+     * @param number The string representation of the number.
+     * @param parameterName The name of the parameter that is checked.
+     * @return The parsed valid number.
+     * @throws IllegalArgumentException if the passed number is invalid.
+     */
+    private int getNumberFromString(final String number, final String parameterName) {
+        int num = NumberParser.parseNumber(number);
+
+        if (num < 1) {
+            throw new IncompleteDataException("Cannot generate zip file for invalid " + parameterName + " " + num
+                    + "!");
+        }
+
+        return num;
+    }
+
+    /**
+     * Filters the json code saved for the given user during the given experiment according to the specified parameters.
+     * If the code is to be filtered in minute intervals, the jsons are filtered according to their generation time. If
+     * the code within a certain range is to be returned, the jsons are filtered according to the specified start and
+     * end positions.
+     *
+     * @param steps The step interval in minutes.
+     * @param startPosition The start of the interval in which all json files should be downloaded.
+     * @param endPosition The end of the interval in which all json files should be downloaded.
+     * @param userId The id of the user.
+     * @param experimentId The id of the experiment.
+     * @param finalProject The final project saved for the user, if any.
+     * @return The filtered code list.
+     * @throws IllegalArgumentException if the given end position is bigger than the number of codes.
+     */
+    private List<BlockEventJSONProjection> filterJsons(final int steps, final int startPosition, final int endPosition,
+                                                       final int userId, final int experimentId,
+                                                       final Optional<Sb3ZipDTO> finalProject) {
+        List<BlockEventJSONProjection> jsons = eventService.getJsonForUser(userId, experimentId);
+
+        if (steps > 0) {
+            LocalDateTime lastDateTime = finalProject.isPresent() ? finalProject.get().getDate()
+                    : jsons.get(jsons.size() - 1).getDate();
+            return filterProjectionsByStep(jsons, steps, lastDateTime);
+        } else if (startPosition > 0) {
+            if (endPosition > jsons.size()) {
+                throw new IncompleteDataException("Cannot generate zip file with invalid end position " + endPosition
+                        + " bigger than the amount of saved json strings " + jsons.size() + "!");
+            }
+
+            return jsons.subList(startPosition - 1, endPosition);
+        }
+
+        return jsons;
+    }
+
+    /**
+     * Creates a sb3 file saved as a zip entry for the given json code. Beside the json itself, all saved files and the
+     * initial project data are included in the zip file.
+     *
+     * @param json The json code to be used.
+     * @param zos The {@link ZipOutputStream} in which the zip file should be written.
+     * @param counter The file counter.
+     * @param projection The initial experiment project data.
+     * @param fileDTOS The saved files.
+     * @throws IOException if the data could not be written correctly.
+     */
+    private void createSb3File(final BlockEventJSONProjection json, final ZipOutputStream zos, final int counter,
+                               final ExperimentProjection projection, final List<FileDTO> fileDTOS) throws IOException {
+        ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
+
+        try (ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip))) {
+            Set<String> fileNames = new HashSet<>();
+
+            if (projection.getProject() != null) {
+                writeInitialProjectData(innerZos, projection.getProject());
+            }
+
+            for (FileDTO fileDTO : fileDTOS) {
+                writeFileData(innerZos, fileDTO, fileNames);
+            }
+
+            byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
+            writeJsonData(innerZos, code);
+
+            innerZos.flush();
+        }
+
+        ZipEntry createdZip = new ZipEntry("project_" + json.getId() + "_" + counter + ".sb3");
+        zos.putNextEntry(createdZip);
+        zos.write(innerZip.toByteArray());
+        zos.closeEntry();
     }
 
     /**
