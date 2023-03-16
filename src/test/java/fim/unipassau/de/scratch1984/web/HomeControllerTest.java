@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.MailServerSetter;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.PageService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
@@ -61,6 +62,9 @@ public class HomeControllerTest {
     private UserService userService;
 
     @Mock
+    private ParticipantService participantService;
+
+    @Mock
     private Model model;
 
     @Mock
@@ -90,6 +94,7 @@ public class HomeControllerTest {
     private static final String LAST = "5";
     private static final String BLANK = "   ";
     private static final String ID_STRING = "1";
+    private static final String SECRET = "secret";
     private static final String THANKS = "thanks";
     private static final String EXPERIMENTS = "experiments";
     private static final String EXPERIMENT_PAGE = "experimentPage";
@@ -889,68 +894,103 @@ public class HomeControllerTest {
     @Test
     public void testGetExperimentFinishPage() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        assertEquals(FINISH, homeController.getExperimentFinishPage(ID_STRING, ID_STRING, model));
+        assertEquals(FINISH, homeController.getExperimentFinishPage(ID_STRING, ID_STRING, SECRET, model));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(experimentService).getExperiment(ID);
         verify(model).addAttribute(THANKS, experimentDTO.getPostscript());
         verify(model).addAttribute("user", ID);
         verify(model).addAttribute("experiment", ID);
+        verify(model).addAttribute(SECRET, SECRET);
     }
 
     @Test
     public void testGetExperimentFinishPagePostscriptNull() {
         experimentDTO.setPostscript(null);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        assertEquals(FINISH, homeController.getExperimentFinishPage(ID_STRING, ID_STRING, model));
+        assertEquals(FINISH, homeController.getExperimentFinishPage(ID_STRING, ID_STRING, SECRET, model));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(experimentService).getExperiment(ID);
-        verify(model, times(3)).addAttribute(anyString(), any());
+        verify(model, times(4)).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetExperimentFinishPageNotFound() {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, ID_STRING, model));
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, ID_STRING, SECRET, model));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(experimentService).getExperiment(ID);
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
+    public void testGetExperimentFinishPageInvalidParticipant() {
+        when(participantService.isInvalidParticipant(ID, ID, SECRET)).thenReturn(true);
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, ID_STRING, SECRET, model));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetExperimentFinishPageSecretBlank() {
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, ID_STRING, BLANK, model));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetExperimentFinishPageSecretNull() {
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, ID_STRING, null, model));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
     public void testGetExperimentFinishPageExperimentIdInvalid() {
-        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage("0", ID_STRING, model));
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage("0", ID_STRING, SECRET, model));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetExperimentFinishPageUserIdInvalid() {
-        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, "a", model));
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, "a", SECRET, model));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetExperimentFinishPageExperimentIdNull() {
-        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(null, ID_STRING, model));
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(null, ID_STRING, SECRET, model));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetExperimentFinishPageUserIdNull() {
-        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, null, model));
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, null, SECRET, model));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetExperimentFinishPageExperimentIdBlank() {
-        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(BLANK, ID_STRING, model));
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(BLANK, ID_STRING, SECRET, model));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetExperimentFinishPageUserIdBlank() {
-        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, BLANK, model));
+        assertEquals(Constants.ERROR, homeController.getExperimentFinishPage(ID_STRING, BLANK, SECRET, model));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }

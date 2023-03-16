@@ -4,9 +4,8 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
-import fim.unipassau.de.scratch1984.util.Constants;
-import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.DebuggerEventDTO;
@@ -20,11 +19,9 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.ServletOutputStream;
@@ -35,7 +32,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * The REST controller receiving all the logging requests sent by the Scratch GUI and VM.
@@ -65,18 +64,25 @@ public class EventRestController {
     private final ExperimentService experimentService;
 
     /**
+     * The participant service to use for verifying participants.
+     */
+    private final ParticipantService participantService;
+
+    /**
      * Constructs an event rest controller with the given dependencies.
      *
      * @param eventService The event service to use.
      * @param fileService The file service to use.
      * @param experimentService The experiment service to use.
+     * @param participantService The participant service to use.
      */
     @Autowired
     public EventRestController(final EventService eventService, final FileService fileService,
-                               final ExperimentService experimentService) {
+                               final ExperimentService experimentService, final ParticipantService participantService) {
         this.eventService = eventService;
         this.fileService = fileService;
         this.experimentService = experimentService;
+        this.participantService = participantService;
     }
 
     /**
@@ -88,7 +94,7 @@ public class EventRestController {
     public void storeBlockEvent(@RequestBody final String data) {
         BlockEventDTO blockEventDTO = createBlockEventDTO(data);
 
-        if (blockEventDTO == null) {
+        if (blockEventDTO == null || isInvalidRequest(data, blockEventDTO)) {
             return;
         }
 
@@ -104,7 +110,7 @@ public class EventRestController {
     public void storeClickEvent(@RequestBody final String data) {
         ClickEventDTO clickEventDTO = createClickEventDTO(data);
 
-        if (clickEventDTO == null) {
+        if (clickEventDTO == null || isInvalidRequest(data, clickEventDTO)) {
             return;
         }
 
@@ -120,7 +126,7 @@ public class EventRestController {
     public void storeDebuggerEvent(@RequestBody final String data) {
         DebuggerEventDTO debuggerEventDTO = createDebuggerEventDTO(data);
 
-        if (debuggerEventDTO == null) {
+        if (debuggerEventDTO == null || isInvalidRequest(data, debuggerEventDTO)) {
             return;
         }
 
@@ -136,7 +142,7 @@ public class EventRestController {
     public void storeQuestionEvent(@RequestBody final String data) {
         QuestionEventDTO questionEventDTO = createQuestionEventDTO(data);
 
-        if (questionEventDTO == null) {
+        if (questionEventDTO == null || isInvalidRequest(data, questionEventDTO)) {
             return;
         }
 
@@ -152,7 +158,7 @@ public class EventRestController {
     public void storeResourceEvent(@RequestBody final String data) {
         ResourceEventDTO resourceEventDTO = createResourceEventDTO(data);
 
-        if (resourceEventDTO == null) {
+        if (resourceEventDTO == null || isInvalidRequest(data, resourceEventDTO)) {
             return;
         }
 
@@ -168,7 +174,7 @@ public class EventRestController {
     public void storeFileEvent(@RequestBody final String data) {
         FileDTO fileDTO = createFileDTO(data);
 
-        if (fileDTO == null) {
+        if (fileDTO == null || isInvalidRequest(data, fileDTO)) {
             return;
         }
 
@@ -184,7 +190,7 @@ public class EventRestController {
     public void storeZipFile(@RequestBody final String data) {
         Sb3ZipDTO sb3ZipDTO = createSb3ZipDTO(data);
 
-        if (sb3ZipDTO == null) {
+        if (sb3ZipDTO == null || isInvalidRequest(data, sb3ZipDTO)) {
             return;
         }
 
@@ -192,28 +198,23 @@ public class EventRestController {
     }
 
     /**
-     * Retrieves the sb3 file stored for the experiment with the given id, if it exists. If the passed id is invalid, no
-     * experiment could be found or no file was stored for the experiment, the {@link HttpServletResponse} returns an
-     * error status code instead.
+     * Retrieves the sb3 file stored for the experiment with the id passed in the request body, if it exists. If the
+     * information passed in the body could not be verified or no file was stored for the experiment, the
+     * {@link HttpServletResponse} returns an error status code instead.
      *
-     * @param id The experiment id.
+     * @param data The request body containing the required information.
      * @param response The servlet response.
      */
-    @GetMapping("/sb3")
-    public void retrieveSb3File(@RequestParam("id") final String id, final HttpServletResponse response) {
-        if (id == null) {
-            logger.error("Cannot retrieve sb3 file for experiment with id null!");
+    @PostMapping("/sb3")
+    public void retrieveSb3File(@RequestBody final String data, final HttpServletResponse response) {
+        List<Integer> ids = checkValidRequestData(data);
+
+        if (ids.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
-        int experimentId = NumberParser.parseNumber(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot retrieve sb3 file for experiment with invalid id " + experimentId + "!");
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
+        int experimentId = ids.get(0);
 
         try {
             ExperimentProjection projection = experimentService.getSb3File(experimentId);
@@ -241,36 +242,24 @@ public class EventRestController {
     }
 
     /**
-     * Retrieves the last json code saved for the given user during the given experiment from the database, if it
-     * exists. If the passed ids are invalid, no corresponding user or participant or no json code could be found, the
-     * {@link HttpServletResponse} returns an error status code instead.
+     * Retrieves the last json code saved for the user and experiment passed in the given request body from the
+     * database, if it exists. If information passed in the body could not be verified or no json code could be found,
+     * the {@link HttpServletResponse} returns an error status code instead.
      *
-     * @param user The user to search for.
-     * @param experiment The experiment to search for.
+     * @param data The request body containing the required information.
      * @param response The servlet response.
      */
-    @GetMapping("/json")
-    public void retrieveLastJson(@RequestParam("user") final String user,
-                                  @RequestParam("experiment") final String experiment,
-                                  final HttpServletResponse response) {
-        if (user == null || experiment == null) {
-            logger.error("Cannot retrieve the last json file for experiment or user with id null!");
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
+    @PostMapping("/json")
+    public void retrieveLastJson(@RequestBody final String data, final HttpServletResponse response) {
+        List<Integer> ids = checkValidRequestData(data);
 
-        int userId = NumberParser.parseNumber(user);
-        int experimentId = NumberParser.parseNumber(experiment);
-
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot retrieve the last json file for experiment with invalid id " + experiment
-                    + " or user with invalid id " + user + "!");
+        if (ids.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
         try {
-            String json = eventService.findFirstJSON(userId, experimentId);
+            String json = eventService.findFirstJSON(ids.get(1), ids.get(0));
 
             if (json == null) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -286,10 +275,46 @@ public class EventRestController {
         } catch (NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
-            logger.error("Could not retrieve the last saved json code for user with id " + userId
-                    + " during experiment with id " + experimentId + " due to IOException!", e);
+            logger.error("Could not retrieve the last saved json code for user with id " + ids.get(1)
+                    + " during experiment with id " + ids.get(0) + " due to IOException!", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Extracts the user and experiment id as well as the user's secret from the given request data and checks if the
+     * user is a valid participant in the experiment with the given secret.
+     *
+     * @param data The data containing the required information.
+     * @return A list containing the user and experiment id, or an empty list, if the passed data is invalid.
+     */
+    private List<Integer> checkValidRequestData(final String data) {
+        List<Integer> ids = new ArrayList<>();
+        JSONObject object = new JSONObject(data);
+        int userId = object.getInt("user");
+        int experimentId = object.getInt("experiment");
+        String secret = object.getString("secret");
+
+        if (!participantService.isInvalidParticipant(userId, experimentId, secret)) {
+            ids.add(experimentId);
+            ids.add(userId);
+        }
+
+        return ids;
+    }
+
+    /**
+     * Checks, if the data passed to the REST controller should be stored in the database. The data should not be stored
+     * if the participant data is invalid.
+     *
+     * @param data The data passed in the request body.
+     * @param eventDTO The {@link EventDTO} to check.
+     * @return {@code true} if the event should not be persisted or {@code false} otherwise.
+     */
+    private boolean isInvalidRequest(final String data, final EventDTO eventDTO) {
+        JSONObject object = new JSONObject(data);
+        String secret = object.getString("secret");
+        return participantService.isInvalidParticipant(eventDTO.getUser(), eventDTO.getExperiment(), secret);
     }
 
     /**

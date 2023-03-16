@@ -97,12 +97,14 @@ public class ParticipantControllerTest {
     private static final String REDIRECT_FINISH = "redirect:/finish?user=";
     private static final String REDIRECT_SECRET = "redirect:/secret?user=";
     private static final String EXP_ID = "&expid=";
+    private static final String SECRET_PARAM = "&secret=";
     private static final String RESTART = "&restart=true";
     private static final String EXPERIMENT_PARAM = "&experiment=";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String EMAIL = "participant@participant.de";
     private static final String BLANK = "   ";
     private static final String ID_STRING = "1";
+    private static final String SECRET = "secret";
     private static final String INFO = "info";
     private static final String POSTSCRIPT = "postscript";
     private static final String ERROR_ATTRIBUTE = "error";
@@ -206,7 +208,7 @@ public class ParticipantControllerTest {
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         assertEquals(REDIRECT_EXPERIMENT + ID, participantController.addParticipant(ID_STRING, newUser, model,
-                bindingResult, httpServletRequest));
+                bindingResult));
         verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
@@ -218,7 +220,7 @@ public class ParticipantControllerTest {
         MailServerSetter.setMailServer(false);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         assertEquals(REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + ID,
-                participantController.addParticipant(ID_STRING, newUser, model, bindingResult, httpServletRequest));
+                participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
         verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -229,8 +231,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantMessagingException() {
         MailServerSetter.setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, newUser, model, bindingResult,
-                httpServletRequest));
+        assertEquals(ERROR, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
         verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
@@ -241,8 +242,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantNotFound() {
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         doThrow(NotFoundException.class).when(participantService).saveParticipant(userDTO.getId(), ID);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, newUser, model, bindingResult,
-                httpServletRequest));
+        assertEquals(ERROR, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
         verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -253,8 +253,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantExistsEmail() {
         when(userService.existsEmail(newUser.getEmail())).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult,
-                httpServletRequest));
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -265,8 +264,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantEmailInvalid() {
         newUser.setEmail(PARTICIPANT);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult,
-                httpServletRequest));
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -277,8 +275,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantUsernameExists() {
         when(userService.existsUser(PARTICIPANT)).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult,
-                httpServletRequest));
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -289,8 +286,7 @@ public class ParticipantControllerTest {
     public void testAddParticipantUsernameInvalid() {
         newUser.setUsername(BLANK);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult,
-                httpServletRequest));
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -299,8 +295,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipantExperimentIdInvalid() {
-        assertEquals(ERROR, participantController.addParticipant("0", newUser, model, bindingResult,
-                httpServletRequest));
+        assertEquals(ERROR, participantController.addParticipant("0", newUser, model, bindingResult));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -309,8 +304,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipantUserIdNotNull() {
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
-                httpServletRequest));
+        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -320,8 +314,7 @@ public class ParticipantControllerTest {
     @Test
     public void testAddParticipantUsernameNull() {
         userDTO.setUsername(null);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
-                httpServletRequest));
+        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -331,8 +324,7 @@ public class ParticipantControllerTest {
     @Test
     public void testAddParticipantEmailNull() {
         userDTO.setEmail(null);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult,
-                httpServletRequest));
+        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -341,8 +333,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipantExperimentIdNull() {
-        assertEquals(ERROR, participantController.addParticipant(null, userDTO, model, bindingResult,
-                httpServletRequest));
+        assertEquals(ERROR, participantController.addParticipant(null, userDTO, model, bindingResult));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -543,8 +534,8 @@ public class ParticipantControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
-        assertEquals(REDIRECT_GUI + ID + EXP_ID + ID, participantController.startExperiment(ID_STRING,
-                httpServletRequest));
+        assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + SECRET_PARAM + SECRET,
+                participantController.startExperiment(ID_STRING, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -579,7 +570,7 @@ public class ParticipantControllerTest {
         when(userService.getUser(PARTICIPANT)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + RESTART,
+        assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + SECRET_PARAM + SECRET + RESTART,
                 participantController.startExperiment(ID_STRING, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
@@ -731,8 +722,9 @@ public class ParticipantControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
-        assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID,
-                participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET,
+                participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -748,8 +740,9 @@ public class ParticipantControllerTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.simultaneousParticipation(ID)).thenReturn(true);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
-        assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID,
-                participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET,
+                participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -763,7 +756,8 @@ public class ParticipantControllerTest {
         participantDTO.setStart(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -778,7 +772,9 @@ public class ParticipantControllerTest {
         participantDTO.setEnd(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -791,7 +787,8 @@ public class ParticipantControllerTest {
     public void testStopExperimentParticipantNotStarted() {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -804,7 +801,8 @@ public class ParticipantControllerTest {
     public void testStopExperimentParticipantNotFound() {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -814,9 +812,21 @@ public class ParticipantControllerTest {
     }
 
     @Test
-    public void testStopExperimentParticipantUserAdmin() {
-        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, httpServletRequest));
+    public void testStopExperimentSecretBlank() {
+        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, BLANK, httpServletRequest));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(userService, never()).getUserById(anyInt());
+        verify(participantService, never()).getParticipant(anyInt(), anyInt());
+        verify(participantService, never()).simultaneousParticipation(anyInt());
+        verify(participantService, never()).updateParticipant(any());
+        verify(userService, never()).saveUser(any());
+        verify(httpServletRequest, never()).getSession(anyBoolean());
+    }
+
+    @Test
+    public void testStopExperimentSecretNull() {
+        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, null, httpServletRequest));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -827,7 +837,8 @@ public class ParticipantControllerTest {
 
     @Test
     public void testStopExperimentParticipantInvalidUserId() {
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, "0", httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, "0", SECRET, httpServletRequest));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -838,7 +849,8 @@ public class ParticipantControllerTest {
 
     @Test
     public void testStopExperimentParticipantInvalidExperimentId() {
-        assertEquals(ERROR, participantController.stopExperiment("-1", ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment("-1", ID_STRING, SECRET, httpServletRequest));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -849,7 +861,8 @@ public class ParticipantControllerTest {
 
     @Test
     public void testStopExperimentParticipantUserIdNull() {
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, null, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, null, SECRET, httpServletRequest));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -860,7 +873,8 @@ public class ParticipantControllerTest {
 
     @Test
     public void testStopExperimentParticipantExperimentIdNull() {
-        assertEquals(ERROR, participantController.stopExperiment(null, ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(null, ID_STRING, SECRET, httpServletRequest));
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -879,11 +893,12 @@ public class ParticipantControllerTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         assertAll(
-                () -> assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + RESTART,
-                        participantController.restartExperiment(ID_STRING, ID_STRING, httpServletRequest)),
+                () -> assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + SECRET_PARAM + SECRET + RESTART,
+                        participantController.restartExperiment(ID_STRING, ID_STRING, SECRET)),
                 () -> assertTrue(userDTO.isActive()),
                 () -> assertNull(participantDTO.getEnd())
         );
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -901,10 +916,11 @@ public class ParticipantControllerTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertAll(
                 () -> assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
-                        httpServletRequest)),
+                        SECRET)),
                 () -> assertFalse(userDTO.isActive()),
                 () -> assertNull(participantDTO.getEnd())
         );
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -918,8 +934,8 @@ public class ParticipantControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
-                        httpServletRequest));
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -933,8 +949,8 @@ public class ParticipantControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
-                httpServletRequest));
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -945,8 +961,8 @@ public class ParticipantControllerTest {
     @Test
     public void testRestartExperimentNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
-                httpServletRequest));
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService).getUserById(ID);
         verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -955,22 +971,10 @@ public class ParticipantControllerTest {
     }
 
     @Test
-    public void testRestartExperimentUserAdmin() {
-        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
-                httpServletRequest));
-        verify(userService, never()).getUserById(anyInt());
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(participantService, never()).getParticipant(anyInt(), anyInt());
-        verify(participantService, never()).updateParticipant(any());
-        verify(userService, never()).updateUser(any());
-        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
-    }
-
-    @Test
-    public void testRestartExperimentInvalidExperimentId() {
-        assertEquals(Constants.ERROR, participantController.restartExperiment(INFO, ID_STRING,
-                httpServletRequest));
+    public void testRestartExperimentInvalidParticipant() {
+        when(participantService.isInvalidParticipant(ID, ID, SECRET)).thenReturn(true);
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
         verify(userService, never()).getUserById(anyInt());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -979,36 +983,4 @@ public class ParticipantControllerTest {
         verify(httpServletRequest, never()).isUserInRole(anyString());
     }
 
-    @Test
-    public void testRestartExperimentInvalidUserId() {
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, "0", httpServletRequest));
-        verify(userService, never()).getUserById(anyInt());
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(participantService, never()).getParticipant(anyInt(), anyInt());
-        verify(participantService, never()).updateParticipant(any());
-        verify(userService, never()).updateUser(any());
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-    }
-
-    @Test
-    public void testRestartExperimentExperimentIdNull() {
-        assertEquals(Constants.ERROR, participantController.restartExperiment(null, ID_STRING, httpServletRequest));
-        verify(userService, never()).getUserById(anyInt());
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(participantService, never()).getParticipant(anyInt(), anyInt());
-        verify(participantService, never()).updateParticipant(any());
-        verify(userService, never()).updateUser(any());
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-    }
-
-    @Test
-    public void testRestartExperimentUserIdNull() {
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, null, httpServletRequest));
-        verify(userService, never()).getUserById(anyInt());
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(participantService, never()).getParticipant(anyInt(), anyInt());
-        verify(participantService, never()).updateParticipant(any());
-        verify(userService, never()).updateUser(any());
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-    }
 }

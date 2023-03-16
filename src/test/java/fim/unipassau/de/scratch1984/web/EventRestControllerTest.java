@@ -4,6 +4,7 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.FileService;
+import fim.unipassau.de.scratch1984.application.service.ParticipantService;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.web.controller.EventRestController;
 import org.json.JSONException;
@@ -45,11 +46,15 @@ public class EventRestControllerTest {
     private ExperimentService experimentService;
 
     @Mock
+    private ParticipantService participantService;
+
+    @Mock
     private HttpServletResponse httpServletResponse;
 
-    private static final String ID_STRING = "1";
     private static final String JSON = "json";
-    private static final int ID = 1;
+    private static final String SECRET = "secret";
+    private static final int USER_ID = 3;
+    private static final int Experiment_ID = 39;
     private final JSONObject blockEventObject = new JSONObject();
     private final JSONObject clickEventObject = new JSONObject();
     private final JSONObject debuggerEventObject = new JSONObject();
@@ -57,6 +62,7 @@ public class EventRestControllerTest {
     private final JSONObject resourceEventObject = new JSONObject();
     private final JSONObject fileEventObject = new JSONObject();
     private final JSONObject sb3ZipObject = new JSONObject();
+    private final JSONObject dataObject = new JSONObject();
     private final ExperimentProjection experimentProjection = new ExperimentProjection() {
         @Override
         public Integer getId() {
@@ -76,8 +82,9 @@ public class EventRestControllerTest {
 
     @BeforeEach
     public void setup() throws JSONException {
-        blockEventObject.put("user", 3);
-        blockEventObject.put("experiment", 39);
+        blockEventObject.put("user", USER_ID);
+        blockEventObject.put("experiment", Experiment_ID);
+        blockEventObject.put(SECRET, SECRET);
         blockEventObject.put("type", "DRAG");
         blockEventObject.put("time", "2021-06-28T12:36:37.601Z");
         blockEventObject.put("event", "ENDDRAG");
@@ -85,14 +92,16 @@ public class EventRestControllerTest {
         blockEventObject.put("spritename", "Figur1");
         blockEventObject.put("xml", "xml");
         blockEventObject.put("json", "json");
-        clickEventObject.put("user", 3);
-        clickEventObject.put("experiment", 39);
+        clickEventObject.put("user", USER_ID);
+        clickEventObject.put("experiment", Experiment_ID);
+        clickEventObject.put(SECRET, SECRET);
         clickEventObject.put("type", "ICON");
         clickEventObject.put("time", "2021-06-28T12:36:37.601Z");
         clickEventObject.put("event", "STOPALL");
         clickEventObject.put("metadata", "meta");
-        debuggerEventObject.put("user", 3);
-        debuggerEventObject.put("experiment", 39);
+        debuggerEventObject.put("user", USER_ID);
+        debuggerEventObject.put("experiment", Experiment_ID);
+        debuggerEventObject.put(SECRET, SECRET);
         debuggerEventObject.put("type", "SPRITE");
         debuggerEventObject.put("time", "2021-06-28T12:36:37.601Z");
         debuggerEventObject.put("event", "SELECT_SPRITE");
@@ -100,8 +109,9 @@ public class EventRestControllerTest {
         debuggerEventObject.put("name", "name");
         debuggerEventObject.put("original", 1);
         debuggerEventObject.put("execution", 5);
-        questionEventObject.put("user", 3);
-        questionEventObject.put("experiment", 39);
+        questionEventObject.put("user", USER_ID);
+        questionEventObject.put("experiment", Experiment_ID);
+        questionEventObject.put(SECRET, SECRET);
         questionEventObject.put("type", "QUESTION");
         questionEventObject.put("time", "2021-06-28T12:36:37.601Z");
         questionEventObject.put("event", "SELECT");
@@ -112,8 +122,9 @@ public class EventRestControllerTest {
         questionEventObject.put("form", "negative");
         questionEventObject.put("id", "id");
         questionEventObject.put("opcode", "opcode");
-        resourceEventObject.put("user", 3);
-        resourceEventObject.put("experiment", 39);
+        resourceEventObject.put("user", USER_ID);
+        resourceEventObject.put("experiment", Experiment_ID);
+        resourceEventObject.put(SECRET, SECRET);
         resourceEventObject.put("type", "DELETE");
         resourceEventObject.put("time", "2021-06-28T12:36:37.601Z");
         resourceEventObject.put("event", "DELETE_SOUND");
@@ -121,17 +132,22 @@ public class EventRestControllerTest {
         resourceEventObject.put("md5", "md5");
         resourceEventObject.put("dataFormat", "wav");
         resourceEventObject.put("libraryResource", "UNKNOWN");
-        fileEventObject.put("user", 3);
-        fileEventObject.put("experiment", 39);
+        fileEventObject.put("user", USER_ID);
+        fileEventObject.put("experiment", Experiment_ID);
+        fileEventObject.put(SECRET, SECRET);
         fileEventObject.put("name", "Miau.wav");
         fileEventObject.put("type", "audio/x-wav");
         fileEventObject.put("file", "blub");
         fileEventObject.put("time", "2021-06-28T12:36:37.601Z");
-        sb3ZipObject.put("user", 3);
-        sb3ZipObject.put("experiment", 39);
+        sb3ZipObject.put("user", USER_ID);
+        sb3ZipObject.put("experiment", Experiment_ID);
+        sb3ZipObject.put(SECRET, SECRET);
         sb3ZipObject.put("name", "sb3zip.sb3");
         sb3ZipObject.put("time", "2021-06-28T12:36:37.601Z");
         sb3ZipObject.put("zip", "blub");
+        dataObject.put("user", USER_ID);
+        dataObject.put("experiment", Experiment_ID);
+        dataObject.put(SECRET, SECRET);
     }
 
     @Test
@@ -139,6 +155,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeBlockEvent(blockEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveBlockEvent(any());
     }
 
@@ -148,6 +165,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeBlockEvent(blockEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveBlockEvent(any());
     }
 
@@ -157,6 +175,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeBlockEvent(blockEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveBlockEvent(any());
     }
 
@@ -166,6 +185,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeBlockEvent(blockEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveBlockEvent(any());
     }
 
@@ -175,7 +195,18 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeBlockEvent(blockEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveBlockEvent(any());
+    }
+
+    @Test
+    public void testStoreBlockEventInvalidParticipant() {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        assertDoesNotThrow(
+                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService, never()).saveBlockEvent(any());
     }
 
     @Test
@@ -184,6 +215,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeBlockEvent(blockEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveBlockEvent(any());
     }
 
@@ -193,6 +225,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeBlockEvent(blockEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveBlockEvent(any());
     }
 
@@ -202,6 +235,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeBlockEvent(blockEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveBlockEvent(any());
     }
 
@@ -210,6 +244,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeClickEvent(clickEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveClickEvent(any());
     }
 
@@ -219,6 +254,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeClickEvent(clickEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveClickEvent(any());
     }
 
@@ -232,11 +268,22 @@ public class EventRestControllerTest {
     }
 
     @Test
+    public void testStoreClickEventInvalidParticipant() {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        assertDoesNotThrow(
+                () -> eventRestController.storeClickEvent(clickEventObject.toString())
+        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService, never()).saveBlockEvent(any());
+    }
+
+    @Test
     public void testStoreClickEventIllegalArgument() throws JSONException {
         clickEventObject.put("event", "");
         assertDoesNotThrow(
                 () -> eventRestController.storeClickEvent(clickEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveClickEvent(any());
     }
 
@@ -246,6 +293,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeClickEvent(clickEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveClickEvent(any());
     }
 
@@ -254,6 +302,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveDebuggerEvent(any());
     }
 
@@ -263,6 +312,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveDebuggerEvent(any());
     }
 
@@ -272,6 +322,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveDebuggerEvent(any());
     }
 
@@ -281,6 +332,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveDebuggerEvent(any());
     }
 
@@ -290,7 +342,18 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveDebuggerEvent(any());
+    }
+
+    @Test
+    public void testStoreDebuggerEventInvalidParticipant() {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        assertDoesNotThrow(
+                () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
+        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService, never()).saveBlockEvent(any());
     }
 
     @Test
@@ -299,6 +362,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveDebuggerEvent(any());
     }
 
@@ -308,6 +372,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveDebuggerEvent(any());
     }
 
@@ -317,6 +382,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeDebuggerEvent(debuggerEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveDebuggerEvent(any());
     }
 
@@ -325,6 +391,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveQuestionEvent(any());
     }
 
@@ -334,6 +401,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveQuestionEvent(any());
     }
 
@@ -343,6 +411,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveQuestionEvent(any());
     }
 
@@ -352,6 +421,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveQuestionEvent(any());
     }
 
@@ -361,6 +431,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveQuestionEvent(any());
     }
 
@@ -370,6 +441,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveQuestionEvent(any());
     }
 
@@ -379,6 +451,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveQuestionEvent(any());
     }
 
@@ -388,7 +461,18 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveQuestionEvent(any());
+    }
+
+    @Test
+    public void testStoreQuestionEventInvalidParticipant() {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        assertDoesNotThrow(
+                () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
+        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService, never()).saveBlockEvent(any());
     }
 
     @Test
@@ -397,6 +481,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveQuestionEvent(any());
     }
 
@@ -406,6 +491,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveQuestionEvent(any());
     }
 
@@ -415,6 +501,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeQuestionEvent(questionEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveQuestionEvent(any());
     }
 
@@ -423,6 +510,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveResourceEvent(any());
     }
 
@@ -432,6 +520,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveResourceEvent(any());
     }
 
@@ -441,6 +530,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveResourceEvent(any());
     }
 
@@ -450,7 +540,18 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService).saveResourceEvent(any());
+    }
+
+    @Test
+    public void testStoreResourceEventInvalidParticipant() {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        assertDoesNotThrow(
+                () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
+        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService, never()).saveBlockEvent(any());
     }
 
     @Test
@@ -459,6 +560,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveResourceEvent(any());
     }
 
@@ -468,6 +570,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveResourceEvent(any());
     }
 
@@ -477,6 +580,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeResourceEvent(resourceEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(eventService, never()).saveResourceEvent(any());
     }
 
@@ -485,7 +589,18 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(fileService).saveFile(any());
+    }
+
+    @Test
+    public void testStoreFileEventInvalidParticipant() {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        assertDoesNotThrow(
+                () -> eventRestController.storeFileEvent(fileEventObject.toString())
+        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService, never()).saveBlockEvent(any());
     }
 
     @Test
@@ -494,6 +609,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(fileService, never()).saveFile(any());
     }
 
@@ -503,6 +619,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(fileService, never()).saveFile(any());
     }
 
@@ -512,6 +629,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeFileEvent(fileEventObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(fileService, never()).saveFile(any());
     }
 
@@ -520,7 +638,18 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeZipFile(sb3ZipObject.toString())
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(fileService).saveSb3Zip(any());
+    }
+
+    @Test
+    public void testStoreZipFileInvalidParticipant() {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        assertDoesNotThrow(
+                () -> eventRestController.storeZipFile(sb3ZipObject.toString())
+        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService, never()).saveBlockEvent(any());
     }
 
     @Test
@@ -529,6 +658,7 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeZipFile(sb3ZipObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(fileService, never()).saveSb3Zip(any());
     }
 
@@ -547,12 +677,13 @@ public class EventRestControllerTest {
         assertDoesNotThrow(
                 () -> eventRestController.storeZipFile(sb3ZipObject.toString())
         );
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
         verify(fileService, never()).saveSb3Zip(any());
     }
 
     @Test
     public void testRetrieveSb3File() throws IOException {
-        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(experimentService.getSb3File(Experiment_ID)).thenReturn(experimentProjection);
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
             public boolean isReady() {
@@ -570,9 +701,10 @@ public class EventRestControllerTest {
             }
         });
         assertDoesNotThrow(
-                () -> eventRestController.retrieveSb3File(ID_STRING, httpServletResponse)
+                () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
-        verify(experimentService).getSb3File(ID);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(experimentService).getSb3File(Experiment_ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
@@ -581,12 +713,13 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveSb3FileIO() throws IOException {
-        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(experimentService.getSb3File(Experiment_ID)).thenReturn(experimentProjection);
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertDoesNotThrow(
-                () -> eventRestController.retrieveSb3File(ID_STRING, httpServletResponse)
+                () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
-        verify(experimentService).getSb3File(ID);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(experimentService).getSb3File(Experiment_ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -594,7 +727,7 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveSb3FileProjectNull() throws IOException {
-        when(experimentService.getSb3File(ID)).thenReturn(new ExperimentProjection() {
+        when(experimentService.getSb3File(Experiment_ID)).thenReturn(new ExperimentProjection() {
             @Override
             public Integer getId() {
                 return null;
@@ -611,9 +744,10 @@ public class EventRestControllerTest {
             }
         });
         assertDoesNotThrow(
-                () -> eventRestController.retrieveSb3File(ID_STRING, httpServletResponse)
+                () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
-        verify(experimentService).getSb3File(ID);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(experimentService).getSb3File(Experiment_ID);
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -621,32 +755,24 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveSb3FileNotFound() throws IOException {
-        when(experimentService.getSb3File(ID)).thenThrow(NotFoundException.class);
+        when(experimentService.getSb3File(Experiment_ID)).thenThrow(NotFoundException.class);
         assertDoesNotThrow(
-                () -> eventRestController.retrieveSb3File(ID_STRING, httpServletResponse)
+                () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
-        verify(experimentService).getSb3File(ID);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(experimentService).getSb3File(Experiment_ID);
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
     }
 
     @Test
-    public void testRetrieveSb3FileNotFoundInvalidId() throws IOException {
+    public void testRetrieveSb3FileInvalidParticipant() throws IOException {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
         assertDoesNotThrow(
-                () -> eventRestController.retrieveSb3File("0", httpServletResponse)
+                () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
-        verify(experimentService, never()).getSb3File(anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setContentType(anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
-    }
-
-    @Test
-    public void testRetrieveSb3FileNotFoundIdNull() throws IOException {
-        assertDoesNotThrow(
-                () -> eventRestController.retrieveSb3File(null, httpServletResponse)
-        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(experimentService, never()).getSb3File(anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
@@ -655,7 +781,7 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveLastJson() throws IOException {
-        when(eventService.findFirstJSON(ID, ID)).thenReturn(JSON);
+        when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenReturn(JSON);
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
             public boolean isReady() {
@@ -673,9 +799,10 @@ public class EventRestControllerTest {
             }
         });
         assertDoesNotThrow(
-                () -> eventRestController.retrieveLastJson(ID_STRING, ID_STRING, httpServletResponse)
+                () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
-        verify(eventService).findFirstJSON(ID, ID);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/json");
         verify(httpServletResponse).setCharacterEncoding("UTF-8");
@@ -685,9 +812,10 @@ public class EventRestControllerTest {
     @Test
     public void testRetrieveLastJsonJsonNull() throws IOException {
         assertDoesNotThrow(
-                () -> eventRestController.retrieveLastJson(ID_STRING, ID_STRING, httpServletResponse)
+                () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
-        verify(eventService).findFirstJSON(ID, ID);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setCharacterEncoding(anyString());
@@ -696,11 +824,12 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveLastJsonNotFound() throws IOException {
-        when(eventService.findFirstJSON(ID, ID)).thenThrow(NotFoundException.class);
+        when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenThrow(NotFoundException.class);
         assertDoesNotThrow(
-                () -> eventRestController.retrieveLastJson(ID_STRING, ID_STRING, httpServletResponse)
+                () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
-        verify(eventService).findFirstJSON(ID, ID);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setCharacterEncoding(anyString());
@@ -709,12 +838,13 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveLastJsonIO() throws IOException {
-        when(eventService.findFirstJSON(ID, ID)).thenReturn(JSON);
+        when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenReturn(JSON);
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertDoesNotThrow(
-                () -> eventRestController.retrieveLastJson(ID_STRING, ID_STRING, httpServletResponse)
+                () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
-        verify(eventService).findFirstJSON(ID, ID);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/json");
         verify(httpServletResponse).setCharacterEncoding("UTF-8");
@@ -722,10 +852,12 @@ public class EventRestControllerTest {
     }
 
     @Test
-    public void testRetrieveLastJsonInvalidExperimentId() throws IOException {
+    public void testRetrieveLastJsonInvalidParticipant() throws IOException {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
         assertDoesNotThrow(
-                () -> eventRestController.retrieveLastJson(ID_STRING, JSON, httpServletResponse)
+                () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
         verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
@@ -733,39 +865,4 @@ public class EventRestControllerTest {
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
 
-    @Test
-    public void testRetrieveLastJsonInvalidUserId() throws IOException {
-        assertDoesNotThrow(
-                () -> eventRestController.retrieveLastJson("0", ID_STRING, httpServletResponse)
-        );
-        verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setContentType(anyString());
-        verify(httpServletResponse, never()).setCharacterEncoding(anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
-    }
-
-    @Test
-    public void testRetrieveLastJsonExperimentNull() throws IOException {
-        assertDoesNotThrow(
-                () -> eventRestController.retrieveLastJson(ID_STRING, null, httpServletResponse)
-        );
-        verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setContentType(anyString());
-        verify(httpServletResponse, never()).setCharacterEncoding(anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
-    }
-
-    @Test
-    public void testRetrieveLastJsonUserNull() throws IOException {
-        assertDoesNotThrow(
-                () -> eventRestController.retrieveLastJson(null, ID_STRING, httpServletResponse)
-        );
-        verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setContentType(anyString());
-        verify(httpServletResponse, never()).setCharacterEncoding(anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);
-    }
 }
