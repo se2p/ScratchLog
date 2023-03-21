@@ -142,7 +142,7 @@
                 </div>
                 <div class="mb-3">
                     <input id="deleteParticipant" type="submit" class="btn btn-danger"
-                           th:value="#{delete_participant}"/>
+                           th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
                 </div>
             </div>
         </div>
@@ -226,7 +226,8 @@
                        th:text="#{add_experiment}"></a>
                 </div>
                 <div class="mb-3">
-                    <input id="deleteExperiment" type="submit" class="btn btn-danger" th:value="#{delete_experiment}"/>
+                    <input id="deleteExperiment" type="submit" class="btn btn-danger" th:value="#{delete_experiment}"
+                           th:unless="${experiments.isEmpty()}"/>
                 </div>
             </div>
         </div>

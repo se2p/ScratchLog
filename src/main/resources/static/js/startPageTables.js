@@ -1,4 +1,5 @@
 import {redirectErrorPage} from "./errorRedirect.js";
+import {addClickEventListener} from "./eventListeners.js";
 
 /**
  * Readies the functions to retrieve a different experiment or course page upon clicking the respective buttons.
@@ -127,24 +128,12 @@ function updateCourseTable(data) {
  * Adds the event listeners to handle user clicks on the buttons under the experiment and course tables.
  */
 function addEventListeners() {
-    addEventListener("coursesNext", loadNextCoursePage);
-    addEventListener("coursesPrev", loadPreviousCoursePage);
-    addEventListener("coursesFirst", loadFirstCoursePage);
-    addEventListener("coursesLast", loadLastCoursePage);
-    addEventListener("experimentsNext", loadNextExperimentPage);
-    addEventListener("experimentsPrev", loadPreviousExperimentPage);
-    addEventListener("experimentsFirst", loadFirstExperimentPage);
-    addEventListener("experimentsLast", loadLastExperimentPage);
-}
-
-/**
- * Adds a click event listener calling the given function if the element with the given id can be found.
- *
- * @param elementId The id of the element.
- * @param callFunction The function to be called on click.
- */
-function addEventListener(elementId, callFunction) {
-    if (document.getElementById(elementId)) {
-        document.getElementById(elementId).addEventListener("click", callFunction);
-    }
+    addClickEventListener("coursesNext", loadNextCoursePage);
+    addClickEventListener("coursesPrev", loadPreviousCoursePage);
+    addClickEventListener("coursesFirst", loadFirstCoursePage);
+    addClickEventListener("coursesLast", loadLastCoursePage);
+    addClickEventListener("experimentsNext", loadNextExperimentPage);
+    addClickEventListener("experimentsPrev", loadPreviousExperimentPage);
+    addClickEventListener("experimentsFirst", loadFirstExperimentPage);
+    addClickEventListener("experimentsLast", loadLastExperimentPage);
 }

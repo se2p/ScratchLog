@@ -1,5 +1,9 @@
-import {closeModal, openModal} from "./modals.js";
 import {redirectErrorPage} from "./errorRedirect.js";
+import {
+    addClickEventListener,
+    addClickEventListenerCloseModal,
+    addClickEventListenerOpenModal
+} from "./eventListeners.js";
 
 /**
  * Readies all necessary event listeners for buttons on the course page.
@@ -178,36 +182,16 @@ function addModalOnclickFunctions() {
     let deleteParticipantModal = document.getElementById("openDeleteParticipant");
     let deleteExperimentModal = document.getElementById("openDeleteExperiment");
 
-    document.getElementById("abortStop").addEventListener("click", function () {
-        closeModal(stopModal);
-    })
-    document.getElementById("delete").addEventListener("click", function () {
-        openModal(deleteModal);
-    });
-    document.getElementById("abortDelete").addEventListener("click", function () {
-        closeModal(deleteModal);
-    });
-    document.getElementById("addParticipant").addEventListener("click", function () {
-        openModal(addParticipantModal);
-    });
-    document.getElementById("abortAddParticipant").addEventListener("click", function () {
-        closeModal(addParticipantModal);
-    });
-    document.getElementById("deleteParticipant").addEventListener("click", function () {
-        openModal(deleteParticipantModal);
-    });
-    document.getElementById("abortDeleteParticipant").addEventListener("click", function () {
-        closeModal(deleteParticipantModal);
-    });
-    document.getElementById("deleteExperiment").addEventListener("click", function () {
-       openModal(deleteExperimentModal);
-    });
-    document.getElementById("abortDeleteExperiment").addEventListener("click", function () {
-        closeModal(deleteExperimentModal);
-    });
-    document.getElementById("close").addEventListener("click", function () {
-        openModal(stopModal);
-    });
+    addClickEventListenerOpenModal("close", stopModal);
+    addClickEventListenerCloseModal("abortStop", stopModal);
+    addClickEventListenerOpenModal("delete", deleteModal);
+    addClickEventListenerCloseModal("abortDelete", deleteModal);
+    addClickEventListenerOpenModal("addParticipant", addParticipantModal);
+    addClickEventListenerCloseModal("abortAddParticipant", addParticipantModal);
+    addClickEventListenerOpenModal("deleteParticipant", deleteParticipantModal);
+    addClickEventListenerCloseModal("abortDeleteParticipant", deleteParticipantModal);
+    addClickEventListenerOpenModal("deleteExperiment", deleteExperimentModal);
+    addClickEventListenerCloseModal("abortDeleteExperiment", deleteExperimentModal);
 }
 
 /**
@@ -216,12 +200,12 @@ function addModalOnclickFunctions() {
 function addEventListeners() {
     addModalOnclickFunctions();
     addKeyupFunctions();
-    document.getElementById("participantsNext").addEventListener("click", loadNextCourseParticipantPage);
-    document.getElementById("participantsPrev").addEventListener("click", loadPreviousCourseParticipantPage);
-    document.getElementById("participantsFirst").addEventListener("click", loadFirstCourseParticipantPage);
-    document.getElementById("participantsLast").addEventListener("click", loadLastCourseParticipantPage);
-    document.getElementById("experimentsNext").addEventListener("click", loadNextCourseExperimentPage);
-    document.getElementById("experimentsPrev").addEventListener("click", loadPreviousCourseExperimentPage);
-    document.getElementById("experimentsFirst").addEventListener("click", loadFirstCourseExperimentPage);
-    document.getElementById("experimentsLast").addEventListener("click", loadLastCourseExperimentPage);
+    addClickEventListener("participantsNext", loadNextCourseParticipantPage);
+    addClickEventListener("participantsPrev", loadPreviousCourseParticipantPage);
+    addClickEventListener("participantsFirst", loadFirstCourseParticipantPage);
+    addClickEventListener("participantsLast", loadLastCourseParticipantPage);
+    addClickEventListener("experimentsNext", loadNextCourseExperimentPage);
+    addClickEventListener("experimentsPrev", loadPreviousCourseExperimentPage);
+    addClickEventListener("experimentsFirst", loadFirstCourseExperimentPage);
+    addClickEventListener("experimentsLast", loadLastCourseExperimentPage);
 }
