@@ -101,6 +101,11 @@
                     <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                 </a>
             </div>
+            <!-- Let Thymeleaf fetch the current and the last course page numbers. -->
+            <script>
+                var coursePage = [[${coursePage}]];
+                var lastCoursePage = [[${lastCoursePage}]];
+            </script>
         </div>
 
         <!-- The experiment heading and table shown to administrators or participants. -->
@@ -167,19 +172,17 @@
                     <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                 </a>
             </div>
+            <!-- Let Thymeleaf fetch the current and the last experiment page numbers. -->
+            <script>
+                var experimentPage = [[${experimentPage}]];
+                var lastExperimentPage = [[${lastExperimentPage}]];
+            </script>
         </div>
     </div>
 </div>
 
 <!-- Script to update the experiment and course tables on user interactions with the respective buttons. -->
 <script type="module" th:src="@{/js/startPageTables.js}"></script>
-<!-- Let Thymeleaf fetch the current and the last experiment and course page numbers. -->
-<script>
-    let experimentPage = [[${experimentPage}]];
-    let lastExperimentPage = [[${lastExperimentPage}]];
-    let coursePage = [[${coursePage}]];
-    let lastCoursePage = [[${lastCoursePage}]];
-</script>
 
 <!-- Footer -->
 <div th:insert="footer :: footer"></div>

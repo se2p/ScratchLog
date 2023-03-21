@@ -76,6 +76,7 @@ public class HomeControllerIntegrationTest {
     private static final String INDEX = "index";
     private static final String INDEX_EXPERIMENT = "index::experiment_table";
     private static final String INDEX_COURSE = "index::course_table";
+    private static final String ERROR = "error";
     private static final String FINISH = "experiment-finish";
     private static final String PASSWORD_RESET = "password-reset";
     private static final String CURRENT = "3";
@@ -137,8 +138,6 @@ public class HomeControllerIntegrationTest {
     @Test
     @WithMockUser(username = "user", roles = {"ADMIN"})
     public void testGetIndexPageAdmin() throws Exception {
-        when(pageService.computeLastExperimentPage()).thenReturn(lastPage);
-        when(pageService.computeLastCoursePage()).thenReturn(lastPage);
         when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
         when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
         mvc.perform(get("/")
@@ -148,15 +147,13 @@ public class HomeControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(0)))
                 .andExpect(model().attribute(EXPERIMENT_PAGE, is(0)))
                 .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(LAST_COURSE_PAGE, is(0)))
                 .andExpect(model().attribute(COURSE_PAGE, is(0)))
                 .andExpect(view().name(INDEX));
         verify(userService, never()).getUser(anyString());
-        verify(pageService).computeLastExperimentPage();
-        verify(pageService).computeLastCoursePage();
         verify(pageService).getExperimentPage(any(PageRequest.class));
         verify(pageService).getCoursePage(any(PageRequest.class));
     }
@@ -165,8 +162,6 @@ public class HomeControllerIntegrationTest {
     @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
     public void testGetIndexPageParticipant() throws Exception {
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(lastPage);
-        when(pageService.getLastCoursePage(userDTO.getId())).thenReturn(lastPage);
         when(pageService.getExperimentParticipantPage(any(PageRequest.class),
                 anyInt())).thenReturn(experimentPage);
         when(pageService.getCourseParticipantPage(any(PageRequest.class), anyInt())).thenReturn(coursePage);
@@ -177,15 +172,13 @@ public class HomeControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(0)))
                 .andExpect(model().attribute(EXPERIMENT_PAGE, is(0)))
                 .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(lastPage - 1)))
+                .andExpect(model().attribute(LAST_COURSE_PAGE, is(0)))
                 .andExpect(model().attribute(COURSE_PAGE, is(0)))
                 .andExpect(view().name(INDEX));
         verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getLastExperimentPage(userDTO.getId());
-        verify(pageService).getLastCoursePage(userDTO.getId());
         verify(pageService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
         verify(pageService).getCourseParticipantPage(any(PageRequest.class), anyInt());
     }
@@ -264,8 +257,8 @@ public class HomeControllerIntegrationTest {
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(ERROR));
         verify(pageService, never()).computeLastCoursePage();
         verify(userService).getUser(userDTO.getUsername());
         verify(pageService).getLastCoursePage(userDTO.getId());
@@ -327,8 +320,8 @@ public class HomeControllerIntegrationTest {
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(ERROR));
         verify(pageService, never()).computeLastExperimentPage();
         verify(pageService).getLastExperimentPage(userDTO.getId());
         verify(pageService, never()).getExperimentPage(any(PageRequest.class));
@@ -345,8 +338,8 @@ public class HomeControllerIntegrationTest {
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(ERROR));
         verify(pageService, never()).computeLastExperimentPage();
         verify(userService).getUser(userDTO.getUsername());
         verify(pageService, never()).getLastExperimentPage(userDTO.getId());
@@ -363,8 +356,8 @@ public class HomeControllerIntegrationTest {
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(ERROR));
         verify(pageService).computeLastExperimentPage();
         verify(pageService, never()).getExperimentPage(any(PageRequest.class));
         verify(userService, never()).getUser(anyString());

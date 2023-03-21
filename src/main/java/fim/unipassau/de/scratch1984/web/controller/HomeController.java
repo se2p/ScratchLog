@@ -20,6 +20,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.util.Pair;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -101,8 +102,8 @@ public class HomeController {
             Page<ExperimentTableProjection> experimentPage = pageService.getExperimentPage(PageRequest.of(0,
                     Constants.PAGE_SIZE));
             Page<CourseTableProjection> coursePage = pageService.getCoursePage(PageRequest.of(0, Constants.PAGE_SIZE));
-            int lastExperimentPage = pageService.computeLastExperimentPage();
-            int lastCoursePage = pageService.computeLastCoursePage();
+            int lastExperimentPage = experimentPage.getTotalPages();
+            int lastCoursePage = coursePage.getTotalPages();
             addModelInfo(experimentPage, coursePage, 0, 0, lastExperimentPage - 1, lastCoursePage - 1, model);
         } else if (httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -118,8 +119,8 @@ public class HomeController {
                         PageRequest.of(0, Constants.PAGE_SIZE), userDTO.getId());
                 Page<CourseTableProjection> coursePage = pageService.getCourseParticipantPage(
                         PageRequest.of(0, Constants.PAGE_SIZE), userDTO.getId());
-                int lastExperimentPage = pageService.getLastExperimentPage(userDTO.getId());
-                int lastCoursePage = pageService.getLastCoursePage(userDTO.getId());
+                int lastExperimentPage = experimentPage.getTotalPages();
+                int lastCoursePage = coursePage.getTotalPages();
                 addModelInfo(experimentPage, coursePage, 0, 0, lastExperimentPage - 1, lastCoursePage - 1, model);
             } catch (NotFoundException e) {
                 return Constants.ERROR;
@@ -146,7 +147,9 @@ public class HomeController {
         Pair<Integer, Integer> lastPageInformation = getLastPageCourses(httpServletRequest);
 
         if (lastPageInformation == null || PageUtils.isInvalidPageNumber(page, lastPageInformation.getFirst())) {
-            return new ModelAndView(Constants.ERROR);
+            ModelAndView mv = new ModelAndView("error");
+            mv.setStatus(HttpStatus.BAD_REQUEST);
+            return mv;
         }
 
         Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, page,
@@ -171,7 +174,9 @@ public class HomeController {
         Pair<Integer, Integer> lastPageInformation = getLastPageExperiments(httpServletRequest);
 
         if (lastPageInformation == null || PageUtils.isInvalidPageNumber(page, lastPageInformation.getFirst())) {
-            return new ModelAndView(Constants.ERROR);
+            ModelAndView mv = new ModelAndView("error");
+            mv.setStatus(HttpStatus.BAD_REQUEST);
+            return mv;
         }
 
         Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest, page,
