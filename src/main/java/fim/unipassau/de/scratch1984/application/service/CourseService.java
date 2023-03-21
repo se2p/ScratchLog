@@ -676,7 +676,6 @@ public class CourseService {
             course.setId(courseDTO.getId());
         }
 
-        course.setActive(courseDTO.isActive());
         return course;
     }
 
@@ -699,7 +698,6 @@ public class CourseService {
             courseDTO.setId(course.getId());
         }
 
-        courseDTO.setActive(course.isActive());
         return courseDTO;
     }
 
