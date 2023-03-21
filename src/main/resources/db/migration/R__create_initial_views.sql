@@ -17,6 +17,21 @@ group by
     `b`.`experiment_id`,
     `b`.`event`;
 
+-- user_num_click_events view source
+
+CREATE OR REPLACE VIEW `user_num_click_events` (`user`, `experiment`, `count`, `event`) AS
+select
+    `b`.`user_id` AS `user_id`,
+    `b`.`experiment_id` AS `experiment_id`,
+    count(`b`.`event`) AS `COUNT(b.event)`,
+    `b`.`event` AS `event`
+from
+    `click_event` `b`
+group by
+    `b`.`user_id`,
+    `b`.`experiment_id`,
+    `b`.`event`;
+
 
 -- user_num_resource_events view source
 
