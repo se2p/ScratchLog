@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS `block_event` (
     CONSTRAINT `block_event_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 );
 
--- scratch1984.click_event definition
+-- click_event definition
 
 CREATE TABLE IF NOT EXISTS `click_event` (
     `id` int NOT NULL AUTO_INCREMENT,

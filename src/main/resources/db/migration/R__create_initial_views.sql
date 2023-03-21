@@ -11,7 +11,7 @@ select
     count(`b`.`event`) AS `COUNT(b.event)`,
     `b`.`event` AS `event`
 from
-    `scratch1984`.`block_event` `b`
+    `block_event` `b`
 group by
     `b`.`user_id`,
     `b`.`experiment_id`,
@@ -42,7 +42,7 @@ select
     count(`r`.`event`) AS `COUNT(r.event)`,
     `r`.`event` AS `event`
 from
-    `scratch1984`.`resource_event` `r`
+    `resource_event` `r`
 group by
     `r`.`user_id`,
     `r`.`experiment_id`,
