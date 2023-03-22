@@ -98,7 +98,7 @@ public class CourseControllerIntegrationTest {
     private static final String PARTICIPANT_PARAM = "participant";
     private static final String PAGE_PARAM = "page";
     private static final String STATUS_PARAM = "stat";
-    private static final String ERROR_ATTRIBUTE = "error";
+    private static final String ERROR = "error";
     private static final int ID = 1;
     private static final int LAST_PAGE = 5;
     private static final String TITLE = "Title";
@@ -493,7 +493,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+                .andExpect(model().attribute(ERROR, notNullValue()));
         verify(courseService).getCourse(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
@@ -552,7 +552,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+                .andExpect(model().attribute(ERROR, notNullValue()));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
@@ -610,7 +610,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+                .andExpect(model().attribute(ERROR, notNullValue()));
         verify(courseService).getCourse(ID);
         verify(experimentService, never()).existsExperiment(anyString());
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
@@ -668,8 +668,8 @@ public class CourseControllerIntegrationTest {
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(ERROR));
         verify(pageService, never()).getLastParticipantCoursePage(anyInt());
         verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService, never()).getCourse(anyInt());
@@ -708,8 +708,8 @@ public class CourseControllerIntegrationTest {
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(ERROR));
         verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());

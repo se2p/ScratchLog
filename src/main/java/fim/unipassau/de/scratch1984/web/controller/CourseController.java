@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -421,7 +422,9 @@ public class CourseController {
 
         if (courseId < Constants.MIN_ID) {
             LOGGER.error("Cannot fetch course participant page for invalid course id " + id + "!");
-            return new ModelAndView(Constants.ERROR);
+            ModelAndView mv = new ModelAndView("error");
+            mv.setStatus(HttpStatus.BAD_REQUEST);
+            return mv;
         }
 
         int lastPage = pageService.getLastParticipantCoursePage(courseId);
@@ -430,7 +433,9 @@ public class CourseController {
         if (PageUtils.isInvalidPageNumber(page, lastPage)) {
             LOGGER.error("Cannot fetch course participant page for invalid page number " + pageNumber
                     + " with last page " + lastPage + "!");
-            return new ModelAndView(Constants.ERROR);
+            ModelAndView mv = new ModelAndView("error");
+            mv.setStatus(HttpStatus.BAD_REQUEST);
+            return mv;
         }
 
         Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId, PageRequest.of(page,
@@ -453,7 +458,9 @@ public class CourseController {
 
         if (courseId < Constants.MIN_ID) {
             LOGGER.error("Cannot fetch course experiment page for invalid course id " + courseId + "!");
-            return new ModelAndView(Constants.ERROR);
+            ModelAndView mv = new ModelAndView("error");
+            mv.setStatus(HttpStatus.BAD_REQUEST);
+            return mv;
         }
 
         int lastPage = pageService.getLastCourseExperimentPage(courseId);
@@ -462,7 +469,9 @@ public class CourseController {
         if (PageUtils.isInvalidPageNumber(page, lastPage)) {
             LOGGER.error("Cannot fetch course experiment page for invalid page number " + pageNumber
                     + " with last page " + lastPage + "!");
-            return new ModelAndView(Constants.ERROR);
+            ModelAndView mv = new ModelAndView("error");
+            mv.setStatus(HttpStatus.BAD_REQUEST);
+            return mv;
         }
 
         Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(page,
