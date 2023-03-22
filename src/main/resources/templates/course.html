@@ -145,6 +145,11 @@
                            th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
                 </div>
             </div>
+            <!-- Let Thymeleaf fetch the current and the last participant page numbers. -->
+            <script>
+                var participantPage = [[${participantPage}]];
+                var lastParticipantPage = [[${lastParticipantPage}]];
+            </script>
         </div>
 
         <!-- The experiment table containing experiments that are part of this course. -->
@@ -230,6 +235,12 @@
                            th:unless="${experiments.isEmpty()}"/>
                 </div>
             </div>
+            <!-- Let Thymeleaf fetch the current and the last experiment page numbers. -->
+            <script>
+                var experimentPage = [[${experimentPage}]];
+                var lastExperimentPage = [[${lastExperimentPage}]];
+            </script>
+
         </div>
 
         <!-- The course content information. -->
@@ -361,10 +372,6 @@
 <!-- Let Thymeleaf fetch the current and the last experiment and participant page numbers. -->
 <script>
     let courseId = [[${courseDTO.id}]];
-    let participantPage = [[${participantPage}]];
-    let lastParticipantPage = [[${lastParticipantPage}]];
-    let experimentPage = [[${experimentPage}]];
-    let lastExperimentPage = [[${lastExperimentPage}]];
 </script>
 
 <!-- Footer -->

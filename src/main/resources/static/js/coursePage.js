@@ -17,7 +17,6 @@ $(document).ready(function () {
  */
 function loadNextCourseParticipantPage() {
     const PAGE = participantPage + 1;
-    updateLastCourseParticipantPage();
     loadCourseParticipantPage(PAGE);
 }
 
@@ -26,7 +25,6 @@ function loadNextCourseParticipantPage() {
  */
 function loadPreviousCourseParticipantPage() {
     const PAGE = participantPage - 1;
-    updateLastCourseParticipantPage();
     loadCourseParticipantPage(PAGE);
 }
 
@@ -34,7 +32,6 @@ function loadPreviousCourseParticipantPage() {
  * Loads the first course participant page and updates the course participant table with the new data.
  */
 function loadFirstCourseParticipantPage() {
-    updateLastCourseParticipantPage();
     loadCourseParticipantPage(0);
 }
 
@@ -42,7 +39,6 @@ function loadFirstCourseParticipantPage() {
  * Loads the last course participant page and updates the course participant table with the new data.
  */
 function loadLastCourseParticipantPage() {
-    updateLastCourseParticipantPage();
     loadCourseParticipantPage(lastParticipantPage);
 }
 
@@ -51,7 +47,6 @@ function loadLastCourseParticipantPage() {
  */
 function loadNextCourseExperimentPage() {
     const PAGE = experimentPage + 1;
-    updateLastCourseExperimentPage();
     loadCourseExperimentPage(PAGE);
 }
 
@@ -60,7 +55,6 @@ function loadNextCourseExperimentPage() {
  */
 function loadPreviousCourseExperimentPage() {
     const PAGE = experimentPage - 1;
-    updateLastCourseExperimentPage();
     loadCourseExperimentPage(PAGE);
 }
 
@@ -68,7 +62,6 @@ function loadPreviousCourseExperimentPage() {
  * Loads the first course experiment page and updates the course experiment table with the new data.
  */
 function loadFirstCourseExperimentPage() {
-    updateLastCourseExperimentPage();
     loadCourseExperimentPage(0);
 }
 
@@ -76,7 +69,6 @@ function loadFirstCourseExperimentPage() {
  * Loads the last course experiment page and updates the course experiment table with the new data.
  */
 function loadLastCourseExperimentPage() {
-    updateLastCourseExperimentPage();
     loadCourseExperimentPage(lastExperimentPage);
 }
 
@@ -92,24 +84,6 @@ function loadCourseParticipantPage(page) {
         data: {id: courseId, page: page},
         success: function(data) {
             updateCourseParticipantTable(data);
-            participantPage = page;
-        },
-        error: function() {
-            redirectErrorPage();
-        }
-    });
-}
-
-/**
- * Retrieves the page number of the last course participant page from the database.
- */
-function updateLastCourseParticipantPage() {
-    $.ajax({
-        type: 'get',
-        url: contextPath + "/pages/course/participant",
-        data: {id: courseId},
-        success: function(data) {
-            lastParticipantPage = data;
         },
         error: function() {
             redirectErrorPage();
@@ -138,24 +112,6 @@ function loadCourseExperimentPage(page) {
         data: {id: courseId, page: page},
         success: function(data) {
             updateCourseExperimentTable(data);
-            experimentPage = page;
-        },
-        error: function() {
-            redirectErrorPage();
-        }
-    });
-}
-
-/**
- * Retrieves the page number of the last course experiment page from the database.
- */
-function updateLastCourseExperimentPage() {
-    $.ajax({
-        type: 'get',
-        url: contextPath + "/pages/course/experiment",
-        data: {id: courseId},
-        success: function(data) {
-            lastExperimentPage = data;
         },
         error: function() {
             redirectErrorPage();
