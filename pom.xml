@@ -11,7 +11,9 @@
 
     <properties>
         <!-- Compiler and Source settings -->
-        <maven.compiler.release>11</maven.compiler.release>
+        <java.version>11</java.version>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Library versions -->
