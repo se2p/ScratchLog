@@ -19,9 +19,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -73,9 +70,6 @@ public class TokenControllerIntegrationTest {
     private final TokenDTO forgotToken = new TokenDTO(TokenType.FORGOT_PASSWORD, LocalDateTime.now(), null, ID);
     private final UserDTO userDTO = new UserDTO("admin", "admin1@admin.de", Role.ADMIN,
             Language.ENGLISH, "admin", "secret1");
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @BeforeEach
     public void setup() {
@@ -101,8 +95,6 @@ public class TokenControllerIntegrationTest {
         when(tokenService.findToken(VALUE)).thenReturn(tokenDTO);
         mvc.perform(get("/token")
                 .param("value", VALUE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
@@ -118,8 +110,6 @@ public class TokenControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/token")
                 .param("value", VALUE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(model().attribute(USER_DTO, is(userDTO)))
@@ -136,8 +126,6 @@ public class TokenControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/token")
                 .param("value", VALUE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(model().attribute(USER_DTO, is(userDTO)))
@@ -154,8 +142,6 @@ public class TokenControllerIntegrationTest {
         doThrow(NotFoundException.class).when(userService).updateEmail(ID, EMAIL);
         mvc.perform(get("/token")
                 .param("value", VALUE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
@@ -171,8 +157,6 @@ public class TokenControllerIntegrationTest {
         when(tokenService.findToken(VALUE)).thenReturn(tokenDTO);
         mvc.perform(get("/token")
                 .param("value", VALUE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
@@ -187,8 +171,6 @@ public class TokenControllerIntegrationTest {
         when(tokenService.findToken(VALUE)).thenThrow(NotFoundException.class);
         mvc.perform(get("/token")
                 .param("value", VALUE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
@@ -205,8 +187,6 @@ public class TokenControllerIntegrationTest {
         mvc.perform(post("/token/password")
                 .flashAttr(USER_DTO, userDTO)
                 .param("value", VALUE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
@@ -223,8 +203,6 @@ public class TokenControllerIntegrationTest {
         mvc.perform(post("/token/password")
                 .flashAttr(USER_DTO, userDTO)
                 .param("value", VALUE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
@@ -242,8 +220,6 @@ public class TokenControllerIntegrationTest {
         mvc.perform(post("/token/password")
                 .flashAttr(USER_DTO, userDTO)
                 .param("value", VALUE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

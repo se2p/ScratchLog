@@ -22,14 +22,14 @@ import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
-import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -114,7 +114,7 @@ public class CourseService {
         }
 
         try {
-            Course course = courseRepository.getOne(id);
+            Course course = courseRepository.getReferenceById(id);
             return course.isActive();
         } catch (EntityNotFoundException e) {
             return false;
@@ -177,7 +177,7 @@ public class CourseService {
                     + "title or an invalid course id " + courseId + "!");
         }
 
-        Course course = courseRepository.getOne(courseId);
+        Course course = courseRepository.getReferenceById(courseId);
         Optional<Experiment> experiment = experimentRepository.findByTitle(experimentTitle);
 
         try {
@@ -204,7 +204,7 @@ public class CourseService {
                     + "or an invalid course id " + courseId + "!");
         }
 
-        Course course = courseRepository.getOne(courseId);
+        Course course = courseRepository.getReferenceById(courseId);
         Optional<User> user = userRepository.findUserByUsernameOrEmail(input, input);
 
         try {
@@ -231,8 +231,8 @@ public class CourseService {
                     + userId + " or invalid experiment id " + experimentId + "!");
         }
 
-        Experiment experiment = experimentRepository.getOne(experimentId);
-        User user = userRepository.getOne(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
+        User user = userRepository.getReferenceById(userId);
 
         try {
             Optional<CourseExperiment> courseExperiment = courseExperimentRepository.findByExperiment(experiment);
@@ -288,7 +288,7 @@ public class CourseService {
             throw new IllegalArgumentException("Cannot delete course with invalid id " + id);
         }
 
-        Course course = courseRepository.getOne(id);
+        Course course = courseRepository.getReferenceById(id);
 
         try {
             List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
@@ -323,7 +323,7 @@ public class CourseService {
                     + "invalid course id!");
         }
 
-        Course course = courseRepository.getOne(courseId);
+        Course course = courseRepository.getReferenceById(courseId);
         Optional<User> optionalUser = userRepository.findUserByUsernameOrEmail(participant, participant);
 
         try {
@@ -371,7 +371,7 @@ public class CourseService {
                     + "invalid course id!");
         }
 
-        Course course = courseRepository.getOne(courseId);
+        Course course = courseRepository.getReferenceById(courseId);
         Optional<User> user = userRepository.findUserByUsernameOrEmail(participant, participant);
 
         try {
@@ -411,8 +411,8 @@ public class CourseService {
                     + " or experiment id " + experimentId + "!");
         }
 
-        Course course = courseRepository.getOne(courseId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        Course course = courseRepository.getReferenceById(courseId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
         persistCourseExperiment(course, experiment);
     }
 
@@ -432,7 +432,7 @@ public class CourseService {
                     + "invalid course id!");
         }
 
-        Course course = courseRepository.getOne(courseId);
+        Course course = courseRepository.getReferenceById(courseId);
         Optional<Experiment> experiment = experimentRepository.findByTitle(experimentTitle);
 
         try {
@@ -469,8 +469,8 @@ public class CourseService {
                     + courseId + " or invalid user id " + userId);
         }
 
-        Course course = courseRepository.getOne(courseId);
-        User user = userRepository.getOne(userId);
+        Course course = courseRepository.getReferenceById(courseId);
+        User user = userRepository.getReferenceById(userId);
 
         try {
             List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
@@ -532,7 +532,7 @@ public class CourseService {
             throw new IllegalArgumentException("Cannot update status for course with invalid id " + id + "!");
         }
 
-        Course course = courseRepository.getOne(id);
+        Course course = courseRepository.getReferenceById(id);
 
         try {
             if (!status) {

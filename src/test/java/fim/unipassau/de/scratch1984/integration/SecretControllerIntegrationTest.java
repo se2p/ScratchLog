@@ -20,9 +20,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -79,9 +76,6 @@ public class SecretControllerIntegrationTest {
     private final UserDTO user2 = new UserDTO("participant2", "part2@part.de", Role.PARTICIPANT,
             Language.ENGLISH, "password2", SECRET);
     private List<UserDTO> users;
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @BeforeEach
     public void setUp() {
@@ -102,8 +96,6 @@ public class SecretControllerIntegrationTest {
         mvc.perform(get("/secret")
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -123,8 +115,6 @@ public class SecretControllerIntegrationTest {
         mvc.perform(get("/secret")
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -145,8 +135,6 @@ public class SecretControllerIntegrationTest {
         mvc.perform(get("/secret")
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -161,8 +149,6 @@ public class SecretControllerIntegrationTest {
         mvc.perform(get("/secret")
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -176,8 +162,6 @@ public class SecretControllerIntegrationTest {
         mvc.perform(get("/secret")
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT_PARAM, "-1")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -191,8 +175,6 @@ public class SecretControllerIntegrationTest {
         mvc.perform(get("/secret")
                         .param(USER_PARAM, BLANK)
                         .param(EXPERIMENT_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -207,8 +189,6 @@ public class SecretControllerIntegrationTest {
         when(userService.findUnfinishedUsers(ID)).thenReturn(users);
         mvc.perform(get("/secret/list")
                         .param(EXPERIMENT_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -227,8 +207,6 @@ public class SecretControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenReturn(experiment);
         mvc.perform(get("/secret/list")
                         .param(EXPERIMENT_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -247,8 +225,6 @@ public class SecretControllerIntegrationTest {
         when(userService.findUnfinishedUsers(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/secret/list")
                         .param(EXPERIMENT_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -261,8 +237,6 @@ public class SecretControllerIntegrationTest {
     public void testDisplaySecretsInvalidId() throws Exception {
         mvc.perform(get("/secret/list")
                         .param(EXPERIMENT_PARAM, "a")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -275,8 +249,6 @@ public class SecretControllerIntegrationTest {
     public void testDisplaySecretsExperimentBlank() throws Exception {
         mvc.perform(get("/secret/list")
                         .param(EXPERIMENT_PARAM, BLANK)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -290,8 +262,6 @@ public class SecretControllerIntegrationTest {
         when(userService.findUnfinishedUsers(ID)).thenReturn(users);
         mvc.perform(get("/secret/csv")
                         .param(EXPERIMENT_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -307,8 +277,6 @@ public class SecretControllerIntegrationTest {
         mvc.perform(get("/secret/csv")
                         .param(EXPERIMENT_PARAM, ID_STRING)
                         .param(USER_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -323,8 +291,6 @@ public class SecretControllerIntegrationTest {
         mvc.perform(get("/secret/csv")
                         .param(EXPERIMENT_PARAM, ID_STRING)
                         .param(USER_PARAM, "0")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -336,8 +302,6 @@ public class SecretControllerIntegrationTest {
     public void testDownloadParticipationLinksInvalidExperimentId() throws Exception {
         mvc.perform(get("/secret/csv")
                         .param(EXPERIMENT_PARAM, "a")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());

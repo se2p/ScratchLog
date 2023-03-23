@@ -15,14 +15,14 @@ import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
-import javax.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -90,8 +90,8 @@ public class FileService {
      */
     @Transactional
     public void saveFile(final FileDTO fileDTO) {
-        User user = userRepository.getOne(fileDTO.getUser());
-        Experiment experiment = experimentRepository.getOne(fileDTO.getExperiment());
+        User user = userRepository.getReferenceById(fileDTO.getUser());
+        Experiment experiment = experimentRepository.getReferenceById(fileDTO.getExperiment());
 
         try {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
@@ -118,8 +118,8 @@ public class FileService {
      */
     @Transactional
     public void saveSb3Zip(final Sb3ZipDTO sb3ZipDTO) {
-        User user = userRepository.getOne(sb3ZipDTO.getUser());
-        Experiment experiment = experimentRepository.getOne(sb3ZipDTO.getExperiment());
+        User user = userRepository.getReferenceById(sb3ZipDTO.getUser());
+        Experiment experiment = experimentRepository.getReferenceById(sb3ZipDTO.getExperiment());
 
         try {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
@@ -156,8 +156,8 @@ public class FileService {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             return fileRepository.findFilesByUserAndExperiment(user, experiment);
@@ -184,8 +184,8 @@ public class FileService {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             List<File> files = fileRepository.findAllByUserAndExperiment(user, experiment);
@@ -215,8 +215,8 @@ public class FileService {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             return sb3ZipRepository.findAllIdsByUserAndExperiment(user, experiment);
@@ -293,8 +293,8 @@ public class FileService {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             Optional<Sb3Zip> finalProject = sb3ZipRepository.findFirstByUserAndExperiment(user,
@@ -332,8 +332,8 @@ public class FileService {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             List<Sb3Zip> sb3Zips = sb3ZipRepository.findAllByUserAndExperiment(user, experiment);

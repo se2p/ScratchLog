@@ -10,13 +10,13 @@ import fim.unipassau.de.scratch1984.persistence.repository.ExperimentDataReposit
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -254,7 +254,7 @@ public class ExperimentService {
         }
 
         try {
-            Experiment experiment = experimentRepository.getOne(id);
+            Experiment experiment = experimentRepository.getReferenceById(id);
             experiment.setProject(project);
             experimentRepository.save(experiment);
         } catch (EntityNotFoundException e) {
@@ -278,7 +278,7 @@ public class ExperimentService {
         }
 
         try {
-            Experiment experiment = experimentRepository.getOne(id);
+            Experiment experiment = experimentRepository.getReferenceById(id);
             experiment.setProject(null);
             experimentRepository.save(experiment);
         } catch (EntityNotFoundException e) {

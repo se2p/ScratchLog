@@ -19,9 +19,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -85,9 +82,6 @@ public class EventRestControllerIntegrationTest {
             return new byte[]{1, 2, 3};
         }
     };
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @BeforeEach
     public void setup() throws JSONException {
@@ -168,8 +162,6 @@ public class EventRestControllerIntegrationTest {
     public void testStoreBlockEvent() throws Exception {
         mvc.perform(post("/store/block")
                         .content(blockEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -182,8 +174,6 @@ public class EventRestControllerIntegrationTest {
         when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
         mvc.perform(post("/store/block")
                         .content(blockEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -196,8 +186,6 @@ public class EventRestControllerIntegrationTest {
         blockEventObject.put("experiment", "no");
         mvc.perform(post("/store/block")
                         .content(blockEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -209,8 +197,6 @@ public class EventRestControllerIntegrationTest {
     public void testStoreClickEvent() throws Exception {
         mvc.perform(post("/store/click")
                         .content(clickEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -223,8 +209,6 @@ public class EventRestControllerIntegrationTest {
         clickEventObject.put("time", "-1");
         mvc.perform(post("/store/click")
                         .content(clickEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -236,8 +220,6 @@ public class EventRestControllerIntegrationTest {
     public void testStoreDebuggerEvent() throws Exception {
         mvc.perform(post("/store/debugger")
                         .content(debuggerEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -250,8 +232,6 @@ public class EventRestControllerIntegrationTest {
         debuggerEventObject.put("time", ".");
         mvc.perform(post("/store/debugger")
                         .content(debuggerEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -263,8 +243,6 @@ public class EventRestControllerIntegrationTest {
     public void testStoreQuestionEvent() throws Exception {
         mvc.perform(post("/store/question")
                         .content(questionEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -277,8 +255,6 @@ public class EventRestControllerIntegrationTest {
         when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
         mvc.perform(post("/store/question")
                         .content(questionEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -290,8 +266,6 @@ public class EventRestControllerIntegrationTest {
     public void testStoreResourceEvent() throws Exception {
         mvc.perform(post("/store/resource")
                         .content(resourceEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -304,8 +278,6 @@ public class EventRestControllerIntegrationTest {
         resourceEventObject.put("time", "user");
         mvc.perform(post("/store/resource")
                         .content(resourceEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -317,8 +289,6 @@ public class EventRestControllerIntegrationTest {
     public void testStoreFileEvent() throws Exception {
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -331,8 +301,6 @@ public class EventRestControllerIntegrationTest {
         fileEventObject.put("file", "%");
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -344,8 +312,6 @@ public class EventRestControllerIntegrationTest {
     public void testStoreZipFile() throws Exception {
         mvc.perform(post("/store/zip")
                         .content(sb3ZipObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -358,8 +324,6 @@ public class EventRestControllerIntegrationTest {
         when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
         mvc.perform(post("/store/zip")
                         .content(sb3ZipObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -372,8 +336,6 @@ public class EventRestControllerIntegrationTest {
         sb3ZipObject.put("user", "unicorn");
         mvc.perform(post("/store/zip")
                         .content(sb3ZipObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -386,8 +348,6 @@ public class EventRestControllerIntegrationTest {
         when(experimentService.getSb3File(Experiment_ID)).thenReturn(experimentProjection);
         mvc.perform(post("/store/sb3")
                         .content(dataObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -415,8 +375,6 @@ public class EventRestControllerIntegrationTest {
         });
         mvc.perform(post("/store/sb3")
                         .content(dataObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
@@ -429,8 +387,6 @@ public class EventRestControllerIntegrationTest {
         when(experimentService.getSb3File(Experiment_ID)).thenThrow(NotFoundException.class);
         mvc.perform(post("/store/sb3")
                         .content(dataObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
@@ -443,8 +399,6 @@ public class EventRestControllerIntegrationTest {
         when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenReturn(JSON);
         mvc.perform(post("/store/json")
                         .content(dataObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -456,8 +410,6 @@ public class EventRestControllerIntegrationTest {
     public void testRetrieveLastJsonJsonNull() throws Exception {
         mvc.perform(post("/store/json")
                         .content(dataObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
@@ -470,8 +422,6 @@ public class EventRestControllerIntegrationTest {
         when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenThrow(NotFoundException.class);
         mvc.perform(post("/store/json")
                         .content(dataObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
@@ -484,8 +434,6 @@ public class EventRestControllerIntegrationTest {
         when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
         mvc.perform(post("/store/json")
                         .content(dataObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());

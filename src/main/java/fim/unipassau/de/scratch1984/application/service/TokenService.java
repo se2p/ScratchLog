@@ -9,13 +9,13 @@ import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -93,7 +93,7 @@ public class TokenService {
         }
 
         TokenDTO tokenDTO = new TokenDTO(type, computeExpirationDate(type), metadata, userId);
-        User user = userRepository.getOne(tokenDTO.getUser());
+        User user = userRepository.getReferenceById(tokenDTO.getUser());
         Token token = createToken(tokenDTO);
 
         try {
@@ -214,7 +214,7 @@ public class TokenService {
                         + " with user null!");
             }
 
-            User user = userRepository.getOne(token.getUser().getId());
+            User user = userRepository.getReferenceById(token.getUser().getId());
 
             try {
                 user.setAttempts(0);

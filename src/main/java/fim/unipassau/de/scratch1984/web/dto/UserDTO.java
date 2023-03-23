@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.Column;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -80,7 +79,6 @@ public class UserDTO {
     /**
      * The last time the user logged in to use the application.
      */
-    @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
     /**

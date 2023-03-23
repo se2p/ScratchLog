@@ -27,10 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -106,9 +103,6 @@ public class HomeControllerIntegrationTest {
             "password", "");
     private final Page<ExperimentTableProjection> experimentPage = new PageImpl<>(getExperimentProjections(5));
     private final Page<CourseTableProjection> coursePage = new PageImpl<>(getCourseTableProjections(3));
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @BeforeEach
     public void setup() {
@@ -123,8 +117,6 @@ public class HomeControllerIntegrationTest {
     @Test
     public void testGetIndexPage() throws Exception {
         mvc.perform(get("/")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -141,8 +133,6 @@ public class HomeControllerIntegrationTest {
         when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
         when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
         mvc.perform(get("/")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -166,8 +156,6 @@ public class HomeControllerIntegrationTest {
                 anyInt())).thenReturn(experimentPage);
         when(pageService.getCourseParticipantPage(any(PageRequest.class), anyInt())).thenReturn(coursePage);
         mvc.perform(get("/")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -188,8 +176,6 @@ public class HomeControllerIntegrationTest {
     public void testGetIndexPageParticipantNotFound() throws Exception {
         when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
         mvc.perform(get("/")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -208,8 +194,6 @@ public class HomeControllerIntegrationTest {
         when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
         mvc.perform(get(PAGE_COURSE)
                         .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -231,8 +215,6 @@ public class HomeControllerIntegrationTest {
         when(pageService.getCourseParticipantPage(any(PageRequest.class), anyInt())).thenReturn(coursePage);
         mvc.perform(get(PAGE_COURSE)
                         .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -253,8 +235,6 @@ public class HomeControllerIntegrationTest {
         when(pageService.getLastCoursePage(userDTO.getId())).thenReturn(lastPage);
         mvc.perform(get(PAGE_COURSE)
                         .param(PAGE_PARAM, INVALID_NUMBER)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
@@ -272,8 +252,6 @@ public class HomeControllerIntegrationTest {
         when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
         mvc.perform(get(PAGE_EXPERIMENT)
                         .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -294,8 +272,6 @@ public class HomeControllerIntegrationTest {
         when(pageService.getExperimentParticipantPage(any(PageRequest.class), anyInt())).thenReturn(experimentPage);
         mvc.perform(get(PAGE_EXPERIMENT)
                         .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -316,8 +292,6 @@ public class HomeControllerIntegrationTest {
         when(pageService.getLastExperimentPage(userDTO.getId())).thenReturn(pageNum);
         mvc.perform(get(PAGE_EXPERIMENT)
                         .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
@@ -334,8 +308,6 @@ public class HomeControllerIntegrationTest {
         when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
         mvc.perform(get(PAGE_EXPERIMENT)
                         .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
@@ -352,8 +324,6 @@ public class HomeControllerIntegrationTest {
         when(pageService.computeLastExperimentPage()).thenReturn(lastPage);
         mvc.perform(get(PAGE_EXPERIMENT)
                         .param(PAGE_PARAM, PAGE_PARAM)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
@@ -370,8 +340,6 @@ public class HomeControllerIntegrationTest {
                         .param(EXPERIMENT, ID_STRING)
                         .param(USER, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -390,8 +358,6 @@ public class HomeControllerIntegrationTest {
                         .param(EXPERIMENT, ID_STRING)
                         .param(USER, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -407,8 +373,6 @@ public class HomeControllerIntegrationTest {
                         .param(EXPERIMENT, INVALID_NUMBER)
                         .param(USER, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -424,8 +388,6 @@ public class HomeControllerIntegrationTest {
                         .param(EXPERIMENT, ID_STRING)
                         .param(USER, BLANK)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -439,8 +401,6 @@ public class HomeControllerIntegrationTest {
     public void testGetResetPage() throws Exception {
         MailServerSetter.setMailServer(true);
         mvc.perform(get("/reset")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -451,8 +411,6 @@ public class HomeControllerIntegrationTest {
     public void testGetResetPageNoMailServer() throws Exception {
         MailServerSetter.setMailServer(false);
         mvc.perform(get("/reset")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())

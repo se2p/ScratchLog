@@ -12,12 +12,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.registration.InMemoryRelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrations;
+import org.springframework.security.web.SecurityFilterChain;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,7 +38,7 @@ import java.util.Collection;
 @Configuration
 @Order(1)
 @Profile("saml2")
-public class SAML2Configuration extends WebSecurityConfigurerAdapter {
+public class SAML2Configuration {
 
     /**
      * The log instance associated with this class for logging purposes.
@@ -180,30 +180,25 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
     /**
      * Configures the URL patterns that are used for SAML2 authentication.
      *
-     * @param http The {@link HttpSecurity}.
-     * @throws Exception if something went wrong during access.
+     * @param http The http security.
+     * @return The security filter chain.
+     * @throws Exception Throws an exception if a user with insufficient privileges tries to access a restricted page.
      */
-    @Override
-    protected void configure(final HttpSecurity http) throws Exception {
-        http
-                .cors()
+    @Bean
+    public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
+        http.cors()
                 .and()
-                .requestMatchers()
-                // This filter chain is only applied if the URL matches
-                // Else the request is filtered by {@link SecurityConfig}.
-                .antMatchers("/saml2/**", "/login/saml2/**")
-                .and()
-                .csrf()
-                // Needed for SAML to work properly
-                .disable()
-                .authorizeRequests()
+                .securityMatcher("/saml2/**", "/login/saml2/**")
+                .csrf().disable()
+                .authorizeHttpRequests()
                 .anyRequest().authenticated()
                 .and()
-                // Processes the RelyingPartyRegistrationRepository Bean and installs the filters for SAML2
                 .saml2Login()
                 .and().formLogin().loginPage("/login/saml2")
                 .defaultSuccessUrl("/index", true)
                 .and().headers().frameOptions().sameOrigin();
+
+        return http.build();
     }
 
 }

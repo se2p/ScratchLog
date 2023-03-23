@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Custom security configuration for integration testing.
@@ -16,25 +16,21 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 public class SecurityTestConfig {
 
     /**
-     * Disables the standard security settings for testing purposes.
+     * Authorizes any requests for all mappings for the test profile.
      *
-     * @return The new web security configurer adapter.
+     * @param http The http security.
+     * @return The security filter chain.
+     * @throws Exception Throws an exception if a user with insufficient privileges tries to access a restricted page.
      */
     @Bean
-    public WebSecurityConfigurerAdapter securityDisabled() {
-        return new WebSecurityConfigurerAdapter() {
+    public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
+        http.cors()
+                .and()
+                .csrf().disable()
+                .authorizeHttpRequests()
+                .anyRequest().permitAll();
 
-            /**
-             * Authorizes any requests for all mappings.
-             *
-             * @param http The http security.
-             * @throws Exception Throws an exception of the authorization requirements are not met.
-             */
-            @Override
-            protected void configure(final HttpSecurity http) throws Exception {
-                http.cors().and().authorizeRequests().anyRequest().permitAll();
-            }
-        };
+        return http.build();
     }
 
 }

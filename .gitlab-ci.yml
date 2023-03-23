@@ -24,7 +24,7 @@ stages:
   - visualize
 
 default:
-  image: maven:3-jdk-11
+  image: maven:3-openjdk-17
   cache:
     paths:
       - .m2/repository/

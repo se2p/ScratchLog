@@ -18,6 +18,8 @@ import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.enums.Language;
 import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,8 +27,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.persistence.EntityNotFoundException;
-import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -104,23 +104,23 @@ public class CourseServiceTest {
     @Test
     public void testExistsActiveCourse() {
         course.setActive(true);
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         assertTrue(courseService.existsActiveCourse(ID));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
     }
 
     @Test
     public void testExistsActiveCourseInactive() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         assertFalse(courseService.existsActiveCourse(ID));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
     }
 
     @Test
     public void testExistsActiveCourseEntityNotFound() {
-        when(courseRepository.getOne(ID)).thenThrow(EntityNotFoundException.class);
+        when(courseRepository.getReferenceById(ID)).thenThrow(EntityNotFoundException.class);
         assertFalse(courseService.existsActiveCourse(ID));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
     }
 
     @Test
@@ -200,42 +200,42 @@ public class CourseServiceTest {
 
     @Test
     public void testExistsCourseExperiment() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.findByTitle(TITLE)).thenReturn(Optional.of(experiment1));
         when(courseExperimentRepository.existsByCourseAndExperiment(course, experiment1)).thenReturn(true);
         assertTrue(courseService.existsCourseExperiment(ID, TITLE));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).findByTitle(TITLE);
         verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment1);
     }
 
     @Test
     public void testExistsCourseExperimentNoEntry() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.findByTitle(TITLE)).thenReturn(Optional.of(experiment1));
         assertFalse(courseService.existsCourseExperiment(ID, TITLE));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).findByTitle(TITLE);
         verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment1);
     }
 
     @Test
     public void testExistsCourseExperimentEntityNotFound() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.findByTitle(TITLE)).thenReturn(Optional.of(experiment1));
         when(courseExperimentRepository.existsByCourseAndExperiment(course, experiment1)).thenThrow(
                 EntityNotFoundException.class);
         assertFalse(courseService.existsCourseExperiment(ID, TITLE));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).findByTitle(TITLE);
         verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment1);
     }
 
     @Test
     public void testExistsCourseExperimentNull() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         assertFalse(courseService.existsCourseExperiment(ID, TITLE));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).findByTitle(TITLE);
         verify(courseExperimentRepository, never()).existsByCourseAndExperiment(any(), any());
     }
@@ -245,7 +245,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.existsCourseExperiment(0, TITLE)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).findByTitle(anyString());
         verify(courseExperimentRepository, never()).existsByCourseAndExperiment(any(), any());
     }
@@ -255,7 +255,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.existsCourseExperiment(ID, BLANK)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).findByTitle(anyString());
         verify(courseExperimentRepository, never()).existsByCourseAndExperiment(any(), any());
     }
@@ -265,48 +265,48 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.existsCourseExperiment(ID, null)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).findByTitle(anyString());
         verify(courseExperimentRepository, never()).existsByCourseAndExperiment(any(), any());
     }
 
     @Test
     public void testExistsCourseParticipant() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         when(courseParticipantRepository.existsByCourseAndUser(course, user)).thenReturn(true);
         assertTrue(courseService.existsCourseParticipant(ID, USERNAME));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository).existsByCourseAndUser(course, user);
     }
 
     @Test
     public void testExistsCourseParticipantNoParticipant() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         assertFalse(courseService.existsCourseParticipant(ID, USERNAME));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository).existsByCourseAndUser(course, user);
     }
 
     @Test
     public void testExistsCourseParticipantNoUser() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         assertFalse(courseService.existsCourseParticipant(ID, USERNAME));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
 
     @Test
     public void testExistsCourseParticipantNotFound() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         when(courseParticipantRepository.existsByCourseAndUser(course, user)).thenThrow(EntityNotFoundException.class);
         assertFalse(courseService.existsCourseParticipant(ID, USERNAME));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository).existsByCourseAndUser(course, user);
     }
@@ -316,7 +316,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.existsCourseParticipant(0, USERNAME)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
@@ -326,7 +326,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.existsCourseParticipant(ID, BLANK)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
@@ -336,44 +336,44 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.existsCourseParticipant(ID, null)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
 
     @Test
     public void testExistsCourseParticipantExperiment() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findByExperiment(experiment1)).thenReturn(Optional.of(courseExperiment));
         when(courseParticipantRepository.existsByCourseAndUser(course, user)).thenReturn(true);
         assertTrue(courseService.existsCourseParticipant(ID, ID));
-        verify(experimentRepository).getOne(ID);
-        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findByExperiment(experiment1);
         verify(courseParticipantRepository).existsByCourseAndUser(course, user);
     }
 
     @Test
     public void testExistsCourseParticipantNoCourseExperiment() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findByExperiment(experiment1)).thenReturn(Optional.empty());
         assertFalse(courseService.existsCourseParticipant(ID, ID));
-        verify(experimentRepository).getOne(ID);
-        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findByExperiment(experiment1);
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
 
     @Test
     public void testExistsCourseParticipantExperimentEntityNotFound() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findByExperiment(experiment1)).thenThrow(EntityNotFoundException.class);
         assertFalse(courseService.existsCourseParticipant(ID, ID));
-        verify(experimentRepository).getOne(ID);
-        verify(userRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findByExperiment(experiment1);
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
@@ -383,8 +383,8 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.existsCourseParticipant(0, ID)
         );
-        verify(experimentRepository, never()).getOne(anyInt());
-        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
+        verify(userRepository, never()).getReferenceById(anyInt());
         verify(courseExperimentRepository, never()).findByExperiment(any());
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
@@ -394,8 +394,8 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.existsCourseParticipant(ID, -1)
         );
-        verify(experimentRepository, never()).getOne(anyInt());
-        verify(userRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
+        verify(userRepository, never()).getReferenceById(anyInt());
         verify(courseExperimentRepository, never()).findByExperiment(any());
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
     }
@@ -473,12 +473,12 @@ public class CourseServiceTest {
 
     @Test
     public void testDeleteCourse() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment));
         assertDoesNotThrow(
                 () -> courseService.deleteCourse(ID)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(courseExperimentRepository).deleteAll(any());
         verify(experimentRepository).delete(courseExperiment.getExperiment());
@@ -487,12 +487,12 @@ public class CourseServiceTest {
 
     @Test
     public void testDeleteCourseEntityNotFound() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(courseExperimentRepository.findAllByCourse(course)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> courseService.deleteCourse(ID)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(courseExperimentRepository, never()).deleteAll(any());
         verify(experimentRepository, never()).delete(any());
@@ -504,7 +504,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.deleteCourse(0)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(courseExperimentRepository, never()).deleteAll(any());
         verify(experimentRepository, never()).delete(any());
@@ -513,14 +513,14 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseParticipant() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         assertAll(
                 () -> assertEquals(ID, courseService.saveCourseParticipant(ID, USERNAME)),
                 () -> assertTrue(user.isActive()),
                 () -> assertTrue(course.getLastChanged().isAfter(DATE))
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository).save(any());
         verify(courseRepository).save(course);
@@ -529,13 +529,13 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseParticipantConstraintViolation() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         when(courseParticipantRepository.save(any())).thenThrow(ConstraintViolationException.class);
         assertThrows(StoreException.class,
                 () -> courseService.saveCourseParticipant(ID, USERNAME)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository).save(any());
         verify(courseRepository, never()).save(any());
@@ -544,13 +544,13 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseParticipantEntityNotFound() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         when(courseParticipantRepository.save(any())).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> courseService.saveCourseParticipant(ID, USERNAME)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository).save(any());
         verify(courseRepository, never()).save(any());
@@ -560,12 +560,12 @@ public class CourseServiceTest {
     @Test
     public void testSaveCourseParticipantAdmin() {
         user.setRole(Role.ADMIN);
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         assertThrows(IllegalStateException.class,
                 () -> courseService.saveCourseParticipant(ID, USERNAME)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository, never()).save(any());
         verify(courseRepository, never()).save(any());
@@ -574,11 +574,11 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseParticipantNoUser() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         assertThrows(NotFoundException.class,
                 () -> courseService.saveCourseParticipant(ID, USERNAME)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository, never()).save(any());
         verify(courseRepository, never()).save(any());
@@ -590,7 +590,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourseParticipant(-1, USERNAME)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).save(any());
         verify(courseRepository, never()).save(any());
@@ -602,7 +602,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourseParticipant(ID, BLANK)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).save(any());
         verify(courseRepository, never()).save(any());
@@ -614,7 +614,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourseParticipant(ID, null)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).save(any());
         verify(courseRepository, never()).save(any());
@@ -623,14 +623,14 @@ public class CourseServiceTest {
 
     @Test
     public void testDeleteCourseParticipant() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
                 courseExperiment));
         when(participantRepository.existsByUserAndExperiment(user, experiment2)).thenReturn(true, false);
         courseService.deleteCourseParticipant(ID, USERNAME);
         assertTrue(course.getLastChanged().isAfter(DATE));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment2);
@@ -641,13 +641,13 @@ public class CourseServiceTest {
 
     @Test
     public void testDeleteCourseParticipantEntityNotFound() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         when(courseExperimentRepository.findAllByCourse(course)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> courseService.deleteCourseParticipant(ID, USERNAME)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
@@ -658,11 +658,11 @@ public class CourseServiceTest {
 
     @Test
     public void testDeleteCourseParticipantNoUser() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         assertThrows(NotFoundException.class,
                 () -> courseService.deleteCourseParticipant(ID, USERNAME)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
@@ -676,7 +676,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.deleteCourseParticipant(0, USERNAME)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
@@ -690,7 +690,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.deleteCourseParticipant(ID, BLANK)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
@@ -704,7 +704,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.deleteCourseParticipant(ID, null)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
@@ -715,16 +715,16 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseExperiment() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.getOne(INVALID_ID)).thenReturn(experiment1);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(experimentRepository.getReferenceById(INVALID_ID)).thenReturn(experiment1);
         courseService.saveCourseExperiment(ID, INVALID_ID);
         assertAll(
                 () -> assertTrue(experiment1.isActive()),
                 () -> assertTrue(course.isActive()),
                 () -> assertTrue(course.getLastChanged().isAfter(DATE))
         );
-        verify(courseRepository).getOne(ID);
-        verify(experimentRepository).getOne(INVALID_ID);
+        verify(courseRepository).getReferenceById(ID);
+        verify(experimentRepository).getReferenceById(INVALID_ID);
         verify(courseExperimentRepository).save(any());
         verify(courseRepository).save(course);
         verify(experimentRepository).save(experiment1);
@@ -732,14 +732,14 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseExperimentConstraintViolation() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.getOne(INVALID_ID)).thenReturn(experiment1);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(experimentRepository.getReferenceById(INVALID_ID)).thenReturn(experiment1);
         when(courseExperimentRepository.save(any())).thenThrow(ConstraintViolationException.class);
         assertThrows(StoreException.class,
                 () -> courseService.saveCourseExperiment(ID, INVALID_ID)
         );
-        verify(courseRepository).getOne(ID);
-        verify(experimentRepository).getOne(INVALID_ID);
+        verify(courseRepository).getReferenceById(ID);
+        verify(experimentRepository).getReferenceById(INVALID_ID);
         verify(courseExperimentRepository).save(any());
         verify(courseRepository, never()).save(any());
         verify(experimentRepository, never()).save(any());
@@ -747,14 +747,14 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseExperimentEntityNotFound() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
-        when(experimentRepository.getOne(INVALID_ID)).thenReturn(experiment1);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(experimentRepository.getReferenceById(INVALID_ID)).thenReturn(experiment1);
         when(courseExperimentRepository.save(any())).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> courseService.saveCourseExperiment(ID, INVALID_ID)
         );
-        verify(courseRepository).getOne(ID);
-        verify(experimentRepository).getOne(INVALID_ID);
+        verify(courseRepository).getReferenceById(ID);
+        verify(experimentRepository).getReferenceById(INVALID_ID);
         verify(courseExperimentRepository).save(any());
         verify(courseRepository, never()).save(any());
         verify(experimentRepository, never()).save(any());
@@ -765,8 +765,8 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourseExperiment(ID, 0)
         );
-        verify(courseRepository, never()).getOne(anyInt());
-        verify(experimentRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(courseExperimentRepository, never()).save(any());
         verify(courseRepository, never()).save(any());
         verify(experimentRepository, never()).save(any());
@@ -777,8 +777,8 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourseExperiment(-1, INVALID_ID)
         );
-        verify(courseRepository, never()).getOne(anyInt());
-        verify(experimentRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(courseExperimentRepository, never()).save(any());
         verify(courseRepository, never()).save(any());
         verify(experimentRepository, never()).save(any());
@@ -786,11 +786,11 @@ public class CourseServiceTest {
 
     @Test
     public void testDeleteCourseExperiment() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.findByTitle(TITLE)).thenReturn(Optional.of(experiment1));
         courseService.deleteCourseExperiment(ID, TITLE);
         assertTrue(course.getLastChanged().isAfter(DATE));
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).findByTitle(TITLE);
         verify(courseExperimentRepository).deleteById(any());
         verify(courseRepository).save(course);
@@ -798,13 +798,13 @@ public class CourseServiceTest {
 
     @Test
     public void testDeleteCourseExperimentEntityNotFound() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.findByTitle(TITLE)).thenReturn(Optional.of(experiment1));
         when(courseRepository.save(course)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> courseService.deleteCourseExperiment(ID, TITLE)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).findByTitle(TITLE);
         verify(courseExperimentRepository).deleteById(any());
         verify(courseRepository).save(course);
@@ -812,11 +812,11 @@ public class CourseServiceTest {
 
     @Test
     public void testDeleteCourseExperimentNull() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         assertThrows(NotFoundException.class,
                 () -> courseService.deleteCourseExperiment(ID, TITLE)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).findByTitle(TITLE);
         verify(courseExperimentRepository, never()).deleteById(any());
         verify(courseRepository, never()).save(any());
@@ -827,7 +827,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.deleteCourseExperiment(0, TITLE)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).findByTitle(anyString());
         verify(courseExperimentRepository, never()).deleteById(any());
         verify(courseRepository, never()).save(any());
@@ -838,7 +838,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.deleteCourseExperiment(ID, BLANK)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).findByTitle(anyString());
         verify(courseExperimentRepository, never()).deleteById(any());
         verify(courseRepository, never()).save(any());
@@ -849,7 +849,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.deleteCourseExperiment(ID, null)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).findByTitle(anyString());
         verify(courseExperimentRepository, never()).deleteById(any());
         verify(courseRepository, never()).save(any());
@@ -858,13 +858,13 @@ public class CourseServiceTest {
     @Test
     public void testAddParticipantToCourseExperiments() {
         user.setSecret(null);
-        when(courseRepository.getOne(ID)).thenReturn(course);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
                 courseExperiment));
         assertDoesNotThrow(() -> courseService.addParticipantToCourseExperiments(ID, ID));
-        verify(courseRepository).getOne(ID);
-        verify(userRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment2);
         verify(participantRepository, times(2)).save(any());
@@ -873,13 +873,13 @@ public class CourseServiceTest {
 
     @Test
     public void testAddParticipantToCourseExperimentsSecretNotNull() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
                 courseExperiment));
         assertDoesNotThrow(() -> courseService.addParticipantToCourseExperiments(ID, ID));
-        verify(courseRepository).getOne(ID);
-        verify(userRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment2);
         verify(participantRepository, times(2)).save(any());
@@ -888,11 +888,11 @@ public class CourseServiceTest {
 
     @Test
     public void testAddParticipantToCourseExperimentsNoExperiments() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         assertDoesNotThrow(() -> courseService.addParticipantToCourseExperiments(ID, ID));
-        verify(courseRepository).getOne(ID);
-        verify(userRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
         verify(participantRepository, never()).save(any());
@@ -901,16 +901,16 @@ public class CourseServiceTest {
 
     @Test
     public void testAddParticipantToCourseExperimentsParticipantExists() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
                 courseExperiment));
         when(participantRepository.existsByUserAndExperiment(user, experiment2)).thenReturn(true);
         assertThrows(IllegalStateException.class,
                 () -> courseService.addParticipantToCourseExperiments(ID, ID)
         );
-        verify(courseRepository).getOne(ID);
-        verify(userRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(participantRepository).existsByUserAndExperiment(user, experiment2);
         verify(participantRepository, never()).save(any());
@@ -919,16 +919,16 @@ public class CourseServiceTest {
 
     @Test
     public void testAddParticipantToCourseExperimentsConstraintViolation() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
                 courseExperiment));
         when(participantRepository.save(any())).thenThrow(ConstraintViolationException.class);
         assertThrows(StoreException.class,
                 () -> courseService.addParticipantToCourseExperiments(ID, ID)
         );
-        verify(courseRepository).getOne(ID);
-        verify(userRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(participantRepository).existsByUserAndExperiment(user, experiment2);
         verify(participantRepository).save(any());
@@ -937,14 +937,14 @@ public class CourseServiceTest {
 
     @Test
     public void testAddParticipantToCourseExperimentsEntityNotFound() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> courseService.addParticipantToCourseExperiments(ID, ID)
         );
-        verify(courseRepository).getOne(ID);
-        verify(userRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
         verify(participantRepository, never()).save(any());
@@ -956,8 +956,8 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.addParticipantToCourseExperiments(ID, -1)
         );
-        verify(courseRepository, never()).getOne(anyInt());
-        verify(userRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
+        verify(userRepository, never()).getReferenceById(anyInt());
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
         verify(participantRepository, never()).save(any());
@@ -969,8 +969,8 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.addParticipantToCourseExperiments(0, ID)
         );
-        verify(courseRepository, never()).getOne(anyInt());
-        verify(userRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
+        verify(userRepository, never()).getReferenceById(anyInt());
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
         verify(participantRepository, never()).save(any());
@@ -1010,7 +1010,7 @@ public class CourseServiceTest {
 
     @Test
     public void testChangeCourseStatus() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(courseParticipantRepository.findAllByCourse(course)).thenReturn(List.of(courseParticipant));
         when(courseRepository.save(course)).thenReturn(course);
         courseService.changeCourseStatus(true, ID);
@@ -1019,7 +1019,7 @@ public class CourseServiceTest {
                 () -> assertTrue(course.getLastChanged().isAfter(DATE)),
                 () -> assertTrue(user.isActive())
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(courseParticipantRepository).findAllByCourse(course);
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(experimentRepository, never()).updateStatusById(anyInt(), anyBoolean());
@@ -1030,7 +1030,7 @@ public class CourseServiceTest {
     @Test
     public void testChangeCourseStatusInactive() {
         course.setActive(true);
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment));
         when(courseParticipantRepository.findAllByCourse(course)).thenReturn(List.of(courseParticipant));
         when(courseRepository.save(course)).thenReturn(course);
@@ -1041,7 +1041,7 @@ public class CourseServiceTest {
                 () -> assertFalse(user.isActive()),
                 () -> assertNull(user.getSecret())
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(courseParticipantRepository).findAllByCourse(course);
         verify(courseExperimentRepository).findAllByCourse(course);
         verify(experimentRepository).updateStatusById(ID, false);
@@ -1051,12 +1051,12 @@ public class CourseServiceTest {
 
     @Test
     public void testChangeCourseStatusEntityNotFound() {
-        when(courseRepository.getOne(ID)).thenReturn(course);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(courseParticipantRepository.findAllByCourse(course)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> courseService.changeCourseStatus(true, ID)
         );
-        verify(courseRepository).getOne(ID);
+        verify(courseRepository).getReferenceById(ID);
         verify(courseParticipantRepository).findAllByCourse(course);
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(experimentRepository, never()).updateStatusById(anyInt(), anyBoolean());
@@ -1069,7 +1069,7 @@ public class CourseServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> courseService.changeCourseStatus(true, 0)
         );
-        verify(courseRepository, never()).getOne(anyInt());
+        verify(courseRepository, never()).getReferenceById(anyInt());
         verify(courseParticipantRepository, never()).findAllByCourse(any());
         verify(courseExperimentRepository, never()).findAllByCourse(any());
         verify(experimentRepository, never()).updateStatusById(anyInt(), anyBoolean());

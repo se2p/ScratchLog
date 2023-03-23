@@ -35,6 +35,8 @@ import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventDTO;
 import fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +47,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
-import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -158,8 +158,8 @@ public class EventService {
      */
     @Transactional
     public void saveBlockEvent(final BlockEventDTO blockEventDTO) {
-        User user = userRepository.getOne(blockEventDTO.getUser());
-        Experiment experiment = experimentRepository.getOne(blockEventDTO.getExperiment());
+        User user = userRepository.getReferenceById(blockEventDTO.getUser());
+        Experiment experiment = experimentRepository.getReferenceById(blockEventDTO.getExperiment());
 
         try {
             if (isParticipant(user, experiment, blockEventDTO.getUser(), blockEventDTO.getExperiment())
@@ -181,8 +181,8 @@ public class EventService {
      */
     @Transactional
     public void saveClickEvent(final ClickEventDTO clickEventDTO) {
-        User user = userRepository.getOne(clickEventDTO.getUser());
-        Experiment experiment = experimentRepository.getOne(clickEventDTO.getExperiment());
+        User user = userRepository.getReferenceById(clickEventDTO.getUser());
+        Experiment experiment = experimentRepository.getReferenceById(clickEventDTO.getExperiment());
 
         try {
             if (isParticipant(user, experiment, clickEventDTO.getUser(), clickEventDTO.getExperiment())
@@ -204,8 +204,8 @@ public class EventService {
      */
     @Transactional
     public void saveDebuggerEvent(final DebuggerEventDTO debuggerEventDTO) {
-        User user = userRepository.getOne(debuggerEventDTO.getUser());
-        Experiment experiment = experimentRepository.getOne(debuggerEventDTO.getExperiment());
+        User user = userRepository.getReferenceById(debuggerEventDTO.getUser());
+        Experiment experiment = experimentRepository.getReferenceById(debuggerEventDTO.getExperiment());
 
         try {
             if (isParticipant(user, experiment, debuggerEventDTO.getUser(), debuggerEventDTO.getExperiment())
@@ -227,8 +227,8 @@ public class EventService {
      */
     @Transactional
     public void saveQuestionEvent(final QuestionEventDTO questionEventDTO) {
-        User user = userRepository.getOne(questionEventDTO.getUser());
-        Experiment experiment = experimentRepository.getOne(questionEventDTO.getExperiment());
+        User user = userRepository.getReferenceById(questionEventDTO.getUser());
+        Experiment experiment = experimentRepository.getReferenceById(questionEventDTO.getExperiment());
 
         try {
             if (isParticipant(user, experiment, questionEventDTO.getUser(), questionEventDTO.getExperiment())
@@ -250,8 +250,8 @@ public class EventService {
      */
     @Transactional
     public void saveResourceEvent(final ResourceEventDTO resourceEventDTO) {
-        User user = userRepository.getOne(resourceEventDTO.getUser());
-        Experiment experiment = experimentRepository.getOne(resourceEventDTO.getExperiment());
+        User user = userRepository.getReferenceById(resourceEventDTO.getUser());
+        Experiment experiment = experimentRepository.getReferenceById(resourceEventDTO.getExperiment());
 
         try {
             if (isParticipant(user, experiment, resourceEventDTO.getUser(), resourceEventDTO.getExperiment())
@@ -309,8 +309,8 @@ public class EventService {
                     + userId + " or experiment with invalid id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             BlockEventJSONProjection projection =
@@ -405,8 +405,8 @@ public class EventService {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             List<BlockEventJSONProjection> json =
@@ -445,8 +445,8 @@ public class EventService {
                     + " or experiment with invalid id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             List<BlockEventXMLProjection> xml = blockEventRepository.findAllByXmlIsNotNullAndUserAndExperiment(user,
@@ -495,8 +495,8 @@ public class EventService {
                     + pageSize + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             return blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(user, experiment,
@@ -548,7 +548,7 @@ public class EventService {
                     + "!");
         }
 
-        Experiment experiment = experimentRepository.getOne(id);
+        Experiment experiment = experimentRepository.getReferenceById(id);
 
         try {
             List<BlockEvent> blockEvents = blockEventRepository.findAllByExperiment(experiment);
@@ -574,7 +574,7 @@ public class EventService {
                     + "!");
         }
 
-        Experiment experiment = experimentRepository.getOne(id);
+        Experiment experiment = experimentRepository.getReferenceById(id);
 
         try {
             List<ClickEvent> clickEvents = clickEventRepository.findAllByExperiment(experiment);
@@ -600,7 +600,7 @@ public class EventService {
                     + id + "!");
         }
 
-        Experiment experiment = experimentRepository.getOne(id);
+        Experiment experiment = experimentRepository.getReferenceById(id);
 
         try {
             List<ResourceEvent> resourceEvents = resourceEventRepository.findAllByExperiment(experiment);

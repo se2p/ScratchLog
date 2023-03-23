@@ -26,10 +26,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -116,9 +113,6 @@ public class UserControllerIntegrationTest {
     private final TokenDTO tokenDTO = new TokenDTO(TokenType.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final UserBulkDTO userBulkDTO = new UserBulkDTO(AMOUNT, Language.ENGLISH, USERNAME, true);
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @BeforeEach
     public void setup() {
@@ -153,8 +147,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(get("/users/authenticate")
                 .param("id", ID_STRING)
                 .param("secret", SECRET)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -169,8 +161,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(get("/users/authenticate")
                 .param("id", ID_STRING)
                 .param("secret", SECRET)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -185,8 +175,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(get("/users/authenticate")
                 .param("id", ID_STRING)
                 .param("secret", SECRET)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -200,8 +188,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(get("/users/authenticate")
                 .param("id", "0")
                 .param("secret", SECRET)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -216,8 +202,6 @@ public class UserControllerIntegrationTest {
         when(userService.loginUser(userDTO)).thenReturn(true);
         mvc.perform(post("/users/login")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -233,8 +217,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(post("/users/login")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
@@ -252,8 +234,6 @@ public class UserControllerIntegrationTest {
         when(userService.loginUser(any())).thenThrow(NotFoundException.class);
         mvc.perform(post("/users/login")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
@@ -271,8 +251,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(post("/users/login")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
@@ -290,8 +268,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(post("/users/login")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -308,8 +284,6 @@ public class UserControllerIntegrationTest {
         userDTO.setPassword(null);
         mvc.perform(post("/users/login")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -324,8 +298,6 @@ public class UserControllerIntegrationTest {
     public void testLogoutUser() throws Exception {
         when(userService.existsUser(anyString())).thenReturn(true);
         mvc.perform(get("/users/logout")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
@@ -336,8 +308,6 @@ public class UserControllerIntegrationTest {
     @Test
     public void testLogoutUserNonExistent() throws Exception {
         mvc.perform(get("/users/logout")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -348,8 +318,6 @@ public class UserControllerIntegrationTest {
     public void testGetAddUser() throws Exception {
         mvc.perform(get("/users/add")
                 .flashAttr(USER_DTO, new UserDTO())
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(USER));
@@ -364,8 +332,6 @@ public class UserControllerIntegrationTest {
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/users/add")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SUCCESS));
@@ -384,8 +350,6 @@ public class UserControllerIntegrationTest {
         when(tokenService.generateToken(TokenType.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
         mvc.perform(post("/users/add")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -405,8 +369,6 @@ public class UserControllerIntegrationTest {
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/users/add")
                         .flashAttr(USER_DTO, userDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + oldDTO.getUsername()));
@@ -424,8 +386,6 @@ public class UserControllerIntegrationTest {
         when(userService.existsUser(userDTO.getUsername())).thenReturn(true);
         mvc.perform(post("/users/add")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(USER));
@@ -443,8 +403,6 @@ public class UserControllerIntegrationTest {
         when(userService.existsEmail(userDTO.getEmail())).thenReturn(true);
         mvc.perform(post("/users/add")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(USER));
@@ -460,8 +418,6 @@ public class UserControllerIntegrationTest {
         MailServerSetter.setMailServer(false);
         mvc.perform(get("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PARTICIPANTS_ADD));
@@ -472,8 +428,6 @@ public class UserControllerIntegrationTest {
         MailServerSetter.setMailServer(true);
         mvc.perform(get("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT));
@@ -483,8 +437,6 @@ public class UserControllerIntegrationTest {
     public void testAddParticipants() throws Exception {
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SUCCESS))
@@ -502,8 +454,6 @@ public class UserControllerIntegrationTest {
         when(userService.existsUser(existingNames.get(0))).thenReturn(true);
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PARTICIPANTS_ADD))
@@ -519,8 +469,6 @@ public class UserControllerIntegrationTest {
         userBulkDTO.setUsername("ad");
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PARTICIPANTS_ADD))
@@ -536,8 +484,6 @@ public class UserControllerIntegrationTest {
         userBulkDTO.setAmount(-1);
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR))
@@ -557,8 +503,6 @@ public class UserControllerIntegrationTest {
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/users/reset")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_INFO));
@@ -576,8 +520,6 @@ public class UserControllerIntegrationTest {
         when(tokenService.generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
         mvc.perform(post("/users/reset")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_INFO));
@@ -592,8 +534,6 @@ public class UserControllerIntegrationTest {
         MailServerSetter.setMailServer(false);
         mvc.perform(post("/users/reset")
                         .flashAttr(USER_DTO, userDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -611,8 +551,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(oldDTO);
         mvc.perform(post("/users/reset")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_INFO));
@@ -628,8 +566,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
         mvc.perform(post("/users/reset")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_INFO));
@@ -645,8 +581,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/profile")
                 .param(NAME, USERNAME)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -669,8 +603,6 @@ public class UserControllerIntegrationTest {
         when(participantService.getExperimentInfoForParticipant(userDTO.getId())).thenReturn(experiments);
         mvc.perform(get("/users/profile")
                 .param(NAME, USERNAME)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -690,8 +622,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         mvc.perform(get("/users/profile")
                 .param(NAME, USERNAME)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -704,8 +634,6 @@ public class UserControllerIntegrationTest {
     public void testGetProfileOwnProfile() throws Exception {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/profile")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -723,8 +651,6 @@ public class UserControllerIntegrationTest {
     public void testGetProfileUserParticipant() throws Exception {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/profile")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -743,8 +669,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/profile")
                 .param(NAME, USERNAME + 1)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -763,8 +687,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/edit")
                 .param(NAME, USERNAME)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(USER_DTO, allOf(
@@ -782,8 +704,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         mvc.perform(get("/users/edit")
                 .param(NAME, USERNAME)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -795,8 +715,6 @@ public class UserControllerIntegrationTest {
     public void testGetEditProfileFormUsernameNull() throws Exception {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/edit")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(USER_DTO, allOf(
@@ -815,8 +733,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/edit")
                 .param(NAME, "  ")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(USER_DTO, allOf(
@@ -833,8 +749,6 @@ public class UserControllerIntegrationTest {
     public void testGetEditProfileFormUsernameNotFound() throws Exception {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         mvc.perform(get("/users/edit")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -846,8 +760,6 @@ public class UserControllerIntegrationTest {
     public void testGetEditProfileFormUserParticipant() throws Exception {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/edit")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(USER_DTO, allOf(
@@ -865,8 +777,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(get("/users/edit")
                 .param(NAME, USERNAME + 1)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(USER_DTO, allOf(
@@ -886,8 +796,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + USERNAME));
@@ -908,8 +816,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + NEW_USERNAME));
@@ -934,8 +840,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + USERNAME));
@@ -960,8 +864,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(EMAIL_REDIRECT + USERNAME));
@@ -988,8 +890,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                         .flashAttr(USER_DTO, userDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + USERNAME));
@@ -1021,8 +921,6 @@ public class UserControllerIntegrationTest {
         when(userService.encodePassword(VALID_PASSWORD)).thenReturn(VALID_PASSWORD);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(EMAIL_REDIRECT + USERNAME));
@@ -1048,8 +946,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + USERNAME));
@@ -1077,8 +973,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PROFILE_EDIT));
@@ -1102,8 +996,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PROFILE_EDIT));
@@ -1125,8 +1017,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PROFILE_EDIT));
@@ -1148,8 +1038,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(PROFILE)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PROFILE_EDIT));
@@ -1172,8 +1060,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PROFILE_EDIT));
@@ -1191,8 +1077,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1211,8 +1095,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1233,8 +1115,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         mvc.perform(post("/users/update")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1258,8 +1138,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(post("/users/delete")
                 .param(ID_PARAM, ID_STRING)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SUCCESS));
@@ -1279,8 +1157,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(post("/users/delete")
                 .param(ID_PARAM, ID_STRING)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SUCCESS));
@@ -1301,8 +1177,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(post("/users/delete")
                 .param(ID_PARAM, ID_STRING)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(LAST_ADMIN));
@@ -1321,8 +1195,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(post("/users/delete")
                 .param(ID_PARAM, ID_STRING)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(INVALID + USERNAME));
@@ -1341,8 +1213,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(post("/users/delete")
                 .param(ID_PARAM, ID_STRING)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1358,8 +1228,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(post("/users/delete")
                 .param(ID_PARAM, USERNAME)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1376,8 +1244,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/users/active")
                 .param("id", ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + userDTO.getUsername()));
@@ -1392,8 +1258,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/users/active")
                 .param("id", ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + userDTO.getUsername()));
@@ -1406,8 +1270,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/users/active")
                 .param("id", ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1420,8 +1282,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/users/active")
                 .param("id", ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1433,8 +1293,6 @@ public class UserControllerIntegrationTest {
     public void testChangeActiveStatusInvalidId() throws Exception {
         mvc.perform(get("/users/active")
                 .param("id", USERNAME)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1448,8 +1306,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/users/forgot")
                 .param("id", ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(model().attribute(USER_DTO, is(userDTO)))
                 .andExpect(status().isOk())
@@ -1462,8 +1318,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/users/forgot")
                 .param("id", ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1475,8 +1329,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/users/forgot")
                 .param("id", ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1487,8 +1339,6 @@ public class UserControllerIntegrationTest {
     public void testGetPasswordResetFormInvalidId() throws Exception {
         mvc.perform(get("/users/forgot")
                 .param("id", "0")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1506,8 +1356,6 @@ public class UserControllerIntegrationTest {
         when(userService.encodePassword(VALID_PASSWORD)).thenReturn(VALID_PASSWORD);
         mvc.perform(post("/users/forgot")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(PROFILE_REDIRECT + USERNAME));
@@ -1527,8 +1375,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(post("/users/forgot")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PASSWORD_PAGE));
@@ -1548,8 +1394,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
         mvc.perform(post("/users/forgot")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1567,8 +1411,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         mvc.perform(post("/users/forgot")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
@@ -1584,8 +1426,6 @@ public class UserControllerIntegrationTest {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
         mvc.perform(post("/users/forgot")
                 .flashAttr(USER_DTO, userDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
