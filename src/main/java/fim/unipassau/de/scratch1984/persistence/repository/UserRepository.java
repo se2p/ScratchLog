@@ -105,7 +105,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param limit The maximum number of results to return.
      * @return A list of {@link UserProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) LIMIT :limit")
     List<UserProjection> findUserSuggestions(@Param("query") String query, @Param("limit") int limit);
 
@@ -118,7 +118,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param offset The offset used to return new results.
      * @return A list of {@link UserProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) LIMIT :limit OFFSET :offset")
     List<UserProjection> findUserResults(@Param("query") String query, @Param("limit") int limit,
                                          @Param("offset") int offset);
@@ -129,8 +129,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param query The username or email to search for.
      * @return The number of user results.
      */
-    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
-            + "OR u.email LIKE CONCAT('%', :query, '%'))")
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM `user` AS u WHERE (u.username LIKE "
+            + "CONCAT('%', :query, '%') OR u.email LIKE CONCAT('%', :query, '%'))")
     int getUserResultsCount(@Param("query") String query);
 
     /**
@@ -142,7 +142,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param limit The maximum number of results to return.
      * @return A list of users.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.role = 'PARTICIPANT' AND u.id NOT IN "
             + "(SELECT p.user_id FROM participant AS p WHERE p.experiment_id = :id) LIMIT :limit")
     List<UserProjection> findParticipantSuggestions(@Param("query") String query, @Param("id") int experiment,
@@ -158,7 +158,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param limit The maximum number of results to return.
      * @return A list of users.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.role = 'PARTICIPANT' AND u.id NOT IN "
             + "(SELECT p.user_id FROM participant AS p WHERE p.experiment_id = :experiment) AND u.id IN "
             + "(SELECT c.user_id from course_participant AS c WHERE c.course_id = :course) LIMIT :limit")
@@ -174,7 +174,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param limit The maximum number of results to return.
      * @return A list of users.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.id IN (SELECT p.user_id FROM participant AS p WHERE "
             + "p.experiment_id = :id) LIMIT :limit")
     List<UserProjection> findDeleteParticipantSuggestions(@Param("query") String query, @Param("id") int experiment,
@@ -189,7 +189,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param limit The maximum number of results to return.
      * @return A list of {@link UserProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.role = 'PARTICIPANT' AND u.id NOT IN "
             + "(SELECT p.user_id FROM course_participant AS p WHERE p.course_id = :id) LIMIT :limit")
     List<UserProjection> findCourseParticipantSuggestions(@Param("query") String query, @Param("id") int course,
@@ -204,7 +204,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param limit The maximum number of results to return.
      * @return A list of {@link UserProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
+    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
             + "OR u.email LIKE CONCAT('%', :query, '%')) AND u.id IN (SELECT p.user_id FROM course_participant AS p "
             + "WHERE p.course_id = :id) LIMIT :limit")
     List<UserProjection> findDeleteCourseParticipantSuggestions(@Param("query") String query, @Param("id") int course,
@@ -218,7 +218,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param name The username pattern to search for.
      * @return The user projection containing information or an empty {@link Optional}.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM user AS u WHERE u.username LIKE CONCAT(:name, '%') AND "
+    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE u.username LIKE CONCAT(:name, '%') AND "
             + "RIGHT(u.username, 1) IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9) ORDER BY LENGTH(u.username) DESC, u.username "
             + "DESC LIMIT 1")
     Optional<UserProjection> findLastUsername(@Param("name") String name);

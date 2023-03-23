@@ -38,10 +38,11 @@
         <selenium.version>4.0.0</selenium.version>
         <javax.validation.version>2.0.1.Final</javax.validation.version>
         <mysql.version>8.0.24</mysql.version>
-        <h2.version>1.4.200</h2.version>
-        <maven.checkstyle.version>3.1.1</maven.checkstyle.version>
-        <maven.surefire.version>3.0.0-M5</maven.surefire.version>
-        <checkstyle.version>8.37</checkstyle.version>
+        <h2.version>2.1.214</h2.version>
+        <maven.checkstyle.version>3.2.1</maven.checkstyle.version>
+        <checkstyle.version>9.3</checkstyle.version>
+        <maven.surefire.version>3.0.0</maven.surefire.version>
+        <jacoco.version>0.8.8</jacoco.version>
     </properties>
 
     <dependencies>
@@ -342,7 +343,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.6</version>
+                <version>${jacoco.version}</version>
                 <executions>
                     <execution>
                         <id>pre-unit-test</id>

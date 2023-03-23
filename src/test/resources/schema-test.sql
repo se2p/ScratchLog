@@ -10,11 +10,11 @@ CREATE TABLE IF NOT EXISTS `experiment` (
     `description` text,
     `postscript` text,
     `infotext` text,
-    `active` bit(1) NOT NULL DEFAULT 0,
+    `active` boolean NOT NULL DEFAULT 0,
     `project` longblob NULL DEFAULT NULL,
     `gui_url` varchar(2000) DEFAULT NULL,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `experiment_title` (`title`)
+    CONSTRAINT `experiment_title` UNIQUE (`title`)
 );
 
 
@@ -28,12 +28,12 @@ CREATE TABLE IF NOT EXISTS `user` (
     `password` varchar(255) NULL DEFAULT NULL,
     `secret` varchar(255) NULL DEFAULT NULL,
     `attempts` int NOT NULL DEFAULT 0,
-    `active` bit(1) NOT NULL DEFAULT 0,
+    `active` boolean NOT NULL DEFAULT 0,
     `email` varchar(255) DEFAULT NULL,
     `last_login` DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (`id`),
-    UNIQUE KEY `username` (`username`),
-    UNIQUE KEY `secret` (`secret`)
+    CONSTRAINT `username` UNIQUE (`username`),
+    CONSTRAINT `secret` UNIQUE (`secret`)
 );
 
 
@@ -192,10 +192,10 @@ CREATE TABLE IF NOT EXISTS `course` (
     `title` varchar(255) NOT NULL,
     `description` text,
     `content` text,
-    `active` bit(1) NOT NULL DEFAULT 0,
+    `active` BOOLEAN NOT NULL DEFAULT 0,
     `last_changed` DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (`id`),
-    UNIQUE KEY `course_title` (`title`)
+    CONSTRAINT `course_title` UNIQUE (`title`)
 );
 
 -- course_participant table definition
@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS `course_experiment` (
     `experiment_id` int NOT NULL,
     `added` DATETIME NOT NULL DEFAULT NOW(),
     PRIMARY KEY (`course_id`,`experiment_id`),
-    UNIQUE KEY `experiment_id` (`experiment_id`),
+    CONSTRAINT `experiment_id` UNIQUE (`experiment_id`),
     CONSTRAINT `course_experiment_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `course` (`id`) ON DELETE CASCADE,
     CONSTRAINT `course_experiment_ibfk_2` FOREIGN KEY (`experiment_id`) REFERENCES `experiment` (`id`) ON DELETE CASCADE
 );
