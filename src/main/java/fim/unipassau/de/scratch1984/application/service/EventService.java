@@ -1001,15 +1001,16 @@ public class EventService {
      */
     private List<String[]> createBlockEventList(final List<BlockEvent> blockEvents) {
         List<String[]> events = new ArrayList<>();
-        String[] header = {"id", "user", "experiment", "date", "eventType", "event", "spritename", "metadata", "xml",
-                "json"};
+        String[] header = {"id", "user", "username", "experiment", "date", "eventType", "event", "spritename",
+                "metadata", "xml", "json"};
         events.add(header);
 
         for (BlockEvent blockEvent : blockEvents) {
             String[] data = {blockEvent.getId().toString(), blockEvent.getUser().getId().toString(),
-                    blockEvent.getExperiment().getId().toString(), blockEvent.getDate().toString(),
-                    blockEvent.getEventType().toString(), blockEvent.getEvent().toString(), blockEvent.getSprite(),
-                    blockEvent.getMetadata(), blockEvent.getXml(), blockEvent.getCode()};
+                    blockEvent.getUser().getUsername(), blockEvent.getExperiment().getId().toString(),
+                    blockEvent.getDate().toString(), blockEvent.getEventType().toString(),
+                    blockEvent.getEvent().toString(), blockEvent.getSprite(), blockEvent.getMetadata(),
+                    blockEvent.getXml(), blockEvent.getCode()};
             events.add(data);
         }
 
@@ -1024,13 +1025,14 @@ public class EventService {
      */
     private List<String[]> createClickEventList(final List<ClickEvent> clickEvents) {
         List<String[]> events = new ArrayList<>();
-        String[] header = {"id", "user", "experiment", "date", "eventType", "event", "metadata"};
+        String[] header = {"id", "user", "username", "experiment", "date", "eventType", "event", "metadata"};
         events.add(header);
 
         for (ClickEvent clickEvent : clickEvents) {
             String[] data = {clickEvent.getId().toString(), clickEvent.getUser().getId().toString(),
-                    clickEvent.getExperiment().getId().toString(), clickEvent.getDate().toString(),
-                    clickEvent.getEventType().toString(), clickEvent.getEvent().toString(), clickEvent.getMetadata()};
+                    clickEvent.getUser().getUsername(), clickEvent.getExperiment().getId().toString(),
+                    clickEvent.getDate().toString(), clickEvent.getEventType().toString(),
+                    clickEvent.getEvent().toString(), clickEvent.getMetadata()};
             events.add(data);
         }
 
@@ -1045,16 +1047,16 @@ public class EventService {
      */
     private List<String[]> createResourceEventList(final List<ResourceEvent> resourceEvents) {
         List<String[]> events = new ArrayList<>();
-        String[] header = {"id", "user", "experiment", "date", "eventType", "event", "name", "md5", "filetype",
-                "library"};
+        String[] header = {"id", "user", "username", "experiment", "date", "eventType", "event", "name", "md5",
+                "filetype", "library"};
         events.add(header);
 
         for (ResourceEvent resourceEvent : resourceEvents) {
             String[] data = {resourceEvent.getId().toString(), resourceEvent.getUser().getId().toString(),
-                    resourceEvent.getExperiment().getId().toString(), resourceEvent.getDate().toString(),
-                    resourceEvent.getEventType().toString(), resourceEvent.getEvent().toString(),
-                    resourceEvent.getResourceName(), resourceEvent.getHash(), resourceEvent.getResourceType(),
-                    resourceEvent.getLibraryResource() == null
+                    resourceEvent.getUser().getUsername(), resourceEvent.getExperiment().getId().toString(),
+                    resourceEvent.getDate().toString(), resourceEvent.getEventType().toString(),
+                    resourceEvent.getEvent().toString(), resourceEvent.getResourceName(), resourceEvent.getHash(),
+                    resourceEvent.getResourceType(), resourceEvent.getLibraryResource() == null
                     ? "null" : resourceEvent.getLibraryResource().toString()};
             events.add(data);
         }

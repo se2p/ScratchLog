@@ -89,6 +89,7 @@
                 <div class="d-flex justify-content-between">
                     <div class="form-text" th:text="#{password_info}"></div>
                     <a class="link-secondary" th:text="#{forgot_password}" th:href="@{/users/forgot(id=${userDTO.id})}"
+                       th:if="${userDTO.getRole().equals(T(fim.unipassau.de.scratch1984.util.enums.Role).PARTICIPANT)}"
                        sec:authorize="hasRole('ADMIN')">
                     </a>
                 </div>

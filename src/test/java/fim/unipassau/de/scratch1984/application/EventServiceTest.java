@@ -128,12 +128,12 @@ public class EventServiceTest {
             false, GUI_URL);
     private final Participant participant = new Participant(user, experiment, LocalDateTime.now(), null);
     private final CodesData codesData = new CodesData(ID, ID, 15);
-    private final String[] blockEventDataHeader = {"id", "user", "experiment", "date", "eventType", "event",
+    private final String[] blockEventDataHeader = {"id", "user", "username", "experiment", "date", "eventType", "event",
             "spritename", "metadata", "xml", "json"};
-    private final String[] clickEventDataHeader = {"id", "user", "experiment", "date", "eventType", "event",
+    private final String[] clickEventDataHeader = {"id", "user", "username", "experiment", "date", "eventType", "event",
             "metadata"};
-    private final String[] resourceEventDataHeader = {"id", "user", "experiment", "date", "eventType", "event", "name",
-            "md5", "filetype", "library"};
+    private final String[] resourceEventDataHeader = {"id", "user", "username", "experiment", "date", "eventType",
+            "event", "name", "md5", "filetype", "library"};
     private final String[] eventCountDataHeader = {"user", "experiment", "count", "event"};
     private final String[] codesDataHeader = {"user", "experiment", "count"};
     private final BlockEvent blockEvent = new BlockEvent(user, experiment, LocalDateTime.now(), BlockEventType.CREATE,

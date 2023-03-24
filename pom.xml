@@ -12,8 +12,8 @@
     <properties>
         <!-- Compiler and Source settings -->
         <java.version>17</java.version>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Library versions -->
@@ -22,20 +22,17 @@
         <thymeleaf.version>3.1.1.RELEASE</thymeleaf.version>
         <lombok.version>1.18.24</lombok.version>
         <flyway.version>9.16.1</flyway.version>
-        <databind.version>2.14.0</databind.version>
-        <bouncycastle.version>1.64</bouncycastle.version>
+        <databind.version>2.14.2</databind.version>
+        <bouncycastle.version>1.70</bouncycastle.version>
         <codec.version>1.15</codec.version>
-        <jQuery.version>3.5.1</jQuery.version>
-        <json.version>20190722</json.version>
-        <commonmark.version>0.16.1</commonmark.version>
-        <font-awesome.version>5.15.2</font-awesome.version>
-        <opencsv.version>5.5</opencsv.version>
+        <json.version>20230227</json.version>
+        <commonmark.version>0.21.0</commonmark.version>
+        <opencsv.version>5.7.1</opencsv.version>
         <jaxb.version>4.0.0</jaxb.version>
         <junit.version>5.9.2</junit.version>
         <junitplatform.version>1.9.2</junitplatform.version>
         <mockito.version>5.2.0</mockito.version>
         <powermock.version>2.0.9</powermock.version>
-        <selenium.version>4.0.0</selenium.version>
         <jakarta.validation.version>3.0.2</jakarta.validation.version>
         <mysql.version>8.0.32</mysql.version>
         <h2.version>2.1.214</h2.version>
@@ -179,13 +176,6 @@
             <version>${mysql.version}</version>
         </dependency>
 
-        <!-- jQuery -->
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>jquery</artifactId>
-            <version>${jQuery.version}</version>
-        </dependency>
-
         <!-- Annotations for entities -->
         <dependency>
             <groupId>jakarta.validation</groupId>
@@ -203,10 +193,11 @@
 
         <!-- Markdown -->
         <dependency>
-            <groupId>com.atlassian.commonmark</groupId>
+            <groupId>org.commonmark</groupId>
             <artifactId>commonmark</artifactId>
             <version>${commonmark.version}</version>
         </dependency>
+
 
         <!-- CSV Files -->
         <dependency>
@@ -271,26 +262,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Selenium 4 -->
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-firefox-driver</artifactId>
-            <version>${selenium.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-chrome-driver</artifactId>
-            <version>${selenium.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-support</artifactId>
-            <version>${selenium.version}</version>
-            <scope>test</scope>
-        </dependency>
-
         <!-- H2 database for in-memory testing -->
         <dependency>
             <groupId>com.h2database</groupId>
@@ -341,12 +312,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven.surefire.version}</version>
-                <configuration>
-                    <excludes>
-                        <exclude>fim.unipassau.de.scratch1984.Scratch1984ApplicationTests</exclude>
-                        <exclude>**/selenium/**</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
 
             <!-- JaCoCo Test report -->

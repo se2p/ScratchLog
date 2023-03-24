@@ -150,6 +150,7 @@ public class UserControllerTest {
         oldDTO.setUsername(USERNAME);
         oldDTO.setPassword(PASSWORD);
         oldDTO.setEmail(EMAIL);
+        oldDTO.setRole(Role.ADMIN);
         userDTO.setId(ID);
         userDTO.setUsername(USERNAME);
         userDTO.setPassword(PASSWORD);
@@ -1677,9 +1678,19 @@ public class UserControllerTest {
 
     @Test
     public void testGetPasswordResetForm() {
+        userDTO.setRole(Role.PARTICIPANT);
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
         assertEquals(PASSWORD_PAGE, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+    }
+
+    @Test
+    public void testGetPasswordResetFormAdminUser() {
+        when(userService.getUserById(ID)).thenReturn(userDTO);
+        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
+        assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
     }
@@ -1716,6 +1727,7 @@ public class UserControllerTest {
 
     @Test
     public void testResetPassword() {
+        oldDTO.setRole(Role.PARTICIPANT);
         userDTO.setNewPassword(VALID_PASSWORD);
         userDTO.setConfirmPassword(VALID_PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
@@ -1738,6 +1750,7 @@ public class UserControllerTest {
 
     @Test
     public void testResetPasswordPasswordInvalid() {
+        oldDTO.setRole(Role.PARTICIPANT);
         userDTO.setNewPassword(VALID_PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
@@ -1759,6 +1772,7 @@ public class UserControllerTest {
 
     @Test
     public void testResetPasswordNewPasswordBlank() {
+        oldDTO.setRole(Role.PARTICIPANT);
         userDTO.setNewPassword(BLANK);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
@@ -1779,6 +1793,7 @@ public class UserControllerTest {
 
     @Test
     public void testResetPasswordAdminNotFound() {
+        oldDTO.setRole(Role.PARTICIPANT);
         userDTO.setNewPassword(VALID_PASSWORD);
         userDTO.setConfirmPassword(VALID_PASSWORD);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
@@ -1799,6 +1814,7 @@ public class UserControllerTest {
 
     @Test
     public void testResetPasswordAuthenticationNameNull() {
+        oldDTO.setRole(Role.PARTICIPANT);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
@@ -1807,6 +1823,20 @@ public class UserControllerTest {
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication).getName();
+        verify(userService, never()).getUser(anyString());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
+        verify(bindingResult, never()).hasErrors();
+        verify(userService, never()).encodePassword(anyString());
+    }
+
+    @Test
+    public void testResetPasswordUserAdmin() {
+        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
+        when(userService.getUserById(ID)).thenReturn(oldDTO);
+        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
+        verify(userService).getUserById(ID);
+        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
+        verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(bindingResult, never()).hasErrors();

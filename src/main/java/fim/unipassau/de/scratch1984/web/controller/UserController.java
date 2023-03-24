@@ -799,7 +799,8 @@ public class UserController {
 
         try {
             UserDTO userDTO = userService.getUserById(userId);
-            if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+
+            if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN) && !userDTO.getRole().equals(Role.ADMIN)) {
                 model.addAttribute(USER_DTO, userDTO);
                 return PASSWORD;
             }
@@ -837,7 +838,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN) && !findOldUser.getRole().equals(Role.ADMIN)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication.getName() == null) {
