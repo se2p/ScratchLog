@@ -361,11 +361,13 @@ public class ParticipantService {
      * @param userId The id of the user.
      * @param experimentId The id of the experiment.
      * @param secret The user's secret.
+     * @param userActive Boolean indicating whether the user account should be active.
      * @return {@code true} if the user is a participant with the given secret or {@code false} otherwise.
      * @throws IllegalArgumentException if the passed secret, user or experiment id are invalid.
      */
     @Transactional
-    public boolean isInvalidParticipant(final int userId, final int experimentId, final String secret) {
+    public boolean isInvalidParticipant(final int userId, final int experimentId, final String secret,
+                                        final boolean userActive) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             throw new IllegalArgumentException("Cannot verify participant with invalid user id " + userId
                     + " or invalid experiment id " + experimentId + "!");
@@ -382,7 +384,7 @@ public class ParticipantService {
             if (participant.isEmpty()) {
                 LOGGER.error("Cannot save event data for participant null!");
                 return true;
-            } else if (!user.isActive() || !experiment.isActive()) {
+            } else if ((!user.isActive() && userActive) || !experiment.isActive()) {
                 LOGGER.error("Cannot save event data for inactive experiment or user!");
                 return true;
             } else {

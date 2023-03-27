@@ -22,6 +22,7 @@
         <!-- The form for editing a profile. -->
         <form th:action="@{/users/update}" th:object="${userDTO}" th:name="userDTO" method="post">
             <input type="hidden" th:field="*{id}">
+            <input type="hidden" th:field="*{role}">
             <!-- The set password button. -->
             <div class="text-end" th:if="${userDTO.password == null}" sec:authorize="hasRole('ADMIN')">
                 <a class="btn btn-secondary" th:text="#{set_password}" th:href="@{/users/forgot(id=${userDTO.id})}"></a>

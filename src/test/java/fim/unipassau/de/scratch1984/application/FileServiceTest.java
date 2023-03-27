@@ -496,35 +496,35 @@ public class FileServiceTest {
     public void testFindFinalProject() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(sb3ZipRepository.findFirstByUserAndExperiment(user, experiment)).thenReturn(java.util.Optional.of(sb3Zip));
+        when(sb3ZipRepository.findFirstByUserAndExperimentOrderByIdDesc(user, experiment)).thenReturn(java.util.Optional.of(sb3Zip));
         assertTrue(fileService.findFinalProject(ID, ID).isPresent());
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
-        verify(sb3ZipRepository).findFirstByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository).findFirstByUserAndExperimentOrderByIdDesc(user, experiment);
     }
 
     @Test
     public void testFindFinalProjectEmpty() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(sb3ZipRepository.findFirstByUserAndExperiment(user, experiment)).thenReturn(Optional.empty());
+        when(sb3ZipRepository.findFirstByUserAndExperimentOrderByIdDesc(user, experiment)).thenReturn(Optional.empty());
         assertTrue(fileService.findFinalProject(ID, ID).isEmpty());
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
-        verify(sb3ZipRepository).findFirstByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository).findFirstByUserAndExperimentOrderByIdDesc(user, experiment);
     }
 
     @Test
     public void testFindFinalProjectEntityNotFound() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(sb3ZipRepository.findFirstByUserAndExperiment(user, experiment)).thenThrow(EntityNotFoundException.class);
+        when(sb3ZipRepository.findFirstByUserAndExperimentOrderByIdDesc(user, experiment)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> fileService.findFinalProject(ID, ID)
         );
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
-        verify(sb3ZipRepository).findFirstByUserAndExperiment(user, experiment);
+        verify(sb3ZipRepository).findFirstByUserAndExperimentOrderByIdDesc(user, experiment);
     }
 
     @Test
@@ -534,7 +534,7 @@ public class FileServiceTest {
         );
         verify(userRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(sb3ZipRepository, never()).findFirstByUserAndExperiment(any(), any());
+        verify(sb3ZipRepository, never()).findFirstByUserAndExperimentOrderByIdDesc(any(), any());
     }
 
     @Test
@@ -544,7 +544,7 @@ public class FileServiceTest {
         );
         verify(userRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(sb3ZipRepository, never()).findFirstByUserAndExperiment(any(), any());
+        verify(sb3ZipRepository, never()).findFirstByUserAndExperimentOrderByIdDesc(any(), any());
     }
 
     @Test

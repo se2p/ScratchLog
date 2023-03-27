@@ -173,15 +173,19 @@
     let deleteModal = document.getElementById("openDelete");
     let deleteButton = document.getElementById("delete");
     let abort = document.getElementById("abort");
-    deleteButton.onclick = function() {
-        let content = document.getElementById("content");
-        deleteModal.style.display = "block";
-        content.style.filter = "blur(4px)";
+    if (deleteButton) {
+        deleteButton.onclick = function () {
+            let content = document.getElementById("content");
+            deleteModal.style.display = "block";
+            content.style.filter = "blur(4px)";
+        }
     }
-    abort.onclick = function () {
-        let content = document.getElementById("content");
-        deleteModal.style.display = "none";
-        content.style.filter = "none";
+    if (abort) {
+        abort.onclick = function () {
+            let content = document.getElementById("content");
+            deleteModal.style.display = "none";
+            content.style.filter = "none";
+        }
     }
 </script>
 

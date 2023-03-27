@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
@@ -859,7 +860,8 @@ public class UserController {
                 FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "newPassword", "empty_string", resourceBundle);
             }
 
-            validateUpdatePassword(userDTO, admin.getPassword(), userDTO.getPassword(), bindingResult, resourceBundle);
+            validateUpdatePassword(userDTO, admin.getPassword(), findOldUser.getPassword(), bindingResult,
+                    resourceBundle);
 
             if (bindingResult.hasErrors()) {
                 return PASSWORD;
@@ -949,7 +951,7 @@ public class UserController {
             } else if (!userService.matchesPassword(userDTO.getPassword(), matchPassword)) {
                 FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "password", "invalid_password",
                         resourceBundle);
-            } else if (oldPassword.equals(userDTO.getNewPassword())) {
+            } else if (Objects.equals(oldPassword, userDTO.getNewPassword())) {
                 FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "newPassword", "old_password", resourceBundle);
             }
         }

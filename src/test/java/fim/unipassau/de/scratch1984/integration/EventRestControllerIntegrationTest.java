@@ -24,6 +24,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -165,19 +166,19 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService).saveBlockEvent(any());
     }
 
     @Test
     public void testStoreBlockEventInvalidParticipant() throws Exception {
-        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true)).thenReturn(true);
         mvc.perform(post("/store/block")
                         .content(blockEventObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService, never()).saveBlockEvent(any());
     }
 
@@ -189,7 +190,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(eventService, never()).saveBlockEvent(any());
     }
 
@@ -200,7 +201,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService).saveClickEvent(any());
     }
 
@@ -212,7 +213,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(eventService, never()).saveClickEvent(any());
     }
 
@@ -223,7 +224,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService).saveDebuggerEvent(any());
     }
 
@@ -235,7 +236,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(eventService, never()).saveDebuggerEvent(any());
     }
 
@@ -246,19 +247,19 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService).saveQuestionEvent(any());
     }
 
     @Test
     public void testStoreQuestionEventInvalidParticipant() throws Exception {
-        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true)).thenReturn(true);
         mvc.perform(post("/store/question")
                         .content(questionEventObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService, never()).saveQuestionEvent(any());
     }
 
@@ -269,7 +270,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService).saveResourceEvent(any());
     }
 
@@ -281,7 +282,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(eventService, never()).saveResourceEvent(any());
     }
 
@@ -292,7 +293,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(fileService).saveFile(any());
     }
 
@@ -304,7 +305,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(fileService, never()).saveFile(any());
     }
 
@@ -315,19 +316,19 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(fileService).saveSb3Zip(any());
     }
 
     @Test
     public void testStoreZipFileInvalidParticipant() throws Exception {
-        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true)).thenReturn(true);
         mvc.perform(post("/store/zip")
                         .content(sb3ZipObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(fileService, never()).saveSb3Zip(any());
     }
 
@@ -339,7 +340,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(fileService, never()).saveSb3Zip(any());
     }
 
@@ -351,7 +352,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(experimentService).getSb3File(Experiment_ID);
     }
 
@@ -378,7 +379,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(experimentService).getSb3File(Experiment_ID);
     }
 
@@ -390,7 +391,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(experimentService).getSb3File(Experiment_ID);
     }
 
@@ -402,7 +403,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
     }
 
@@ -413,7 +414,7 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
     }
 
@@ -425,19 +426,19 @@ public class EventRestControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
     }
 
     @Test
     public void testRetrieveLastJsonInvalidParticipant() throws Exception {
-        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET)).thenReturn(true);
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true)).thenReturn(true);
         mvc.perform(post("/store/json")
                         .content(dataObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
-        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET);
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
     }
 }

@@ -40,6 +40,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -622,7 +623,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -645,8 +646,8 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -667,7 +668,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -686,7 +687,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -696,7 +697,7 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testStopExperimentInvalidParticipant() throws Exception {
-        when(participantService.isInvalidParticipant(ID, ID, SECRET)).thenReturn(true);
+        when(participantService.isInvalidParticipant(ID, ID, SECRET, true)).thenReturn(true);
         mvc.perform(get("/participant/stop")
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
@@ -705,7 +706,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -723,7 +724,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -741,7 +742,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -766,7 +767,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_GUI + ID + EXP_ID + ID + SECRET_PARAM + SECRET + RESTART));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -790,7 +791,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -811,7 +812,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -835,7 +836,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -853,7 +854,7 @@ public class ParticipantControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());

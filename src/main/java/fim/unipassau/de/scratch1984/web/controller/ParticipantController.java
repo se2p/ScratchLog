@@ -409,13 +409,13 @@ public class ParticipantController {
         int experimentId = NumberParser.parseId(experiment);
         int userId = NumberParser.parseId(user);
 
-        if (isInvalidPassedParams(experimentId, userId, secret, "stop")) {
+        if (isInvalidPassedParams(experimentId, userId, secret, "stop", true)) {
             return Constants.ERROR;
         }
 
         try {
             UserDTO userDTO = userService.getUserById(userId);
-            ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userDTO.getId());
+            ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userId);
 
             if (participantDTO.getStart() == null || participantDTO.getEnd() != null) {
                 LOGGER.error("Cannot end experiment for participant with id " + participantDTO.getUser()
@@ -466,7 +466,7 @@ public class ParticipantController {
         int experimentId = NumberParser.parseId(experiment);
         int userId = NumberParser.parseId(user);
 
-        if (isInvalidPassedParams(experimentId, userId, secret, "restart")) {
+        if (isInvalidPassedParams(experimentId, userId, secret, "restart", false)) {
             return Constants.ERROR;
         }
 
@@ -614,10 +614,11 @@ public class ParticipantController {
      * @param userId The id of the user.
      * @param secret The user's secret.
      * @param method The type of method from which this method is called.
+     * @param userActive Boolean indicating whether the user account should be active.
      * @return {@code true} if the passed parameters are invalid or {@code false} otherwise.
      */
     private boolean isInvalidPassedParams(final int experimentId, final int userId, final String secret,
-                                          final String method) {
+                                          final String method, final boolean userActive) {
         if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
             LOGGER.error("Cannot " + method + " experiment with invalid experiment id " + experimentId
                     + " or invalid user id " + userId + "!");
@@ -626,7 +627,7 @@ public class ParticipantController {
             LOGGER.error("Cannot " + method + " experiment with secret null or blank!");
             return true;
         } else {
-            return participantService.isInvalidParticipant(userId, experimentId, secret);
+            return participantService.isInvalidParticipant(userId, experimentId, secret, userActive);
         }
     }
 

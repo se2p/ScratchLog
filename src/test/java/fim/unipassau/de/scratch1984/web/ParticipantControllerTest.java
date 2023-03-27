@@ -725,7 +725,7 @@ public class ParticipantControllerTest {
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET,
                 participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -743,7 +743,7 @@ public class ParticipantControllerTest {
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET,
                 participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -758,7 +758,7 @@ public class ParticipantControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -774,8 +774,7 @@ public class ParticipantControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -789,7 +788,7 @@ public class ParticipantControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -803,7 +802,7 @@ public class ParticipantControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenThrow(NotFoundException.class);
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -815,7 +814,7 @@ public class ParticipantControllerTest {
     @Test
     public void testStopExperimentSecretBlank() {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, BLANK, httpServletRequest));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -827,7 +826,7 @@ public class ParticipantControllerTest {
     @Test
     public void testStopExperimentSecretNull() {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, null, httpServletRequest));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -839,7 +838,7 @@ public class ParticipantControllerTest {
     @Test
     public void testStopExperimentParticipantInvalidUserId() {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, "0", SECRET, httpServletRequest));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -851,7 +850,7 @@ public class ParticipantControllerTest {
     @Test
     public void testStopExperimentParticipantInvalidExperimentId() {
         assertEquals(ERROR, participantController.stopExperiment("-1", ID_STRING, SECRET, httpServletRequest));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -863,7 +862,7 @@ public class ParticipantControllerTest {
     @Test
     public void testStopExperimentParticipantUserIdNull() {
         assertEquals(ERROR, participantController.stopExperiment(ID_STRING, null, SECRET, httpServletRequest));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -875,7 +874,7 @@ public class ParticipantControllerTest {
     @Test
     public void testStopExperimentParticipantExperimentIdNull() {
         assertEquals(ERROR, participantController.stopExperiment(null, ID_STRING, SECRET, httpServletRequest));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -899,7 +898,7 @@ public class ParticipantControllerTest {
                 () -> assertTrue(userDTO.isActive()),
                 () -> assertNull(participantDTO.getEnd())
         );
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -921,7 +920,7 @@ public class ParticipantControllerTest {
                 () -> assertFalse(userDTO.isActive()),
                 () -> assertNull(participantDTO.getEnd())
         );
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -936,7 +935,7 @@ public class ParticipantControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -951,7 +950,7 @@ public class ParticipantControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -963,7 +962,7 @@ public class ParticipantControllerTest {
     public void testRestartExperimentNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -973,9 +972,9 @@ public class ParticipantControllerTest {
 
     @Test
     public void testRestartExperimentInvalidParticipant() {
-        when(participantService.isInvalidParticipant(ID, ID, SECRET)).thenReturn(true);
+        when(participantService.isInvalidParticipant(ID, ID, SECRET, false)).thenReturn(true);
         assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService, never()).getUserById(anyInt());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());

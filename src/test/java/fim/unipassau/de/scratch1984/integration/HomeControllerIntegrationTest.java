@@ -38,6 +38,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -347,7 +348,7 @@ public class HomeControllerIntegrationTest {
                 .andExpect(model().attribute(EXPERIMENT, is(ID)))
                 .andExpect(model().attribute(USER, is(ID)))
                 .andExpect(view().name(FINISH));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(experimentService).getExperiment(ID);
     }
 
@@ -363,7 +364,7 @@ public class HomeControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(model().attribute(THANKS, nullValue()))
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(experimentService).getExperiment(ID);
     }
 
@@ -378,7 +379,7 @@ public class HomeControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(model().attribute(THANKS, nullValue()))
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(experimentService, never()).getExperiment(anyInt());
     }
 
@@ -393,7 +394,7 @@ public class HomeControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(model().attribute(THANKS, nullValue()))
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(experimentService, never()).getExperiment(anyInt());
     }
 

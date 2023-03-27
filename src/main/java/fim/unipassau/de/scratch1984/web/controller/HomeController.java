@@ -393,7 +393,7 @@ public class HomeController {
             LOGGER.error("Cannot finish experiment with secret null or blank!");
             return true;
         } else {
-            return participantService.isInvalidParticipant(userId, experimentId, secret);
+            return participantService.isInvalidParticipant(userId, experimentId, secret, false);
         }
     }
 

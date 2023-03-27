@@ -297,7 +297,7 @@ public class FileService {
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
-            Optional<Sb3Zip> finalProject = sb3ZipRepository.findFirstByUserAndExperiment(user,
+            Optional<Sb3Zip> finalProject = sb3ZipRepository.findFirstByUserAndExperimentOrderByIdDesc(user,
                     experiment);
 
             if (finalProject.isEmpty()) {

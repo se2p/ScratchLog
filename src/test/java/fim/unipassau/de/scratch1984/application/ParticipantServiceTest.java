@@ -533,7 +533,18 @@ public class ParticipantServiceTest {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
         when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
-        assertFalse(participantService.isInvalidParticipant(ID, ID, SECRET));
+        assertFalse(participantService.isInvalidParticipant(ID, ID, SECRET, true));
+        verify(userRepository).getReferenceById(ID);
+        verify(experimentRepository).getReferenceById(ID);
+        verify(participantRepository).findByUserAndExperiment(user, experiment1);
+    }
+
+    @Test
+    public void testIsInvalidParticipantInactive() {
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
+        assertFalse(participantService.isInvalidParticipant(ID, ID, SECRET, false));
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment1);
@@ -545,7 +556,7 @@ public class ParticipantServiceTest {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
         when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
-        assertTrue(participantService.isInvalidParticipant(ID, ID, PASSWORD));
+        assertTrue(participantService.isInvalidParticipant(ID, ID, PASSWORD, true));
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment1);
@@ -556,7 +567,7 @@ public class ParticipantServiceTest {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
         when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
-        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
+        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET, true));
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment1);
@@ -569,7 +580,7 @@ public class ParticipantServiceTest {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
         when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
-        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
+        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET, true));
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment1);
@@ -579,7 +590,7 @@ public class ParticipantServiceTest {
     public void testIsInvalidParticipantNoParticipant() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
-        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
+        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET, true));
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment1);
@@ -590,7 +601,7 @@ public class ParticipantServiceTest {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
         when(participantRepository.findByUserAndExperiment(user, experiment1)).thenThrow(EntityNotFoundException.class);
-        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
+        assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET, true));
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findByUserAndExperiment(user, experiment1);
@@ -599,7 +610,7 @@ public class ParticipantServiceTest {
     @Test
     public void testIsInvalidParticipantSecretBlank() {
         assertThrows(IllegalArgumentException.class,
-                () -> participantService.isInvalidParticipant(ID, ID, " ")
+                () -> participantService.isInvalidParticipant(ID, ID, " ", true)
         );
         verify(userRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).getReferenceById(anyInt());
@@ -609,7 +620,7 @@ public class ParticipantServiceTest {
     @Test
     public void testIsInvalidParticipantSecretNull() {
         assertThrows(IllegalArgumentException.class,
-                () -> participantService.isInvalidParticipant(ID, ID, null)
+                () -> participantService.isInvalidParticipant(ID, ID, null, true)
         );
         verify(userRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).getReferenceById(anyInt());
@@ -619,7 +630,7 @@ public class ParticipantServiceTest {
     @Test
     public void testIsInvalidParticipantInvalidExperimentId() {
         assertThrows(IllegalArgumentException.class,
-                () -> participantService.isInvalidParticipant(ID, 0, SECRET)
+                () -> participantService.isInvalidParticipant(ID, 0, SECRET, true)
         );
         verify(userRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).getReferenceById(anyInt());
@@ -629,7 +640,7 @@ public class ParticipantServiceTest {
     @Test
     public void testIsInvalidParticipantInvalidUserId() {
         assertThrows(IllegalArgumentException.class,
-                () -> participantService.isInvalidParticipant(-9, ID, SECRET)
+                () -> participantService.isInvalidParticipant(-9, ID, SECRET, true)
         );
         verify(userRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).getReferenceById(anyInt());

@@ -1,6 +1,7 @@
 package fim.unipassau.de.scratch1984.spring.configuration;
 
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
+import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +10,14 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * Custom security configuration for accessing application content.
@@ -43,8 +52,7 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
-        http.cors()
-                .and()
+        http.cors(withDefaults())
                 .csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers("/login", "/finish", "/token/password", "/reset",
@@ -53,13 +61,30 @@ public class SecurityConfig {
                         "/users/bulk", "/result", "/search", "/secret", "/search/*").hasRole("ADMIN")
                 .requestMatchers("/experiment", "/users/profile", "/users/logout", "/users/edit",
                         "/users/update", "/course").hasRole("PARTICIPANT")
-                .requestMatchers("/design/*", "/js/*", "/webfonts/*", "/jquery/*", "/").permitAll()
+                .requestMatchers("/design/*", "/js/*", "/webfonts/*", "/", "/finish",
+                        "/participant/restart", "/participant/stop", "/store/*", "/token", "/error").permitAll()
                 .anyRequest().authenticated()
                 .and().formLogin().loginPage("/login")
                 .defaultSuccessUrl("/", true)
                 .and().headers().frameOptions().sameOrigin();
 
         return http.build();
+    }
+
+    /**
+     * Configures the allowed sources of cross-origin requests, namely the instrumented Scratch GUI and the SSO
+     * authentication provider.
+     *
+     * @return The CORS configuration.
+     */
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of(ApplicationProperties.GUI_BASE_URL));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/store/*", configuration);
+        return source;
     }
 
 }

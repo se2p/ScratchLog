@@ -292,7 +292,7 @@ public class EventRestController {
         int experimentId = object.getInt("experiment");
         String secret = object.getString("secret");
 
-        if (!participantService.isInvalidParticipant(userId, experimentId, secret)) {
+        if (!participantService.isInvalidParticipant(userId, experimentId, secret, true)) {
             ids.add(experimentId);
             ids.add(userId);
         }
@@ -311,7 +311,7 @@ public class EventRestController {
     private boolean isInvalidRequest(final String data, final EventDTO eventDTO) {
         JSONObject object = new JSONObject(data);
         String secret = object.getString("secret");
-        return participantService.isInvalidParticipant(eventDTO.getUser(), eventDTO.getExperiment(), secret);
+        return participantService.isInvalidParticipant(eventDTO.getUser(), eventDTO.getExperiment(), secret, true);
     }
 
     /**
