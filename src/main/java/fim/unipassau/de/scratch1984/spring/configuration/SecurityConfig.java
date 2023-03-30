@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -51,6 +52,7 @@ public class SecurityConfig {
      * @throws Exception Throws an exception if a user with insufficient privileges tries to access a restricted page.
      */
     @Bean
+    @Order(2)
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
         http.cors(withDefaults())
                 .csrf().disable()
@@ -62,7 +64,8 @@ public class SecurityConfig {
                 .requestMatchers("/experiment", "/users/profile", "/users/logout", "/users/edit",
                         "/users/update", "/course").hasRole("PARTICIPANT")
                 .requestMatchers("/design/*", "/js/*", "/webfonts/*", "/", "/finish",
-                        "/participant/restart", "/participant/stop", "/store/*", "/token", "/error").permitAll()
+                        "/participant/restart", "/participant/stop", "/store/*", "/token", "/error", "/login/saml2",
+                        "/saml2/**").permitAll()
                 .anyRequest().authenticated()
                 .and().formLogin().loginPage("/login")
                 .defaultSuccessUrl("/", true)
@@ -84,6 +87,11 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/store/*", configuration);
+        CorsConfiguration saml2Config = new CorsConfiguration();
+        saml2Config.setAllowedOrigins(List.of(ApplicationProperties.SAML2_BASE_URL));
+        saml2Config.setAllowedMethods(Arrays.asList("GET", "POST"));
+        source.registerCorsConfiguration("/login/saml2", saml2Config);
+        source.registerCorsConfiguration("/saml2/**", saml2Config);
         return source;
     }
 

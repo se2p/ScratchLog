@@ -36,7 +36,6 @@ import java.util.Collection;
  * Configuration for SAML2 authentication. This class has been adapted from the Artemis project.
  */
 @Configuration
-@Order(1)
 @Profile("saml2")
 public class SAML2Configuration {
 
@@ -184,7 +183,8 @@ public class SAML2Configuration {
      * @return The security filter chain.
      * @throws Exception Throws an exception if a user with insufficient privileges tries to access a restricted page.
      */
-    @Bean
+    @Bean("saml2")
+    @Order(1)
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
         http.cors()
                 .and()
