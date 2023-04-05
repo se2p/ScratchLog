@@ -1,11 +1,24 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
  * A DTO representing a participation in an experiment.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class ParticipantDTO {
 
     /**
@@ -29,12 +42,6 @@ public class ParticipantDTO {
     private LocalDateTime end;
 
     /**
-     * Default constructor for the participant dto.
-     */
-    public ParticipantDTO() {
-    }
-
-    /**
      * Constructs a new participant dto with the given attributes.
      *
      * @param user The participating user's id.
@@ -43,78 +50,6 @@ public class ParticipantDTO {
     public ParticipantDTO(final int user, final int experiment) {
         this.user = user;
         this.experiment = experiment;
-    }
-
-    /**
-     * Returns user's ID.
-     *
-     * @return The user ID.
-     */
-    public Integer getUser() {
-        return user;
-    }
-
-    /**
-     * Sets the user's ID.
-     *
-     * @param user The user ID to be set.
-     */
-    public void setUser(final Integer user) {
-        this.user = user;
-    }
-
-    /**
-     * Returns the ID of the experiment.
-     *
-     * @return The experiment ID.
-     */
-    public Integer getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * Sets the ID of the experiment.
-     *
-     * @param experiment The experiment ID to be set.
-     */
-    public void setExperiment(final Integer experiment) {
-        this.experiment = experiment;
-    }
-
-    /**
-     * Returns the starting time.
-     *
-     * @return The starting time.
-     */
-    public LocalDateTime getStart() {
-        return start;
-    }
-
-    /**
-     * Sets the time at which the user started the experiment.
-     *
-     * @param start The starting time to be set.
-     */
-    public void setStart(final LocalDateTime start) {
-        this.start = start;
-    }
-
-    /**
-     * Returns the finishing time.
-     *
-     * @return The finishing time.
-     */
-    public LocalDateTime getEnd() {
-        return end;
-    }
-
-    /**
-     * Sets the time at which the user finished the experiment.
-     *
-     * @param end The finishing time to be set.
-     */
-    public void setEnd(final LocalDateTime end) {
-        this.end = end;
     }
 
     /**
@@ -146,21 +81,6 @@ public class ParticipantDTO {
     @Override
     public int hashCode() {
         return Objects.hash(user, experiment);
-    }
-
-    /**
-     * Converts the participant DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the participant DTO.
-     */
-    @Override
-    public String toString() {
-        return "ParticipantDTO{"
-                + "user=" + user
-                + ", experiment=" + experiment
-                + ", start=" + start
-                + ", end=" + end
-                + '}';
     }
 
 }

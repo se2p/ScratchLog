@@ -1,10 +1,21 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.util.Objects;
 
 /**
  * A DTO that represents adding multiple participants at once.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
 public class UserBulkDTO {
 
     /**
@@ -29,12 +40,6 @@ public class UserBulkDTO {
     private boolean startAtOne;
 
     /**
-     * Default constructor for the user bulk DTO.
-     */
-    public UserBulkDTO() {
-    }
-
-    /**
      * Constructs a new user bulk DTO with the given attributes.
      *
      * @param amount The number of participants to add.
@@ -47,78 +52,6 @@ public class UserBulkDTO {
         this.amount = amount;
         this.language = language;
         this.username = username;
-        this.startAtOne = startAtOne;
-    }
-
-    /**
-     * Returns the amount of participants to be added.
-     *
-     * @return The amount of participants.
-     */
-    public int getAmount() {
-        return amount;
-    }
-
-    /**
-     * Sets the amount of participants to be added.
-     *
-     * @param amount The amount of participants to be set.
-     */
-    public void setAmount(final int amount) {
-        this.amount = amount;
-    }
-
-    /**
-     * Returns the participants' preferred language.
-     *
-     * @return The participants' language.
-     */
-    public UserDTO.Language getLanguage() {
-        return language;
-    }
-
-    /**
-     * Sets the participants' preferred language.
-     *
-     * @param language The language to be set.
-     */
-    public void setLanguage(final UserDTO.Language language) {
-        this.language = language;
-    }
-
-    /**
-     * Returns the username pattern.
-     *
-     * @return The username pattern.
-     */
-    public String getUsername() {
-        return username;
-    }
-
-    /**
-     * Sets the username pattern.
-     *
-     * @param username The username pattern to be set.
-     */
-    public void setUsername(final String username) {
-        this.username = username;
-    }
-
-    /**
-     * Indicates whether the numbering of the username pattern should start at one.
-     *
-     * @return {@code true} iff the number added to the username starts at one.
-     */
-    public boolean isStartAtOne() {
-        return startAtOne;
-    }
-
-    /**
-     * Sets whether the username pattern numbering should start at one.
-     *
-     * @param startAtOne The value to be set.
-     */
-    public void setStartAtOne(final boolean startAtOne) {
         this.startAtOne = startAtOne;
     }
 
@@ -154,21 +87,6 @@ public class UserBulkDTO {
     @Override
     public int hashCode() {
         return Objects.hash(amount, language, username, startAtOne);
-    }
-
-    /**
-     * Converts the user bulk DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the user bulk DTO.
-     */
-    @Override
-    public String toString() {
-        return "UserBulkDTO{"
-                + "amount=" + amount
-                + ", language='" + language + '\''
-                + ", username='" + username + '\''
-                + ", startAtOne=" + startAtOne
-                + '}';
     }
 
 }

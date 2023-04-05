@@ -1,5 +1,11 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -13,6 +19,11 @@ import java.sql.Timestamp;
 /**
  * An entity representing a block event that resulted from user interaction with a Scratch block or a sprite rename.
  */
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
 public class BlockEvent implements Event {
 
@@ -81,12 +92,6 @@ public class BlockEvent implements Event {
     private String code;
 
     /**
-     * Default constructor for the block event entity.
-     */
-    public BlockEvent() {
-    }
-
-    /**
      * Constructs a new block event with the given attributes.
      *
      * @param user The user who caused the event.
@@ -110,198 +115,6 @@ public class BlockEvent implements Event {
         this.sprite = sprite;
         this.metadata = metadata;
         this.xml = xml;
-        this.code = code;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event ID.
-     */
-    @Override
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param id The event ID to be set.
-     */
-    @Override
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The respective user.
-     */
-    @Override
-    public User getUser() {
-        return user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param user The event user to be set.
-     */
-    @Override
-    public void setUser(final User user) {
-        this.user = user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The respective experiment.
-     */
-    @Override
-    public Experiment getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param experiment The event experiment to be set.
-     */
-    @Override
-    public void setExperiment(final Experiment experiment) {
-        this.experiment = experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The respective timestamp.
-     */
-    @Override
-    public Timestamp getDate() {
-        return date;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param date The event timestamp to be set.
-     */
-    @Override
-    public void setDate(final Timestamp date) {
-        this.date = date;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event type.
-     */
-    @Override
-    public String getEventType() {
-        return eventType;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param eventType The event type to be set.
-     */
-    @Override
-    public void setEventType(final String eventType) {
-        this.eventType = eventType;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The respective event.
-     */
-    @Override
-    public String getEvent() {
-        return event;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param event The event to be set.
-     */
-    @Override
-    public void setEvent(final String event) {
-        this.event = event;
-    }
-
-    /**
-     * Returns the spritename of the event.
-     *
-     * @return The respective spritename.
-     */
-    public String getSprite() {
-        return sprite;
-    }
-
-    /**
-     * Sets the spritename of the event.
-     *
-     * @param sprite The name of the sprite to be set.
-     */
-    public void setSprite(final String sprite) {
-        this.sprite = sprite;
-    }
-
-    /**
-     * Returns the metadata of the event.
-     *
-     * @return The metadata.
-     */
-    public String getMetadata() {
-        return metadata;
-    }
-
-    /**
-     * Sets the metadata of the event.
-     *
-     * @param metadata The metadata to be set.
-     */
-    public void setMetadata(final String metadata) {
-        this.metadata = metadata;
-    }
-
-    /**
-     * Returns the xml of the event.
-     *
-     * @return The xml.
-     */
-    public String getXml() {
-        return xml;
-    }
-
-    /**
-     * Sets the xml of the event.
-     *
-     * @param xml The xml to be set.
-     */
-    public void setXml(final String xml) {
-        this.xml = xml;
-    }
-
-    /**
-     * Returns the code of the event.
-     *
-     * @return The respective code.
-     */
-    public String getCode() {
-        return code;
-    }
-
-    /**
-     * Sets the code of the event.
-     *
-     * @param code The code to be set.
-     */
-    public void setCode(final String code) {
         this.code = code;
     }
 

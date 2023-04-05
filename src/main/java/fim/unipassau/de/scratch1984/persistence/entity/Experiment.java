@@ -6,11 +6,21 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.Formula;
 
 /**
  * An entity representing an experiment.
  */
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
 public class Experiment {
 
@@ -70,12 +80,6 @@ public class Experiment {
     private byte[] project;
 
     /**
-     * Default constructor for the experiment entity.
-     */
-    public Experiment() {
-    }
-
-    /**
      * Constructs a new experiment with the given attributes.
      *
      * @param id The experiment id.
@@ -97,159 +101,6 @@ public class Experiment {
         this.postscript = postscript;
         this.active = active;
         this.courseExperiment = courseExperiment;
-        this.guiURL = guiURL;
-    }
-
-    /**
-     * Returns the ID of the experiment.
-     *
-     * @return The experiment ID.
-     */
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * Sets the ID of the experiment.
-     *
-     * @param id The experiment ID to be set.
-     */
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * Returns the title of the experiment.
-     *
-     * @return The experiment title.
-     */
-    public String getTitle() {
-        return title;
-    }
-
-    /**
-     * Sets the title of the experiment.
-     *
-     * @param name The experiment title to be set.
-     */
-    public void setTitle(final String name) {
-        this.title = name;
-    }
-
-    /**
-     * Returns the description of the experiment.
-     *
-     * @return The experiment description text.
-     */
-    public String getDescription() {
-        return description;
-    }
-
-    /**
-     * Sets the description of the experiment.
-     *
-     * @param description The experiment description to be set.
-     */
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
-    /**
-     * Returns the information text of the experiment.
-     *
-     * @return The experiment information text.
-     */
-    public String getInfo() {
-        return info;
-    }
-
-    /**
-     * Sets the information text of the experiment.
-     *
-     * @param info The experiment information text to be set.
-     */
-    public void setInfo(final String info) {
-        this.info = info;
-    }
-
-    /**
-     * Returns the postscript of the experiment.
-     *
-     * @return The postscript text.
-     */
-    public String getPostscript() {
-        return postscript;
-    }
-
-    /**
-     * Sets the text shown after the user has finished the experiment.
-     *
-     * @param postscript The postscript to be set.
-     */
-    public void setPostscript(final String postscript) {
-        this.postscript = postscript;
-    }
-
-    /**
-     * Returns whether the experiment is currently running.
-     *
-     * @return The experiment status.
-     */
-    public boolean isActive() {
-        return active;
-    }
-
-    /**
-     * Sets the running status the experiment.
-     *
-     * @param active The status.
-     */
-    public void setActive(final boolean active) {
-        this.active = active;
-    }
-
-    /**
-     * Returns whether the experiment is part of a course.
-     *
-     * @return The experiment course status.
-     */
-    public boolean isCourseExperiment() {
-        return courseExperiment;
-    }
-
-    /**
-     * Returns the current sb3 project.
-     *
-     * @return The sb3 project.
-     */
-    public byte[] getProject() {
-        return project;
-    }
-
-    /**
-     * Sets the current sb3 project.
-     *
-     * @param project The project.
-     */
-    public void setProject(final byte[] project) {
-        this.project = project;
-    }
-
-    /**
-     * Returns whether the GUI-URL of the experiment.
-     *
-     * @return The GUI-URL.
-     */
-    public String getGuiURL() {
-        return guiURL;
-    }
-
-    /**
-     * Sets the GUI_URL of the experiment.
-     *
-     * @param guiURL The GUI_URL.
-     */
-    public void setGuiURL(final String guiURL) {
         this.guiURL = guiURL;
     }
 

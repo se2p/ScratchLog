@@ -1,12 +1,24 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * A DTO representing a sb3 zip file uploaded during an experiment.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class Sb3ZipDTO implements EventDTO {
 
     /**
@@ -40,12 +52,6 @@ public class Sb3ZipDTO implements EventDTO {
     private byte[] content;
 
     /**
-     * Default constructor for the sb3 zip dto.
-     */
-    public Sb3ZipDTO() {
-    }
-
-    /**
      * Constructs a new sb3 zip dto with the given attributes.
      *
      * @param user The id of the user for whom the zip file was created.
@@ -60,122 +66,6 @@ public class Sb3ZipDTO implements EventDTO {
         this.experiment = experiment;
         this.date = date;
         this.name = name;
-        this.content = content;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The ID of the sb3 file.
-     */
-    @Override
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param id The ID to be set.
-     */
-    @Override
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The user's ID.
-     */
-    @Override
-    public Integer getUser() {
-        return user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param user The user ID to be set.
-     */
-    @Override
-    public void setUser(final Integer user) {
-        this.user = user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The experiment ID.
-     */
-    @Override
-    public Integer getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param experiment The experiment ID to be set.
-     */
-    @Override
-    public void setExperiment(final Integer experiment) {
-        this.experiment = experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The time at which the sb3 file was created.
-     */
-    @Override
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param date The time to be set.
-     */
-    @Override
-    public void setDate(final LocalDateTime date) {
-        this.date = date;
-    }
-
-    /**
-     * Returns the name of the zip file.
-     *
-     * @return The file name.
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Sets the name of the zip file.
-     *
-     * @param name The file name to be set.
-     */
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    /**
-     * Returns the content of the zip file.
-     *
-     * @return The file content.
-     */
-    public byte[] getContent() {
-        return content;
-    }
-
-    /**
-     * Sets the content of the zip file.
-     *
-     * @param content The file content to be set.
-     */
-    public void setContent(final byte[] content) {
         this.content = content;
     }
 
@@ -208,23 +98,6 @@ public class Sb3ZipDTO implements EventDTO {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    /**
-     * Converts the sb3 zip DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the sb3 zip DTO.
-     */
-    @Override
-    public String toString() {
-        return "Sb3ZipDTO{"
-                + "id=" + id
-                + ", user=" + user
-                + ", experiment=" + experiment
-                + ", date=" + date
-                + ", name='" + name + '\''
-                + ", content=" + Arrays.toString(content)
-                + '}';
     }
 
 }

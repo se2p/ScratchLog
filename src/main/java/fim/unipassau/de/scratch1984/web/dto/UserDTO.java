@@ -1,5 +1,11 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.Column;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -7,6 +13,11 @@ import java.util.Objects;
 /**
  * A DTO representing a user.
  */
+@Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserDTO {
 
     /**
@@ -101,12 +112,6 @@ public class UserDTO {
     private LocalDateTime lastLogin;
 
     /**
-     * Default constructor for the user dto.
-     */
-    public UserDTO() {
-    }
-
-    /**
      * Constructs a new user dto with the given attributes.
      *
      * @param username The user's username.
@@ -124,222 +129,6 @@ public class UserDTO {
         this.language = language;
         this.password = password;
         this.secret = secret;
-    }
-
-    /**
-     * Returns the user's ID.
-     *
-     * @return The user ID.
-     */
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * Sets the user's ID.
-     *
-     * @param id The user ID to be set.
-     */
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * Returns the user's username.
-     *
-     * @return The username.
-     */
-    public String getUsername() {
-        return username;
-    }
-
-    /**
-     * Sets the user's username.
-     *
-     * @param username The username to be set.
-     */
-    public void setUsername(final String username) {
-        this.username = username;
-    }
-
-    /**
-     * Returns the user's email.
-     *
-     * @return The user's email.
-     */
-    public String getEmail() {
-        return email;
-    }
-
-    /**
-     * Sets the user's email.
-     *
-     * @param email The email to be set.
-     */
-    public void setEmail(final String email) {
-        this.email = email;
-    }
-
-    /**
-     * Returns the user's role.
-     *
-     * @return The user's role.
-     */
-    public Role getRole() {
-        return role;
-    }
-
-    /**
-     * Sets the user's role.
-     *
-     * @param role The role to be set.
-     */
-    public void setRole(final Role role) {
-        this.role = role;
-    }
-
-    /**
-     * Returns the user's preferred language.
-     *
-     * @return The user's language.
-     */
-    public Language getLanguage() {
-        return language;
-    }
-
-    /**
-     * Sets the user's preferred language.
-     *
-     * @param language The language to be set.
-     */
-    public void setLanguage(final Language language) {
-        this.language = language;
-    }
-
-    /**
-     * Returns the user's hashed password.
-     *
-     * @return The user's hashed password.
-     */
-    public String getPassword() {
-        return password;
-    }
-
-    /**
-     * Sets the user's password.
-     *
-     * @param password The password to be set.
-     */
-    public void setPassword(final String password) {
-        this.password = password;
-    }
-
-    /**
-     * Returns the user's new password.
-     *
-     * @return The user's new password.
-     */
-    public String getNewPassword() {
-        return newPassword;
-    }
-
-    /**
-     * Sets the user's new password.
-     *
-     * @param newPassword The new password to be set.
-     */
-    public void setNewPassword(final String newPassword) {
-        this.newPassword = newPassword;
-    }
-
-    /**
-     * Returns the user's repeated password.
-     *
-     * @return The user's repeated password.
-     */
-    public String getConfirmPassword() {
-        return confirmPassword;
-    }
-
-    /**
-     * Sets the user's repeated password.
-     *
-     * @param confirmPassword The password to be set.
-     */
-    public void setConfirmPassword(final String confirmPassword) {
-        this.confirmPassword = confirmPassword;
-    }
-
-    /**
-     * Returns the user's secret.
-     *
-     * @return The user's secret.
-     */
-    public String getSecret() {
-        return secret;
-    }
-
-    /**
-     * Sets the user's secret.
-     *
-     * @param secret The secret to be set.
-     */
-    public void setSecret(final String secret) {
-        this.secret = secret;
-    }
-
-    /**
-     * Returns the number of login attempts for the user.
-     *
-     * @return The number of attempts.
-     */
-    public int getAttempts() {
-        return attempts;
-    }
-
-    /**
-     * Sets the number of login attempts for the user.
-     *
-     * @param attempts The number of login attempts to be set.
-     */
-    public void setAttempts(final int attempts) {
-        this.attempts = attempts;
-    }
-
-    /**
-     * Returns whether the user is active.
-     *
-     * @return {@code true} iff the user is active.
-     */
-    public boolean isActive() {
-        return active;
-    }
-
-    /**
-     * Sets whether this user's profile is currently active.
-     *
-     * @param active The user's active status to be set.
-     */
-    public void setActive(final boolean active) {
-        this.active = active;
-    }
-
-    /**
-     * Returns the date and time at which the user last logged in.
-     *
-     * @return The last login time.
-     */
-    public LocalDateTime getLastLogin() {
-        return lastLogin;
-    }
-
-    /**
-     * Sets the last login time for the user.
-     *
-     * @param lastLogin The time to be set.
-     */
-    public void setLastLogin(final LocalDateTime lastLogin) {
-        this.lastLogin = lastLogin;
     }
 
     /**

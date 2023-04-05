@@ -1,12 +1,24 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * A DTO representing a file uploaded during an experiment.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class FileDTO implements EventDTO {
 
     /**
@@ -45,12 +57,6 @@ public class FileDTO implements EventDTO {
     private byte[] content;
 
     /**
-     * Default constructor for the file dto.
-     */
-    public FileDTO() {
-    }
-
-    /**
      * Constructs a new file dto with the given attributes.
      *
      * @param user The id of the user who uploaded the file.
@@ -67,140 +73,6 @@ public class FileDTO implements EventDTO {
         this.date = date;
         this.name = name;
         this.filetype = filetype;
-        this.content = content;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The file ID.
-     */
-    @Override
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param id The file ID to be set.
-     */
-    @Override
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The user's ID.
-     */
-    @Override
-    public Integer getUser() {
-        return user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param user The user ID to be set.
-     */
-    @Override
-    public void setUser(final Integer user) {
-        this.user = user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The experiment ID.
-     */
-    @Override
-    public Integer getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param experiment The experiment ID to be set.
-     */
-    @Override
-    public void setExperiment(final Integer experiment) {
-        this.experiment = experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The time at which the file was uploaded.
-     */
-    @Override
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param date The time to be set.
-     */
-    @Override
-    public void setDate(final LocalDateTime date) {
-        this.date = date;
-    }
-
-    /**
-     * Returns the name of the file.
-     *
-     * @return The file name.
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Sets the name of the file.
-     *
-     * @param name The file name to be set.
-     */
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    /**
-     * Returns the type of the file.
-     *
-     * @return The filetype.
-     */
-    public String getFiletype() {
-        return filetype;
-    }
-
-    /**
-     * Sets the type of the file.
-     *
-     * @param filetype The filetype to be set.
-     */
-    public void setFiletype(final String filetype) {
-        this.filetype = filetype;
-    }
-
-    /**
-     * Returns the content of the file.
-     *
-     * @return The file content.
-     */
-    public byte[] getContent() {
-        return content;
-    }
-
-    /**
-     * Sets the content of the file.
-     *
-     * @param content The file content to be set.
-     */
-    public void setContent(final byte[] content) {
         this.content = content;
     }
 
@@ -233,24 +105,6 @@ public class FileDTO implements EventDTO {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    /**
-     * Converts the file DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the file DTO.
-     */
-    @Override
-    public String toString() {
-        return "FileDTO{"
-                + "id=" + id
-                + ", user=" + user
-                + ", experiment=" + experiment
-                + ", date=" + date
-                + ", name='" + name + '\''
-                + ", filetype='" + filetype + '\''
-                + ", content=" + Arrays.toString(content)
-                + '}';
     }
 
 }

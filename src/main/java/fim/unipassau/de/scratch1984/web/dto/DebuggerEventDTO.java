@@ -1,5 +1,12 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -7,6 +14,12 @@ import java.util.Objects;
  * A DTO representing a debugger event that resulted from user interaction with the Scratch debugger, not including
  * interactions with questions.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class DebuggerEventDTO implements EventDTO {
 
     /**
@@ -125,12 +138,6 @@ public class DebuggerEventDTO implements EventDTO {
     private Integer execution;
 
     /**
-     * Default constructor for the debugger event dto.
-     */
-    public DebuggerEventDTO() {
-    }
-
-    /**
      * Constructs a new debugger event dto with the given attributes.
      *
      * @param user The id of the user who caused the event.
@@ -154,194 +161,6 @@ public class DebuggerEventDTO implements EventDTO {
         this.blockOrTargetID = blockOrTargetID;
         this.nameOrOpcode = nameOrOpcode;
         this.original = original;
-        this.execution = execution;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event ID.
-     */
-    @Override
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param id The event ID to be set.
-     */
-    @Override
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The user's ID.
-     */
-    @Override
-    public Integer getUser() {
-        return user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param user The user ID to be set.
-     */
-    @Override
-    public void setUser(final Integer user) {
-        this.user = user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The experiment ID.
-     */
-    @Override
-    public Integer getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param experiment The experiment ID to be set.
-     */
-    @Override
-    public void setExperiment(final Integer experiment) {
-        this.experiment = experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event time.
-     */
-    @Override
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param date The time to be set.
-     */
-    @Override
-    public void setDate(final LocalDateTime date) {
-        this.date = date;
-    }
-
-    /**
-     * Returns the type of the event.
-     *
-     * @return The event type.
-     */
-    public DebuggerEventType getEventType() {
-        return eventType;
-    }
-
-    /**
-     * Sets the type of the event.
-     *
-     * @param eventType The event type to be set.
-     */
-    public void setEventType(final DebuggerEventType eventType) {
-        this.eventType = eventType;
-    }
-
-    /**
-     * Returns the specific event that occurred.
-     *
-     * @return The event.
-     */
-    public DebuggerEvent getEvent() {
-        return event;
-    }
-
-    /**
-     * Sets the specific event that occurred.
-     *
-     * @param event The event to be set.
-     */
-    public void setEvent(final DebuggerEvent event) {
-        this.event = event;
-    }
-
-    /**
-     * Returns the block or target ID.
-     *
-     * @return The ID.
-     */
-    public String getBlockOrTargetID() {
-        return blockOrTargetID;
-    }
-
-    /**
-     * Sets the block or target ID.
-     *
-     * @param blockOrTargetID The ID to be set.
-     */
-    public void setBlockOrTargetID(final String blockOrTargetID) {
-        this.blockOrTargetID = blockOrTargetID;
-    }
-
-    /**
-     * Returns the target name or block opcode.
-     *
-     * @return The name.
-     */
-    public String getNameOrOpcode() {
-        return nameOrOpcode;
-    }
-
-    /**
-     * Sets the target name or block opcode.
-     *
-     * @param nameOrOpcode The name or opcode to be set.
-     */
-    public void setNameOrOpcode(final String nameOrOpcode) {
-        this.nameOrOpcode = nameOrOpcode;
-    }
-
-    /**
-     * Returns the original value.
-     *
-     * @return The value.
-     */
-    public Integer getOriginal() {
-        return original;
-    }
-
-    /**
-     * Sets the original value.
-     *
-     * @param original The value to be set.
-     */
-    public void setOriginal(final Integer original) {
-        this.original = original;
-    }
-
-    /**
-     * Returns the execution number.
-     *
-     * @return The number.
-     */
-    public Integer getExecution() {
-        return execution;
-    }
-
-    /**
-     * Sets the execution number.
-     *
-     * @param execution The number to be set.
-     */
-    public void setExecution(final Integer execution) {
         this.execution = execution;
     }
 
@@ -374,26 +193,6 @@ public class DebuggerEventDTO implements EventDTO {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    /**
-     * Converts the debugger event DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the debugger event DTO.
-     */
-    @Override
-    public String toString() {
-        return "DebuggerEventDTO{"
-                + "id=" + id
-                + ", user=" + user
-                + ", experiment=" + experiment
-                + ", date=" + date
-                + ", eventType=" + eventType
-                + ", event=" + event
-                + ", blockOrTargetID='" + blockOrTargetID + '\''
-                + ", nameOrOpcode='" + nameOrOpcode + '\''
-                + ", original=" + original
-                + '}';
     }
 
 }

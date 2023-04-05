@@ -1,10 +1,21 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.util.Objects;
 
 /**
  * A DTO representing the number of times an xml code has been saved for a user during an experiment.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
 public class CodesDataDTO {
 
     /**
@@ -23,12 +34,6 @@ public class CodesDataDTO {
     private int count;
 
     /**
-     * Default constructor for the codes data dto.
-     */
-    public CodesDataDTO() {
-    }
-
-    /**
      * Constructs a new codes data dto with the given attributes.
      *
      * @param user The id of the user for whom the code was saved.
@@ -38,60 +43,6 @@ public class CodesDataDTO {
     public CodesDataDTO(final int user, final int experiment, final int count) {
         this.user = user;
         this.experiment = experiment;
-        this.count = count;
-    }
-
-    /**
-     * Returns the ID of the user to whom this data belongs.
-     *
-     * @return The user ID.
-     */
-    public Integer getUser() {
-        return user;
-    }
-
-    /**
-     * Sets the user ID.
-     *
-     * @param user The user ID to be set.
-     */
-    public void setUser(final Integer user) {
-        this.user = user;
-    }
-
-    /**
-     * Returns the ID of the experiment to which this data belongs.
-     *
-     * @return The experiment ID.
-     */
-    public Integer getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * Sets the experiment ID.
-     *
-     * @param experiment The experiment ID to be set.
-     */
-    public void setExperiment(final Integer experiment) {
-        this.experiment = experiment;
-    }
-
-    /**
-     * Returns the calculated count value.
-     *
-     * @return The counted occurrences.
-     */
-    public int getCount() {
-        return count;
-    }
-
-    /**
-     * Sets the count value.
-     *
-     * @param count The value to be set.
-     */
-    public void setCount(final int count) {
         this.count = count;
     }
 
@@ -124,20 +75,6 @@ public class CodesDataDTO {
     @Override
     public int hashCode() {
         return Objects.hash(user, experiment);
-    }
-
-    /**
-     * Converts the codes data DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the codes data DTO.
-     */
-    @Override
-    public String toString() {
-        return "CodesDataDTO{"
-                + "user=" + user
-                + ", experiment=" + experiment
-                + ", count=" + count
-                + '}';
     }
 
 }

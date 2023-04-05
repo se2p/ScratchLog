@@ -178,9 +178,6 @@ function addModalOnclickFunctions() {
     let deleteParticipantModal = document.getElementById("openDeleteParticipant");
     let deleteExperimentModal = document.getElementById("openDeleteExperiment");
 
-    document.getElementById("close").addEventListener("click", function () {
-        openModal(stopModal);
-    });
     document.getElementById("abortStop").addEventListener("click", function () {
         closeModal(stopModal);
     })
@@ -207,6 +204,9 @@ function addModalOnclickFunctions() {
     });
     document.getElementById("abortDeleteExperiment").addEventListener("click", function () {
         closeModal(deleteExperimentModal);
+    });
+    document.getElementById("close").addEventListener("click", function () {
+        openModal(stopModal);
     });
 }
 

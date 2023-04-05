@@ -1,5 +1,12 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -7,6 +14,12 @@ import java.util.Objects;
  * A DTO representing a block event that resulted from user interaction with a Scratch block, the green flag or stop
  * all icon, or a sprite rename.
  */
+@Builder
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class BlockEventDTO implements EventDTO {
 
     /**
@@ -205,12 +218,6 @@ public class BlockEventDTO implements EventDTO {
     private String code;
 
     /**
-     * Default constructor for the block event dto.
-     */
-    public BlockEventDTO() {
-    }
-
-    /**
      * Constructs a new block event dto with the given attributes.
      *
      * @param user The id of the user who caused the event.
@@ -234,194 +241,6 @@ public class BlockEventDTO implements EventDTO {
         this.sprite = sprite;
         this.metadata = metadata;
         this.xml = xml;
-        this.code = code;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event ID.
-     */
-    @Override
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param id The event ID to be set.
-     */
-    @Override
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The user's ID.
-     */
-    @Override
-    public Integer getUser() {
-        return user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param user The user ID to be set.
-     */
-    @Override
-    public void setUser(final Integer user) {
-        this.user = user;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The experiment ID.
-     */
-    @Override
-    public Integer getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param experiment The experiment ID to be set.
-     */
-    @Override
-    public void setExperiment(final Integer experiment) {
-        this.experiment = experiment;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @return The event time.
-     */
-    @Override
-    public LocalDateTime getDate() {
-        return date;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @param date The time to be set.
-     */
-    @Override
-    public void setDate(final LocalDateTime date) {
-        this.date = date;
-    }
-
-    /**
-     * Returns the type of the event.
-     *
-     * @return The event type.
-     */
-    public BlockEventType getEventType() {
-        return eventType;
-    }
-
-    /**
-     * Sets the type of the event.
-     *
-     * @param eventType The event type to be set.
-     */
-    public void setEventType(final BlockEventType eventType) {
-        this.eventType = eventType;
-    }
-
-    /**
-     * Returns the specific event that occurred.
-     *
-     * @return The event.
-     */
-    public BlockEvent getEvent() {
-        return event;
-    }
-
-    /**
-     * Sets the specific event that occurred.
-     *
-     * @param event The event to be set.
-     */
-    public void setEvent(final BlockEvent event) {
-        this.event = event;
-    }
-
-    /**
-     * Returns the spritename of the event.
-     *
-     * @return The spritename.
-     */
-    public String getSprite() {
-        return sprite;
-    }
-
-    /**
-     * Sets the spritename of the event.
-     *
-     * @param sprite The name to be set.
-     */
-    public void setSprite(final String sprite) {
-        this.sprite = sprite;
-    }
-
-    /**
-     * Returns the metadata of this event, if any.
-     *
-     * @return The metadata.
-     */
-    public String getMetadata() {
-        return metadata;
-    }
-
-    /**
-     * Sets the metadata of the event.
-     *
-     * @param metadata The metadata to be set.
-     */
-    public void setMetadata(final String metadata) {
-        this.metadata = metadata;
-    }
-
-    /**
-     * Returns the xml saved for this event, if any.
-     *
-     * @return The xml.
-     */
-    public String getXml() {
-        return xml;
-    }
-
-    /**
-     * Sets the xml of the event.
-     *
-     * @param xml The xml to be set.
-     */
-    public void setXml(final String xml) {
-        this.xml = xml;
-    }
-
-    /**
-     * Returns the code saved for this event, if any.
-     *
-     * @return The code.
-     */
-    public String getCode() {
-        return code;
-    }
-
-    /**
-     * Sets the code of the event.
-     *
-     * @param code The code to be set.
-     */
-    public void setCode(final String code) {
         this.code = code;
     }
 
@@ -454,27 +273,6 @@ public class BlockEventDTO implements EventDTO {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    /**
-     * Converts the block event DTO into a human-readable string representation.
-     *
-     * @return A human-readable string representation of the block event DTO.
-     */
-    @Override
-    public String toString() {
-        return "BlockEventDTO{"
-                + "id=" + id
-                + ", user=" + user
-                + ", experiment=" + experiment
-                + ", date=" + date
-                + ", eventType=" + eventType
-                + ", event=" + event
-                + ", sprite='" + sprite + '\''
-                + ", metadata='" + metadata + '\''
-                + ", xml='" + xml + '\''
-                + ", code='" + code + '\''
-                + '}';
     }
 
 }

@@ -410,28 +410,17 @@ public class FileService {
      * @return The new file containing the information passed in the DTO.
      */
     private File createFile(final FileDTO fileDTO, final User user, final Experiment experiment) {
-        File file = new File();
+        File file = File.builder()
+                .user(user)
+                .experiment(experiment)
+                .date(Timestamp.valueOf(fileDTO.getDate()))
+                .name(fileDTO.getName())
+                .filetype(fileDTO.getFiletype())
+                .content(fileDTO.getContent())
+                .build();
 
-        if (user != null) {
-            file.setUser(user);
-        }
-        if (experiment != null) {
-            file.setExperiment(experiment);
-        }
         if (fileDTO.getId() != null) {
             file.setId(fileDTO.getId());
-        }
-        if (fileDTO.getDate() != null) {
-            file.setDate(Timestamp.valueOf(fileDTO.getDate()));
-        }
-        if (fileDTO.getName() != null) {
-            file.setName(fileDTO.getName());
-        }
-        if (fileDTO.getFiletype() != null) {
-            file.setFiletype(fileDTO.getFiletype());
-        }
-        if (fileDTO.getContent() != null) {
-            file.setContent(fileDTO.getContent());
         }
 
         return file;
@@ -444,28 +433,17 @@ public class FileService {
      * @return The new file dto containing the information passed in the file.
      */
     private FileDTO createFileDTO(final File file) {
-        FileDTO fileDTO = new FileDTO();
+        FileDTO fileDTO = FileDTO.builder()
+                .user(file.getUser().getId())
+                .experiment(file.getExperiment().getId())
+                .filetype(file.getFiletype())
+                .date(file.getDate().toLocalDateTime())
+                .name(file.getName())
+                .content(file.getContent())
+                .build();
 
-        if (file.getUser() != null) {
-            fileDTO.setUser(file.getUser().getId());
-        }
-        if (file.getExperiment() != null) {
-            fileDTO.setExperiment(file.getExperiment().getId());
-        }
         if (file.getId() != null) {
             fileDTO.setId(file.getId());
-        }
-        if (file.getFiletype() != null) {
-            fileDTO.setFiletype(file.getFiletype());
-        }
-        if (file.getDate() != null) {
-            fileDTO.setDate(file.getDate().toLocalDateTime());
-        }
-        if (file.getName() != null) {
-            fileDTO.setName(file.getName());
-        }
-        if (file.getContent() != null) {
-            fileDTO.setContent(file.getContent());
         }
 
         return fileDTO;
@@ -497,25 +475,16 @@ public class FileService {
      * @return The new zip file containing the information passed in the DTO.
      */
     private Sb3Zip createSb3Zip(final Sb3ZipDTO sb3ZipDTO, final User user, final Experiment experiment) {
-        Sb3Zip sb3Zip = new Sb3Zip();
+        Sb3Zip sb3Zip = Sb3Zip.builder()
+                .user(user)
+                .experiment(experiment)
+                .date(Timestamp.valueOf(sb3ZipDTO.getDate()))
+                .name(sb3ZipDTO.getName())
+                .content(sb3ZipDTO.getContent())
+                .build();
 
         if (sb3ZipDTO.getId() != null) {
             sb3Zip.setId(sb3ZipDTO.getId());
-        }
-        if (user != null) {
-            sb3Zip.setUser(user);
-        }
-        if (experiment != null) {
-            sb3Zip.setExperiment(experiment);
-        }
-        if (sb3ZipDTO.getDate() != null) {
-            sb3Zip.setDate(Timestamp.valueOf(sb3ZipDTO.getDate()));
-        }
-        if (sb3ZipDTO.getName() != null) {
-            sb3Zip.setName(sb3ZipDTO.getName());
-        }
-        if (sb3ZipDTO.getContent() != null) {
-            sb3Zip.setContent(sb3ZipDTO.getContent());
         }
 
         return sb3Zip;
@@ -528,25 +497,16 @@ public class FileService {
      * @return The new zip dto file.
      */
     private Sb3ZipDTO createSb3ZipDTO(final Sb3Zip sb3Zip) {
-        Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO();
+        Sb3ZipDTO sb3ZipDTO = Sb3ZipDTO.builder()
+                .user(sb3Zip.getUser().getId())
+                .experiment(sb3Zip.getExperiment().getId())
+                .name(sb3Zip.getName())
+                .date(sb3Zip.getDate().toLocalDateTime())
+                .content(sb3Zip.getContent())
+                .build();
 
-        if (sb3Zip.getUser() != null) {
-            sb3ZipDTO.setUser(sb3Zip.getUser().getId());
-        }
-        if (sb3Zip.getExperiment() != null) {
-            sb3ZipDTO.setExperiment(sb3Zip.getExperiment().getId());
-        }
         if (sb3Zip.getId() != null) {
             sb3ZipDTO.setId(sb3Zip.getId());
-        }
-        if (sb3Zip.getName() != null) {
-            sb3ZipDTO.setName(sb3Zip.getName());
-        }
-        if (sb3Zip.getDate() != null) {
-            sb3ZipDTO.setDate(sb3Zip.getDate().toLocalDateTime());
-        }
-        if (sb3Zip.getContent() != null) {
-            sb3ZipDTO.setContent(sb3Zip.getContent());
         }
 
         return sb3ZipDTO;

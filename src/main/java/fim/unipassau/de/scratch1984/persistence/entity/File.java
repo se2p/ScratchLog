@@ -1,5 +1,11 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -13,6 +19,11 @@ import java.sql.Timestamp;
 /**
  * An entity representing a file.
  */
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
 public class File {
 
@@ -63,12 +74,6 @@ public class File {
     private Experiment experiment;
 
     /**
-     * Default constructor for the file entity.
-     */
-    public File() {
-    }
-
-    /**
      * Constructs a new file with the given attributes.
      *
      * @param user The user who uploaded the file.
@@ -86,132 +91,6 @@ public class File {
         this.name = name;
         this.filetype = filetype;
         this.content = content;
-    }
-
-    /**
-     * Returns the ID of the file.
-     *
-     * @return The file ID.
-     */
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     * Sets the ID of the file.
-     *
-     * @param id The file ID to be set.
-     */
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * Returns the timestamp at which the file was added.
-     *
-     * @return The respective timestamp.
-     */
-    public Timestamp getDate() {
-        return date;
-    }
-
-    /**
-     * Sets the timestamp of the file.
-     *
-     * @param date The timestamp to be set.
-     */
-    public void setDate(final Timestamp date) {
-        this.date = date;
-    }
-
-    /**
-     * Returns the name of the file.
-     *
-     * @return The file name.
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Sets the name of the file.
-     *
-     * @param name The file name to be set.
-     */
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    /**
-     * Returns the type of the file.
-     *
-     * @return The filetype.
-     */
-    public String getFiletype() {
-        return filetype;
-    }
-
-    /**
-     * Sets the type of the file.
-     *
-     * @param filetype The filetyepe to be set.
-     */
-    public void setFiletype(final String filetype) {
-        this.filetype = filetype;
-    }
-
-    /**
-     * Returns the file content.
-     *
-     * @return The file content.
-     */
-    public byte[] getContent() {
-        return content;
-    }
-
-    /**
-     * Sets the content of the file.
-     *
-     * @param content The file content to be set.
-     */
-    public void setContent(final byte[] content) {
-        this.content = content;
-    }
-
-    /**
-     * Returns the user who added the file.
-     *
-     * @return The respective user.
-     */
-    public User getUser() {
-        return user;
-    }
-
-    /**
-     * Sets the user who added the file.
-     *
-     * @param user The respective user.
-     */
-    public void setUser(final User user) {
-        this.user = user;
-    }
-
-    /**
-     * Returns the experiment during which the file was added.
-     *
-     * @return The respective experiment.
-     */
-    public Experiment getExperiment() {
-        return experiment;
-    }
-
-    /**
-     * Sets the experiment during which the file was added.
-     *
-     * @param experiment The respective experiment.
-     */
-    public void setExperiment(final Experiment experiment) {
-        this.experiment = experiment;
     }
 
 }
