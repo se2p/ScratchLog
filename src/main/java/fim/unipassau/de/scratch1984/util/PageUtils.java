@@ -24,40 +24,18 @@ public final class PageUtils {
     }
 
     /**
-     * Checks, whether the passed id and page strings are valid numbers.
+     * Checks, whether the given page is within the tolerated boundaries. The lower boundary for any page number is
+     * zero, while the upper boundary depends on the given last page number.
      *
-     * @param id The id to check.
-     * @param currentPage The number of the current page to check.
-     * @param lastPage The number of the last page to check.
-     * @return {@code true} if any of the strings is an invalid number, or {@code false} otherwise.
+     * @param page The page number to check.
+     * @param lastPage The number of the last page.
+     * @return {@code true} if the page number is invalid, or {@code false} otherwise.
      */
-    public static boolean isInvalidParams(final String id, final String currentPage, final String lastPage) {
-        if (!isInvalidParams(id, currentPage)) {
-            if (lastPage == null) {
-                return true;
-            } else {
-                return NumberParser.parseNumber(lastPage) <= -1;
-            }
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Checks, whether the given current page is within the tolerated upper and lower boundaries.
-     *
-     * @param current The current page number to be checked.
-     * @param currentBoundary The allowed lower boundary.
-     * @param lastPage The allowed upper boundary.
-     * @param isNext Whether the operation is to retrieve the next or previous page.
-     * @return {@code true} if the current page is invalid, or {@code false} otherwise.
-     */
-    public static boolean isInvalidCurrentPage(final int current, final int currentBoundary, final int lastPage,
-                                               final boolean isNext) {
-        if (current <= currentBoundary) {
+    public static boolean isInvalidPageNumber(final int page, final int lastPage) {
+        if (page < 0) {
             return true;
         } else {
-            return isNext ? current >= lastPage : current > lastPage;
+            return page >= lastPage;
         }
     }
 

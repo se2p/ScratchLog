@@ -103,7 +103,7 @@ public class HomeController {
             Page<CourseTableProjection> coursePage = pageService.getCoursePage(PageRequest.of(0, Constants.PAGE_SIZE));
             int lastExperimentPage = pageService.computeLastExperimentPage();
             int lastCoursePage = pageService.computeLastCoursePage();
-            addModelInfo(experimentPage, coursePage, 1, 1, lastExperimentPage, lastCoursePage, model);
+            addModelInfo(experimentPage, coursePage, 0, 0, lastExperimentPage - 1, lastCoursePage - 1, model);
         } else if (httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -120,7 +120,7 @@ public class HomeController {
                         PageRequest.of(0, Constants.PAGE_SIZE), userDTO.getId());
                 int lastExperimentPage = pageService.getLastExperimentPage(userDTO.getId());
                 int lastCoursePage = pageService.getLastCoursePage(userDTO.getId());
-                addModelInfo(experimentPage, coursePage, 1, 1, lastExperimentPage, lastCoursePage, model);
+                addModelInfo(experimentPage, coursePage, 0, 0, lastExperimentPage - 1, lastCoursePage - 1, model);
             } catch (NotFoundException e) {
                 return Constants.ERROR;
             }
@@ -130,184 +130,53 @@ public class HomeController {
     }
 
     /**
-     * Loads the next course page from the database. If the current page is the last page, the error page is displayed
-     * instead.
+     * Retrieves the course page corresponding to the given page number for the current user, if the provided
+     * information is valid. An administrator will get an overview over all courses while participants will only see
+     * courses in which they are participating.
      *
-     * @param httpServletRequest The servlet request.
-     * @param currentPage The page currently being displayed.
-     * @return A {@link ModelAndView} used to update the course table on success, or the error page otherwise.
+     * @param pageNumber The number of the page to be retrieved.
+     * @param httpServletRequest The {@link HttpServletRequest} containing providing information on the user's role.
+     * @return The retrieved course page information.
      */
-    @GetMapping("/next/course")
+    @GetMapping("/page/course")
     @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getNextCoursePage(@RequestParam(PAGE) final String currentPage,
+    public ModelAndView getCoursePage(@RequestParam(PAGE) final String pageNumber,
+                                      final HttpServletRequest httpServletRequest) {
+        int page = getPageNumber(pageNumber);
+        Pair<Integer, Integer> lastPageInformation = getLastPageCourses(httpServletRequest);
+
+        if (lastPageInformation == null || PageUtils.isInvalidPageNumber(page, lastPageInformation.getFirst())) {
+            return new ModelAndView(Constants.ERROR);
+        }
+
+        Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, page,
+                lastPageInformation.getSecond());
+        return getCourseModelView(projections, page, lastPageInformation.getFirst() - 1);
+    }
+
+    /**
+     * Retrieves the experiment page corresponding to the given page number for the current user if the provided
+     * information is valid. An administrator will get an overview over all experiments while participants will only see
+     * experiments in which they are participating.
+     *
+     * @param pageNumber The number of the page to be retrieved.
+     * @param httpServletRequest The {@link HttpServletRequest} containing providing information on the user's role.
+     * @return The retrieved experiment page information.
+     */
+    @GetMapping("/page/experiment")
+    @Secured(Constants.ROLE_PARTICIPANT)
+    public ModelAndView getExperimentPage(@RequestParam(PAGE) final String pageNumber,
                                           final HttpServletRequest httpServletRequest) {
-        int current = getCurrentPageNumber(currentPage);
-        Pair<Integer, Integer> lastPageInformation = getLastPageCourses(httpServletRequest);
-
-        if (isInvalidCurrent(lastPageInformation, current, -1, true)) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, current,
-                lastPageInformation.getSecond());
-        current++;
-        return getCourseModelView(projections, current, lastPageInformation.getFirst());
-    }
-
-    /**
-     * Loads the previous course page from the database. If the current page is the last page, the error page is
-     * displayed instead.
-     *
-     * @param httpServletRequest The servlet request.
-     * @param currentPage The page currently being displayed.
-     * @return A {@link ModelAndView} used to update the course table on success, or the error page otherwise.
-     */
-    @GetMapping("/previous/course")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getPreviousCoursePage(@RequestParam(PAGE) final String currentPage,
-                                              final HttpServletRequest httpServletRequest) {
-        int current = getCurrentPageNumber(currentPage);
-        Pair<Integer, Integer> lastPageInformation = getLastPageCourses(httpServletRequest);
-
-        if (isInvalidCurrent(lastPageInformation, current, 1, false)) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, current - 2,
-                lastPageInformation.getSecond());
-        current--;
-        return getCourseModelView(projections, current, lastPageInformation.getFirst());
-    }
-
-    /**
-     * Loads the first course page from the database.
-     *
-     * @param httpServletRequest The servlet request.
-     * @return A {@link ModelAndView} used to update the course table on success, or the error page otherwise.
-     */
-    @GetMapping("/first/course")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getFirstCoursePage(final HttpServletRequest httpServletRequest) {
-        Pair<Integer, Integer> lastPageInformation = getLastPageCourses(httpServletRequest);
-
-        if (lastPageInformation == null) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, 0, lastPageInformation.getSecond());
-        return getCourseModelView(projections, 1, lastPageInformation.getFirst());
-    }
-
-    /**
-     * Loads the last course page from the database.
-     *
-     * @param httpServletRequest The servlet request.
-     * @return A {@link ModelAndView} used to update the course table on success, or the error page otherwise.
-     */
-    @GetMapping("/last/course")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getLastCoursePage(final HttpServletRequest httpServletRequest) {
-        Pair<Integer, Integer> lastPageInformation = getLastPageCourses(httpServletRequest);
-
-        if (lastPageInformation == null) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, lastPageInformation.getFirst() - 1,
-                lastPageInformation.getSecond());
-        int last = lastPageInformation.getFirst();
-        return getCourseModelView(projections, last, last);
-    }
-
-    /**
-     * Loads the next experiment page from the database. If the current page is the last page, the error page is
-     * displayed instead.
-     *
-     * @param httpServletRequest The servlet request.
-     * @param currentPage The page currently being displayed.
-     * @return A {@link ModelAndView} used to update the experiment table on success, or the error page otherwise.
-     */
-    @GetMapping("/next/experiment")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getNextExperimentPage(@RequestParam(PAGE) final String currentPage,
-                                              final HttpServletRequest httpServletRequest) {
-        int current = getCurrentPageNumber(currentPage);
+        int page = getPageNumber(pageNumber);
         Pair<Integer, Integer> lastPageInformation = getLastPageExperiments(httpServletRequest);
 
-        if (isInvalidCurrent(lastPageInformation, current, -1, true)) {
+        if (lastPageInformation == null || PageUtils.isInvalidPageNumber(page, lastPageInformation.getFirst())) {
             return new ModelAndView(Constants.ERROR);
         }
 
-        Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest, current,
+        Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest, page,
                 lastPageInformation.getSecond());
-        current++;
-        return getExperimentModelView(projections, current, lastPageInformation.getFirst());
-    }
-
-    /**
-     * Loads the previous experiment page from the database. If the current page is the first page, the error page is
-     * displayed instead.
-     *
-     * @param httpServletRequest The servlet request.
-     * @param currentPage The page currently being displayed.
-     * @return A {@link ModelAndView} used to update the experiment table on success, or the error page otherwise.
-     */
-    @GetMapping("/previous/experiment")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getPreviousExperimentPage(@RequestParam(PAGE) final String currentPage,
-                                                  final HttpServletRequest httpServletRequest) {
-        int current = getCurrentPageNumber(currentPage);
-        Pair<Integer, Integer> lastPageInformation = getLastPageExperiments(httpServletRequest);
-
-        if (isInvalidCurrent(lastPageInformation, current, 1, false)) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest, current - 2,
-                lastPageInformation.getSecond());
-        current--;
-        return getExperimentModelView(projections, current, lastPageInformation.getFirst());
-    }
-
-    /**
-     * Loads the first experiment page from the database.
-     *
-     * @param httpServletRequest The servlet request.
-     * @return A {@link ModelAndView} used to update the experiment table on success, or the error page otherwise.
-     */
-    @GetMapping("/first/experiment")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getFirstExperimentPage(final HttpServletRequest httpServletRequest) {
-        Pair<Integer, Integer> lastPageInformation = getLastPageExperiments(httpServletRequest);
-
-        if (lastPageInformation == null) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest, 0,
-                lastPageInformation.getSecond());
-        return getExperimentModelView(projections, 1, lastPageInformation.getFirst());
-    }
-
-    /**
-     * Loads the last experiment page from the database.
-     *
-     * @param httpServletRequest The servlet request.
-     * @return A {@link ModelAndView} used to update the experiment table on success, or the error page otherwise.
-     */
-    @GetMapping("/last/experiment")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getLastExperimentPage(final HttpServletRequest httpServletRequest) {
-        Pair<Integer, Integer> lastPageInformation = getLastPageExperiments(httpServletRequest);
-
-        if (lastPageInformation == null) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest,
-                lastPageInformation.getFirst() - 1, lastPageInformation.getSecond());
-        int last = lastPageInformation.getFirst();
-        return getExperimentModelView(projections, last, last);
+        return getExperimentModelView(projections, page, lastPageInformation.getFirst() - 1);
     }
 
     /**
@@ -396,22 +265,22 @@ public class HomeController {
     /**
      * Parses the given string to a number. If the string is not a valid number, -1 is returned.
      *
-     * @param currentPage The current page number represented as a string.
+     * @param pageNumber The current page number represented as a string.
      * @return The page number, or -1.
      */
-    private int getCurrentPageNumber(final String currentPage) {
-        if (currentPage == null) {
+    private int getPageNumber(final String pageNumber) {
+        if (pageNumber == null) {
             logger.error("Cannot return a page for page number null!");
             return -1;
         }
 
-        int current = NumberParser.parseNumber(currentPage);
+        int page = NumberParser.parseNumber(pageNumber);
 
-        if (current <= -1) {
-            logger.error("Cannot return a page for invalid page number " + currentPage + "!");
+        if (page <= -1) {
+            logger.error("Cannot return a page for invalid page number " + pageNumber + "!");
         }
 
-        return current;
+        return page;
     }
 
     /**
@@ -500,23 +369,6 @@ public class HomeController {
         } catch (NotFoundException e) {
             return null;
         }
-    }
-
-    /**
-     * Checks whether the given current page is a valid page number with respect to the minimum page number given by the
-     * current boundary parameter and the information whether the current user requested the next or previous page of a
-     * tale.
-     *
-     * @param lastPageInformation The {@link Pair} containing the last page number.
-     * @param current The current page.
-     * @param currentBoundary The minimum value the current page can have depending on the operation.
-     * @param isNext Whether the current operation is getting the next or previous page.
-     * @return {@code true} if the current page number is invalid, or {@code false} otherwise.
-     */
-    private boolean isInvalidCurrent(final Pair<Integer, Integer> lastPageInformation, final int current,
-                                     final int currentBoundary, final boolean isNext) {
-        return lastPageInformation == null || PageUtils.isInvalidCurrentPage(current, currentBoundary,
-                lastPageInformation.getFirst(), isNext);
     }
 
     /**

@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.repository.query.Param;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -407,198 +406,67 @@ public class CourseController {
     }
 
     /**
-     * Loads the next course participant page from the database. If the current page is the last page, or any of the
-     * passed parameters are invalid, the error page is returned instead.
+     * Retrieves the course participant page for the given course and page number, if the provided numbers are valid.
      *
-     * @param id The id of the course.
-     * @param lastPage The last course participant page.
-     * @param page The page currently being displayed.
-     * @return A {@link ModelAndView} used to update the course participant table on success, or the error page.
+     * @param id The course id.
+     * @param pageNumber The number of the page to be retrieved.
+     * @return The retrieved participant page information.
      */
-    @GetMapping("/next/participant")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getNextParticipantPage(@Param("id") final String id, @Param("lastPage") final String lastPage,
-                                               @Param("page") final String page) {
-        if (isInvalidPageInformation(id, page, lastPage, -1, true)) {
+    @GetMapping("/page/participant")
+    @Secured(Constants.ROLE_ADMIN)
+    public ModelAndView getParticipantPage(@RequestParam("id") final String id,
+                                           @RequestParam("page") final String pageNumber) {
+        int courseId = NumberParser.parseId(id);
+
+        if (courseId < Constants.MIN_ID) {
+            logger.error("Cannot fetch course participant page for invalid course id " + id + "!");
             return new ModelAndView(Constants.ERROR);
         }
 
-        int courseId = NumberParser.parseNumber(id);
-        int current = NumberParser.parseNumber(page);
-        int lastParticipantPage = NumberParser.parseNumber(lastPage);
-        Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId, PageRequest.of(current,
+        int lastPage = pageService.getLastParticipantCoursePage(courseId);
+        int page = NumberParser.parseId(pageNumber);
+
+        if (PageUtils.isInvalidPageNumber(page, lastPage)) {
+            logger.error("Cannot fetch course participant page for invalid page number " + pageNumber
+                    + " with last page " + lastPage + "!");
+            return new ModelAndView(Constants.ERROR);
+        }
+
+        Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId, PageRequest.of(page,
                 Constants.PAGE_SIZE));
-        current++;
-        return getParticipantModelView(participants, current, lastParticipantPage, courseId);
+        return getParticipantModelView(participants, page, lastPage, courseId);
     }
 
     /**
-     * Loads the previous course participant page from the database. If the current page is the first page, or any of
-     * the passed parameters are invalid, the error page is returned instead.
+     * Retrieves the course experiment page for the given course and page number, if the provided numbers are valid.
      *
-     * @param id The id of the course.
-     * @param lastPage The last course participant page.
-     * @param page The page currently being displayed.
-     * @return A {@link ModelAndView} used to update the course participant table on success, or the error page.
+     * @param id The course id.
+     * @param pageNumber The number of the page to be retrieved.
+     * @return The retrieved experiment page information.
      */
-    @GetMapping("/previous/participant")
+    @GetMapping("/page/experiment")
     @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getPreviousParticipantPage(@Param("id") final String id,
-                                                   @Param("lastPage") final String lastPage,
-                                                   @Param("page") final String page) {
-        if (isInvalidPageInformation(id, page, lastPage, 1, false)) {
+    public ModelAndView getExperimentPage(@RequestParam("id") final String id,
+                                          @RequestParam("page") final String pageNumber) {
+        int courseId = NumberParser.parseId(id);
+
+        if (courseId < Constants.MIN_ID) {
+            logger.error("Cannot fetch course experiment page for invalid course id " + courseId + "!");
             return new ModelAndView(Constants.ERROR);
         }
 
-        int courseId = NumberParser.parseNumber(id);
-        int current = NumberParser.parseNumber(page);
-        int lastParticipantPage = NumberParser.parseNumber(lastPage);
-        Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId,
-                PageRequest.of(current - 2, Constants.PAGE_SIZE));
-        current--;
-        return getParticipantModelView(participants, current, lastParticipantPage, courseId);
-    }
+        int lastPage = pageService.getLastCourseExperimentPage(courseId);
+        int page = NumberParser.parseId(pageNumber);
 
-    /**
-     * Loads the first course participant page from the database. If any of the passed parameters are invalid, the error
-     * page is returned instead.
-     *
-     * @param id The id of the course.
-     * @param lastPage The last course participant page.
-     * @return A {@link ModelAndView} used to update the course participant table, or the error page.
-     */
-    @GetMapping("/first/participant")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getFirstParticipantPage(@Param("id") final String id,
-                                                @Param("lastPage") final String lastPage) {
-        if (PageUtils.isInvalidParams(id, lastPage)) {
+        if (PageUtils.isInvalidPageNumber(page, lastPage)) {
+            logger.error("Cannot fetch course experiment page for invalid page number " + pageNumber
+                    + " with last page " + lastPage + "!");
             return new ModelAndView(Constants.ERROR);
         }
 
-        int courseId = NumberParser.parseNumber(id);
-        int lastParticipantPage = NumberParser.parseNumber(lastPage);
-        Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId,
-                PageRequest.of(0, Constants.PAGE_SIZE));
-        return getParticipantModelView(participants, 1, lastParticipantPage, courseId);
-    }
-
-    /**
-     * Loads the last course participant page from the database. If any of the passed parameters are invalid, the error
-     * page is returned instead.
-     *
-     * @param id The id of the course.
-     * @param lastPage The last course participant page.
-     * @return A {@link ModelAndView} used to update the course participant table, or the error page.
-     */
-    @GetMapping("/last/participant")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getLastParticipantPage(@Param("id") final String id, @Param("lastPage") final String lastPage) {
-        if (PageUtils.isInvalidParams(id, lastPage)) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        int courseId = NumberParser.parseNumber(id);
-        int lastParticipantPage = NumberParser.parseNumber(lastPage);
-        Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId,
-                PageRequest.of(lastParticipantPage - 1, Constants.PAGE_SIZE));
-        return getParticipantModelView(participants, lastParticipantPage, lastParticipantPage, courseId);
-    }
-
-    /**
-     * Loads the next course experiment page from the database. If the current page is the last page, or any of the
-     * passed parameters are invalid, the error page is returned instead.
-     *
-     * @param id The id of the course.
-     * @param lastPage The last course experiment page.
-     * @param page The page currently being displayed.
-     * @return A {@link ModelAndView} used to update the course experiment table on success, or the error page.
-     */
-    @GetMapping("/next/experiment")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getNextExperimentPage(@Param("id") final String id, @Param("lastPage") final String lastPage,
-                                              @Param("page") final String page) {
-        if (isInvalidPageInformation(id, page, lastPage, -1, true)) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        int courseId = NumberParser.parseNumber(id);
-        int current = NumberParser.parseNumber(page);
-        int lastExperimentPage = NumberParser.parseNumber(lastPage);
-        Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(current,
+        Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(page,
                 Constants.PAGE_SIZE), courseId);
-        current++;
-        return getExperimentModelView(experiments, current, lastExperimentPage, courseId);
-    }
-
-    /**
-     * Loads the previous course experiment page from the database. If the current page is the first page, or any of the
-     * passed parameters are invalid, the error page is returned instead.
-     *
-     * @param id The id of the course.
-     * @param lastPage The last course experiment page.
-     * @param page The page currently being displayed.
-     * @return A {@link ModelAndView} used to update the course experiment table on success, or the error page.
-     */
-    @GetMapping("/previous/experiment")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getPreviousExperimentPage(@Param("id") final String id,
-                                                  @Param("lastPage") final String lastPage,
-                                                  @Param("page") final String page) {
-        if (isInvalidPageInformation(id, page, lastPage, 1, false)) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        int courseId = NumberParser.parseNumber(id);
-        int current = NumberParser.parseNumber(page);
-        int lastExperimentPage = NumberParser.parseNumber(lastPage);
-        Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(current - 2,
-                Constants.PAGE_SIZE), courseId);
-        current--;
-        return getExperimentModelView(experiments, current, lastExperimentPage, courseId);
-    }
-
-    /**
-     * Loads the first course experiment page from the database. If any of the passed parameters are invalid, the error
-     * page is returned instead.
-     *
-     * @param id The id of the course.
-     * @param lastPage The last course experiment page.
-     * @return A {@link ModelAndView} used to update the course experiment table, or the error page.
-     */
-    @GetMapping("/first/experiment")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getFirstExperimentPage(@Param("id") final String id, @Param("lastPage") final String lastPage) {
-        if (PageUtils.isInvalidParams(id, lastPage)) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        int courseId = NumberParser.parseNumber(id);
-        int lastExperimentPage = NumberParser.parseNumber(lastPage);
-        Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(
-                PageRequest.of(0, Constants.PAGE_SIZE), courseId);
-        return getExperimentModelView(experiments, 1, lastExperimentPage, courseId);
-    }
-
-    /**
-     * Loads the last course experiment page from the database. If any of the passed parameters are invalid, the error
-     * page is returned instead.
-     *
-     * @param id The id of the course.
-     * @param lastPage The last course experiment page.
-     * @return A {@link ModelAndView} used to update the course experiment table, or the error page.
-     */
-    @GetMapping("/last/experiment")
-    @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getLastExperimentPage(@Param("id") final String id, @Param("lastPage") final String lastPage) {
-        if (PageUtils.isInvalidParams(id, lastPage)) {
-            return new ModelAndView(Constants.ERROR);
-        }
-
-        int courseId = NumberParser.parseNumber(id);
-        int lastExperimentPage = NumberParser.parseNumber(lastPage);
-        Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(
-                lastExperimentPage - 1, Constants.PAGE_SIZE), courseId);
-        return getExperimentModelView(experiments, lastExperimentPage, lastExperimentPage, courseId);
+        return getExperimentModelView(experiments, page, lastPage, courseId);
     }
 
     /**
@@ -675,28 +543,6 @@ public class CourseController {
         }
 
         return true;
-    }
-
-    /**
-     * Checks, whether the given page parameters are valid page numbers and ids.
-     *
-     * @param id The id of the course.
-     * @param page The number of the current page.
-     * @param lastPage The number of the last page.
-     * @param boundary The lower boundary for the current page.
-     * @param isNext Whether the next or previous page is to be returned.
-     * @return {@code true} if the given parameters are invalid, or {@code false} otherwise.
-     */
-    private boolean isInvalidPageInformation(final String id, final String page, final String lastPage,
-                                             final int boundary, final boolean isNext) {
-        if (PageUtils.isInvalidParams(id, page, lastPage)) {
-            return true;
-        }
-
-        int current = NumberParser.parseNumber(page);
-        int lastPageNumber = NumberParser.parseNumber(lastPage);
-
-        return PageUtils.isInvalidCurrentPage(current, boundary, lastPageNumber, isNext);
     }
 
     /**
@@ -785,8 +631,8 @@ public class CourseController {
         int lastExperimentPage = pageService.getLastCourseExperimentPage(courseDTO.getId());
         model.addAttribute("courseDTO", courseDTO);
         model.addAttribute("experiments", experiments);
-        model.addAttribute("experimentPage", 1);
-        model.addAttribute("lastExperimentPage", lastExperimentPage);
+        model.addAttribute("experimentPage", 0);
+        model.addAttribute("lastExperimentPage", lastExperimentPage - 1);
         model.addAttribute("passwordDTO", new PasswordDTO());
         addParticipantInfo(model, courseDTO.getId(), addParticipants);
     }
@@ -801,16 +647,16 @@ public class CourseController {
      * @param addParticipants Whether to add the course participant information or not.
      */
     private void addParticipantInfo(final Model model, final int courseId, final boolean addParticipants) {
-        model.addAttribute("participantPage", 1);
+        model.addAttribute("participantPage", 0);
 
         if (addParticipants) {
             Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId,
                     PageRequest.of(0, Constants.PAGE_SIZE));
             model.addAttribute("participants", participants);
-            model.addAttribute("lastParticipantPage", pageService.getLastParticipantCoursePage(courseId));
+            model.addAttribute("lastParticipantPage", pageService.getLastParticipantCoursePage(courseId) - 1);
         } else {
             model.addAttribute("participants", new ArrayList<>());
-            model.addAttribute("lastParticipantPage", 1);
+            model.addAttribute("lastParticipantPage", 0);
         }
     }
 
@@ -835,7 +681,7 @@ public class CourseController {
         mv.addObject("courseDTO", courseDTO);
         mv.addObject("participants", participants);
         mv.addObject("participantPage", currentPage);
-        mv.addObject("lastParticipantPage", lastPage);
+        mv.addObject("lastParticipantPage", lastPage - 1);
         return mv;
     }
 
@@ -860,7 +706,7 @@ public class CourseController {
         mv.addObject("courseDTO", courseDTO);
         mv.addObject("experiments", experiments);
         mv.addObject("experimentPage", currentPage);
-        mv.addObject("lastExperimentPage", lastPage);
+        mv.addObject("lastExperimentPage", lastPage - 1);
         return mv;
     }
 

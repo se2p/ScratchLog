@@ -45,6 +45,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -189,10 +190,11 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        if (!httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        try {
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
 
-            try {
+            if (!httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 UserDTO userDTO = userService.getUser(authentication.getName());
 
                 if (!userDTO.isActive()) {
@@ -205,17 +207,14 @@ public class ExperimentController {
 
                 ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userDTO.getId());
                 model.addAttribute("participant", participantDTO);
-            } catch (NotFoundException e) {
-                logger.error("Can't find user with username " + authentication.getName() + " in the database!", e);
-                return Constants.ERROR;
+                addParticipantModelInfo(experimentDTO, model);
+            } else {
+                addModelInfo(0, experimentDTO, model);
             }
-        }
 
-        try {
-            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
         } catch (NotFoundException e) {
+            logger.error("Could not retrieve experiment page!", e);
             return Constants.ERROR;
         }
     }
@@ -476,122 +475,33 @@ public class ExperimentController {
     }
 
     /**
-     * Loads the next participant page from the database. If the current page is the last page, or no experiment with a
-     * corresponding id could be found in the database, the error page is displayed instead.
+     * Loads the participant page with the given page number for the experiment with the given id, if the provided
+     * numbers are valid.
      *
      * @param id The experiment id.
-     * @param model The model to store the loaded information in.
-     * @param currentPage The page currently being displayed.
+     * @param pageNumber The number of the page to be retrieved.
+     * @param model The {@link Model} used to store the information.
      * @return The experiment page on success, or the error page otherwise.
      */
-    @GetMapping("/next")
+    @GetMapping("/page")
     @Secured(Constants.ROLE_ADMIN)
-    public String getNextPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
-                              final Model model) {
-        if (PageUtils.isInvalidParams(id, currentPage)) {
+    public String getPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String pageNumber,
+                          final Model model) {
+        if (PageUtils.isInvalidParams(id, pageNumber)) {
+            logger.error("Cannot fetch participant page for invalid id " + id + " or invalid page number "
+                    + pageNumber + "!");
             return Constants.ERROR;
         }
 
-        int current = NumberParser.parseNumber(currentPage);
+        int page = NumberParser.parseNumber(pageNumber);
         int experimentId = NumberParser.parseId(id);
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            if (!addModelInfo(current, experimentDTO, model)) {
-                return Constants.ERROR;
-            }
+            return addModelInfo(page, experimentDTO, model) ? EXPERIMENT : Constants.ERROR;
         } catch (NotFoundException e) {
             return Constants.ERROR;
         }
-
-        return EXPERIMENT;
-    }
-
-    /**
-     * Loads the previous participant page from the database. If the current page is the last page, or no experiment
-     * with a corresponding id could be found in the database, the error page is displayed instead.
-     *
-     * @param id The experiment id.
-     * @param model The model to store the loaded information in.
-     * @param currentPage The page currently being displayed.
-     * @return The index page on success, or the error page otherwise.
-     */
-    @GetMapping("/previous")
-    @Secured(Constants.ROLE_ADMIN)
-    public String getPreviousPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String currentPage,
-                                  final Model model) {
-        if (PageUtils.isInvalidParams(id, currentPage)) {
-            return Constants.ERROR;
-        }
-
-        int current = NumberParser.parseNumber(currentPage);
-        int experimentId = NumberParser.parseId(id);
-
-        try {
-            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            if (!addModelInfo(current - 2, experimentDTO, model)) {
-                return Constants.ERROR;
-            }
-        } catch (NotFoundException e) {
-            return Constants.ERROR;
-        }
-
-        return EXPERIMENT;
-    }
-
-    /**
-     * Loads the first participant page from the database. If the passed id is invalid, or no experiment with the
-     * corresponding id could be found, the error page is displayed instead.
-     *
-     * @param id The experiment id.
-     * @param model The model to store the loaded information in.
-     * @return The index page on success, or the error page otherwise.
-     */
-    @GetMapping("/first")
-    @Secured(Constants.ROLE_ADMIN)
-    public String getFirstPage(@RequestParam(ID) final String id, final Model model) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            return Constants.ERROR;
-        }
-
-        try {
-            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            addModelInfo(0, experimentDTO, model);
-        } catch (NotFoundException e) {
-            return Constants.ERROR;
-        }
-
-        return EXPERIMENT;
-    }
-
-    /**
-     * Loads the last participant page from the database. If the passed experiment id is invalid, or no experiment with
-     * the corresponding id could be found, the error page is displayed instead.
-     *
-     * @param id The experiment id.
-     * @param model The model to store the loaded information in.
-     * @return The index page on success, or the error page otherwise.
-     */
-    @GetMapping("/last")
-    @Secured(Constants.ROLE_ADMIN)
-    public String getLastPage(@RequestParam(ID) final String id, final Model model) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            return Constants.ERROR;
-        }
-
-        try {
-            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            int page = pageService.getLastParticipantPage(experimentId);
-            addModelInfo(page, experimentDTO, model);
-        } catch (NotFoundException e) {
-            return Constants.ERROR;
-        }
-
-        return EXPERIMENT;
     }
 
     /**
@@ -786,33 +696,54 @@ public class ExperimentController {
      *
      * @param page The number of the current participant page to be retrieved.
      * @param experimentDTO The current experiment dto.
-     * @param model The model used to save the information.
+     * @param model The {@link Model} used to save the information.
      * @return {@code true}, if the current page number is lower than the last page number, or {@code false} otherwise.
      */
     private boolean addModelInfo(final int page, final ExperimentDTO experimentDTO, final Model model) {
-        if (experimentDTO.getInfo() != null) {
-            experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
-        }
+        int last = pageService.getLastParticipantPage(experimentDTO.getId());
 
-        int last = pageService.getLastParticipantPage(experimentDTO.getId()) + 1;
-
-        if (page >= last) {
+        if (page > last) {
             return false;
         }
 
         Page<Participant> participants = pageService.getParticipantPage(experimentDTO.getId(),
                 PageRequest.of(page, Constants.PAGE_SIZE));
+        model.addAttribute(PAGE, page);
+        model.addAttribute("lastPage", last);
+        model.addAttribute("participants", participants);
+        addExperimentInfo(experimentDTO, model);
+        return true;
+    }
 
+    /**
+     * Adds the required information for the participant view of the experiment page to the given model.
+     *
+     * @param experimentDTO The {@link ExperimentDTO} containing information on the experiment.
+     * @param model The {@link Model} used to store the information.
+     */
+    private void addParticipantModelInfo(final ExperimentDTO experimentDTO, final Model model) {
+        addExperimentInfo(experimentDTO, model);
+        model.addAttribute(PAGE, 0);
+        model.addAttribute("lastPage", 0);
+        model.addAttribute("participants", new ArrayList<>());
+    }
+
+    /**
+     * Adds the required information about the experiment to the model.
+     *
+     * @param experimentDTO The {@link ExperimentDTO} containing information on the experiment.
+     * @param model The {@link Model} used to store the information.
+     */
+    private void addExperimentInfo(final ExperimentDTO experimentDTO, final Model model) {
+        if (experimentDTO.getInfo() != null) {
+            experimentDTO.setInfo(MarkdownHandler.toHtml(experimentDTO.getInfo()));
+        }
         if (experimentService.hasProjectFile(experimentDTO.getId())) {
             model.addAttribute("project", true);
         }
 
-        model.addAttribute(PAGE, page + 1);
-        model.addAttribute("lastPage", last);
         model.addAttribute("experimentDTO", experimentDTO);
         model.addAttribute("passwordDTO", new PasswordDTO());
-        model.addAttribute("participants", participants);
-        return true;
     }
 
     /**

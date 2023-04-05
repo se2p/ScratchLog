@@ -1,3 +1,5 @@
+import {redirectErrorPage} from "./errorRedirect.js";
+
 /**
  * Readies the functions to retrieve a different experiment or course page upon clicking the respective buttons.
  */
@@ -11,115 +13,103 @@ $(document).ready(function () {
  * Loads the next course page and updates the course table with the new value.
  */
 function loadNextCoursePage() {
-    $.ajax({
-        type: 'get',
-        url: contextPath + "/next/course",
-        data: {page: coursePage},
-        success: function(data) {
-            updateCourseTable(data);
-            coursePage++;
-        },
-    });
+    const PAGE = coursePage + 1;
+    updateLastCoursePage();
+    loadCoursePage(PAGE);
 }
 
 /**
  * Loads the previous course page and updates the course table with the new value.
  */
 function loadPreviousCoursePage() {
-    $.ajax({
-        type: 'get',
-        url: contextPath + "/previous/course",
-        data: {page: coursePage},
-        success: function(data) {
-            updateCourseTable(data);
-            coursePage--;
-        },
-    });
+    const PAGE = coursePage - 1;
+    updateLastCoursePage();
+    loadCoursePage(PAGE);
 }
 
 /**
  * Loads the first course page and updates the course table with the new value.
  */
 function loadFirstCoursePage() {
-    $.ajax({
-        type: 'get',
-        url: contextPath + "/first/course",
-        success: function(data) {
-            updateCourseTable(data);
-            coursePage = 1;
-        },
-    });
+    updateLastCoursePage();
+    loadCoursePage(0);
 }
 
 /**
  * Loads the last course page and updates the course table with the new value.
  */
 function loadLastCoursePage() {
-    $.ajax({
-        type: 'get',
-        url: contextPath + "/last/course",
-        success: function(data) {
-            updateCourseTable(data);
-            coursePage = lastCoursePage;
-        },
-    });
+    updateLastCoursePage();
+    loadCoursePage(lastCoursePage);
 }
 
 /**
  * Loads the next experiment page and updates the experiment table with the new value.
  */
 function loadNextExperimentPage() {
-    $.ajax({
-        type: 'get',
-        url: contextPath + "/next/experiment",
-        data: {page: experimentPage},
-        success: function(data) {
-            updateExperimentTable(data);
-            experimentPage++;
-        },
-    });
+    const PAGE = experimentPage + 1;
+    updateLastExperimentPage();
+    loadExperimentPage(PAGE);
 }
 
 /**
  * Loads the previous experiment page and updates the experiment table with the new value.
  */
 function loadPreviousExperimentPage() {
-    $.ajax({
-        type: 'get',
-        url: contextPath + "/previous/experiment",
-        data: {page: experimentPage},
-        success: function(data) {
-            updateExperimentTable(data);
-            experimentPage--;
-        },
-    });
+    const PAGE = experimentPage - 1;
+    updateLastExperimentPage();
+    loadExperimentPage(PAGE);
 }
 
 /**
  * Loads the first experiment page and updates the experiment table with the new value.
  */
 function loadFirstExperimentPage() {
-    $.ajax({
-        type: 'get',
-        url: contextPath + "/first/experiment",
-        success: function(data) {
-            updateExperimentTable(data);
-            experimentPage = 1;
-        },
-    });
+    updateLastExperimentPage();
+    loadExperimentPage(0);
 }
 
 /**
  * Loads the last experiment page and updates the experiment table with the new value.
  */
 function loadLastExperimentPage() {
+    updateLastExperimentPage();
+    loadExperimentPage(lastExperimentPage);
+}
+
+/**
+ * Retrieves the page number of the last experiment page from the database.
+ */
+function updateLastExperimentPage() {
     $.ajax({
         type: 'get',
-        url: contextPath + "/last/experiment",
+        url: contextPath + "/pages/home/experiment",
+        success: function(data) {
+            lastExperimentPage = data;
+        },
+        error: function() {
+            redirectErrorPage();
+        }
+    });
+}
+
+/**
+ * Loads the experiment page for the given page number from the database and updates the corresponding table.
+ *
+ * @param page The page to be retrieved.
+ */
+function loadExperimentPage(page) {
+    $.ajax({
+        type: 'get',
+        url: contextPath + "/page/experiment",
+        data: {page: page},
         success: function(data) {
             updateExperimentTable(data);
-            experimentPage = lastExperimentPage;
+            experimentPage = page;
         },
+        error: function() {
+            redirectErrorPage();
+        }
     });
 }
 
@@ -129,6 +119,42 @@ function loadLastExperimentPage() {
 function updateExperimentTable(data) {
     $('#experiment_table').html(data);
     addEventListeners();
+}
+
+/**
+ * Retrieves the page number of the last course page from the database.
+ */
+function updateLastCoursePage() {
+    $.ajax({
+        type: 'get',
+        url: contextPath + "/pages/home/course",
+        success: function(data) {
+            lastCoursePage = data;
+        },
+        error: function() {
+            redirectErrorPage();
+        }
+    });
+}
+
+/**
+ * Loads the course page for the given page number from the database and updates the corresponding table.
+ *
+ * @param page The page to be retrieved.
+ */
+function loadCoursePage(page) {
+    $.ajax({
+        type: 'get',
+        url: contextPath + "/page/course",
+        data: {page: page},
+        success: function(data) {
+            updateCourseTable(data);
+            coursePage = page;
+        },
+        error: function() {
+            redirectErrorPage();
+        }
+    });
 }
 
 /**
