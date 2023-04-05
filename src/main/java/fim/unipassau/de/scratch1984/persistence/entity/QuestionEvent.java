@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
+import fim.unipassau.de.scratch1984.util.enums.QuestionEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.QuestionEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,13 +10,15 @@ import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a question event that resulted from user interaction with the questions in the Scratch
@@ -51,22 +55,24 @@ public class QuestionEvent implements Event {
     private Experiment experiment;
 
     /**
-     * The timestamp at which the question event occurred.
+     * The datetime at which the question event occurred.
      */
     @Column(name = "date")
-    private Timestamp date;
+    private LocalDateTime date;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO.QuestionEventType}.
+     * The type of question event that occurred.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "event_type")
-    private String eventType;
+    private QuestionEventType eventType;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO.QuestionEvent}.
+     * The specific event that occurred.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "event")
-    private String event;
+    private QuestionEventSpecific event;
 
     /**
      * The feedback for the question, if any.

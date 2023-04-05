@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,13 +10,15 @@ import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a resource event being the result of a user adding costumes or sounds in the Scratch GUI.
@@ -50,22 +54,24 @@ public class ResourceEvent implements Event {
     private Experiment experiment;
 
     /**
-     * The timestamp at which the resource event occurred.
+     * The datetime at which the resource event occurred.
      */
     @Column(name = "date")
-    private Timestamp date;
+    private LocalDateTime date;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO.ResourceEventType}.
+     * The type of resource event that occurred.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "event_type")
-    private String eventType;
+    private ResourceEventType eventType;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO.ResourceEvent}.
+     * The specific event that occurred.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "event")
-    private String event;
+    private ResourceEventSpecific event;
 
     /**
      * The name of the resource.
@@ -86,7 +92,7 @@ public class ResourceEvent implements Event {
     private String resourceType;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO.LibraryResource}.
+     * A String representing the {@link fim.unipassau.de.scratch1984.util.enums.LibraryResource}.
      */
     @Column(name = "library")
     private Integer libraryResource;
@@ -104,8 +110,9 @@ public class ResourceEvent implements Event {
      * @param resourceType The filetype of the resource.
      * @param libraryResource Whether the resource is from the Scratch library or not.
      */
-    public ResourceEvent(final User user, final Experiment experiment, final Timestamp date, final String eventType,
-                         final String event, final String resourceName, final String hash, final String resourceType,
+    public ResourceEvent(final User user, final Experiment experiment, final LocalDateTime date,
+                         final ResourceEventType eventType, final ResourceEventSpecific event,
+                         final String resourceName, final String hash, final String resourceType,
                          final Integer libraryResource) {
         this.user = user;
         this.experiment = experiment;

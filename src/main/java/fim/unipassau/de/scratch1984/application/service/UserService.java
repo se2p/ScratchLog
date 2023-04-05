@@ -11,6 +11,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.Secrets;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ public class UserService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
     /**
      * The user repository to use for database queries related to user data.
@@ -167,14 +168,14 @@ public class UserService {
             throw new IllegalArgumentException("The username cannot be null or blank!");
         }
 
-        User user = userRepository.findUserByUsername(username);
+        Optional<User> user = userRepository.findUserByUsername(username);
 
-        if (user == null) {
-            logger.error("Could not find user with username " + username + ".");
+        if (user.isEmpty()) {
+            LOGGER.error("Could not find user with username " + username + ".");
             throw new NotFoundException("Could not find user with username " + username + ".");
         }
 
-        return createUserDTO(user);
+        return createUserDTO(user.get());
     }
 
     /**
@@ -194,7 +195,7 @@ public class UserService {
         Optional<User> user = userRepository.findById(id);
 
         if (user.isEmpty()) {
-            logger.error("Could not find user with id " + id + ".");
+            LOGGER.error("Could not find user with id " + id + ".");
             throw new NotFoundException("Could not find user with id " + id + ".");
         }
 
@@ -218,7 +219,7 @@ public class UserService {
         Optional<User> user = userRepository.findByEmail(email);
 
         if (user.isEmpty()) {
-            logger.error("Could not find user with email " + email + ".");
+            LOGGER.error("Could not find user with email " + email + ".");
             throw new NotFoundException("Could not find user with email " + email + ".");
         }
 
@@ -239,14 +240,14 @@ public class UserService {
             throw new IllegalArgumentException("Cannot search for with search string null or blank!");
         }
 
-        User user = userRepository.findUserByUsernameOrEmail(search, search);
+        Optional<User> user = userRepository.findUserByUsernameOrEmail(search, search);
 
-        if (user == null) {
-            logger.debug("Could not find user with username or email " + search + "!");
+        if (user.isEmpty()) {
+            LOGGER.debug("Could not find user with username or email " + search + "!");
             return null;
         }
 
-        return createUserDTO(user);
+        return createUserDTO(user.get());
     }
 
     /**
@@ -258,9 +259,10 @@ public class UserService {
      */
     @Transactional
     public boolean loginUser(final UserDTO userDTO) {
-        User user = userRepository.findUserByUsername(userDTO.getUsername());
+        Optional<User> optionalUser = userRepository.findUserByUsername(userDTO.getUsername());
 
-        if (user != null) {
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
             if ((userDTO.getPassword() != null) && (matchesPassword(userDTO.getPassword(), user.getPassword()))) {
                 user.setAttempts(0);
                 user.setLastLogin(LocalDateTime.now());
@@ -274,7 +276,7 @@ public class UserService {
             }
         }
 
-        logger.error("Could not find user with username " + userDTO.getUsername() + " in the database.");
+        LOGGER.error("Could not find user with username " + userDTO.getUsername() + " in the database.");
         throw new NotFoundException("Incorrect username or password!");
     }
 
@@ -293,13 +295,14 @@ public class UserService {
             throw new IllegalArgumentException("Cannot search for user with secret null or blank!");
         }
 
-        User user = userRepository.findUserBySecret(secret);
+        Optional<User> optionalUser = userRepository.findUserBySecret(secret);
 
-        if (user == null) {
-            logger.error("Could not find any user with the secret " + secret + " in the database!");
+        if (optionalUser.isEmpty()) {
+            LOGGER.error("Could not find any user with the secret " + secret + " in the database!");
             throw new NotFoundException("Could not find any user with the secret " + secret + " in the database!");
         }
 
+        User user = optionalUser.get();
         user.setActive(true);
         user.setLastLogin(LocalDateTime.now());
         User saved = userRepository.save(user);
@@ -343,7 +346,7 @@ public class UserService {
         Optional<User> user = userRepository.findById(id);
 
         if (user.isEmpty()) {
-            logger.error("Could not find user with id " + id + " in the database!");
+            LOGGER.error("Could not find user with id " + id + " in the database!");
             throw new NotFoundException("Could not find user with id " + id + " in the database!");
         }
 
@@ -357,7 +360,7 @@ public class UserService {
      */
     @Transactional
     public void deactivateOldParticipantAccounts() {
-        List<User> inactiveUsers = userRepository.findAllByRoleAndLastLoginBefore(UserDTO.Role.PARTICIPANT.toString(),
+        List<User> inactiveUsers = userRepository.findAllByRoleAndLastLoginBefore(Role.PARTICIPANT,
                 LocalDateTime.now().minusDays(Constants.PARTICIPANT_INACTIVE_DAYS));
 
         for (User user : inactiveUsers) {
@@ -416,7 +419,7 @@ public class UserService {
      */
     @Transactional
     public boolean isLastAdmin() {
-        List<User> admins = userRepository.findAllByRole(UserDTO.Role.ADMIN.toString());
+        List<User> admins = userRepository.findAllByRole(Role.ADMIN);
 
         if (admins.size() < 1) {
             throw new IllegalStateException("There are no users with administrator status in the database!");
@@ -448,13 +451,13 @@ public class UserService {
      */
     @Transactional
     public int findLastId() {
-        User user = userRepository.findFirstByOrderByIdDesc();
+        Optional<User> user = userRepository.findFirstByOrderByIdDesc();
 
-        if (user == null) {
-            throw new IllegalStateException("There are no users in database!");
+        if (user.isEmpty()) {
+            throw new IllegalStateException("There are no users in the database!");
         }
 
-        return user.getId();
+        return user.get().getId();
     }
 
     /**
@@ -475,7 +478,7 @@ public class UserService {
         Optional<UserProjection> user = userRepository.findLastUsername(username);
 
         if (user.isEmpty()) {
-            logger.debug("Couldn't find username starting with " + username + ".");
+            LOGGER.debug("Couldn't find username starting with " + username + ".");
             return 1;
         } else {
             String name = user.get().getUsername();
@@ -563,7 +566,7 @@ public class UserService {
         try {
             participants = participantRepository.findAllByExperimentAndEnd(experiment, null);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + experimentId + "!", e);
+            LOGGER.error("Could not find experiment with id " + experimentId + "!", e);
             throw new NotFoundException("Could not find experiment with id " + experimentId + "!", e);
         }
 
@@ -579,8 +582,8 @@ public class UserService {
     private User createUser(final UserDTO userDTO) {
         User user = User.builder()
                 .username(userDTO.getUsername())
-                .role(userDTO.getRole().toString())
-                .language(userDTO.getLanguage().toString())
+                .role(userDTO.getRole())
+                .language(userDTO.getLanguage())
                 .active(userDTO.isActive())
                 .attempts(userDTO.getAttempts())
                 .build();
@@ -613,8 +616,8 @@ public class UserService {
     private UserDTO createUserDTO(final User user) {
         UserDTO userDTO = UserDTO.builder()
                 .username(user.getUsername())
-                .role(UserDTO.Role.valueOf(user.getRole()))
-                .language(UserDTO.Language.valueOf(user.getLanguage()))
+                .role(user.getRole())
+                .language(user.getLanguage())
                 .active(user.isActive())
                 .attempts(user.getAttempts())
                 .build();

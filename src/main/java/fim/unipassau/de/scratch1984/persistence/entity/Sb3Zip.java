@@ -15,7 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing an sb3 zip file.
@@ -52,10 +52,10 @@ public class Sb3Zip {
     private Experiment experiment;
 
     /**
-     * The timestamp at which the zip file was created by the Scratch VM.
+     * The datetime at which the zip file was created by the Scratch VM.
      */
     @Column(name = "date")
-    private Timestamp date;
+    private LocalDateTime date;
 
     /**
      * The name of the zip file.
@@ -74,11 +74,11 @@ public class Sb3Zip {
      *
      * @param user The user for whom the zip file was created.
      * @param experiment The experiment during which the zip file was created.
-     * @param date The timestamp at which the file was created.
+     * @param date The datetime at which the file was created.
      * @param name The name of the zip.
      * @param content The content.
      */
-    public Sb3Zip(final User user, final Experiment experiment, final Timestamp date, final String name,
+    public Sb3Zip(final User user, final Experiment experiment, final LocalDateTime date, final String name,
                   final byte[] content) {
         this.user = user;
         this.experiment = experiment;

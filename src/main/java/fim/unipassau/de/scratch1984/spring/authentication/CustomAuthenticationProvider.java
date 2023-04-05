@@ -2,9 +2,8 @@ package fim.unipassau.de.scratch1984.spring.authentication;
 
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,11 +21,6 @@ import java.util.Set;
  */
 @Component
 public class CustomAuthenticationProvider implements AuthenticationProvider {
-
-    /**
-     * The log instance associated with this class for logging purposes.
-     */
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationProvider.class);
 
     /**
      * The user service for accessing user information.
@@ -64,12 +58,12 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         UserDTO userDTO = userService.getUser(name);
 
         if (userDTO != null && userDTO.getRole() != null && userDTO.isActive()) {
-            if (userDTO.getRole() == UserDTO.Role.PARTICIPANT || userDTO.getRole() == UserDTO.Role.ADMIN) {
+            if (userDTO.getRole() == Role.PARTICIPANT || userDTO.getRole() == Role.ADMIN) {
                 GrantedAuthority grantedAuthorityUser = new SimpleGrantedAuthority(Constants.ROLE_PARTICIPANT);
                 authorities.add(grantedAuthorityUser);
             }
 
-            if (userDTO.getRole() == UserDTO.Role.ADMIN) {
+            if (userDTO.getRole() == Role.ADMIN) {
                 GrantedAuthority grantedAuthorityAdmin = new SimpleGrantedAuthority(Constants.ROLE_ADMIN);
                 authorities.add(grantedAuthorityAdmin);
             }

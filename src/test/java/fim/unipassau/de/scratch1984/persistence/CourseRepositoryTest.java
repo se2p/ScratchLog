@@ -5,6 +5,8 @@ import fim.unipassau.de.scratch1984.persistence.entity.CourseParticipant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,19 +38,19 @@ public class CourseRepositoryTest {
     private static final String NO_RESULTS = "blubb";
     private static final int LIMIT = 3;
     private static final int SEARCH_LIMIT = 5;
-    private static final Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
+    private static final LocalDateTime DATE = LocalDateTime.now();
     private PageRequest pageRequest;
-    private User user1 = new User("user1", "email1", "PARTICIPANT", "ENGLISH", "password", "secret1");
-    private User user2 = new User("user2", "email2", "PARTICIPANT", "ENGLISH", "password", "secret2");
-    private Course course1 = new Course(null, "Course 1", "Description 1", "", false, timestamp);
-    private Course course2 = new Course(null, "Course 2", "Description 2", "", false, timestamp);
-    private Course course3 = new Course(null, "Course 3", "Description 3", "", false, timestamp);
-    private Course course4 = new Course(null, "Course 4", "Description 4", "", false, timestamp);
-    private CourseParticipant participant1 = new CourseParticipant(user1, course1, timestamp);
-    private CourseParticipant participant2 = new CourseParticipant(user1, course2, timestamp);
-    private CourseParticipant participant3 = new CourseParticipant(user1, course3, timestamp);
-    private CourseParticipant participant4 = new CourseParticipant(user1, course4, timestamp);
-    private CourseParticipant participant5 = new CourseParticipant(user2, course1, timestamp);
+    private User user1 = new User("user1", "email1", Role.PARTICIPANT, Language.ENGLISH, "password", "secret1");
+    private User user2 = new User("user2", "email2", Role.PARTICIPANT, Language.ENGLISH, "password", "secret2");
+    private Course course1 = new Course(null, "Course 1", "Description 1", "", false, DATE);
+    private Course course2 = new Course(null, "Course 2", "Description 2", "", false, DATE);
+    private Course course3 = new Course(null, "Course 3", "Description 3", "", false, DATE);
+    private Course course4 = new Course(null, "Course 4", "Description 4", "", false, DATE);
+    private CourseParticipant participant1 = new CourseParticipant(user1, course1, DATE);
+    private CourseParticipant participant2 = new CourseParticipant(user1, course2, DATE);
+    private CourseParticipant participant3 = new CourseParticipant(user1, course3, DATE);
+    private CourseParticipant participant4 = new CourseParticipant(user1, course4, DATE);
+    private CourseParticipant participant5 = new CourseParticipant(user2, course1, DATE);
 
     @BeforeEach
     public void setUp() {

@@ -25,10 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -40,7 +40,7 @@ public class ParticipantService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ParticipantService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParticipantService.class);
 
     /**
      * The user repository to use for database queries related to user data.
@@ -116,18 +116,18 @@ public class ParticipantService {
         Experiment experiment = experimentRepository.getOne(experimentId);
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
-                logger.error("Could not find any participant entry for user with id " + userId + " for experiment with "
+            if (participant.isEmpty()) {
+                LOGGER.error("Could not find any participant entry for user with id " + userId + " for experiment with "
                         + "id " + experimentId + "!");
                 throw new NotFoundException("Could not find any participant entry for user with id " + userId
                         + " for experiment with id " + experimentId + "!");
             }
 
-            return createParticipantDTO(participant);
+            return createParticipantDTO(participant.get());
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
                     + " in the database!", e);
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " in the database!", e);
@@ -166,7 +166,7 @@ public class ParticipantService {
             courseParticipants.forEach(courseParticipant -> addCourseParticipantToExperiment(courseParticipant,
                     experiment));
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course or experiment data when trying to save course participants!", e);
+            LOGGER.error("Could not find the course or experiment data when trying to save course participants!", e);
             throw new NotFoundException("Could not find the course or experiment data when trying to save course "
                     + "participants!", e);
         } catch (ConstraintViolationException e) {
@@ -197,7 +197,7 @@ public class ParticipantService {
             Participant participant = new Participant(user, experiment, null, null);
             participantRepository.save(participant);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the user or experiment when saving the participant data!", e);
+            LOGGER.error("Could not find the user or experiment when saving the participant data!", e);
             throw new NotFoundException("Could not find the user or experiment when saving the participant data!", e);
         } catch (ConstraintViolationException e) {
             throw new StoreException("The given participant data does not meet the foreign key constraints!", e);
@@ -225,10 +225,10 @@ public class ParticipantService {
             participantRepository.save(createParticipant(participantDTO, user, experiment));
             return true;
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the user with id " + participantDTO.getUser() + " or experiment with id "
+            LOGGER.error("Could not find the user with id " + participantDTO.getUser() + " or experiment with id "
                     + participantDTO.getExperiment() + " when trying to update a participant!", e);
         } catch (ConstraintViolationException e) {
-            logger.error("No participant entry could be found for user with id " + participantDTO.getUser()
+            LOGGER.error("No participant entry could be found for user with id " + participantDTO.getUser()
                     + " for experiment with id " + participantDTO.getExperiment() + "!", e);
         }
 
@@ -256,7 +256,7 @@ public class ParticipantService {
         try {
             participants = participantRepository.findAllByExperiment(experiment);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + experimentId + "!");
+            LOGGER.error("Could not find experiment with id " + experimentId + "!");
             throw new NotFoundException("Could not find experiment with id " + experimentId + "!");
         }
 
@@ -299,7 +299,7 @@ public class ParticipantService {
         try {
             participants = participantRepository.findAllByUser(user);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + userId + "!");
+            LOGGER.error("Could not find user with id " + userId + "!");
             throw new NotFoundException("Could not find user with id " + userId + "!");
         }
 
@@ -349,7 +349,7 @@ public class ParticipantService {
             List<Participant> participation = participantRepository.findAllByEndIsNullAndUser(user);
             return participation.size() > 1;
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find participation entries for user with id " + userId + "!", e);
+            LOGGER.error("Could not find participation entries for user with id " + userId + "!", e);
             throw new NotFoundException("Could not find participation entries for user with id " + userId + "!", e);
         }
     }
@@ -377,19 +377,19 @@ public class ParticipantService {
         Experiment experiment = experimentRepository.getOne(experimentId);
 
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
-                logger.error("Cannot save event data for participant null!");
+            if (participant.isEmpty()) {
+                LOGGER.error("Cannot save event data for participant null!");
                 return true;
             } else if (!user.isActive() || !experiment.isActive()) {
-                logger.error("Cannot save event data for inactive experiment or user!");
+                LOGGER.error("Cannot save event data for inactive experiment or user!");
                 return true;
             } else {
                 return !user.getSecret().equals(secret);
             }
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user or experiment when trying to verify a participant!", e);
+            LOGGER.error("Could not find user or experiment when trying to verify a participant!", e);
             return true;
         }
     }
@@ -443,10 +443,10 @@ public class ParticipantService {
 
         if (participants.size() > 0) {
             LocalDateTime maxInactiveTime = LocalDateTime.now().minusDays(Constants.EXPERIMENT_INACTIVE_DAYS);
-            LocalDateTime lastStart = participants.stream().filter(participant -> participant.getStart() != null).map(
-                    participant -> participant.getStart().toLocalDateTime()).max(LocalDateTime::compareTo).orElse(null);
-            LocalDateTime lastEnd = participants.stream().filter(participant -> participant.getEnd() != null).map(
-                    participant -> participant.getEnd().toLocalDateTime()).max(LocalDateTime::compareTo).orElse(null);
+            LocalDateTime lastStart = participants.stream().map(
+                    Participant::getStart).filter(Objects::nonNull).max(LocalDateTime::compareTo).orElse(null);
+            LocalDateTime lastEnd = participants.stream().map(
+                    Participant::getEnd).filter(Objects::nonNull).max(LocalDateTime::compareTo).orElse(null);
             boolean inactiveStart = lastStart != null && lastStart.isBefore(maxInactiveTime);
             boolean inactiveEnd = lastEnd != null && lastEnd.isBefore(maxInactiveTime);
             if (inactiveStart || inactiveEnd) {
@@ -473,10 +473,10 @@ public class ParticipantService {
                 .build();
 
         if (participantDTO.getStart() != null) {
-            participant.setStart(Timestamp.valueOf(participantDTO.getStart()));
+            participant.setStart(participantDTO.getStart());
         }
         if (participantDTO.getEnd() != null) {
-            participant.setEnd(Timestamp.valueOf(participantDTO.getEnd()));
+            participant.setEnd(participantDTO.getEnd());
         }
 
         return participant;
@@ -495,10 +495,10 @@ public class ParticipantService {
                 .build();
 
         if (participant.getStart() != null) {
-            participantDTO.setStart(participant.getStart().toLocalDateTime());
+            participantDTO.setStart(participant.getStart());
         }
         if (participant.getEnd() != null) {
-            participantDTO.setEnd(participant.getEnd().toLocalDateTime());
+            participantDTO.setEnd(participant.getEnd());
         }
 
         return participantDTO;

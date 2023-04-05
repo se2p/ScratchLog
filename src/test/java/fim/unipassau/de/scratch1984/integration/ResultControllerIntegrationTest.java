@@ -36,7 +36,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.URL;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -942,8 +941,8 @@ public class ResultControllerIntegrationTest {
                 }
 
                 @Override
-                public Timestamp getDate() {
-                    return Timestamp.valueOf(LocalDateTime.now().plusMinutes(id));
+                public LocalDateTime getDate() {
+                    return LocalDateTime.now().plusMinutes(id);
                 }
 
                 @Override
@@ -976,7 +975,7 @@ public class ResultControllerIntegrationTest {
                 }
 
                 @Override
-                public Timestamp getDate() {
+                public LocalDateTime getDate() {
                     return null;
                 }
 

@@ -41,7 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -61,7 +61,7 @@ public class ResultController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ResultController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResultController.class);
 
     /**
      * The user service to use for user management.
@@ -135,7 +135,7 @@ public class ResultController {
     public ModelAndView getResult(@RequestParam(EXPERIMENT) final String experiment,
                                   @RequestParam(USER) final String user, final Model model) {
         if (user == null || experiment == null) {
-            logger.error("Cannot return result page for user with id null or experiment with id null!");
+            LOGGER.error("Cannot return result page for user with id null or experiment with id null!");
             return new ModelAndView(Constants.ERROR);
         }
 
@@ -143,12 +143,12 @@ public class ResultController {
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot return result page for user with invalid id " + userId + " or experiment with invalid "
+            LOGGER.error("Cannot return result page for user with invalid id " + userId + " or experiment with invalid "
                     + "id " + experimentId + "!");
             return new ModelAndView(Constants.ERROR);
         }
         if (!userService.existsParticipant(userId, experimentId)) {
-            logger.error("Could not find participant entry for user with id " + userId + " for experiment with id "
+            LOGGER.error("Could not find participant entry for user with id " + userId + " for experiment with id "
                     + experimentId);
             return new ModelAndView(Constants.ERROR);
         }
@@ -187,14 +187,14 @@ public class ResultController {
     @Secured(Constants.ROLE_ADMIN)
     public Object downloadFile(@RequestParam(ID) final String id) {
         if (id == null) {
-            logger.error("Cannot download file with invalid id null!");
+            LOGGER.error("Cannot download file with invalid id null!");
             return Constants.ERROR;
         }
 
         int fileId = NumberParser.parseNumber(id);
 
         if (fileId < Constants.MIN_ID) {
-            logger.error("Cannot download file with invalid id " + fileId + "!");
+            LOGGER.error("Cannot download file with invalid id " + fileId + "!");
             return Constants.ERROR;
         }
 
@@ -271,14 +271,14 @@ public class ResultController {
     @Secured(Constants.ROLE_ADMIN)
     public Object downloadZip(@RequestParam(ID) final String id) {
         if (id == null) {
-            logger.error("Cannot download zip file with invalid id null!");
+            LOGGER.error("Cannot download zip file with invalid id null!");
             return Constants.ERROR;
         }
 
         int zipId = NumberParser.parseNumber(id);
 
         if (zipId < Constants.MIN_ID) {
-            logger.error("Cannot download zip file with invalid id " + zipId + "!");
+            LOGGER.error("Cannot download zip file with invalid id " + zipId + "!");
             return Constants.ERROR;
         }
 
@@ -493,17 +493,7 @@ public class ResultController {
                                  @RequestParam(value = "end", required = false) final String end,
                                  @RequestParam(value = "include", required = false) final String include,
                                  final HttpServletResponse httpServletResponse) {
-        if (experiment == null || user == null) {
-            throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
-        } else if ((start != null || end != null || include != null)
-                && (start == null || end == null || include == null)) {
-            throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
-                    + "parameters start, end and include are specified!");
-        } else if (start != null && step != null) {
-            throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
-                    + "parameters are specified!");
-        }
-
+        checkDownloadParameters(experiment, user, step, start, end, include);
         int userId = NumberParser.parseNumber(user);
         int experimentId = NumberParser.parseNumber(experiment);
         int steps = 0;
@@ -512,20 +502,13 @@ public class ResultController {
         boolean includeFinalProject = true;
 
         if (step != null) {
-            steps = NumberParser.parseNumber(step);
-
-            if (steps < 1) {
-                throw new IncompleteDataException("Cannot generate zip file for invalid step interval " + step + "!");
-            }
+            steps = getNumberFromString(step, "step interval");
         } else if (start != null) {
-            startPosition = NumberParser.parseNumber(start);
-            endPosition = NumberParser.parseNumber(end);
+            startPosition = getNumberFromString(start, "start position");
+            endPosition = getNumberFromString(end, "end position");
             includeFinalProject = !include.equals("false");
 
-            if (startPosition < 1 || endPosition < 1) {
-                throw new IncompleteDataException("Cannot generate zip file for invalid start position " + start
-                        + " or invalid end position " + end + "!");
-            } else if (startPosition > endPosition) {
+            if (startPosition > endPosition) {
                 throw new IncompleteDataException("Cannot generate zip file for start position " + start
                         + " bigger than end position " + end + "!");
             }
@@ -538,50 +521,15 @@ public class ResultController {
 
         ExperimentProjection projection = experimentService.getSb3File(experimentId);
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
-        List<BlockEventJSONProjection> jsons = eventService.getJsonForUser(userId, experimentId);
         Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
-
-        if (steps > 0) {
-            Timestamp lastTimestamp = finalProject.isPresent() ? Timestamp.valueOf(finalProject.get().getDate())
-                    : jsons.get(jsons.size() - 1).getDate();
-            jsons = filterProjectionsByStep(jsons, steps, lastTimestamp);
-        } else if (startPosition > 0) {
-            if (endPosition > jsons.size()) {
-                throw new IncompleteDataException("Cannot generate zip file with invalid end position " + endPosition
-                        + " bigger than the amount of saved json strings " + jsons.size() + "!");
-            }
-
-            jsons = jsons.subList(startPosition - 1, endPosition);
-        }
+        List<BlockEventJSONProjection> jsons = filterJsons(steps, startPosition, endPosition, userId, experimentId,
+                finalProject);
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip")) {
             writeCSVData(zos, jsons, finalProject, includeFinalProject);
 
             for (int i = 0; i < jsons.size(); i++) {
-                BlockEventJSONProjection json = jsons.get(i);
-                ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
-
-                try (ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip))) {
-                    Set<String> fileNames = new HashSet<>();
-
-                    if (projection.getProject() != null) {
-                        writeInitialProjectData(innerZos, projection.getProject());
-                    }
-
-                    for (FileDTO fileDTO : fileDTOS) {
-                        writeFileData(innerZos, fileDTO, fileNames);
-                    }
-
-                    byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
-                    writeJsonData(innerZos, code);
-
-                    innerZos.flush();
-                }
-
-                ZipEntry createdZip = new ZipEntry("project_" + json.getId() + "_" + i + ".sb3");
-                zos.putNextEntry(createdZip);
-                zos.write(innerZip.toByteArray());
-                zos.closeEntry();
+                createSb3File(jsons.get(i), zos, i, projection, fileDTOS);
             }
 
             if (finalProject.isPresent() && includeFinalProject) {
@@ -592,6 +540,127 @@ public class ResultController {
         } catch (IOException e) {
             throw new RuntimeException("Could not generate zip file due to IOException!", e);
         }
+    }
+
+    /**
+     * Checks, whether the parameters for downloading sb3 files are valid. For the parameters to be valid, both the
+     * experiment and user ids have to be specified. If sb3 files in a certain range are to be downloaded, the start,
+     * end and include parameters need to be present. If sb3 files are downloaded in minute intervals, the start
+     * parameter cannot be specified.
+     *
+     * @param experiment The id of the experiment.
+     * @param user The id of the user.
+     * @param step The step interval in minutes.
+     * @param start The start of the interval in which all json files should be downloaded.
+     * @param end The end of the interval in which all json files should be downloaded.
+     * @param include Whether the final project should be included.
+     * @throws IncompleteDataException if the required parameters are not specified.
+     */
+    private void checkDownloadParameters(final String experiment, final String user, final String step,
+                                         final String start, final String end, final String include) {
+        if (experiment == null || user == null) {
+            throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
+        } else if ((start != null || end != null || include != null)
+                && (start == null || end == null || include == null)) {
+            throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
+                    + "parameters start, end and include are specified!");
+        } else if (start != null && step != null) {
+            throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
+                    + "parameters are specified!");
+        }
+    }
+
+    /**
+     * Parses the given string to a number and checks if it is larger than one.
+     *
+     * @param number The string representation of the number.
+     * @param parameterName The name of the parameter that is checked.
+     * @return The parsed valid number.
+     * @throws IllegalArgumentException if the passed number is invalid.
+     */
+    private int getNumberFromString(final String number, final String parameterName) {
+        int num = NumberParser.parseNumber(number);
+
+        if (num < 1) {
+            throw new IncompleteDataException("Cannot generate zip file for invalid " + parameterName + " " + num
+                    + "!");
+        }
+
+        return num;
+    }
+
+    /**
+     * Filters the json code saved for the given user during the given experiment according to the specified parameters.
+     * If the code is to be filtered in minute intervals, the jsons are filtered according to their generation time. If
+     * the code within a certain range is to be returned, the jsons are filtered according to the specified start and
+     * end positions.
+     *
+     * @param steps The step interval in minutes.
+     * @param startPosition The start of the interval in which all json files should be downloaded.
+     * @param endPosition The end of the interval in which all json files should be downloaded.
+     * @param userId The id of the user.
+     * @param experimentId The id of the experiment.
+     * @param finalProject The final project saved for the user, if any.
+     * @return The filtered code list.
+     * @throws IllegalArgumentException if the given end position is bigger than the number of codes.
+     */
+    private List<BlockEventJSONProjection> filterJsons(final int steps, final int startPosition, final int endPosition,
+                                                       final int userId, final int experimentId,
+                                                       final Optional<Sb3ZipDTO> finalProject) {
+        List<BlockEventJSONProjection> jsons = eventService.getJsonForUser(userId, experimentId);
+
+        if (steps > 0) {
+            LocalDateTime lastDateTime = finalProject.isPresent() ? finalProject.get().getDate()
+                    : jsons.get(jsons.size() - 1).getDate();
+            return filterProjectionsByStep(jsons, steps, lastDateTime);
+        } else if (startPosition > 0) {
+            if (endPosition > jsons.size()) {
+                throw new IncompleteDataException("Cannot generate zip file with invalid end position " + endPosition
+                        + " bigger than the amount of saved json strings " + jsons.size() + "!");
+            }
+
+            return jsons.subList(startPosition - 1, endPosition);
+        }
+
+        return jsons;
+    }
+
+    /**
+     * Creates a sb3 file saved as a zip entry for the given json code. Beside the json itself, all saved files and the
+     * initial project data are included in the zip file.
+     *
+     * @param json The json code to be used.
+     * @param zos The {@link ZipOutputStream} in which the zip file should be written.
+     * @param counter The file counter.
+     * @param projection The initial experiment project data.
+     * @param fileDTOS The saved files.
+     * @throws IOException if the data could not be written correctly.
+     */
+    private void createSb3File(final BlockEventJSONProjection json, final ZipOutputStream zos, final int counter,
+                               final ExperimentProjection projection, final List<FileDTO> fileDTOS) throws IOException {
+        ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
+
+        try (ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip))) {
+            Set<String> fileNames = new HashSet<>();
+
+            if (projection.getProject() != null) {
+                writeInitialProjectData(innerZos, projection.getProject());
+            }
+
+            for (FileDTO fileDTO : fileDTOS) {
+                writeFileData(innerZos, fileDTO, fileNames);
+            }
+
+            byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
+            writeJsonData(innerZos, code);
+
+            innerZos.flush();
+        }
+
+        ZipEntry createdZip = new ZipEntry("project_" + json.getId() + "_" + counter + ".sb3");
+        zos.putNextEntry(createdZip);
+        zos.write(innerZip.toByteArray());
+        zos.closeEntry();
     }
 
     /**
@@ -742,7 +811,7 @@ public class ResultController {
 
     /**
      * Filters the passed {@link BlockEventJSONProjection}s according to the passed steps in minutes. Starting with the
-     * first json, steps minutes are added to its timestamp. The remaining json files are traversed until one with a
+     * first json, steps minutes are added to its datetime. The remaining json files are traversed until one with a
      * timestamp after the calculated one is found. Its predecessor is added to filtered list and the calculated time
      * is increased by one more step. The same json file might be added multiple times if the next calculated timestamp
      * is more than one time step apart from the timestamp of the next json file. To avoid adding the same file too many
@@ -750,60 +819,57 @@ public class ResultController {
      *
      * @param projections A list of {@link BlockEventJSONProjection} containing the relevant block event data.
      * @param step The time steps the files should be apart in minutes.
-     * @param lastProjectStamp The timestamp of the last file the final project state saved.
+     * @param lastDateTime The datetime of the last file the final project state saved.
      * @return The filtered {@link BlockEventJSONProjection}s.
      */
     private List<BlockEventJSONProjection> filterProjectionsByStep(final List<BlockEventJSONProjection> projections,
-                                                                   final int step, final Timestamp lastProjectStamp) {
+                                                                   final int step, final LocalDateTime lastDateTime) {
         List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
         filteredProjections.add(projections.get(0));
 
         if (projections.size() > 1) {
-            long stepsInMillis = (long) step * Constants.MINUTES_TO_MILLIS;
-            filteredProjections.addAll(addProjections(projections, stepsInMillis, lastProjectStamp));
+            filteredProjections.addAll(addProjections(projections, step, lastDateTime));
         }
 
         return filteredProjections;
     }
 
     /**
-     * Adds the passed {@link BlockEventJSONProjection}s to a list depending on their timestamp. If the timestamp of the
+     * Adds the passed {@link BlockEventJSONProjection}s to a list depending on their datetime. If the datetime of the
      * current file is after that of the current time, it is added to the list (possibly more than once), unless the
-     * timestamp is after the maximum allowed time break. In that case, the project is only added once. Finally, the
+     * datetime is after the maximum allowed time break. In that case, the project is only added once. Finally, the
      * last project file is added and the list returned.
      *
      * @param projections A list of {@link BlockEventJSONProjection} containing the relevant block event data.
-     * @param stepsInMillis The regular desired time break between two projections.
-     * @param lastProjectStamp The {@link Timestamp} of the last project.
+     * @param steps The regular desired time break between two projections.
+     * @param lastDateTime The {@link LocalDateTime} of the last project.
      * @return The list of filtered projections.
      */
     private List<BlockEventJSONProjection> addProjections(final List<BlockEventJSONProjection> projections,
-                                                          final long stepsInMillis, final Timestamp lastProjectStamp) {
+                                                          final int steps, final LocalDateTime lastDateTime) {
         List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
-        long currentTime = projections.get(0).getDate().getTime() + stepsInMillis;
-        long maxAllowedTime = projections.get(0).getDate().getTime() + Constants.MAX_ALLOWED_BREAK_FACTOR
-                * stepsInMillis;
+        LocalDateTime currentTime = projections.get(0).getDate();
+        LocalDateTime maxTime = currentTime.plusMinutes((long) Constants.MAX_ALLOWED_BREAK_FACTOR * steps);
 
         for (int i = 1; i < projections.size(); i++) {
             BlockEventJSONProjection projection = projections.get(i);
-            long projectionTime = projection.getDate().getTime();
+            LocalDateTime projectionTime = projection.getDate();
 
-            if (projectionTime < maxAllowedTime) {
-                while (projectionTime >= currentTime) {
+            if (projectionTime.isBefore(maxTime)) {
+                while (projectionTime.isAfter(currentTime)) {
                     filteredProjections.add(projections.get(i - 1));
-                    currentTime += stepsInMillis;
-                    maxAllowedTime += stepsInMillis;
+                    currentTime = currentTime.plusMinutes(steps);
+                    maxTime = maxTime.plusMinutes(steps);
                 }
             } else {
                 filteredProjections.add(projections.get(i - 1));
-                currentTime = projections.get(i - 1).getDate().getTime() + stepsInMillis;
-                maxAllowedTime = projections.get(i - 1).getDate().getTime() + Constants.MAX_ALLOWED_BREAK_FACTOR
-                        * stepsInMillis;
+                currentTime = projections.get(i - 1).getDate();
+                maxTime = currentTime.plusMinutes((long) Constants.MAX_ALLOWED_BREAK_FACTOR * steps);
             }
         }
 
-        addLastProjection(filteredProjections, projections.get(projections.size() - 1), lastProjectStamp, currentTime,
-                maxAllowedTime, stepsInMillis);
+        addLastProjection(filteredProjections, projections.get(projections.size() - 1), lastDateTime, currentTime,
+                maxTime, steps);
         return filteredProjections;
     }
 
@@ -812,26 +878,26 @@ public class ResultController {
      *
      * @param filteredProjections The list of filtered projections.
      * @param lastProjection The last projection to be added.
-     * @param lastProjectStamp The {@link Timestamp} of the last saved project change.
-     * @param currentTime The current time to look at in milliseconds.
-     * @param maxAllowedTime The maximum allowed break time signifying that the participant has been inactive.
-     * @param stepsInMillis The desired step size in milliseconds.
+     * @param lastProjectTime The {@link LocalDateTime} of the last saved project change.
+     * @param currentTime The current time to look at.
+     * @param maxTime The maximum allowed break time signifying that the participant has been inactive.
+     * @param steps The desired step size in minutes.
      */
     private void addLastProjection(final List<BlockEventJSONProjection> filteredProjections,
-                                   final BlockEventJSONProjection lastProjection, final Timestamp lastProjectStamp,
-                                   final long currentTime, final long maxAllowedTime, final long stepsInMillis) {
-        int compare = lastProjectStamp.compareTo(lastProjection.getDate());
+                                   final BlockEventJSONProjection lastProjection, final LocalDateTime lastProjectTime,
+                                   final LocalDateTime currentTime, final LocalDateTime maxTime, final int steps) {
+        int compare = lastProjectTime.compareTo(lastProjection.getDate());
 
         if (compare <= 0) {
             filteredProjections.add(lastProjection);
         }
 
-        long projectTime = lastProjectStamp.getTime();
+        LocalDateTime projectTime = lastProjectTime;
 
-        if (projectTime < maxAllowedTime) {
-            while (projectTime >= currentTime) {
+        if (projectTime.isBefore(maxTime)) {
+            while (projectTime.isAfter(currentTime)) {
                 filteredProjections.add(lastProjection);
-                projectTime -= stepsInMillis;
+                projectTime = projectTime.minusMinutes(steps);
             }
         } else {
             filteredProjections.add(lastProjection);

@@ -14,6 +14,8 @@ import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,11 +27,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -77,8 +79,8 @@ public class ParticipantServiceTest {
     private static final String GUI_URL = "scratch";
     private static final int ID = 1;
     private static final long MAX_DAYS = 90;
-    private static final Timestamp MAX_TIME = Timestamp.valueOf(LocalDateTime.now().minusDays(MAX_DAYS));
-    private final User user = new User(USERNAME, EMAIL, PARTICIPANT, "ENGLISH", PASSWORD, SECRET);
+    private static final LocalDateTime MAX_TIME = LocalDateTime.now().minusDays(MAX_DAYS);
+    private final User user = new User(USERNAME, EMAIL, Role.PARTICIPANT, Language.ENGLISH, PASSWORD, SECRET);
     private final Experiment experiment1 = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
     private final Experiment experiment2 = new Experiment(ID, "title", "description", "info", "postscript", true,
@@ -87,7 +89,7 @@ public class ParticipantServiceTest {
     private final Participant participant2 = new Participant(user, experiment2, MAX_TIME, MAX_TIME);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final Course course = new Course(ID, "title", "description", "content", true,
-            Timestamp.valueOf(LocalDateTime.now()));
+            LocalDateTime.now());
     private final List<Participant> participantList = getParticipants(5);
     private final List<CourseParticipant> courseParticipants = getCourseParticipants(3);
 
@@ -108,7 +110,7 @@ public class ParticipantServiceTest {
     public void testGetParticipant() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         ParticipantDTO participantDTO = participantService.getParticipant(ID, ID);
         assertAll(
                 () -> assertEquals(ID, participantDTO.getExperiment()),
@@ -531,7 +533,7 @@ public class ParticipantServiceTest {
         user.setActive(true);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         assertFalse(participantService.isInvalidParticipant(ID, ID, SECRET));
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
@@ -543,7 +545,7 @@ public class ParticipantServiceTest {
         user.setActive(true);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         assertTrue(participantService.isInvalidParticipant(ID, ID, PASSWORD));
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
@@ -554,7 +556,7 @@ public class ParticipantServiceTest {
     public void testIsInvalidParticipantUserInactive() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
@@ -567,7 +569,7 @@ public class ParticipantServiceTest {
         experiment1.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment1);
-        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(participant1);
+        when(participantRepository.findByUserAndExperiment(user, experiment1)).thenReturn(Optional.of(participant1));
         assertTrue(participantService.isInvalidParticipant(ID, ID, SECRET));
         verify(userRepository).getOne(ID);
         verify(experimentRepository).getOne(ID);
@@ -653,7 +655,7 @@ public class ParticipantServiceTest {
 
     @Test
     public void testDeactivateInactiveExperimentsLastStart() {
-        participant2.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        participant2.setEnd(LocalDateTime.now());
         when(experimentRepository.findAllByActiveIsTrue()).thenReturn(List.of(experiment1, experiment2));
         when(participantRepository.findAllByExperiment(experiment1)).thenReturn(new ArrayList<>());
         when(participantRepository.findAllByExperiment(experiment2)).thenReturn(List.of(participant2));
@@ -670,7 +672,7 @@ public class ParticipantServiceTest {
 
     @Test
     public void testDeactivateInactiveExperimentsLastEnd() {
-        participant2.setStart(Timestamp.valueOf(LocalDateTime.now()));
+        participant2.setStart(LocalDateTime.now());
         when(experimentRepository.findAllByActiveIsTrue()).thenReturn(List.of(experiment2));
         when(participantRepository.findAllByExperiment(experiment2)).thenReturn(List.of(participant2));
         participantService.deactivateInactiveExperiments();
@@ -688,7 +690,7 @@ public class ParticipantServiceTest {
             Experiment experiment = new Experiment();
             experiment.setId(i + 1);
             experiment.setTitle("Title " + i);
-            participants.add(new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null));
+            participants.add(new Participant(user, experiment, LocalDateTime.now(), null));
         }
         return participants;
     }
@@ -704,7 +706,7 @@ public class ParticipantServiceTest {
                 user.setActive(true);
             }
 
-            participants.add(new CourseParticipant(user, course, Timestamp.valueOf(LocalDateTime.now())));
+            participants.add(new CourseParticipant(user, course, LocalDateTime.now()));
         }
         return participants;
     }

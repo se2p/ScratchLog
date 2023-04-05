@@ -1,5 +1,11 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import fim.unipassau.de.scratch1984.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.BlockEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,152 +26,8 @@ import java.util.Objects;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BlockEventDTO implements EventDTO {
-
-    /**
-     * All possible event types for a block event.
-     */
-    public enum BlockEventType {
-        /**
-         * The event was caused by a mouse click.
-         */
-        CLICK,
-
-        /**
-         * The event was caused by the renaming of a variable or sprite.
-         */
-        RENAME,
-
-        /**
-         * The event was caused by the creation of a block, comment or variable.
-         */
-        CREATE,
-
-        /**
-         * The event was caused by the change of an existent block or comment.
-         */
-        CHANGE,
-
-        /**
-         * The event was caused by a block being moved.
-         */
-        MOVE,
-
-        /**
-         * The event was caused by the deletion of a block, variable or comment.
-         */
-        DELETE,
-
-        /**
-         * The event was caused by dragging a block.
-         */
-        DRAG
-    }
-
-    /**
-     * All possible specific events for a block event.
-     */
-    public enum BlockEvent {
-        /**
-         * The user clicked on the green flag icon.
-         */
-        GREENFLAG,
-
-        /**
-         * The user clicked on the stop all icon.
-         */
-        STOPALL,
-
-        /**
-         * The user renamed the sprite.
-         */
-        SPRITE,
-
-        /**
-         * The user clicked on a block.
-         */
-        STACKCLICK,
-
-        /**
-         * The user created a new block.
-         */
-        CREATE,
-
-        /**
-         * The user changed an existing block.
-         */
-        CHANGE,
-
-        /**
-         * The user moved a block.
-         */
-        MOVE,
-
-        /**
-         * The user dragged a block outside.
-         */
-        DRAGOUTSIDE,
-
-        /**
-         * The user dragged a block onto another.
-         */
-        ENDDRAGONTO,
-
-        /**
-         * The user finished dragging the block.
-         */
-        ENDDRAG,
-
-        /**
-         * The user deleted a block.
-         */
-        DELETE,
-
-        /**
-         * The user created a global variable.
-         */
-        VAR_CREATE_GLOBAL,
-
-        /**
-         * The user created a local variable.
-         */
-        VAR_CREATE_LOCAL,
-
-        /**
-         * The user renamed a global variable.
-         */
-        VAR_RENAME_GLOBAL,
-
-        /**
-         * The user renamed a local variable.
-         */
-        VAR_RENAME_LOCAL,
-
-        /**
-         * The user deleted a variable.
-         */
-        VAR_DELETE,
-
-        /**
-         * The user created a comment.
-         */
-        COMMENT_CREATE,
-
-        /**
-         * The user changed a comment.
-         */
-        COMMENT_CHANGE,
-
-        /**
-         * The user moved a comment.
-         */
-        COMMENT_MOVE,
-
-        /**
-         * The user deleted a comment.
-         */
-        COMMENT_DELETE
-    }
 
     /**
      * The unique ID of the block event.
@@ -185,21 +47,25 @@ public class BlockEventDTO implements EventDTO {
     /**
      * The local date time at which the block interaction occurred in the Scratch GUI.
      */
+    @JsonProperty("time")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime date;
 
     /**
      * The type of block event that occurred.
      */
+    @JsonProperty("type")
     private BlockEventType eventType;
 
     /**
      * The specific event that occurred.
      */
-    private BlockEvent event;
+    private BlockEventSpecific event;
 
     /**
      * The name of the sprite on which the event occurred.
      */
+    @JsonProperty("spritename")
     private String sprite;
 
     /**
@@ -215,6 +81,7 @@ public class BlockEventDTO implements EventDTO {
     /**
      * The Scratch project state after the event saved in a json format.
      */
+    @JsonProperty("json")
     private String code;
 
     /**
@@ -231,7 +98,7 @@ public class BlockEventDTO implements EventDTO {
      * @param code The current json code.
      */
     public BlockEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
-                         final BlockEventType eventType, final BlockEvent event, final String sprite,
+                         final BlockEventType eventType, final BlockEventSpecific event, final String sprite,
                          final String metadata, final String xml, final String code) {
         this.user = user;
         this.experiment = experiment;

@@ -20,6 +20,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.util.Pair;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,7 +42,7 @@ public class HomeController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HomeController.class);
 
     /**
      * The experiment service to use for retrieving experiment information.
@@ -101,14 +102,14 @@ public class HomeController {
             Page<ExperimentTableProjection> experimentPage = pageService.getExperimentPage(PageRequest.of(0,
                     Constants.PAGE_SIZE));
             Page<CourseTableProjection> coursePage = pageService.getCoursePage(PageRequest.of(0, Constants.PAGE_SIZE));
-            int lastExperimentPage = pageService.computeLastExperimentPage();
-            int lastCoursePage = pageService.computeLastCoursePage();
+            int lastExperimentPage = experimentPage.getTotalPages();
+            int lastCoursePage = coursePage.getTotalPages();
             addModelInfo(experimentPage, coursePage, 0, 0, lastExperimentPage - 1, lastCoursePage - 1, model);
         } else if (httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication == null || authentication.getName() == null) {
-                logger.error("Can't show the participant experiment page for an unauthenticated user!");
+                LOGGER.error("Can't show the participant experiment page for an unauthenticated user!");
                 return Constants.ERROR;
             }
 
@@ -118,8 +119,8 @@ public class HomeController {
                         PageRequest.of(0, Constants.PAGE_SIZE), userDTO.getId());
                 Page<CourseTableProjection> coursePage = pageService.getCourseParticipantPage(
                         PageRequest.of(0, Constants.PAGE_SIZE), userDTO.getId());
-                int lastExperimentPage = pageService.getLastExperimentPage(userDTO.getId());
-                int lastCoursePage = pageService.getLastCoursePage(userDTO.getId());
+                int lastExperimentPage = experimentPage.getTotalPages();
+                int lastCoursePage = coursePage.getTotalPages();
                 addModelInfo(experimentPage, coursePage, 0, 0, lastExperimentPage - 1, lastCoursePage - 1, model);
             } catch (NotFoundException e) {
                 return Constants.ERROR;
@@ -146,7 +147,9 @@ public class HomeController {
         Pair<Integer, Integer> lastPageInformation = getLastPageCourses(httpServletRequest);
 
         if (lastPageInformation == null || PageUtils.isInvalidPageNumber(page, lastPageInformation.getFirst())) {
-            return new ModelAndView(Constants.ERROR);
+            ModelAndView mv = new ModelAndView("error");
+            mv.setStatus(HttpStatus.BAD_REQUEST);
+            return mv;
         }
 
         Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, page,
@@ -171,7 +174,9 @@ public class HomeController {
         Pair<Integer, Integer> lastPageInformation = getLastPageExperiments(httpServletRequest);
 
         if (lastPageInformation == null || PageUtils.isInvalidPageNumber(page, lastPageInformation.getFirst())) {
-            return new ModelAndView(Constants.ERROR);
+            ModelAndView mv = new ModelAndView("error");
+            mv.setStatus(HttpStatus.BAD_REQUEST);
+            return mv;
         }
 
         Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest, page,
@@ -270,14 +275,14 @@ public class HomeController {
      */
     private int getPageNumber(final String pageNumber) {
         if (pageNumber == null) {
-            logger.error("Cannot return a page for page number null!");
+            LOGGER.error("Cannot return a page for page number null!");
             return -1;
         }
 
         int page = NumberParser.parseNumber(pageNumber);
 
         if (page <= -1) {
-            logger.error("Cannot return a page for invalid page number " + pageNumber + "!");
+            LOGGER.error("Cannot return a page for invalid page number " + pageNumber + "!");
         }
 
         return page;
@@ -360,7 +365,7 @@ public class HomeController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
-            logger.error("Can't show the participant experiment page for an unauthenticated user!");
+            LOGGER.error("Can't show the participant experiment page for an unauthenticated user!");
             return null;
         }
 
@@ -381,11 +386,11 @@ public class HomeController {
      */
     private boolean isInvalidFinishParams(final int experimentId, final int userId, final String secret) {
         if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            logger.error("Cannot finish experiment with invalid experiment id " + experimentId + " or invalid user id "
+            LOGGER.error("Cannot finish experiment with invalid experiment id " + experimentId + " or invalid user id "
                     + userId + "!");
             return true;
         } else if (secret == null || secret.isBlank()) {
-            logger.error("Cannot finish experiment with secret null or blank!");
+            LOGGER.error("Cannot finish experiment with secret null or blank!");
             return true;
         } else {
             return participantService.isInvalidParticipant(userId, experimentId, secret);

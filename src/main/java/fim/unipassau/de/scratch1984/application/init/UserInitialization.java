@@ -2,6 +2,8 @@ package fim.unipassau.de.scratch1984.application.init;
 
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,14 +53,14 @@ public class UserInitialization {
      */
     @PostConstruct
     public void init() {
-        List<User> users = userRepository.findAllByRole("ADMIN");
+        List<User> users = userRepository.findAllByRole(Role.ADMIN);
         if (users == null || users.isEmpty()) {
             User user = new User();
             user.setActive(true);
             user.setEmail("admin@admin.de");
             user.setUsername("admin");
-            user.setRole("ADMIN");
-            user.setLanguage("ENGLISH");
+            user.setRole(Role.ADMIN);
+            user.setLanguage(Language.ENGLISH);
             user.setPassword(passwordEncoder.encode("!ISeeYou!"));
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);

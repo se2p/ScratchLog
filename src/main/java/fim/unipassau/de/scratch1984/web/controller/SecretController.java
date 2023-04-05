@@ -34,7 +34,7 @@ public class SecretController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(SecretController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecretController.class);
 
     /**
      * The user service to use for user management.
@@ -78,7 +78,7 @@ public class SecretController {
     public String displaySecret(@RequestParam("user") final String user,
                                 @RequestParam("experiment") final String experiment, final Model model) {
         if (user == null || experiment == null || user.trim().isBlank() || experiment.trim().isBlank()) {
-            logger.error("Cannot display secret for user or experiment id null or blank!");
+            LOGGER.error("Cannot display secret for user or experiment id null or blank!");
             return Constants.ERROR;
         }
 
@@ -86,7 +86,7 @@ public class SecretController {
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            logger.error("Cannot display secret for user with invalid id " + user + " or experiment with invalid id "
+            LOGGER.error("Cannot display secret for user with invalid id " + user + " or experiment with invalid id "
                     + experiment + "!");
             return Constants.ERROR;
         }
@@ -99,7 +99,7 @@ public class SecretController {
                 UserDTO userDTO = userService.getUserById(userId);
 
                 if (userDTO.getSecret() == null) {
-                    logger.error("Cannot display newly created secret for user " + userDTO.getId() + " as the user's "
+                    LOGGER.error("Cannot display newly created secret for user " + userDTO.getId() + " as the user's "
                             + "secret is null!");
                     return Constants.ERROR;
                 }
@@ -126,14 +126,14 @@ public class SecretController {
     @Secured(Constants.ROLE_ADMIN)
     public String displaySecrets(@RequestParam("experiment") final String experiment, final Model model) {
         if (experiment == null || experiment.trim().isBlank()) {
-            logger.error("Cannot display secrets for experiment id null or blank!");
+            LOGGER.error("Cannot display secrets for experiment id null or blank!");
             return Constants.ERROR;
         }
 
         int experimentId = NumberParser.parseNumber(experiment);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot display secrets for experiment with invalid id " + experiment + "!");
+            LOGGER.error("Cannot display secrets for experiment with invalid id " + experiment + "!");
             return Constants.ERROR;
         }
 

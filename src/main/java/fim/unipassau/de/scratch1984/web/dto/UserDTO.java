@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,36 +21,6 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDTO {
-
-    /**
-     * All available roles for a user.
-     */
-    public enum Role {
-        /**
-         * A user participating in an experiment.
-         */
-        PARTICIPANT,
-
-        /**
-         * A user with administration rights.
-         */
-        ADMIN
-    }
-
-    /**
-     * All available languages to choose from.
-     */
-    public enum Language {
-        /**
-         * The preferred language is English.
-         */
-        ENGLISH,
-
-        /**
-         * The preferred language is German.
-         */
-        GERMAN
-    }
 
     /**
      * The user's unique ID.

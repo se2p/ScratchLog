@@ -1,5 +1,12 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import fim.unipassau.de.scratch1984.util.enums.LibraryResource;
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ResourceEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,87 +27,8 @@ import java.util.Objects;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ResourceEventDTO implements EventDTO {
-
-    /**
-     * All possible event types for a resource event.
-     */
-    public enum ResourceEventType {
-        /**
-         * The event was caused by a user adding a resource.
-         */
-        ADD,
-
-        /**
-         * The event was caused by a user renaming a resource.
-         */
-        RENAME,
-
-        /**
-         * The event was caused by a user deleting a resource.
-         */
-        DELETE
-    }
-
-    /**
-     * All possible specific events for a resource event.
-     */
-    public enum ResourceEvent {
-        /**
-         * The user deleted a costume or backdrop.
-         */
-        DELETE_COSTUME,
-
-        /**
-         * The user deleted a sound.
-         */
-        DELETE_SOUND,
-
-        /**
-         * The user added a costume or backdrop.
-         */
-        ADD_COSTUME,
-
-        /**
-         * The user added a sound.
-         */
-        ADD_SOUND,
-
-        /**
-         * The user renamed a costume.
-         */
-        RENAME_COSTUME,
-
-        /**
-         * The user renamed a backdrop.
-         */
-        RENAME_BACKDROP,
-
-        /**
-         * The user renamed a sound.
-         */
-        RENAME_SOUND
-    }
-
-    /**
-     * All possible library status values for a resource event.
-     */
-    public enum LibraryResource {
-        /**
-         * The resource is from the Scratch library.
-         */
-        TRUE,
-
-        /**
-         * The resource is a user-produced resource.
-         */
-        FALSE,
-
-        /**
-         * It is unknown, whether the resource is from the library or user-produced.
-         */
-        UNKNOWN
-    }
 
     /**
      * The unique ID of the resource event.
@@ -120,17 +48,20 @@ public class ResourceEventDTO implements EventDTO {
     /**
      * The local date time at which the block interaction occurred in the Scratch GUI.
      */
+    @JsonProperty("time")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime date;
 
     /**
      * The type of resource event that occurred.
      */
+    @JsonProperty("type")
     private ResourceEventType eventType;
 
     /**
      * The specific event that occurred.
      */
-    private ResourceEvent event;
+    private ResourceEventSpecific event;
 
     /**
      * The name of the resource.
@@ -145,6 +76,7 @@ public class ResourceEventDTO implements EventDTO {
     /**
      * The filetype of the resource.
      */
+    @JsonProperty("dataFormat")
     private String filetype;
 
     /**
@@ -166,7 +98,7 @@ public class ResourceEventDTO implements EventDTO {
      * @param libraryResource Whether or not the resource is external.
      */
     public ResourceEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
-                            final ResourceEventType eventType, final ResourceEvent event, final String name,
+                            final ResourceEventType eventType, final ResourceEventSpecific event, final String name,
                             final String md5, final String filetype, final LibraryResource libraryResource) {
         this.user = user;
         this.experiment = experiment;

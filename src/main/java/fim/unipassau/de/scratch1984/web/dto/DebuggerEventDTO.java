@@ -1,5 +1,11 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import fim.unipassau.de.scratch1984.util.enums.DebuggerEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.DebuggerEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,72 +26,8 @@ import java.util.Objects;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DebuggerEventDTO implements EventDTO {
-
-    /**
-     * All possible event types for a debugger event.
-     */
-    public enum DebuggerEventType {
-        /**
-         * The event was caused by a breakpoint interaction.
-         */
-        BREAKPOINT,
-
-        /**
-         * The event was caused by a block interaction in the debugger.
-         */
-        BLOCK,
-
-        /**
-         * The event was caused by selecting a sprite in the debugger.
-         */
-        SPRITE,
-
-        /**
-         * The event was caused by opening the debugger.
-         */
-        TARGET
-    }
-
-    /**
-     * All possible specific events for a debugger event.
-     */
-    public enum DebuggerEvent {
-        /**
-         * The user opened the debugger on a sprite or stage.
-         */
-        OPEN_DEBUGGER,
-
-        /**
-         * The user selected a sprite instance in the dropdown list of the debugger.
-         */
-        SELECT_SPRITE,
-
-        /**
-         * The user opened the debugger for a specific block.
-         */
-        OPEN_BLOCK,
-
-        /**
-         * The user selected a block execution in the dropdown list of the debugger.
-         */
-        SELECT_BLOCK_EXECUTION,
-
-        /**
-         * The user clicked on a block and is routed to the block-debugger.
-         */
-        ROUTE_TO_BLOCK,
-
-        /**
-         * The user added a breakpoint.
-         */
-        ADD_BREAKPOINT,
-
-        /**
-         * The user deleted a breakpoint.
-         */
-        DELETE_BREAKPOINT
-    }
 
     /**
      * The unique ID of the debugger event.
@@ -105,26 +47,31 @@ public class DebuggerEventDTO implements EventDTO {
     /**
      * The local date time at which the debugger interaction occurred in the Scratch GUI.
      */
+    @JsonProperty("time")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime date;
 
     /**
      * The type of debugger event that occurred.
      */
+    @JsonProperty("type")
     private DebuggerEventType eventType;
 
     /**
      * The specific event that occurred.
      */
-    private DebuggerEvent event;
+    private DebuggerEventSpecific event;
 
     /**
      * The block or target id of the debugger event.
      */
+    @JsonProperty("scratchId")
     private String blockOrTargetID;
 
     /**
      * The target name or block opcode of the debugger event.
      */
+    @JsonProperty("name")
     private String nameOrOpcode;
 
     /**
@@ -151,8 +98,9 @@ public class DebuggerEventDTO implements EventDTO {
      * @param execution The number of the block executions of the event.
      */
     public DebuggerEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
-                            final DebuggerEventType eventType, final DebuggerEvent event, final String blockOrTargetID,
-                            final String nameOrOpcode, final Integer original, final Integer execution) {
+                            final DebuggerEventType eventType, final DebuggerEventSpecific event,
+                            final String blockOrTargetID, final String nameOrOpcode, final Integer original,
+                            final Integer execution) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;

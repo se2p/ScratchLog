@@ -22,6 +22,7 @@
         <thymeleaf.version>3.0.4.RELEASE</thymeleaf.version>
         <lombok.version>1.18.24</lombok.version>
         <flyway.version>8.1.0</flyway.version>
+        <databind.version>2.14.0</databind.version>
         <bouncycastle.version>1.64</bouncycastle.version>
         <codec.version>1.15</codec.version>
         <jQuery.version>3.5.1</jQuery.version>
@@ -133,6 +134,18 @@
             <version>${flyway.version}</version>
         </dependency>
 
+        <!-- Jackson for parsing JSON to DTOs -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${databind.version}</version>
+        </dependency>
+        <!-- For parsing DateTime properties -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${databind.version}</version>
+        </dependency>
 
         <!-- Used in SAML2Configuration -->
         <dependency>

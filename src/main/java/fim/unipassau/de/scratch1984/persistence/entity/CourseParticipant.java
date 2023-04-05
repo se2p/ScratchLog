@@ -13,7 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An entity representing a participation in a course.
@@ -44,9 +44,9 @@ public class CourseParticipant {
     private Course course;
 
     /**
-     * The timestamp at which the user was added as participant to the course.
+     * The datetime at which the user was added as participant to the course.
      */
     @Column(name = "added")
-    private Timestamp added;
+    private LocalDateTime added;
 
 }

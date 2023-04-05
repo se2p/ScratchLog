@@ -12,13 +12,13 @@ import fim.unipassau.de.scratch1984.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,10 +74,8 @@ public class SearchServiceTest {
             "url");
     private final Experiment experiment2 = new Experiment(ID, "My Experiment", "Some description", "", "", true, true,
             "url");
-    private final Course course = new Course(ID, "title", "description", "content", true,
-            Timestamp.valueOf(LocalDateTime.now()));
-    private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment2,
-            Timestamp.valueOf(LocalDateTime.now()));
+    private final Course course = new Course(ID, "title", "description", "content", true, LocalDateTime.now());
+    private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment2, LocalDateTime.now());
     private final List<UserProjection> users = addUserSuggestions();
     private final List<ExperimentTableProjection> experiments = addExperimentSuggestions();
     private final List<CourseTableProjection> courses = addCourseSuggestions();
@@ -575,8 +573,8 @@ public class SearchServiceTest {
                 }
 
                 @Override
-                public String getRole() {
-                    return PARTICIPANT;
+                public Role getRole() {
+                    return Role.PARTICIPANT;
                 }
             };
 

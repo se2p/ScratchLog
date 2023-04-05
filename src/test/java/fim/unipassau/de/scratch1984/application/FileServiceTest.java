@@ -13,6 +13,8 @@ import fim.unipassau.de.scratch1984.persistence.repository.FileRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.Sb3ZipRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +26,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,14 +68,12 @@ public class FileServiceTest {
     private static final String GUI_URL = "scratch";
     private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "png", new byte[]{1, 2, 3, 4});
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip", new byte[]{1, 2, 3, 4});
-    private final User user = new User("participant", "email", "PARTICIPANT", "GERMAN", "password", "secret");
+    private final User user = new User("participant", "email", Role.PARTICIPANT, Language.GERMAN, "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
-    private final Participant participant = new Participant(user, experiment, Timestamp.valueOf(LocalDateTime.now()), null);
-    private final File file = new File(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "file", "type",
-            new byte[]{1, 2, 3, 4});
-    private final Sb3Zip sb3Zip = new Sb3Zip(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "zip",
-            new byte[]{1, 2, 3, 4});
+    private final Participant participant = new Participant(user, experiment, LocalDateTime.now(), null);
+    private final File file = new File(user, experiment, LocalDateTime.now(), "file", "type", new byte[]{1, 2, 3, 4});
+    private final Sb3Zip sb3Zip = new Sb3Zip(user, experiment, LocalDateTime.now(), "zip", new byte[]{1, 2, 3, 4});
     private final List<FileProjection> fileProjections = getFileProjections(5);
     private final List<File> files = getFiles(2);
     private final List<Integer> zips = Arrays.asList(1, 4, 10, 18);
@@ -93,7 +92,7 @@ public class FileServiceTest {
     public void testSaveFile() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -107,7 +106,7 @@ public class FileServiceTest {
     public void testSaveFileConstraintViolation() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         when(fileRepository.save(any())).thenThrow(ConstraintViolationException.class);
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
@@ -134,10 +133,10 @@ public class FileServiceTest {
 
     @Test
     public void testSaveFileParticipantFinished() {
-        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        participant.setEnd(LocalDateTime.now());
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -165,7 +164,7 @@ public class FileServiceTest {
         user.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -180,7 +179,7 @@ public class FileServiceTest {
         experiment.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -194,7 +193,7 @@ public class FileServiceTest {
     public void testSaveSb3Zip() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );
@@ -208,7 +207,7 @@ public class FileServiceTest {
     public void testSaveSb3ZipConstraintViolation() {
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         when(sb3ZipRepository.save(any())).thenThrow(ConstraintViolationException.class);
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
@@ -235,10 +234,10 @@ public class FileServiceTest {
 
     @Test
     public void testSaveSb3ZipParticipantFinished() {
-        participant.setEnd(Timestamp.valueOf(LocalDateTime.now()));
+        participant.setEnd(LocalDateTime.now());
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );
@@ -266,7 +265,7 @@ public class FileServiceTest {
         user.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );
@@ -281,7 +280,7 @@ public class FileServiceTest {
         experiment.setActive(false);
         when(userRepository.getOne(ID)).thenReturn(user);
         when(experimentRepository.getOne(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(participant);
+        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );
@@ -439,7 +438,7 @@ public class FileServiceTest {
         assertAll(
                 () -> assertEquals(file.getUser().getId(), fileDTO.getUser()),
                 () -> assertEquals(file.getExperiment().getId(), fileDTO.getExperiment()),
-                () -> assertEquals(file.getDate().toLocalDateTime(), fileDTO.getDate()),
+                () -> assertEquals(file.getDate(), fileDTO.getDate()),
                 () -> assertEquals(file.getFiletype(), fileDTO.getFiletype()),
                 () -> assertEquals(file.getName(), fileDTO.getName()),
                 () -> assertEquals(file.getContent(), fileDTO.getContent())
@@ -470,7 +469,7 @@ public class FileServiceTest {
         assertAll(
                 () -> assertEquals(sb3Zip.getUser().getId(), sb3ZipDTO.getUser()),
                 () -> assertEquals(sb3Zip.getExperiment().getId(), sb3ZipDTO.getExperiment()),
-                () -> assertEquals(sb3Zip.getDate().toLocalDateTime(), sb3ZipDTO.getDate()),
+                () -> assertEquals(sb3Zip.getDate(), sb3ZipDTO.getDate()),
                 () -> assertEquals(sb3Zip.getName(), sb3ZipDTO.getName()),
                 () -> assertEquals(sb3Zip.getContent(), sb3ZipDTO.getContent())
         );
@@ -634,7 +633,7 @@ public class FileServiceTest {
 
     private List<File> getFiles(int number) {
         List<File> files = new ArrayList<>();
-        Timestamp time = Timestamp.valueOf(LocalDateTime.now());
+        LocalDateTime time = LocalDateTime.now();
         for (int i = 0; i < number; i++) {
             File file = new File(user, experiment, time, "name" + i, "type", new byte[]{1, 2, 3, 4});
             file.setId(i + 1);
@@ -646,7 +645,7 @@ public class FileServiceTest {
     private List<Sb3Zip> getSb3ZipFiles(int number) {
         List<Sb3Zip> sb3Zips = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            sb3Zips.add(new Sb3Zip(user, experiment, Timestamp.valueOf(LocalDateTime.now()), "file" + i,
+            sb3Zips.add(new Sb3Zip(user, experiment, LocalDateTime.now(), "file" + i,
                     new byte[] {1, 2, 3, 4}));
         }
         return sb3Zips;

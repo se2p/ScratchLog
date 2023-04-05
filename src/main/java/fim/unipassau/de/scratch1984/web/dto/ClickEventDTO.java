@@ -1,5 +1,11 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import fim.unipassau.de.scratch1984.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.ClickEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,87 +25,8 @@ import java.util.Objects;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ClickEventDTO implements EventDTO {
-
-    /**
-     * All possible event types for a click event.
-     */
-    public enum ClickEventType {
-        /**
-         * The event was caused by clicking on a button.
-         */
-        BUTTON,
-
-        /**
-         * The event was caused by clicking on an icon.
-         */
-        ICON,
-
-        /**
-         * The event was caused by clicking on code segments.
-         */
-        CODE
-    }
-
-    /**
-     * All possible specific events for a click event.
-     */
-    public enum ClickEvent {
-        /**
-         * The user clicked on the green flag icon.
-         */
-        GREENFLAG,
-
-        /**
-         * The user clicked on the stop all icon.
-         */
-        STOPALL,
-
-        /**
-         * The user clicked on a block.
-         */
-        STACKCLICK,
-
-        /**
-         * The user rewound the execution slider.
-         */
-        REWIND_EXECUTION_SLIDER_CHANGE,
-
-        /**
-         * The user revisited the previous step in the block execution.
-         */
-        STEP_BACK,
-
-        /**
-         * The user jumped over an execution step.
-         */
-        STEP_OVER,
-
-        /**
-         * The user paused the execution of a code block.
-         */
-        PAUSE_EXECUTION,
-
-        /**
-         * The user resumed the execution of a code block.
-         */
-        RESUME_EXECUTION,
-
-        /**
-         * The user deactivated the observation.
-         */
-        DEACTIVATE_OBSERVATION,
-
-        /**
-         * The user activated the observation.
-         */
-        ACTIVATE_OBSERVATION,
-
-        /**
-         * The user closed the debugger.
-         */
-        CLOSE_DEBUGGER
-    }
 
     /**
      * The unique ID of the click event.
@@ -119,17 +46,20 @@ public class ClickEventDTO implements EventDTO {
     /**
      * The local date time at which the click interaction occurred in the Scratch GUI.
      */
+    @JsonProperty("time")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime date;
 
     /**
      * The type of click event that occurred.
      */
+    @JsonProperty("type")
     private ClickEventType eventType;
 
     /**
      * The specific event that occurred.
      */
-    private ClickEvent event;
+    private ClickEventSpecific event;
 
     /**
      * Additional information about the event.
@@ -147,7 +77,7 @@ public class ClickEventDTO implements EventDTO {
      * @param metadata The metadata.
      */
     public ClickEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
-                         final ClickEventType eventType, final ClickEvent event, final String metadata) {
+                         final ClickEventType eventType, final ClickEventSpecific event, final String metadata) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;

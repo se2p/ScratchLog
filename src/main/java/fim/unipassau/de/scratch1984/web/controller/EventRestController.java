@@ -1,5 +1,8 @@
 package fim.unipassau.de.scratch1984.web.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.EventService;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
@@ -14,7 +17,6 @@ import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.QuestionEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ResourceEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,12 +30,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 /**
@@ -46,7 +43,7 @@ public class EventRestController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(EventRestController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventRestController.class);
 
     /**
      * The event service to use to save the received event data.
@@ -235,7 +232,7 @@ public class EventRestController {
         } catch (NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
-            logger.error("Could not retrieve sb3 file for experiment with id " + experimentId + " due to IOException!",
+            LOGGER.error("Could not retrieve sb3 file for experiment with id " + experimentId + " due to IOException!",
                     e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
@@ -275,7 +272,7 @@ public class EventRestController {
         } catch (NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
-            logger.error("Could not retrieve the last saved json code for user with id " + ids.get(1)
+            LOGGER.error("Could not retrieve the last saved json code for user with id " + ids.get(1)
                     + " during experiment with id " + ids.get(0) + " due to IOException!", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
@@ -318,57 +315,20 @@ public class EventRestController {
     }
 
     /**
-     * Sets the user, experiment and time for every {@link EventDTO} using the values from the passed
-     * {@link JSONObject}.
-     *
-     * @param eventDTO The dto for which the properties are to be set.
-     * @param object The JSON providing the values.
-     */
-    private void setEventDTOData(final EventDTO eventDTO, final JSONObject object) {
-        eventDTO.setUser(object.getInt("user"));
-        eventDTO.setExperiment(object.getInt("experiment"));
-        eventDTO.setDate(LocalDateTime.ofInstant(Instant.parse(object.getString("time")), ZoneId.systemDefault()));
-    }
-
-    /**
      * Creates a {@link BlockEventDTO} with the given data.
      *
      * @param data The data passed in the request body.
      * @return The new block event DTO containing the information.
      */
     private BlockEventDTO createBlockEventDTO(final String data) {
-        BlockEventDTO dto = new BlockEventDTO();
-
         try {
-            JSONObject object = new JSONObject(data);
-            String spritename = object.getString("spritename");
-            String metadata = object.getString("metadata");
-            String xml = object.getString("xml");
-            String json = object.getString("json");
-
-            setEventDTOData(dto, object);
-            dto.setEventType(BlockEventDTO.BlockEventType.valueOf(object.getString("type")));
-            dto.setEvent(BlockEventDTO.BlockEvent.valueOf(object.getString("event")));
-
-            if (!spritename.trim().isBlank()) {
-                dto.setSprite(object.getString("spritename"));
-            }
-            if (!metadata.trim().isBlank()) {
-                dto.setMetadata(metadata);
-            }
-            if (!xml.trim().isBlank()) {
-                dto.setXml(xml);
-            }
-            if (!json.trim().isBlank()) {
-                dto.setCode(json);
-            }
-        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
-                | JSONException e) {
-            logger.error("The block event data sent to the server was incomplete!", e);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            return mapper.readValue(data, BlockEventDTO.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("The block event data sent to the server was incomplete!", e);
             return null;
         }
-
-        return dto;
     }
 
     /**
@@ -378,26 +338,14 @@ public class EventRestController {
      * @return The new click event DTO containing the information.
      */
     private ClickEventDTO createClickEventDTO(final String data) {
-        ClickEventDTO dto = new ClickEventDTO();
-
         try {
-            JSONObject object = new JSONObject(data);
-            String metadata = object.getString("metadata");
-
-            setEventDTOData(dto, object);
-            dto.setEventType(ClickEventDTO.ClickEventType.valueOf(object.getString("type")));
-            dto.setEvent(ClickEventDTO.ClickEvent.valueOf(object.getString("event")));
-
-            if (!metadata.trim().isBlank()) {
-                dto.setMetadata(metadata);
-            }
-        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
-                | JSONException e) {
-            logger.error("The click event data sent to the server was incomplete!", e);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            return mapper.readValue(data, ClickEventDTO.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("The click event data sent to the server was incomplete!", e);
             return null;
         }
-
-        return dto;
     }
 
     /**
@@ -407,38 +355,14 @@ public class EventRestController {
      * @return The new debugger event DTO containing the information.
      */
     private DebuggerEventDTO createDebuggerEventDTO(final String data) {
-        DebuggerEventDTO dto = new DebuggerEventDTO();
-
         try {
-            JSONObject object = new JSONObject(data);
-            String id = object.getString("id");
-            String name = object.getString("name");
-            String original = object.get("original").toString();
-            String execution = object.get("execution").toString();
-
-            setEventDTOData(dto, object);
-            dto.setEventType(DebuggerEventDTO.DebuggerEventType.valueOf(object.getString("type")));
-            dto.setEvent(DebuggerEventDTO.DebuggerEvent.valueOf(object.getString("event")));
-
-            if (!id.trim().isBlank()) {
-                dto.setBlockOrTargetID(id);
-            }
-            if (!name.trim().isBlank()) {
-                dto.setNameOrOpcode(name);
-            }
-            if (!original.trim().isBlank()) {
-                dto.setOriginal(object.getInt("original"));
-            }
-            if (!execution.trim().isBlank()) {
-                dto.setExecution(object.getInt("execution"));
-            }
-        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
-                | JSONException e) {
-            logger.error("The debugger event data sent to the server was incomplete!", e);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            return mapper.readValue(data, DebuggerEventDTO.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("The debugger event data sent to the server was incomplete!", e);
             return null;
         }
-
-        return dto;
     }
 
     /**
@@ -448,48 +372,12 @@ public class EventRestController {
      * @return The new question event DTO containing the information.
      */
     private QuestionEventDTO createQuestionEventDTO(final String data) {
-        QuestionEventDTO dto = new QuestionEventDTO();
-
         try {
-            JSONObject object = new JSONObject(data);
-            String feedback = object.get("feedback").toString();
-            String type = object.getString("q_type");
-            String values = object.getString("values");
-            String category = object.getString("category");
-            String form = object.getString("form");
-            String blockId = object.getString("id");
-            String opcode = object.getString("opcode");
-
-            setEventDTOData(dto, object);
-            dto.setEventType(QuestionEventDTO.QuestionEventType.valueOf(object.getString("type")));
-            dto.setEvent(QuestionEventDTO.QuestionEvent.valueOf(object.getString("event")));
-
-            if (!feedback.trim().isBlank()) {
-                dto.setFeedback(object.getInt("feedback"));
-            }
-            if (!type.trim().isBlank()) {
-                dto.setType(type);
-            }
-            if (!values.trim().isBlank()) {
-                dto.setValues(values.split(","));
-            }
-            if (!category.trim().isBlank()) {
-                dto.setCategory(category);
-            }
-            if (!form.trim().isBlank()) {
-                dto.setForm(form);
-            }
-            if (!blockId.trim().isBlank()) {
-                dto.setBlockID(blockId);
-            }
-            if (!opcode.trim().isBlank()) {
-                dto.setOpcode(opcode);
-            }
-
-            return dto;
-        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
-                | JSONException e) {
-            logger.error("The question event data sent to the server was incomplete!", e);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            return mapper.readValue(data, QuestionEventDTO.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("The question event data sent to the server was incomplete!", e);
             return null;
         }
     }
@@ -501,35 +389,14 @@ public class EventRestController {
      * @return The new resource event DTO containing the information.
      */
     private ResourceEventDTO createResourceEventDTO(final String data) {
-        ResourceEventDTO dto = new ResourceEventDTO();
-
         try {
-            JSONObject object = new JSONObject(data);
-            String name = object.getString("name");
-            String md5 = object.getString("md5");
-            String dataFormat = object.getString("dataFormat");
-
-            setEventDTOData(dto, object);
-            dto.setEventType(ResourceEventDTO.ResourceEventType.valueOf(object.getString("type")));
-            dto.setEvent(ResourceEventDTO.ResourceEvent.valueOf(object.getString("event")));
-            dto.setLibraryResource(ResourceEventDTO.LibraryResource.valueOf(object.getString("libraryResource")));
-
-            if (!name.trim().isBlank()) {
-                dto.setName(name);
-            }
-            if (!md5.trim().isBlank()) {
-                dto.setMd5(md5);
-            }
-            if (!dataFormat.isBlank()) {
-                dto.setFiletype(dataFormat);
-            }
-        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
-                | JSONException e) {
-            logger.error("The resource event data sent to the server was incomplete!", e);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            return mapper.readValue(data, ResourceEventDTO.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("The resource event data sent to the server was incomplete!", e);
             return null;
         }
-
-        return dto;
     }
 
     /**
@@ -539,21 +406,14 @@ public class EventRestController {
      * @return The new file DTO containing the information.
      */
     private FileDTO createFileDTO(final String data) {
-        FileDTO dto = new FileDTO();
-
         try {
-            JSONObject object = new JSONObject(data);
-            setEventDTOData(dto, object);
-            dto.setName(object.getString("name"));
-            dto.setFiletype(object.getString("type"));
-            dto.setContent(Base64.getDecoder().decode(object.getString("file")));
-        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
-                | JSONException e) {
-            logger.error("The file data sent to the server was incomplete!", e);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            return mapper.readValue(data, FileDTO.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("The file data sent to the server was incomplete!", e);
             return null;
         }
-
-        return dto;
     }
 
     /**
@@ -563,20 +423,14 @@ public class EventRestController {
      * @return The new sb3 zip DTO containing the information.
      */
     private Sb3ZipDTO createSb3ZipDTO(final String data) {
-        Sb3ZipDTO dto = new Sb3ZipDTO();
-
         try {
-            JSONObject object = new JSONObject(data);
-            setEventDTOData(dto, object);
-            dto.setName(object.getString("name"));
-            dto.setContent(Base64.getDecoder().decode(object.getString("zip")));
-        } catch (NullPointerException | ClassCastException | DateTimeParseException | IllegalArgumentException
-                | JSONException e) {
-            logger.error("The sb3 zip file data sent to the server was incomplete!", e);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            return mapper.readValue(data, Sb3ZipDTO.class);
+        } catch (JsonProcessingException e) {
+            LOGGER.error("The sb3 zip file data sent to the server was incomplete!", e);
             return null;
         }
-
-        return dto;
     }
 
 }

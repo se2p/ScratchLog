@@ -7,6 +7,7 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.TokenRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A service providing methods related to tokens.
@@ -28,7 +29,7 @@ public class TokenService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(TokenService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TokenService.class);
 
     /**
      * The user repository to use for database queries related to user data.
@@ -75,7 +76,7 @@ public class TokenService {
     /**
      * Creates a new token with the given parameters.
      *
-     * @param type The {@link fim.unipassau.de.scratch1984.web.dto.TokenDTO.Type} of the token.
+     * @param type The {@link TokenType} of the token.
      * @param metadata Optional metadata for the token.
      * @param userId The user for whom this token is to be created.
      * @return The newly created token, if the information was persisted.
@@ -84,7 +85,7 @@ public class TokenService {
      * @throws StoreException if the created token could not be persisted.
      */
     @Transactional
-    public TokenDTO generateToken(final TokenDTO.Type type, final String metadata, final int userId) {
+    public TokenDTO generateToken(final TokenType type, final String metadata, final int userId) {
         if (userId < Constants.MIN_ID) {
             throw new IllegalArgumentException("Cannot generate token with invalid user id " + userId + "!");
         } else if (type == null) {
@@ -99,7 +100,7 @@ public class TokenService {
             token.setUser(user);
             token = tokenRepository.save(token);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + tokenDTO.getUser() + "!", e);
+            LOGGER.error("Could not find user with id " + tokenDTO.getUser() + "!", e);
             throw new NotFoundException("Could not find user with id " + tokenDTO.getUser() + "!", e);
         }
 
@@ -124,14 +125,14 @@ public class TokenService {
             throw new IllegalArgumentException("Cannot search for token with null or empty value!");
         }
 
-        Token token = tokenRepository.findByValue(value);
+        Optional<Token> token = tokenRepository.findByValue(value);
 
-        if (token == null) {
-            logger.error("Could not find token with value " + value + " in the database!");
+        if (token.isEmpty()) {
+            LOGGER.error("Could not find token with value " + value + " in the database!");
             throw new NotFoundException("Could not find token with value " + value + " in the database!");
         }
 
-        return createTokenDTO(token);
+        return createTokenDTO(token.get());
     }
 
     /**
@@ -161,7 +162,7 @@ public class TokenService {
             throw new IllegalArgumentException("Cannot delete expired tokens with timestamp null!");
         }
 
-        tokenRepository.deleteAllByDateBefore(Timestamp.valueOf(localDateTime));
+        tokenRepository.deleteAllByDateBefore(localDateTime);
     }
 
     /**
@@ -177,8 +178,8 @@ public class TokenService {
             throw new IllegalArgumentException("Cannot delete expired accounts with timestamp null!");
         }
 
-        List<Token> expiredRegistrations = tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(localDateTime),
-                TokenDTO.Type.REGISTER.toString());
+        List<Token> expiredRegistrations = tokenRepository.findAllByDateBeforeAndType(localDateTime,
+                TokenType.REGISTER);
 
         for (Token token : expiredRegistrations) {
             if (token.getUser() == null) {
@@ -204,8 +205,8 @@ public class TokenService {
             throw new IllegalArgumentException("Cannot reactivate user accounts with timestamp null!");
         }
 
-        List<Token> deactivatedAccounts = tokenRepository.findAllByDateBeforeAndType(Timestamp.valueOf(localDateTime),
-                TokenDTO.Type.DEACTIVATED.toString());
+        List<Token> deactivatedAccounts = tokenRepository.findAllByDateBeforeAndType(localDateTime,
+                TokenType.DEACTIVATED);
 
         for (Token token : deactivatedAccounts) {
             if (token.getUser() == null || token.getUser().getId() == null) {
@@ -220,7 +221,7 @@ public class TokenService {
                 user.setActive(true);
                 userRepository.save(user);
             } catch (EntityNotFoundException e) {
-                logger.error("Cannot reactivate user account for user with id " + user.getId() + "!", e);
+                LOGGER.error("Cannot reactivate user account for user with id " + user.getId() + "!", e);
                 throw new NotFoundException("Cannot reactivate user account for user with id " + user.getId() + "!", e);
             }
         }
@@ -229,17 +230,17 @@ public class TokenService {
     /**
      * Returns the {@link LocalDateTime} expiration date for a token with the given type.
      *
-     * @param type The {@link fim.unipassau.de.scratch1984.web.dto.TokenDTO.Type}.
+     * @param type The {@link TokenType}.
      * @return The computed expiration date.
      */
-    private LocalDateTime computeExpirationDate(final TokenDTO.Type type) {
+    private LocalDateTime computeExpirationDate(final TokenType type) {
         LocalDateTime dateTime = LocalDateTime.now();
 
-        if (type == TokenDTO.Type.CHANGE_EMAIL) {
+        if (type == TokenType.CHANGE_EMAIL) {
             return dateTime.plusHours(EMAIL_TOKEN_EXPIRES);
-        } else if (type == TokenDTO.Type.FORGOT_PASSWORD) {
+        } else if (type == TokenType.FORGOT_PASSWORD) {
             return dateTime.plusHours(PASSWORD_TOKEN_EXPIRES);
-        } else if (type == TokenDTO.Type.DEACTIVATED) {
+        } else if (type == TokenType.DEACTIVATED) {
             return dateTime.plusHours(DEACTIVATED_TOKEN_EXPIRES);
         } else {
             return dateTime.plusDays(REGISTER_TOKEN_EXPIRES);
@@ -254,8 +255,8 @@ public class TokenService {
      */
     private Token createToken(final TokenDTO tokenDTO) {
         Token token = Token.builder()
-                .type(tokenDTO.getType().toString())
-                .date(Timestamp.valueOf(tokenDTO.getExpirationDate()))
+                .type(tokenDTO.getType())
+                .date(tokenDTO.getExpirationDate())
                 .build();
 
         if (tokenDTO.getValue() != null) {
@@ -276,8 +277,8 @@ public class TokenService {
      */
     private TokenDTO createTokenDTO(final Token token) {
         TokenDTO tokenDTO = TokenDTO.builder()
-                .type(TokenDTO.Type.valueOf(token.getType()))
-                .expirationDate(token.getDate().toLocalDateTime())
+                .type(token.getType())
+                .expirationDate(token.getDate())
                 .user(token.getUser().getId())
                 .build();
 

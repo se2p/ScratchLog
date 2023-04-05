@@ -10,6 +10,8 @@ import fim.unipassau.de.scratch1984.persistence.projection.CourseExperimentProje
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.CourseController;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
@@ -91,14 +93,12 @@ public class CourseControllerIntegrationTest {
     private static final String PASSWORD_DTO = "passwordDTO";
     private static final String ID_STRING = "1";
     private static final String CURRENT = "3";
-    private static final String LAST = "5";
     private static final String ID_PARAM = "id";
     private static final String TITLE_PARAM = "title";
     private static final String PARTICIPANT_PARAM = "participant";
     private static final String PAGE_PARAM = "page";
-    private static final String LAST_PAGE_PARAM = "lastPage";
     private static final String STATUS_PARAM = "stat";
-    private static final String ERROR_ATTRIBUTE = "error";
+    private static final String ERROR = "error";
     private static final int ID = 1;
     private static final int LAST_PAGE = 5;
     private static final String TITLE = "Title";
@@ -109,8 +109,8 @@ public class CourseControllerIntegrationTest {
     private static final LocalDateTime CHANGED = LocalDateTime.now();
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
-    private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, PASSWORD, "secret");
+    private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", Role.PARTICIPANT, Language.ENGLISH,
+            PASSWORD, "secret");
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -125,7 +125,7 @@ public class CourseControllerIntegrationTest {
         courseDTO.setContent(CONTENT);
         courseDTO.setActive(true);
         courseDTO.setLastChanged(CHANGED);
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
     }
 
     @AfterEach
@@ -493,7 +493,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+                .andExpect(model().attribute(ERROR, notNullValue()));
         verify(courseService).getCourse(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
@@ -552,7 +552,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+                .andExpect(model().attribute(ERROR, notNullValue()));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
@@ -610,7 +610,7 @@ public class CourseControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(COURSE))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+                .andExpect(model().attribute(ERROR, notNullValue()));
         verify(courseService).getCourse(ID);
         verify(experimentService, never()).existsExperiment(anyString());
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
@@ -668,8 +668,8 @@ public class CourseControllerIntegrationTest {
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(ERROR));
         verify(pageService, never()).getLastParticipantCoursePage(anyInt());
         verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService, never()).getCourse(anyInt());
@@ -708,8 +708,8 @@ public class CourseControllerIntegrationTest {
                         .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(ERROR));
         verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());

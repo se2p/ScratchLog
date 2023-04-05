@@ -15,6 +15,8 @@ import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.ExperimentController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -44,7 +46,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -145,10 +146,10 @@ public class ExperimentControllerIntegrationTest {
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false,
             false, GUI_URL);
-    private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, PASSWORD, "secret1");
-    private final UserDTO participant = new UserDTO(PARTICIPANT, "participant@part.de", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "user", null);
+    private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", Role.ADMIN, Language.ENGLISH,
+            PASSWORD, "secret1");
+    private final UserDTO participant = new UserDTO(PARTICIPANT, "participant@part.de", Role.PARTICIPANT,
+            Language.ENGLISH, "user", null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
@@ -1282,7 +1283,7 @@ public class ExperimentControllerIntegrationTest {
     private List<Participant> getParticipants(int number) {
         List<Participant> participants = new ArrayList<>();
         for (int i = 0; i < number; i++) {
-            participants.add(new Participant(new User(), new Experiment(), Timestamp.valueOf(LocalDateTime.now()), null));
+            participants.add(new Participant(new User(), new Experiment(), LocalDateTime.now(), null));
         }
         return participants;
     }

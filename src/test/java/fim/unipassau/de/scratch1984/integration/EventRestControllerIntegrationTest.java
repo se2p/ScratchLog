@@ -114,7 +114,7 @@ public class EventRestControllerIntegrationTest {
         debuggerEventObject.put("type", "SPRITE");
         debuggerEventObject.put("time", "2021-06-28T12:36:37.601Z");
         debuggerEventObject.put("event", "SELECT_SPRITE");
-        debuggerEventObject.put("id", "id");
+        debuggerEventObject.put("scratchId", "id");
         debuggerEventObject.put("name", "name");
         debuggerEventObject.put("original", 1);
         debuggerEventObject.put("execution", 5);
@@ -126,10 +126,10 @@ public class EventRestControllerIntegrationTest {
         questionEventObject.put("event", "SELECT");
         questionEventObject.put("feedback", 1);
         questionEventObject.put("q_type", "block-execution");
-        questionEventObject.put("values", "Cat, Costume");
+        questionEventObject.put("values", new String[]{"Cat", "Costume"});
         questionEventObject.put("category", "execution");
         questionEventObject.put("form", "negative");
-        questionEventObject.put("id", "id");
+        questionEventObject.put("blockID", "id");
         questionEventObject.put("opcode", "opcode");
         resourceEventObject.put("user", USER_ID);
         resourceEventObject.put("experiment", Experiment_ID);
@@ -192,36 +192,8 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreBlockEventJSON() throws Exception {
+    public void testStoreBlockEventJsonProcessing() throws Exception {
         blockEventObject.put("experiment", "no");
-        mvc.perform(post("/store/block")
-                        .content(blockEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveBlockEvent(any());
-    }
-
-    @Test
-    public void testStoreBlockEventIllegalArgument() throws Exception {
-        blockEventObject.put("type", "no");
-        mvc.perform(post("/store/block")
-                        .content(blockEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveBlockEvent(any());
-    }
-
-    @Test
-    public void testStoreBlockEventDateTimeParse() throws Exception {
-        blockEventObject.put("time", "no");
         mvc.perform(post("/store/block")
                         .content(blockEventObject.toString())
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -247,35 +219,7 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreClickEventJSON() throws Exception {
-        clickEventObject.put("user", "unicorn");
-        mvc.perform(post("/store/click")
-                        .content(clickEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveClickEvent(any());
-    }
-
-    @Test
-    public void testStoreClickEventIllegalArgument() throws Exception {
-        clickEventObject.put("event", "unicorn");
-        mvc.perform(post("/store/click")
-                        .content(clickEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveClickEvent(any());
-    }
-
-    @Test
-    public void testStoreClickEventTimeParse() throws Exception {
+    public void testStoreClickJsonProcessing() throws Exception {
         clickEventObject.put("time", "-1");
         mvc.perform(post("/store/click")
                         .content(clickEventObject.toString())
@@ -302,21 +246,7 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreDebuggerEventJSON() throws Exception {
-        debuggerEventObject.put("user", "user");
-        mvc.perform(post("/store/debugger")
-                        .content(debuggerEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveDebuggerEvent(any());
-    }
-
-    @Test
-    public void testStoreDebuggerEventTimeParse() throws Exception {
+    public void testStoreDebuggerEventJsonProcessing() throws Exception {
         debuggerEventObject.put("time", ".");
         mvc.perform(post("/store/debugger")
                         .content(debuggerEventObject.toString())
@@ -357,48 +287,6 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreQuestionEventJSON() throws Exception {
-        questionEventObject.put("experiment", "exp");
-        mvc.perform(post("/store/question")
-                        .content(questionEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventIllegalArgument() throws Exception {
-        questionEventObject.put("type", "BREAKPOINT");
-        mvc.perform(post("/store/question")
-                        .content(questionEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveQuestionEvent(any());
-    }
-
-    @Test
-    public void testStoreQuestionEventTimeParse() throws Exception {
-        questionEventObject.put("time", "time");
-        mvc.perform(post("/store/question")
-                        .content(questionEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveQuestionEvent(any());
-    }
-
-    @Test
     public void testStoreResourceEvent() throws Exception {
         mvc.perform(post("/store/resource")
                         .content(resourceEventObject.toString())
@@ -412,35 +300,7 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreResourceEventJSON() throws Exception {
-        resourceEventObject.put("user", "user");
-        mvc.perform(post("/store/resource")
-                        .content(resourceEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveResourceEvent(any());
-    }
-
-    @Test
-    public void testStoreResourceEventIllegalArgument() throws Exception {
-        resourceEventObject.put("event", "user");
-        mvc.perform(post("/store/resource")
-                        .content(resourceEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(eventService, never()).saveResourceEvent(any());
-    }
-
-    @Test
-    public void testStoreResourceEventDateTimeParse() throws Exception {
+    public void testStoreResourceEventJsonProcessing() throws Exception {
         resourceEventObject.put("time", "user");
         mvc.perform(post("/store/resource")
                         .content(resourceEventObject.toString())
@@ -467,36 +327,8 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreFileEventJSON() throws Exception {
-        fileEventObject.put("user", "unicorn");
-        mvc.perform(post("/store/file")
-                        .content(fileEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(fileService, never()).saveFile(any());
-    }
-
-    @Test
-    public void testStoreFileEventIllegalArgument() throws Exception {
+    public void testStoreFileEventJsonProcessing() throws Exception {
         fileEventObject.put("file", "%");
-        mvc.perform(post("/store/file")
-                        .content(fileEventObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(fileService, never()).saveFile(any());
-    }
-
-    @Test
-    public void testStoreFileEventDateTimeParse() throws Exception {
-        fileEventObject.put("time", "%");
         mvc.perform(post("/store/file")
                         .content(fileEventObject.toString())
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
@@ -536,36 +368,8 @@ public class EventRestControllerIntegrationTest {
     }
 
     @Test
-    public void testStoreZipFileJSON() throws Exception {
+    public void testStoreZipFileJsonProcessing() throws Exception {
         sb3ZipObject.put("user", "unicorn");
-        mvc.perform(post("/store/zip")
-                        .content(sb3ZipObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(fileService, never()).saveSb3Zip(any());
-    }
-
-    @Test
-    public void testStoreZipFileIllegalArgument() throws Exception {
-        sb3ZipObject.put("zip", "%");
-        mvc.perform(post("/store/zip")
-                        .content(sb3ZipObject.toString())
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
-        verify(fileService, never()).saveSb3Zip(any());
-    }
-
-    @Test
-    public void testStoreZipFileDateTimeParse() throws Exception {
-        sb3ZipObject.put("time", "%");
         mvc.perform(post("/store/zip")
                         .content(sb3ZipObject.toString())
                         .sessionAttr(TOKEN_ATTR_NAME, csrfToken)

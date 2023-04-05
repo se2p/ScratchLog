@@ -26,6 +26,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.QuestionEventReposito
 import fim.unipassau.de.scratch1984.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.LibraryResource;
 import fim.unipassau.de.scratch1984.web.dto.BlockEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.ClickEventDTO;
 import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
@@ -46,7 +47,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,7 +62,7 @@ public class EventService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(EventService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventService.class);
 
     /**
      * The event count repository to use for event count queries.
@@ -168,7 +168,7 @@ public class EventService {
                 blockEventRepository.save(blockEvent);
             }
         } catch (ConstraintViolationException e) {
-            logger.error("Could not store the block event data for user with id " + blockEventDTO.getUser()
+            LOGGER.error("Could not store the block event data for user with id " + blockEventDTO.getUser()
                     + " for experiment with id " + blockEventDTO.getExperiment() + " since the block event violates the"
                     + " block event table constraints!", e);
         }
@@ -191,7 +191,7 @@ public class EventService {
                 clickEventRepository.save(clickEvent);
             }
         } catch (ConstraintViolationException e) {
-            logger.error("Could not store the click event data for user with id " + clickEventDTO.getUser()
+            LOGGER.error("Could not store the click event data for user with id " + clickEventDTO.getUser()
                     + " for experiment with id " + clickEventDTO.getExperiment() + " since the click event violates the"
                     + " click event table constraints!", e);
         }
@@ -214,7 +214,7 @@ public class EventService {
                 debuggerEventRepository.save(debuggerEvent);
             }
         } catch (ConstraintViolationException e) {
-            logger.error("Could not store the debugger event data for user with id " + debuggerEventDTO.getUser()
+            LOGGER.error("Could not store the debugger event data for user with id " + debuggerEventDTO.getUser()
                     + " for experiment with id " + debuggerEventDTO.getExperiment() + " since the debugger event "
                     + "violates the debugger event table constraints!", e);
         }
@@ -237,7 +237,7 @@ public class EventService {
                 questionEventRepository.save(questionEvent);
             }
         } catch (ConstraintViolationException e) {
-            logger.error("Could not store the question event data for user with id " + questionEventDTO.getUser()
+            LOGGER.error("Could not store the question event data for user with id " + questionEventDTO.getUser()
                     + " for experiment with id " + questionEventDTO.getExperiment() + " since the question event "
                     + "violates the question event table constraints!", e);
         }
@@ -260,7 +260,7 @@ public class EventService {
                 resourceEventRepository.save(resourceEvent);
             }
         } catch (ConstraintViolationException e) {
-            logger.error("Could not store the resource event data for user with id " + resourceEventDTO.getUser()
+            LOGGER.error("Could not store the resource event data for user with id " + resourceEventDTO.getUser()
                     + " for experiment with id " + resourceEventDTO.getExperiment() + " since the resource event "
                     + "violates the resource event table constraints!", e);
         }
@@ -283,7 +283,7 @@ public class EventService {
         Optional<BlockEvent> projection = blockEventRepository.findById(id);
 
         if (projection.isEmpty()) {
-            logger.error("Could not find block event with id " + id + "!");
+            LOGGER.error("Could not find block event with id " + id + "!");
             throw new NotFoundException("Could not find block event with id " + id + "!");
         } else if (projection.get().getCode() == null) {
             throw new IllegalArgumentException("No json string could be found for the block event with id " + id + "!");
@@ -315,7 +315,7 @@ public class EventService {
         try {
             BlockEventJSONProjection projection =
                     blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
             if (!checkReturnFirstJson(participant, projection, user, experiment)) {
                 return null;
@@ -323,7 +323,7 @@ public class EventService {
 
             return projection.getCode();
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
                     + " when trying to retrieve the last json file!", e);
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " when trying to retrieve the last json file!", e);
@@ -413,7 +413,7 @@ public class EventService {
                     blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
 
             if (json.isEmpty()) {
-                logger.error("Could not find any json data for user with id " + user + " for experiment with id "
+                LOGGER.error("Could not find any json data for user with id " + user + " for experiment with id "
                         + experimentId + "!");
                 throw new NotFoundException("Could not find any json data for user with id " + user + " for experiment "
                         + "with id " + experimentId + "!");
@@ -421,7 +421,7 @@ public class EventService {
 
             return json;
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
                     + " when trying to download the json files!", e);
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " when trying to download the json files!", e);
@@ -453,7 +453,7 @@ public class EventService {
                     experiment);
 
             if (xml.isEmpty()) {
-                logger.error("Could not find any xml data for user with id " + user + " for experiment with id "
+                LOGGER.error("Could not find any xml data for user with id " + user + " for experiment with id "
                         + experimentId + "!");
                 throw new NotFoundException("Could not find any xml data for user with id " + user + " for experiment "
                         + "with id " + experimentId + "!");
@@ -461,7 +461,7 @@ public class EventService {
 
             return xml;
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
                     + " when trying to download the xml files!", e);
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " when trying to download the xml files!", e);
@@ -502,7 +502,7 @@ public class EventService {
             return blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(user, experiment,
                     PageRequest.of(currentPage, pageSize, Sort.by("date").ascending()));
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find block event projections for user with id " + userId + " or experiment with id "
+            LOGGER.error("Could not find block event projections for user with id " + userId + " or experiment with id "
                     + experimentId + "!", e);
             throw new NotFoundException("Could not find block event projections for user with id " + userId
                     + " or experiment with id " + experimentId + "!", e);
@@ -524,13 +524,13 @@ public class EventService {
                     + " or experiment with invalid id " + experiment + "!");
         }
 
-        CodesData codesData = codesDataRepository.findByUserAndExperiment(user, experiment);
+        Optional<CodesData> codesData = codesDataRepository.findByUserAndExperiment(user, experiment);
 
-        if (codesData == null) {
+        if (codesData.isEmpty()) {
             return new CodesDataDTO();
         }
 
-        return createCodesDataDTO(codesData);
+        return createCodesDataDTO(codesData.get());
     }
 
     /**
@@ -554,7 +554,7 @@ public class EventService {
             List<BlockEvent> blockEvents = blockEventRepository.findAllByExperiment(experiment);
             return createBlockEventList(blockEvents);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + id + " in the database!", e);
+            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }
@@ -580,7 +580,7 @@ public class EventService {
             List<ClickEvent> clickEvents = clickEventRepository.findAllByExperiment(experiment);
             return createClickEventList(clickEvents);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + id + " in the database!", e);
+            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }
@@ -606,7 +606,7 @@ public class EventService {
             List<ResourceEvent> resourceEvents = resourceEventRepository.findAllByExperiment(experiment);
             return createResourceEventList(resourceEvents);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + id + " in the database!", e);
+            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }
@@ -695,21 +695,21 @@ public class EventService {
     private boolean isParticipant(final User user, final Experiment experiment, final int userId,
                                   final int experimentId) {
         try {
-            Participant participant = participantRepository.findByUserAndExperiment(user, experiment);
+            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
-            if (participant == null) {
-                logger.error("No corresponding participant entry could be found for user with id " + userId
+            if (participant.isEmpty()) {
+                LOGGER.error("No corresponding participant entry could be found for user with id " + userId
                         + " and experiment " + experimentId + " when trying to save an event!");
                 return false;
-            } else if (participant.getEnd() != null) {
-                logger.error("Tried to insert an event for participant " + userId + " during experiment "
+            } else if (participant.get().getEnd() != null) {
+                LOGGER.error("Tried to insert an event for participant " + userId + " during experiment "
                         + experimentId + " who has already finished!");
                 return false;
             }
 
             return true;
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find user with id " + userId + " or experiment with id " + experimentId
+            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
                     + " when trying to save an event!", e);
             return false;
         }
@@ -725,10 +725,10 @@ public class EventService {
      */
     private boolean isValidEvent(final User user, final Experiment experiment, final LocalDateTime date) {
         if (user == null || experiment == null || date == null) {
-            logger.error("Cannot save event to database with user, experiment or timestamp null!");
+            LOGGER.error("Cannot save event to database with user, experiment or timestamp null!");
             return false;
         } else if (!user.isActive() || !experiment.isActive()) {
-            logger.error("Cannot save event to database with user or experiment inactive!");
+            LOGGER.error("Cannot save event to database with user or experiment inactive!");
             return false;
         } else {
             return true;
@@ -746,18 +746,19 @@ public class EventService {
      * @param experiment The {@link Experiment} during which the code was generated.
      * @return {@code true} if the code should be returned, or {@code false} otherwise.
      */
-    private boolean checkReturnFirstJson(final Participant participant, final BlockEventJSONProjection projection,
+    private boolean checkReturnFirstJson(final Optional<Participant> participant,
+                                         final BlockEventJSONProjection projection,
                                          final User user, final Experiment experiment) {
-        if (participant == null) {
-            logger.error("No corresponding participant entry could be found for user with id " + user.getId()
+        if (participant.isEmpty()) {
+            LOGGER.error("No corresponding participant entry could be found for user with id " + user.getId()
                     + " and experiment with id " + experiment.getId() + " when trying to load the last json code!");
             return false;
         } else if (projection == null) {
-            logger.info("No json code saved for user with id " + user.getId() + " for experiment with id "
+            LOGGER.info("No json code saved for user with id " + user.getId() + " for experiment with id "
                     + experiment.getId() + ".");
             return false;
         } else if (!user.isActive() || !experiment.isActive()) {
-            logger.error("Tried to load json code for user with id " + user.getId() + " and experiment with id "
+            LOGGER.error("Tried to load json code for user with id " + user.getId() + " and experiment with id "
                     + experiment.getId() + " with inactive user or experiment!");
             return false;
         } else {
@@ -771,21 +772,17 @@ public class EventService {
      * @param event The event for which the properties are to be set.
      * @param user The {@link User} who caused the event.
      * @param experiment The {@link Experiment} during which the even occurred.
-     * @param eventType The event type to be set.
-     * @param eventName The concrete event to be set.
      * @param eventDTO The {@link EventDTO} containing additional information.
      */
-    private void setEventData(final Event event, final User user, final Experiment experiment, final String eventType,
-                              final String eventName, final EventDTO eventDTO) {
+    private void setEventData(final Event event, final User user, final Experiment experiment,
+                              final EventDTO eventDTO) {
         if (eventDTO.getId() != null) {
             event.setId(eventDTO.getId());
         }
 
         event.setUser(user);
         event.setExperiment(experiment);
-        event.setDate(Timestamp.valueOf(eventDTO.getDate()));
-        event.setEventType(eventType);
-        event.setEvent(eventName);
+        event.setDate(eventDTO.getDate());
     }
 
     /**
@@ -828,8 +825,9 @@ public class EventService {
             blockEvent.setCode(blockEventDTO.getCode());
         }
 
-        setEventData(blockEvent, user, experiment, blockEventDTO.getEventType().toString(),
-                blockEventDTO.getEvent().toString(), blockEventDTO);
+        blockEvent.setEventType(blockEventDTO.getEventType());
+        blockEvent.setEvent(blockEventDTO.getEvent());
+        setEventData(blockEvent, user, experiment, blockEventDTO);
         return blockEvent;
     }
 
@@ -850,8 +848,9 @@ public class EventService {
             clickEvent.setMetadata(clickEventDTO.getMetadata());
         }
 
-        setEventData(clickEvent, user, experiment, clickEventDTO.getEventType().toString(),
-                clickEventDTO.getEvent().toString(), clickEventDTO);
+        clickEvent.setEventType(clickEventDTO.getEventType());
+        clickEvent.setEvent(clickEventDTO.getEvent());
+        setEventData(clickEvent, user, experiment, clickEventDTO);
         return clickEvent;
     }
 
@@ -881,8 +880,9 @@ public class EventService {
             debuggerEvent.setExecution(debuggerEventDTO.getExecution());
         }
 
-        setEventData(debuggerEvent, user, experiment, debuggerEventDTO.getEventType().toString(),
-                debuggerEventDTO.getEvent().toString(), debuggerEventDTO);
+        debuggerEvent.setEventType(debuggerEventDTO.getEventType());
+        debuggerEvent.setEvent(debuggerEventDTO.getEvent());
+        setEventData(debuggerEvent, user, experiment, debuggerEventDTO);
         return debuggerEvent;
     }
 
@@ -921,8 +921,9 @@ public class EventService {
             questionEvent.setOpcode(questionEventDTO.getOpcode());
         }
 
-        setEventData(questionEvent, user, experiment, questionEventDTO.getEventType().toString(),
-                questionEventDTO.getEvent().toString(), questionEventDTO);
+        questionEvent.setEventType(questionEventDTO.getEventType());
+        questionEvent.setEvent(questionEventDTO.getEvent());
+        setEventData(questionEvent, user, experiment, questionEventDTO);
         return questionEvent;
     }
 
@@ -948,14 +949,15 @@ public class EventService {
         if (resourceEventDTO.getFiletype() != null) {
             resourceEvent.setResourceType(resourceEventDTO.getFiletype());
         }
-        if (resourceEventDTO.getLibraryResource().equals(ResourceEventDTO.LibraryResource.TRUE)) {
+        if (resourceEventDTO.getLibraryResource().equals(LibraryResource.TRUE)) {
             resourceEvent.setLibraryResource(1);
-        } else if (resourceEventDTO.getLibraryResource().equals(ResourceEventDTO.LibraryResource.FALSE)) {
+        } else if (resourceEventDTO.getLibraryResource().equals(LibraryResource.FALSE)) {
             resourceEvent.setLibraryResource(0);
         }
 
-        setEventData(resourceEvent, user, experiment, resourceEventDTO.getEventType().toString(),
-                resourceEventDTO.getEvent().toString(), resourceEventDTO);
+        resourceEvent.setEventType(resourceEventDTO.getEventType());
+        resourceEvent.setEvent(resourceEventDTO.getEvent());
+        setEventData(resourceEvent, user, experiment, resourceEventDTO);
         return resourceEvent;
     }
 
@@ -1006,8 +1008,8 @@ public class EventService {
         for (BlockEvent blockEvent : blockEvents) {
             String[] data = {blockEvent.getId().toString(), blockEvent.getUser().getId().toString(),
                     blockEvent.getExperiment().getId().toString(), blockEvent.getDate().toString(),
-                    blockEvent.getEventType(), blockEvent.getEvent(), blockEvent.getSprite(), blockEvent.getMetadata(),
-                    blockEvent.getXml(), blockEvent.getCode()};
+                    blockEvent.getEventType().toString(), blockEvent.getEvent().toString(), blockEvent.getSprite(),
+                    blockEvent.getMetadata(), blockEvent.getXml(), blockEvent.getCode()};
             events.add(data);
         }
 
@@ -1028,7 +1030,7 @@ public class EventService {
         for (ClickEvent clickEvent : clickEvents) {
             String[] data = {clickEvent.getId().toString(), clickEvent.getUser().getId().toString(),
                     clickEvent.getExperiment().getId().toString(), clickEvent.getDate().toString(),
-                    clickEvent.getEventType(), clickEvent.getEvent(), clickEvent.getMetadata()};
+                    clickEvent.getEventType().toString(), clickEvent.getEvent().toString(), clickEvent.getMetadata()};
             events.add(data);
         }
 
@@ -1050,8 +1052,9 @@ public class EventService {
         for (ResourceEvent resourceEvent : resourceEvents) {
             String[] data = {resourceEvent.getId().toString(), resourceEvent.getUser().getId().toString(),
                     resourceEvent.getExperiment().getId().toString(), resourceEvent.getDate().toString(),
-                    resourceEvent.getEventType(), resourceEvent.getEvent(), resourceEvent.getResourceName(),
-                    resourceEvent.getHash(), resourceEvent.getResourceType(), resourceEvent.getLibraryResource() == null
+                    resourceEvent.getEventType().toString(), resourceEvent.getEvent().toString(),
+                    resourceEvent.getResourceName(), resourceEvent.getHash(), resourceEvent.getResourceType(),
+                    resourceEvent.getLibraryResource() == null
                     ? "null" : resourceEvent.getLibraryResource().toString()};
             events.add(data);
         }

@@ -20,8 +20,8 @@ import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.Secrets;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.CourseDTO;
-import fim.unipassau.de.scratch1984.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +43,7 @@ public class CourseService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(CourseService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CourseService.class);
 
     /**
      * The course repository to use for database queries related to course data.
@@ -179,10 +178,11 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        Experiment experiment = experimentRepository.findByTitle(experimentTitle);
+        Optional<Experiment> experiment = experimentRepository.findByTitle(experimentTitle);
 
         try {
-            return experiment != null && courseExperimentRepository.existsByCourseAndExperiment(course, experiment);
+            return experiment.isPresent() && courseExperimentRepository.existsByCourseAndExperiment(course,
+                    experiment.get());
         } catch (EntityNotFoundException e) {
             return false;
         }
@@ -205,10 +205,10 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        User user = userRepository.findUserByUsernameOrEmail(input, input);
+        Optional<User> user = userRepository.findUserByUsernameOrEmail(input, input);
 
         try {
-            return user != null && courseParticipantRepository.existsByCourseAndUser(course, user);
+            return user.isPresent() && courseParticipantRepository.existsByCourseAndUser(course, user.get());
         } catch (EntityNotFoundException e) {
             return false;
         }
@@ -296,7 +296,7 @@ public class CourseService {
             courseExperiments.forEach(experiment -> experimentRepository.delete(experiment.getExperiment()));
             courseRepository.deleteById(id);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course when trying to delete the course experiments of course with id "
+            LOGGER.error("Could not find the course when trying to delete the course experiments of course with id "
                     + id + "!", e);
             throw new NotFoundException("Could not find the course when trying to delete the course experiments of "
                     + "course with id " + id + "!", e);
@@ -324,29 +324,30 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        User user = userRepository.findUserByUsernameOrEmail(participant, participant);
+        Optional<User> optionalUser = userRepository.findUserByUsernameOrEmail(participant, participant);
 
         try {
-            if (user == null) {
-                logger.error("Could not find the user with username or email " + participant + " when trying to add a "
+            if (optionalUser.isEmpty()) {
+                LOGGER.error("Could not find the user with username or email " + participant + " when trying to add a "
                         + "course participant!");
                 throw new NotFoundException("Could not find the user with username or email " + participant
                         + " when trying to add a course participant!");
-            } else if (!user.getRole().equals(UserDTO.Role.PARTICIPANT.toString())) {
+            } else if (!optionalUser.get().getRole().equals(Role.PARTICIPANT)) {
                 throw new IllegalStateException("Tried to add administrator with username or email " + participant
                         + " as a course participant!");
             }
 
-            CourseParticipant courseParticipant = new CourseParticipant(user, course,
-                    Timestamp.valueOf(LocalDateTime.now()));
-            course.setLastChanged(courseParticipant.getAdded());
+            User user = optionalUser.get();
+            LocalDateTime now = LocalDateTime.now();
+            CourseParticipant courseParticipant = new CourseParticipant(user, course, now);
+            course.setLastChanged(now);
             user.setActive(true);
             courseParticipantRepository.save(courseParticipant);
             courseRepository.save(course);
             userRepository.save(user);
             return user.getId();
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course when saving the course participant data!", e);
+            LOGGER.error("Could not find the course when saving the course participant data!", e);
             throw new NotFoundException("Could not find the course when saving the course participant data!", e);
         } catch (ConstraintViolationException e) {
             throw new StoreException("The given course participant data does not meet the foreign key constraints!", e);
@@ -371,25 +372,25 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        User user = userRepository.findUserByUsernameOrEmail(participant, participant);
+        Optional<User> user = userRepository.findUserByUsernameOrEmail(participant, participant);
 
         try {
-            if (user == null) {
-                logger.error("Could not find the user with username or email " + participant + " when trying to delete "
+            if (user.isEmpty()) {
+                LOGGER.error("Could not find the user with username or email " + participant + " when trying to delete "
                         + "a course participant!");
                 throw new NotFoundException("Could not find the user with username or email " + participant + " when "
                         + "trying to delete a course participant!");
             }
 
-            CourseParticipantId courseParticipantId = new CourseParticipantId(user.getId(), courseId);
+            CourseParticipantId courseParticipantId = new CourseParticipantId(user.get().getId(), courseId);
             List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
-            course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
-            courseExperiments.forEach(courseExperiment -> deleteExperimentParticipant(user,
+            course.setLastChanged(LocalDateTime.now());
+            courseExperiments.forEach(courseExperiment -> deleteExperimentParticipant(user.get(),
                     courseExperiment.getExperiment()));
             courseParticipantRepository.deleteById(courseParticipantId);
             courseRepository.save(course);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course when deleting the course participant data!", e);
+            LOGGER.error("Could not find the course when deleting the course participant data!", e);
             throw new NotFoundException("Could not find the course when deleting the course participant data!", e);
         }
     }
@@ -432,22 +433,22 @@ public class CourseService {
         }
 
         Course course = courseRepository.getOne(courseId);
-        Experiment experiment = experimentRepository.findByTitle(experimentTitle);
+        Optional<Experiment> experiment = experimentRepository.findByTitle(experimentTitle);
 
         try {
-            if (experiment == null) {
-                logger.error("Could not find the experiment with title " + experimentTitle + " when trying to delete a "
+            if (experiment.isEmpty()) {
+                LOGGER.error("Could not find the experiment with title " + experimentTitle + " when trying to delete a "
                         + "course experiment!");
                 throw new NotFoundException("Could not find the experiment with title " + experimentTitle
                         + " when trying to delete a course experiment!");
             }
 
-            CourseExperimentId courseExperimentId = new CourseExperimentId(courseId, experiment.getId());
-            course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
+            CourseExperimentId courseExperimentId = new CourseExperimentId(courseId, experiment.get().getId());
+            course.setLastChanged(LocalDateTime.now());
             courseExperimentRepository.deleteById(courseExperimentId);
             courseRepository.save(course);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course when deleting the course experiment data!", e);
+            LOGGER.error("Could not find the course when deleting the course experiment data!", e);
             throw new NotFoundException("Could not find the course when deleting the course experiment data!", e);
         }
     }
@@ -481,7 +482,7 @@ public class CourseService {
                 userRepository.save(user);
             }
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course or user when adding course participants to course experiments!", e);
+            LOGGER.error("Could not find the course or user when adding course participants to course experiments!", e);
             throw new NotFoundException("Could not find the course or user when adding course participants to course "
                     + "experiments!", e);
         } catch (ConstraintViolationException e) {
@@ -507,7 +508,7 @@ public class CourseService {
         Optional<Course> course = courseRepository.findById(id);
 
         if (course.isEmpty()) {
-            logger.error("Could not find course with id " + id + " in the database!");
+            LOGGER.error("Could not find course with id " + id + " in the database!");
             throw new NotFoundException("Could not find course with id " + id + " in the database!");
         }
 
@@ -544,11 +545,11 @@ public class CourseService {
             List<CourseParticipant> courseParticipants = courseParticipantRepository.findAllByCourse(course);
             courseParticipants.forEach(courseParticipant -> updateUserStatus(status, courseParticipant.getUser()));
             course.setActive(status);
-            course.setLastChanged(Timestamp.valueOf(LocalDateTime.now()));
+            course.setLastChanged(LocalDateTime.now());
             Course updated = courseRepository.save(course);
             return createCourseDTO(updated);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not update the status for non-existent course with id " + id + "!");
+            LOGGER.error("Could not update the status for non-existent course with id " + id + "!");
             throw new NotFoundException("Could not update the status for non-existent course with id " + id + "!");
         }
     }
@@ -620,16 +621,16 @@ public class CourseService {
      */
     private void persistCourseExperiment(final Course course, final Experiment experiment) {
         try {
-            CourseExperiment courseExperiment = new CourseExperiment(course, experiment,
-                    Timestamp.valueOf(LocalDateTime.now()));
+            LocalDateTime now = LocalDateTime.now();
+            CourseExperiment courseExperiment = new CourseExperiment(course, experiment, now);
             experiment.setActive(true);
             course.setActive(true);
-            course.setLastChanged(courseExperiment.getAdded());
+            course.setLastChanged(now);
             courseExperimentRepository.save(courseExperiment);
             courseRepository.save(course);
             experimentRepository.save(experiment);
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find the course or experiment when saving the course experiment data!", e);
+            LOGGER.error("Could not find the course or experiment when saving the course experiment data!", e);
             throw new NotFoundException("Could not find the course or experiment when saving the course experiment "
                     + "data!", e);
         } catch (ConstraintViolationException e) {
@@ -649,7 +650,7 @@ public class CourseService {
         boolean experimentsInactive = !courseExperiments.isEmpty() && courseExperiments.stream().noneMatch(
                 courseExperiment -> courseExperiment.getExperiment().isActive());
 
-        if (experimentsInactive && course.getLastChanged().toLocalDateTime().isBefore(LocalDateTime.now().minusDays(
+        if (experimentsInactive && course.getLastChanged().isBefore(LocalDateTime.now().minusDays(
                 Constants.COURSE_INACTIVE_DAYS))) {
             course.setActive(false);
             courseRepository.save(course);
@@ -667,7 +668,7 @@ public class CourseService {
                 .title(courseDTO.getTitle())
                 .description(courseDTO.getDescription())
                 .content(courseDTO.getContent())
-                .lastChanged(Timestamp.valueOf(courseDTO.getLastChanged()))
+                .lastChanged(courseDTO.getLastChanged())
                 .active(courseDTO.isActive())
                 .build();
 
@@ -675,7 +676,6 @@ public class CourseService {
             course.setId(courseDTO.getId());
         }
 
-        course.setActive(courseDTO.isActive());
         return course;
     }
 
@@ -690,7 +690,7 @@ public class CourseService {
                 .title(course.getTitle())
                 .description(course.getDescription())
                 .content(course.getContent())
-                .lastChanged(course.getLastChanged().toLocalDateTime())
+                .lastChanged(course.getLastChanged())
                 .active(course.isActive())
                 .build();
 
@@ -698,7 +698,6 @@ public class CourseService {
             courseDTO.setId(course.getId());
         }
 
-        courseDTO.setActive(course.isActive());
         return courseDTO;
     }
 

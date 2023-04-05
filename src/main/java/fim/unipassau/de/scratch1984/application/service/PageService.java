@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.Optional;
 
 /**
  * A service providing methods related to loading information to be displayed in tables with multiple pages.
@@ -37,7 +38,7 @@ public class PageService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(PageService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PageService.class);
 
     /**
      * The experiment repository to use for database queries related to experiment data.
@@ -109,7 +110,7 @@ public class PageService {
                 PageRequest.of(currentPage, pageSize, Sort.by("id").descending()));
 
         if (experiments.isEmpty()) {
-            logger.info("Could not find any experiments for the page with page size of " + pageSize
+            LOGGER.info("Could not find any experiments for the page with page size of " + pageSize
                     + ", current page of " + currentPage + " and offset of " + pageable.getOffset() + "!");
         }
 
@@ -130,7 +131,7 @@ public class PageService {
                 PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id").descending()));
 
         if (courses.isEmpty()) {
-            logger.info("Could not find any courses for the page with page size of " + pageable.getPageSize()
+            LOGGER.info("Could not find any courses for the page with page size of " + pageable.getPageSize()
                     + ", current page of " + pageable.getPageNumber() + " and offset of " + pageable.getOffset() + "!");
         }
 
@@ -159,7 +160,7 @@ public class PageService {
                 course);
 
         if (experiments.isEmpty()) {
-            logger.info("Could not find any course experiments for the page with page size of " + pageable.getPageSize()
+            LOGGER.info("Could not find any course experiments for the page with page size of " + pageable.getPageSize()
                     + ", current page of " + pageable.getPageNumber() + " and offset of " + pageable.getOffset() + "!");
         }
 
@@ -229,7 +230,7 @@ public class PageService {
             return participantRepository.findAllByExperiment(experiment,
                     PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("user").descending()));
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find experiment with id " + id + " in the database!", e);
+            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }
@@ -256,7 +257,7 @@ public class PageService {
             return courseParticipantRepository.findAllByCourse(course, PageRequest.of(pageable.getPageNumber(),
                     pageable.getPageSize(), Sort.by("added").descending()));
         } catch (EntityNotFoundException e) {
-            logger.error("Could not find course with id " + id + " in the database!", e);
+            LOGGER.error("Could not find course with id " + id + " in the database!", e);
             throw new NotFoundException("Could not find course with id " + id + " in the database!", e);
         }
     }
@@ -345,12 +346,12 @@ public class PageService {
      */
     @Transactional
     public int getLastParticipantPage(final int id) {
-        ExperimentData experimentData = experimentDataRepository.findByExperiment(id);
+        Optional<ExperimentData> experimentData = experimentDataRepository.findByExperiment(id);
 
-        if (experimentData == null) {
+        if (experimentData.isEmpty()) {
             return 0;
         } else {
-            int participants = experimentData.getParticipants();
+            int participants = experimentData.get().getParticipants();
             return computeLastPage(participants);
         }
     }
@@ -420,7 +421,7 @@ public class PageService {
      */
     private int checkRowCount(final long rows) {
         if (rows > (long) Integer.MAX_VALUE) {
-            logger.error("Can't return the correct row count as number of rows is too big to be cast to an int!");
+            LOGGER.error("Can't return the correct row count as number of rows is too big to be cast to an int!");
             return Integer.MAX_VALUE;
         }
 

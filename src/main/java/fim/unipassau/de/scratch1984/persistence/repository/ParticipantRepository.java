@@ -8,8 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A repository providing functionality for retrieving participant information for an experiment.
@@ -32,7 +33,7 @@ public interface ParticipantRepository extends JpaRepository<Participant, Partic
      * @param experiment The experiment to search for.
      * @return The participation data or {@code null}, if no entry could be found.
      */
-    Participant findByUserAndExperiment(User user, Experiment experiment);
+    Optional<Participant> findByUserAndExperiment(User user, Experiment experiment);
 
     /**
      * Returns a page of participants for the given experiment, if any entries exist.
@@ -52,13 +53,13 @@ public interface ParticipantRepository extends JpaRepository<Participant, Partic
     List<Participant> findAllByExperiment(Experiment experiment);
 
     /**
-     * Returns a list of all participants for the given experiment with the given end timestamp, if any entries exist.
+     * Returns a list of all participants for the given experiment with the given end datetime, if any entries exist.
      *
      * @param experiment The experiment to search for.
-     * @param end The ending timestamp.
+     * @param end The ending datetime.
      * @return The participant list.
      */
-    List<Participant> findAllByExperimentAndEnd(Experiment experiment, Timestamp end);
+    List<Participant> findAllByExperimentAndEnd(Experiment experiment, LocalDateTime end);
 
     /**
      * Returns a list of all participant relations for the given user, if any entries exist.

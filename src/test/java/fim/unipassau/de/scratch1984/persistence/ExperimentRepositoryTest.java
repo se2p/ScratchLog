@@ -8,6 +8,8 @@ import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -43,13 +44,13 @@ public class ExperimentRepositoryTest {
     private static final String GUI_URL = "scratch";
     private static final int LIMIT = 5;
     private static final int SMALL_LIMIT = 2;
-    private static final Timestamp TIMESTAMP = Timestamp.valueOf(LocalDateTime.now());
+    private static final LocalDateTime DATE = LocalDateTime.now();
     private PageRequest pageRequest;
-    private User user = new User("user", "email", "PARTICIPANT", "ENGLISH", "password", "secret");
+    private User user = new User("user", "email", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
     private Course course1 = new Course(null, "Course 1", "Description for my course", "No info", true,
-            TIMESTAMP);
+            DATE);
     private Course course2 = new Course(null, "Course 2", "Description for my course", "No info", true,
-            TIMESTAMP);
+            DATE);
     private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
             "Some postscript", false, false, GUI_URL);
     private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
@@ -66,9 +67,9 @@ public class ExperimentRepositoryTest {
     private Participant participant2 = new Participant(user, experiment2, null, null);
     private Participant participant3 = new Participant(user, experiment3, null, null);
     private Participant participant4 = new Participant(user, experiment4, null, null);
-    private CourseExperiment courseExperiment1 = new CourseExperiment(course1, experiment1, TIMESTAMP);
-    private CourseExperiment courseExperiment2 = new CourseExperiment(course2, experiment3, TIMESTAMP);
-    private CourseExperiment courseExperiment3 = new CourseExperiment(course1, experiment2, TIMESTAMP);
+    private CourseExperiment courseExperiment1 = new CourseExperiment(course1, experiment1, DATE);
+    private CourseExperiment courseExperiment2 = new CourseExperiment(course2, experiment3, DATE);
+    private CourseExperiment courseExperiment3 = new CourseExperiment(course1, experiment2, DATE);
 
     @BeforeEach
     public void setup() {

@@ -3,7 +3,8 @@ package fim.unipassau.de.scratch1984.application.service;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.spring.configuration.SAML2Properties;
-import fim.unipassau.de.scratch1984.web.dto.UserDTO;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,7 +31,7 @@ public class SAML2Service {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(SAML2Service.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SAML2Service.class);
 
     /**
      * The user repository to use for user queries.
@@ -73,16 +75,18 @@ public class SAML2Service {
      */
     public Authentication handleAuthentication(final Saml2AuthenticatedPrincipal principal) {
         String username = substituteAttributes(properties.getUsernamePattern(), principal);
-        User user = userRepository.findUserByUsername(username);
+        Optional<User> optionalUser = userRepository.findUserByUsername(username);
+        User user;
 
-        if (user == null) {
+        if (optionalUser.isEmpty()) {
             user = createUserFromAuth(username, principal);
 
             if (user.getId() == null) {
-                logger.error("Could not save new user " + username + " authenticated with SAML2!");
+                LOGGER.error("Could not save new user " + username + " authenticated with SAML2!");
                 throw new IllegalStateException("Could not save new user " + username + " authenticated with SAML2!");
             }
         } else {
+            user = optionalUser.get();
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
         }
@@ -103,8 +107,8 @@ public class SAML2Service {
         user.setUsername(username);
         user.setEmail(substituteAttributes(properties.getEmailPattern(), principal));
         user.setActive(true);
-        user.setRole(UserDTO.Role.PARTICIPANT.name());
-        user.setLanguage(UserDTO.Language.ENGLISH.name());
+        user.setRole(Role.PARTICIPANT);
+        user.setLanguage(Language.ENGLISH);
         user.setLastLogin(LocalDateTime.now());
         return userRepository.save(user);
     }

@@ -1,6 +1,6 @@
 package fim.unipassau.de.scratch1984.persistence.projection;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * Projection interface for the {@link fim.unipassau.de.scratch1984.persistence.entity.BlockEvent} class to return only
@@ -34,7 +34,7 @@ public interface BlockEventProjection {
      *
      * @return The respective timestamp.
      */
-    Timestamp getDate();
+    LocalDateTime getDate();
 
     /**
      * Returns the spritename of the event.

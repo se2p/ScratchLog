@@ -12,7 +12,7 @@ include:
 workflow:
   rules:
     - if: $CI_MERGE_REQUEST_IID
-    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 stages:
   - validate
@@ -32,7 +32,7 @@ default:
 
 variables:
   # Arguments passed to maven before CLI arguments, only used from Maven 4 onward
-  MAVEN_ARGS: '--no-transfer-progress -Dmaven.repo.local=.m2/repository -Dmaven.compiler.useIncrementalCompilation=false -Prelease'
+  MAVEN_ARGS: '--no-transfer-progress -Dmaven.repo.local=.m2/repository -Dmaven.compiler.useIncrementalCompilation=false'
   GIT_STRATEGY: fetch
   # Disable all SAST jobs by default, since we manually enable/configure those
   SAST_DISABLED: 'true'
@@ -55,7 +55,7 @@ Compile:
   stage: build
   needs: []
   script:
-    - "mvn $MAVEN_ARGS -DskipCheckstyle -DskipTests package"
+    - "mvn $MAVEN_ARGS package"
   artifacts:
     paths:
       - target/
@@ -64,7 +64,7 @@ Unit-Tests:
   stage: test
   needs: ["Compile"]
   script:
-    - "mvn $MAVEN_ARGS -DskipCheckstyle test"
+    - "mvn $MAVEN_ARGS test"
   after_script:
     - mvn $MAVEN_ARGS jacoco:report
     # Print summary line, so GitLab can extract code coverage
@@ -91,7 +91,7 @@ spotbugs-sast:
     # We already have a compiled version of the project, no need to recompile it
     COMPILE: 'false'
     # GitLab Spotbugs uses MAVEN_CLI_OPTS for additional CLI flags
-    MAVEN_CLI_OPTS: '$MAVEN_ARGS -DskipCheckstyle -DskipTests'
+    MAVEN_CLI_OPTS: '$MAVEN_ARGS'
     # Needs to be set explicitly even if it's set via $MAVEN_ARGS/$MAVEN_CLI_OPTS above, to prevent a fatal spotbugs
     # error: 'lstat /root/.m2/repository: no such file or directory'. There exists an upstream issue for a similar error
     # https://gitlab.com/gitlab-org/gitlab/-/issues/334854 but the upstream issue is for maven multi-module projects.
@@ -100,8 +100,7 @@ spotbugs-sast:
     reports:
       sast: gl-sast-report.json
   rules:
-    # Exclude job for Draft merge requests and trigger it otherwise
-    - if: '$CI_MERGE_REQUEST_TITLE !~ /^Draft:/'
+    - when: always
 
 gemnasium-maven-dependency_scanning:
   stage: test
@@ -109,18 +108,14 @@ gemnasium-maven-dependency_scanning:
   variables:
     MAVEN_CLI_OPTS: "$MAVEN_ARGS -DskipCheckstyle -DskipTests"
   rules:
-    # Exclude job for Draft merge requests
-    - if: '$CI_MERGE_REQUEST_TITLE !~ /^Draft:/'
+    - when: always
 
 secret_detection:
   stage: test
   needs: []
   cache: []
-
-semgrep-sast:
-  stage: test
-  needs: []
-  cache: []
+  rules:
+    - when: always
 
 # See: https://docs.gitlab.com/ee/user/project/merge_requests/test_coverage_visualization.html#java-and-kotlin-examples
 Visualize-Coverage:

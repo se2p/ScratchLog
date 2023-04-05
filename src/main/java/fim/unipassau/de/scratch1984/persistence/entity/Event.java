@@ -1,6 +1,6 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * An interface for event entities logged by the instrumented Scratch IDE.
@@ -50,45 +50,17 @@ public interface Event {
     void setExperiment(Experiment experiment);
 
     /**
-     * Returns the timestamp of the event.
+     * Returns the datetime of the event.
      *
      * @return The respective timestamp.
      */
-    Timestamp getDate();
+    LocalDateTime getDate();
 
     /**
-     * Sets the timestamp of the event.
+     * Sets the datetime of the event.
      *
      * @param date The event timestamp to be set.
      */
-    void setDate(Timestamp date);
-
-    /**
-     * Returns the type of the event.
-     *
-     * @return The event type.
-     */
-    String getEventType();
-
-    /**
-     * Sets the type of the event.
-     *
-     * @param eventType The event type to be set.
-     */
-    void setEventType(String eventType);
-
-    /**
-     * Returns the concrete event that occurred.
-     *
-     * @return The respective event.
-     */
-    String getEvent();
-
-    /**
-     * Sets the concrete event that occurred.
-     *
-     * @param event The event to be set.
-     */
-    void setEvent(String event);
+    void setDate(LocalDateTime date);
 
 }

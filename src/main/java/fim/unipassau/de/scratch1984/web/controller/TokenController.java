@@ -5,6 +5,7 @@ import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.util.validation.PasswordValidator;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -34,7 +35,7 @@ public class TokenController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(TokenController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TokenController.class);
 
     /**
      * The token service to use for generating tokens.
@@ -86,19 +87,18 @@ public class TokenController {
         LocalDateTime localDateTime = LocalDateTime.now();
 
         if (localDateTime.isAfter(tokenDTO.getExpirationDate())) {
-            logger.debug("The token for the user with id " + tokenDTO.getUser() + " has already expired!");
+            LOGGER.debug("The token for the user with id " + tokenDTO.getUser() + " has already expired!");
             return "redirect:/?error=true";
         }
 
-        if (tokenDTO.getType() == TokenDTO.Type.CHANGE_EMAIL) {
+        if (tokenDTO.getType() == TokenType.CHANGE_EMAIL) {
             try {
                 userService.updateEmail(tokenDTO.getUser(), tokenDTO.getMetadata());
                 tokenService.deleteToken(tokenDTO.getValue());
             } catch (NotFoundException e) {
                 return Constants.ERROR;
             }
-        } else if (tokenDTO.getType() == TokenDTO.Type.REGISTER || tokenDTO.getType()
-                == TokenDTO.Type.FORGOT_PASSWORD) {
+        } else if (tokenDTO.getType() == TokenType.REGISTER || tokenDTO.getType() == TokenType.FORGOT_PASSWORD) {
             UserDTO userDTO = userService.getUserById(tokenDTO.getUser());
             model.addAttribute("userDTO", userDTO);
             model.addAttribute("token", tokenDTO.getValue());
@@ -127,10 +127,10 @@ public class TokenController {
                                final Model model) {
         if (userDTO == null || userDTO.getId() == null || userDTO.getPassword() == null
                 || userDTO.getConfirmPassword() == null) {
-            logger.error("Cannot register user with id null, or passwords null!");
+            LOGGER.error("Cannot register user with id null, or passwords null!");
             return Constants.ERROR;
         } else if (token == null || token.trim().isBlank()) {
-            logger.error("Cannot register user with token null or blank!");
+            LOGGER.error("Cannot register user with token null or blank!");
             return Constants.ERROR;
         }
 

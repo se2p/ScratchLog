@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence.entity;
 
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,6 +10,8 @@ import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -45,16 +49,18 @@ public class User {
     private String email;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.UserDTO.Role}.
+     * The user's role.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "role")
-    private String role;
+    private Role role;
 
     /**
-     * A String representing the {@link fim.unipassau.de.scratch1984.web.dto.UserDTO.Language}.
+     * The user's preferred language.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "language")
-    private String language;
+    private Language language;
 
     /**
      * The user's hashed password.
@@ -96,7 +102,7 @@ public class User {
      * @param password The user's hashed password.
      * @param secret The user's secret.
      */
-    public User(final String username, final String email, final String role, final String language,
+    public User(final String username, final String email, final Role role, final Language language,
                 final String password, final String secret) {
         this.username = username;
         this.email = email;

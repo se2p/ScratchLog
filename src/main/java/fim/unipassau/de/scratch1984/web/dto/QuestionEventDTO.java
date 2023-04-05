@@ -1,5 +1,11 @@
 package fim.unipassau.de.scratch1984.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import fim.unipassau.de.scratch1984.util.enums.QuestionEventSpecific;
+import fim.unipassau.de.scratch1984.util.enums.QuestionEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,47 +25,8 @@ import java.util.Objects;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class QuestionEventDTO implements EventDTO {
-
-    /**
-     * All possible event types for a question event.
-     */
-    public enum QuestionEventType {
-        /**
-         * The event was caused by selecting or rating a question.
-         */
-        QUESTION,
-
-        /**
-         * The event was caused by opening a question category.
-         */
-        QUESTION_CATEGORY
-    }
-
-    /**
-     * All possible specific events for a question event.
-     */
-    public enum QuestionEvent {
-        /**
-         * The user opened a question category.
-         */
-        OPEN_CATEGORY,
-
-        /**
-         * The user closed a question category.
-         */
-        CLOSE_CATEGORY,
-
-        /**
-         * The user selected a question.
-         */
-        SELECT,
-
-        /**
-         * The user rated a question.
-         */
-        RATE
-    }
 
     /**
      * The unique ID of the question event.
@@ -79,17 +46,20 @@ public class QuestionEventDTO implements EventDTO {
     /**
      * The local date time at which the question interaction occurred in the Scratch GUI.
      */
+    @JsonProperty("time")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime date;
 
     /**
      * The type of question event that occurred.
      */
+    @JsonProperty("type")
     private QuestionEventType eventType;
 
     /**
      * The specific event that occurred.
      */
-    private QuestionEvent event;
+    private QuestionEventSpecific event;
 
     /**
      * The feedback for the question, if any.
@@ -99,6 +69,7 @@ public class QuestionEventDTO implements EventDTO {
     /**
      * The type of question of the event.
      */
+    @JsonProperty("q_type")
     private String type;
 
     /**
@@ -143,9 +114,9 @@ public class QuestionEventDTO implements EventDTO {
      * @param opcode The block opcode of the event.
      */
     public QuestionEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
-                            final QuestionEventType eventType, final QuestionEvent event, final Integer feedback,
-                            final String type, final String[] values, final String category, final String form,
-                            final String blockID, final String opcode) {
+                            final QuestionEventType eventType, final QuestionEventSpecific event,
+                            final Integer feedback, final String type, final String[] values, final String category,
+                            final String form, final String blockID, final String opcode) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;

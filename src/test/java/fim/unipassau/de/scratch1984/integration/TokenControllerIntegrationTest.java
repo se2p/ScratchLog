@@ -4,6 +4,9 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.TokenService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
+import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.web.controller.TokenController;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -62,15 +65,14 @@ public class TokenControllerIntegrationTest {
     private static final String VALUE = "value";
     private static final String EMAIL = "admin@admin.com";
     private static final String VALID_PASSWORD = "V4l1d_P4ssw0rd!";
-    private static final String BLANK = "   ";
     private static final String USER_DTO = "userDTO";
     private static final String TOKEN = "token";
     private static final int ID = 1;
-    private final TokenDTO tokenDTO = new TokenDTO(TokenDTO.Type.CHANGE_EMAIL, LocalDateTime.now(), EMAIL, ID);
-    private final TokenDTO registerToken = new TokenDTO(TokenDTO.Type.REGISTER, LocalDateTime.now(), null, ID);
-    private final TokenDTO forgotToken = new TokenDTO(TokenDTO.Type.FORGOT_PASSWORD, LocalDateTime.now(), null, ID);
-    private final UserDTO userDTO = new UserDTO("admin", "admin1@admin.de", UserDTO.Role.ADMIN,
-            UserDTO.Language.ENGLISH, "admin", "secret1");
+    private final TokenDTO tokenDTO = new TokenDTO(TokenType.CHANGE_EMAIL, LocalDateTime.now(), EMAIL, ID);
+    private final TokenDTO registerToken = new TokenDTO(TokenType.REGISTER, LocalDateTime.now(), null, ID);
+    private final TokenDTO forgotToken = new TokenDTO(TokenType.FORGOT_PASSWORD, LocalDateTime.now(), null, ID);
+    private final UserDTO userDTO = new UserDTO("admin", "admin1@admin.de", Role.ADMIN,
+            Language.ENGLISH, "admin", "secret1");
     private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
     private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
     private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
@@ -80,7 +82,7 @@ public class TokenControllerIntegrationTest {
         LocalDateTime expirationDate = LocalDateTime.now();
         expirationDate = expirationDate.plusHours(1);
         tokenDTO.setValue(VALUE);
-        tokenDTO.setType(TokenDTO.Type.CHANGE_EMAIL);
+        tokenDTO.setType(TokenType.CHANGE_EMAIL);
         tokenDTO.setExpirationDate(expirationDate);
         registerToken.setValue(VALUE);
         registerToken.setExpirationDate(expirationDate);

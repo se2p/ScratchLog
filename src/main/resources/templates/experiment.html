@@ -201,7 +201,7 @@
                 </div>
                 <div class="mb-3">
                     <input id="deleteParticipant" type="submit" class="btn btn-danger"
-                           th:value="#{delete_participant}"/>
+                           th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
                 </div>
             </div>
         </div>

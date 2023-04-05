@@ -10,6 +10,8 @@ import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.persistence.entity.Participant;
 import fim.unipassau.de.scratch1984.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.ParticipantController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
@@ -104,10 +106,10 @@ public class ParticipantControllerIntegrationTest {
     private static final String EXPERIMENT_PARAM = "&experiment=";
     private static final int ID = 1;
     private static final int LAST_ID = ID + 1;
-    private final UserDTO newUser = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", "secret");
-    private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password", "secret");
+    private final UserDTO newUser = new UserDTO(PARTICIPANT, EMAIL, Role.PARTICIPANT, Language.ENGLISH, "password",
+            "secret");
+    private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, Role.PARTICIPANT, Language.ENGLISH, "password",
+            "secret");
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true,
             false, GUI_URL);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
@@ -120,7 +122,7 @@ public class ParticipantControllerIntegrationTest {
         userDTO.setId(ID);
         userDTO.setUsername(PARTICIPANT);
         userDTO.setEmail(EMAIL);
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         userDTO.setActive(true);
         userDTO.setSecret("secret");
         experimentDTO.setActive(true);

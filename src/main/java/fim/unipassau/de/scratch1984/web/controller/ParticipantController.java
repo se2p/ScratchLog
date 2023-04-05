@@ -13,6 +13,8 @@ import fim.unipassau.de.scratch1984.util.FieldErrorHandler;
 import fim.unipassau.de.scratch1984.util.MarkdownHandler;
 import fim.unipassau.de.scratch1984.util.NumberParser;
 import fim.unipassau.de.scratch1984.util.Secrets;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -52,7 +54,7 @@ public class ParticipantController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger logger = LoggerFactory.getLogger(ParticipantController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParticipantController.class);
 
     /**
      * The user service to use for user management.
@@ -151,14 +153,14 @@ public class ParticipantController {
     @Secured(Constants.ROLE_ADMIN)
     public String getParticipantForm(@RequestParam(value = ID) final String experimentId, final Model model) {
         if (experimentId == null || experimentId.trim().isBlank()) {
-            logger.error("Cannot add new participant for experiment with id null or blank!");
+            LOGGER.error("Cannot add new participant for experiment with id null or blank!");
             return Constants.ERROR;
         }
 
         int id = NumberParser.parseNumber(experimentId);
 
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot add new participant for experiment with invalid id " + id + "!");
+            LOGGER.error("Cannot add new participant for experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
@@ -199,19 +201,19 @@ public class ParticipantController {
                                  @ModelAttribute("userDTO") final UserDTO userDTO, final Model model,
                                  final BindingResult bindingResult) {
         if (userDTO.getUsername() == null || userDTO.getEmail() == null || experimentId == null) {
-            logger.error("The new username, email and experiment id cannot be null!");
+            LOGGER.error("The new username, email and experiment id cannot be null!");
             return Constants.ERROR;
         }
 
         if (userDTO.getId() != null) {
-            logger.error("Cannot create new user if the id is not null!");
+            LOGGER.error("Cannot create new user if the id is not null!");
             return Constants.ERROR;
         }
 
         int id = NumberParser.parseNumber(experimentId);
 
         if (id < Constants.MIN_ID) {
-            logger.error("Cannot add new participant for experiment with invalid id " + id + "!");
+            LOGGER.error("Cannot add new participant for experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
@@ -226,7 +228,7 @@ public class ParticipantController {
         }
 
         String secret = Secrets.generateRandomBytes(Constants.SECRET_LENGTH);
-        userDTO.setRole(UserDTO.Role.PARTICIPANT);
+        userDTO.setRole(Role.PARTICIPANT);
         userDTO.setSecret(secret);
         userDTO.setLastLogin(LocalDateTime.now());
         UserDTO saved = userService.saveUser(userDTO);
@@ -272,14 +274,14 @@ public class ParticipantController {
                                     @RequestParam(ID) final String id, final Model model) {
         if (participant == null || id == null || participant.trim().isBlank()
                 || participant.length() > Constants.LARGE_FIELD) {
-            logger.error("Cannot delete participant with invalid id or input string!");
+            LOGGER.error("Cannot delete participant with invalid id or input string!");
             return Constants.ERROR;
         }
 
         int experimentId = NumberParser.parseNumber(id);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot delete a participant for experiment with invalid id " + id + "!");
+            LOGGER.error("Cannot delete a participant for experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
@@ -298,7 +300,7 @@ public class ParticipantController {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
             addModelInfo(experimentDTO, model);
             return "experiment";
-        } else if (!userDTO.getRole().equals(UserDTO.Role.PARTICIPANT)) {
+        } else if (!userDTO.getRole().equals(Role.PARTICIPANT)) {
             model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
         } else if (!userService.existsParticipant(userDTO.getId(), experimentId)) {
             model.addAttribute(ERROR, resourceBundle.getString("no_participant_entry"));
@@ -341,18 +343,18 @@ public class ParticipantController {
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            logger.error("Cannot start experiment with invalid id " + id + "!");
+            LOGGER.error("Cannot start experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
         if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            logger.error("An administrator tried to participate in the experiment with id " + id + "!");
+            LOGGER.error("An administrator tried to participate in the experiment with id " + id + "!");
             return Constants.ERROR;
         } else {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication.getName() == null) {
-                logger.error("Cannot start the experiment for a user with authentication with name null!");
+                LOGGER.error("Cannot start the experiment for a user with authentication with name null!");
                 return Constants.ERROR;
             }
 
@@ -373,7 +375,7 @@ public class ParticipantController {
                                 + EXPERIMENT_ID_PARAM + participantDTO.getExperiment() + SECRET_PARAM
                                 + userDTO.getSecret();
                     } else {
-                        logger.error("Failed to update the starting time of participant with user id "
+                        LOGGER.error("Failed to update the starting time of participant with user id "
                                 + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment()
                                 + "!");
                         return Constants.ERROR;
@@ -416,7 +418,7 @@ public class ParticipantController {
             ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userDTO.getId());
 
             if (participantDTO.getStart() == null || participantDTO.getEnd() != null) {
-                logger.error("Cannot end experiment for participant with id " + participantDTO.getUser()
+                LOGGER.error("Cannot end experiment for participant with id " + participantDTO.getUser()
                         + " and experiment " + participantDTO.getExperiment() + " with invalid starting time "
                         + participantDTO.getStart() + " or finishing time " + participantDTO.getEnd() + "!");
                 clearSecurityContext(httpServletRequest);
@@ -435,7 +437,7 @@ public class ParticipantController {
                 clearSecurityContext(httpServletRequest);
                 return "redirect:/finish?user=" + userId + EXPERIMENT_PARAM + experimentId + SECRET_PARAM + secret;
             } else {
-                logger.error("Failed to update the finishing time of participant with user id "
+                LOGGER.error("Failed to update the finishing time of participant with user id "
                         + participantDTO.getUser() + " for experiment with id " + participantDTO.getExperiment() + "!");
                 clearSecurityContext(httpServletRequest);
                 return Constants.ERROR;
@@ -474,7 +476,7 @@ public class ParticipantController {
             ParticipantDTO participantDTO = participantService.getParticipant(experimentId, userId);
 
             if (participantDTO.getStart() == null || participantDTO.getEnd() == null) {
-                logger.error("Cannot restart experiment for user " + userId + " and experiment " + experimentId
+                LOGGER.error("Cannot restart experiment for user " + userId + " and experiment " + experimentId
                         + " with start or end time null!");
                 return Constants.ERROR;
             }
@@ -482,7 +484,7 @@ public class ParticipantController {
             participantDTO.setEnd(null);
 
             if (!participantService.updateParticipant(participantDTO)) {
-                logger.error("Could not reset the ending time for user " + userId + " and experiment " + experimentId);
+                LOGGER.error("Could not reset the ending time for user " + userId + " and experiment " + experimentId);
                 return Constants.ERROR;
             } else {
                 userDTO.setActive(true);
@@ -569,8 +571,8 @@ public class ParticipantController {
      * @param language The user's preferred language.
      * @return The corresponding locale, or English as a default value.
      */
-    private Locale getLocaleFromLanguage(final UserDTO.Language language) {
-        if (language == UserDTO.Language.GERMAN) {
+    private Locale getLocaleFromLanguage(final Language language) {
+        if (language == Language.GERMAN) {
             return Locale.GERMAN;
         }
         return Locale.ENGLISH;
@@ -589,15 +591,15 @@ public class ParticipantController {
     private boolean isInvalidStartExperiment(final UserDTO userDTO, final ExperimentDTO experimentDTO,
                                              final ParticipantDTO participantDTO) {
         if (!experimentDTO.isActive()) {
-            logger.error("Cannot start experiment with id " + experimentDTO.getId() + " for user with id "
+            LOGGER.error("Cannot start experiment with id " + experimentDTO.getId() + " for user with id "
                     + userDTO.getId() + " since the experiment is closed!");
             return true;
         } else if (!userDTO.isActive() || userDTO.getSecret() == null) {
-            logger.error("Cannot start experiment for user with id " + userDTO.getId() + " since their account "
+            LOGGER.error("Cannot start experiment for user with id " + userDTO.getId() + " since their account "
                     + "is inactive or their secret null!");
             return true;
         } else if (participantDTO.getEnd() != null) {
-            logger.error("The user with id " + userDTO.getId() + " tried to start the experiment with id "
+            LOGGER.error("The user with id " + userDTO.getId() + " tried to start the experiment with id "
                     + experimentDTO.getId() + " even though they have already finished it!");
             return true;
         }
@@ -617,11 +619,11 @@ public class ParticipantController {
     private boolean isInvalidPassedParams(final int experimentId, final int userId, final String secret,
                                           final String method) {
         if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            logger.error("Cannot " + method + " experiment with invalid experiment id " + experimentId
+            LOGGER.error("Cannot " + method + " experiment with invalid experiment id " + experimentId
                     + " or invalid user id " + userId + "!");
             return true;
         } else if (secret == null || secret.isBlank()) {
-            logger.error("Cannot " + method + " experiment with secret null or blank!");
+            LOGGER.error("Cannot " + method + " experiment with secret null or blank!");
             return true;
         } else {
             return participantService.isInvalidParticipant(userId, experimentId, secret);

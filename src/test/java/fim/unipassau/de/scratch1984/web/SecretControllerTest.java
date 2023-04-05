@@ -5,6 +5,8 @@ import fim.unipassau.de.scratch1984.application.exception.NotFoundException;
 import fim.unipassau.de.scratch1984.application.service.ExperimentService;
 import fim.unipassau.de.scratch1984.application.service.UserService;
 import fim.unipassau.de.scratch1984.util.Constants;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.controller.SecretController;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
@@ -61,10 +63,10 @@ public class SecretControllerTest {
     private static final String GUI_URL = "scratch";
     private final ExperimentDTO experiment = new ExperimentDTO(ID, "experiment", "my experiment", "info", "no", true,
             false, GUI_URL);
-    private final UserDTO user1 = new UserDTO("participant1", "part1@part.de", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password1", SECRET);
-    private final UserDTO user2 = new UserDTO("participant2", "part2@part.de", UserDTO.Role.PARTICIPANT,
-            UserDTO.Language.ENGLISH, "password2", SECRET);
+    private final UserDTO user1 = new UserDTO("participant1", "part1@part.de", Role.PARTICIPANT, Language.ENGLISH,
+            "password1", SECRET);
+    private final UserDTO user2 = new UserDTO("participant2", "part2@part.de", Role.PARTICIPANT, Language.ENGLISH,
+            "password2", SECRET);
     private List<UserDTO> users;
 
     @BeforeEach

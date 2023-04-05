@@ -2,6 +2,7 @@ package fim.unipassau.de.scratch1984.persistence.repository;
 
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.projection.UserProjection;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,7 +38,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param username The username to search for.
      * @return The user data or {@code null}, if no user could be found.
      */
-    User findUserByUsername(String username);
+    Optional<User> findUserByUsername(String username);
 
     /**
      * Returns the user with the given secret, if one exists.
@@ -45,7 +46,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param secret The secret to search for.
      * @return The user data, or {@code null}, if no user could be found.
      */
-    User findUserBySecret(String secret);
+    Optional<User> findUserBySecret(String secret);
 
     /**
      * Returns the user identified by the given username or email address, if one exists.
@@ -54,7 +55,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param email The email to search for.
      * @return The user data, or {@code null}, if no user could be found.
      */
-    User findUserByUsernameOrEmail(String username, String email);
+    Optional<User> findUserByUsernameOrEmail(String username, String email);
 
     /**
      * Returns the user identified by the given id, if one exists.
@@ -78,7 +79,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param role The user role to search for.
      * @return A list of users.
      */
-    List<User> findAllByRole(String role);
+    List<User> findAllByRole(Role role);
 
     /**
      * Returns a list of users with the given role who have last logged in before the given date and time, or an empty
@@ -88,14 +89,14 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param lastLogin The last login time to search for.
      * @return A list of users.
      */
-    List<User> findAllByRoleAndLastLoginBefore(String role, LocalDateTime lastLogin);
+    List<User> findAllByRoleAndLastLoginBefore(Role role, LocalDateTime lastLogin);
 
     /**
      * Returns the user with the highest user id currently existing in the database.
      *
      * @return The user.
      */
-    User findFirstByOrderByIdDesc();
+    Optional<User> findFirstByOrderByIdDesc();
 
     /**
      * Returns a list of the first users up to the given limit whose email or username contain the given query value.

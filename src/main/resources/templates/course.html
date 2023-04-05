@@ -71,8 +71,7 @@
             <!-- The timestamp of the last change operation to the course. -->
             <div class="text-muted">
                 <span th:text="#{last_changed}"></span>
-                <span th:text="${courseDTO.lastChanged.toLocalDate()}"></span>
-                <span th:text="${courseDTO.lastChanged.toLocalTime()}"></span>
+                <span th:text="${courseDTO.lastChanged}"></span>
             </div>
         </div>
 
@@ -109,7 +108,7 @@
                         </td>
                         <td class="text-center">
                             <!--suppress ThymeleafVariablesResolveInspection -->
-                            <span th:text="${participant.added.toLocalDateTime().toLocalDate()}"></span>
+                            <span th:text="${participant.added.toLocalDate()}"></span>
                         </td>
                     </tr>
                     </tbody>
@@ -143,9 +142,14 @@
                 </div>
                 <div class="mb-3">
                     <input id="deleteParticipant" type="submit" class="btn btn-danger"
-                           th:value="#{delete_participant}"/>
+                           th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
                 </div>
             </div>
+            <!-- Let Thymeleaf fetch the current and the last participant page numbers. -->
+            <script>
+                var participantPage = [[${participantPage}]];
+                var lastParticipantPage = [[${lastParticipantPage}]];
+            </script>
         </div>
 
         <!-- The experiment table containing experiments that are part of this course. -->
@@ -227,9 +231,16 @@
                        th:text="#{add_experiment}"></a>
                 </div>
                 <div class="mb-3">
-                    <input id="deleteExperiment" type="submit" class="btn btn-danger" th:value="#{delete_experiment}"/>
+                    <input id="deleteExperiment" type="submit" class="btn btn-danger" th:value="#{delete_experiment}"
+                           th:unless="${experiments.isEmpty()}"/>
                 </div>
             </div>
+            <!-- Let Thymeleaf fetch the current and the last experiment page numbers. -->
+            <script>
+                var experimentPage = [[${experimentPage}]];
+                var lastExperimentPage = [[${lastExperimentPage}]];
+            </script>
+
         </div>
 
         <!-- The course content information. -->
@@ -361,10 +372,6 @@
 <!-- Let Thymeleaf fetch the current and the last experiment and participant page numbers. -->
 <script>
     let courseId = [[${courseDTO.id}]];
-    let participantPage = [[${participantPage}]];
-    let lastParticipantPage = [[${lastParticipantPage}]];
-    let experimentPage = [[${experimentPage}]];
-    let lastExperimentPage = [[${lastExperimentPage}]];
 </script>
 
 <!-- Footer -->

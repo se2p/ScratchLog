@@ -4,6 +4,8 @@ import fim.unipassau.de.scratch1984.application.service.SAML2Service;
 import fim.unipassau.de.scratch1984.persistence.entity.User;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.spring.configuration.SAML2Properties;
+import fim.unipassau.de.scratch1984.util.enums.Language;
+import fim.unipassau.de.scratch1984.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +16,7 @@ import org.springframework.security.saml2.provider.service.authentication.Saml2A
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -21,8 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,7 +47,7 @@ public class SAML2ServiceTest {
 
     private static final String VALUE = "value";
     private Set<String> keySet = Set.of(VALUE);
-    private User user = new User("user", "email", "role", "lang", "password", "secret");
+    private final User user = new User("user", "email", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
 
     @BeforeEach
     public void setup() {
@@ -81,7 +82,7 @@ public class SAML2ServiceTest {
         when(principal.getAttributes()).thenReturn(attributes);
         when(attributes.keySet()).thenReturn(keySet);
         when(principal.getFirstAttribute(VALUE)).thenReturn(VALUE);
-        when(userRepository.findUserByUsername(VALUE)).thenReturn(user);
+        when(userRepository.findUserByUsername(VALUE)).thenReturn(Optional.of(user));
         when(userRepository.save(any())).thenReturn(user);
         Authentication authentication = saml2Service.handleAuthentication(principal);
         assertAll(

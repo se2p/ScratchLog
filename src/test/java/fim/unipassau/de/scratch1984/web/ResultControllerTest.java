@@ -37,7 +37,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1530,8 +1529,8 @@ public class ResultControllerTest {
                 }
 
                 @Override
-                public Timestamp getDate() {
-                    return Timestamp.valueOf(LocalDateTime.now().plusMinutes(id).minusSeconds(id));
+                public LocalDateTime getDate() {
+                    return LocalDateTime.now().plusMinutes(id).minusSeconds(id);
                 }
 
                 @Override
@@ -1558,8 +1557,8 @@ public class ResultControllerTest {
             }
 
             @Override
-            public Timestamp getDate() {
-                return Timestamp.valueOf(LocalDateTime.now());
+            public LocalDateTime getDate() {
+                return LocalDateTime.now();
             }
 
             @Override
@@ -1580,8 +1579,8 @@ public class ResultControllerTest {
             }
 
             @Override
-            public Timestamp getDate() {
-                return Timestamp.valueOf(LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 1));
+            public LocalDateTime getDate() {
+                return LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 1);
             }
 
             @Override
@@ -1602,8 +1601,8 @@ public class ResultControllerTest {
             }
 
             @Override
-            public Timestamp getDate() {
-                return Timestamp.valueOf(LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 3));
+            public LocalDateTime getDate() {
+                return LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 3);
             }
 
             @Override
@@ -1636,7 +1635,7 @@ public class ResultControllerTest {
                 }
 
                 @Override
-                public Timestamp getDate() {
+                public LocalDateTime getDate() {
                     return null;
                 }
 

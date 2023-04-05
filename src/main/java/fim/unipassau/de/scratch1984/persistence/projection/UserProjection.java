@@ -1,5 +1,7 @@
 package fim.unipassau.de.scratch1984.persistence.projection;
 
+import fim.unipassau.de.scratch1984.util.enums.Role;
+
 /**
  * Projection interface for the {@link fim.unipassau.de.scratch1984.persistence.entity.User} class to return only the
  * user id, username, email and role.
@@ -32,6 +34,6 @@ public interface UserProjection {
      *
      * @return The role.
      */
-    String getRole();
+    Role getRole();
 
 }
