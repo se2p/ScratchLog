@@ -1,37 +1,137 @@
+include:
+  # This includes the GitLab provided license scanning job
+  - template: Security/License-Scanning.gitlab-ci.yml
+  # This includes the GitLab provided dependency scanning jobs
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  # This includes the GitLab provided SAST jobs.
+  - template: Security/SAST.gitlab-ci.yml
+  # This includes the GitLab provided secret detection job
+  - template: Security/Secret-Detection.gitlab-ci.yml
+
+# Allows the pipeline to be executed as a merge request pipeline and after merges
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_COMMIT_BRANCH
+
 stages:
   - validate
   - build
   - test
+  - visualize
 
-image: maven:3-jdk-14
+default:
+  image: maven:3-jdk-11
+  cache:
+    paths:
+      - .m2/repository/
+    when: always
+  artifacts:
+    # Expire all artifacts already after 36 hours. (Default is around 30 days/4 weeks)
+    expire_in: 36 hours
 
-before_script:
-  - mvn -v
-  - mvn dependency:resolve -B
+variables:
+  # Arguments passed to maven before CLI arguments, only used from Maven 4 onward
+  MAVEN_ARGS: '--no-transfer-progress -Dmaven.repo.local=.m2/repository -Dmaven.compiler.useIncrementalCompilation=false -Prelease'
+  GIT_STRATEGY: fetch
+  # Disable all SAST jobs by default, since we manually enable/configure those
+  SAST_DISABLED: 'true'
 
 ############################### JOBS ###############################
 
 Validate:
   stage: validate
-  script: "mvn validate"
+  needs: []
+  script:
+    - "mvn $MAVEN_ARGS validate"
 
 Checkstyle:
   stage: validate
+  needs: []
   script:
-    - "mvn checkstyle:check"
+    - "mvn $MAVEN_ARGS checkstyle:check"
 
 Compile:
   stage: build
+  needs: []
   script:
-    - "mvn compile"
+    - "mvn $MAVEN_ARGS -DskipCheckstyle -DskipTests package"
+  artifacts:
+    paths:
+      - target/
 
 Unit-Tests:
   stage: test
+  needs: ["Compile"]
   script:
-    - "mvn verify"
+    - "mvn $MAVEN_ARGS -DskipCheckstyle test"
+  after_script:
+    - mvn $MAVEN_ARGS jacoco:report
+    # Print summary line, so GitLab can extract code coverage
+    - cat target/site/jacoco/index.html | grep -o '<tfoot>.*</tfoot>'
+    # Regex for extracting a coverage percentage, project wide configuration is planned to be deprecated at some point
+  coverage: '/Total.*?([0-9]{1,3})%/'
   artifacts:
-    when: always
+    paths:
+      - target/jacoco.exec
+      - target/site/jacoco/jacoco.xml
     reports:
       junit:
         - target/surefire-reports/TEST-*.xml
         - target/failsafe-reports/TEST-*.xml
+
+### Analysis (Secret detection)
+
+spotbugs-sast:
+  stage: test
+  needs: ["Compile"]
+  variables:
+    # We target Java 11
+    SAST_JAVA_VERSION: 11
+    # We already have a compiled version of the project, no need to recompile it
+    COMPILE: 'false'
+    # GitLab Spotbugs uses MAVEN_CLI_OPTS for additional CLI flags
+    MAVEN_CLI_OPTS: '$MAVEN_ARGS -DskipCheckstyle -DskipTests'
+    # Needs to be set explicitly even if it's set via $MAVEN_ARGS/$MAVEN_CLI_OPTS above, to prevent a fatal spotbugs
+    # error: 'lstat /root/.m2/repository: no such file or directory'. There exists an upstream issue for a similar error
+    # https://gitlab.com/gitlab-org/gitlab/-/issues/334854 but the upstream issue is for maven multi-module projects.
+    MAVEN_REPO_PATH: '.m2/repository'
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+  rules:
+    # Exclude job for Draft merge requests and trigger it otherwise
+    - if: '$CI_MERGE_REQUEST_TITLE !~ /^Draft:/'
+
+gemnasium-maven-dependency_scanning:
+  stage: test
+  needs: []
+  variables:
+    MAVEN_CLI_OPTS: "$MAVEN_ARGS -DskipCheckstyle -DskipTests"
+  rules:
+    # Exclude job for Draft merge requests
+    - if: '$CI_MERGE_REQUEST_TITLE !~ /^Draft:/'
+
+secret_detection:
+  stage: test
+  needs: []
+  cache: []
+
+semgrep-sast:
+  stage: test
+  needs: []
+  cache: []
+
+# See: https://docs.gitlab.com/ee/user/project/merge_requests/test_coverage_visualization.html#java-and-kotlin-examples
+Visualize-Coverage:
+  stage: visualize
+  image: registry.gitlab.com/haynes/jacoco2cobertura:1.0.7
+  script:
+    # Convert report from jacoco to cobertura, using relative project path
+    - python /opt/cover2cover.py target/site/jacoco/jacoco.xml $CI_PROJECT_DIR/src/main/java/ > target/cobertura.xml
+  needs: ["Unit-Tests"]
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: target/cobertura.xml
