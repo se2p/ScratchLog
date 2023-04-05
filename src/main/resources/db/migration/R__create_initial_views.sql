@@ -2,9 +2,9 @@
  *  Definition of views.  *
  **************************/
 
--- scratch1984.user_num_block_events source
+-- user_num_block_events view source
 
-CREATE OR REPLACE VIEW `scratch1984`.`user_num_block_events` (`user`, `experiment`, `count`, `event`) AS
+CREATE OR REPLACE VIEW `user_num_block_events` (`user`, `experiment`, `count`, `event`) AS
 select
     `b`.`user_id` AS `user_id`,
     `b`.`experiment_id` AS `experiment_id`,
@@ -18,9 +18,9 @@ group by
     `b`.`event`;
 
 
--- scratch1984.user_num_resource_events source
+-- user_num_resource_events view source
 
-CREATE OR REPLACE VIEW `scratch1984`.`user_num_resource_events` (`user`, `experiment`, `count`, `event`) AS
+CREATE OR REPLACE VIEW `user_num_resource_events` (`user`, `experiment`, `count`, `event`) AS
 select
     `r`.`user_id` AS `user_id`,
     `r`.`experiment_id` AS `experiment_id`,
@@ -33,7 +33,7 @@ group by
     `r`.`experiment_id`,
     `r`.`event`;
 
--- scratch1984.active_experiments source
+-- experiment_data view source
 
 CREATE OR REPLACE VIEW `experiment_data` (`experiment`, `participants`, `started`, `finished`) AS
 select
@@ -49,7 +49,7 @@ where
 group by
     `p`.`experiment_id`;
 
--- scratch1984.user_num_codes source
+-- codes_data view source
 
 CREATE OR REPLACE VIEW `codes_data` (`user`, `experiment`, `count`) AS
 select
