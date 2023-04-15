@@ -20,12 +20,12 @@
         <h2 class="mb-5" th:text="#{add_user}"></h2>
 
         <!-- The information shown on the add user page if the mail server constant is set to true. -->
-        <div class="row" th:if="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).MAIL_SERVER}">
+        <div class="row" th:if="${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).MAIL_SERVER}">
             <div class="col-12 mb-5" th:text="#{user_info}"></div>
         </div>
 
         <!-- The information shown on the add user page if the mail server constant is set to false. -->
-        <div class="row" th:unless="${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).MAIL_SERVER}">
+        <div class="row" th:unless="${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).MAIL_SERVER}">
             <div class="col-12 mb-5" th:text="#{user_info_no_mail}"></div>
         </div>
 
@@ -40,7 +40,7 @@
                         <span class="sr-only" th:text="#{username}"></span>
                     </span>
                     <input name="username" id="username" type="text" th:placeholder="#{username}"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
                            th:field="*{username}" th:class="${#fields.hasErrors('username')
                                    ? 'form-control is-invalid' : 'form-control'}" required/>
                 </div>
@@ -56,7 +56,7 @@
                         <span class="sr-only" th:text="#{email}"></span>
                     </span>
                     <input name="email" id="email" type="text" th:placeholder="#{email}"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"
                            th:field="*{email}" th:class="${#fields.hasErrors('email')
                                    ? 'form-control is-invalid' : 'form-control'}" required/>
                 </div>
@@ -72,7 +72,7 @@
                     </span>
                     <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
                         <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="lang : ${T(fim.unipassau.de.scratch1984.util.enums.Language).values()}"
+                        <option th:each="lang : ${T(fim.unipassau.de.scratchLog.util.enums.Language).values()}"
                                 th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
                     </select>
                 </div>
@@ -87,7 +87,7 @@
                     </span>
                     <select id="role" class="form-select" th:aria-label="#{role}" th:field="*{role}">
                         <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="userRole : ${T(fim.unipassau.de.scratch1984.util.enums.Role).values()}"
+                        <option th:each="userRole : ${T(fim.unipassau.de.scratchLog.util.enums.Role).values()}"
                                 th:value="${userRole}" th:text="#{${userRole.toString().toLowerCase()}}"></option>
                     </select>
                 </div>

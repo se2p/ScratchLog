@@ -1,6 +1,4 @@
-# Scratch 1984
-
-This is the Scratch instrumentation that will log your every move!
+# ScratchLog
 
 ## Installation
 
@@ -72,9 +70,9 @@ string of all the unique base URLs of the different Scratch GUI instances (no ne
 
 #### Deployment under a relative context path
 
-If you plan to deploy the project under a relative context path, e.g.`scratch.fim.uni-passau.de/scratch1984` instead of
+If you plan to deploy the project under a relative context path, e.g.`scratch.fim.uni-passau.de/scratchlog` instead of
 `scratch.fim.uni-passau.de`, you need to change the `server.servlet.context-path` in the `application.properties` file
-accordingly, e.g. to `/scratch1984` while the *app.url* value is `scratch.fim.uni-passau.de`.
+accordingly, e.g. to `/scratchlog` while the *app.url* value is `scratch.fim.uni-passau.de`.
 
 #### Configuring the instrumented Scratch instance
 
@@ -104,7 +102,7 @@ authentication.
 - Change the *saml.extraction.value* string if needed.
 - Change the *saml.metadata* string to the path at which the IdP's metadata file is located.
 - Change the *saml.idp* string to the name of the IdP.
-- Change the *saml.entity* string to the address at which Scratch1984 will be available.
+- Change the *saml.entity* string to the address at which ScratchLog will be available.
 - Change the *saml.certificate* and *saml.key* strings to the paths at which the server certificate and the key file are
 available.
 
@@ -127,5 +125,5 @@ over the `GUI_URL` constant.
 
 To run the jar, execute
 ```bash
-java -jar scratch1984-0.0.1-SNAPSHOT.jar
+java -jar scratchLog-0.0.1-SNAPSHOT.jar
 ```

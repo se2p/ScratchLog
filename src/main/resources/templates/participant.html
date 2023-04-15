@@ -43,7 +43,7 @@
                             <span class="sr-only" th:text="#{username}"></span>
                         </span>
                         <input name="username" id="username" type="text" th:placeholder="#{username}"
-                               th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                               th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
                                th:field="*{username}" th:class="${#fields.hasErrors('username')
                                ? 'form-control is-invalid' : 'form-control'}" required/>
                     </div>
@@ -58,7 +58,7 @@
                             <span class="sr-only" th:text="#{email}"></span>
                         </span>
                         <input name="email" id="email" th:placeholder="#{email}"
-                               th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
+                               th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"
                                th:field="*{email}" th:class="${#fields.hasErrors('email')
                                ? 'form-control is-invalid' : 'form-control'}" required/>
                     </div>
@@ -74,7 +74,7 @@
                         </span>
                         <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
                             <!--suppress ThymeleafVariablesResolveInspection -->
-                            <option th:each="lang : ${T(fim.unipassau.de.scratch1984.util.enums.Language).values()}"
+                            <option th:each="lang : ${T(fim.unipassau.de.scratchLog.util.enums.Language).values()}"
                                     th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
                         </select>
                     </div>

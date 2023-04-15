@@ -33,7 +33,7 @@
                         <label class="form-label" for="title" th:text="#{title}"></label>
                         <div class="input-group">
                             <input name="title" id="title" type="text" th:placeholder="#{title}"
-                                   th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
+                                   th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"
                                    th:field="*{title}" th:class="${#fields.hasErrors('title')
                                    ? 'form-control is-invalid' : 'form-control'}" required/>
                         </div>
@@ -46,7 +46,7 @@
                         <div class="input-group">
                             <textarea name="description" id="description" type="text" rows="3"
                                       th:placeholder="#{description_placeholder}"
-                                      th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_AREA}"
+                                      th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_AREA}"
                                       th:field="*{description}" th:class="${#fields.hasErrors('description')
                                       ? 'form-control is-invalid' : 'form-control'}" required></textarea>
                         </div>
@@ -60,7 +60,7 @@
                         <div class="input-group">
                             <textarea name="postscript" id="postscript" type="text" rows="3"
                                       th:placeholder="#{postscript_placeholder}"
-                                      th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_AREA}"
+                                      th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_AREA}"
                                       th:field="*{postscript}" th:class="${#fields.hasErrors('postscript')
                                       ? 'form-control is-invalid' : 'form-control'}"></textarea>
                         </div>
@@ -72,7 +72,7 @@
                     <div class="mb-3 form-group position-relative">
                         <label class="form-label" for="info" th:text="#{info}"></label>
                         <textarea name="info" id="info" type="text" rows="10" th:placeholder="#{info_placeholder}"
-                                  th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_AREA}"
+                                  th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_AREA}"
                                   th:field="*{info}" th:class="${#fields.hasErrors('info')
                                   ? 'form-control is-invalid' : 'form-control'}" autocomplete="off"></textarea>
                         <div class="validation" th:if="${#fields.hasErrors('info')}" th:errors="*{info}">
@@ -83,7 +83,7 @@
                     <div class="mb-5 form-group position-relative">
                         <label for="urlSelect">Scratch-GUI Address</label>
                         <select class="form-control" id="urlSelect" th:field="*{guiURL}">
-                            <option th:each="url : ${T(fim.unipassau.de.scratch1984.util.ApplicationProperties).GUI_URL}"
+                            <option th:each="url : ${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).GUI_URL}"
                                     th:value="${url}" th:text="${url}"></option>
                         </select>
                     </div>

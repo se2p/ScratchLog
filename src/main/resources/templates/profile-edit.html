@@ -36,7 +36,7 @@
                         <span class="sr-only" th:text="#{username}"></span>
                     </span>
                     <input name="username" id="username" type="text" th:placeholder="#{username}"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
                            th:field="*{username}" th:class="${#fields.hasErrors('username')
                                    ? 'form-control is-invalid' : 'form-control'}" required/>
                 </div>
@@ -52,7 +52,7 @@
                         <span class="sr-only" th:text="#{email}"></span>
                     </span>
                     <input name="email" id="email" type="text" th:placeholder="#{email}"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"
                            th:field="*{email}" th:class="${#fields.hasErrors('email')
                                    ? 'form-control is-invalid' : 'form-control'}"/>
                 </div>
@@ -68,7 +68,7 @@
                     </span>
                     <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
                         <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="lang : ${T(fim.unipassau.de.scratch1984.util.enums.Language).values()}"
+                        <option th:each="lang : ${T(fim.unipassau.de.scratchLog.util.enums.Language).values()}"
                                 th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
                     </select>
                 </div>
@@ -82,7 +82,7 @@
                         <span class="sr-only" th:text="#{password}"></span>
                     </span>
                     <input name="password" id="password" type="password" th:placeholder="#{password}"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
                            th:field="*{password}" th:class="${#fields.hasErrors('password')
                                ? 'form-control is-invalid' : 'form-control'}"/>
                 </div>
@@ -90,7 +90,7 @@
                 <div class="d-flex justify-content-between">
                     <div class="form-text" th:text="#{password_info}"></div>
                     <a class="link-secondary" th:text="#{forgot_password}" th:href="@{/users/forgot(id=${userDTO.id})}"
-                       th:if="${userDTO.getRole().equals(T(fim.unipassau.de.scratch1984.util.enums.Role).PARTICIPANT)}"
+                       th:if="${userDTO.getRole().equals(T(fim.unipassau.de.scratchLog.util.enums.Role).PARTICIPANT)}"
                        sec:authorize="hasRole('ADMIN')">
                     </a>
                 </div>
@@ -104,7 +104,7 @@
                         <span class="sr-only" th:text="#{password_new}"></span>
                     </span>
                     <input name="password" id="new_password" type="password" th:placeholder="#{password_new}"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
                            th:field="*{newPassword}" th:class="${#fields.hasErrors('newPassword')
                                ? 'form-control is-invalid' : 'form-control'}"/>
                 </div>
@@ -120,7 +120,7 @@
                         <span class="sr-only" th:text="#{password_confirm}"></span>
                     </span>
                     <input name="password" id="confirm_password" type="password" th:placeholder="#{password_confirm}"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
                            th:field="*{confirmPassword}" th:class="${#fields.hasErrors('confirmPassword')
                                ? 'form-control is-invalid' : 'form-control'}"/>
                 </div>
