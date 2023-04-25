@@ -4,10 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fim.uni-passau.de</groupId>
-    <artifactId>scratch1984</artifactId>
+    <artifactId>scratchLog</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>scratch1984</name>
-    <description>The Scratch instrumentation that logs your every move</description>
+    <name>ScratchLog</name>
 
     <properties>
         <!-- Compiler and Source settings -->
@@ -36,6 +35,7 @@
         <jakarta.validation.version>3.0.2</jakarta.validation.version>
         <mysql.version>8.0.32</mysql.version>
         <h2.version>2.1.214</h2.version>
+        <mycila.version>4.2</mycila.version>
         <maven.checkstyle.version>3.2.1</maven.checkstyle.version>
         <checkstyle.version>9.3</checkstyle.version>
         <maven.surefire.version>3.0.0</maven.surefire.version>
@@ -278,7 +278,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.version}</version>
                 <configuration>
-                    <mainClass>fim.unipassau.de.scratch1984.Scratch1984Application</mainClass>
+                    <mainClass>fim.unipassau.de.scratchLog.ScratchLogApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
@@ -288,6 +288,40 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- License text in source files -->
+            <!--
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${mycila.version}</version>
+                <configuration>
+                    <header>src/main/resources/static/license-header.txt</header>
+                    <properties>
+                        <year>2023</year>
+                    </properties>
+                    <excludes>
+                        <exclude>**/README</exclude>
+                        <exclude>**/.gitlab-ci.yml</exclude>
+                        <exclude>**/pom.xml</exclude>
+                        <exclude>src/test/resources/**</exclude>
+                        <exclude>src/main/resources/**</exclude>
+                        <exclude>**/*.properties</exclude>
+                        <exclude>checkstyle.xml</exclude>
+                    </excludes>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            -->
 
             <!-- Checkstyle -->
             <plugin>
@@ -303,7 +337,7 @@
                 </dependencies>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
-                    <excludes>fim.unipassau.de.scratch1984.Scratch1984Application</excludes>
+                    <excludes>fim.unipassau.de.scratchLog.ScratchLogApplication</excludes>
                 </configuration>
             </plugin>
 
@@ -314,7 +348,7 @@
                 <version>${maven.surefire.version}</version>
                 <configuration>
                     <excludes>
-                        <exclude>fim.unipassau.de.scratch1984.Scratch1984ApplicationTests</exclude>
+                        <exclude>fim.unipassau.de.scratchLog.ScratchLogApplicationTests</exclude>
                     </excludes>
                 </configuration>
             </plugin>

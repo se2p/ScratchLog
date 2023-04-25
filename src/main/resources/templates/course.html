@@ -265,7 +265,7 @@
                             <span class="sr-only" th:text="#{password}"></span>
                         </span>
                     <input th:name="password" id="password" type="password" th:placeholder="#{password}"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_FIELD}"
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
                            th:field="*{password}" th:class="${#fields.hasErrors('password')
                                ? 'form-control is-invalid' : 'form-control'}" required/>
                 </div>
@@ -307,7 +307,7 @@
                 </div>
                 <div class="input-group">
                     <input class="form-control" type="text" th:name="participant" id="participantInput"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"/>
                 </div>
                 <div id="participantResults"></div>
             </div>
@@ -329,7 +329,7 @@
                 <input id="deleteParticipantId" type="hidden" th:name="id" th:value="${courseDTO.id}">
                 <div class="input-group">
                     <input class="form-control" type="text" th:name="participant" id="deleteParticipantInput"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"/>
                 </div>
                 <div id="deleteParticipantResults"></div>
             </div>
@@ -351,7 +351,7 @@
                 <input id="deleteExperimentId" type="hidden" th:name="id" th:value="${courseDTO.id}">
                 <div class="input-group">
                     <input class="form-control" type="text" th:name="title" id="deleteExperimentInput"
-                           th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"/>
+                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"/>
                 </div>
                 <div id="deleteExperimentResults"></div>
             </div>

@@ -30,7 +30,7 @@
                         <label class="form-label" for="title" th:text="#{title}"></label>
                         <div class="input-group">
                             <input name="title" id="title" type="text" th:placeholder="#{title}"
-                                   th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_FIELD}"
+                                   th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"
                                    th:field="*{title}" th:class="${#fields.hasErrors('title')
                                    ? 'form-control is-invalid' : 'form-control'}" required/>
                         </div>
@@ -43,7 +43,7 @@
                         <div class="input-group">
                             <textarea name="description" id="description" type="text" rows="3"
                                       th:placeholder="#{course_description}"
-                                      th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).SMALL_AREA}"
+                                      th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_AREA}"
                                       th:field="*{description}" th:class="${#fields.hasErrors('description')
                                       ? 'form-control is-invalid' : 'form-control'}" required></textarea>
                         </div>
@@ -56,7 +56,7 @@
                         <label class="form-label" for="course_content" th:text="#{course_content}"></label>
                         <textarea name="course_content" id="course_content" type="text" rows="10"
                                   th:placeholder="#{course_content_placeholder}"
-                                  th:maxlength="${T(fim.unipassau.de.scratch1984.util.Constants).LARGE_AREA}"
+                                  th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_AREA}"
                                   th:field="*{content}" th:class="${#fields.hasErrors('content')
                                   ? 'form-control is-invalid' : 'form-control'}" autocomplete="off"></textarea>
                         <div class="validation" th:if="${#fields.hasErrors('content')}" th:errors="*{content}">
