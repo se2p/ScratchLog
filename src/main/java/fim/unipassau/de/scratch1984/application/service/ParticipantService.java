@@ -17,14 +17,14 @@ import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
-import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -112,8 +112,8 @@ public class ParticipantService {
                     + experimentId + " or invalid user id " + userId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
@@ -151,8 +151,8 @@ public class ParticipantService {
                     + "id " + experimentId + " or invalid course id " + courseId + "!");
         }
 
-        Course course = courseRepository.getOne(courseId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        Course course = courseRepository.getReferenceById(courseId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             if (!course.isActive() || !experiment.isActive()) {
@@ -190,8 +190,8 @@ public class ParticipantService {
                     + " or invalid experiment id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             Participant participant = new Participant(user, experiment, null, null);
@@ -218,8 +218,8 @@ public class ParticipantService {
                     + participantDTO.getExperiment() + " or invalid user id " + participantDTO.getUser() + "!");
         }
 
-        User user = userRepository.getOne(participantDTO.getUser());
-        Experiment experiment = experimentRepository.getOne(participantDTO.getExperiment());
+        User user = userRepository.getReferenceById(participantDTO.getUser());
+        Experiment experiment = experimentRepository.getReferenceById(participantDTO.getExperiment());
 
         try {
             participantRepository.save(createParticipant(participantDTO, user, experiment));
@@ -251,7 +251,7 @@ public class ParticipantService {
         }
 
         List<Participant> participants;
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             participants = participantRepository.findAllByExperiment(experiment);
@@ -294,7 +294,7 @@ public class ParticipantService {
 
         List<Participant> participants;
         HashMap<Integer, String> experiments = new HashMap<>();
-        User user = userRepository.getOne(userId);
+        User user = userRepository.getReferenceById(userId);
 
         try {
             participants = participantRepository.findAllByUser(user);
@@ -343,7 +343,7 @@ public class ParticipantService {
                     + userId + "!");
         }
 
-        User user = userRepository.getOne(userId);
+        User user = userRepository.getReferenceById(userId);
 
         try {
             List<Participant> participation = participantRepository.findAllByEndIsNullAndUser(user);
@@ -361,11 +361,13 @@ public class ParticipantService {
      * @param userId The id of the user.
      * @param experimentId The id of the experiment.
      * @param secret The user's secret.
+     * @param userActive Boolean indicating whether the user account should be active.
      * @return {@code true} if the user is a participant with the given secret or {@code false} otherwise.
      * @throws IllegalArgumentException if the passed secret, user or experiment id are invalid.
      */
     @Transactional
-    public boolean isInvalidParticipant(final int userId, final int experimentId, final String secret) {
+    public boolean isInvalidParticipant(final int userId, final int experimentId, final String secret,
+                                        final boolean userActive) {
         if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
             throw new IllegalArgumentException("Cannot verify participant with invalid user id " + userId
                     + " or invalid experiment id " + experimentId + "!");
@@ -373,8 +375,8 @@ public class ParticipantService {
             throw new IllegalArgumentException("Cannot verify participant with secret null or blank!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
@@ -382,7 +384,7 @@ public class ParticipantService {
             if (participant.isEmpty()) {
                 LOGGER.error("Cannot save event data for participant null!");
                 return true;
-            } else if (!user.isActive() || !experiment.isActive()) {
+            } else if ((!user.isActive() && userActive) || !experiment.isActive()) {
                 LOGGER.error("Cannot save event data for inactive experiment or user!");
                 return true;
             } else {

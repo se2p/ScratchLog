@@ -20,7 +20,7 @@ public interface EventCountRepository extends JpaRepository<EventCount, EventCou
      * @param experiment The experiment to search for.
      * @return A list of event counts that is empty if no entry could be found.
      */
-    @Query(nativeQuery = true, value = "SELECT * FROM user_num_block_events AS n WHERE n.user = :uId AND "
+    @Query(nativeQuery = true, value = "SELECT * FROM user_num_block_events AS n WHERE n.`user` = :uId AND "
             + "n.experiment = :expId")
     List<EventCount> findAllBlockEventsByUserAndExperiment(@Param("uId") Integer user,
                                                            @Param("expId") Integer experiment);
@@ -41,7 +41,7 @@ public interface EventCountRepository extends JpaRepository<EventCount, EventCou
      * @param experiment The experiment to search for.
      * @return A list of event counts that is empty if no entry could be found.
      */
-    @Query(nativeQuery = true, value = "SELECT * FROM user_num_click_events AS n WHERE n.user = :uId AND "
+    @Query(nativeQuery = true, value = "SELECT * FROM user_num_click_events AS n WHERE n.`user` = :uId AND "
             + "n.experiment = :expId")
     List<EventCount> findAllClickEventsByUserAndExperiment(@Param("uId") Integer user,
                                                            @Param("expId") Integer experiment);
@@ -62,7 +62,7 @@ public interface EventCountRepository extends JpaRepository<EventCount, EventCou
      * @param experiment The experiment to search for.
      * @return A list of event counts that is empty if no entry could be found.
      */
-    @Query(nativeQuery = true, value = "SELECT * FROM user_num_resource_events AS n WHERE n.user = :uId AND "
+    @Query(nativeQuery = true, value = "SELECT * FROM user_num_resource_events AS n WHERE n.`user` = :uId AND "
             + "n.experiment = :expId")
     List<EventCount> findAllResourceEventsByUserIdAndExperimentId(@Param("uId") Integer user,
                                                                   @Param("expId") Integer experiment);

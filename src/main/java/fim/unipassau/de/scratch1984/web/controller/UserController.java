@@ -19,6 +19,9 @@ import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserBulkDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,15 +41,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.LocaleResolver;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
@@ -799,7 +800,8 @@ public class UserController {
 
         try {
             UserDTO userDTO = userService.getUserById(userId);
-            if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+
+            if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN) && !userDTO.getRole().equals(Role.ADMIN)) {
                 model.addAttribute(USER_DTO, userDTO);
                 return PASSWORD;
             }
@@ -837,7 +839,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN) && !findOldUser.getRole().equals(Role.ADMIN)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication.getName() == null) {
@@ -858,7 +860,8 @@ public class UserController {
                 FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "newPassword", "empty_string", resourceBundle);
             }
 
-            validateUpdatePassword(userDTO, admin.getPassword(), userDTO.getPassword(), bindingResult, resourceBundle);
+            validateUpdatePassword(userDTO, admin.getPassword(), findOldUser.getPassword(), bindingResult,
+                    resourceBundle);
 
             if (bindingResult.hasErrors()) {
                 return PASSWORD;
@@ -948,7 +951,7 @@ public class UserController {
             } else if (!userService.matchesPassword(userDTO.getPassword(), matchPassword)) {
                 FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "password", "invalid_password",
                         resourceBundle);
-            } else if (oldPassword.equals(userDTO.getNewPassword())) {
+            } else if (Objects.equals(oldPassword, userDTO.getNewPassword())) {
                 FieldErrorHandler.addFieldError(bindingResult, USER_DTO, "newPassword", "old_password", resourceBundle);
             }
         }

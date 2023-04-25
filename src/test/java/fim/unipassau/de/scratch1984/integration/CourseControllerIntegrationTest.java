@@ -28,10 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -111,9 +108,6 @@ public class CourseControllerIntegrationTest {
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
     private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", Role.PARTICIPANT, Language.ENGLISH,
             PASSWORD, "secret");
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(2));
     private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
@@ -143,8 +137,6 @@ public class CourseControllerIntegrationTest {
         when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
         mvc.perform(get("/course")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -171,8 +163,6 @@ public class CourseControllerIntegrationTest {
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
         mvc.perform(get("/course")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -195,8 +185,6 @@ public class CourseControllerIntegrationTest {
     public void testGetCourseInvalidId() throws Exception {
         mvc.perform(get("/course")
                         .param(ID_PARAM, "0")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -212,8 +200,6 @@ public class CourseControllerIntegrationTest {
     public void testGetCourseForm() throws Exception {
         mvc.perform(get("/course/create")
                         .flashAttr(COURSE_DTO, courseDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -225,8 +211,6 @@ public class CourseControllerIntegrationTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         mvc.perform(get("/course/edit")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -240,8 +224,6 @@ public class CourseControllerIntegrationTest {
         when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/course/edit")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -253,8 +235,6 @@ public class CourseControllerIntegrationTest {
     public void testGetEditCourseFormInvalidId() throws Exception {
         mvc.perform(get("/course/edit")
                         .param(ID_PARAM, TITLE)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -267,8 +247,6 @@ public class CourseControllerIntegrationTest {
         when(courseService.saveCourse(courseDTO)).thenReturn(ID);
         mvc.perform(post("/course/update")
                         .flashAttr(COURSE_DTO, courseDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -282,8 +260,6 @@ public class CourseControllerIntegrationTest {
         when(courseService.existsCourse(ID, TITLE)).thenReturn(true);
         mvc.perform(post("/course/update")
                         .flashAttr(COURSE_DTO, courseDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -298,8 +274,6 @@ public class CourseControllerIntegrationTest {
         when(courseService.existsCourse(TITLE)).thenReturn(true);
         mvc.perform(post("/course/update")
                         .flashAttr(COURSE_DTO, courseDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -314,8 +288,6 @@ public class CourseControllerIntegrationTest {
         courseDTO.setDescription(null);
         mvc.perform(post("/course/update")
                         .flashAttr(COURSE_DTO, courseDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -332,8 +304,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(post("/course/delete")
                         .flashAttr(PASSWORD_DTO, passwordDTO)
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -350,8 +320,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(post("/course/delete")
                         .flashAttr(PASSWORD_DTO, passwordDTO)
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -370,8 +338,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(post("/course/delete")
                         .flashAttr(PASSWORD_DTO, passwordDTO)
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -386,8 +352,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(post("/course/delete")
                         .flashAttr(PASSWORD_DTO, passwordDTO)
                         .param(ID_PARAM, "0")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -403,8 +367,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/status")
                         .param(ID_PARAM, ID_STRING)
                         .param(STATUS_PARAM, "open")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -425,8 +387,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/status")
                         .param(ID_PARAM, ID_STRING)
                         .param(STATUS_PARAM, "close")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -447,8 +407,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/status")
                         .param(ID_PARAM, ID_STRING)
                         .param(STATUS_PARAM, "close")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -468,8 +426,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -487,8 +443,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, " ")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -507,8 +461,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -528,8 +480,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/participant/delete")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -546,8 +496,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/participant/delete")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -566,8 +514,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/participant/delete")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -586,8 +532,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/experiment/delete")
                         .param(ID_PARAM, ID_STRING)
                         .param(TITLE_PARAM, TITLE)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -604,8 +548,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/experiment/delete")
                         .param(ID_PARAM, ID_STRING)
                         .param(TITLE_PARAM, "  ")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -623,8 +565,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/experiment/delete")
                         .param(ID_PARAM, ID_STRING)
                         .param(TITLE_PARAM, TITLE)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -644,8 +584,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/page/participant")
                         .param(ID_PARAM, ID_STRING)
                         .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -664,8 +602,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/page/participant")
                         .param(ID_PARAM, "0")
                         .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
@@ -683,8 +619,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/page/experiment")
                         .param(ID_PARAM, ID_STRING)
                         .param(PAGE_PARAM, CURRENT)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -704,8 +638,6 @@ public class CourseControllerIntegrationTest {
         mvc.perform(get("/course/page/experiment")
                         .param(ID_PARAM, ID_STRING)
                         .param(PAGE_PARAM, "-1")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())

@@ -26,9 +26,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -122,9 +119,6 @@ public class ResultControllerIntegrationTest {
             return null;
         }
     };
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @Test
     public void testGetResult() throws Exception {
@@ -138,8 +132,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("blockEvents", is(blockEvents)))
@@ -173,8 +165,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("blockEvents", is(blockEvents)))
@@ -207,8 +197,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("blockEvents", nullValue()))
@@ -227,8 +215,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("blockEvents", nullValue()))
@@ -247,8 +233,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result")
                 .param(EXPERIMENT_PARAM, "0")
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("blockEvents", nullValue()))
@@ -267,8 +251,6 @@ public class ResultControllerIntegrationTest {
         when(fileService.findFile(ID)).thenReturn(fileDTO);
         mvc.perform(get("/result/file")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -283,8 +265,6 @@ public class ResultControllerIntegrationTest {
         when(fileService.findFile(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/result/file")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -296,8 +276,6 @@ public class ResultControllerIntegrationTest {
     public void testDownloadFileInvalidId() throws Exception {
         mvc.perform(get("/result/file")
                 .param(ID_PARAM, "  ")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -346,8 +324,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(JSON, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
@@ -375,8 +351,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(JSON, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
@@ -392,8 +366,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(JSON, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isNotFound());
@@ -408,8 +380,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(JSON, "  ")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -424,8 +394,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, "0")
                 .param(USER_PARAM, ID_STRING)
                 .param(JSON, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -440,8 +408,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, "-1")
                 .param(JSON, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -455,8 +421,6 @@ public class ResultControllerIntegrationTest {
         when(fileService.findZip(ID)).thenReturn(sb3ZipDTO);
         mvc.perform(get("/result/zip")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -471,8 +435,6 @@ public class ResultControllerIntegrationTest {
         when(fileService.findZip(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/result/zip")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -484,8 +446,6 @@ public class ResultControllerIntegrationTest {
     public void testDownloadZipInvalidId() throws Exception {
         mvc.perform(get("/result/zip")
                 .param(ID_PARAM, "0")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -499,8 +459,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/zips")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
@@ -513,8 +471,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/zips")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isNotFound());
@@ -526,8 +482,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/zips")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, "0")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -540,8 +494,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/xmls")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
@@ -554,8 +506,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/xmls")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isNotFound());
@@ -567,8 +517,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/xmls")
                 .param(EXPERIMENT_PARAM, "-1")
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -581,8 +529,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/jsons")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
@@ -595,8 +541,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/jsons")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isNotFound());
@@ -608,8 +552,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/jsons")
                 .param(EXPERIMENT_PARAM, "id")
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -623,8 +565,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(PAGE_PARAM, PAGE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
@@ -637,8 +577,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(PAGE_PARAM, "-3")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -651,8 +589,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, "-1")
                 .param(USER_PARAM, ID_STRING)
                 .param(PAGE_PARAM, PAGE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -665,8 +601,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, PAGE)
                 .param(PAGE_PARAM, PAGE)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -714,8 +648,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -736,8 +668,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -759,8 +689,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(STEP_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -784,8 +712,6 @@ public class ResultControllerIntegrationTest {
                 .param(START_PARAM, ID_STRING)
                 .param(END_PARAM, "2")
                 .param(INCLUDE_PARAM, "false")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -802,8 +728,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, "ID_STRING")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -818,8 +742,6 @@ public class ResultControllerIntegrationTest {
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, "0")
                 .param(USER_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -835,8 +757,6 @@ public class ResultControllerIntegrationTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(STEP_PARAM, "bla")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -858,8 +778,6 @@ public class ResultControllerIntegrationTest {
                 .param(START_PARAM, ID_STRING)
                 .param(END_PARAM, "5")
                 .param(INCLUDE_PARAM, "false")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -877,8 +795,6 @@ public class ResultControllerIntegrationTest {
                 .param(START_PARAM, "3")
                 .param(END_PARAM, "2")
                 .param(INCLUDE_PARAM, "false")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());

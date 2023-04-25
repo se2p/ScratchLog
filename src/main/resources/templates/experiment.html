@@ -10,7 +10,7 @@
 </head>
 <body>
 <!-- Navigation bar -->
-<header th:insert="header :: header"></header>
+<header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
 <div class="row" id="content">
@@ -95,7 +95,7 @@
         <div class="mb-5" sec:authorize="hasRole('ADMIN')">
             <div class="d-flex justify-content-between flex-wrap mb-3">
                 <h2 class="h3" th:text="#{heading_participants}"></h2>
-                <a class="btn btn-secondary" th:unless="${participants.isEmpty()}"
+                <a class="btn btn-secondary" th:unless="${participants.isEmpty()}" th:if="${experimentDTO.active}"
                    th:href="@{/secret/list(experiment=${experimentDTO.id})}" th:text="#{show_secrets}"></a>
             </div>
             <div class="col-12 mb-5">
@@ -322,8 +322,6 @@
     </div>
 </div>
 
-<script th:src="@{/webjars/jquery/3.5.1/jquery.min.js}"></script>
-
 <!-- Script to open and close the delete and add modals. -->
 <script type="module" th:src="@{/js/experimentModals.js}"></script>
 
@@ -331,6 +329,6 @@
 <script type="text/javascript" th:src="@{/js/participantSuggestions.js}"></script>
 
 <!-- Footer -->
-<div th:insert="footer :: footer"></div>
+<div th:insert="~{footer :: footer}"></div>
 </body>
 </html>

@@ -10,7 +10,7 @@
 </head>
 <body>
 <!-- Navigation bar -->
-<header th:insert="header :: header"></header>
+<header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
 <div class="row" id="content">
@@ -173,20 +173,23 @@
     let deleteModal = document.getElementById("openDelete");
     let deleteButton = document.getElementById("delete");
     let abort = document.getElementById("abort");
-    deleteButton.onclick = function() {
-        let content = document.getElementById("content");
-        deleteModal.style.display = "block";
-        content.style.filter = "blur(4px)";
+    if (deleteButton) {
+        deleteButton.onclick = function () {
+            let content = document.getElementById("content");
+            deleteModal.style.display = "block";
+            content.style.filter = "blur(4px)";
+        }
     }
-    abort.onclick = function () {
-        let content = document.getElementById("content");
-        deleteModal.style.display = "none";
-        content.style.filter = "none";
+    if (abort) {
+        abort.onclick = function () {
+            let content = document.getElementById("content");
+            deleteModal.style.display = "none";
+            content.style.filter = "none";
+        }
     }
 </script>
 
 <!-- Footer -->
-<div th:insert="footer :: footer"></div>
-</body>
+<div th:insert="~{footer :: footer}"></div>
 </body>
 </html>

@@ -4,6 +4,8 @@ import fim.unipassau.de.scratch1984.application.service.SAML2Service;
 import fim.unipassau.de.scratch1984.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratch1984.util.ApplicationProperties;
 import fim.unipassau.de.scratch1984.util.Constants;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +16,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.util.Optional;
 
 import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;

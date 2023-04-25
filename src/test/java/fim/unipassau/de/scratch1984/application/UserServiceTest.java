@@ -13,6 +13,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.enums.Language;
 import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,8 +23,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import javax.persistence.EntityNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -171,8 +170,8 @@ public class UserServiceTest {
     public void testExistsParticipant() {
         when(participantRepository.existsByUserAndExperiment(any(), any())).thenReturn(true);
         assertTrue(userService.existsParticipant(ID, ID));
-        verify(userRepository).getOne(ID);
-        verify(experimentRepository).getOne(ID);
+        verify(userRepository).getReferenceById(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).existsByUserAndExperiment(any(), any());
     }
 
@@ -180,8 +179,8 @@ public class UserServiceTest {
     public void testExistsParticipantEntityNotFound() {
         when(participantRepository.existsByUserAndExperiment(any(), any())).thenThrow(EntityNotFoundException.class);
         assertFalse(userService.existsParticipant(ID, ID));
-        verify(userRepository).getOne(ID);
-        verify(experimentRepository).getOne(ID);
+        verify(userRepository).getReferenceById(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).existsByUserAndExperiment(any(), any());
     }
 
@@ -190,8 +189,8 @@ public class UserServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> userService.existsParticipant(-1, ID)
         );
-        verify(userRepository, never()).getOne(ID);
-        verify(experimentRepository, never()).getOne(ID);
+        verify(userRepository, never()).getReferenceById(ID);
+        verify(experimentRepository, never()).getReferenceById(ID);
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
     }
 
@@ -200,8 +199,8 @@ public class UserServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> userService.existsParticipant(ID, 0)
         );
-        verify(userRepository, never()).getOne(ID);
-        verify(experimentRepository, never()).getOne(ID);
+        verify(userRepository, never()).getReferenceById(ID);
+        verify(experimentRepository, never()).getReferenceById(ID);
         verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
     }
 
@@ -581,7 +580,7 @@ public class UserServiceTest {
 
     @Test
     public void testReactivateUserAccount() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperimentAndEnd(experiment, null)).thenReturn(participants);
         List<UserDTO> userDTOS = userService.reactivateUserAccounts(ID);
         assertAll(
@@ -592,7 +591,7 @@ public class UserServiceTest {
                 () -> assertTrue(userDTOS.stream().allMatch(UserDTO::isActive)),
                 () -> assertTrue(userDTOS.stream().allMatch(u -> u.getSecret() != null))
         );
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperimentAndEnd(experiment, null);
         verify(userRepository, times(3)).save(any());
     }
@@ -600,35 +599,35 @@ public class UserServiceTest {
     @Test
     public void testReactivateUserAccountsUserIdNull() {
         user2.setId(null);
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperimentAndEnd(experiment, null)).thenReturn(participants);
         assertThrows(IllegalStateException.class,
                 () -> userService.reactivateUserAccounts(ID)
         );
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperimentAndEnd(experiment, null);
         verify(userRepository, never()).save(any());
     }
 
     @Test
     public void testReactivateUserAccountsEmptyList() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         List<UserDTO> userDTOS = userService.reactivateUserAccounts(ID);
         assertTrue(userDTOS.isEmpty());
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperimentAndEnd(experiment, null);
         verify(userRepository, never()).save(any());
     }
 
     @Test
     public void testReactivateUserAccountsNotFound() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperimentAndEnd(experiment,
                 null)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> userService.reactivateUserAccounts(ID)
         );
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperimentAndEnd(experiment, null);
         verify(userRepository, never()).save(any());
     }
@@ -638,14 +637,14 @@ public class UserServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> userService.reactivateUserAccounts(0)
         );
-        verify(experimentRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(participantRepository, never()).findAllByExperimentAndEnd(any(), any());
         verify(userRepository, never()).save(any());
     }
 
     @Test
     public void testFindUnfinishedUsers() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperimentAndEnd(experiment, null)).thenReturn(participants);
         List<UserDTO> userDTOS = userService.findUnfinishedUsers(ID);
         assertAll(
@@ -654,19 +653,19 @@ public class UserServiceTest {
                 () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 3)),
                 () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 4))
         );
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperimentAndEnd(experiment, null);
     }
 
     @Test
     public void testFindUnfinishedUsersNotFound() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperimentAndEnd(experiment,
                 null)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> userService.findUnfinishedUsers(ID)
         );
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperimentAndEnd(experiment, null);
     }
 
@@ -675,7 +674,7 @@ public class UserServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> userService.findUnfinishedUsers(0)
         );
-        verify(experimentRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(participantRepository, never()).findAllByExperimentAndEnd(any(), any());
     }
 
@@ -736,7 +735,7 @@ public class UserServiceTest {
     @ValueSource(ints = {9, 25, 100})
     public void testFindLastUsernameNumber(int number) {
         UserProjection projection = getProjection(number);
-        when(userRepository.findLastUsername(USERNAME)).thenReturn(java.util.Optional.of(projection));
+        when(userRepository.findLastUsername(USERNAME)).thenReturn(Optional.of(projection));
         assertEquals(number + 1, userService.findValidNumberForUsername(USERNAME));
         verify(userRepository).findLastUsername(USERNAME);
     }

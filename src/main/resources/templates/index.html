@@ -10,7 +10,7 @@
 </head>
 <body>
 <!-- Navigation bar -->
-<header th:insert="header :: header"></header>
+<header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
 <div class="row" id="content">
@@ -185,6 +185,6 @@
 <script type="module" th:src="@{/js/startPageTables.js}"></script>
 
 <!-- Footer -->
-<div th:insert="footer :: footer"></div>
+<div th:insert="~{footer :: footer}"></div>
 </body>
 </html>

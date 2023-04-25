@@ -27,10 +27,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,6 +40,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -113,9 +111,6 @@ public class ParticipantControllerIntegrationTest {
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true,
             false, GUI_URL);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @BeforeEach
     public void setup() {
@@ -140,8 +135,6 @@ public class ParticipantControllerIntegrationTest {
         when(userService.findLastId()).thenReturn(ID);
         mvc.perform(get("/participant/add")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -157,8 +150,6 @@ public class ParticipantControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/participant/add")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -173,8 +164,6 @@ public class ParticipantControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/participant/add")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -189,8 +178,6 @@ public class ParticipantControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/participant/add")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -203,8 +190,6 @@ public class ParticipantControllerIntegrationTest {
     public void testGetParticipantFormExperimentIdInvalid() throws Exception {
         mvc.perform(get("/participant/add")
                 .param(ID_PARAM, "0")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -221,8 +206,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)
                 .param(EXP_ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -239,8 +222,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(post("/participant/add")
                         .flashAttr(USER_DTO, newUser)
                         .param(EXP_ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -257,8 +238,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)
                 .param(EXP_ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -275,8 +254,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)
                 .param(EXP_ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -293,8 +270,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)
                 .param(EXP_ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -311,8 +286,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)
                 .param(EXP_ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -329,8 +302,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)
                 .param(EXP_ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -346,8 +317,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)
                 .param(EXP_ID_PARAM, "-1")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -362,8 +331,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, userDTO)
                 .param(EXP_ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -382,8 +349,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
                 .param(PARTICIPANT, PARTICIPANT)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -406,8 +371,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
                 .param(PARTICIPANT, PARTICIPANT)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -429,8 +392,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
                 .param(PARTICIPANT, PARTICIPANT)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -453,8 +414,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
                 .param(PARTICIPANT, PARTICIPANT)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("page", 1))
@@ -480,8 +439,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
                 .param(PARTICIPANT, PARTICIPANT)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -500,8 +457,6 @@ public class ParticipantControllerIntegrationTest {
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, BLANK)
                 .param(PARTICIPANT, PARTICIPANT)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -524,8 +479,6 @@ public class ParticipantControllerIntegrationTest {
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         mvc.perform(get("/participant/start")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -544,8 +497,6 @@ public class ParticipantControllerIntegrationTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         mvc.perform(get("/participant/start")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -565,8 +516,6 @@ public class ParticipantControllerIntegrationTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         mvc.perform(get("/participant/start")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -586,8 +535,6 @@ public class ParticipantControllerIntegrationTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         mvc.perform(get("/participant/start")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -607,8 +554,6 @@ public class ParticipantControllerIntegrationTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         mvc.perform(get("/participant/start")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -625,8 +570,6 @@ public class ParticipantControllerIntegrationTest {
         when(userService.getUser(PARTICIPANT)).thenThrow(NotFoundException.class);
         mvc.perform(get("/participant/start")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -642,8 +585,6 @@ public class ParticipantControllerIntegrationTest {
     public void testStartExperimentUserAdmin() throws Exception {
         mvc.perform(get("/participant/start")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -658,8 +599,6 @@ public class ParticipantControllerIntegrationTest {
     public void testStartExperimentIdInvalid() throws Exception {
         mvc.perform(get("/participant/start")
                 .param(ID_PARAM, BLANK)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -680,13 +619,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -705,14 +642,12 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -729,13 +664,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
         verify(participantService).simultaneousParticipation(ID);
@@ -750,13 +683,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -766,18 +697,16 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testStopExperimentInvalidParticipant() throws Exception {
-        when(participantService.isInvalidParticipant(ID, ID, SECRET)).thenReturn(true);
+        when(participantService.isInvalidParticipant(ID, ID, SECRET, true)).thenReturn(true);
         mvc.perform(get("/participant/stop")
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -791,13 +720,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, BLANK)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -811,13 +738,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, PARTICIPANT)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(participantService, never()).simultaneousParticipation(anyInt());
@@ -838,13 +763,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_GUI + ID + EXP_ID + ID + SECRET_PARAM + SECRET + RESTART));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -864,13 +787,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -887,13 +808,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -913,13 +832,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, ID_STRING)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService).isInvalidParticipant(ID, ID, SECRET);
+        verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -933,13 +850,11 @@ public class ParticipantControllerIntegrationTest {
                         .param(USER_PARAM, BLANK)
                         .param(EXPERIMENT, ID_STRING)
                         .param(SECRET, SECRET)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());

@@ -9,6 +9,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.TokenRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.UserRepository;
 import fim.unipassau.de.scratch1984.util.enums.TokenType;
 import fim.unipassau.de.scratch1984.web.dto.TokenDTO;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +72,7 @@ public class TokenServiceTest {
 
     @Test
     public void testGenerateEmailToken() {
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(tokenRepository.save(any())).thenReturn(token);
         TokenDTO tokenDTO = tokenService.generateToken(TokenType.CHANGE_EMAIL, EMAIL, ID);
         assertAll(
@@ -81,14 +81,14 @@ public class TokenServiceTest {
                 () -> assertEquals(EMAIL, tokenDTO.getMetadata()),
                 () -> assertEquals(ID, tokenDTO.getUser())
         );
-        verify(userRepository).getOne(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(tokenRepository).save(any());
     }
 
     @Test
     public void testGenerateRegisterToken() {
         token.setType(TokenType.REGISTER);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(tokenRepository.save(any())).thenReturn(token);
         TokenDTO tokenDTO = tokenService.generateToken(TokenType.REGISTER, null, ID);
         assertAll(
@@ -97,14 +97,14 @@ public class TokenServiceTest {
                 () -> assertEquals(EMAIL, tokenDTO.getMetadata()),
                 () -> assertEquals(ID, tokenDTO.getUser())
         );
-        verify(userRepository).getOne(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(tokenRepository).save(any());
     }
 
     @Test
     public void testGenerateForgotToken() {
         token.setType(TokenType.FORGOT_PASSWORD);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(tokenRepository.save(any())).thenReturn(token);
         TokenDTO tokenDTO = tokenService.generateToken(TokenType.FORGOT_PASSWORD, null, ID);
         assertAll(
@@ -113,14 +113,14 @@ public class TokenServiceTest {
                 () -> assertEquals(EMAIL, tokenDTO.getMetadata()),
                 () -> assertEquals(ID, tokenDTO.getUser())
         );
-        verify(userRepository).getOne(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(tokenRepository).save(any());
     }
 
     @Test
     public void testGenerateReactivateToken() {
         token.setType(TokenType.DEACTIVATED);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(tokenRepository.save(any())).thenReturn(token);
         TokenDTO tokenDTO = tokenService.generateToken(TokenType.DEACTIVATED, null, ID);
         assertAll(
@@ -129,19 +129,19 @@ public class TokenServiceTest {
                 () -> assertEquals(EMAIL, tokenDTO.getMetadata()),
                 () -> assertEquals(ID, tokenDTO.getUser())
         );
-        verify(userRepository).getOne(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(tokenRepository).save(any());
     }
 
     @Test
     public void testGenerateTokenStore() {
         token.setValue(null);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(tokenRepository.save(any())).thenReturn(token);
         assertThrows(StoreException.class,
                 () -> tokenService.generateToken(TokenType.CHANGE_EMAIL, EMAIL, ID)
         );
-        verify(userRepository).getOne(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(tokenRepository).save(any());
     }
 
@@ -151,7 +151,7 @@ public class TokenServiceTest {
         assertThrows(NotFoundException.class,
                 () -> tokenService.generateToken(TokenType.CHANGE_EMAIL, EMAIL, ID)
         );
-        verify(userRepository).getOne(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(tokenRepository).save(any());
     }
 
@@ -160,7 +160,7 @@ public class TokenServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> tokenService.generateToken(null, EMAIL, ID)
         );
-        verify(userRepository, never()).getOne(ID);
+        verify(userRepository, never()).getReferenceById(ID);
         verify(tokenRepository, never()).save(any());
     }
 
@@ -169,7 +169,7 @@ public class TokenServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> tokenService.generateToken(TokenType.CHANGE_EMAIL, EMAIL, 0)
         );
-        verify(userRepository, never()).getOne(ID);
+        verify(userRepository, never()).getReferenceById(ID);
         verify(tokenRepository, never()).save(any());
     }
 
@@ -282,14 +282,14 @@ public class TokenServiceTest {
     public void testReactivateUserAccounts() {
         LocalDateTime dateTime = LocalDateTime.now();
         when(tokenRepository.findAllByDateBeforeAndType(dateTime, TokenType.DEACTIVATED)).thenReturn(registerTokens);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         tokenService.reactivateUserAccounts(dateTime);
         assertAll(
                 () -> assertTrue(user.isActive()),
                 () -> assertEquals(0, user.getAttempts())
         );
         verify(tokenRepository).findAllByDateBeforeAndType(dateTime, TokenType.DEACTIVATED);
-        verify(userRepository, times(2)).getOne(ID);
+        verify(userRepository, times(2)).getReferenceById(ID);
         verify(userRepository, times(2)).save(user);
     }
 
@@ -297,13 +297,13 @@ public class TokenServiceTest {
     public void testReactivateUserAccountsEntityNotFound() {
         LocalDateTime dateTime = LocalDateTime.now();
         when(tokenRepository.findAllByDateBeforeAndType(dateTime, TokenType.DEACTIVATED)).thenReturn(registerTokens);
-        when(userRepository.getOne(ID)).thenReturn(user);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(userRepository.save(user)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> tokenService.reactivateUserAccounts(dateTime)
         );
         verify(tokenRepository).findAllByDateBeforeAndType(dateTime, TokenType.DEACTIVATED);
-        verify(userRepository).getOne(ID);
+        verify(userRepository).getReferenceById(ID);
         verify(userRepository).save(user);
     }
 
@@ -316,7 +316,7 @@ public class TokenServiceTest {
                 () -> tokenService.reactivateUserAccounts(dateTime)
         );
         verify(tokenRepository).findAllByDateBeforeAndType(dateTime, TokenType.DEACTIVATED);
-        verify(userRepository, never()).getOne(anyInt());
+        verify(userRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).save(any());
     }
 
@@ -329,7 +329,7 @@ public class TokenServiceTest {
                 () -> tokenService.reactivateUserAccounts(dateTime)
         );
         verify(tokenRepository).findAllByDateBeforeAndType(dateTime, TokenType.DEACTIVATED);
-        verify(userRepository, never()).getOne(anyInt());
+        verify(userRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).save(any());
     }
 
@@ -339,7 +339,7 @@ public class TokenServiceTest {
                 () -> tokenService.reactivateUserAccounts(null)
         );
         verify(tokenRepository, never()).findAllByDateBeforeAndType(any(), any());
-        verify(userRepository, never()).getOne(anyInt());
+        verify(userRepository, never()).getReferenceById(anyInt());
         verify(userRepository, never()).save(any());
     }
 }

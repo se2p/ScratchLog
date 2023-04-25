@@ -13,6 +13,7 @@ import fim.unipassau.de.scratch1984.util.Constants;
 import fim.unipassau.de.scratch1984.util.Secrets;
 import fim.unipassau.de.scratch1984.util.enums.Role;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -121,8 +121,8 @@ public class UserService {
                     + " or invalid experiment id " + experimentId + "!");
         }
 
-        User user = userRepository.getOne(userId);
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
             return participantRepository.existsByUserAndExperiment(user, experiment);
@@ -560,7 +560,7 @@ public class UserService {
      * @throws NotFoundException if no corresponding experiment could be found.
      */
     private List<Participant> findUnfinishedParticipants(final int experimentId) {
-        Experiment experiment = experimentRepository.getOne(experimentId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
         List<Participant> participants;
 
         try {

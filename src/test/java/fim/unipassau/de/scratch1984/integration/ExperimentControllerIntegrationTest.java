@@ -22,6 +22,7 @@ import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratch1984.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratch1984.web.dto.PasswordDTO;
 import fim.unipassau.de.scratch1984.web.dto.UserDTO;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,18 +35,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -156,9 +153,6 @@ public class ExperimentControllerIntegrationTest {
     private final MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILETYPE, CONTENT);
     private final MockMultipartFile wrongFiletype = new MockMultipartFile("file", FILENAME, "type", CONTENT);
     private final MockMultipartFile wrongFilename = new MockMultipartFile("file", "name", FILETYPE, CONTENT);
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @BeforeEach
     public void setup() {
@@ -191,8 +185,6 @@ public class ExperimentControllerIntegrationTest {
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -224,8 +216,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.hasProjectFile(ID)).thenReturn(true);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -255,8 +245,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -273,8 +261,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -309,8 +295,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/experiment")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -342,8 +326,6 @@ public class ExperimentControllerIntegrationTest {
         when(userService.getUser(anyString())).thenThrow(NotFoundException.class);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -361,8 +343,6 @@ public class ExperimentControllerIntegrationTest {
         when(participantService.getParticipant(ID, ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -380,8 +360,6 @@ public class ExperimentControllerIntegrationTest {
         when(userService.getUser(anyString())).thenReturn(userDTO);
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -395,8 +373,6 @@ public class ExperimentControllerIntegrationTest {
     public void testGetExperimentInvalidId() throws Exception {
         mvc.perform(get("/experiment")
                 .param(ID_PARAM, INVALID_ID)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -407,8 +383,6 @@ public class ExperimentControllerIntegrationTest {
     @Test
     public void testGetExperimentForm() throws  Exception {
         mvc.perform(get("/experiment/create")
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -423,8 +397,6 @@ public class ExperimentControllerIntegrationTest {
     public void testGetExperimentFormCourse() throws  Exception {
         mvc.perform(get("/experiment/create")
                         .param("course", ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -440,8 +412,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         mvc.perform(get("/experiment/edit")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -462,8 +432,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/experiment/edit")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -475,8 +443,6 @@ public class ExperimentControllerIntegrationTest {
     public void testGetExperimentFormInvalidId() throws Exception {
         mvc.perform(get("/experiment/edit")
                         .param(ID_PARAM, INFO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -489,8 +455,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -507,8 +471,6 @@ public class ExperimentControllerIntegrationTest {
         when(courseService.existsActiveCourse(ID)).thenReturn(true);
         mvc.perform(post("/experiment/update")
                         .flashAttr(EXPERIMENT_DTO, experimentDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -530,8 +492,6 @@ public class ExperimentControllerIntegrationTest {
         doThrow(ConstraintViolationException.class).when(courseService).saveCourseExperiment(ID, ID);
         mvc.perform(post("/experiment/update")
                         .flashAttr(EXPERIMENT_DTO, experimentDTO)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -550,8 +510,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.existsExperiment(TITLE, ID)).thenReturn(true);
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -566,8 +524,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -583,8 +539,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -599,8 +553,6 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setDescription(null);
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -618,8 +570,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(post("/experiment/delete")
                 .param(ID_PARAM, ID_STRING)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -636,8 +586,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(post("/experiment/delete")
                 .param(ID_PARAM, ID_STRING)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -655,8 +603,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(post("/experiment/delete")
                 .param(ID_PARAM, ID_STRING)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -673,8 +619,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(post("/experiment/delete")
                 .param(ID_PARAM, ID_STRING)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -689,8 +633,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(post("/experiment/delete")
                 .param(ID_PARAM, BLANK)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -713,8 +655,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, "open")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -749,8 +689,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/status")
                         .param(STATUS_PARAM, "open")
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -770,8 +708,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, "close")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -798,8 +734,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, INFO)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -813,8 +747,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/status")
                 .param(STATUS_PARAM, "close")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -834,8 +766,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/search")
                 .param(PARTICIPANT, PARTICIPANT)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -858,8 +788,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/search")
                 .param(PARTICIPANT, PARTICIPANT)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -882,8 +810,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/search")
                         .param(PARTICIPANT, PARTICIPANT)
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -904,8 +830,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/search")
                 .param(PARTICIPANT, PARTICIPANT)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -934,8 +858,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/search")
                         .param(PARTICIPANT, PARTICIPANT)
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -963,8 +885,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/search")
                         .param(PARTICIPANT, PARTICIPANT)
                         .param(ID_PARAM, ID_STRING)
-                        .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                        .param(csrfToken.getParameterName(), csrfToken.getToken())
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -991,8 +911,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/search")
                 .param(PARTICIPANT, BLANK)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -1016,8 +934,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/search")
                 .param(PARTICIPANT, PARTICIPANT)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -1037,8 +953,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/page")
                 .param(ID_PARAM, ID_STRING)
                 .param(PAGE_PARAM, CURRENT)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute(PASSWORD_DTO, notNullValue()))
@@ -1066,8 +980,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/page")
                 .param(ID_PARAM, ID_STRING)
                 .param(PAGE_PARAM, CURRENT)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -1082,8 +994,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/page")
                 .param(ID_PARAM, BLANK)
                 .param(PAGE_PARAM, CURRENT)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -1098,8 +1008,6 @@ public class ExperimentControllerIntegrationTest {
         mvc.perform(get("/experiment/page")
                 .param(ID_PARAM, ID_STRING)
                 .param(PAGE_PARAM, "-1")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -1121,8 +1029,6 @@ public class ExperimentControllerIntegrationTest {
         when(experimentService.getExperimentData(ID)).thenReturn(new ArrayList<>());
         mvc.perform(get("/experiment/csv")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
@@ -1140,8 +1046,6 @@ public class ExperimentControllerIntegrationTest {
     public void testDownloadCSVFileInvalidId() throws Exception {
         mvc.perform(get("/experiment/csv")
                 .param(ID_PARAM, "0")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -1161,8 +1065,6 @@ public class ExperimentControllerIntegrationTest {
         mockMvc.perform(multipart("/experiment/upload")
                 .file(file)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -1177,8 +1079,6 @@ public class ExperimentControllerIntegrationTest {
         mockMvc.perform(multipart("/experiment/upload")
                 .file(file)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -1193,8 +1093,6 @@ public class ExperimentControllerIntegrationTest {
         mockMvc.perform(multipart("/experiment/upload")
                 .file(wrongFilename)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -1212,8 +1110,6 @@ public class ExperimentControllerIntegrationTest {
         mockMvc.perform(multipart("/experiment/upload")
                 .file(wrongFiletype)
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -1230,8 +1126,6 @@ public class ExperimentControllerIntegrationTest {
         mockMvc.perform(multipart("/experiment/upload")
                 .file(file)
                 .param(ID_PARAM, BLANK)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -1244,8 +1138,6 @@ public class ExperimentControllerIntegrationTest {
     public void testDeleteProjectFile() throws Exception {
         mvc.perform(get("/experiment/sb3")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -1258,8 +1150,6 @@ public class ExperimentControllerIntegrationTest {
         doThrow(NotFoundException.class).when(experimentService).deleteSb3Project(ID);
         mvc.perform(get("/experiment/sb3")
                 .param(ID_PARAM, ID_STRING)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
@@ -1271,8 +1161,6 @@ public class ExperimentControllerIntegrationTest {
     public void testDeleteProjectFileInvalidId() throws Exception {
         mvc.perform(get("/experiment/sb3")
                 .param(ID_PARAM, "0")
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())

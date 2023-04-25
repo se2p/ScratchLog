@@ -17,9 +17,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -69,9 +66,6 @@ public class SearchControllerIntegrationTest {
     private List<UserProjection> users;
     private List<ExperimentTableProjection> experiments;
     private List<CourseTableProjection> courses;
-    private final String TOKEN_ATTR_NAME = "org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository.CSRF_TOKEN";
-    private final HttpSessionCsrfTokenRepository httpSessionCsrfTokenRepository = new HttpSessionCsrfTokenRepository();
-    private final CsrfToken csrfToken = httpSessionCsrfTokenRepository.generateToken(new MockHttpServletRequest());
 
     @AfterEach
     public void resetService() {reset(searchService);}
@@ -89,8 +83,6 @@ public class SearchControllerIntegrationTest {
         when(searchService.getCourseList(QUERY, Constants.PAGE_SIZE)).thenReturn(courses);
         mvc.perform(get(PATH)
                 .param(QUERY, QUERY)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(model().attribute(USERS, is(users)))
@@ -115,8 +107,6 @@ public class SearchControllerIntegrationTest {
     public void testGetSearchPageQueryBlank() throws Exception {
         mvc.perform(get(PATH)
                 .param(QUERY, BLANK)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(model().attribute(USERS, is(empty())))
@@ -141,8 +131,6 @@ public class SearchControllerIntegrationTest {
     public void testGetSearchPageQueryTooLong() throws Exception {
         mvc.perform(get(PATH)
                 .param(QUERY, LONG_QUERY)
-                .sessionAttr(TOKEN_ATTR_NAME, csrfToken)
-                .param(csrfToken.getParameterName(), csrfToken.getToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())

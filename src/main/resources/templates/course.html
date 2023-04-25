@@ -10,7 +10,7 @@
 </head>
 <body>
 <!-- Navigation bar -->
-<header th:insert="header :: header"></header>
+<header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
 <div class="row" id="content" sec:authorize="hasRole('PARTICIPANT')">
@@ -225,7 +225,7 @@
                 </a>
             </div>
             <!-- The buttons for experiment management. -->
-            <div class="d-flex gap-3 flex-wrap" th:if="${courseDTO.active}">
+            <div class="d-flex gap-3 flex-wrap" th:if="${courseDTO.active}" sec:authorize="hasRole('ADMIN')">
                 <div class="mb-3">
                     <a class="btn btn-secondary" th:href="@{/experiment/create(course=${courseDTO.id})}"
                        th:text="#{add_experiment}"></a>
@@ -375,6 +375,6 @@
 </script>
 
 <!-- Footer -->
-<div th:insert="footer :: footer"></div>
+<div th:insert="~{footer :: footer}"></div>
 </body>
 </html>

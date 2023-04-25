@@ -16,6 +16,7 @@ import fim.unipassau.de.scratch1984.persistence.repository.ExperimentDataReposit
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratch1984.util.Constants;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.Optional;
 
 /**
@@ -155,7 +155,7 @@ public class PageService {
         }
 
         checkPageable(pageable);
-        Course course = courseRepository.getOne(courseId);
+        Course course = courseRepository.getReferenceById(courseId);
         Page<CourseExperimentProjection> experiments = courseExperimentRepository.findAllProjectedByCourse(pageable,
                 course);
 
@@ -224,7 +224,7 @@ public class PageService {
                     + "!");
         }
 
-        Experiment experiment = experimentRepository.getOne(id);
+        Experiment experiment = experimentRepository.getReferenceById(id);
 
         try {
             return participantRepository.findAllByExperiment(experiment,
@@ -251,7 +251,7 @@ public class PageService {
         }
 
         checkPageable(pageable);
-        Course course = courseRepository.getOne(id);
+        Course course = courseRepository.getReferenceById(id);
 
         try {
             return courseParticipantRepository.findAllByCourse(course, PageRequest.of(pageable.getPageNumber(),

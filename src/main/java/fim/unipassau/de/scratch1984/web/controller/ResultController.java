@@ -18,6 +18,7 @@ import fim.unipassau.de.scratch1984.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratch1984.web.dto.EventCountDTO;
 import fim.unipassau.de.scratch1984.web.dto.FileDTO;
 import fim.unipassau.de.scratch1984.web.dto.Sb3ZipDTO;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -10,6 +10,7 @@ import fim.unipassau.de.scratch1984.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratch1984.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratch1984.web.dto.ExperimentDTO;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +18,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -407,20 +407,20 @@ public class ExperimentServiceTest {
 
     @Test
     public void testUploadSb3Project() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         assertDoesNotThrow(() -> experimentService.uploadSb3Project(ID, CONTENT));
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(experimentRepository).save(any());
     }
 
     @Test
     public void testUploadSb3ProjectEntityNotFound() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(experimentRepository.save(any())).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> experimentService.uploadSb3Project(ID, CONTENT)
         );
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(experimentRepository).save(any());
     }
 
@@ -429,7 +429,7 @@ public class ExperimentServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> experimentService.uploadSb3Project(0, CONTENT)
         );
-        verify(experimentRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).save(any());
     }
 
@@ -438,26 +438,26 @@ public class ExperimentServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> experimentService.uploadSb3Project(ID, null)
         );
-        verify(experimentRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).save(any());
     }
 
     @Test
     public void testDeleteSb3Project() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         assertDoesNotThrow(() -> experimentService.deleteSb3Project(ID));
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(experimentRepository).save(any());
     }
 
     @Test
     public void testDeleteSb3ProjectEntityNotFound() {
-        when(experimentRepository.getOne(ID)).thenReturn(experiment);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(experimentRepository.save(any())).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> experimentService.deleteSb3Project(ID)
         );
-        verify(experimentRepository).getOne(ID);
+        verify(experimentRepository).getReferenceById(ID);
         verify(experimentRepository).save(any());
     }
 
@@ -466,7 +466,7 @@ public class ExperimentServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> experimentService.deleteSb3Project(-1)
         );
-        verify(experimentRepository, never()).getOne(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).save(any());
     }
 

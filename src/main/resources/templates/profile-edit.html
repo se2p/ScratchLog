@@ -10,7 +10,7 @@
 </head>
 <body>
 <!-- Navigation bar -->
-<header th:insert="header :: header"></header>
+<header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
 <div class="row" id="content">
@@ -22,6 +22,7 @@
         <!-- The form for editing a profile. -->
         <form th:action="@{/users/update}" th:object="${userDTO}" th:name="userDTO" method="post">
             <input type="hidden" th:field="*{id}">
+            <input type="hidden" th:field="*{role}">
             <!-- The set password button. -->
             <div class="text-end" th:if="${userDTO.password == null}" sec:authorize="hasRole('ADMIN')">
                 <a class="btn btn-secondary" th:text="#{set_password}" th:href="@{/users/forgot(id=${userDTO.id})}"></a>
@@ -89,6 +90,7 @@
                 <div class="d-flex justify-content-between">
                     <div class="form-text" th:text="#{password_info}"></div>
                     <a class="link-secondary" th:text="#{forgot_password}" th:href="@{/users/forgot(id=${userDTO.id})}"
+                       th:if="${userDTO.getRole().equals(T(fim.unipassau.de.scratch1984.util.enums.Role).PARTICIPANT)}"
                        sec:authorize="hasRole('ADMIN')">
                     </a>
                 </div>
@@ -135,6 +137,6 @@
 </div>
 
 <!-- Footer -->
-<div th:insert="footer :: footer"></div>
+<div th:insert="~{footer :: footer}"></div>
 </body>
 </html>
