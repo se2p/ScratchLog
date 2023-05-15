@@ -43,11 +43,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -67,6 +71,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -80,6 +85,9 @@ public class UserControllerIntegrationTest {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private WebApplicationContext webApplicationContext;
 
     @MockBean
     private UserService userService;
@@ -106,6 +114,7 @@ public class UserControllerIntegrationTest {
     private static final String LOGIN = "login";
     private static final String PROFILE = "profile";
     private static final String PROFILE_EDIT = "profile-edit";
+    private static final String PARTICIPANTS_CSV = "participants-csv";
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
@@ -124,6 +133,8 @@ public class UserControllerIntegrationTest {
     private static final String ID_STRING = "1";
     private static final String ID_PARAM = "id";
     private static final String SECRET = "secret";
+    private static final String FILETYPE = "text/csv";
+    private static final String FILENAME = "users.csv";
     private static final int ID = 1;
     private static final int AMOUNT = 5;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
@@ -509,6 +520,63 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).findValidNumberForUsername(anyString());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    public void testGetCSVParticipants() throws Exception {
+        mvc.perform(get("/users/csv"))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANTS_CSV));
+    }
+
+    @Test
+    public void testAddCSVParticipants() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILETYPE,
+                new ClassPathResource("users.csv").getInputStream());
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc.perform(multipart("/users/csv")
+                        .file(file)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(userService, times(2)).existsUser(anyString());
+        verify(userService, times(2)).existsEmail(anyString());
+        verify(userService, times(2)).encodePassword(anyString());
+        verify(userService, times(2)).saveUser(any());
+    }
+
+    @Test
+    public void testAddCSVParticipantsInvalidAttributes() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILETYPE,
+                new ClassPathResource("usersInvalid.csv").getInputStream());
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc.perform(multipart("/users/csv")
+                        .file(file)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANTS_CSV));
+        verify(userService).existsUser(anyString());
+        verify(userService).existsEmail(anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(userService, never()).saveUser(any());
+    }
+
+    @Test
+    public void testAddCSVParticipantsInvalidFile() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILENAME,
+                new ClassPathResource("usersInvalid.csv").getInputStream());
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc.perform(multipart("/users/csv")
+                        .file(file)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(PARTICIPANTS_CSV));
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUser(any());
     }
 

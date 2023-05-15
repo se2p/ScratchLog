@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{csv_participants_title}"></title>
+    <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/style.css}">
+</head>
+<body>
+<!-- Navigation bar -->
+<header th:insert="~{header :: header}"></header>
+
+<!-- Page content -->
+<div class="row" id="content">
+    <div class="inside">
+        <!-- The error message shown at the top of the page when an error occurs. -->
+        <div class="row" th:if="${error != null}">
+            <div class="col-12 alert alert-danger" th:text="${error}"></div>
+        </div>
+
+        <!-- The CSV participant page heading. -->
+        <h2 class="mb-5" th:text="#{csv_create}"></h2>
+
+        <!-- The information shown on the page if the mail server constant is set to true. -->
+        <div class="row" th:if="${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).MAIL_SERVER}">
+            <div class="col-12 mb-5" th:text="#{csv_info}"></div>
+        </div>
+
+        <!-- The information shown on the page if the mail server constant is set to false. -->
+        <div class="row" th:unless="${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).MAIL_SERVER}">
+            <div class="col-12 mb-5" th:text="#{csv_info_no_mail}"></div>
+        </div>
+
+        <!-- The form for uploading the CSV file. -->
+        <h2 th:text="#{csv_heading}" class="h5"></h2>
+        <form method="post" th:action="@{/users/csv}" enctype="multipart/form-data"
+              class="align-items-start d-flex flex-column gap-3">
+            <input type="file" name="file" accept=".csv"/>
+            <input class="btn btn-primary" type="submit" th:value="#{upload}"/>
+        </form>
+    </div>
+</div>
+
+<!-- Footer -->
+<div th:insert="~{footer :: footer}"></div>
+</body>
+</html>
