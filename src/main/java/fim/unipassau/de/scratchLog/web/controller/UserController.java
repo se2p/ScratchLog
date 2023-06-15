@@ -19,6 +19,7 @@
 
 package fim.unipassau.de.scratchLog.web.controller;
 
+import com.opencsv.bean.CsvToBeanBuilder;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.MailService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
@@ -27,13 +28,16 @@ import fim.unipassau.de.scratchLog.application.service.UserService;
 import fim.unipassau.de.scratchLog.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
+import fim.unipassau.de.scratchLog.util.CustomPasswordGenerator;
 import fim.unipassau.de.scratchLog.util.FieldErrorHandler;
 import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.util.enums.TokenType;
+import fim.unipassau.de.scratchLog.util.validation.EmailValidator;
 import fim.unipassau.de.scratchLog.util.validation.PasswordValidator;
 import fim.unipassau.de.scratchLog.util.validation.StringValidator;
+import fim.unipassau.de.scratchLog.util.validation.UsernameValidator;
 import fim.unipassau.de.scratchLog.web.dto.PasswordDTO;
 import fim.unipassau.de.scratchLog.web.dto.TokenDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserBulkDTO;
@@ -45,6 +49,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -58,8 +64,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.LocaleResolver;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -67,6 +78,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.ResourceBundle;
 
 import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
@@ -152,6 +164,11 @@ public class UserController {
      * String corresponding to the userDTO model attribute.
      */
     private static final String USER_DTO = "userDTO";
+
+    /**
+     * String corresponding to the error model attribute.
+     */
+    private static final String ERROR = "error";
 
     /**
      * Constructs a new user controller with the given dependencies.
@@ -260,7 +277,7 @@ public class UserController {
 
             if (!findUser.isActive()) {
                 LOGGER.debug("Tried to log in inactive user with username " + userDTO.getUsername() + ".");
-                model.addAttribute("error", resourceBundle.getString("activate_first"));
+                model.addAttribute(ERROR, resourceBundle.getString("activate_first"));
                 return LOGIN;
             } else if (findUser.getAttempts() >= Constants.MAX_LOGIN_ATTEMPTS) {
                 findUser.setActive(false);
@@ -268,7 +285,7 @@ public class UserController {
                 tokenService.generateToken(TokenType.DEACTIVATED, "", findUser.getId());
                 LOGGER.info("Deactivated account of user with username " + userDTO.getUsername()
                         + " due to exceeding the maximum number of login attempts!");
-                model.addAttribute("error", resourceBundle.getString("account_deactivated"));
+                model.addAttribute(ERROR, resourceBundle.getString("account_deactivated"));
                 return LOGIN;
             }
 
@@ -279,12 +296,12 @@ public class UserController {
                         getLocaleFromLanguage(findUser.getLanguage()));
                 return INDEX;
             } else {
-                model.addAttribute("error", resourceBundle.getString("authentication_error"));
+                model.addAttribute(ERROR, resourceBundle.getString("authentication_error"));
                 return LOGIN;
             }
         } catch (NotFoundException e) {
             LOGGER.error("Failed to log in user with username " + userDTO.getUsername() + ".", e);
-            model.addAttribute("error", resourceBundle.getString("authentication_error"));
+            model.addAttribute(ERROR, resourceBundle.getString("authentication_error"));
             return LOGIN;
         }
     }
@@ -446,8 +463,60 @@ public class UserController {
         if (invalidUsernames.isEmpty()) {
             return "redirect:/?success=true";
         } else {
-            model.addAttribute("error", invalidUsernames);
+            model.addAttribute(ERROR, invalidUsernames);
             return PARTICIPANTS_ADD;
+        }
+    }
+
+    /**
+     * Returns the CSV participants page to create new users from a CSV file.
+     *
+     * @return The CSV participants page.
+     */
+    @GetMapping("/csv")
+    @Secured(Constants.ROLE_ADMIN)
+    public String getCSVParticipants() {
+        return "participants-csv";
+    }
+
+    /**
+     * Creates new users in the database with the information provided by the given CSV file. Another CSV file
+     * containing information about the passwords generated for each user is returned. If the passed file is invalid,
+     * users could not be added or the file could not be parsed correctly, the CSV participants page is returned where
+     * a corresponding error message is displayed.
+     *
+     * @param file The file containing the user information.
+     * @param model The {@link Model} used to store information on errors.
+     * @return The CSV file containing information on the created users on success, or the CSV participants page
+     * otherwise.
+     */
+    @PostMapping("/csv")
+    @Secured(Constants.ROLE_ADMIN)
+    public Object addCSVParticipants(@RequestParam("file") final MultipartFile file, final Model model) {
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+
+        if (isInvalidFile(file, model, resourceBundle)) {
+            return "participants-csv";
+        }
+
+        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            List<UserDTO> users = new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
+
+            if (isValidUserInfo(users, model, resourceBundle)) {
+                Random random = new Random();
+                StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
+                users.forEach(userDTO -> completeUserInformation(userDTO, random, builder));
+                userService.saveUsers(users);
+                return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv"
+                        + "\"").body(builder.toString());
+            } else {
+                return "participants-csv";
+            }
+        } catch (IOException e) {
+            LOGGER.error("Error parsing CSV file!", e);
+            model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
+            return "participants-csv";
         }
     }
 
@@ -1015,6 +1084,112 @@ public class UserController {
         templateModel.put("baseUrl", ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH);
         templateModel.put("token", tokenUrl);
         return mailService.sendEmail(email, resourceBundle.getString(subject), templateModel, template);
+    }
+
+    /**
+     * Checks, whether the given file is a valid CSV file. If the file is empty or is not a CSV file, a corresponding
+     * error message is added to the given model to be displayed to the user.
+     *
+     * @param file The file to be checked.
+     * @param model The {@link Model} used to store error messages.
+     * @param resourceBundle The {@link ResourceBundle} used to display error messages in the desired language.
+     * @return {@code true} if the file is invalid or {@code false} otherwise.
+     */
+    private boolean isInvalidFile(final MultipartFile file, final Model model, final ResourceBundle resourceBundle) {
+        if (file.isEmpty()) {
+            LOGGER.error("Cannot upload empty CSV file!");
+            model.addAttribute(ERROR, resourceBundle.getString("file_empty"));
+            return true;
+        } else if (file.getContentType() == null || !file.getContentType().equals("text/csv")) {
+            LOGGER.error("Cannot upload file with invalid content type " + file.getContentType() + "!");
+            model.addAttribute(ERROR, resourceBundle.getString("file_type"));
+            return true;
+        } else if (file.getOriginalFilename() == null || !file.getOriginalFilename().endsWith(".csv")) {
+            LOGGER.error("Cannot upload file with invalid filename " + file.getOriginalFilename() + "!");
+            model.addAttribute(ERROR, resourceBundle.getString("csv_file_name"));
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks, whether the given list of DTOs contains valid usernames and emails. If the size of the list is more than
+     * the maximum allowed size, it is considered invalid as well.
+     *
+     * @param users The list of users.
+     * @param model The {@link Model} used to store error information.
+     * @param resourceBundle The {@link ResourceBundle} used to display error messages in the desired language.
+     * @return {@code true} if all user information is valid, or {@code false} otherwise.
+     */
+    private boolean isValidUserInfo(final List<UserDTO> users, final Model model, final ResourceBundle resourceBundle) {
+        List<String> invalidAttributes = new ArrayList<>();
+        List<String> existingAttributes = new ArrayList<>();
+
+        if (users.size() > Constants.MAX_ADD_PARTICIPANTS) {
+            LOGGER.error("Cannot add an invalid number of participants " + users.size() + " from CSV!");
+            model.addAttribute(ERROR, resourceBundle.getString("max_participants"));
+            return false;
+        }
+
+        users.forEach(userDTO -> checkValidUserInfo(userDTO, invalidAttributes, existingAttributes));
+
+        if (!invalidAttributes.isEmpty()) {
+            LOGGER.error("Cannot create users from CSV with invalid usernames or emails!");
+            model.addAttribute(ERROR, resourceBundle.getString("invalid_attributes") + " " + invalidAttributes);
+            return false;
+        } else if (!existingAttributes.isEmpty()) {
+            LOGGER.error("Cannot create users from CSV with existing usernames or emails!");
+            model.addAttribute(ERROR, resourceBundle.getString("existing_attributes") + " " + existingAttributes);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks, if the username and email address of the given user meet the requirements and cannot be found in the
+     * database.
+     *
+     * @param userDTO The DTO containing the information to check.
+     * @param invalid A list used to store all invalid usernames and emails.
+     * @param existing A list used to store all usernames and emails that already exist.
+     */
+    private void checkValidUserInfo(final UserDTO userDTO, final List<String> invalid, final List<String> existing) {
+        userDTO.setRole(Role.PARTICIPANT);
+
+        if (UsernameValidator.validate(userDTO.getUsername()) != null) {
+            invalid.add(userDTO.getUsername());
+        } else if (userService.existsUser(userDTO.getUsername())) {
+            existing.add(userDTO.getUsername());
+        }
+        if (userDTO.getEmail() != null) {
+            if (EmailValidator.validate(userDTO.getEmail()) != null) {
+                invalid.add(userDTO.getEmail());
+            } else if (userService.existsEmail(userDTO.getEmail())) {
+                existing.add(userDTO.getEmail());
+            }
+        }
+    }
+
+    /**
+     * Sets all the required attributes for user information retrieved from a CSV file to subsequently be persisted.
+     * This includes the generation of a new password for the user, which is then appended to the given string builder
+     * to be returned later.
+     *
+     * @param userDTO The user to be added.
+     * @param random Instance used to generating a random number for the password length.
+     * @param builder The {@link StringBuilder} used to store the information.
+     */
+    private void completeUserInformation(final UserDTO userDTO, final Random random, final StringBuilder builder) {
+        int randomLength = random.nextInt(Constants.PASSWORD_MIN * 2 - Constants.PASSWORD_MIN) + Constants.PASSWORD_MIN;
+        String password = CustomPasswordGenerator.generatePassword(randomLength);
+        userDTO.setPassword(userService.encodePassword(password));
+        userDTO.setConfirmPassword(password);
+        userDTO.setActive(true);
+        userDTO.setLastLogin(LocalDateTime.now());
+        builder.append(userDTO.getUsername()).append(", ").append(userDTO.getConfirmPassword()).append(
+                System.lineSeparator());
     }
 
     /**

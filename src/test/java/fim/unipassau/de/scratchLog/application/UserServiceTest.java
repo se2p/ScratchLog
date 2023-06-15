@@ -223,6 +223,18 @@ public class UserServiceTest {
     }
 
     @Test
+    public void testSaveUsers() {
+        when(userRepository.save(any())).thenReturn(user1, user2);
+        List<UserDTO> saved = userService.saveUsers(List.of(userDTO, userDTO));
+        assertAll(
+                () -> assertEquals(2, saved.size()),
+                () -> assertEquals(user1.getId(), saved.get(0).getId()),
+                () -> assertEquals(user2.getId(), saved.get(1).getId())
+        );
+        verify(userRepository, times(2)).save(any());
+    }
+
+    @Test
     public void testSaveUser() {
         when(userRepository.save(any())).thenReturn(user1);
         UserDTO saved = userService.saveUser(userDTO);

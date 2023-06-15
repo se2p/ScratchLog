@@ -27,6 +27,7 @@
         <json.version>20230227</json.version>
         <commonmark.version>0.21.0</commonmark.version>
         <opencsv.version>5.7.1</opencsv.version>
+        <passay.version>1.6.3</passay.version>
         <jaxb.version>4.0.0</jaxb.version>
         <junit.version>5.9.2</junit.version>
         <junitplatform.version>1.9.2</junitplatform.version>
@@ -204,6 +205,13 @@
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>${opencsv.version}</version>
+        </dependency>
+
+        <!-- Generate passwords complying with rules -->
+        <dependency>
+            <groupId>org.passay</groupId>
+            <artifactId>passay</artifactId>
+            <version>${passay.version}</version>
         </dependency>
 
         <!-- API, java.xml.bind module no longer contained in JDK since Java 11 -->

@@ -19,6 +19,7 @@
 
 package fim.unipassau.de.scratchLog.web.dto;
 
+import com.opencsv.bean.CsvBindByName;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import lombok.AllArgsConstructor;
@@ -48,11 +49,13 @@ public class UserDTO {
     /**
      * The user's unique username.
      */
+    @CsvBindByName(required = true)
     private String username;
 
     /**
      * The user's email.
      */
+    @CsvBindByName()
     private String email;
 
     /**
@@ -63,6 +66,7 @@ public class UserDTO {
     /**
      * The user's preferred language.
      */
+    @CsvBindByName(required = true)
     private Language language;
 
     /**

@@ -43,6 +43,9 @@
                         <li th:unless="${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).MAIL_SERVER}">
                             <a class="dropdown-item" th:href="@{/users/bulk}" th:text="#{new_users}"></a>
                         </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{users/csv}" th:text="#{csv_users}"></a>
+                        </li>
                     </ul>
                 </li>
             </ul>
