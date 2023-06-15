@@ -23,6 +23,7 @@ import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.EventService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.FileService;
+import fim.unipassau.de.scratchLog.application.service.ParticipantService;
 import fim.unipassau.de.scratchLog.application.service.UserService;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventJSONProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventProjection;
@@ -34,6 +35,7 @@ import fim.unipassau.de.scratchLog.web.controller.ResultController;
 import fim.unipassau.de.scratchLog.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratchLog.web.dto.EventCountDTO;
 import fim.unipassau.de.scratchLog.web.dto.FileDTO;
+import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratchLog.web.dto.Sb3ZipDTO;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
@@ -92,6 +94,9 @@ public class ResultControllerTest {
     private FileService fileService;
 
     @Mock
+    private ParticipantService participantService;
+
+    @Mock
     private Model model;
 
     @Mock
@@ -109,6 +114,8 @@ public class ResultControllerTest {
             new byte[]{1, 2, 3, 4});
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now().plusMinutes(15), "file",
             new byte[]{1, 2, 3});
+    private final ParticipantDTO participantDTO1 = new ParticipantDTO(ID, ID);
+    private final ParticipantDTO participantDTO2 = new ParticipantDTO(2, ID);
     private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
     private final List<EventCountDTO> clickEvents = getEventCounts(3, "GREENFLAG");
@@ -120,6 +127,7 @@ public class ResultControllerTest {
     private final List<BlockEventJSONProjection> jsonProjections = getJsonProjections(4);
     private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(2));
     private List<FileDTO> fileDTOS = new ArrayList<>();
+    private final List<ParticipantDTO> participants = List.of(participantDTO1, participantDTO2);
     ExperimentProjection experimentProjection = new ExperimentProjection() {
         @Override
         public Integer getId() {
@@ -1468,6 +1476,164 @@ public class ResultControllerTest {
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, "false",
                         httpServletResponse)
         );
+        verify(experimentService, never()).getSb3File(anyInt());
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+    }
+
+    @Test
+    public void testDownloadExperimentSb3Files() throws IOException {
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
+        when(eventService.getJsonForUser(anyInt(), anyInt())).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
+        assertDoesNotThrow(
+                () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
+        );
+        verify(participantService).getParticipants(ID);
+        verify(experimentService).getSb3File(ID);
+        verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, times(2)).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, times(2)).findFinalProject(anyInt(), anyInt());
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testDownloadExperimentSb3FilesSteps() throws IOException {
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
+        when(eventService.getJsonForUser(anyInt(), anyInt())).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
+        assertDoesNotThrow(
+                () -> resultController.downloadExperimentSb3Files(ID_STRING, ID_STRING, httpServletResponse)
+        );
+        verify(participantService).getParticipants(ID);
+        verify(experimentService).getSb3File(ID);
+        verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, times(2)).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, times(2)).findFinalProject(anyInt(), anyInt());
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testDownloadExperimentSb3FilesNoEntries() throws IOException {
+        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
+            @Override
+            public boolean isReady() {
+                return false;
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+
+            }
+
+            @Override
+            public void write(int b) throws IOException {
+
+            }
+        });
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
+        when(eventService.getJsonForUser(anyInt(), anyInt())).thenThrow(NotFoundException.class);
+        when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
+        assertDoesNotThrow(
+                () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
+        );
+        verify(participantService).getParticipants(ID);
+        verify(experimentService).getSb3File(ID);
+        verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, times(2)).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, times(2)).findFinalProject(anyInt(), anyInt());
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testDownloadExperimentSb3FilesIOException() throws IOException {
+        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        assertThrows(RuntimeException.class,
+                () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
+        );
+        verify(participantService).getParticipants(ID);
+        verify(experimentService).getSb3File(ID);
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
+        verify(httpServletResponse).getOutputStream();
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testDownloadExperimentSb3FilesNoParticipants() throws IOException {
+        when(participantService.getParticipants(ID)).thenReturn(new ArrayList<>());
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
+        );
+        verify(participantService).getParticipants(ID);
+        verify(experimentService).getSb3File(ID);
+        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
+        verify(httpServletResponse, never()).getOutputStream();
+    }
+
+    @Test
+    public void testDownloadExperimentSb3FilesInvalidExperiment() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> resultController.downloadExperimentSb3Files(RESULT, null, httpServletResponse)
+        );
+        verify(participantService, never()).getParticipants(anyInt());
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
         verify(eventService, never()).getJsonForUser(anyInt(), anyInt());

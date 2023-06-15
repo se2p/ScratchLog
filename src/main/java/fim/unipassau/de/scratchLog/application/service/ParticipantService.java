@@ -45,6 +45,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -151,6 +152,27 @@ public class ParticipantService {
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " in the database!", e);
         }
+    }
+
+    /**
+     * Retrieves all participants for a given experiment, if any exist.
+     *
+     * @param experimentId The id of the experiment.
+     * @return The list of participants.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     */
+    @Transactional
+    public List<ParticipantDTO> getParticipants(final int experimentId) {
+        if (experimentId < Constants.MIN_ID) {
+            throw new IllegalArgumentException("Cannot retrieve participant information for experiment with invalid id "
+                    + experimentId + "!");
+        }
+
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
+        List<Participant> participants = participantRepository.findAllByExperiment(experiment);
+        List<ParticipantDTO> participantDTOS = new ArrayList<>();
+        participants.forEach(participant -> participantDTOS.add(createParticipantDTO(participant)));
+        return participantDTOS;
     }
 
     /**
