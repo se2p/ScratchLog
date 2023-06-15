@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -151,10 +152,23 @@ public class UserService {
     }
 
     /**
+     * Creates new users for each user contained in the given list.
+     *
+     * @param userDTOS The list of users to be saved.
+     * @return The list of persisted users.
+     */
+    @Transactional
+    public List<UserDTO> saveUsers(final List<UserDTO> userDTOS) {
+        List<UserDTO> saved = new ArrayList<>();
+        userDTOS.forEach(userDTO -> saved.add(saveUser(userDTO)));
+        return saved;
+    }
+
+    /**
      * Creates a new user with the given parameters in the database.
      *
      * @param userDTO The dto containing the user information to set.
-     * @return The newly created user, if the information was persisted, or {@code null} if not.
+     * @return The newly created user, if the information was persisted.
      * @throws IllegalArgumentException if the username is null or blank.
      * @throws StoreException if the user could not be persisted.
      */

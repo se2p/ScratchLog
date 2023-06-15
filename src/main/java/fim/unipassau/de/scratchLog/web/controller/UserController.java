@@ -506,7 +506,8 @@ public class UserController {
             if (isValidUserInfo(users, model, resourceBundle)) {
                 Random random = new Random();
                 StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
-                users.forEach(userDTO -> saveUserFromCSV(userDTO, random, builder));
+                users.forEach(userDTO -> completeUserInformation(userDTO, random, builder));
+                userService.saveUsers(users);
                 return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv"
                         + "\"").body(builder.toString());
             } else {
@@ -1172,21 +1173,21 @@ public class UserController {
     }
 
     /**
-     * Saves the given user information extracted from a CSV file in the database. Before saving, a new password is
-     * generated for the user and information about it is appended to the given string builder.
+     * Sets all the required attributes for user information retrieved from a CSV file to subsequently be persisted.
+     * This includes the generation of a new password for the user, which is then appended to the given string builder
+     * to be returned later.
      *
      * @param userDTO The user to be added.
      * @param random Instance used to generating a random number for the password length.
      * @param builder The {@link StringBuilder} used to store the information.
      */
-    private void saveUserFromCSV(final UserDTO userDTO, final Random random, final StringBuilder builder) {
+    private void completeUserInformation(final UserDTO userDTO, final Random random, final StringBuilder builder) {
         int randomLength = random.nextInt(Constants.PASSWORD_MIN * 2 - Constants.PASSWORD_MIN) + Constants.PASSWORD_MIN;
         String password = CustomPasswordGenerator.generatePassword(randomLength);
         userDTO.setPassword(userService.encodePassword(password));
         userDTO.setConfirmPassword(password);
         userDTO.setActive(true);
         userDTO.setLastLogin(LocalDateTime.now());
-        userService.saveUser(userDTO);
         builder.append(userDTO.getUsername()).append(", ").append(userDTO.getConfirmPassword()).append(
                 System.lineSeparator());
     }

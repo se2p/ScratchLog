@@ -543,7 +543,7 @@ public class UserControllerIntegrationTest {
         verify(userService, times(2)).existsUser(anyString());
         verify(userService, times(2)).existsEmail(anyString());
         verify(userService, times(2)).encodePassword(anyString());
-        verify(userService, times(2)).saveUser(any());
+        verify(userService).saveUsers(any());
     }
 
     @Test
@@ -560,7 +560,7 @@ public class UserControllerIntegrationTest {
         verify(userService).existsUser(anyString());
         verify(userService).existsEmail(anyString());
         verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUser(any());
+        verify(userService, never()).saveUsers(any());
     }
 
     @Test
@@ -577,7 +577,7 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUser(any());
+        verify(userService, never()).saveUsers(any());
     }
 
     @Test
