@@ -61,7 +61,7 @@
                     </div>
                     <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                 </div>
-                <!-- The forgot password and submit buttons if the mail server constant is set to true. -->
+                <!-- The buttons to login through an identity provider and submit if SAML authentication is enabled. -->
                 <div class="d-flex justify-content-between"
                      th:if="${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).SAML_AUTHENTICATION}">
                     <a class="btn btn-secondary" th:text="#{saml2_login}" th:href="@{/login/saml2}"></a>

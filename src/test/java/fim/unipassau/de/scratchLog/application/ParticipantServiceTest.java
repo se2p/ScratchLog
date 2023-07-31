@@ -186,6 +186,28 @@ public class ParticipantServiceTest {
     }
 
     @Test
+    public void testGetParticipants() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(participantRepository.findAllByExperiment(experiment1)).thenReturn(participantList);
+        List<ParticipantDTO> participantDTOS = participantService.getParticipants(ID);
+        assertAll(
+                () -> assertEquals(participantList.size(), participantDTOS.size()),
+                () -> assertEquals(participantDTOS.get(0).getUser(), participantList.get(0).getUser().getId())
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(participantRepository).findAllByExperiment(experiment1);
+    }
+
+    @Test
+    public void testGetParticipantsInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.getParticipants(0)
+        );
+        verify(experimentRepository, never()).getReferenceById(anyInt());
+        verify(participantRepository, never()).findAllByExperiment(any());
+    }
+
+    @Test
     public void testSaveParticipants() {
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment2);

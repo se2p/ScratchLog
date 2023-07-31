@@ -841,7 +841,7 @@ public class UserController {
         try {
             UserDTO userDTO = userService.getUserById(userId);
 
-            if (userDTO.getRole().equals(Role.ADMIN)) {
+            if (userDTO.getRole().equals(Role.ADMIN) && userDTO.isActive()) {
                 LOGGER.error("Cannot deactivate an administrator profile!");
                 return Constants.ERROR;
             }
@@ -889,7 +889,7 @@ public class UserController {
         try {
             UserDTO userDTO = userService.getUserById(userId);
 
-            if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN) && !userDTO.getRole().equals(Role.ADMIN)) {
+            if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
                 model.addAttribute(USER_DTO, userDTO);
                 return PASSWORD;
             }
@@ -927,7 +927,7 @@ public class UserController {
             return Constants.ERROR;
         }
 
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN) && !findOldUser.getRole().equals(Role.ADMIN)) {
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication.getName() == null) {

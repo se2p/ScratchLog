@@ -1868,15 +1868,6 @@ public class UserControllerTest {
     }
 
     @Test
-    public void testGetPasswordResetFormAdminUser() {
-        when(userService.getUserById(ID)).thenReturn(userDTO);
-        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
-        assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
-        verify(userService).getUserById(ID);
-        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
-    }
-
-    @Test
     public void testGetPasswordResetFormNoAdmin() {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
@@ -2004,20 +1995,6 @@ public class UserControllerTest {
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication).getName();
-        verify(userService, never()).getUser(anyString());
-        verify(userService, never()).matchesPassword(anyString(), anyString());
-        verify(bindingResult, never()).hasErrors();
-        verify(userService, never()).encodePassword(anyString());
-    }
-
-    @Test
-    public void testResetPasswordUserAdmin() {
-        when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
-        when(userService.getUserById(ID)).thenReturn(oldDTO);
-        assertEquals(Constants.ERROR, userController.passwordReset(userDTO, bindingResult, httpServletRequest));
-        verify(userService).getUserById(ID);
-        verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
-        verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(bindingResult, never()).hasErrors();

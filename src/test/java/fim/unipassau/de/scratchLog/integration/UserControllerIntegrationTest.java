@@ -1339,7 +1339,6 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testChangeActiveStatusActivate() throws Exception {
-        userDTO.setRole(Role.PARTICIPANT);
         userDTO.setActive(false);
         when(userService.getUserById(ID)).thenReturn(userDTO);
         mvc.perform(get("/users/active")
@@ -1397,18 +1396,6 @@ public class UserControllerIntegrationTest {
                 .andExpect(model().attribute(USER_DTO, is(userDTO)))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PASSWORD_PAGE));
-        verify(userService).getUserById(ID);
-    }
-
-    @Test
-    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
-    public void testGetPasswordResetFormAdmin() throws Exception {
-        when(userService.getUserById(ID)).thenReturn(userDTO);
-        mvc.perform(get("/users/forgot")
-                        .param("id", ID_STRING)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
     }
 
@@ -1514,24 +1501,6 @@ public class UserControllerIntegrationTest {
         mvc.perform(post("/users/forgot")
                 .flashAttr(USER_DTO, userDTO)
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR));
-        verify(userService).getUserById(ID);
-        verify(userService, never()).getUser(anyString());
-        verify(userService, never()).matchesPassword(anyString(), anyString());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUser(any());
-    }
-
-    @Test
-    @WithMockUser(username = USERNAME, roles = {"ADMIN"})
-    public void testResetPasswordUserAdmin() throws Exception {
-        userDTO.setNewPassword(VALID_PASSWORD);
-        userDTO.setConfirmPassword(VALID_PASSWORD);
-        when(userService.getUserById(ID)).thenReturn(oldDTO);
-        mvc.perform(post("/users/forgot")
-                        .flashAttr(USER_DTO, userDTO)
-                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);

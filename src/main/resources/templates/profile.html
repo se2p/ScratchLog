@@ -53,7 +53,7 @@
 
         <!-- The profile activation status information and the button to activate or deactivate the profile. -->
         <!--suppress ThymeleafVariablesResolveInspection -->
-        <div class="row mb-3" th:unless="${userDTO.role == T(fim.unipassau.de.scratchLog.util.enums.Role).ADMIN}">
+        <div class="row mb-3">
             <div class="col-9" th:if="${userDTO.active}">
                 <i aria-hidden="true" class="fa fa-lock-open fa-2x" title="Participant profile inactive"></i>
                 <span class="text-muted ms-1" th:text="#{activated}"></span>
@@ -63,7 +63,8 @@
                 <span class="text-muted ms-1" th:text="#{inactive}"></span>
             </div>
             <div class="col-3 text-end" sec:authorize="hasRole('ADMIN')">
-                <a class="btn btn-primary" th:text="#{deactivate}" th:if="${userDTO.active}"
+                <a class="btn btn-primary" th:text="#{deactivate}" th:if="${userDTO.active
+                and userDTO.role != T(fim.unipassau.de.scratchLog.util.enums.Role).ADMIN}"
                    th:href="@{/users/active(id=${userDTO.id})}"></a>
                 <a class="btn btn-primary" th:text="#{activate}" th:unless="${userDTO.active}"
                    th:href="@{/users/active(id=${userDTO.id})}"></a>

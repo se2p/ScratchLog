@@ -154,6 +154,25 @@ public class ParticipantService {
     }
 
     /**
+     * Retrieves all participants for a given experiment, if any exist.
+     *
+     * @param experimentId The id of the experiment.
+     * @return The list of participants.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     */
+    @Transactional
+    public List<ParticipantDTO> getParticipants(final int experimentId) {
+        if (experimentId < Constants.MIN_ID) {
+            throw new IllegalArgumentException("Cannot retrieve participant information for experiment with invalid id "
+                    + experimentId + "!");
+        }
+
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
+        return participantRepository.findAllByExperiment(experiment).stream()
+                .map(this::createParticipantDTO).toList();
+    }
+
+    /**
      * Adds the users participating in the course with the given id as participants to the experiment with the given id.
      *
      * @param experimentId The id of the experiment.

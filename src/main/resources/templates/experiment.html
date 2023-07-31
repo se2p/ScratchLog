@@ -206,6 +206,78 @@
             </div>
         </div>
 
+        <!-- The download sb3 files heading and the corresponding button. -->
+        <div class="row mb-3" sec:authorize="hasRole('ADMIN')" th:unless="${participants.isEmpty()
+        or not experimentDTO.isActive()}">
+            <div class="col-7">
+                <h4 th:text="#{download_files}"></h4>
+            </div>
+            <div class="col-5 text-end">
+                <a class="btn btn-primary" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id})}"
+                   th:aria-label="#{sb3_label}">
+                    <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                    <span th:text="#{all_sb3}"></span>
+                </a>
+            </div>
+        </div>
+
+        <div class="mb-5" sec:authorize="hasRole('ADMIN')" th:unless="${participants.isEmpty()}">
+            <span class="text-muted mb-3" th:text="#{sb3_active}"></span>
+        </div>
+
+        <!-- The download sb3 files section. -->
+        <div class="mb-5" sec:authorize="hasRole('ADMIN')" th:unless="${participants.isEmpty()
+        or not experimentDTO.isActive()}">
+            <!-- The accordion for downloading sb3 files in a certain interval. -->
+            <div class="accordion mt-3" id="accordionFiles">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="stepHeading">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#steps" aria-expanded="false" aria-controls="steps"
+                                th:text="#{files_steps}">
+                        </button>
+                    </h2>
+                    <!-- The content for downloading sb3 files at certain time intervals. -->
+                    <div id="steps" class="accordion-collapse collapse" aria-labelledby="stepHeading"
+                         data-bs-parent="#accordionFiles">
+                        <div class="accordion-body">
+                            <p th:text="#{files_steps_info}"></p>
+                            <ul class="list-group list-group-horizontal justify-content-center">
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id},
+                                    step=1)}">1</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id},
+                                    step=2)}">2</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id},
+                                    step=3)}">3</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id},
+                                    step=5)}">5</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id},
+                                    step=10)}">10</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id},
+                                    step=15)}">15</a>
+                                </li>
+                                <li class="list-group-item">
+                                    <a class="no_decoration" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id},
+                                    step=30)}">30</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- The experiment information. -->
         <div class="row mb-5">
             <div class="col-12" th:utext="${experimentDTO.info}"></div>
