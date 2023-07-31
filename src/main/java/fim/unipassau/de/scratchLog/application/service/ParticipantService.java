@@ -45,7 +45,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -169,10 +168,8 @@ public class ParticipantService {
         }
 
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
-        List<Participant> participants = participantRepository.findAllByExperiment(experiment);
-        List<ParticipantDTO> participantDTOS = new ArrayList<>();
-        participants.forEach(participant -> participantDTOS.add(createParticipantDTO(participant)));
-        return participantDTOS;
+        return participantRepository.findAllByExperiment(experiment).stream()
+                .map(this::createParticipantDTO).toList();
     }
 
     /**

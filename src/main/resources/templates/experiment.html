@@ -207,7 +207,8 @@
         </div>
 
         <!-- The download sb3 files heading and the corresponding button. -->
-        <div class="row mb-3" sec:authorize="hasRole('ADMIN')" th:unless="${participants.isEmpty()}">
+        <div class="row mb-3" sec:authorize="hasRole('ADMIN')" th:unless="${participants.isEmpty()
+        or not experimentDTO.isActive()}">
             <div class="col-7">
                 <h4 th:text="#{download_files}"></h4>
             </div>
@@ -225,7 +226,8 @@
         </div>
 
         <!-- The download sb3 files section. -->
-        <div class="mb-5" sec:authorize="hasRole('ADMIN')" th:unless="${participants.isEmpty()}">
+        <div class="mb-5" sec:authorize="hasRole('ADMIN')" th:unless="${participants.isEmpty()
+        or not experimentDTO.isActive()}">
             <!-- The accordion for downloading sb3 files in a certain interval. -->
             <div class="accordion mt-3" id="accordionFiles">
                 <div class="accordion-item">
