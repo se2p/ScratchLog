@@ -21,6 +21,7 @@ package fim.unipassau.de.scratchLog.application.init;
 
 import fim.unipassau.de.scratchLog.persistence.entity.User;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
+import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import jakarta.annotation.PostConstruct;
@@ -80,7 +81,7 @@ public class UserInitialization {
             user.setUsername("admin");
             user.setRole(Role.ADMIN);
             user.setLanguage(Language.ENGLISH);
-            user.setPassword(passwordEncoder.encode("!ISeeYou!"));
+            user.setPassword(passwordEncoder.encode(Constants.ADMIN_PASSWORD)); // default: !ISeeYou!
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
             logger.info("User admin:admin was added to the database as a first administrator.");

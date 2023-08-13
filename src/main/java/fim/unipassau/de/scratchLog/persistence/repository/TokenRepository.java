@@ -20,6 +20,7 @@
 package fim.unipassau.de.scratchLog.persistence.repository;
 
 import fim.unipassau.de.scratchLog.persistence.entity.Token;
+import fim.unipassau.de.scratchLog.persistence.entity.User;
 import fim.unipassau.de.scratchLog.util.enums.TokenType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -52,5 +53,14 @@ public interface TokenRepository extends JpaRepository<Token, String> {
      * @return A list of tokens matching the specified criteria.
      */
     List<Token> findAllByDateBeforeAndType(LocalDateTime date, TokenType type);
+
+    /**
+     * Returns a list of all tokens of a specific type saved for the given user.
+     *
+     * @param type The token type to search for.
+     * @param user The user to search for.
+     * @return A list of tokens matching the specified criteria.
+     */
+    List<Token> findAllByTypeAndUser(TokenType type, User user);
 
 }

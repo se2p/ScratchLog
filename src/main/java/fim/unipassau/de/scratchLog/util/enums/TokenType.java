@@ -42,6 +42,11 @@ public enum TokenType {
     /**
      * A token for a temporarily deactivated user account.
      */
-    DEACTIVATED
+    DEACTIVATED,
+
+    /**
+     * A token for tracking how many login attempts administrators using the default password have left.
+     */
+    DEFAULT_PASSWORD
 
 }
