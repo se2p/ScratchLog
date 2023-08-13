@@ -77,8 +77,8 @@ accordingly, e.g. to `/scratchlog` while the *app.url* value is `scratch.fim.uni
 #### Configuring the instrumented Scratch instance
 
 You also have to make some changes to the instrumented Scratch instance:
-- Change the *baseUrl* in `logging.js` in the instrumented `scratch-vm` to `<app.url> + <server.servlet.context-path>
-  /store`.
+- Change the *baseUrl* in `logging.js` in the instrumented `scratch-vm` to `<app.url> + <server.servlet.context-path> +
+  '/participant/store...'`.
 - Change the `window.location.href` in the *handleFinishExperiment()* method in `menu-bar.jsx` in the instrumented
   `scratch-gui` to `<app.url> + <server.servlet.context-path>`.
 - The instrumented `scratch-gui` and `scratch-vm` need to be linked via the `npm link` setting, as described
@@ -86,7 +86,8 @@ You also have to make some changes to the instrumented Scratch instance:
 
 On application startup, a first administrator is added automatically, if no other administrator could be found in the
 database. The login credentials are specified in the `UserInitialization` class. You should change these credentials
-immediately after you have logged in.
+immediately after you have logged in. If you log in too many times with the default administrator password, the account
+will be **deactivated**.
 
 #### Configuring SSO Authentication
 
