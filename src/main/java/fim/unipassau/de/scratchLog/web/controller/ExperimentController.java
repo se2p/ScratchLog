@@ -20,6 +20,7 @@
 package fim.unipassau.de.scratchLog.web.controller;
 
 import com.opencsv.CSVWriter;
+import com.opencsv.bean.CsvToBeanBuilder;
 import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.CourseService;
@@ -39,6 +40,7 @@ import fim.unipassau.de.scratchLog.util.PageUtils;
 import fim.unipassau.de.scratchLog.util.Secrets;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
+import fim.unipassau.de.scratchLog.util.validation.FiletypeValidator;
 import fim.unipassau.de.scratchLog.util.validation.StringValidator;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
@@ -65,7 +67,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -580,6 +585,66 @@ public class ExperimentController {
     }
 
     /**
+     * Adds participants to the given experiment provided as usernames in a CSV file. If the passed file experiment id
+     * are invalid, the user is redirected to the error page instead. If the file is not a CSV file, the provided
+     * usernames are invalid or the file could not be parsed correctly, the user returns to the experiment page where a
+     * corresponding error message is displayed.
+     *
+     * @param file The file containing the user information.
+     * @param id The id of the experiment to which the users should be added.
+     * @param model The model used to return error messages.
+     * @return The experiment page on success or if an error message should be displayed, or the error page otherwise.
+     */
+    @PostMapping("/csv")
+    @Secured(Constants.ROLE_ADMIN)
+    public String addParticipantsFromCSV(@RequestParam("file") final MultipartFile file,
+                                         @RequestParam(ID) final String id, final Model model) {
+        if (file == null) {
+            LOGGER.error("Cannot add participants from CSV for experiment with file null!");
+            return Constants.ERROR;
+        }
+
+        int experimentId = NumberParser.parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            LOGGER.error("Cannot add participants from CSV for experiment with invalid id " + id + "!");
+            return Constants.ERROR;
+        }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
+        String fileValidation = FiletypeValidator.validate(file, "text/csv", ".csv");
+        ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+
+        if (fileValidation != null) {
+            LOGGER.error("Could not add participants from CSV file due to invalid filetype or empty file!");
+            model.addAttribute(ERROR, resourceBundle.getString(fileValidation));
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        }
+
+        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            List<UserDTO> users = new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
+
+            if (isValidUserList(users, model, resourceBundle)) {
+                if (experimentDTO.isCourseExperiment()) {
+                    courseService.saveCourseParticipants(courseService.getCourseIdForExperiment(experimentId), users);
+                }
+
+                participantService.saveParticipantsFromCSV(experimentId, users);
+            }
+
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        } catch (IOException e) {
+            LOGGER.error("Error parsing CSV file!", e);
+            model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
+            addModelInfo(0, experimentDTO, model);
+            return EXPERIMENT;
+        }
+    }
+
+    /**
      * Saves the content of the given sb3 file to the database for the experiment with the given id. If the file does
      * not meet the requirements, the user returns to the experiment page where an error message is displayed. If the
      * parameters are invalid, no corresponding experiment could be found, or an {@link IOException} occurred, the user
@@ -608,16 +673,11 @@ public class ExperimentController {
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
+        String fileValidation = FiletypeValidator.validate(file, "application/octet-stream", Constants.SB3);
 
-        if (file.isEmpty()) {
-            LOGGER.error("Cannot upload empty file for experiment with id " + id + "!");
-            model.addAttribute(ERROR, resourceBundle.getString("file_empty"));
-        } else if (file.getContentType() == null || !file.getContentType().equals("application/octet-stream")) {
-            LOGGER.error("Cannot upload file with invalid content type " + file.getContentType() + "!");
-            model.addAttribute(ERROR, resourceBundle.getString("file_type"));
-        } else if (file.getOriginalFilename() == null || !file.getOriginalFilename().endsWith(Constants.SB3)) {
-            LOGGER.error("Cannot upload file with invalid filename " + file.getOriginalFilename() + "!");
-            model.addAttribute(ERROR, resourceBundle.getString("file_name"));
+        if (fileValidation != null) {
+            LOGGER.error("Could not upload sb3 file due to invalid filetype or empty file!");
+            model.addAttribute(ERROR, resourceBundle.getString(fileValidation));
         }
 
         if (model.getAttribute(ERROR) != null) {
@@ -876,6 +936,33 @@ public class ExperimentController {
                 userDTO.getId())) {
             model.addAttribute(ERROR, resourceBundle.getString("course_participant_not_found"));
         }
+    }
+
+    /**
+     * Checks, whether the provided list of users are valid to add as participants, i.e. the users exist and they are
+     * not administrators.
+     *
+     * @param users The list of users to check.
+     * @param model The model used to return error messages.
+     * @param resourceBundle The resource bundle used to return specific messages in the desired language.
+     * @return {@code true} if all provided users are valid, or {@code false} otherwise.
+     */
+    private boolean isValidUserList(final List<UserDTO> users, final Model model, final ResourceBundle resourceBundle) {
+        List<String> invalidUsernames = new ArrayList<>();
+
+        users.forEach(userDTO -> {
+            if (!userService.existsUser(userDTO.getUsername()) || userService.isAdmin(userDTO.getUsername())) {
+                invalidUsernames.add(userDTO.getUsername());
+            }
+        });
+
+        if (!invalidUsernames.isEmpty()) {
+            LOGGER.error("Cannot add participants from CSV with invalid usernames!");
+            model.addAttribute(ERROR, resourceBundle.getString("invalid_usernames") + " " + invalidUsernames);
+            return false;
+        }
+
+        return true;
     }
 
 }

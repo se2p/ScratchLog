@@ -36,6 +36,7 @@ import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.CourseDTO;
+import fim.unipassau.de.scratchLog.web.dto.UserDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,9 +44,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,10 +59,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class CourseServiceTest {
@@ -98,9 +105,12 @@ public class CourseServiceTest {
     private final Course course = new Course(ID, TITLE, DESCRIPTION, CONTENT, false, DATE);
     private final Experiment experiment1 = new Experiment(ID, TITLE, DESCRIPTION, "", "", false, false, "url");
     private final Experiment experiment2 = new Experiment(ID, TITLE, DESCRIPTION, "", "", false, true, "url");
+    private final UserDTO user1 = new UserDTO(USERNAME, "email1", Role.PARTICIPANT, Language.ENGLISH, "password1", "secret");
+    private final UserDTO user2 = new UserDTO(USERNAME, "email2", Role.PARTICIPANT, Language.ENGLISH, "password2", "secret");
     private final User user = new User(USERNAME, "email", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
     private final CourseExperiment courseExperiment = new CourseExperiment(course, experiment2, DATE);
     private final CourseParticipant courseParticipant = new CourseParticipant(user, course, DATE);
+    private final List<UserDTO> users = List.of(user1, user2);
 
     @BeforeEach
     public void setUp() {
@@ -530,7 +540,131 @@ public class CourseServiceTest {
     }
 
     @Test
+    public void testSaveCourseParticipants() {
+        course.setActive(true);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
+        when(courseParticipantRepository.existsByCourseAndUser(course, user)).thenReturn(false, true);
+        assertDoesNotThrow(() -> courseService.saveCourseParticipants(ID, users));
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository, times(2)).findUserByUsernameOrEmail(USERNAME, USERNAME);
+        verify(courseParticipantRepository, times(2)).existsByCourseAndUser(course, user);
+        verify(courseParticipantRepository).save(any());
+        verify(courseRepository).save(course);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void testSaveCourseParticipantsStore() {
+        course.setActive(true);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
+        when(courseParticipantRepository.save(any())).thenThrow(ConstraintViolationException.class);
+        assertThrows(StoreException.class,
+                () -> courseService.saveCourseParticipants(ID, users)
+        );
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
+        verify(courseParticipantRepository).existsByCourseAndUser(course, user);
+        verify(courseParticipantRepository).save(any());
+        verify(courseRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveCourseParticipantsAdmin() {
+        course.setActive(true);
+        user.setRole(Role.ADMIN);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
+        assertThrows(IllegalStateException.class,
+                () -> courseService.saveCourseParticipants(ID, users)
+        );
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+        verify(courseParticipantRepository, never()).save(any());
+        verify(courseRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveCourseParticipantsNoUser() {
+        course.setActive(true);
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class,
+                () -> courseService.saveCourseParticipants(ID, users)
+        );
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+        verify(courseParticipantRepository, never()).save(any());
+        verify(courseRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveCourseParticipantsCourseInactive() {
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
+        assertThrows(IllegalStateException.class,
+                () -> courseService.saveCourseParticipants(ID, users)
+        );
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+        verify(courseParticipantRepository, never()).save(any());
+        verify(courseRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveCourseParticipantsNoCourse() {
+        Course mockCourse = Mockito.mock(Course.class);
+        when(courseRepository.getReferenceById(ID)).thenReturn(mockCourse);
+        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
+        when(mockCourse.isActive()).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> courseService.saveCourseParticipants(ID, users)
+        );
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+        verify(courseParticipantRepository, never()).save(any());
+        verify(courseRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveCourseParticipantsEmpty() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.saveCourseParticipants(ID, new ArrayList<>())
+        );
+        verify(courseRepository, never()).getReferenceById(anyInt());
+        verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+        verify(courseParticipantRepository, never()).save(any());
+        verify(courseRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveCourseParticipantsInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.saveCourseParticipants(0, users)
+        );
+        verify(courseRepository, never()).getReferenceById(anyInt());
+        verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
+        verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+        verify(courseParticipantRepository, never()).save(any());
+        verify(courseRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     public void testSaveCourseParticipant() {
+        course.setActive(true);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         assertAll(
@@ -547,6 +681,7 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseParticipantConstraintViolation() {
+        course.setActive(true);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         when(courseParticipantRepository.save(any())).thenThrow(ConstraintViolationException.class);
@@ -562,6 +697,7 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseParticipantEntityNotFound() {
+        course.setActive(true);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         when(courseParticipantRepository.save(any())).thenThrow(EntityNotFoundException.class);
@@ -577,6 +713,7 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseParticipantAdmin() {
+        course.setActive(true);
         user.setRole(Role.ADMIN);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
@@ -592,6 +729,7 @@ public class CourseServiceTest {
 
     @Test
     public void testSaveCourseParticipantNoUser() {
+        course.setActive(true);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         assertThrows(NotFoundException.class,
                 () -> courseService.saveCourseParticipant(ID, USERNAME)
@@ -1024,6 +1162,46 @@ public class CourseServiceTest {
                 () -> courseService.getCourse(-1)
         );
         verify(courseRepository, never()).findById(anyInt());
+    }
+
+    @Test
+    public void testGetCourseIdForExperiment() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(courseExperimentRepository.findByExperiment(experiment1)).thenReturn(Optional.of(courseExperiment));
+        assertEquals(course.getId(), courseService.getCourseIdForExperiment(ID));
+        verify(experimentRepository).getReferenceById(ID);
+        verify(courseExperimentRepository).findByExperiment(experiment1);
+    }
+
+    @Test
+    public void testGetCourseIdForExperimentNoCourseExperiment() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(courseExperimentRepository.findByExperiment(experiment1)).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class,
+                () -> courseService.getCourseIdForExperiment(ID)
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(courseExperimentRepository).findByExperiment(experiment1);
+    }
+
+    @Test
+    public void testGetCourseIdForExperimentNotFound() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(courseExperimentRepository.findByExperiment(experiment1)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> courseService.getCourseIdForExperiment(ID)
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(courseExperimentRepository).findByExperiment(experiment1);
+    }
+
+    @Test
+    public void testGetCourseIdForExperimentInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.getCourseIdForExperiment(-1)
+        );
+        verify(experimentRepository, never()).getReferenceById(anyInt());
+        verify(courseExperimentRepository, never()).findByExperiment(any());
     }
 
     @Test

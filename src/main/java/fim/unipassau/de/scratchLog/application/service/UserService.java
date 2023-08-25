@@ -152,6 +152,39 @@ public class UserService {
     }
 
     /**
+     * Checks, whether an administrator with the given username exists in the database.
+     *
+     * @param username The username to search for.
+     * @return {@code true} if such a user exists, or {@code false} otherwise.
+     * @throws IllegalArgumentException if the passed username is null or blank.
+     */
+    @Transactional
+    public boolean isAdmin(final String username) {
+        if (username == null || username.trim().isBlank()) {
+            throw new IllegalArgumentException("Cannot search for a user with username null or blank!");
+        }
+
+        return userRepository.existsByRoleAndUsername(Role.ADMIN, username);
+    }
+
+    /**
+     * Verifies how many users with administrator status are currently registered.
+     *
+     * @return {@code true} if only one administrator remains in the database, or {@code false} otherwise.
+     * @throws IllegalStateException if no administrator could be found.
+     */
+    @Transactional
+    public boolean isLastAdmin() {
+        List<User> admins = userRepository.findAllByRole(Role.ADMIN);
+
+        if (admins.size() < 1) {
+            throw new IllegalStateException("There are no users with administrator status in the database!");
+        }
+
+        return admins.size() == 1;
+    }
+
+    /**
      * Creates new users for each user contained in the given list.
      *
      * @param userDTOS The list of users to be saved.
@@ -442,23 +475,6 @@ public class UserService {
 
         return findUnfinishedParticipants(experimentId).stream().map(participant
                 -> createUserDTO(participant.getUser())).collect(Collectors.toList());
-    }
-
-    /**
-     * Verifies how many users with administrator status are currently registered.
-     *
-     * @return {@code true} if only one administrator remains in the database, or {@code false} otherwise.
-     * @throws IllegalStateException if no administrator could be found.
-     */
-    @Transactional
-    public boolean isLastAdmin() {
-        List<User> admins = userRepository.findAllByRole(Role.ADMIN);
-
-        if (admins.size() < 1) {
-            throw new IllegalStateException("There are no users with administrator status in the database!");
-        }
-
-        return admins.size() == 1;
     }
 
     /**

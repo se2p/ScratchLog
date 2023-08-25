@@ -52,6 +52,15 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     boolean existsByEmail(String email);
 
     /**
+     * Checks, whether a user with the given username and role exists in the database.
+     *
+     * @param role The role to search for.
+     * @param username The username to search for.
+     * @return {@code true} iff a user with the given username and role exists.
+     */
+    boolean existsByRoleAndUsername(Role role, String username);
+
+    /**
      * Returns the user identified by the given username, if one exists.
      *
      * @param username The username to search for.

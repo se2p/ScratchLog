@@ -50,9 +50,9 @@
         <div class="controls d-flex flex-row gap-5 justify-content-start mb-5 flex-wrap"
              sec:authorize="hasRole('ADMIN')">
 
-            <!-- The download button for the experiment csv file and upload button for an initial sb3 template. -->
+            <!-- The download button for the experiment csv file. -->
             <div>
-                <h2 th:text="#{heading_csv}" class="h5"></h2>
+                <h5 th:text="#{heading_csv}"></h5>
                 <a class="btn btn-primary" th:unless="${participants.isEmpty()}"
                    th:href="@{/experiment/csv(id=${experimentDTO.id})}">
                     <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download CSV file"></i>
@@ -61,8 +61,9 @@
                 </a>
             </div>
 
+            <!-- The button to upload an initial sb3 template or delete an existing one. -->
             <div>
-                <h2 th:text="#{heading_sb3}" class="h5"></h2>
+                <h5 th:text="#{heading_sb3}"></h5>
                 <form method="post" th:action="@{/experiment/upload}" enctype="multipart/form-data"
                       th:if="${project == null}" class="align-items-start d-flex flex-column gap-3">
                     <input type="hidden" name="id" th:value="${experimentDTO.id}"/>
@@ -73,22 +74,37 @@
                        th:unless="${project == null}"/>
             </div>
 
+            <!-- The button to add existing participants from a CSV file. -->
+            <div th:if="${experimentDTO.active}">
+                <h5 th:text="#{add_csv_participants}"></h5>
+                <form method="post" th:action="@{/experiment/csv}" enctype="multipart/form-data"
+                      class="align-items-start d-flex flex-column gap-3">
+                    <input type="hidden" name="id" th:value="${experimentDTO.id}"/>
+                    <input type="file" name="file" accept=".csv"/>
+                    <input class="btn btn-primary" type="submit" th:value="#{upload}"/>
+                </form>
+            </div>
+
             <!-- The experiment status and the button to start or stop the experiment. -->
             <div>
                 <div>
-                    <h2 class="h5">
+                    <h5>
                         <i aria-hidden="true" th:class="${experimentDTO.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
                            title="Experiment status"></i>
                         <span th:text="#{status} + ':'"></span>
                         <span th:if="${experimentDTO.active}" th:text="#{opened}"></span>
                         <span th:unless="${experimentDTO.active}" th:text="#{closed}"></span>
-                    </h2>
+                    </h5>
                 </div>
                 <a id="open" class="btn btn-primary" type="submit" th:text="#{open}" th:unless="${experimentDTO.active}"
                    th:href="@{/experiment/status(id=${experimentDTO.id}, stat='open')}"></a>
                 <input th:if="${experimentDTO.active}" id="close" class="btn btn-secondary" type="submit"
                        th:value="#{close}">
             </div>
+        </div>
+
+        <div class="mb-5" sec:authorize="hasRole('ADMIN')" th:if="${experimentDTO.active}">
+            <span class="text-muted mb-3" th:text="#{csv_participants}"></span>
         </div>
 
         <!-- The table of participants in the experiment and the buttons for adding and removing participants. -->

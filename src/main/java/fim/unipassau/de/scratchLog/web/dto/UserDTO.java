@@ -66,7 +66,7 @@ public class UserDTO {
     /**
      * The user's preferred language.
      */
-    @CsvBindByName(required = true)
+    @CsvBindByName()
     private Language language;
 
     /**

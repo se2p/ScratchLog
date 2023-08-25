@@ -51,9 +51,11 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -159,10 +161,13 @@ public class ExperimentControllerTest {
     private static final String EMAIL = "participant@part.de";
     private static final String LONG_PASSWORD = StringCreator.createLongString(55);
     private static final String PARTICIPANTS = "participants";
+    private static final String PARTICIPANT1 = "participant1";
     private static final String PAGE = "3";
     private static final String LAST = "4";
-    private static final String FILETYPE = "application/octet-stream";
-    private static final String FILENAME = "project.sb3";
+    private static final String FILETYPE_SB3 = "application/octet-stream";
+    private static final String FILENAME_SB3 = "project.sb3";
+    private static final String FILETYPE_CSV = "text/csv";
+    private static final String FILENAME_CSV = "participants.csv";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final int LAST_PAGE = 3;
     private static final int ID = 1;
@@ -1135,9 +1140,143 @@ public class ExperimentControllerTest {
     }
 
     @Test
+    public void testAddParticipantsFromCSV() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(FILENAME_CSV, FILENAME_CSV, FILETYPE_CSV,
+                new ClassPathResource(FILENAME_CSV).getInputStream());
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.existsUser(anyString())).thenReturn(true);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsUser(PARTICIPANT1);
+        verify(userService).existsUser(PARTICIPANTS);
+        verify(userService, times(2)).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(participantService).saveParticipantsFromCSV(anyInt(), any());
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsFromCSVCourseExperiment() throws IOException {
+        experimentDTO.setCourseExperiment(true);
+        MockMultipartFile file = new MockMultipartFile(FILENAME_CSV, FILENAME_CSV, FILETYPE_CSV,
+                new ClassPathResource(FILENAME_CSV).getInputStream());
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.existsUser(anyString())).thenReturn(true);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsUser(PARTICIPANT1);
+        verify(userService).existsUser(PARTICIPANTS);
+        verify(userService, times(2)).isAdmin(anyString());
+        verify(courseService).saveCourseParticipants(anyInt(), any());
+        verify(courseService).getCourseIdForExperiment(ID);
+        verify(participantService).saveParticipantsFromCSV(anyInt(), any());
+        verify(model, times(5)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsFromCSVUserAdmin() throws IOException {
+        experimentDTO.setCourseExperiment(true);
+        MockMultipartFile file = new MockMultipartFile(FILENAME_CSV, FILENAME_CSV, FILETYPE_CSV,
+                new ClassPathResource(FILENAME_CSV).getInputStream());
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.existsUser(anyString())).thenReturn(true);
+        when(userService.isAdmin(PARTICIPANTS)).thenReturn(true);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsUser(PARTICIPANT1);
+        verify(userService).existsUser(PARTICIPANTS);
+        verify(userService, times(2)).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(courseService, never()).getCourseIdForExperiment(anyInt());
+        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsFromCSVUnknownUsername() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(FILENAME_CSV, FILENAME_CSV, FILETYPE_CSV,
+                new ClassPathResource(FILENAME_CSV).getInputStream());
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsUser(PARTICIPANT1);
+        verify(userService).existsUser(PARTICIPANTS);
+        verify(userService, never()).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(courseService, never()).getCourseIdForExperiment(anyInt());
+        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsFromCSVIO() throws IOException {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(file.getContentType()).thenReturn(FILETYPE_CSV);
+        when(file.getOriginalFilename()).thenReturn(FILENAME_CSV);
+        when(file.getInputStream()).thenThrow(IOException.class);
+        assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(courseService, never()).getCourseIdForExperiment(anyInt());
+        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsFromCSVInvalidFile() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(FILENAME_CSV, FILENAME_CSV, FILETYPE_SB3,
+                new ClassPathResource(FILENAME_CSV).getInputStream());
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(courseService, never()).getCourseIdForExperiment(anyInt());
+        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsFromCSVInvalidId() {
+        assertEquals(ERROR, experimentController.addParticipantsFromCSV(file, null, model));
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(courseService, never()).getCourseIdForExperiment(anyInt());
+        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testAddParticipantsFromCSVNoFile() {
+        assertEquals(ERROR, experimentController.addParticipantsFromCSV(null, INFO, model));
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(courseService, never()).getCourseIdForExperiment(anyInt());
+        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
     public void testUploadProjectFile() throws IOException {
-        when(file.getContentType()).thenReturn(FILETYPE);
-        when(file.getOriginalFilename()).thenReturn(FILENAME);
+        when(file.getContentType()).thenReturn(FILETYPE_SB3);
+        when(file.getOriginalFilename()).thenReturn(FILENAME_SB3);
         when(file.getBytes()).thenReturn(CONTENT);
         assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.uploadProjectFile(file, ID_STRING, model));
         verify(experimentService).uploadSb3Project(ID, CONTENT);
@@ -1150,8 +1289,8 @@ public class ExperimentControllerTest {
 
     @Test
     public void testUploadProjectFileIO() throws IOException {
-        when(file.getContentType()).thenReturn(FILETYPE);
-        when(file.getOriginalFilename()).thenReturn(FILENAME);
+        when(file.getContentType()).thenReturn(FILETYPE_SB3);
+        when(file.getOriginalFilename()).thenReturn(FILENAME_SB3);
         when(file.getBytes()).thenThrow(IOException.class);
         assertEquals(ERROR, experimentController.uploadProjectFile(file, ID_STRING, model));
         verify(experimentService, never()).uploadSb3Project(anyInt(), any());
@@ -1164,8 +1303,8 @@ public class ExperimentControllerTest {
 
     @Test
     public void testUploadProjectFileNotFound() throws IOException {
-        when(file.getContentType()).thenReturn(FILETYPE);
-        when(file.getOriginalFilename()).thenReturn(FILENAME);
+        when(file.getContentType()).thenReturn(FILETYPE_SB3);
+        when(file.getOriginalFilename()).thenReturn(FILENAME_SB3);
         when(file.getBytes()).thenReturn(CONTENT);
         doThrow(NotFoundException.class).when(experimentService).uploadSb3Project(ID, CONTENT);
         assertEquals(ERROR, experimentController.uploadProjectFile(file, ID_STRING, model));
@@ -1179,14 +1318,14 @@ public class ExperimentControllerTest {
 
     @Test
     public void testUploadProjectFileFilenameInvalid() throws IOException {
-        when(file.getContentType()).thenReturn(FILETYPE);
+        when(file.getContentType()).thenReturn(FILETYPE_SB3);
         when(file.getOriginalFilename()).thenReturn("name");
         when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         assertEquals(EXPERIMENT, experimentController.uploadProjectFile(file, ID_STRING, model));
         verify(experimentService, never()).uploadSb3Project(anyInt(), any());
         verify(file).isEmpty();
-        verify(file, times(3)).getOriginalFilename();
+        verify(file, times(2)).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
         verify(model, times(6)).addAttribute(anyString(), any());
@@ -1194,13 +1333,13 @@ public class ExperimentControllerTest {
 
     @Test
     public void testUploadProjectFileFilenameNull() throws IOException {
-        when(file.getContentType()).thenReturn(FILETYPE);
+        when(file.getContentType()).thenReturn(FILETYPE_SB3);
         when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         assertEquals(EXPERIMENT, experimentController.uploadProjectFile(file, ID_STRING, model));
         verify(experimentService, never()).uploadSb3Project(anyInt(), any());
         verify(file).isEmpty();
-        verify(file, times(2)).getOriginalFilename();
+        verify(file).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
         verify(model, times(6)).addAttribute(anyString(), any());
@@ -1215,7 +1354,7 @@ public class ExperimentControllerTest {
         verify(experimentService, never()).uploadSb3Project(anyInt(), any());
         verify(file).isEmpty();
         verify(file, never()).getOriginalFilename();
-        verify(file, times(3)).getContentType();
+        verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
         verify(model, times(6)).addAttribute(anyString(), any());
     }
@@ -1228,7 +1367,7 @@ public class ExperimentControllerTest {
         verify(experimentService, never()).uploadSb3Project(anyInt(), any());
         verify(file).isEmpty();
         verify(file, never()).getOriginalFilename();
-        verify(file, times(2)).getContentType();
+        verify(file).getContentType();
         verify(file, never()).getBytes();
         verify(model, times(6)).addAttribute(anyString(), any());
     }
