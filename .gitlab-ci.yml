@@ -1,6 +1,4 @@
 include:
-  # This includes the GitLab provided license scanning job
-  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
   # This includes the GitLab provided dependency scanning jobs
   - template: Security/Dependency-Scanning.gitlab-ci.yml
   # This includes the GitLab provided SAST jobs.
