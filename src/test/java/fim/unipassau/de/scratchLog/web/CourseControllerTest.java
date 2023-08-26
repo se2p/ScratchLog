@@ -510,6 +510,21 @@ public class CourseControllerTest {
     }
 
     @Test
+    public void testAddParticipantInactiveExperiment() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.existsInactiveExperiment(ID)).thenReturn(true);
+        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService).existsInactiveExperiment(ID);
+        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+        verify(model, times(9)).addAttribute(anyString(), any());
+    }
+
+    @Test
     public void testAddParticipantExists() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);

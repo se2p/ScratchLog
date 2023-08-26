@@ -456,6 +456,27 @@ public class CourseControllerIntegrationTest {
     }
 
     @Test
+    public void testAddParticipantExperimentInactive() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
+        when(courseService.existsInactiveExperiment(ID)).thenReturn(true);
+        mvc.perform(get("/course/participant/add")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(PARTICIPANT_PARAM, USERNAME)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(COURSE))
+                .andExpect(model().attribute(ERROR, notNullValue()));
+        verify(courseService).getCourse(ID);
+        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        verify(courseService).existsCourseParticipant(ID, USERNAME);
+        verify(courseService).existsInactiveExperiment(ID);
+        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
+        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+    }
+
+    @Test
     public void testAddParticipantInvalidInput() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         mvc.perform(get("/course/participant/add")

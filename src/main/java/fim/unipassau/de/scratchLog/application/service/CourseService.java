@@ -268,6 +268,48 @@ public class CourseService {
     }
 
     /**
+     * Checks if the course with the given id contains any inactive experiments.
+     *
+     * @param id The id of the course.
+     * @return {@code true} if the course contains an inactive experiment, or {@code false} otherwise.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     */
+    @Transactional
+    public boolean existsInactiveExperiment(final int id) {
+        if (id < Constants.MIN_ID) {
+            throw new IllegalArgumentException("Cannot check if any inactive experiments exist for a course with "
+                    + "invalid id " + id + "!");
+        }
+
+        Course course = courseRepository.getReferenceById(id);
+
+        try {
+            List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+            return courseExperiments.stream().anyMatch(courseExperiment
+                    -> !courseExperiment.getExperiment().isActive());
+        } catch (EntityNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Checks, whether the course to which the experiment with the given id belongs is active.
+     *
+     * @param id The id of the experiment.
+     * @return The course status.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     */
+    @Transactional
+    public boolean isActiveCourse(final int id) {
+        if (id < Constants.MIN_ID) {
+            throw new IllegalArgumentException("Cannot check if course is active for course experiment with invalid id "
+                    + id + "!");
+        }
+
+        return getCourseForExperiment(id).getCourse().isActive();
+    }
+
+    /**
      * Creates a new course or updates an existing one with the given parameters in the database.
      *
      * @param courseDTO The dto containing the course information to set.
@@ -537,26 +579,13 @@ public class CourseService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding experiment or course could be found.
      */
+    @Transactional
     public int getCourseIdForExperiment(final int id) {
         if (id < Constants.MIN_ID) {
             throw new IllegalArgumentException("Cannot search for experiment with invalid id " + id + "!");
         }
 
-        Experiment experiment = experimentRepository.getReferenceById(id);
-
-        try {
-            Optional<CourseExperiment> courseExperiment = courseExperimentRepository.findByExperiment(experiment);
-
-            if (courseExperiment.isEmpty()) {
-                LOGGER.error("Could not find a course for experiment with id " + id + "!");
-                throw new NotFoundException("Could not find a course for experiment with id " + id + "!");
-            }
-
-            return courseExperiment.get().getCourse().getId();
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find the experiment when searching for its course experiments!", e);
-            throw new NotFoundException("Could not find the experiment when searching for its course experiments!", e);
-        }
+        return getCourseForExperiment(id).getCourse().getId();
     }
 
     /**
@@ -635,6 +664,8 @@ public class CourseService {
         if (participantRepository.existsByUserAndExperiment(user, experiment)) {
             throw new IllegalStateException("A participant entry for the user with id " + user.getId()
                     + " and experiment with id " + experiment.getId() + " already exists!");
+        } else if (!experiment.isActive()) {
+            throw new IllegalStateException("Cannot add a participant to an inactive experiment!");
         }
 
         Participant participant = new Participant(user, experiment, null, null);
@@ -754,6 +785,31 @@ public class CourseService {
         courseParticipantRepository.save(courseParticipant);
         courseRepository.save(course);
         userRepository.save(user);
+    }
+
+    /**
+     * Retrieves the course for the experiment with the given id is part of, if such a course exists.
+     *
+     * @param id The id of the experiment.
+     * @return The course to which the experiment belongs.
+     * @throws NotFoundException if no corresponding experiment or course could be found.
+     */
+    private CourseExperiment getCourseForExperiment(final int id) {
+        Experiment experiment = experimentRepository.getReferenceById(id);
+
+        try {
+            Optional<CourseExperiment> courseExperiment = courseExperimentRepository.findByExperiment(experiment);
+
+            if (courseExperiment.isEmpty()) {
+                LOGGER.error("Could not find a course for experiment with id " + id + "!");
+                throw new NotFoundException("Could not find a course for experiment with id " + id + "!");
+            }
+
+            return courseExperiment.get();
+        } catch (EntityNotFoundException e) {
+            LOGGER.error("Could not find the experiment when searching for its course experiments!", e);
+            throw new NotFoundException("Could not find the experiment when searching for its course experiments!", e);
+        }
     }
 
     /**

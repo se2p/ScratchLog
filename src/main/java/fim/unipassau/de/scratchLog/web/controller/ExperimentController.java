@@ -414,6 +414,16 @@ public class ExperimentController {
             ExperimentDTO experimentDTO;
 
             if (status.equals("open")) {
+                experimentDTO = experimentService.getExperiment(experimentId);
+
+                if (experimentDTO.isCourseExperiment() && !courseService.isActiveCourse(experimentId)) {
+                    ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                            LocaleContextHolder.getLocale());
+                    model.addAttribute(ERROR, resourceBundle.getString("course_inactive"));
+                    addModelInfo(0, experimentDTO, model);
+                    return EXPERIMENT;
+                }
+
                 experimentDTO = experimentService.changeExperimentStatus(true, experimentId);
                 List<UserDTO> userDTOS = userService.reactivateUserAccounts(experimentId);
 

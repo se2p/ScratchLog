@@ -677,11 +677,14 @@ public class ExperimentControllerTest {
     @Test
     public void testChangeExperimentStatusOpen() {
         MailServerSetter.setMailServer(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true).thenReturn(false);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("open", ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(courseService, never()).isActiveCourse(anyInt());
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, times(2)).sendEmail(anyString(), anyString(), any(), anyString());
@@ -694,10 +697,15 @@ public class ExperimentControllerTest {
     @Test
     public void testChangeExperimentStatusOpenNoMailServer() {
         MailServerSetter.setMailServer(false);
+        experimentDTO.setCourseExperiment(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(courseService.isActiveCourse(ID)).thenReturn(true);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
         assertEquals(REDIRECT_SECRET_LIST + ID, experimentController.changeExperimentStatus("open",
                 ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(courseService).isActiveCourse(ID);
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
@@ -734,6 +742,23 @@ public class ExperimentControllerTest {
     }
 
     @Test
+    public void testChangeExperimentStatusOpenInactiveCourse() {
+        experimentDTO.setCourseExperiment(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("open", ID_STRING, model));
+        verify(experimentService).getExperiment(ID);
+        verify(courseService).isActiveCourse(ID);
+        verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
+        verify(userService, never()).reactivateUserAccounts(anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(pageService).getLastParticipantPage(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
+        verify(model).addAttribute(PARTICIPANTS, participants);
+    }
+
+    @Test
     public void testChangeExperimentStatusInvalid() {
         assertEquals(ERROR, experimentController.changeExperimentStatus("blabla", ID_STRING, model));
         verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
@@ -742,6 +767,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusOpenNotFound() {
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(experimentService.changeExperimentStatus(true, ID)).thenThrow(NotFoundException.class);
         assertEquals(ERROR, experimentController.changeExperimentStatus("open", ID_STRING, model));
         verify(experimentService).changeExperimentStatus(true, ID);

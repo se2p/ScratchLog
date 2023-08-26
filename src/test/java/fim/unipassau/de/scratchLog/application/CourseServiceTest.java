@@ -33,6 +33,7 @@ import fim.unipassau.de.scratchLog.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
+import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.CourseDTO;
@@ -426,6 +427,51 @@ public class CourseServiceTest {
         verify(userRepository, never()).getReferenceById(anyInt());
         verify(courseExperimentRepository, never()).findByExperiment(any());
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
+    }
+
+    @Test
+    public void testExistsInactiveExperiment() {
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment));
+        assertTrue(courseService.existsInactiveExperiment(ID));
+        verify(courseRepository).getReferenceById(ID);
+        verify(courseExperimentRepository).findAllByCourse(course);
+    }
+
+    @Test
+    public void testExistsInactiveExperimentNotFound() {
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(courseExperimentRepository.findAllByCourse(course)).thenThrow(EntityNotFoundException.class);
+        assertFalse(courseService.existsInactiveExperiment(ID));
+        verify(courseRepository).getReferenceById(ID);
+        verify(courseExperimentRepository).findAllByCourse(course);
+    }
+
+    @Test
+    public void testExistsInactiveExperimentInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.existsInactiveExperiment(Constants.MIN_ID - 1)
+        );
+        verify(courseRepository, never()).getReferenceById(anyInt());
+        verify(courseExperimentRepository, never()).findAllByCourse(any());
+    }
+
+    @Test
+    public void testIsActiveCourse() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(courseExperimentRepository.findByExperiment(experiment1)).thenReturn(Optional.of(courseExperiment));
+        assertFalse(courseService.isActiveCourse(ID));
+        verify(experimentRepository).getReferenceById(ID);
+        verify(courseExperimentRepository).findByExperiment(experiment1);
+    }
+
+    @Test
+    public void testIsActiveCourseInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> courseService.isActiveCourse(0)
+        );
+        verify(experimentRepository, never()).getReferenceById(anyInt());
+        verify(courseExperimentRepository, never()).findByExperiment(any());
     }
 
     @Test
@@ -1014,6 +1060,7 @@ public class CourseServiceTest {
     @Test
     public void testAddParticipantToCourseExperiments() {
         user.setSecret(null);
+        experiment2.setActive(true);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
@@ -1029,6 +1076,7 @@ public class CourseServiceTest {
 
     @Test
     public void testAddParticipantToCourseExperimentsSecretNotNull() {
+        experiment2.setActive(true);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
@@ -1056,7 +1104,25 @@ public class CourseServiceTest {
     }
 
     @Test
+    public void testAddParticipantToCourseExperimentsInactive() {
+        when(courseRepository.getReferenceById(ID)).thenReturn(course);
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
+        when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
+                courseExperiment));
+        assertThrows(IllegalStateException.class,
+                () -> courseService.addParticipantToCourseExperiments(ID, ID)
+        );
+        verify(courseRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
+        verify(courseExperimentRepository).findAllByCourse(course);
+        verify(participantRepository).existsByUserAndExperiment(user, experiment2);
+        verify(participantRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     public void testAddParticipantToCourseExperimentsParticipantExists() {
+        experiment2.setActive(true);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
@@ -1075,6 +1141,7 @@ public class CourseServiceTest {
 
     @Test
     public void testAddParticipantToCourseExperimentsConstraintViolation() {
+        experiment2.setActive(true);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,

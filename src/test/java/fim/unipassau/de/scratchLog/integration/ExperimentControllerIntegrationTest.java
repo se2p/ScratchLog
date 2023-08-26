@@ -671,6 +671,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setActive(true);
         List<UserDTO> userDTOS = new ArrayList<>();
         userDTOS.add(participant);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(ID)).thenReturn(userDTOS);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
@@ -694,6 +695,7 @@ public class ExperimentControllerIntegrationTest {
                 )))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
@@ -707,6 +709,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setActive(true);
         List<UserDTO> userDTOS = new ArrayList<>();
         userDTOS.add(participant);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(ID)).thenReturn(userDTOS);
         mvc.perform(get("/experiment/status")
@@ -716,6 +719,7 @@ public class ExperimentControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SECRET_LIST + ID));
+        verify(experimentService).getExperiment(ID);
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
@@ -749,6 +753,28 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testChangeExperimentStatusOpenInactiveCourse() throws Exception {
+        MailServerSetter.setMailServer(false);
+        experimentDTO.setActive(true);
+        experimentDTO.setCourseExperiment(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        mvc.perform(get("/experiment/status")
+                        .param(STATUS_PARAM, "open")
+                        .param(ID_PARAM, ID_STRING)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
+        verify(userService, never()).reactivateUserAccounts(anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(pageService).getLastParticipantPage(ID);
         verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
