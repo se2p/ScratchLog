@@ -109,7 +109,7 @@ gemnasium-maven-dependency_scanning:
   stage: test
   needs: []
   variables:
-    MAVEN_CLI_OPTS: "$MAVEN_ARGS -DskipCheckstyle -DskipTests"
+    MAVEN_CLI_OPTS: "$MAVEN_ARGS"
   rules:
     - when: always
 
