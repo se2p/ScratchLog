@@ -31,6 +31,11 @@
             <!-- The experiment title. -->
             <h1 class="mb-3 h2" th:text="${experimentDTO.title}"></h1>
             <div sec:authorize="hasRole('ADMIN')">
+                <a class="btn btn-secondary" th:href="@{/dashboard(id=${experimentDTO.id})}"
+                   th:unless="${participants.isEmpty()}">
+                    <i aria-hidden="true" class="fas fa-chart-line" th:title="#{dashboard_title}"></i>
+                    <span th:text="#{dashboard_title}"></span>
+                </a>
                 <a class="btn btn-secondary" th:href="@{/experiment/edit(id=${experimentDTO.id})}">
                     <i aria-hidden="true" class="fas fa-edit fa-inverse" th:title="#{edit}"></i>
                     <span th:text="#{edit}"></span>

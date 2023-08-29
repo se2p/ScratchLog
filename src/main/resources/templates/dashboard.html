@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{dashboard_title}"></title>
+    <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/design/all.min.css}">
+    <link rel="stylesheet" th:href="@{/design/style.css}">
+</head>
+<body>
+<!-- Navigation bar -->
+<header th:insert="~{header :: header}"></header>
+
+<!-- Page content -->
+<div class="row" id="content" sec:authorize="hasRole('ADMIN')">
+    <div class="inside">
+        <!-- The dashboard page heading. -->
+        <h2 class="mb-5" th:text="#{dashboard_title}"></h2>
+
+        <!-- The button to return to the corresponding experiment page. -->
+        <div class="row mb-3">
+            <div class="col-12 text-end">
+                <a class="btn btn-secondary" th:href="@{/experiment(id=${experiment})}">
+                    <span th:text="#{experiment_return}"></span>
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <input type="hidden" name="id" th:value="${experiment}"/>
+            <div class="col-6 p-4 text-center">
+                <div class="text-info">
+                    <span class="display-1" id="started"></span>
+                    <span class="display-5">/</span>
+                    <span class="display-5" id="totalStarted"></span>
+                </div>
+                <div class="text-muted" th:text="#{participants_started}"></div>
+            </div>
+            <div class="col-6 p-4 text-center">
+                <div class="text-info">
+                    <span class="display-1" id="finished"></span>
+                    <span class="display-5">/</span>
+                    <span class="display-5" id="totalFinished"></span>
+                </div>
+                <div class="text-muted" th:text="#{participants_finished}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script to fetch and update the dashboard information. -->
+<script type="module" th:src="@{/js/dashboard.js}"></script>
+
+<!-- Let Thymeleaf fetch the ID of the current experiment. -->
+<script>
+    let experimentId = [[${experiment}]];
+</script>
+
+<!-- Footer -->
+<div th:insert="~{footer :: footer}"></div>
+</body>
+</html>
