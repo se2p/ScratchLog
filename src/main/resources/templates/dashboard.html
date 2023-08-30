@@ -27,7 +27,8 @@
             </div>
         </div>
 
-        <div class="row">
+        <!-- The information about the number of participants who started and finished the experiment. -->
+        <div class="row mb-3">
             <input type="hidden" name="id" th:value="${experiment}"/>
             <div class="col-6 p-4 text-center">
                 <div class="text-info">
@@ -44,6 +45,19 @@
                     <span class="display-5" id="totalFinished"></span>
                 </div>
                 <div class="text-muted" th:text="#{participants_finished}"></div>
+            </div>
+        </div>
+
+        <!-- The information about the currently selected participants for whom statistics are shown. -->
+        <div class="row mb-3">
+            <div class="col-9" id="selectedParticipants">
+            </div>
+            <div class="col-3">
+                <label id="participantsLabel" class="form-label" for="participants" th:text="#{heading_participants}">
+                </label>
+                <select id="participants" class="form-select" th:aria-label="#{heading_participants}">
+                    <option class="text"></option>
+                </select>
             </div>
         </div>
     </div>

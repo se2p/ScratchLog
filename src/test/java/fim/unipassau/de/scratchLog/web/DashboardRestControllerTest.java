@@ -27,6 +27,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -46,6 +49,7 @@ public class DashboardRestControllerTest {
     private static final String ID_STRING = "5";
     private static final int ID = 5;
     private static final String[] experimentData = new String[]{"11", "7", "5"};
+    private static final List<String[]> participantData = new ArrayList<>();
 
     @Test
     public void testGetExperimentData() {
@@ -60,6 +64,21 @@ public class DashboardRestControllerTest {
                 () -> dashboardRestController.getExperimentData(null)
         );
         verify(dashboardService, never()).getExperimentData(anyInt());
+    }
+
+    @Test
+    public void testGetParticipantData() {
+        when(dashboardService.getParticipants(ID)).thenReturn(participantData);
+        assertEquals(participantData, dashboardRestController.getParticipantData(ID_STRING));
+        verify(dashboardService).getParticipants(ID);
+    }
+
+    @Test
+    public void testGetParticipantDataInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> dashboardRestController.getParticipantData("0")
+        );
+        verify(dashboardService, never()).getParticipants(anyInt());
     }
 
 }

@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * The REST controller for retrieving data to be displayed on the experiment dashboard.
  */
@@ -46,6 +48,11 @@ public class DashboardRestController {
      * The dashboard service to use for retrieving information displayed on the experiment dashboard.
      */
     private final DashboardService dashboardService;
+
+    /**
+     * String corresponding to the id request parameter.
+     */
+    private static final String ID = "id";
 
     /**
      * Constructs a new dashboard REST controller with the given dependencies.
@@ -66,7 +73,32 @@ public class DashboardRestController {
      * @throws IllegalArgumentException if the passed id is invalid.
      */
     @GetMapping("")
-    public String[] getExperimentData(@RequestParam("id") final String id) {
+    public String[] getExperimentData(@RequestParam(ID) final String id) {
+        int experimentId = parseExperimentId(id);
+        return dashboardService.getExperimentData(experimentId);
+    }
+
+    /**
+     * Retrieves the ids and usernames of all participants of the experiment with the given id.
+     *
+     * @param id The id of the experiment.
+     * @return The participant information.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     */
+    @GetMapping("/participants")
+    public List<String[]> getParticipantData(@RequestParam(ID) final String id) {
+        int experimentId = parseExperimentId(id);
+        return dashboardService.getParticipants(experimentId);
+    }
+
+    /**
+     * Parses the given id string to an integer.
+     *
+     * @param id The string representation of the id.
+     * @return The integer representation of the id.
+     * @throws IllegalArgumentException if the passed id could not be parsed into a number or is an invalid id.
+     */
+    private int parseExperimentId(final String id) {
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
@@ -75,7 +107,7 @@ public class DashboardRestController {
                     + "id " + id + "!");
         }
 
-        return dashboardService.getExperimentData(experimentId);
+        return experimentId;
     }
 
 }

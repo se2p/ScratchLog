@@ -34,9 +34,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -60,13 +64,16 @@ public class DashboardControllerIntegrationTest {
     @Test
     public void testGetDashboard() throws Exception {
         when(dashboardService.existsExperiment(ID)).thenReturn(true);
+        when(dashboardService.existsParticipants(ID)).thenReturn(true);
         mvc.perform(get("/dashboard")
                         .param(ID_PARAM, ID_STRING)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
-                .andExpect(view().name(DASHBOARD));
+                .andExpect(view().name(DASHBOARD))
+                .andExpect(model().attribute("experiment", is(ID)));
         verify(dashboardService).existsExperiment(ID);
+        verify(dashboardService).existsParticipants(ID);
     }
 
     @Test
@@ -78,6 +85,7 @@ public class DashboardControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(dashboardService).existsExperiment(ID);
+        verify(dashboardService, never()).existsParticipants(anyInt());
     }
 
 }

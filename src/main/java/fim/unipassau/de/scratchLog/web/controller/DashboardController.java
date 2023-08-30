@@ -77,7 +77,7 @@ public class DashboardController {
             return Constants.ERROR;
         }
 
-        if (dashboardService.existsExperiment(experimentId)) {
+        if (dashboardService.existsExperiment(experimentId) && dashboardService.existsParticipants(experimentId)) {
             model.addAttribute("experiment", experimentId);
             return "dashboard";
         } else {

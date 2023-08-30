@@ -54,20 +54,32 @@ public class DashboardControllerTest {
     @Test
     public void testGetDashboard() {
         when(dashboardService.existsExperiment(ID)).thenReturn(true);
+        when(dashboardService.existsParticipants(ID)).thenReturn(true);
         assertEquals(DASHBOARD, dashboardController.getDashboard(ID_STRING, model));
         verify(dashboardService).existsExperiment(ID);
+        verify(dashboardService).existsParticipants(ID);
+    }
+
+    @Test
+    public void testGetDashboardNoParticipants() {
+        when(dashboardService.existsExperiment(ID)).thenReturn(true);
+        assertEquals(Constants.ERROR, dashboardController.getDashboard(ID_STRING, model));
+        verify(dashboardService).existsExperiment(ID);
+        verify(dashboardService).existsParticipants(ID);
     }
 
     @Test
     public void testGetDashboardNoExperiment() {
         assertEquals(Constants.ERROR, dashboardController.getDashboard(ID_STRING, model));
         verify(dashboardService).existsExperiment(ID);
+        verify(dashboardService, never()).existsParticipants(anyInt());
     }
 
     @Test
     public void testGetDashboardInvalidId() {
         assertEquals(Constants.ERROR, dashboardController.getDashboard(DASHBOARD, model));
         verify(dashboardService, never()).existsExperiment(anyInt());
+        verify(dashboardService, never()).existsParticipants(anyInt());
     }
 
 }

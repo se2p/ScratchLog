@@ -33,6 +33,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -55,6 +58,7 @@ public class DashboardRestControllerIntegrationTest {
     private static final String ID_PARAM = "id";
     private static final int ID = 5;
     private static final String[] experimentData = new String[]{"11", "7", "5"};
+    private static final List<String[]> participantData = new ArrayList<>();
 
     @Test
     public void testGetExperimentData() throws Exception {
@@ -66,6 +70,18 @@ public class DashboardRestControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("[\"11\",\"7\",\"5\"]"));
         verify(dashboardService).getExperimentData(ID);
+    }
+
+    @Test
+    public void testGetParticipantData() throws Exception {
+        when(dashboardService.getParticipants(ID)).thenReturn(participantData);
+        mvc.perform(get("/dashboard/data/participants")
+                        .param(ID_PARAM, ID_STRING)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(content().string("[]"));
+        verify(dashboardService).getParticipants(ID);
     }
 
 }
