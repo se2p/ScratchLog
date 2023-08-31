@@ -22,6 +22,7 @@ package fim.unipassau.de.scratchLog.web.controller;
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.NumberParser;
+import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,6 +57,16 @@ public class DashboardRestController {
     private static final String ID = "id";
 
     /**
+     * String corresponding to the users request parameter.
+     */
+    private static final String USERS = "users";
+
+    /**
+     * String corresponding to the event request parameter.
+     */
+    private static final String EVENT = "event";
+
+    /**
      * Constructs a new dashboard REST controller with the given dependencies.
      *
      * @param dashboardService The {@link DashboardService} to use.
@@ -74,7 +86,7 @@ public class DashboardRestController {
      */
     @GetMapping("")
     public String[] getExperimentData(@RequestParam(ID) final String id) {
-        int experimentId = parseExperimentId(id);
+        int experimentId = parseId(id);
         return dashboardService.getExperimentData(experimentId);
     }
 
@@ -87,8 +99,25 @@ public class DashboardRestController {
      */
     @GetMapping("/participants")
     public List<String[]> getParticipantData(@RequestParam(ID) final String id) {
-        int experimentId = parseExperimentId(id);
+        int experimentId = parseId(id);
         return dashboardService.getParticipants(experimentId);
+    }
+
+    /**
+     * Returns the number of executions per minute of the given event for the experiment and users with the given ids.
+     *
+     * @param id The id of the experiment.
+     * @param users The ids of the users.
+     * @param event The event of interest.
+     * @return A list containing an array for each user with the number of executions.
+     */
+    @GetMapping("/event/block")
+    public List<Integer[]> getBlockEventData(@RequestParam(ID) final String id,
+                                             @RequestParam(USERS) final String users,
+                                             @RequestParam(EVENT) final BlockEventSpecific event) {
+        int experimentId = parseId(id);
+        List<Integer> userIds = parseUserIds(users);
+        return dashboardService.getBlockEventCountData(userIds, experimentId, event);
     }
 
     /**
@@ -98,16 +127,37 @@ public class DashboardRestController {
      * @return The integer representation of the id.
      * @throws IllegalArgumentException if the passed id could not be parsed into a number or is an invalid id.
      */
-    private int parseExperimentId(final String id) {
+    private int parseId(final String id) {
         int experimentId = NumberParser.parseId(id);
 
         if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot retrieve data for experiment dashboard with invalid experiment id " + id + "!");
-            throw new IllegalArgumentException("Cannot retrieve data for experiment dashboard with invalid experiment "
-                    + "id " + id + "!");
+            LOGGER.error("Cannot retrieve data for experiment dashboard with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve data for experiment dashboard with invalid id " + id
+                    + "!");
         }
 
         return experimentId;
+    }
+
+    /**
+     * Parses the user ids passed in the given string to a list of integers.
+     *
+     * @param users The string containing the user ids.
+     * @return A list of user ids as integers.
+     * @throws IllegalArgumentException if the string contains no ids or if any of the ids could not be parsed.
+     */
+    private List<Integer> parseUserIds(final String users) {
+        String userIdString = users.replaceAll("\"", "").replaceAll("\\[", "").replaceAll("]", "");
+        List<String> ids = List.of(userIdString.split(","));
+
+        if (ids.isEmpty()) {
+            LOGGER.error("Cannot retrieve event data without any user ids!");
+            throw new IllegalArgumentException("Cannot retrieve event data without any user ids!");
+        }
+
+        List<Integer> userIds = new ArrayList<>();
+        ids.forEach(id -> userIds.add(parseId(id)));
+        return userIds;
     }
 
 }

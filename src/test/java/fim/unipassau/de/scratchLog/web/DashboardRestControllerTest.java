@@ -20,6 +20,7 @@
 package fim.unipassau.de.scratchLog.web;
 
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
+import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +33,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,9 +50,12 @@ public class DashboardRestControllerTest {
     private DashboardService dashboardService;
 
     private static final String ID_STRING = "5";
+    private static final String userIds = "[\"1\",\"5\"]";
+    private static final String invalidUsers = "[";
     private static final int ID = 5;
     private static final String[] experimentData = new String[]{"11", "7", "5"};
     private static final List<String[]> participantData = new ArrayList<>();
+    private static final List<Integer[]> blockEventData = new ArrayList<>();
 
     @Test
     public void testGetExperimentData() {
@@ -79,6 +85,22 @@ public class DashboardRestControllerTest {
                 () -> dashboardRestController.getParticipantData("0")
         );
         verify(dashboardService, never()).getParticipants(anyInt());
+    }
+
+    @Test
+    public void testGetBlockEvent() {
+        when(dashboardService.getBlockEventCountData(anyList(), anyInt(), any())).thenReturn(blockEventData);
+        assertEquals(blockEventData, dashboardRestController.getBlockEventData(ID_STRING, userIds,
+                BlockEventSpecific.CREATE));
+        verify(dashboardService).getBlockEventCountData(anyList(), anyInt(), any());
+    }
+
+    @Test
+    public void testGetBlockEventNoUsers() {
+        assertThrows(IllegalArgumentException.class,
+                () -> dashboardRestController.getBlockEventData(ID_STRING, invalidUsers, BlockEventSpecific.CREATE)
+        );
+        verify(dashboardService, never()).getBlockEventCountData(anyList(), anyInt(), any());
     }
 
 }

@@ -21,6 +21,7 @@ package fim.unipassau.de.scratchLog.integration;
 
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,6 +37,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -56,9 +60,13 @@ public class DashboardRestControllerIntegrationTest {
 
     private static final String ID_STRING = "5";
     private static final String ID_PARAM = "id";
+    private static final String USER_PARAM = "users";
+    private static final String EVENT_PARAM = "event";
+    private static final String userIds = "[\"1\",\"5\"]";
     private static final int ID = 5;
     private static final String[] experimentData = new String[]{"11", "7", "5"};
     private static final List<String[]> participantData = new ArrayList<>();
+    private static final List<Integer[]> blockEventData = new ArrayList<>();
 
     @Test
     public void testGetExperimentData() throws Exception {
@@ -82,6 +90,20 @@ public class DashboardRestControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("[]"));
         verify(dashboardService).getParticipants(ID);
+    }
+
+    @Test
+    public void testGetBlockEventData() throws Exception {
+        when(dashboardService.getBlockEventCountData(anyList(), anyInt(), any())).thenReturn(blockEventData);
+        mvc.perform(get("/dashboard/data/event/block")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(USER_PARAM, userIds)
+                        .param(EVENT_PARAM, String.valueOf(BlockEventSpecific.CHANGE))
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(content().string("[]"));
+        verify(dashboardService).getBlockEventCountData(anyList(), anyInt(), any());
     }
 
 }

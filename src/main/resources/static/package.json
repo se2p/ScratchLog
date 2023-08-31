@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "blockly": "^5.20210325.1",
+    "chart.js": "^4.4.0",
     "scratch-blocks": "^0.1.0-prerelease.20210711065959"
   }
 }

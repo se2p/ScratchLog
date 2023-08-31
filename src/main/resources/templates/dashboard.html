@@ -7,6 +7,7 @@
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
     <link rel="stylesheet" th:href="@{/design/style.css}">
+    <script type="text/javascript" th:src="@{/node_modules/chart.js/dist/chart.umd.js}"></script>
 </head>
 <body>
 <!-- Navigation bar -->
@@ -32,17 +33,17 @@
             <input type="hidden" name="id" th:value="${experiment}"/>
             <div class="col-6 p-4 text-center">
                 <div class="text-info">
-                    <span class="display-1" id="started"></span>
-                    <span class="display-5">/</span>
-                    <span class="display-5" id="totalStarted"></span>
+                    <span class="display-3" id="started"></span>
+                    <span class="display-6">/</span>
+                    <span class="display-6" id="totalStarted"></span>
                 </div>
                 <div class="text-muted" th:text="#{participants_started}"></div>
             </div>
             <div class="col-6 p-4 text-center">
                 <div class="text-info">
-                    <span class="display-1" id="finished"></span>
-                    <span class="display-5">/</span>
-                    <span class="display-5" id="totalFinished"></span>
+                    <span class="display-3" id="finished"></span>
+                    <span class="display-6">/</span>
+                    <span class="display-6" id="totalFinished"></span>
                 </div>
                 <div class="text-muted" th:text="#{participants_finished}"></div>
             </div>
@@ -59,6 +60,18 @@
                     <option class="text"></option>
                 </select>
             </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-6">
+                <div class="mb-3">
+                    <span th:text="#{block_event}"></span>
+                    <span id="blockEventChartDescription"></span>
+                </div>
+                <div id="blockEventChartNoData" class="text-muted" th:text="#{no_data}"></div>
+                <canvas id="blockEventChart" style="max-width: 90%; display: none"></canvas>
+            </div>
+            <div class="col-6"></div>
         </div>
     </div>
 </div>

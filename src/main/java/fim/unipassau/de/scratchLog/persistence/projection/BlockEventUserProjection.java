@@ -19,10 +19,6 @@
 
 package fim.unipassau.de.scratchLog.persistence.projection;
 
-import fim.unipassau.de.scratchLog.persistence.entity.User;
-import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
-import fim.unipassau.de.scratchLog.util.enums.BlockEventType;
-
 import java.time.LocalDateTime;
 
 /**
@@ -39,31 +35,10 @@ public interface BlockEventUserProjection {
     Integer getId();
 
     /**
-     * Returns the user who caused the event.
-     *
-     * @return The user.
-     */
-    User getUser();
-
-    /**
      * Returns the timestamp of the event.
      *
      * @return The respective timestamp.
      */
     LocalDateTime getDate();
-
-    /**
-     * Returns the concrete event that occurred.
-     *
-     * @return The respective event.
-     */
-    BlockEventType getEventType();
-
-    /**
-     * Returns the concrete event that occurred.
-     *
-     * @return The respective event.
-     */
-    BlockEventSpecific getEvent();
 
 }
