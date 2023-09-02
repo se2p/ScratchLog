@@ -22,10 +22,9 @@ package fim.unipassau.de.scratchLog.persistence.projection;
 import java.time.LocalDateTime;
 
 /**
- * Projection interface for the {@link fim.unipassau.de.scratchLog.persistence.entity.BlockEvent} class to return only
- * the block event id, the user, the event, event type and date.
+ * Projection interface for different event classes to return only their id and date.
  */
-public interface BlockEventUserProjection {
+public interface EventProjection {
 
     /**
      * Returns the unique id of the block event.

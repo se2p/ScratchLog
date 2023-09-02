@@ -24,10 +24,9 @@ import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
 import fim.unipassau.de.scratchLog.persistence.entity.User;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventJSONProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventProjection;
-import fim.unipassau.de.scratchLog.persistence.projection.BlockEventUserProjection;
+import fim.unipassau.de.scratchLog.persistence.projection.EventProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
-import fim.unipassau.de.scratchLog.util.enums.BlockEventType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -81,26 +80,15 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
     List<BlockEvent> findAllByExperiment(Experiment experiment);
 
     /**
-     * Returns all {@link BlockEventUserProjection}s for the given user and experiment with the given event.
+     * Returns all {@link EventProjection}s for the given user and experiment with the given event.
      *
      * @param user The user to search for.
      * @param experiment The experiment to search for.
      * @param event The event to search for.
      * @return A list of all block events of the given event.
      */
-    List<BlockEventUserProjection> findAllByUserAndExperimentAndEvent(User user, Experiment experiment,
-                                                                      BlockEventSpecific event);
-
-    /**
-     * Returns all {@link BlockEventUserProjection}s for the given user and experiment with the given event type.
-     *
-     * @param user The user to search for.
-     * @param experiment The experiment to search for.
-     * @param eventType The event type to search for.
-     * @return A list of all block events of the given event type.
-     */
-    List<BlockEventUserProjection> findAllByUserAndExperimentAndEventType(User user, Experiment experiment,
-                                                                          BlockEventType eventType);
+    List<EventProjection> findAllByUserAndExperimentAndEvent(User user, Experiment experiment,
+                                                             BlockEventSpecific event);
 
     /**
      * Returns a {@link BlockEventJSONProjection} containing the last non-null JSON code that was saved for the given

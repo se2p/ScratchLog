@@ -24,14 +24,16 @@ import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
 import fim.unipassau.de.scratchLog.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratchLog.persistence.entity.Participant;
 import fim.unipassau.de.scratchLog.persistence.entity.User;
-import fim.unipassau.de.scratchLog.persistence.projection.BlockEventUserProjection;
+import fim.unipassau.de.scratchLog.persistence.projection.EventProjection;
 import fim.unipassau.de.scratchLog.persistence.repository.BlockEventRepository;
+import fim.unipassau.de.scratchLog.persistence.repository.ClickEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +82,11 @@ public class DashboardService {
     private final BlockEventRepository blockEventRepository;
 
     /**
+     * The click event repository to use for click event queries.
+     */
+    private final ClickEventRepository clickEventRepository;
+
+    /**
      * The maximum allowed gap in minutes between two events when calculating event counts.
      */
     private static final int MAX_GAP = 10;
@@ -92,17 +99,20 @@ public class DashboardService {
      * @param participantRepository The participant repository to use.
      * @param userRepository The user repository to use.
      * @param blockEventRepository The block event repository to use.
+     * @param clickEventRepository The click event repository to use.
      */
     @Autowired
     public DashboardService(final ExperimentRepository experimentRepository,
                             final ExperimentDataRepository experimentDataRepository,
                             final ParticipantRepository participantRepository, final UserRepository userRepository,
-                            final BlockEventRepository blockEventRepository) {
+                            final BlockEventRepository blockEventRepository,
+                            final ClickEventRepository clickEventRepository) {
         this.experimentRepository = experimentRepository;
         this.experimentDataRepository = experimentDataRepository;
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
         this.blockEventRepository = blockEventRepository;
+        this.clickEventRepository = clickEventRepository;
     }
 
     /**
@@ -211,19 +221,48 @@ public class DashboardService {
      * @param experimentId The id of the experiment.
      * @param event The event of interest.
      * @return A list of arrays with the numbers of executions per minute for every user.
-     * @throws IllegalArgumentException if any of the passed ids is invalid.
      */
     public List<Integer[]> getBlockEventCountData(final List<Integer> userIds, final int experimentId,
                                                   final BlockEventSpecific event) {
+        Experiment experiment = checkInputsAndGetExperiment(userIds, experimentId);
+        List<Integer[]> eventNumbers = new ArrayList<>();
+        userIds.forEach(id -> eventNumbers.add(getBlockEventCounts(id, experiment, event)));
+        return eventNumbers;
+    }
+
+    /**
+     * Retrieves information about the number of times the given click event was executed per minute during the
+     * experiment with the given id for the users with the give id.
+     *
+     * @param userIds The ids of the users for whom the event count should be calculated.
+     * @param experimentId The id of the experiment.
+     * @param event The event of interest.
+     * @return A list of arrays with the numbers of executions per minute for every user.
+     */
+    public List<Integer[]> getClickEventCountData(final List<Integer> userIds, final int experimentId,
+                                                  final ClickEventSpecific event) {
+        Experiment experiment = checkInputsAndGetExperiment(userIds, experimentId);
+        List<Integer[]> eventNumbers = new ArrayList<>();
+        userIds.forEach(id -> eventNumbers.add(getClickEventCounts(id, experiment, event)));
+        return eventNumbers;
+    }
+
+    /**
+     * Checks, whether the passed list of user ids and the experiment id are valid and returns the corresponding
+     * experiment.
+     *
+     * @param userIds A list of user ids to check.
+     * @param experimentId The experiment id to check.
+     * @return The corresponding experiment, if all ids are valid.
+     * @throws IllegalArgumentException if any of the passed ids are invalid.
+     */
+    private Experiment checkInputsAndGetExperiment(final List<Integer> userIds, final int experimentId) {
         if (experimentId < Constants.MIN_ID || userIds.stream().anyMatch(id -> id < Constants.MIN_ID)) {
             throw new IllegalArgumentException("Cannot retrieve event data for experiment with invalid experiment or "
                     + "user ids!");
         }
 
-        List<Integer[]> eventNumbers = new ArrayList<>();
-        Experiment experiment = experimentRepository.getReferenceById(experimentId);
-        userIds.forEach(id -> eventNumbers.add(getEventCounts(id, experiment, event)));
-        return eventNumbers;
+        return experimentRepository.getReferenceById(experimentId);
     }
 
     /**
@@ -236,18 +275,12 @@ public class DashboardService {
      * @return The number of executions per minute.
      * @throws NotFoundException if the given user or experiment could not be found.
      */
-    private Integer[] getEventCounts(final int userId, final Experiment experiment, final BlockEventSpecific event) {
+    private Integer[] getBlockEventCounts(final int userId, final Experiment experiment,
+                                          final BlockEventSpecific event) {
         User user = userRepository.getReferenceById(userId);
 
         try {
-            List<BlockEventUserProjection> projections = blockEventRepository.findAllByUserAndExperimentAndEvent(user,
-                    experiment, event);
-
-            if (projections.isEmpty()) {
-                return new Integer[]{};
-            }
-
-            return sampleEventCountPerMinute(projections).toArray(Integer[]::new);
+            return getEventCounts(blockEventRepository.findAllByUserAndExperimentAndEvent(user, experiment, event));
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find user or experiment when trying to retrieve block event data!", e);
             throw new NotFoundException("Could not find user or experiment when trying to retrieve block event data!",
@@ -256,13 +289,50 @@ public class DashboardService {
     }
 
     /**
-     * Given a list of {@link BlockEventUserProjection}s of a specific event or event type, the number of times this
+     * For a given user, experiment and click event, the number of times the event is executed per minute is calculated
+     * and returned.
+     *
+     * @param userId The id of the user.
+     * @param experiment The experiment in which the events occurred.
+     * @param event The concrete event of interest.
+     * @return The number of executions per minute.
+     * @throws NotFoundException if the given user or experiment could not be found.
+     */
+    private Integer[] getClickEventCounts(final int userId, final Experiment experiment,
+                                          final ClickEventSpecific event) {
+        User user = userRepository.getReferenceById(userId);
+
+        try {
+            return getEventCounts(clickEventRepository.findAllByUserAndExperimentAndEvent(user, experiment, event));
+        } catch (EntityNotFoundException e) {
+            LOGGER.error("Could not find user or experiment when trying to retrieve click event data!", e);
+            throw new NotFoundException("Could not find user or experiment when trying to retrieve click event data!",
+                    e);
+        }
+    }
+
+    /**
+     * Retrieves the number of times an event was executed per minute given the list of event projections.
+     *
+     * @param projections The projections containing information on when an event was executed.
+     * @return The number of executions per minute.
+     */
+    private Integer[] getEventCounts(final List<EventProjection> projections) {
+        if (projections.isEmpty()) {
+            return new Integer[]{};
+        }
+
+        return sampleEventCountPerMinute(projections).toArray(Integer[]::new);
+    }
+
+    /**
+     * Given a list of {@link EventProjection}s of a specific event or event type, the number of times this
      * event (type) was executed per minute is calculated.
      *
      * @param projections The projections for which the number of executions per minute should be calculated.
      * @return A list of event counts per minute.
      */
-    private List<Integer> sampleEventCountPerMinute(final List<BlockEventUserProjection> projections) {
+    private List<Integer> sampleEventCountPerMinute(final List<EventProjection> projections) {
         List<Integer> counts = new ArrayList<>();
         LocalDateTime startTime = projections.get(0).getDate();
         int count = 0;

@@ -34,6 +34,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.never;
@@ -71,7 +72,8 @@ public class DashboardControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(DASHBOARD))
-                .andExpect(model().attribute("experiment", is(ID)));
+                .andExpect(model().attribute("experiment", is(ID)))
+                .andExpect(model().attribute("blockEvents", notNullValue()));
         verify(dashboardService).existsExperiment(ID);
         verify(dashboardService).existsParticipants(ID);
     }

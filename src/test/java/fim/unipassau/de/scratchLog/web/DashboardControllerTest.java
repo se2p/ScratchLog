@@ -30,8 +30,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.Model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,6 +61,7 @@ public class DashboardControllerTest {
         assertEquals(DASHBOARD, dashboardController.getDashboard(ID_STRING, model));
         verify(dashboardService).existsExperiment(ID);
         verify(dashboardService).existsParticipants(ID);
+        verify(model, times(2)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -66,6 +70,7 @@ public class DashboardControllerTest {
         assertEquals(Constants.ERROR, dashboardController.getDashboard(ID_STRING, model));
         verify(dashboardService).existsExperiment(ID);
         verify(dashboardService).existsParticipants(ID);
+        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
@@ -73,6 +78,7 @@ public class DashboardControllerTest {
         assertEquals(Constants.ERROR, dashboardController.getDashboard(ID_STRING, model));
         verify(dashboardService).existsExperiment(ID);
         verify(dashboardService, never()).existsParticipants(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
@@ -80,6 +86,7 @@ public class DashboardControllerTest {
         assertEquals(Constants.ERROR, dashboardController.getDashboard(DASHBOARD, model));
         verify(dashboardService, never()).existsExperiment(anyInt());
         verify(dashboardService, never()).existsParticipants(anyInt());
+        verify(model, never()).addAttribute(anyString(), any());
     }
 
 }

@@ -22,6 +22,7 @@ package fim.unipassau.de.scratchLog.integration;
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import fim.unipassau.de.scratchLog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,7 +67,7 @@ public class DashboardRestControllerIntegrationTest {
     private static final int ID = 5;
     private static final String[] experimentData = new String[]{"11", "7", "5"};
     private static final List<String[]> participantData = new ArrayList<>();
-    private static final List<Integer[]> blockEventData = new ArrayList<>();
+    private static final List<Integer[]> eventData = new ArrayList<>();
 
     @Test
     public void testGetExperimentData() throws Exception {
@@ -94,7 +95,7 @@ public class DashboardRestControllerIntegrationTest {
 
     @Test
     public void testGetBlockEventData() throws Exception {
-        when(dashboardService.getBlockEventCountData(anyList(), anyInt(), any())).thenReturn(blockEventData);
+        when(dashboardService.getBlockEventCountData(anyList(), anyInt(), any())).thenReturn(eventData);
         mvc.perform(get("/dashboard/data/event/block")
                         .param(ID_PARAM, ID_STRING)
                         .param(USER_PARAM, userIds)
@@ -104,6 +105,20 @@ public class DashboardRestControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("[]"));
         verify(dashboardService).getBlockEventCountData(anyList(), anyInt(), any());
+    }
+
+    @Test
+    public void testGetClickEventData() throws Exception {
+        when(dashboardService.getClickEventCountData(anyList(), anyInt(), any())).thenReturn(eventData);
+        mvc.perform(get("/dashboard/data/event/click")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(USER_PARAM, userIds)
+                        .param(EVENT_PARAM, String.valueOf(ClickEventSpecific.STOPALL))
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(content().string("[]"));
+        verify(dashboardService).getClickEventCountData(anyList(), anyInt(), any());
     }
 
 }

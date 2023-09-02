@@ -62,16 +62,53 @@
             </div>
         </div>
 
+        <!-- The chart and information about block and click events. -->
         <div class="row mb-3">
             <div class="col-6">
-                <div class="mb-3">
-                    <span th:text="#{block_event}"></span>
-                    <span id="blockEventChartDescription"></span>
+                <div class="mb-3 d-flex justify-content-between">
+                    <div>
+                        <span th:text="#{block_event}"></span>
+                        <span id="blockEventChartDescription"></span>
+                    </div>
+                    <div>
+                        <label class="form-label" for="blockEvents" th:text="#{block_events}"></label>
+                        <div class="input-group">
+                            <select id="blockEvents" class="form-select" th:aria-label="#{block_events}"
+                                    th:field="*{blockEvents}">
+                                <option th:each="event : ${blockEvents}"
+                                        th:value="${event}" th:text="${event}"></option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div id="blockEventChartNoData" class="text-muted" th:text="#{no_data}"></div>
-                <canvas id="blockEventChart" style="max-width: 90%; display: none"></canvas>
+                <div class="d-flex justify-content-center">
+                    <canvas id="blockEventChart" style="max-width: 90%; display: none"></canvas>
+                </div>
             </div>
-            <div class="col-6"></div>
+            <div class="col-6">
+                <div class="mb-3 d-flex justify-content-between">
+                    <div>
+                        <span th:text="#{click_event}"></span>
+                        <span id="clickEventChartDescription"></span>
+                    </div>
+                    <div>
+                        <label class="form-label" for="clickEvents" th:text="#{click_events}"></label>
+                        <div class="input-group">
+                            <select id="clickEvents" class="form-select" th:aria-label="#{click_events}">
+                                <!--suppress ThymeleafVariablesResolveInspection -->
+                                <option th:each="event
+                                        : ${T(fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific).values()}"
+                                        th:value="${event}" th:text="${event}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="clickEventChartNoData" class="text-muted" th:text="#{no_data}"></div>
+                <div class="d-flex justify-content-center">
+                    <canvas id="clickEventChart" style="max-width: 90%; display: none"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -79,7 +116,7 @@
 <!-- Script to fetch and update the dashboard information. -->
 <script type="module" th:src="@{/js/dashboard.js}"></script>
 
-<!-- Let Thymeleaf fetch the ID of the current experiment. -->
+<!-- Let Thymeleaf fetch the ID of the current experiment and a list of available block events. -->
 <script>
     let experimentId = [[${experiment}]];
 </script>

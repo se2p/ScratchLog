@@ -25,13 +25,15 @@ import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
 import fim.unipassau.de.scratchLog.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratchLog.persistence.entity.Participant;
 import fim.unipassau.de.scratchLog.persistence.entity.User;
-import fim.unipassau.de.scratchLog.persistence.projection.BlockEventUserProjection;
+import fim.unipassau.de.scratchLog.persistence.projection.EventProjection;
 import fim.unipassau.de.scratchLog.persistence.repository.BlockEventRepository;
+import fim.unipassau.de.scratchLog.persistence.repository.ClickEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import jakarta.persistence.EntityNotFoundException;
@@ -79,8 +81,12 @@ public class DashboardServiceTest {
     @Mock
     private BlockEventRepository blockEventRepository;
 
+    @Mock
+    private ClickEventRepository clickEventRepository;
+
     private static final int ID = 3;
     private static final BlockEventSpecific BLOCK_EVENT = BlockEventSpecific.CREATE;
+    private static final ClickEventSpecific CLICK_EVENT = ClickEventSpecific.GREENFLAG;
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "post", true, false, "");
     private final User user1 = new User("user1", "email1", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
     private final User user2 = new User("user2", "email2", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
@@ -91,7 +97,8 @@ public class DashboardServiceTest {
             String.valueOf(experimentData.getStarted()), String.valueOf(experimentData.getFinished())};
     private final List<Participant> participants = List.of(participant1, participant2);
     private final List<Integer> userIds = List.of(ID, ID);
-    private final List<BlockEventUserProjection> blockEventUserProjections = getBlockEventProjections();
+    private final List<EventProjection> eventProjections1 = getBlockEventProjections(15);
+    private final List<EventProjection> eventProjections2 = getBlockEventProjections(2);
 
     @Test
     public void testExistsExperiment() {
@@ -207,7 +214,7 @@ public class DashboardServiceTest {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(userRepository.getReferenceById(ID)).thenReturn(user1);
         when(blockEventRepository.findAllByUserAndExperimentAndEvent(user1, experiment, BLOCK_EVENT)).thenReturn(
-                blockEventUserProjections);
+                eventProjections1);
         List<Integer[]> counts = dashboardService.getBlockEventCountData(userIds, ID, BLOCK_EVENT);
         assertAll(
                 () -> assertEquals(2, counts.size()),
@@ -271,9 +278,43 @@ public class DashboardServiceTest {
         verify(blockEventRepository, never()).findAllByUserAndExperimentAndEvent(any(), any(), any());
     }
 
-    private List<BlockEventUserProjection> getBlockEventProjections() {
-        List<BlockEventUserProjection> projections = new ArrayList<>();
-        BlockEventUserProjection blockEventUserProjection1 = new BlockEventUserProjection() {
+    @Test
+    public void testGetClickEventCountData() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
+        when(userRepository.getReferenceById(ID)).thenReturn(user1);
+        when(clickEventRepository.findAllByUserAndExperimentAndEvent(user1, experiment, CLICK_EVENT)).thenReturn(
+                eventProjections2);
+        List<Integer[]> counts = dashboardService.getClickEventCountData(userIds, ID, CLICK_EVENT);
+        assertAll(
+                () -> assertEquals(2, counts.size()),
+                () -> assertEquals(3, counts.get(0).length),
+                () -> assertEquals(1, counts.get(0)[0]),
+                () -> assertEquals(0, counts.get(0)[1]),
+                () -> assertEquals(2, counts.get(0)[2])
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository, times(2)).getReferenceById(ID);
+        verify(clickEventRepository, times(2)).findAllByUserAndExperimentAndEvent(user1,
+                experiment, CLICK_EVENT);
+    }
+
+    @Test
+    public void testGetClickEventCountDataNotFound() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
+        when(userRepository.getReferenceById(ID)).thenReturn(user1);
+        when(clickEventRepository.findAllByUserAndExperimentAndEvent(user1, experiment, CLICK_EVENT)).thenThrow(
+                EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> dashboardService.getClickEventCountData(userIds, ID, CLICK_EVENT)
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
+        verify(clickEventRepository).findAllByUserAndExperimentAndEvent(user1, experiment, CLICK_EVENT);
+    }
+
+    private List<EventProjection> getBlockEventProjections(long minutes) {
+        List<EventProjection> projections = new ArrayList<>();
+        EventProjection eventProjection1 = new EventProjection() {
             @Override
             public Integer getId() {
                 return 1;
@@ -284,7 +325,7 @@ public class DashboardServiceTest {
                 return LocalDateTime.now();
             }
         };
-        BlockEventUserProjection blockEventUserProjection2 = new BlockEventUserProjection() {
+        EventProjection eventProjection2 = new EventProjection() {
             @Override
             public Integer getId() {
                 return 2;
@@ -292,10 +333,10 @@ public class DashboardServiceTest {
 
             @Override
             public LocalDateTime getDate() {
-                return LocalDateTime.now().plusMinutes(15);
+                return LocalDateTime.now().plusMinutes(minutes);
             }
         };
-        BlockEventUserProjection blockEventUserProjection3 = new BlockEventUserProjection() {
+        EventProjection eventProjection3 = new EventProjection() {
             @Override
             public Integer getId() {
                 return 3;
@@ -303,12 +344,12 @@ public class DashboardServiceTest {
 
             @Override
             public LocalDateTime getDate() {
-                return LocalDateTime.now().plusMinutes(15);
+                return LocalDateTime.now().plusMinutes(minutes);
             }
         };
-        projections.add(blockEventUserProjection1);
-        projections.add(blockEventUserProjection2);
-        projections.add(blockEventUserProjection3);
+        projections.add(eventProjection1);
+        projections.add(eventProjection2);
+        projections.add(eventProjection3);
         return projections;
     }
 

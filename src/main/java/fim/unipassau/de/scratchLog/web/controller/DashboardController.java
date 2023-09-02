@@ -22,6 +22,7 @@ package fim.unipassau.de.scratchLog.web.controller;
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.NumberParser;
+import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * The controller for managing the dashboard.
@@ -79,10 +84,28 @@ public class DashboardController {
 
         if (dashboardService.existsExperiment(experimentId) && dashboardService.existsParticipants(experimentId)) {
             model.addAttribute("experiment", experimentId);
+            model.addAttribute("blockEvents", getBlockEvents());
             return "dashboard";
         } else {
             return Constants.ERROR;
         }
+    }
+
+    /**
+     * Retrieves all possible block events as a list of strings, excluding those that have been moved to click events.
+     *
+     * @return The list of block events.
+     */
+    private List<String> getBlockEvents() {
+        BlockEventSpecific[] events = BlockEventSpecific.values();
+        List<String> blockEvents = new ArrayList<>();
+        Arrays.stream(events).forEach(event -> {
+            if (event != BlockEventSpecific.GREENFLAG && event != BlockEventSpecific.STOPALL
+                    && event != BlockEventSpecific.STACKCLICK) {
+                blockEvents.add(event.toString());
+            }
+        });
+        return blockEvents;
     }
 
 }

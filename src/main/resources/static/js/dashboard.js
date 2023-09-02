@@ -9,6 +9,9 @@ let selectedParticipants = [];
 let blockEvent = "CREATE";
 let blockEventData = [];
 let blockEventChart;
+let clickEvent = "GREENFLAG";
+let clickEventData = [];
+let clickEventChart;
 
 /**
  * Readies the function to retrieve the information to be displayed on the dashboard.
@@ -64,6 +67,7 @@ function fetchParticipantData() {
             _fillParticipantsDropdown();
             _addEventListeners();
             fetchBlockEventData();
+            fetchClickEventData();
         },
         error: function() {
             redirectErrorPage();
@@ -84,7 +88,8 @@ function fetchBlockEventData() {
         data: {id: experimentId, users: JSON.stringify(selectedIds), event: blockEvent},
         success: function(data) {
             document.getElementById("blockEventChartDescription").innerText = " " + blockEvent;
-            let maxLength = _prepareBlockEventData(data);
+            blockEventData = _prepareEventData(data, blockEventData);
+            let maxLength = blockEventData.length > 0 ? blockEventData[0].length : 0;
 
             if (blockEventChart) {
                 blockEventChart.destroy();
@@ -94,10 +99,46 @@ function fetchBlockEventData() {
                 document.getElementById("blockEventChartNoData").style.display = "none";
                 document.getElementById("blockEventChart").style.display = "block";
                 let xValues = Array.from(Array(maxLength).keys());
-                _drawLineChart("blockEventChart", xValues, blockEventData);
+                blockEventChart = _drawLineChart("blockEventChart", xValues, blockEventData);
             } else {
                 document.getElementById("blockEventChartNoData").style.display = "block";
                 document.getElementById("blockEventChart").style.display = "none";
+            }
+        },
+        error: function() {
+            redirectErrorPage();
+        }
+    });
+}
+
+/**
+ * Fetches the number of executions per minute for a given click event for the currently selected users.
+ */
+function fetchClickEventData() {
+    let selectedIds = selectedParticipants.map(function(item) {
+        return item[0];
+    });
+    $.ajax({
+        type: "get",
+        url: contextPath + "/dashboard/data/event/click",
+        data: {id: experimentId, users: JSON.stringify(selectedIds), event: clickEvent},
+        success: function(data) {
+            document.getElementById("clickEventChartDescription").innerText = " " + clickEvent;
+            clickEventData = _prepareEventData(data, clickEventData);
+            let maxLength = clickEventData.length > 0 ? clickEventData[0].length : 0;
+
+            if (clickEventChart) {
+                clickEventChart.destroy();
+            }
+
+            if (maxLength > 0) {
+                document.getElementById("clickEventChartNoData").style.display = "none";
+                document.getElementById("clickEventChart").style.display = "block";
+                let xValues = Array.from(Array(maxLength).keys());
+                clickEventChart = _drawLineChart("clickEventChart", xValues, clickEventData);
+            } else {
+                document.getElementById("clickEventChartNoData").style.display = "block";
+                document.getElementById("clickEventChart").style.display = "none";
             }
         },
         error: function() {
@@ -171,6 +212,14 @@ function _addEventListeners() {
     Array.from(dropdownElements).forEach(element => element.addEventListener("click", function() {
         _addSelectedParticipant(element.innerHTML);
     }));
+    let blockEventElements = document.getElementById("blockEvents").children;
+    Array.from(blockEventElements).forEach(element => element.addEventListener("click", function() {
+        _updateBlockEventData(element.value);
+    }));
+    let clickEventElements = document.getElementById("clickEvents").children;
+    Array.from(clickEventElements).forEach(element => element.addEventListener("click", function() {
+       _updateClickEventData(element.value);
+    }));
 }
 
 /**
@@ -189,6 +238,7 @@ function _addSelectedParticipant(participant) {
         _addEventListeners();
         _changeDropdownVisibility();
         fetchBlockEventData();
+        fetchClickEventData();
     }
 }
 
@@ -206,6 +256,7 @@ function _removeSelectedParticipant(participant) {
         _addEventListeners();
         _changeDropdownVisibility();
         fetchBlockEventData();
+        fetchClickEventData();
     }
 }
 
@@ -224,25 +275,46 @@ function _changeDropdownVisibility() {
 }
 
 /**
+ * Fetches the data for the new block event when the event changes.
+ *
+ * @param event The new event information to be fetched.
+ */
+function _updateBlockEventData(event) {
+    blockEvent = event;
+    fetchBlockEventData();
+}
+
+/**
+ * Fetches the data for the new click event when the event changes.
+ *
+ * @param event The new event information to be fetched.
+ */
+function _updateClickEventData(event) {
+    clickEvent = event;
+    fetchClickEventData();
+}
+
+/**
  * Prepares the event data retrieved from the database by filling missing values for users with zeros.
  *
- * @param data The event data.
+ * @param data The event data retrieved from the database.
+ * @param eventData The variable to which the data should be saved.
  * @return {number} The maximum number of data points for a single participant.
  */
-function _prepareBlockEventData(data) {
-    blockEventData = data;
+function _prepareEventData(data, eventData) {
+    eventData = data;
     let maxLength = 0;
-    blockEventData.forEach(item => {
+    eventData.forEach(item => {
         maxLength = item.length > maxLength ? item.length : maxLength;
     });
-    blockEventData.forEach(item => {
+    eventData.forEach(item => {
         if (item.length < maxLength) {
             while (item.length < maxLength) {
                 item.push(0);
             }
         }
     });
-    return maxLength;
+    return eventData;
 }
 
 /**
@@ -251,6 +323,7 @@ function _prepareBlockEventData(data) {
  * @param item The id of the html element where the chart should be drawn.
  * @param xValues The values to be displayed on the x axis.
  * @param data The event count data of all selected participants.
+ * @return {Chart} The created chart.
  */
 function _drawLineChart(item, xValues, data) {
     let datasets = [];
@@ -263,7 +336,7 @@ function _drawLineChart(item, xValues, data) {
         datasets.push(nextDataset);
     }
 
-    blockEventChart = new Chart(item, {
+    return new Chart(item, {
         type: "line",
         data: {
             labels: xValues,

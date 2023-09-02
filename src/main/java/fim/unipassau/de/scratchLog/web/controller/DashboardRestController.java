@@ -23,6 +23,7 @@ import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,7 +105,8 @@ public class DashboardRestController {
     }
 
     /**
-     * Returns the number of executions per minute of the given event for the experiment and users with the given ids.
+     * Returns the number of executions per minute of the given block event for the experiment and users with the given
+     * ids.
      *
      * @param id The id of the experiment.
      * @param users The ids of the users.
@@ -118,6 +120,24 @@ public class DashboardRestController {
         int experimentId = parseId(id);
         List<Integer> userIds = parseUserIds(users);
         return dashboardService.getBlockEventCountData(userIds, experimentId, event);
+    }
+
+    /**
+     * Returns the number of executions per minute of the given click event for the experiment and users with the given
+     * ids.
+     *
+     * @param id The id of the experiment.
+     * @param users The ids of the users.
+     * @param event The event of interest.
+     * @return A list containing an array for each user with the number of executions.
+     */
+    @GetMapping("/event/click")
+    public List<Integer[]> getClickEventData(@RequestParam(ID) final String id,
+                                             @RequestParam(USERS) final String users,
+                                             @RequestParam(EVENT) final ClickEventSpecific event) {
+        int experimentId = parseId(id);
+        List<Integer> userIds = parseUserIds(users);
+        return dashboardService.getClickEventCountData(userIds, experimentId, event);
     }
 
     /**
