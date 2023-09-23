@@ -12,6 +12,16 @@ let blockEventChart;
 let clickEvent = "GREENFLAG";
 let clickEventData = [];
 let clickEventChart;
+let radarEventChart;
+let resizeId;
+
+/**
+ * Triggers the function to hide the chart legends on small screens after a short timeout.
+ */
+$(window).resize(function() {
+    clearTimeout(resizeId);
+    resizeId = setTimeout(_checkHideLegends, 100);
+});
 
 /**
  * Readies the function to retrieve the information to be displayed on the dashboard.
@@ -68,6 +78,7 @@ function fetchParticipantData() {
             _addEventListeners();
             fetchBlockEventData();
             fetchClickEventData();
+            fetchRadarChartData();
         },
         error: function() {
             redirectErrorPage();
@@ -99,7 +110,7 @@ function fetchBlockEventData() {
                 document.getElementById("blockEventChartNoData").style.display = "none";
                 document.getElementById("blockEventChart").style.display = "block";
                 let xValues = Array.from(Array(maxLength).keys());
-                blockEventChart = _drawLineChart("blockEventChart", xValues, blockEventData);
+                blockEventChart = _drawChart("blockEventChart", xValues, blockEventData, "line");
             } else {
                 document.getElementById("blockEventChartNoData").style.display = "block";
                 document.getElementById("blockEventChart").style.display = "none";
@@ -135,7 +146,7 @@ function fetchClickEventData() {
                 document.getElementById("clickEventChartNoData").style.display = "none";
                 document.getElementById("clickEventChart").style.display = "block";
                 let xValues = Array.from(Array(maxLength).keys());
-                clickEventChart = _drawLineChart("clickEventChart", xValues, clickEventData);
+                clickEventChart = _drawChart("clickEventChart", xValues, clickEventData, "line");
             } else {
                 document.getElementById("clickEventChartNoData").style.display = "block";
                 document.getElementById("clickEventChart").style.display = "none";
@@ -145,6 +156,54 @@ function fetchClickEventData() {
             redirectErrorPage();
         }
     });
+}
+
+/**
+ * Fetches the number of total executions of specific events for the currently selected users.
+ */
+function fetchRadarChartData() {
+    let selectedIds = selectedParticipants.map(function(item) {
+        return item[0];
+    });
+
+    $.ajax({
+        type: "get",
+        url: contextPath + "/dashboard/data/event/counts",
+        data: {id: experimentId, users: JSON.stringify(selectedIds)},
+        success: function(data) {
+            let counts = data.flat().reduce((sum, num) => {return sum + num}, 0);
+
+            if (radarEventChart) {
+                radarEventChart.destroy();
+            }
+
+            if (counts > 0) {
+                document.getElementById("radarEventChartNoData").style.display = "none";
+                document.getElementById("radarEventChart").style.display = "block";
+                let xValues = ["CREATE", "MOVE", "DELETE", "GREENFLAG", "STOPALL", "STACKCLICK"];
+                radarEventChart = _drawChart("radarEventChart", xValues, data, "radar");
+            } else {
+                document.getElementById("radarEventChartNoData").style.display = "block";
+                document.getElementById("radarEventChart").style.display = "none";
+            }
+        },
+        error: function() {
+            redirectErrorPage();
+        }
+    });
+}
+
+/**
+ * Hides the chart legends on small screens.
+ */
+function _checkHideLegends() {
+    let width = document.getElementsByClassName("inside")[0].clientWidth;
+    blockEventChart.legend.options.display = width > 600;
+    blockEventChart.options.legend.display = width > 600;
+    blockEventChart.update();
+    clickEventChart.legend.options.display = width > 600;
+    clickEventChart.options.legend.display = width > 600;
+    clickEventChart.update();
 }
 
 /**
@@ -239,6 +298,7 @@ function _addSelectedParticipant(participant) {
         _changeDropdownVisibility();
         fetchBlockEventData();
         fetchClickEventData();
+        fetchRadarChartData();
     }
 }
 
@@ -257,6 +317,7 @@ function _removeSelectedParticipant(participant) {
         _changeDropdownVisibility();
         fetchBlockEventData();
         fetchClickEventData();
+        fetchRadarChartData();
     }
 }
 
@@ -318,14 +379,16 @@ function _prepareEventData(data, eventData) {
 }
 
 /**
- * Draws a line chart with one line for each currently selected participant for the given event count data.
+ * Draws a chart of the specified type with entries for each currently selected participant for the given event count
+ * data.
  *
  * @param item The id of the html element where the chart should be drawn.
  * @param xValues The values to be displayed on the x axis.
  * @param data The event count data of all selected participants.
+ * @param type The type of chart to be drawn.
  * @return {Chart} The created chart.
  */
-function _drawLineChart(item, xValues, data) {
+function _drawChart(item, xValues, data, type) {
     let datasets = [];
     for (let i = 0; i < data.length; i++) {
         let nextDataset = {
@@ -337,13 +400,15 @@ function _drawLineChart(item, xValues, data) {
     }
 
     return new Chart(item, {
-        type: "line",
+        type: type,
         data: {
             labels: xValues,
             datasets: datasets
         },
         options: {
-            legend: {display: true}
+            legend: {
+                display: true
+            }
         }
     });
 }

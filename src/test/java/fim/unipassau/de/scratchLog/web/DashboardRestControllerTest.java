@@ -119,4 +119,18 @@ public class DashboardRestControllerTest {
         verify(dashboardService, never()).getClickEventCountData(anyList(), anyInt(), any());
     }
 
+    @Test
+    public void testGetEventCounts() {
+        when(dashboardService.getEventCountData(anyList(), anyInt())).thenReturn(eventData);
+        assertEquals(eventData, dashboardRestController.getEventCounts(ID_STRING, userIds));
+        verify(dashboardService).getEventCountData(anyList(), anyInt());
+    }
+
+    @Test
+    public void testGetEventCountsInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> dashboardRestController.getEventCounts(null, userIds));
+        verify(dashboardService, never()).getEventCountData(anyList(), anyInt());
+    }
+
 }

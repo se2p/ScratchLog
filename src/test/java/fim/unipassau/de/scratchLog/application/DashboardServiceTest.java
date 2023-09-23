@@ -21,6 +21,7 @@ package fim.unipassau.de.scratchLog.application;
 
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
+import fim.unipassau.de.scratchLog.persistence.entity.EventCount;
 import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
 import fim.unipassau.de.scratchLog.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratchLog.persistence.entity.Participant;
@@ -28,6 +29,7 @@ import fim.unipassau.de.scratchLog.persistence.entity.User;
 import fim.unipassau.de.scratchLog.persistence.projection.EventProjection;
 import fim.unipassau.de.scratchLog.persistence.repository.BlockEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ClickEventRepository;
+import fim.unipassau.de.scratchLog.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
@@ -55,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -84,6 +87,9 @@ public class DashboardServiceTest {
     @Mock
     private ClickEventRepository clickEventRepository;
 
+    @Mock
+    private EventCountRepository eventCountRepository;
+
     private static final int ID = 3;
     private static final BlockEventSpecific BLOCK_EVENT = BlockEventSpecific.CREATE;
     private static final ClickEventSpecific CLICK_EVENT = ClickEventSpecific.GREENFLAG;
@@ -99,6 +105,8 @@ public class DashboardServiceTest {
     private final List<Integer> userIds = List.of(ID, ID);
     private final List<EventProjection> eventProjections1 = getBlockEventProjections(15);
     private final List<EventProjection> eventProjections2 = getBlockEventProjections(2);
+    private final EventCount eventCount1 = new EventCount(ID, ID, 5, BlockEventSpecific.CREATE.toString());
+    private final EventCount eventCount2 = new EventCount(ID, ID, 3, ClickEventSpecific.GREENFLAG.toString());
 
     @Test
     public void testExistsExperiment() {
@@ -310,6 +318,28 @@ public class DashboardServiceTest {
         verify(experimentRepository).getReferenceById(ID);
         verify(userRepository).getReferenceById(ID);
         verify(clickEventRepository).findAllByUserAndExperimentAndEvent(user1, experiment, CLICK_EVENT);
+    }
+
+    @Test
+    public void testGetEventCountData() {
+        when(eventCountRepository.findBlockEventCountByUserAndExperiment(ID, ID,
+                BlockEventSpecific.CREATE.toString())).thenReturn(Optional.of(eventCount1));
+        when(eventCountRepository.findClickEventCountByUserAndExperiment(ID, ID,
+                ClickEventSpecific.GREENFLAG.toString())).thenReturn(Optional.of(eventCount2));
+        List<Integer[]> counts = dashboardService.getEventCountData(userIds, ID);
+        assertAll(
+                () -> assertEquals(2, counts.size()),
+                () -> assertEquals(6, counts.get(0).length),
+                () -> assertEquals(5, counts.get(0)[0]),
+                () -> assertEquals(0, counts.get(0)[1]),
+                () -> assertEquals(0, counts.get(0)[2]),
+                () -> assertEquals(3, counts.get(0)[3]),
+                () -> assertEquals(0, counts.get(0)[4]),
+                () -> assertEquals(0, counts.get(0)[5])
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(eventCountRepository, times(6)).findBlockEventCountByUserAndExperiment(anyInt(), anyInt(), anyString());
+        verify(eventCountRepository, times(6)).findClickEventCountByUserAndExperiment(anyInt(), anyInt(), anyString());
     }
 
     private List<EventProjection> getBlockEventProjections(long minutes) {

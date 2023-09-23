@@ -141,6 +141,21 @@ public class DashboardRestController {
     }
 
     /**
+     * Returns the total number of executions of specific click and block event for the experiment and users with the
+     * given ids.
+     *
+     * @param id The id of the experiment.
+     * @param users The ids of the users.
+     * @return A list containing an array for each user with the number of executions.
+     */
+    @GetMapping("/event/counts")
+    public List<Integer[]> getEventCounts(@RequestParam(ID) final String id, @RequestParam(USERS) final String users) {
+        int experimentId = parseId(id);
+        List<Integer> userIds = parseUserIds(users);
+        return dashboardService.getEventCountData(userIds, experimentId);
+    }
+
+    /**
      * Parses the given id string to an integer.
      *
      * @param id The string representation of the id.

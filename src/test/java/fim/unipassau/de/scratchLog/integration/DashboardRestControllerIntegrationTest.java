@@ -121,4 +121,17 @@ public class DashboardRestControllerIntegrationTest {
         verify(dashboardService).getClickEventCountData(anyList(), anyInt(), any());
     }
 
+    @Test
+    public void testGetEventCounts() throws Exception {
+        when(dashboardService.getEventCountData(anyList(), anyInt())).thenReturn(eventData);
+        mvc.perform(get("/dashboard/data/event/counts")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(USER_PARAM, userIds)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(content().string("[]"));
+        verify(dashboardService).getEventCountData(anyList(), anyInt());
+    }
+
 }

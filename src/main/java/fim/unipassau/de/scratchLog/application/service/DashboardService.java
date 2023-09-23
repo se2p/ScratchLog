@@ -20,6 +20,7 @@
 package fim.unipassau.de.scratchLog.application.service;
 
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
+import fim.unipassau.de.scratchLog.persistence.entity.EventCount;
 import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
 import fim.unipassau.de.scratchLog.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratchLog.persistence.entity.Participant;
@@ -27,6 +28,7 @@ import fim.unipassau.de.scratchLog.persistence.entity.User;
 import fim.unipassau.de.scratchLog.persistence.projection.EventProjection;
 import fim.unipassau.de.scratchLog.persistence.repository.BlockEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ClickEventRepository;
+import fim.unipassau.de.scratchLog.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
@@ -87,6 +89,11 @@ public class DashboardService {
     private final ClickEventRepository clickEventRepository;
 
     /**
+     * The event count repository to use for event count queries.
+     */
+    private final EventCountRepository eventCountRepository;
+
+    /**
      * The maximum allowed gap in minutes between two events when calculating event counts.
      */
     private static final int MAX_GAP = 10;
@@ -100,19 +107,22 @@ public class DashboardService {
      * @param userRepository The user repository to use.
      * @param blockEventRepository The block event repository to use.
      * @param clickEventRepository The click event repository to use.
+     * @param eventCountRepository The event count repository to use.
      */
     @Autowired
     public DashboardService(final ExperimentRepository experimentRepository,
                             final ExperimentDataRepository experimentDataRepository,
                             final ParticipantRepository participantRepository, final UserRepository userRepository,
                             final BlockEventRepository blockEventRepository,
-                            final ClickEventRepository clickEventRepository) {
+                            final ClickEventRepository clickEventRepository,
+                            final EventCountRepository eventCountRepository) {
         this.experimentRepository = experimentRepository;
         this.experimentDataRepository = experimentDataRepository;
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
         this.blockEventRepository = blockEventRepository;
         this.clickEventRepository = clickEventRepository;
+        this.eventCountRepository = eventCountRepository;
     }
 
     /**
@@ -248,6 +258,21 @@ public class DashboardService {
     }
 
     /**
+     * Retrieves information about the number of times specific click and block events were executed during the
+     * experiment with the given id for the users with the give id.
+     *
+     * @param userIds The ids of the users for whom the event count should be calculated.
+     * @param experimentId The id of the experiment.
+     * @return A list of arrays with the numbers of executions for every user.
+     */
+    public List<Integer[]> getEventCountData(final List<Integer> userIds, final int experimentId) {
+        checkInputsAndGetExperiment(userIds, experimentId);
+        List<Integer[]> eventNumbers = new ArrayList<>();
+        userIds.forEach(id -> eventNumbers.add(getEventCounts(id, experimentId)));
+        return eventNumbers;
+    }
+
+    /**
      * Checks, whether the passed list of user ids and the experiment id are valid and returns the corresponding
      * experiment.
      *
@@ -280,7 +305,8 @@ public class DashboardService {
         User user = userRepository.getReferenceById(userId);
 
         try {
-            return getEventCounts(blockEventRepository.findAllByUserAndExperimentAndEvent(user, experiment, event));
+            return getSampledEventCounts(blockEventRepository.findAllByUserAndExperimentAndEvent(user, experiment,
+                    event));
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find user or experiment when trying to retrieve block event data!", e);
             throw new NotFoundException("Could not find user or experiment when trying to retrieve block event data!",
@@ -303,7 +329,8 @@ public class DashboardService {
         User user = userRepository.getReferenceById(userId);
 
         try {
-            return getEventCounts(clickEventRepository.findAllByUserAndExperimentAndEvent(user, experiment, event));
+            return getSampledEventCounts(clickEventRepository.findAllByUserAndExperimentAndEvent(user, experiment,
+                    event));
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find user or experiment when trying to retrieve click event data!", e);
             throw new NotFoundException("Could not find user or experiment when trying to retrieve click event data!",
@@ -317,7 +344,7 @@ public class DashboardService {
      * @param projections The projections containing information on when an event was executed.
      * @return The number of executions per minute.
      */
-    private Integer[] getEventCounts(final List<EventProjection> projections) {
+    private Integer[] getSampledEventCounts(final List<EventProjection> projections) {
         if (projections.isEmpty()) {
             return new Integer[]{};
         }
@@ -354,6 +381,55 @@ public class DashboardService {
         }
 
         return counts;
+    }
+
+    /**
+     * Retrieves event counts for specific click and block events executed by the user with the given id during the
+     * experiment with the given id from the database.
+     *
+     * @param userId The id of the user.
+     * @param experimentId The id of the experiment.
+     * @return An array containing the retrieved event counts for the user.
+     */
+    private Integer[] getEventCounts(final int userId, final int experimentId) {
+        List<Integer> counts = new ArrayList<>();
+        counts.add(getBlockEventCount(userId, experimentId, BlockEventSpecific.CREATE));
+        counts.add(getBlockEventCount(userId, experimentId, BlockEventSpecific.MOVE));
+        counts.add(getBlockEventCount(userId, experimentId, BlockEventSpecific.DELETE));
+        counts.add(getClickEventCount(userId, experimentId, ClickEventSpecific.GREENFLAG));
+        counts.add(getClickEventCount(userId, experimentId, ClickEventSpecific.STOPALL));
+        counts.add(getClickEventCount(userId, experimentId, ClickEventSpecific.STACKCLICK));
+        return counts.toArray(Integer[]::new);
+    }
+
+    /**
+     * Returns the number of times the user with the given id executed the given block event during the experiment with
+     * the specified id. If no matching event count could be retrieved from the database, zero is returned instead.
+     *
+     * @param userId The id of the user.
+     * @param experimentId The id of the experiment.
+     * @param blockEvent The event of interest.
+     * @return The number of times the event was executed.
+     */
+    private int getBlockEventCount(final int userId, final int experimentId, final BlockEventSpecific blockEvent) {
+        Optional<EventCount> count = eventCountRepository.findBlockEventCountByUserAndExperiment(userId, experimentId,
+                blockEvent.toString());
+        return count.isEmpty() ? 0 : count.get().getCount();
+    }
+
+    /**
+     * Returns the number of times the user with the given id executed the given click event during the experiment with
+     * the specified id. If no matching event count could be retrieved from the database, zero is returned instead.
+     *
+     * @param userId The id of the user.
+     * @param experimentId The id of the experiment.
+     * @param clickEvent The event of interest.
+     * @return The number of times the event was executed.
+     */
+    private int getClickEventCount(final int userId, final int experimentId, final ClickEventSpecific clickEvent) {
+        Optional<EventCount> count = eventCountRepository.findClickEventCountByUserAndExperiment(userId, experimentId,
+                clickEvent.toString());
+        return count.isEmpty() ? 0 : count.get().getCount();
     }
 
 }

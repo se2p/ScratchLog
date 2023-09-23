@@ -237,3 +237,7 @@ code {
 .table-container {
     overflow-x: auto;
 }
+
+#blockEventChart, #clickEventChart {
+    max-width: 90% !important;
+}
