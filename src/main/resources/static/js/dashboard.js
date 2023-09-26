@@ -13,7 +13,11 @@ let clickEvent = "GREENFLAG";
 let clickEventData = [];
 let clickEventChart;
 let radarEventChart;
+let radarEventData;
+let chart1;
+let chart2;
 let resizeId;
+let maxHeight;
 
 /**
  * Triggers the function to hide the chart legends on small screens after a short timeout.
@@ -28,6 +32,7 @@ $(window).resize(function() {
  */
 $(document).ready(function () {
     getDashboardInfo();
+    maxHeight = document.getElementById("chartsCarousel").clientHeight;
 });
 
 /**
@@ -77,8 +82,6 @@ function fetchParticipantData() {
             _fillParticipantsDropdown();
             _addEventListeners();
             fetchBlockEventData();
-            fetchClickEventData();
-            fetchRadarChartData();
         },
         error: function() {
             redirectErrorPage();
@@ -106,15 +109,10 @@ function fetchBlockEventData() {
                 blockEventChart.destroy();
             }
 
-            if (maxLength > 0) {
-                document.getElementById("blockEventChartNoData").style.display = "none";
-                document.getElementById("blockEventChart").style.display = "block";
-                let xValues = Array.from(Array(maxLength).keys());
-                blockEventChart = _drawChart("blockEventChart", xValues, blockEventData, "line");
-            } else {
-                document.getElementById("blockEventChartNoData").style.display = "block";
-                document.getElementById("blockEventChart").style.display = "none";
-            }
+            let xValues = Array.from(Array(maxLength).keys());
+            blockEventChart = _displayChart(xValues, blockEventData, "blockEventChart", "blockEventChartNoData",
+                maxLength, "line", true);
+            fetchClickEventData();
         },
         error: function() {
             redirectErrorPage();
@@ -142,15 +140,10 @@ function fetchClickEventData() {
                 clickEventChart.destroy();
             }
 
-            if (maxLength > 0) {
-                document.getElementById("clickEventChartNoData").style.display = "none";
-                document.getElementById("clickEventChart").style.display = "block";
-                let xValues = Array.from(Array(maxLength).keys());
-                clickEventChart = _drawChart("clickEventChart", xValues, clickEventData, "line");
-            } else {
-                document.getElementById("clickEventChartNoData").style.display = "block";
-                document.getElementById("clickEventChart").style.display = "none";
-            }
+            let xValues = Array.from(Array(maxLength).keys());
+            clickEventChart = _displayChart(xValues, clickEventData, "clickEventChart", "clickEventChartNoData",
+                maxLength, "line", true);
+            fetchRadarChartData();
         },
         error: function() {
             redirectErrorPage();
@@ -172,20 +165,18 @@ function fetchRadarChartData() {
         data: {id: experimentId, users: JSON.stringify(selectedIds)},
         success: function(data) {
             let counts = data.flat().reduce((sum, num) => {return sum + num}, 0);
+            radarEventData = data;
 
             if (radarEventChart) {
                 radarEventChart.destroy();
             }
 
-            if (counts > 0) {
-                document.getElementById("radarEventChartNoData").style.display = "none";
-                document.getElementById("radarEventChart").style.display = "block";
-                let xValues = ["CREATE", "MOVE", "DELETE", "GREENFLAG", "STOPALL", "STACKCLICK"];
-                radarEventChart = _drawChart("radarEventChart", xValues, data, "radar");
-            } else {
-                document.getElementById("radarEventChartNoData").style.display = "block";
-                document.getElementById("radarEventChart").style.display = "none";
-            }
+            let xValues = ["CREATE", "MOVE", "DELETE", "GREENFLAG", "STOPALL", "STACKCLICK"];
+            radarEventChart = _displayChart(xValues, data, "radarEventChart", "radarEventChartNoData", counts, "radar",
+                true);
+            document.getElementById("radarEventChart").style.maxHeight = maxHeight + "px";
+            _displayUnseenCharts();
+            _checkHideLegends();
         },
         error: function() {
             redirectErrorPage();
@@ -194,20 +185,92 @@ function fetchRadarChartData() {
 }
 
 /**
+ * Displays the charts currently not displayed in the carousel as smaller charts below.
+ * @private
+ */
+function _displayUnseenCharts() {
+    let active = document.getElementsByClassName("carousel-item active")[0];
+    let clickMaxLength = clickEventData.length > 0 ? clickEventData[0].length : 0;
+    let blockMaxLength = blockEventData.length > 0 ? blockEventData[0].length : 0;
+    let counts = radarEventData.flat().reduce((sum, num) => {return sum + num}, 0);
+    let radarValues = ["CREATE", "MOVE", "DELETE", "GREENFLAG", "STOPALL", "STACKCLICK"];
+    let clickValues = Array.from(Array(clickMaxLength).keys());
+    let blockValues = Array.from(Array(blockMaxLength).keys());
+
+    if (chart1) {
+        chart1.destroy()
+    }
+    if (chart2) {
+        chart2.destroy()
+    }
+
+    if (active.querySelector("#blockEvents")) {
+        chart1 = _displayChart(clickValues, clickEventData, "chart1", "chart1NoData", clickMaxLength, "line", false);
+        chart2 = _displayChart(radarValues, radarEventData, "chart2", "chart2NoData", counts, "radar", false);
+    } else if (active.querySelector("#clickEvents")) {
+        chart1 = _displayChart(blockValues, blockEventData, "chart1", "chart1NoData", blockMaxLength, "line", false);
+        chart2 = _displayChart(radarValues, radarEventData, "chart2", "chart2NoData", counts, "radar", false);
+    } else {
+        chart1 = _displayChart(blockValues, blockEventData, "chart1", "chart1NoData", blockMaxLength, "line", false);
+        chart2 = _displayChart(clickValues, clickEventData, "chart2", "chart2NoData", clickMaxLength, "line", false);
+    }
+}
+
+/**
+ * Displays a chart of the given type for the passed data if it contains any values.
+ *
+ * @param xValues The values to be displayed on the x-axis.
+ * @param chartData The data to be visualized in the chart.
+ * @param canvasId The id of the canvas element where the chart should be drawn.
+ * @param noDataId The id of the element stating that no data is available for the chart.
+ * @param counts Number indicating whether the passed data contains values that should be displayed.
+ * @param type The type of chart to be drawn.
+ * @param displayLegend Boolean indicating whether a legend should be displayed or not.
+ * @return {Chart} The drawn chart or nothing, if no chart was rendered.
+ * @private
+ */
+function _displayChart(xValues, chartData, canvasId, noDataId, counts, type, displayLegend) {
+    if (counts > 0) {
+        document.getElementById(noDataId).style.display = "none";
+        document.getElementById(canvasId).style.display = "block";
+        return _drawChart(canvasId, xValues, chartData, type, displayLegend);
+    } else {
+        document.getElementById(noDataId).style.display = "flex";
+        document.getElementById(canvasId).style.display = "none";
+    }
+}
+
+/**
  * Hides the chart legends on small screens.
+ * @private
  */
 function _checkHideLegends() {
     let width = document.getElementsByClassName("inside")[0].clientWidth;
-    blockEventChart.legend.options.display = width > 600;
-    blockEventChart.options.legend.display = width > 600;
-    blockEventChart.update();
-    clickEventChart.legend.options.display = width > 600;
-    clickEventChart.options.legend.display = width > 600;
-    clickEventChart.update();
+    if (blockEventChart) {
+        blockEventChart.legend.options.display = width > 600;
+        blockEventChart.update();
+    }
+    if (clickEventChart) {
+        clickEventChart.legend.options.display = width > 600;
+        clickEventChart.update();
+    }
+    if(radarEventChart) {
+        radarEventChart.legend.options.display = width > 600;
+        radarEventChart.update();
+    }
+    if (chart1) {
+        chart1.legend.options.display = false;
+        chart1.update();
+    }
+    if (chart2) {
+        chart2.legend.options.display = false;
+        chart2.update();
+    }
 }
 
 /**
  * Updates the selected participants list based on the fetched participant data.
+ * @private
  */
 function _updateSelectedParticipants() {
     if (selectedParticipants.length === 0) {
@@ -228,6 +291,7 @@ function _updateSelectedParticipants() {
 
 /**
  * Adds the selected participants as a list to the dashboard page to be displayed.
+ * @private
  */
 function _addSelectedParticipants() {
     let html = `<ul class="list-group list-group-horizontal flex-wrap mx-3">`;
@@ -245,6 +309,7 @@ function _addSelectedParticipants() {
 
 /**
  * Fills the participant dropdown menu with usernames of participants who are not currently selected.
+ * @private
  */
 function _fillParticipantsDropdown() {
     let html;
@@ -261,6 +326,7 @@ function _fillParticipantsDropdown() {
 /**
  * Adds event listeners to all elements of the selected participants list to allow removal of selected participants and
  * to all elements of the participants dropdown menu to allow adding participants as selected.
+ * @private
  */
 function _addEventListeners() {
     let listElements = document.getElementsByClassName("fas fa-trash-alt");
@@ -279,6 +345,9 @@ function _addEventListeners() {
     Array.from(clickEventElements).forEach(element => element.addEventListener("click", function() {
        _updateClickEventData(element.value);
     }));
+    $('#chartsCarousel').on('slid.bs.carousel', function () {
+        _displayUnseenCharts();
+    });
 }
 
 /**
@@ -286,6 +355,7 @@ function _addEventListeners() {
  * accordingly.
  *
  * @param participant The username of the participant to be added.
+ * @private
  */
 function _addSelectedParticipant(participant) {
     if (selectedParticipants.length < 10) {
@@ -299,6 +369,7 @@ function _addSelectedParticipant(participant) {
         fetchBlockEventData();
         fetchClickEventData();
         fetchRadarChartData();
+        _checkHideLegends();
     }
 }
 
@@ -307,6 +378,7 @@ function _addSelectedParticipant(participant) {
  * accordingly.
  *
  * @param participant The username of the participant to be removed.
+ * @private
  */
 function _removeSelectedParticipant(participant) {
     if (selectedParticipants.length > 1) {
@@ -318,12 +390,14 @@ function _removeSelectedParticipant(participant) {
         fetchBlockEventData();
         fetchClickEventData();
         fetchRadarChartData();
+        _checkHideLegends();
     }
 }
 
 /**
  * Changes the visibility of the participants dropdown menu to allow only a limited number of participant data to be
  * displayed at once.
+ * @private
  */
 function _changeDropdownVisibility() {
     if (selectedParticipants.length >= 10) {
@@ -339,20 +413,24 @@ function _changeDropdownVisibility() {
  * Fetches the data for the new block event when the event changes.
  *
  * @param event The new event information to be fetched.
+ * @private
  */
 function _updateBlockEventData(event) {
     blockEvent = event;
     fetchBlockEventData();
+    _checkHideLegends();
 }
 
 /**
  * Fetches the data for the new click event when the event changes.
  *
  * @param event The new event information to be fetched.
+ * @private
  */
 function _updateClickEventData(event) {
     clickEvent = event;
     fetchClickEventData();
+    _checkHideLegends();
 }
 
 /**
@@ -361,6 +439,7 @@ function _updateClickEventData(event) {
  * @param data The event data retrieved from the database.
  * @param eventData The variable to which the data should be saved.
  * @return {number} The maximum number of data points for a single participant.
+ * @private
  */
 function _prepareEventData(data, eventData) {
     eventData = data;
@@ -386,9 +465,11 @@ function _prepareEventData(data, eventData) {
  * @param xValues The values to be displayed on the x axis.
  * @param data The event count data of all selected participants.
  * @param type The type of chart to be drawn.
+ * @param displayLegend Boolean indicating whether a legend should be displayed or not.
  * @return {Chart} The created chart.
+ * @private
  */
-function _drawChart(item, xValues, data, type) {
+function _drawChart(item, xValues, data, type, displayLegend) {
     let datasets = [];
     for (let i = 0; i < data.length; i++) {
         let nextDataset = {
@@ -407,7 +488,7 @@ function _drawChart(item, xValues, data, type) {
         },
         options: {
             legend: {
-                display: true
+                display: displayLegend
             }
         }
     });
@@ -418,6 +499,7 @@ function _drawChart(item, xValues, data, type) {
  *
  * @param participant1 The participant to compare to.
  * @return {boolean} true, if the participants are equal, or false otherwise.
+ * @private
  */
 function _containsParticipant(participant1) {
     return participant1[0] === this[0] && participant1[1] === this[1];
