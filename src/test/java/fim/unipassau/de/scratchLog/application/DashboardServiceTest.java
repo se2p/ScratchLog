@@ -33,10 +33,12 @@ import fim.unipassau.de.scratchLog.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
+import fim.unipassau.de.scratchLog.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.Language;
+import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -88,11 +90,15 @@ public class DashboardServiceTest {
     private ClickEventRepository clickEventRepository;
 
     @Mock
+    private ResourceEventRepository resourceEventRepository;
+
+    @Mock
     private EventCountRepository eventCountRepository;
 
     private static final int ID = 3;
     private static final BlockEventSpecific BLOCK_EVENT = BlockEventSpecific.CREATE;
     private static final ClickEventSpecific CLICK_EVENT = ClickEventSpecific.GREENFLAG;
+    private static final ResourceEventSpecific RESOURCE_EVENT = ResourceEventSpecific.ADD_COSTUME;
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "post", true, false, "");
     private final User user1 = new User("user1", "email1", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
     private final User user2 = new User("user2", "email2", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
@@ -103,7 +109,7 @@ public class DashboardServiceTest {
             String.valueOf(experimentData.getStarted()), String.valueOf(experimentData.getFinished())};
     private final List<Participant> participants = List.of(participant1, participant2);
     private final List<Integer> userIds = List.of(ID, ID);
-    private final List<EventProjection> eventProjections1 = getBlockEventProjections(15);
+    private final List<EventProjection> eventProjections1 = getBlockEventProjections(1);
     private final List<EventProjection> eventProjections2 = getBlockEventProjections(2);
     private final EventCount eventCount1 = new EventCount(ID, ID, 5, BlockEventSpecific.CREATE.toString());
     private final EventCount eventCount2 = new EventCount(ID, ID, 3, ClickEventSpecific.GREENFLAG.toString());
@@ -318,6 +324,40 @@ public class DashboardServiceTest {
         verify(experimentRepository).getReferenceById(ID);
         verify(userRepository).getReferenceById(ID);
         verify(clickEventRepository).findAllByUserAndExperimentAndEvent(user1, experiment, CLICK_EVENT);
+    }
+
+    @Test
+    public void testGetResourceEventCountData() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
+        when(userRepository.getReferenceById(ID)).thenReturn(user1);
+        when(resourceEventRepository.findAllByUserAndExperimentAndEvent(user1, experiment, RESOURCE_EVENT)).thenReturn(
+                eventProjections2);
+        List<Integer[]> counts = dashboardService.getResourceEventCountData(userIds, ID, RESOURCE_EVENT);
+        assertAll(
+                () -> assertEquals(2, counts.size()),
+                () -> assertEquals(3, counts.get(0).length),
+                () -> assertEquals(1, counts.get(0)[0]),
+                () -> assertEquals(0, counts.get(0)[1]),
+                () -> assertEquals(2, counts.get(0)[2])
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository, times(2)).getReferenceById(ID);
+        verify(resourceEventRepository, times(2)).findAllByUserAndExperimentAndEvent(user1,
+                experiment, RESOURCE_EVENT);
+    }
+
+    @Test
+    public void testGetResourceEventCountDataNotFound() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
+        when(userRepository.getReferenceById(ID)).thenReturn(user1);
+        when(resourceEventRepository.findAllByUserAndExperimentAndEvent(user1, experiment, RESOURCE_EVENT)).thenThrow(
+                EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> dashboardService.getResourceEventCountData(userIds, ID, RESOURCE_EVENT)
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository).getReferenceById(ID);
+        verify(resourceEventRepository).findAllByUserAndExperimentAndEvent(user1, experiment, RESOURCE_EVENT);
     }
 
     @Test

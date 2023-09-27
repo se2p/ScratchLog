@@ -24,6 +24,7 @@ import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -138,6 +139,24 @@ public class DashboardRestController {
         int experimentId = parseId(id);
         List<Integer> userIds = parseUserIds(users);
         return dashboardService.getClickEventCountData(userIds, experimentId, event);
+    }
+
+    /**
+     * Returns the number of executions per minute of the given resource event for the experiment and users with the
+     * given ids.
+     *
+     * @param id The id of the experiment.
+     * @param users The ids of the users.
+     * @param event The event of interest.
+     * @return A list containing an array for each user with the number of executions.
+     */
+    @GetMapping("/event/resource")
+    public List<Integer[]> getResourceEventData(@RequestParam(ID) final String id,
+                                                @RequestParam(USERS) final String users,
+                                                @RequestParam(EVENT) final ResourceEventSpecific event) {
+        int experimentId = parseId(id);
+        List<Integer> userIds = parseUserIds(users);
+        return dashboardService.getResourceEventCountData(userIds, experimentId, event);
     }
 
     /**

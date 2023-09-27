@@ -12,10 +12,14 @@ let blockEventChart;
 let clickEvent = "GREENFLAG";
 let clickEventData = [];
 let clickEventChart;
+let resourceEvent = "ADD_COSTUME";
+let resourceEventData = [];
+let resourceEventChart;
 let radarEventChart;
 let radarEventData;
 let chart1;
 let chart2;
+let chart3;
 let resizeId;
 let maxHeight;
 
@@ -42,6 +46,7 @@ $(document).ready(function () {
 function getDashboardInfo() {
     fetchExperimentData();
     fetchParticipantData();
+    _changeDropdownVisibility();
     setTimeout(getDashboardInfo, 60000);
 }
 
@@ -103,6 +108,7 @@ function fetchBlockEventData() {
         success: function(data) {
             document.getElementById("blockEventChartDescription").innerText = " " + blockEvent;
             blockEventData = _prepareEventData(data, blockEventData);
+            fetchClickEventData();
             let maxLength = blockEventData.length > 0 ? blockEventData[0].length : 0;
 
             if (blockEventChart) {
@@ -112,7 +118,6 @@ function fetchBlockEventData() {
             let xValues = Array.from(Array(maxLength).keys());
             blockEventChart = _displayChart(xValues, blockEventData, "blockEventChart", "blockEventChartNoData",
                 maxLength, "line", true);
-            fetchClickEventData();
         },
         error: function() {
             redirectErrorPage();
@@ -134,6 +139,7 @@ function fetchClickEventData() {
         success: function(data) {
             document.getElementById("clickEventChartDescription").innerText = " " + clickEvent;
             clickEventData = _prepareEventData(data, clickEventData);
+            fetchResourceEventData();
             let maxLength = clickEventData.length > 0 ? clickEventData[0].length : 0;
 
             if (clickEventChart) {
@@ -143,7 +149,37 @@ function fetchClickEventData() {
             let xValues = Array.from(Array(maxLength).keys());
             clickEventChart = _displayChart(xValues, clickEventData, "clickEventChart", "clickEventChartNoData",
                 maxLength, "line", true);
+        },
+        error: function() {
+            redirectErrorPage();
+        }
+    });
+}
+
+/**
+ * Fetches the number of executions per minute for a given resource event for the currently selected users.
+ */
+function fetchResourceEventData() {
+    let selectedIds = selectedParticipants.map(function(item) {
+        return item[0];
+    });
+    $.ajax({
+        type: "get",
+        url: contextPath + "/dashboard/data/event/resource",
+        data: {id: experimentId, users: JSON.stringify(selectedIds), event: resourceEvent},
+        success: function(data) {
+            document.getElementById("resourceEventChartDescription").innerText = " " + resourceEvent;
+            resourceEventData = _prepareEventData(data, resourceEventData);
             fetchRadarChartData();
+            let maxLength = resourceEventData.length > 0 ? resourceEventData[0].length : 0;
+
+            if (resourceEventChart) {
+                resourceEventChart.destroy();
+            }
+
+            let xValues = Array.from(Array(maxLength).keys());
+            resourceEventChart = _displayChart(xValues, resourceEventData, "resourceEventChart",
+                "resourceEventChartNoData", maxLength, "line", true);
         },
         error: function() {
             redirectErrorPage();
@@ -192,28 +228,42 @@ function _displayUnseenCharts() {
     let active = document.getElementsByClassName("carousel-item active")[0];
     let clickMaxLength = clickEventData.length > 0 ? clickEventData[0].length : 0;
     let blockMaxLength = blockEventData.length > 0 ? blockEventData[0].length : 0;
+    let resourceMaxLength = resourceEventData.length > 0 ? resourceEventData[0].length : 0;
     let counts = radarEventData.flat().reduce((sum, num) => {return sum + num}, 0);
     let radarValues = ["CREATE", "MOVE", "DELETE", "GREENFLAG", "STOPALL", "STACKCLICK"];
     let clickValues = Array.from(Array(clickMaxLength).keys());
     let blockValues = Array.from(Array(blockMaxLength).keys());
+    let resourceValues = Array.from(Array(resourceMaxLength).keys());
 
     if (chart1) {
-        chart1.destroy()
+        chart1.destroy();
     }
     if (chart2) {
-        chart2.destroy()
+        chart2.destroy();
+    }
+    if (chart3) {
+        chart3.destroy();
     }
 
     if (active.querySelector("#blockEvents")) {
         chart1 = _displayChart(clickValues, clickEventData, "chart1", "chart1NoData", clickMaxLength, "line", false);
-        chart2 = _displayChart(radarValues, radarEventData, "chart2", "chart2NoData", counts, "radar", false);
+        chart2 = _displayChart(resourceValues, resourceEventData, "chart2", "chart2NoData", counts, "line", false);
+        chart3 = _displayChart(radarValues, radarEventData, "chart3", "chart3NoData", counts, "radar", false);
     } else if (active.querySelector("#clickEvents")) {
         chart1 = _displayChart(blockValues, blockEventData, "chart1", "chart1NoData", blockMaxLength, "line", false);
-        chart2 = _displayChart(radarValues, radarEventData, "chart2", "chart2NoData", counts, "radar", false);
+        chart2 = _displayChart(resourceValues, resourceEventData, "chart2", "chart2NoData", counts, "line", false);
+        chart3 = _displayChart(radarValues, radarEventData, "chart3", "chart3NoData", counts, "radar", false);
+    } else if (active.querySelector("#resourceEvents")) {
+        chart1 = _displayChart(blockValues, blockEventData, "chart1", "chart1NoData", blockMaxLength, "line", false);
+        chart2 = _displayChart(clickValues, clickEventData, "chart2", "chart2NoData", clickMaxLength, "line", false);
+        chart3 = _displayChart(radarValues, radarEventData, "chart3", "chart3NoData", counts, "radar", false);
     } else {
         chart1 = _displayChart(blockValues, blockEventData, "chart1", "chart1NoData", blockMaxLength, "line", false);
         chart2 = _displayChart(clickValues, clickEventData, "chart2", "chart2NoData", clickMaxLength, "line", false);
+        chart3 = _displayChart(resourceValues, resourceEventData, "chart3", "chart3NoData", counts, "line", false);
     }
+
+    _checkHideLegends();
 }
 
 /**
@@ -254,6 +304,10 @@ function _checkHideLegends() {
         clickEventChart.legend.options.display = width > 600;
         clickEventChart.update();
     }
+    if (resourceEventChart) {
+        resourceEventChart.legend.options.display = width > 600;
+        resourceEventChart.update();
+    }
     if(radarEventChart) {
         radarEventChart.legend.options.display = width > 600;
         radarEventChart.update();
@@ -274,9 +328,7 @@ function _checkHideLegends() {
  */
 function _updateSelectedParticipants() {
     if (selectedParticipants.length === 0) {
-        let numSelected = participants.length > 5 ? 5 : participants.length;
-
-        for (let i = 0; i < numSelected; i++) {
+        for (let i = 0; i < participants.length; i++) {
             selectedParticipants.push(participants[i]);
         }
     } else {
@@ -345,6 +397,10 @@ function _addEventListeners() {
     Array.from(clickEventElements).forEach(element => element.addEventListener("click", function() {
        _updateClickEventData(element.value);
     }));
+    let resourceEventElements = document.getElementById("resourceEvents").children;
+    Array.from(resourceEventElements).forEach(element => element.addEventListener("click", function() {
+        _updateResourceEventData(element.value);
+    }));
     $('#chartsCarousel').on('slid.bs.carousel', function () {
         _displayUnseenCharts();
     });
@@ -358,19 +414,17 @@ function _addEventListeners() {
  * @private
  */
 function _addSelectedParticipant(participant) {
-    if (selectedParticipants.length < 10) {
-        const index = participants.findIndex(item => item[1] === participant);
-        selectedParticipants.push(participants[index]);
-        participants.splice(index, 1);
-        _addSelectedParticipants();
-        _fillParticipantsDropdown();
-        _addEventListeners();
-        _changeDropdownVisibility();
-        fetchBlockEventData();
-        fetchClickEventData();
-        fetchRadarChartData();
-        _checkHideLegends();
-    }
+    const index = participants.findIndex(item => item[1] === participant);
+    selectedParticipants.push(participants[index]);
+    participants.splice(index, 1);
+    _addSelectedParticipants();
+    _fillParticipantsDropdown();
+    _addEventListeners();
+    _changeDropdownVisibility();
+    fetchBlockEventData();
+    fetchClickEventData();
+    fetchRadarChartData();
+    _checkHideLegends();
 }
 
 /**
@@ -395,12 +449,11 @@ function _removeSelectedParticipant(participant) {
 }
 
 /**
- * Changes the visibility of the participants dropdown menu to allow only a limited number of participant data to be
- * displayed at once.
+ * Changes the visibility of the participants dropdown menu if data of all participants is displayed.
  * @private
  */
 function _changeDropdownVisibility() {
-    if (selectedParticipants.length >= 10) {
+    if (participants.length === 0) {
         document.getElementById("participants").style.display = "none";
         document.getElementById("participantsLabel").style.display = "none";
     } else {
@@ -430,6 +483,18 @@ function _updateBlockEventData(event) {
 function _updateClickEventData(event) {
     clickEvent = event;
     fetchClickEventData();
+    _checkHideLegends();
+}
+
+/**
+ * Fetches the data for the new resource event when the event changes.
+ *
+ * @param event The new event information to be fetched.
+ * @private
+ */
+function _updateResourceEventData(event) {
+    resourceEvent = event;
+    fetchResourceEventData();
     _checkHideLegends();
 }
 

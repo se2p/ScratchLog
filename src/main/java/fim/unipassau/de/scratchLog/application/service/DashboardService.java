@@ -32,10 +32,12 @@ import fim.unipassau.de.scratchLog.persistence.repository.EventCountRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
+import fim.unipassau.de.scratchLog.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,14 +91,19 @@ public class DashboardService {
     private final ClickEventRepository clickEventRepository;
 
     /**
+     * The resource event repository to use for resource event queries.
+     */
+    private final ResourceEventRepository resourceEventRepository;
+
+    /**
      * The event count repository to use for event count queries.
      */
     private final EventCountRepository eventCountRepository;
 
     /**
-     * The maximum allowed gap in minutes between two events when calculating event counts.
+     * The maximum number of data points to be returned when calculating event executions per minute.
      */
-    private static final int MAX_GAP = 10;
+    private static final int MAX_DATA_POINTS = 500;
 
     /**
      * Constructs an experiment service with the given dependencies.
@@ -107,6 +114,7 @@ public class DashboardService {
      * @param userRepository The user repository to use.
      * @param blockEventRepository The block event repository to use.
      * @param clickEventRepository The click event repository to use.
+     * @param resourceEventRepository The resource event repository to use.
      * @param eventCountRepository The event count repository to use.
      */
     @Autowired
@@ -115,6 +123,7 @@ public class DashboardService {
                             final ParticipantRepository participantRepository, final UserRepository userRepository,
                             final BlockEventRepository blockEventRepository,
                             final ClickEventRepository clickEventRepository,
+                            final ResourceEventRepository resourceEventRepository,
                             final EventCountRepository eventCountRepository) {
         this.experimentRepository = experimentRepository;
         this.experimentDataRepository = experimentDataRepository;
@@ -122,6 +131,7 @@ public class DashboardService {
         this.userRepository = userRepository;
         this.blockEventRepository = blockEventRepository;
         this.clickEventRepository = clickEventRepository;
+        this.resourceEventRepository = resourceEventRepository;
         this.eventCountRepository = eventCountRepository;
     }
 
@@ -258,6 +268,23 @@ public class DashboardService {
     }
 
     /**
+     * Retrieves information about the number of times the given resource event was executed per minute during the
+     * experiment with the given id for the users with the give id.
+     *
+     * @param userIds The ids of the users for whom the event count should be calculated.
+     * @param experimentId The id of the experiment.
+     * @param event The event of interest.
+     * @return A list of arrays with the numbers of executions per minute for every user.
+     */
+    public List<Integer[]> getResourceEventCountData(final List<Integer> userIds, final int experimentId,
+                                                     final ResourceEventSpecific event) {
+        Experiment experiment = checkInputsAndGetExperiment(userIds, experimentId);
+        List<Integer[]> eventNumbers = new ArrayList<>();
+        userIds.forEach(id -> eventNumbers.add(getResourceEventCounts(id, experiment, event)));
+        return eventNumbers;
+    }
+
+    /**
      * Retrieves information about the number of times specific click and block events were executed during the
      * experiment with the given id for the users with the give id.
      *
@@ -339,6 +366,30 @@ public class DashboardService {
     }
 
     /**
+     * For a given user, experiment and resource event, the number of times the event is executed per minute is
+     * calculated and returned.
+     *
+     * @param userId The id of the user.
+     * @param experiment The experiment in which the events occurred.
+     * @param event The concrete event of interest.
+     * @return The number of executions per minute.
+     * @throws NotFoundException if the given user or experiment could not be found.
+     */
+    private Integer[] getResourceEventCounts(final int userId, final Experiment experiment,
+                                             final ResourceEventSpecific event) {
+        User user = userRepository.getReferenceById(userId);
+
+        try {
+            return getSampledEventCounts(resourceEventRepository.findAllByUserAndExperimentAndEvent(user, experiment,
+                    event));
+        } catch (EntityNotFoundException e) {
+            LOGGER.error("Could not find user or experiment when trying to retrieve resource event data!", e);
+            throw new NotFoundException("Could not find user or experiment when trying to retrieve resource event "
+                    + "data!", e);
+        }
+    }
+
+    /**
      * Retrieves the number of times an event was executed per minute given the list of event projections.
      *
      * @param projections The projections containing information on when an event was executed.
@@ -365,7 +416,7 @@ public class DashboardService {
         int count = 0;
         int i = 1;
 
-        while (i < projections.size()) {
+        while (i < projections.size() && counts.size() <= MAX_DATA_POINTS) {
             if (projections.get(i).getDate().isBefore(startTime.plusMinutes(1))) {
                 i++;
 
@@ -375,8 +426,7 @@ public class DashboardService {
             } else {
                 counts.add(i - count);
                 count = i;
-                LocalDateTime nextTime = projections.get(i).getDate();
-                startTime = nextTime.isAfter(startTime.plusMinutes(MAX_GAP)) ? nextTime : startTime.plusMinutes(1);
+                startTime = startTime.plusMinutes(1);
             }
         }
 

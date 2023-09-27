@@ -23,6 +23,7 @@ import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
 import fim.unipassau.de.scratchLog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -119,6 +120,20 @@ public class DashboardRestControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("[]"));
         verify(dashboardService).getClickEventCountData(anyList(), anyInt(), any());
+    }
+
+    @Test
+    public void testGetResourceEventData() throws Exception {
+        when(dashboardService.getResourceEventCountData(anyList(), anyInt(), any())).thenReturn(eventData);
+        mvc.perform(get("/dashboard/data/event/resource")
+                        .param(ID_PARAM, ID_STRING)
+                        .param(USER_PARAM, userIds)
+                        .param(EVENT_PARAM, String.valueOf(ResourceEventSpecific.DELETE_SOUND))
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(content().string("[]"));
+        verify(dashboardService).getResourceEventCountData(anyList(), anyInt(), any());
     }
 
     @Test

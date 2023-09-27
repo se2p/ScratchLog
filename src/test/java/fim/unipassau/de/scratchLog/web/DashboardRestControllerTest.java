@@ -22,6 +22,7 @@ package fim.unipassau.de.scratchLog.web;
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
 import fim.unipassau.de.scratchLog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -117,6 +118,21 @@ public class DashboardRestControllerTest {
         assertThrows(IllegalArgumentException.class,
                 () -> dashboardRestController.getClickEventData(userIds, userIds, ClickEventSpecific.GREENFLAG));
         verify(dashboardService, never()).getClickEventCountData(anyList(), anyInt(), any());
+    }
+
+    @Test
+    public void testGetResourceEventData() {
+        when(dashboardService.getResourceEventCountData(anyList(), anyInt(), any())).thenReturn(eventData);
+        assertEquals(eventData, dashboardRestController.getResourceEventData(ID_STRING, userIds,
+                ResourceEventSpecific.ADD_COSTUME));
+        verify(dashboardService).getResourceEventCountData(anyList(), anyInt(), any());
+    }
+
+    @Test
+    public void testGetResourceEventDataInvalidIds() {
+        assertThrows(IllegalArgumentException.class,
+                () -> dashboardRestController.getResourceEventData("bla", userIds, ResourceEventSpecific.ADD_COSTUME));
+        verify(dashboardService, never()).getResourceEventCountData(anyList(), anyInt(), any());
     }
 
     @Test

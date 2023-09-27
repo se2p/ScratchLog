@@ -113,6 +113,30 @@
                         </canvas>
                     </div>
                 </div>
+                <div id="resourceEventCarouselItem" class="carousel-item" data-bs-interval="6000000">
+                    <div class="mb-3 d-flex justify-content-between">
+                        <div>
+                            <span th:text="#{resource_event}"></span>
+                            <span id="resourceEventChartDescription"></span>
+                        </div>
+                        <div>
+                            <label class="form-label" for="resourceEvents" th:text="#{resource_event}"></label>
+                            <div class="input-group">
+                                <select id="resourceEvents" class="form-select" th:aria-label="#{resource_events}">
+                                    <option th:each="event
+                                        : ${T(fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific).values()}"
+                                            th:value="${event}" th:text="${event}"></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="resourceEventChartNoData" class="text-muted no-data" th:text="#{no_data}"></div>
+                    <div class="d-flex justify-content-center">
+                        <canvas id="resourceEventChart" style="display: none" role="img"
+                                aria-label="Chart displaying the number of resource event executions per minute">
+                        </canvas>
+                    </div>
+                </div>
                 <div id="radarEventCarouselItem" class="carousel-item" data-bs-interval="6000000">
                     <div id="radarEventChartNoData" class="text-muted no-data" th:text="#{no_data}"></div>
                     <div class="d-flex justify-content-center">
@@ -135,6 +159,7 @@
             </button>
         </div>
 
+        <!-- The line charts displayed below the carousel. -->
         <div class="row mb-3">
             <div class="col-6">
                 <div class="panel-body">
@@ -155,82 +180,19 @@
                 </div>
             </div>
         </div>
-
-        <!-- The chart and information about block events. -->
-        <!--
         <div class="row mb-3">
-            <div class="col-12">
-                <div class="mb-3 d-flex justify-content-between">
-                    <div>
-                        <span th:text="#{block_event}"></span>
-                        <span id="blockEventChartDescription"></span>
+            <div class="col-3"></div>
+            <div class="col-6">
+                <div class="panel-body">
+                    <div id="chart3NoData" class="text-muted text-center" th:text="#{no_data}"></div>
+                    <div class="d-flex justify-content-center">
+                        <canvas id="chart3" style="display: none" role="img">
+                        </canvas>
                     </div>
-                    <div>
-                        <label class="form-label" for="blockEvents" th:text="#{block_events}"></label>
-                        <div class="input-group">
-                            <select id="blockEvents" class="form-select" th:aria-label="#{block_events}"
-                                    th:field="*{blockEvents}">
-                                <option th:each="event : ${blockEvents}"
-                                        th:value="${event}" th:text="${event}"></option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div id="blockEventChartNoData" class="text-muted" th:text="#{no_data}"></div>
-                <div class="d-flex justify-content-center">
-                    <canvas id="blockEventChart"
-                            aria-label="Chart displaying the number of block event executions per minute" role="img">
-                    </canvas>
                 </div>
             </div>
+            <div class="col-3"></div>
         </div>
-        -->
-
-        <!-- The chart and information about click events. -->
-        <!--
-        <div class="row mb-3">
-            <div class="col-12">
-                <div class="mb-3 d-flex justify-content-between">
-                    <div>
-                        <span th:text="#{click_event}"></span>
-                        <span id="clickEventChartDescription"></span>
-                    </div>
-                    <div>
-                        <label class="form-label" for="clickEvents" th:text="#{click_events}"></label>
-                        <div class="input-group">
-                            <select id="clickEvents" class="form-select" th:aria-label="#{click_events}">
-                                <!d--suppress ThymeleafVariablesResolveInspection --d>
-                                <option th:each="event
-                                        : ${T(fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific).values()}"
-                                        th:value="${event}" th:text="${event}"></option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div id="clickEventChartNoData" class="text-muted" th:text="#{no_data}"></div>
-                <div class="d-flex justify-content-center">
-                    <canvas id="clickEventChart" style="display: none"
-                            aria-label="Chart displaying the number of click event executions per minute" role="img">
-                    </canvas>
-                </div>
-            </div>
-        </div>
-        -->
-
-        <!-- The radar chart and information about certain events. -->
-        <!--
-        <div class="row mb-3">
-            <div class="col-12">
-                <div id="radarEventChartNoData" class="text-muted" th:text="#{no_data}"></div>
-                <div class="d-flex justify-content-center">
-                    <canvas id="radarEventChart" style="display: none"
-                            aria-label="Radar chart displaying the number of certain event executions per minute"
-                            role="img">
-                    </canvas>
-                </div>
-            </div>
-        </div>
-        -->
     </div>
 </div>
 
