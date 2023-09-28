@@ -61,7 +61,7 @@ public class DashboardControllerTest {
         assertEquals(DASHBOARD, dashboardController.getDashboard(ID_STRING, model));
         verify(dashboardService).existsExperiment(ID);
         verify(dashboardService).existsParticipants(ID);
-        verify(model, times(2)).addAttribute(anyString(), any());
+        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test

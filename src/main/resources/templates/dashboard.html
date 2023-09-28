@@ -199,9 +199,14 @@
 <!-- Script to fetch and update the dashboard information. -->
 <script type="module" th:src="@{/js/dashboard.js}"></script>
 
-<!-- Let Thymeleaf fetch the ID of the current experiment and a list of available block events. -->
-<script>
+<!-- Let Thymeleaf fetch the ID of the current experiment and the events for which information should be fetched
+initially. -->
+<script th:inline="javascript">
     let experimentId = [[${experiment}]];
+    let blockEvent = [[${blockEvent}]];
+    let clickEvent = [[${clickEvent}]];
+    let resourceEvent = [[${resourceEvent}]];
+    let radarValues = [[${radarValues}]];
 </script>
 
 <!-- Footer -->

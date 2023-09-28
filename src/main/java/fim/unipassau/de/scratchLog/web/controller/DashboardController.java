@@ -23,6 +23,8 @@ import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,6 +87,10 @@ public class DashboardController {
         if (dashboardService.existsExperiment(experimentId) && dashboardService.existsParticipants(experimentId)) {
             model.addAttribute("experiment", experimentId);
             model.addAttribute("blockEvents", getBlockEvents());
+            model.addAttribute("blockEvent", BlockEventSpecific.CREATE.toString());
+            model.addAttribute("clickEvent", ClickEventSpecific.GREENFLAG.toString());
+            model.addAttribute("resourceEvent", ResourceEventSpecific.ADD_COSTUME.toString());
+            model.addAttribute("radarValues", getRadarChartEvents());
             return "dashboard";
         } else {
             return Constants.ERROR;
@@ -106,6 +112,22 @@ public class DashboardController {
             }
         });
         return blockEvents;
+    }
+
+    /**
+     * Returns the events whose statistics should be displayed in the radar chart of the dashboard.
+     *
+     * @return The list of events.
+     */
+    private List<String> getRadarChartEvents() {
+        List<String> radarEvents = new ArrayList<>();
+        radarEvents.add(BlockEventSpecific.CREATE.toString());
+        radarEvents.add(BlockEventSpecific.MOVE.toString());
+        radarEvents.add(BlockEventSpecific.DELETE.toString());
+        radarEvents.add(ClickEventSpecific.GREENFLAG.toString());
+        radarEvents.add(ClickEventSpecific.STOPALL.toString());
+        radarEvents.add(ClickEventSpecific.STACKCLICK.toString());
+        return radarEvents;
     }
 
 }

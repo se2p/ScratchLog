@@ -6,13 +6,10 @@ let finished = document.getElementById("finished");
 let totalFinished = document.getElementById("totalFinished");
 let participants = [];
 let selectedParticipants = [];
-let blockEvent = "CREATE";
 let blockEventData = [];
 let blockEventChart;
-let clickEvent = "GREENFLAG";
 let clickEventData = [];
 let clickEventChart;
-let resourceEvent = "ADD_COSTUME";
 let resourceEventData = [];
 let resourceEventChart;
 let radarEventChart;
@@ -207,9 +204,8 @@ function fetchRadarChartData() {
                 radarEventChart.destroy();
             }
 
-            let xValues = ["CREATE", "MOVE", "DELETE", "GREENFLAG", "STOPALL", "STACKCLICK"];
-            radarEventChart = _displayChart(xValues, data, "radarEventChart", "radarEventChartNoData", counts, "radar",
-                true);
+            radarEventChart = _displayChart(radarValues, data, "radarEventChart", "radarEventChartNoData", counts,
+                "radar", true);
             document.getElementById("radarEventChart").style.maxHeight = maxHeight + "px";
             _displayUnseenCharts();
             _checkHideLegends();
@@ -230,7 +226,6 @@ function _displayUnseenCharts() {
     let blockMaxLength = blockEventData.length > 0 ? blockEventData[0].length : 0;
     let resourceMaxLength = resourceEventData.length > 0 ? resourceEventData[0].length : 0;
     let counts = radarEventData.flat().reduce((sum, num) => {return sum + num}, 0);
-    let radarValues = ["CREATE", "MOVE", "DELETE", "GREENFLAG", "STOPALL", "STACKCLICK"];
     let clickValues = Array.from(Array(clickMaxLength).keys());
     let blockValues = Array.from(Array(blockMaxLength).keys());
     let resourceValues = Array.from(Array(resourceMaxLength).keys());
@@ -319,6 +314,10 @@ function _checkHideLegends() {
     if (chart2) {
         chart2.legend.options.display = false;
         chart2.update();
+    }
+    if (chart3) {
+        chart3.legend.options.display = false;
+        chart3.update();
     }
 }
 

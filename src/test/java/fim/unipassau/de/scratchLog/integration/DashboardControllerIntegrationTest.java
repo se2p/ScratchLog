@@ -22,6 +22,9 @@ package fim.unipassau.de.scratchLog.integration;
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.Constants;
+import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
 import fim.unipassau.de.scratchLog.web.controller.DashboardController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,7 +76,11 @@ public class DashboardControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name(DASHBOARD))
                 .andExpect(model().attribute("experiment", is(ID)))
-                .andExpect(model().attribute("blockEvents", notNullValue()));
+                .andExpect(model().attribute("blockEvents", notNullValue()))
+                .andExpect(model().attribute("blockEvent", is(BlockEventSpecific.CREATE.toString())))
+                .andExpect(model().attribute("clickEvent", is(ClickEventSpecific.GREENFLAG.toString())))
+                .andExpect(model().attribute("resourceEvent", is(ResourceEventSpecific.ADD_COSTUME.toString())))
+                .andExpect(model().attribute("radarValues", notNullValue()));
         verify(dashboardService).existsExperiment(ID);
         verify(dashboardService).existsParticipants(ID);
     }
