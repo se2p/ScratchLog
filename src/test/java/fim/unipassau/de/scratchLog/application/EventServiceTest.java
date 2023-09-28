@@ -147,14 +147,8 @@ public class EventServiceTest {
             false, GUI_URL);
     private final Participant participant = new Participant(user, experiment, LocalDateTime.now(), null);
     private final CodesData codesData = new CodesData(ID, ID, 15);
-    private final String[] blockEventDataHeader = {"id", "user", "username", "experiment", "date", "eventType", "event",
-            "spritename", "metadata", "xml", "json"};
-    private final String[] clickEventDataHeader = {"id", "user", "username", "experiment", "date", "eventType", "event",
-            "metadata"};
-    private final String[] resourceEventDataHeader = {"id", "user", "username", "experiment", "date", "eventType",
-            "event", "name", "md5", "filetype", "library"};
-    private final String[] eventCountDataHeader = {"user", "experiment", "count", "event"};
-    private final String[] codesDataHeader = {"user", "experiment", "count"};
+    private static final String[] EVENT_DATA_HEADER = {"id", "user", "username", "experiment", "date", "eventType",
+            "event", "spritename", "metadata", "xml", "json", "name", "md5", "filetype", "library", "table"};
     private final BlockEvent blockEvent = new BlockEvent(user, experiment, LocalDateTime.now(), BlockEventType.CREATE,
             BlockEventSpecific.CREATE, "sprite", "", "xml", "json");
     private static final String JSON = "json";
@@ -1103,180 +1097,44 @@ public class EventServiceTest {
     }
 
     @Test
-    public void testGetBlockEventData() {
+    public void testGetEventData() {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(blockEventRepository.findAllByExperiment(experiment)).thenReturn(blockEventData);
-        List<String[]> data = eventService.getBlockEventData(ID);
+        when(clickEventRepository.findAllByExperiment(experiment)).thenReturn(clickEventData);
+        when(resourceEventRepository.findAllByExperiment(experiment)).thenReturn(resourceEventData);
+        List<String[]> events = eventService.getEventData(ID);
         assertAll(
-                () -> assertEquals(4, data.size()),
-                () -> assertEquals(Arrays.toString(blockEventDataHeader), Arrays.toString(data.get(0)))
+                () -> assertEquals(8, events.size()),
+                () -> assertEquals(Arrays.toString(EVENT_DATA_HEADER), Arrays.toString(events.get(0)))
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(blockEventRepository).findAllByExperiment(experiment);
+        verify(clickEventRepository).findAllByExperiment(experiment);
+        verify(resourceEventRepository).findAllByExperiment(experiment);
     }
 
     @Test
-    public void testGetBlockEventDataEntityNotFound() {
+    public void testGetEventDataNotFound() {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(blockEventRepository.findAllByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
-                () -> eventService.getBlockEventData(ID)
+                () -> eventService.getEventData(ID)
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(blockEventRepository).findAllByExperiment(experiment);
-    }
-
-    @Test
-    public void testGetBlockEventDataInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> eventService.getBlockEventData(0)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByExperiment(any());
-    }
-
-    @Test
-    public void testGetClickEventData() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(clickEventRepository.findAllByExperiment(experiment)).thenReturn(clickEventData);
-        List<String[]> data = eventService.getClickEventData(ID);
-        assertAll(
-                () -> assertEquals(3, data.size()),
-                () -> assertEquals(Arrays.toString(clickEventDataHeader), Arrays.toString(data.get(0)))
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(clickEventRepository).findAllByExperiment(experiment);
-    }
-
-    @Test
-    public void testGetClickEventDataEntityNotFound() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(clickEventRepository.findAllByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> eventService.getClickEventData(ID)
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(clickEventRepository).findAllByExperiment(experiment);
-    }
-
-    @Test
-    public void testGetClickEventDataEntityInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> eventService.getClickEventData(0)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(clickEventRepository, never()).findAllByExperiment(any());
-    }
-
-    @Test
-    public void testGetResourceEventData() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(resourceEventRepository.findAllByExperiment(experiment)).thenReturn(resourceEventData);
-        List<String[]> data = eventService.getResourceEventData(ID);
-        assertAll(
-                () -> assertEquals(3, data.size()),
-                () -> assertEquals(Arrays.toString(resourceEventDataHeader), Arrays.toString(data.get(0)))
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(resourceEventRepository).findAllByExperiment(experiment);
-    }
-
-    @Test
-    public void testGetResourceEventDataEntityNotFound() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(resourceEventRepository.findAllByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> eventService.getResourceEventData(ID)
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(resourceEventRepository).findAllByExperiment(experiment);
-    }
-
-    @Test
-    public void testGetResourceEventDataEntityInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> eventService.getResourceEventData(-1)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(resourceEventRepository, never()).findAllByExperiment(any());
     }
 
     @Test
-    public void testGetBlockEventCount() {
-        when(eventCountRepository.findAllBlockEventsByExperiment(ID)).thenReturn(blockEvents);
-        List<String[]> data = eventService.getBlockEventCount(ID);
-        assertAll(
-                () -> assertEquals(9, data.size()),
-                () -> assertEquals(Arrays.toString(eventCountDataHeader), Arrays.toString(data.get(0)))
-        );
-        verify(eventCountRepository).findAllBlockEventsByExperiment(ID);
-    }
-
-    @Test
-    public void testGetBlockEventCountInvalidId() {
+    public void testGetEventDataInvalidId() {
         assertThrows(IllegalArgumentException.class,
-                () -> eventService.getBlockEventCount(0)
+                () -> eventService.getEventData(-1)
         );
-        verify(eventCountRepository, never()).findAllBlockEventsByExperiment(anyInt());
-    }
-
-    @Test
-    public void testGetClickEventCount() {
-        when(eventCountRepository.findAllClickEventsByExperiment(ID)).thenReturn(clickEvents);
-        List<String[]> data = eventService.getClickEventCount(ID);
-        assertAll(
-                () -> assertEquals(3, data.size()),
-                () -> assertEquals(Arrays.toString(eventCountDataHeader), Arrays.toString(data.get(0)))
-        );
-        verify(eventCountRepository).findAllClickEventsByExperiment(ID);
-    }
-
-    @Test
-    public void testGetClickEventCountInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> eventService.getClickEventCount(-1)
-        );
-        verify(eventCountRepository, never()).findAllClickEventsByExperiment(anyInt());
-    }
-
-    @Test
-    public void testGetResourceEventCount() {
-        when(eventCountRepository.findAllResourceEventsByExperiment(ID)).thenReturn(resourceEvents);
-        List<String[]> data = eventService.getResourceEventCount(ID);
-        assertAll(
-                () -> assertEquals(4, data.size()),
-                () -> assertEquals(Arrays.toString(eventCountDataHeader), Arrays.toString(data.get(0)))
-        );
-        verify(eventCountRepository).findAllResourceEventsByExperiment(ID);
-    }
-
-    @Test
-    public void testGetResourceEventCountInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> eventService.getResourceEventCount(-5)
-        );
-        verify(eventCountRepository, never()).findAllResourceEventsByExperiment(anyInt());
-    }
-
-    @Test
-    public void testGetCodesDataForExperiment() {
-        List<CodesData> codesDataList = new ArrayList<>();
-        codesDataList.add(codesData);
-        when(codesDataRepository.findAllByExperiment(ID)).thenReturn(codesDataList);
-        List<String[]> data = eventService.getCodesDataForExperiment(ID);
-        assertAll(
-                () -> assertEquals(2, data.size()),
-                () -> assertEquals(Arrays.toString(codesDataHeader), Arrays.toString(data.get(0)))
-        );
-        verify(codesDataRepository).findAllByExperiment(ID);
-    }
-
-    @Test
-    public void testGetCodesDataForExperimentInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> eventService.getCodesDataForExperiment(0)
-        );
-        verify(codesDataRepository, never()).findAllByExperiment(anyInt());
+        verify(experimentRepository, never()).getReferenceById(anyInt());
+        verify(blockEventRepository, never()).findAllByExperiment(any());
+        verify(clickEventRepository, never()).findAllByExperiment(any());
+        verify(resourceEventRepository, never()).findAllByExperiment(any());
     }
 
     private List<EventCount> getEventCounts(int number, String event) {

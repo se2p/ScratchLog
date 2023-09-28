@@ -23,9 +23,7 @@ import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.exception.StoreException;
 import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
-import fim.unipassau.de.scratchLog.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentProjection;
-import fim.unipassau.de.scratchLog.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
@@ -36,8 +34,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -57,21 +53,13 @@ public class ExperimentService {
     private final ExperimentRepository experimentRepository;
 
     /**
-     * The experiment data repository to use for database queries related to participant numbers.
-     */
-    private final ExperimentDataRepository experimentDataRepository;
-
-    /**
      * Constructs an experiment service with the given dependencies.
      *
      * @param experimentRepository The experiment repository to use.
-     * @param experimentDataRepository The experiment data repository to use.
      */
     @Autowired
-    public ExperimentService(final ExperimentRepository experimentRepository,
-                             final ExperimentDataRepository experimentDataRepository) {
+    public ExperimentService(final ExperimentRepository experimentRepository) {
         this.experimentRepository = experimentRepository;
-        this.experimentDataRepository = experimentDataRepository;
     }
 
     /**
@@ -224,35 +212,6 @@ public class ExperimentService {
         experimentRepository.updateStatusById(id, status);
         Experiment experiment = experimentRepository.findById(id);
         return createExperimentDTO(experiment);
-    }
-
-    /**
-     * Retrieves the experiment data for the experiment with the given ID as a list of string arrays.
-     *
-     * @param id The experiment ID.
-     * @return The list of string arrays.
-     * @throws IllegalArgumentException if the passed id is invalid.
-     */
-    @Transactional
-    public List<String[]> getExperimentData(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve experiment data for experiment with invalid id " + id
-                    + "!");
-        }
-
-        Optional<ExperimentData> experimentData = experimentDataRepository.findByExperiment(id);
-        List<String[]> list = new ArrayList<>();
-        String[] header = {"experiment", "participants", "started", "finished"};
-        list.add(header);
-
-        if (experimentData.isPresent()) {
-            ExperimentData expData = experimentData.get();
-            String[] data = {expData.getExperiment().toString(), String.valueOf(expData.getParticipants()),
-                    String.valueOf(expData.getStarted()), String.valueOf(expData.getFinished())};
-            list.add(data);
-        }
-
-        return list;
     }
 
     /**
