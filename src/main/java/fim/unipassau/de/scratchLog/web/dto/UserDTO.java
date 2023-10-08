@@ -72,6 +72,7 @@ public class UserDTO {
     /**
      * The user's hashed password.
      */
+    @CsvBindByName()
     private String password;
 
     /**

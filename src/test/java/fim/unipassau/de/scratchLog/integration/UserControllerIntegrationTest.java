@@ -595,8 +595,8 @@ public class UserControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PARTICIPANTS_CSV));
-        verify(userService).existsUser(anyString());
-        verify(userService).existsEmail(anyString());
+        verify(userService, times(2)).existsUser(anyString());
+        verify(userService, times(2)).existsEmail(anyString());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
     }

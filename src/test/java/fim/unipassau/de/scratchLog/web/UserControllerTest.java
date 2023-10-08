@@ -790,6 +790,19 @@ public class UserControllerTest {
         verify(userService).saveUsers(any());
     }
 
+    @Test
+    public void testAddCSVParticipantsPasswords() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+                new ClassPathResource("usersPassword.csv").getInputStream());
+        ResponseEntity entity = (ResponseEntity) userController.addCSVParticipants(file, model);
+        assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
+        verify(model, never()).addAttribute(anyString(), any());
+        verify(userService, times(2)).existsUser(anyString());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, times(2)).encodePassword(anyString());
+        verify(userService).saveUsers(any());
+    }
+
 
     @Test
     public void testAddCSVParticipantsEmailExists() throws IOException {
@@ -818,14 +831,25 @@ public class UserControllerTest {
     }
 
     @Test
+    public void testAddCSVParticipantsInvalidPassword() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+                new ClassPathResource("usersInvalidPassword.csv").getInputStream());
+        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        verify(model).addAttribute(anyString(), any());
+        verify(userService, times(2)).existsUser(anyString());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(userService, never()).saveUsers(any());
+    }
+
+    @Test
     public void testAddCSVParticipantsInvalidAttributes() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("usersInvalid.csv").getInputStream());
-        when(userService.existsUser(anyString())).thenReturn(true);
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
-        verify(userService).existsUser(anyString());
-        verify(userService).existsEmail(anyString());
+        verify(userService, times(2)).existsUser(anyString());
+        verify(userService, times(2)).existsEmail(anyString());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
     }

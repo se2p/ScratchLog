@@ -1128,6 +1128,7 @@ public class UserController {
      */
     private boolean isValidUserInfo(final List<UserDTO> users, final Model model, final ResourceBundle resourceBundle) {
         List<String> invalidAttributes = new ArrayList<>();
+        List<String> invalidPasswords = new ArrayList<>();
         List<String> existingAttributes = new ArrayList<>();
 
         if (users.size() > Constants.MAX_ADD_PARTICIPANTS) {
@@ -1136,7 +1137,7 @@ public class UserController {
             return false;
         }
 
-        users.forEach(userDTO -> checkValidUserInfo(userDTO, invalidAttributes, existingAttributes));
+        users.forEach(userDTO -> checkValidUserInfo(userDTO, invalidAttributes, invalidPasswords, existingAttributes));
 
         if (!invalidAttributes.isEmpty()) {
             LOGGER.error("Cannot create users from CSV with invalid usernames or emails!");
@@ -1146,20 +1147,26 @@ public class UserController {
             LOGGER.error("Cannot create users from CSV with existing usernames or emails!");
             model.addAttribute(ERROR, resourceBundle.getString("existing_attributes") + " " + existingAttributes);
             return false;
+        } else if (!invalidPasswords.isEmpty()) {
+            LOGGER.error("Cannot create users from CSV with invalid passwords!");
+            model.addAttribute(ERROR, resourceBundle.getString("invalid_passwords") + " " + invalidPasswords);
+            return false;
         }
 
         return true;
     }
 
     /**
-     * Checks, if the username and email address of the given user meet the requirements and cannot be found in the
-     * database.
+     * Checks, if the username, password and email address of the given user meet the requirements and cannot be found
+     * in the database.
      *
      * @param userDTO The DTO containing the information to check.
      * @param invalid A list used to store all invalid usernames and emails.
+     * @param passwords A list used to store all usernames with invalid passwords.
      * @param existing A list used to store all usernames and emails that already exist.
      */
-    private void checkValidUserInfo(final UserDTO userDTO, final List<String> invalid, final List<String> existing) {
+    private void checkValidUserInfo(final UserDTO userDTO, final List<String> invalid, final List<String> passwords,
+                                    final List<String> existing) {
         userDTO.setRole(Role.PARTICIPANT);
 
         if (userDTO.getLanguage() == null) {
@@ -1177,6 +1184,11 @@ public class UserController {
                 existing.add(userDTO.getEmail());
             }
         }
+        if (userDTO.getPassword() != null) {
+            if (PasswordValidator.validate(userDTO.getPassword(), userDTO.getPassword()) != null) {
+                passwords.add(userDTO.getUsername());
+            }
+        }
     }
 
     /**
@@ -1189,8 +1201,9 @@ public class UserController {
      * @param builder The {@link StringBuilder} used to store the information.
      */
     private void completeUserInformation(final UserDTO userDTO, final Random random, final StringBuilder builder) {
-        int randomLength = random.nextInt(Constants.PASSWORD_MIN * 2 - Constants.PASSWORD_MIN) + Constants.PASSWORD_MIN;
-        String password = CustomPasswordGenerator.generatePassword(randomLength);
+        String password;
+        password = userDTO.getPassword() != null ? userDTO.getPassword() : CustomPasswordGenerator.generatePassword(
+                random.nextInt(Constants.PASSWORD_MIN * 2 - Constants.PASSWORD_MIN) + Constants.PASSWORD_MIN);
         userDTO.setPassword(userService.encodePassword(password));
         userDTO.setConfirmPassword(password);
         userDTO.setActive(true);
