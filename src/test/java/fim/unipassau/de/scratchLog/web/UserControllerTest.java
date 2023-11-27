@@ -850,7 +850,7 @@ public class UserControllerTest {
         when(file.getContentType()).thenReturn(FILETYPE);
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
         verify(file, times(2)).getContentType();
-        verify(file, times(3)).getOriginalFilename();
+        verify(file, times(2)).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
@@ -863,7 +863,7 @@ public class UserControllerTest {
         when(file.getContentType()).thenReturn(FILETYPE);
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
         verify(file, times(2)).getContentType();
-        verify(file, times(2)).getOriginalFilename();
+        verify(file).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
@@ -875,7 +875,7 @@ public class UserControllerTest {
     public void testAddCSVParticipantsInvalidContentType() {
         when(file.getContentType()).thenReturn(FILENAME);
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
-        verify(file, times(3)).getContentType();
+        verify(file, times(2)).getContentType();
         verify(file, never()).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
         verify(userService, never()).existsUser(anyString());
@@ -887,7 +887,7 @@ public class UserControllerTest {
     @Test
     public void testAddCSVParticipantsContentTypeNull() {
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
-        verify(file, times(2)).getContentType();
+        verify(file).getContentType();
         verify(file, never()).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
         verify(userService, never()).existsUser(anyString());

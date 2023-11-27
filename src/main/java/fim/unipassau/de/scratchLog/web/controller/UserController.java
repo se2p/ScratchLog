@@ -35,6 +35,7 @@ import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.util.enums.TokenType;
 import fim.unipassau.de.scratchLog.util.validation.EmailValidator;
+import fim.unipassau.de.scratchLog.util.validation.FiletypeValidator;
 import fim.unipassau.de.scratchLog.util.validation.PasswordValidator;
 import fim.unipassau.de.scratchLog.util.validation.StringValidator;
 import fim.unipassau.de.scratchLog.util.validation.UsernameValidator;
@@ -1105,17 +1106,11 @@ public class UserController {
      * @return {@code true} if the file is invalid or {@code false} otherwise.
      */
     private boolean isInvalidFile(final MultipartFile file, final Model model, final ResourceBundle resourceBundle) {
-        if (file.isEmpty()) {
-            LOGGER.error("Cannot upload empty CSV file!");
-            model.addAttribute(ERROR, resourceBundle.getString("file_empty"));
-            return true;
-        } else if (file.getContentType() == null || !file.getContentType().equals("text/csv")) {
-            LOGGER.error("Cannot upload file with invalid content type " + file.getContentType() + "!");
-            model.addAttribute(ERROR, resourceBundle.getString("file_type"));
-            return true;
-        } else if (file.getOriginalFilename() == null || !file.getOriginalFilename().endsWith(".csv")) {
-            LOGGER.error("Cannot upload file with invalid filename " + file.getOriginalFilename() + "!");
-            model.addAttribute(ERROR, resourceBundle.getString("csv_file_name"));
+        String fileValidation = FiletypeValidator.validate(file, "text/csv", ".csv");
+
+        if (fileValidation != null) {
+            LOGGER.error("Could not add new users from CSV file due to invalid filetype or empty file!");
+            model.addAttribute(ERROR, resourceBundle.getString(fileValidation));
             return true;
         }
 
@@ -1167,6 +1162,9 @@ public class UserController {
     private void checkValidUserInfo(final UserDTO userDTO, final List<String> invalid, final List<String> existing) {
         userDTO.setRole(Role.PARTICIPANT);
 
+        if (userDTO.getLanguage() == null) {
+            userDTO.setLanguage(Language.ENGLISH);
+        }
         if (UsernameValidator.validate(userDTO.getUsername()) != null) {
             invalid.add(userDTO.getUsername());
         } else if (userService.existsUser(userDTO.getUsername())) {

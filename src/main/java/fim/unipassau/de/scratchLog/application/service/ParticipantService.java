@@ -35,7 +35,9 @@ import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.Secrets;
+import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
+import fim.unipassau.de.scratchLog.web.dto.UserDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -213,6 +215,37 @@ public class ParticipantService {
     }
 
     /**
+     * Adds the given list of users as participants to the experiment with the given id.
+     *
+     * @param experimentId The id of the experiment.
+     * @param users The users to be added.
+     * @throws IllegalArgumentException if the passed id is invalid or the provided user list is empty.
+     * @throws IllegalStateException if the experiment is inactive or one of the provided users is an administrator.
+     * @throws NotFoundException if no corresponding experiment or users could be found.
+     */
+    @Transactional
+    public void saveParticipantsFromCSV(final int experimentId, final List<UserDTO> users) {
+        if (experimentId < Constants.MIN_ID || users.isEmpty()) {
+            throw new IllegalArgumentException("Cannot add participants to experiment with invalid id " + experimentId
+                    + " or empty user list!");
+        }
+
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
+
+        try {
+            if (!experiment.isActive()) {
+                throw new IllegalStateException("Cannot add participants to an inactive experiment!");
+            }
+
+            users.forEach(userDTO -> saveCSVParticipant(experiment, userDTO.getUsername()));
+        } catch (EntityNotFoundException e) {
+            LOGGER.error("Could not find the experiment data when trying to add participants from CSV!", e);
+            throw new NotFoundException("Could not find the experiment data when trying to add participants from CSV!",
+                    e);
+        }
+    }
+
+    /**
      * Creates a new participation for the given user and experiment in the database.
      *
      * @param userId The user id.
@@ -230,16 +263,7 @@ public class ParticipantService {
 
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
-
-        try {
-            Participant participant = new Participant(user, experiment, null, null);
-            participantRepository.save(participant);
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find the user or experiment when saving the participant data!", e);
-            throw new NotFoundException("Could not find the user or experiment when saving the participant data!", e);
-        } catch (ConstraintViolationException e) {
-            throw new StoreException("The given participant data does not meet the foreign key constraints!", e);
-        }
+        createParticipant(experiment, user);
     }
 
     /**
@@ -493,6 +517,55 @@ public class ParticipantService {
                 experiment.setActive(false);
                 experimentRepository.save(experiment);
             }
+        }
+    }
+
+    /**
+     * Retrieves the user information for the given username from the database and adds the user as a participant to the
+     * given experiment, if a user with participant status could be found.
+     *
+     * @param experiment The experiment to which the user should be added.
+     * @param username The name of the user to search for.
+     * @throws NotFoundException if no corresponding user could be found.
+     * @throws IllegalStateException if the user is an administrator.
+     */
+    private void saveCSVParticipant(final Experiment experiment, final String username) {
+        Optional<User> user = userRepository.findUserByUsername(username);
+
+        if (user.isEmpty()) {
+            throw new NotFoundException("Could not find user with username " + username + "!");
+        } else if (user.get().getRole().equals(Role.ADMIN)) {
+            throw new IllegalStateException("Cannot add an administrator as experiment participant!");
+        }
+
+        if (!participantRepository.existsByUserAndExperiment(user.get(), experiment)) {
+            createParticipant(experiment, user.get());
+            updateUser(user.get());
+
+            if (!user.get().isActive()) {
+                user.get().setActive(true);
+                userRepository.save(user.get());
+            }
+        }
+    }
+
+    /**
+     * Creates a new participant entry for the given user and experiment.
+     *
+     * @param experiment The experiment in which the user should participate.
+     * @param user The user to add as participant.
+     * @throws NotFoundException if the provided experiment or user could not be found.
+     * @throws StoreException if adding the user as a participant violates the foreign key constraints.
+     */
+    private void createParticipant(final Experiment experiment, final User user) {
+        try {
+            Participant participant = new Participant(user, experiment, null, null);
+            participantRepository.save(participant);
+        } catch (EntityNotFoundException e) {
+            LOGGER.error("Could not find the user or experiment when saving the participant data!", e);
+            throw new NotFoundException("Could not find the user or experiment when saving the participant data!", e);
+        } catch (ConstraintViolationException e) {
+            throw new StoreException("The given participant data does not meet the foreign key constraints!", e);
         }
     }
 

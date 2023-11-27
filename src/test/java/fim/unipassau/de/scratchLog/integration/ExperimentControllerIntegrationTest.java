@@ -49,6 +49,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -78,6 +79,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -144,13 +146,16 @@ public class ExperimentControllerIntegrationTest {
     private static final String STATUS_PARAM = "stat";
     private static final String PAGE_PARAM = "page";
     private static final String PARTICIPANTS = "participants";
+    private static final String PARTICIPANT1 = "participant1";
     private static final String PARTICIPANT = "participant";
     private static final String PAGE = "page";
     private static final String LAST_PAGE_ATTRIBUTE = "lastPage";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String CURRENT = "3";
-    private static final String FILETYPE = "application/octet-stream";
-    private static final String FILENAME = "project.sb3";
+    private static final String FILETYPE_SB3 = "application/octet-stream";
+    private static final String FILENAME_SB3 = "project.sb3";
+    private static final String FILETYPE_CSV = "text/csv";
+    private static final String FILENAME_CSV = "participants.csv";
     private static final String USERNAME = "user";
     private static final String PASSWORD = "password";
     private static final String LONG_PASSWORD = StringCreator.createLongString(108);
@@ -168,9 +173,9 @@ public class ExperimentControllerIntegrationTest {
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
-    private final MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILETYPE, CONTENT);
-    private final MockMultipartFile wrongFiletype = new MockMultipartFile("file", FILENAME, "type", CONTENT);
-    private final MockMultipartFile wrongFilename = new MockMultipartFile("file", "name", FILETYPE, CONTENT);
+    private final MockMultipartFile sb3File = new MockMultipartFile("file", FILENAME_SB3, FILETYPE_SB3, CONTENT);
+    private final MockMultipartFile wrongFiletype = new MockMultipartFile("file", FILENAME_SB3, "type", CONTENT);
+    private final MockMultipartFile wrongFilename = new MockMultipartFile("file", "name", FILETYPE_SB3, CONTENT);
 
     @BeforeEach
     public void setup() {
@@ -666,6 +671,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setActive(true);
         List<UserDTO> userDTOS = new ArrayList<>();
         userDTOS.add(participant);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(ID)).thenReturn(userDTOS);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
@@ -689,6 +695,7 @@ public class ExperimentControllerIntegrationTest {
                 )))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
+        verify(experimentService).getExperiment(ID);
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
@@ -702,6 +709,7 @@ public class ExperimentControllerIntegrationTest {
         experimentDTO.setActive(true);
         List<UserDTO> userDTOS = new ArrayList<>();
         userDTOS.add(participant);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(ID)).thenReturn(userDTOS);
         mvc.perform(get("/experiment/status")
@@ -711,6 +719,7 @@ public class ExperimentControllerIntegrationTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SECRET_LIST + ID));
+        verify(experimentService).getExperiment(ID);
         verify(experimentService).changeExperimentStatus(true, ID);
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
@@ -744,6 +753,28 @@ public class ExperimentControllerIntegrationTest {
                 .andExpect(view().name(EXPERIMENT));
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
+        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testChangeExperimentStatusOpenInactiveCourse() throws Exception {
+        MailServerSetter.setMailServer(false);
+        experimentDTO.setActive(true);
+        experimentDTO.setCourseExperiment(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        mvc.perform(get("/experiment/status")
+                        .param(STATUS_PARAM, "open")
+                        .param(ID_PARAM, ID_STRING)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+        verify(experimentService).getExperiment(ID);
+        verify(experimentService, never()).changeExperimentStatus(anyBoolean(), anyInt());
+        verify(userService, never()).reactivateUserAccounts(anyInt());
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(pageService).getLastParticipantPage(ID);
         verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
     }
 
@@ -1078,16 +1109,120 @@ public class ExperimentControllerIntegrationTest {
     }
 
     @Test
+    public void testAddCSVParticipants() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", FILENAME_CSV, FILETYPE_CSV,
+                new ClassPathResource(FILENAME_CSV).getInputStream());
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.existsUser(anyString())).thenReturn(true);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mockMvc.perform(multipart("/experiment/csv")
+                .file(file)
+                .param(ID_PARAM, ID_STRING)
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT))
+                .andExpect(model().attribute(PARTICIPANTS, is(participants)))
+                .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE)))
+                .andExpect(model().attribute(EXPERIMENT_DTO, is(experimentDTO)));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsUser(PARTICIPANT1);
+        verify(userService).existsUser(PARTICIPANTS);
+        verify(userService, times(2)).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(participantService).saveParticipantsFromCSV(anyInt(), any());
+    }
+
+    @Test
+    public void testAddCSVParticipantsAdmin() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", FILENAME_CSV, FILETYPE_CSV,
+                new ClassPathResource(FILENAME_CSV).getInputStream());
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.existsUser(anyString())).thenReturn(true);
+        when(userService.isAdmin(anyString())).thenReturn(true);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mockMvc.perform(multipart("/experiment/csv")
+                        .file(file)
+                        .param(ID_PARAM, ID_STRING)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT))
+                .andExpect(model().attribute(PARTICIPANTS, is(participants)))
+                .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE)))
+                .andExpect(model().attribute(EXPERIMENT_DTO, is(experimentDTO)))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+        verify(experimentService).getExperiment(ID);
+        verify(userService).existsUser(PARTICIPANT1);
+        verify(userService).existsUser(PARTICIPANTS);
+        verify(userService, times(2)).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+    }
+
+    @Test
+    public void testAddCSVParticipantsInvalidFile() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", FILENAME_SB3, FILETYPE_CSV,
+                new ClassPathResource(FILENAME_CSV).getInputStream());
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        mockMvc.perform(multipart("/experiment/csv")
+                        .file(file)
+                        .param(ID_PARAM, ID_STRING)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT))
+                .andExpect(model().attribute(PARTICIPANTS, is(participants)))
+                .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
+                .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE)))
+                .andExpect(model().attribute(EXPERIMENT_DTO, is(experimentDTO)))
+                .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
+        verify(experimentService).getExperiment(ID);
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+    }
+
+    @Test
+    public void testAddCSVParticipantsInvalidId() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", FILENAME_CSV, FILETYPE_CSV,
+                new ClassPathResource(FILENAME_CSV).getInputStream());
+        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        mockMvc.perform(multipart("/experiment/csv")
+                        .file(file)
+                        .param(ID_PARAM, ID_PARAM)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(ERROR));
+        verify(experimentService, never()).getExperiment(anyInt());
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).isAdmin(anyString());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+    }
+
+    @Test
     public void testUploadProjectFile() throws Exception {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         mockMvc.perform(multipart("/experiment/upload")
-                .file(file)
+                .file(sb3File)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
-        verify(experimentService).uploadSb3Project(ID, file.getBytes());
+        verify(experimentService).uploadSb3Project(ID, sb3File.getBytes());
     }
 
     @Test
@@ -1095,13 +1230,13 @@ public class ExperimentControllerIntegrationTest {
         doThrow(NotFoundException.class).when(experimentService).uploadSb3Project(ID, CONTENT);
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         mockMvc.perform(multipart("/experiment/upload")
-                .file(file)
+                .file(sb3File)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(experimentService).uploadSb3Project(ID, file.getBytes());
+        verify(experimentService).uploadSb3Project(ID, sb3File.getBytes());
     }
 
     @Test
@@ -1142,7 +1277,7 @@ public class ExperimentControllerIntegrationTest {
     public void testUploadProjectFileInvalidId() throws Exception {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         mockMvc.perform(multipart("/experiment/upload")
-                .file(file)
+                .file(sb3File)
                 .param(ID_PARAM, BLANK)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))

@@ -709,6 +709,29 @@ public class UserServiceTest {
     }
 
     @Test
+    public void testIsAdmin() {
+        when(userRepository.existsByRoleAndUsername(Role.ADMIN, USERNAME)).thenReturn(true);
+        assertTrue(userService.isAdmin(USERNAME));
+        verify(userRepository).existsByRoleAndUsername(Role.ADMIN, USERNAME);
+    }
+
+    @Test
+    public void testIsAdminUsernameBlank() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.isAdmin(BLANK)
+        );
+        verify(userRepository, never()).existsByRoleAndUsername(any(), anyString());
+    }
+
+    @Test
+    public void testIsAdminUsernameNull() {
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.isAdmin(null)
+        );
+        verify(userRepository, never()).existsByRoleAndUsername(any(), anyString());
+    }
+
+    @Test
     public void testIsLastAdmin() {
         admins.add(new User());
         when(userRepository.findAllByRole(Role.ADMIN)).thenReturn(admins);

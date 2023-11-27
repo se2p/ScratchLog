@@ -342,6 +342,12 @@ public class CourseController {
         if (checkReturnCoursePage(courseId, participant, true, true, model)) {
             addModelInfo(model, courseDTO, true);
             return "course";
+        } else if (courseService.existsInactiveExperiment(courseId)) {
+            ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                    LocaleContextHolder.getLocale());
+            model.addAttribute(ERROR, resourceBundle.getString("course_experiment_inactive"));
+            addModelInfo(model, courseDTO, true);
+            return "course";
         }
 
         try {

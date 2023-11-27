@@ -35,6 +35,7 @@ import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
+import fim.unipassau.de.scratchLog.web.dto.UserDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
@@ -59,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -91,12 +94,13 @@ public class ParticipantServiceTest {
     private static final String USERNAME = "participant";
     private static final String PASSWORD = "participant1";
     private static final String EMAIL = "participant@participant.de";
-    private static final String PARTICIPANT = "PARTICIPANT";
     private static final String SECRET = "secret";
     private static final String GUI_URL = "scratch";
     private static final int ID = 1;
     private static final long MAX_DAYS = 90;
     private static final LocalDateTime MAX_TIME = LocalDateTime.now().minusDays(MAX_DAYS);
+    private final UserDTO user1 = new UserDTO(USERNAME, "email1", Role.PARTICIPANT, Language.ENGLISH, "password1", "secret");
+    private final UserDTO user2 = new UserDTO(USERNAME, "email2", Role.PARTICIPANT, Language.ENGLISH, "password2", "secret");
     private final User user = new User(USERNAME, EMAIL, Role.PARTICIPANT, Language.ENGLISH, PASSWORD, SECRET);
     private final Experiment experiment1 = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
@@ -109,6 +113,7 @@ public class ParticipantServiceTest {
             LocalDateTime.now());
     private final List<Participant> participantList = getParticipants(5);
     private final List<CourseParticipant> courseParticipants = getCourseParticipants(3);
+    private final List<UserDTO> users = List.of(user1, user2);
 
     @BeforeEach
     public void setup() {
@@ -116,6 +121,8 @@ public class ParticipantServiceTest {
         participantDTO.setExperiment(ID);
         user.setId(ID);
         user.setActive(false);
+        user.setSecret("secret");
+        user.setRole(Role.PARTICIPANT);
         course.setActive(true);
         experiment1.setActive(true);
         experiment2.setActive(true);
@@ -301,6 +308,108 @@ public class ParticipantServiceTest {
         verify(experimentRepository, never()).getReferenceById(anyInt());
         verify(courseParticipantRepository, never()).findAllByCourse(any());
         verify(participantRepository, never()).save(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveParticipantsFromCSV() {
+        user.setActive(true);
+        user.setSecret(null);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(Optional.of(user));
+        when(participantRepository.existsByUserAndExperiment(user, experiment1)).thenReturn(false, true);
+        assertDoesNotThrow(() -> participantService.saveParticipantsFromCSV(ID, users));
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository, times(2)).findUserByUsername(USERNAME);
+        verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment1);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void testSaveParticipantsFromCSVUserInactive() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(Optional.of(user));
+        when(participantRepository.existsByUserAndExperiment(user, experiment1)).thenReturn(false, true);
+        assertDoesNotThrow(() -> participantService.saveParticipantsFromCSV(ID, users));
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository, times(2)).findUserByUsername(USERNAME);
+        verify(participantRepository, times(2)).existsByUserAndExperiment(user, experiment1);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void testSaveParticipantsFromCSVUserAdmin() {
+        user.setRole(Role.ADMIN);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(Optional.of(user));
+        assertThrows(IllegalStateException.class,
+                () -> participantService.saveParticipantsFromCSV(ID, users)
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository).findUserByUsername(USERNAME);
+        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveParticipantsFromCSVUserNotFound() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(userRepository.findUserByUsername(USERNAME)).thenReturn(Optional.empty());
+        assertThrows(NotFoundException.class,
+                () -> participantService.saveParticipantsFromCSV(ID, users)
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository).findUserByUsername(USERNAME);
+        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveParticipantsFromCSVExperimentInactive() {
+        experiment1.setActive(false);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        assertThrows(IllegalStateException.class,
+                () -> participantService.saveParticipantsFromCSV(ID, users)
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository, never()).findUserByUsername(anyString());
+        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveParticipantsFromCSVExperimentNotFound() {
+        Experiment exp = Mockito.mock(Experiment.class);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(exp);
+        when(exp.isActive()).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> participantService.saveParticipantsFromCSV(ID, users)
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(userRepository, never()).findUserByUsername(anyString());
+        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveParticipantsFromCSVNoParticipants() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.saveParticipantsFromCSV(ID, new ArrayList<>())
+        );
+        verify(experimentRepository, never()).getReferenceById(anyInt());
+        verify(userRepository, never()).findUserByUsername(anyString());
+        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void testSaveParticipantsFromCSVInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> participantService.saveParticipantsFromCSV(0, users)
+        );
+        verify(experimentRepository, never()).getReferenceById(anyInt());
+        verify(userRepository, never()).findUserByUsername(anyString());
+        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
         verify(userRepository, never()).save(any());
     }
 
