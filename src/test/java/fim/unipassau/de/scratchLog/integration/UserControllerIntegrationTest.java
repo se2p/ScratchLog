@@ -227,6 +227,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testLoginUser() throws Exception {
+        userDTO.setRole(Role.PARTICIPANT);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.loginUser(userDTO)).thenReturn(true);
         mvc.perform(post("/users/login")
@@ -236,6 +237,24 @@ public class UserControllerIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT));
         verify(userService).getUser(USERNAME);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService).loginUser(userDTO);
+    }
+
+    @Test
+    public void testLoginUserDefaultPassword() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())).thenReturn(true);
+        when(userService.loginUser(userDTO)).thenReturn(true);
+        mvc.perform(post("/users/login")
+                        .flashAttr(USER_DTO, userDTO)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT));
+        verify(userService).getUser(USERNAME);
+        verify(tokenService).checkDefaultPasswordToken(userDTO.getId(), true);
         verify(userService, never()).updateUser(any());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(userService).loginUser(userDTO);
@@ -255,6 +274,24 @@ public class UserControllerIntegrationTest {
         verify(userService, never()).updateUser(any());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(userService).loginUser(userDTO);
+    }
+
+    @Test
+    public void testLoginUserDefaultPasswordMaxTries() throws Exception {
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())).thenReturn(true);
+        when(tokenService.checkDefaultPasswordToken(userDTO.getId(), true)).thenReturn(Constants.MAX_DEFAULT_ATTEMPTS);
+        mvc.perform(post("/users/login")
+                        .flashAttr(USER_DTO, userDTO)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(view().name(LOGIN));
+        verify(userService).getUser(USERNAME);
+        verify(tokenService).checkDefaultPasswordToken(userDTO.getId(), true);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService, never()).loginUser(any());
     }
 
     @Test

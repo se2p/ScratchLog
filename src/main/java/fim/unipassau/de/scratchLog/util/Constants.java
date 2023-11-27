@@ -52,6 +52,11 @@ public final class Constants {
     public static final String SB3 = "sb3";
 
     /**
+     * The default admin password to use when creating the first administrator account.
+     */
+    public static final String ADMIN_PASSWORD = "!ISeeYou!";
+
+    /**
      * The minimum length of usernames.
      */
     public static final int USERNAME_MIN = 4;
@@ -95,6 +100,11 @@ public final class Constants {
      * The maximum number of login attempts before the user account is temporarily deactivated.
      */
     public static final int MAX_LOGIN_ATTEMPTS = 3;
+
+    /**
+     * The maximum number of login attempts with the default admin password before the account is deactivated.
+     */
+    public static final int MAX_DEFAULT_ATTEMPTS = 5;
 
     /**
      * The minimal id for a user or experiment entity.

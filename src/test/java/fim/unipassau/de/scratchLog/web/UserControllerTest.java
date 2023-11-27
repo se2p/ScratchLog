@@ -310,6 +310,30 @@ public class UserControllerTest {
         verify(bindingResult, never()).addError(any());
     }
 
+
+    @Test
+    public void testLoginUserDefaultPassword() {
+        userDTO.setActive(true);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())).thenReturn(true);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.loginUser(userDTO)).thenReturn(true);
+        when(httpServletRequest.getSession(false)).thenReturn(null);
+        when(httpServletRequest.getSession(true)).thenReturn(session);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        assertEquals(REDIRECT, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword());
+        verify(tokenService).checkDefaultPasswordToken(userDTO.getId(), true);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(authenticationProvider).authenticate(any());
+        verify(userService).loginUser(userDTO);
+        verify(model, never()).addAttribute(anyString(), anyString());
+        verify(bindingResult, never()).addError(any());
+    }
+
     @Test
     public void testLoginUserFalse() {
         userDTO.setActive(true);
@@ -321,6 +345,24 @@ public class UserControllerTest {
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).loginUser(userDTO);
+        verify(model).addAttribute(anyString(), anyString());
+        verify(bindingResult, never()).addError(any());
+    }
+
+    @Test
+    public void testLoginUserDefaultPasswordMaxTries() {
+        userDTO.setActive(true);
+        when(userService.getUser(USERNAME)).thenReturn(userDTO);
+        when(userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())).thenReturn(true);
+        when(tokenService.checkDefaultPasswordToken(userDTO.getId(), true)).thenReturn(5);
+        assertEquals(LOGIN, userController.loginUser(userDTO, model, httpServletRequest, httpServletResponse,
+                bindingResult));
+        verify(userService).getUser(USERNAME);
+        verify(userService).matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword());
+        verify(tokenService).checkDefaultPasswordToken(userDTO.getId(), true);
+        verify(userService, never()).updateUser(any());
+        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
+        verify(userService, never()).loginUser(any());
         verify(model).addAttribute(anyString(), anyString());
         verify(bindingResult, never()).addError(any());
     }

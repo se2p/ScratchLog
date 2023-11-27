@@ -23,6 +23,7 @@ import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.PageService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
+import fim.unipassau.de.scratchLog.application.service.TokenService;
 import fim.unipassau.de.scratchLog.application.service.UserService;
 import fim.unipassau.de.scratchLog.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentTableProjection;
@@ -84,6 +85,11 @@ public class HomeController {
     private final ParticipantService participantService;
 
     /**
+     * The token service to use for retrieving tokens.
+     */
+    private final TokenService tokenService;
+
+    /**
      * String corresponding to the name of the model attribute containing the current page number or the corresponding
      * request parameter.
      */
@@ -96,20 +102,23 @@ public class HomeController {
      * @param pageService The {@link PageService} to use.
      * @param userService The {@link UserService} to use.
      * @param participantService The {@link ParticipantService} to use.
+     * @param tokenService The {@link TokenService} to use.
      */
     @Autowired
     public HomeController(final ExperimentService experimentService, final PageService pageService,
-                          final UserService userService, final ParticipantService participantService) {
+                          final UserService userService, final ParticipantService participantService,
+                          final TokenService tokenService) {
         this.experimentService = experimentService;
         this.pageService = pageService;
         this.userService = userService;
         this.participantService = participantService;
+        this.tokenService = tokenService;
     }
 
     /**
      * Loads the index page containing basic information about the project. If the user is an administrator, a page
-     * containing the latest experiments is loaded instead. If the user is a participant, a page containing the
-     * experiments they are participating in is displayed instead.
+     * containing the latest experiments and courses is loaded instead. If the user is a participant, a page containing
+     * the experiments and courses they are participating in is displayed instead.
      *
      * @param httpServletRequest The servlet request.
      * @param model The model to store the loaded information in.
@@ -117,30 +126,27 @@ public class HomeController {
      */
     @GetMapping("/")
     public String getIndexPage(final HttpServletRequest httpServletRequest, final Model model) {
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            Page<ExperimentTableProjection> experimentPage = pageService.getExperimentPage(PageRequest.of(0,
-                    Constants.PAGE_SIZE));
-            Page<CourseTableProjection> coursePage = pageService.getCoursePage(PageRequest.of(0, Constants.PAGE_SIZE));
-            int lastExperimentPage = experimentPage.getTotalPages();
-            int lastCoursePage = coursePage.getTotalPages();
-            addModelInfo(experimentPage, coursePage, 0, 0, lastExperimentPage - 1, lastCoursePage - 1, model);
-        } else if (httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)) {
+        if (httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication == null || authentication.getName() == null) {
-                LOGGER.error("Can't show the participant experiment page for an unauthenticated user!");
+                LOGGER.error("Can't show the experiment and course information for an unauthenticated user!");
                 return Constants.ERROR;
             }
 
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
-                Page<ExperimentTableProjection> experimentPage = pageService.getExperimentParticipantPage(
-                        PageRequest.of(0, Constants.PAGE_SIZE), userDTO.getId());
-                Page<CourseTableProjection> coursePage = pageService.getCourseParticipantPage(
-                        PageRequest.of(0, Constants.PAGE_SIZE), userDTO.getId());
-                int lastExperimentPage = experimentPage.getTotalPages();
-                int lastCoursePage = coursePage.getTotalPages();
-                addModelInfo(experimentPage, coursePage, 0, 0, lastExperimentPage - 1, lastCoursePage - 1, model);
+                getIndexPageInfo(userDTO.getId(), httpServletRequest.isUserInRole(Constants.ROLE_ADMIN), model);
+
+                if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)
+                        && userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())) {
+                    int attempts = tokenService.checkDefaultPasswordToken(userDTO.getId(), false);
+
+                    if (attempts > 0) {
+                        model.addAttribute("warn", true);
+                        model.addAttribute("attempts", Constants.MAX_DEFAULT_ATTEMPTS - attempts);
+                    }
+                }
             } catch (NotFoundException e) {
                 return Constants.ERROR;
             }
@@ -260,6 +266,34 @@ public class HomeController {
     @GetMapping("/reset")
     public String getResetPage(final UserDTO userDTO) {
         return ApplicationProperties.MAIL_SERVER ? "password-reset" : Constants.ERROR;
+    }
+
+
+    /**
+     * Retrieves the experiment and course pages to be displayed for the given user. If the user is administrator,
+     * information about all courses and experiments is retrieved. If the user is a participant, only information about
+     * courses and experiments the user is participating in is retrieved.
+     *
+     * @param userId The id of the user.
+     * @param isAdmin Whether the user is an administrator or not.
+     * @param model The model used to store the information.
+     */
+    private void getIndexPageInfo(final int userId, final boolean isAdmin, final Model model) {
+        Page<ExperimentTableProjection> experimentPage;
+        Page<CourseTableProjection> coursePage;
+
+        if (isAdmin) {
+            experimentPage = pageService.getExperimentPage(PageRequest.of(0, Constants.PAGE_SIZE));
+            coursePage = pageService.getCoursePage(PageRequest.of(0, Constants.PAGE_SIZE));
+        } else {
+            experimentPage = pageService.getExperimentParticipantPage(PageRequest.of(0, Constants.PAGE_SIZE),
+                    userId);
+            coursePage = pageService.getCourseParticipantPage(PageRequest.of(0, Constants.PAGE_SIZE), userId);
+        }
+
+        int lastExperimentPage = experimentPage.getTotalPages();
+        int lastCoursePage = coursePage.getTotalPages();
+        addModelInfo(experimentPage, coursePage, 0, 0, lastExperimentPage - 1, lastCoursePage - 1, model);
     }
 
     /**

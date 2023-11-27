@@ -23,6 +23,7 @@ import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.PageService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
+import fim.unipassau.de.scratchLog.application.service.TokenService;
 import fim.unipassau.de.scratchLog.application.service.UserService;
 import fim.unipassau.de.scratchLog.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentTableProjection;
@@ -89,6 +90,9 @@ public class HomeControllerIntegrationTest {
     @MockBean
     private ParticipantService participantService;
 
+    @MockBean
+    private TokenService tokenService;
+
     private static final String INDEX = "index";
     private static final String INDEX_EXPERIMENT = "index::experiment_table";
     private static final String INDEX_COURSE = "index::course_table";
@@ -147,8 +151,9 @@ public class HomeControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "user", roles = {"ADMIN"})
+    @WithMockUser(username = "participant", roles = {"ADMIN", "PARTICIPANT"})
     public void testGetIndexPageAdmin() throws Exception {
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
         when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
         mvc.perform(get("/")
@@ -162,7 +167,36 @@ public class HomeControllerIntegrationTest {
                 .andExpect(model().attribute(LAST_COURSE_PAGE, is(0)))
                 .andExpect(model().attribute(COURSE_PAGE, is(0)))
                 .andExpect(view().name(INDEX));
-        verify(userService, never()).getUser(anyString());
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword());
+        verify(pageService).getExperimentPage(any(PageRequest.class));
+        verify(pageService).getCoursePage(any(PageRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "participant", roles = {"ADMIN", "PARTICIPANT"})
+    public void testGetIndexPageAdminTokenExists() throws Exception {
+        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
+        when(userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())).thenReturn(true);
+        when(tokenService.checkDefaultPasswordToken(userDTO.getId(), false)).thenReturn(1);
+        when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
+        when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
+        mvc.perform(get("/")
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
+                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(0)))
+                .andExpect(model().attribute(EXPERIMENT_PAGE, is(0)))
+                .andExpect(model().attribute(COURSES, is(coursePage)))
+                .andExpect(model().attribute(LAST_COURSE_PAGE, is(0)))
+                .andExpect(model().attribute(COURSE_PAGE, is(0)))
+                .andExpect(model().attribute("warn", is(true)))
+                .andExpect(model().attribute("attempts", is(4)))
+                .andExpect(view().name(INDEX));
+        verify(userService).getUser(userDTO.getUsername());
+        verify(userService).matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword());
+        verify(tokenService).checkDefaultPasswordToken(userDTO.getId(), false);
         verify(pageService).getExperimentPage(any(PageRequest.class));
         verify(pageService).getCoursePage(any(PageRequest.class));
     }
@@ -186,6 +220,7 @@ public class HomeControllerIntegrationTest {
                 .andExpect(model().attribute(COURSE_PAGE, is(0)))
                 .andExpect(view().name(INDEX));
         verify(userService).getUser(userDTO.getUsername());
+        verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(pageService).getExperimentParticipantPage(any(PageRequest.class), anyInt());
         verify(pageService).getCourseParticipantPage(any(PageRequest.class), anyInt());
     }
