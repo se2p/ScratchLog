@@ -103,6 +103,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(ApplicationProperties.GUI_BASE_URL));
+        configuration.setAllowedHeaders(List.of("content-type"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/store/*", configuration);
