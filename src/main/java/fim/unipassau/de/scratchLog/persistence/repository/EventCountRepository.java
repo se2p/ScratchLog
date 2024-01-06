@@ -26,6 +26,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A repository providing functionality for retrieving the different event count values.
@@ -54,6 +55,21 @@ public interface EventCountRepository extends JpaRepository<EventCount, EventCou
     List<EventCount> findAllBlockEventsByExperiment(@Param("expId") Integer experiment);
 
     /**
+     * Returns the total number of times the given user executed the given block event during the given experiment, if
+     * it was executed at all.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @param event The event to search for.
+     * @return The number of times the event was executed or an empty {@link Optional} if the event was never executed.
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM user_num_block_events AS n WHERE n.`user` = :uId AND "
+            + "n.experiment = :expId AND n.event = :event")
+    Optional<EventCount> findBlockEventCountByUserAndExperiment(@Param("uId") Integer user,
+                                                                @Param("expId") Integer experiment,
+                                                                @Param("event") String event);
+
+    /**
      * Returns all click count data for the given user during the given experiment, if any exist.
      *
      * @param user The user to search for.
@@ -73,6 +89,21 @@ public interface EventCountRepository extends JpaRepository<EventCount, EventCou
      */
     @Query(nativeQuery = true, value = "SELECT * FROM user_num_click_events AS n WHERE n.experiment = :expId")
     List<EventCount> findAllClickEventsByExperiment(@Param("expId") Integer experiment);
+
+    /**
+     * Returns the total number of times the given user executed the given click event during the given experiment, if
+     * it was executed at all.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @param event The event to search for.
+     * @return The number of times the event was executed or an empty {@link Optional} if the event was never executed.
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM user_num_click_events AS n WHERE n.`user` = :uId AND "
+            + "n.experiment = :expId AND n.event = :event")
+    Optional<EventCount> findClickEventCountByUserAndExperiment(@Param("uId") Integer user,
+                                                                @Param("expId") Integer experiment,
+                                                                @Param("event") String event);
 
     /**
      * Returns all resource count data for the given user during the given experiment, if any exist.

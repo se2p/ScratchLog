@@ -46,6 +46,14 @@ public interface ParticipantRepository extends JpaRepository<Participant, Partic
     boolean existsByUserAndExperiment(User user, Experiment experiment);
 
     /**
+     * Checks, whether participant entries exist for the given experiment.
+     *
+     * @param experiment The experiment to search for.
+     * @return {@code true} iff the experiment has participants.
+     */
+    boolean existsByExperiment(Experiment experiment);
+
+    /**
      * Returns the participation data for the given user in the given experiment, if any exist.
      *
      * @param user The user to search for.

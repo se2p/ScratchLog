@@ -237,3 +237,18 @@ code {
 .table-container {
     overflow-x: auto;
 }
+
+#blockEventChart, #clickEventChart {
+    max-width: 90% !important;
+}
+
+.carousel-control-next, .carousel-control-prev {
+    height: 10%;
+    margin: auto;
+}
+
+.no-data {
+    min-height: 40vh;
+    align-items: center;
+    justify-content: center;
+}

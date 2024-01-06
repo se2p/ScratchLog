@@ -24,7 +24,9 @@ import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
 import fim.unipassau.de.scratchLog.persistence.entity.User;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventJSONProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventProjection;
+import fim.unipassau.de.scratchLog.persistence.projection.EventProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventXMLProjection;
+import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -64,7 +66,7 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
      * @param user The user to search for.
      * @param experiment The experiment to search for.
      * @param pageable The pageable to use.
-     * @return An block event projection page.
+     * @return A block event projection page.
      */
     Page<BlockEventProjection> findAllByUserAndExperimentAndXmlIsNotNull(User user, Experiment experiment,
                                                                          Pageable pageable);
@@ -76,6 +78,17 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
      * @return A {@link List} of all block events.
      */
     List<BlockEvent> findAllByExperiment(Experiment experiment);
+
+    /**
+     * Returns all {@link EventProjection}s for the given user and experiment with the given event.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @param event The event to search for.
+     * @return A list of all block events of the given event.
+     */
+    List<EventProjection> findAllByUserAndExperimentAndEvent(User user, Experiment experiment,
+                                                             BlockEventSpecific event);
 
     /**
      * Returns a {@link BlockEventJSONProjection} containing the last non-null JSON code that was saved for the given

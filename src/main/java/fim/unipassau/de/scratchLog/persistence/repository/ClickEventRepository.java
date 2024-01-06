@@ -21,6 +21,9 @@ package fim.unipassau.de.scratchLog.persistence.repository;
 
 import fim.unipassau.de.scratchLog.persistence.entity.ClickEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
+import fim.unipassau.de.scratchLog.persistence.entity.User;
+import fim.unipassau.de.scratchLog.persistence.projection.EventProjection;
+import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -37,5 +40,16 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Integer>
      * @return A {@link List} of all click events.
      */
     List<ClickEvent> findAllByExperiment(Experiment experiment);
+
+    /**
+     * Returns all {@link ClickEvent}s for the given user and experiment with the given event.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @param event The event to search for.
+     * @return A list of all click events of the given event.
+     */
+    List<EventProjection> findAllByUserAndExperimentAndEvent(User user, Experiment experiment,
+                                                             ClickEventSpecific event);
 
 }

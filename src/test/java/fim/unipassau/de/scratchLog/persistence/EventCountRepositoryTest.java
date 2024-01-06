@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package fim.unipassau.de.scratchLog.persistence;
 
 import fim.unipassau.de.scratchLog.persistence.entity.BlockEvent;
@@ -42,6 +43,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -144,7 +146,24 @@ public class EventCountRepositoryTest {
     @Test
     public void testFindAllBlockEventsByExperiment() {
         List<EventCount> eventCounts = eventCountRepository.findAllBlockEventsByExperiment(experiment1.getId());
-       assertEquals(3, eventCounts.size());
+        assertEquals(3, eventCounts.size());
+    }
+
+    @Test
+    public void testFindBlockEventCountByUserAndExperiment() {
+        Optional<EventCount> counts = eventCountRepository.findBlockEventCountByUserAndExperiment(user1.getId(),
+                experiment1.getId(), BlockEventSpecific.ENDDRAG.toString());
+        assertAll(
+                () -> assertTrue(counts.isPresent()),
+                () -> assertEquals(2, counts.get().getCount())
+        );
+    }
+
+    @Test
+    public void testFindBlockEventCountByUserAndExperimentNoEvents() {
+        Optional<EventCount> counts = eventCountRepository.findBlockEventCountByUserAndExperiment(user1.getId(),
+                experiment1.getId(), BlockEventSpecific.DELETE.toString());
+        assertTrue(counts.isEmpty());
     }
 
     @Test
@@ -171,6 +190,16 @@ public class EventCountRepositoryTest {
     public void testFindAllClickEventsByExperiment() {
         List<EventCount> eventCounts = eventCountRepository.findAllClickEventsByExperiment(experiment1.getId());
         assertEquals(3, eventCounts.size());
+    }
+
+    @Test
+    public void testFindClickEventCountByUserAndExperiment() {
+        Optional<EventCount> counts = eventCountRepository.findClickEventCountByUserAndExperiment(user1.getId(),
+                experiment1.getId(), ClickEventSpecific.GREENFLAG.toString());
+        assertAll(
+                () -> assertTrue(counts.isPresent()),
+                () -> assertEquals(1, counts.get().getCount())
+        );
     }
 
     @Test

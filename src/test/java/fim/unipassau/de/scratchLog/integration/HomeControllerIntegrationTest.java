@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package fim.unipassau.de.scratchLog.integration;
 
 import fim.unipassau.de.scratchLog.MailServerSetter;

@@ -17,16 +17,27 @@
  * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package fim.unipassau.de.scratchLog;
+package fim.unipassau.de.scratchLog.persistence.projection;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import java.time.LocalDateTime;
 
-@SpringBootTest
-class ScratchLogApplicationTests {
+/**
+ * Projection interface for different event classes to return only their id and date.
+ */
+public interface EventProjection {
 
-    @Test
-    void contextLoads() {
-    }
+    /**
+     * Returns the unique id of the block event.
+     *
+     * @return The block event id.
+     */
+    Integer getId();
+
+    /**
+     * Returns the timestamp of the event.
+     *
+     * @return The respective timestamp.
+     */
+    LocalDateTime getDate();
 
 }
