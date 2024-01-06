@@ -855,6 +855,30 @@ public class UserControllerTest {
     }
 
     @Test
+    public void testAddCSVParticipantsDuplicateUsernames() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+                new ClassPathResource("usersUsernames.csv").getInputStream());
+        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        verify(model).addAttribute(anyString(), any());
+        verify(userService, times(2)).existsUser(anyString());
+        verify(userService, times(2)).existsEmail(anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(userService, never()).saveUsers(any());
+    }
+
+    @Test
+    public void testAddCSVParticipantsDuplicateEmails() throws IOException {
+        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+                new ClassPathResource("usersEmails.csv").getInputStream());
+        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        verify(model).addAttribute(anyString(), any());
+        verify(userService, times(2)).existsUser(anyString());
+        verify(userService, times(2)).existsEmail(anyString());
+        verify(userService, never()).encodePassword(anyString());
+        verify(userService, never()).saveUsers(any());
+    }
+
+    @Test
     public void testAddCSVParticipantsIO() throws IOException {
         when(file.getOriginalFilename()).thenReturn(FILENAME);
         when(file.getContentType()).thenReturn(FILETYPE);

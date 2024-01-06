@@ -75,12 +75,14 @@ import java.io.Reader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import static org.springframework.security.web.context.HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
 
@@ -1153,7 +1155,7 @@ public class UserController {
             return false;
         }
 
-        return true;
+        return containsDuplicateUsernamesOrEmails(users, model, resourceBundle);
     }
 
     /**
@@ -1189,6 +1191,37 @@ public class UserController {
                 passwords.add(userDTO.getUsername());
             }
         }
+    }
+
+    /**
+     * Checks if the usernames and emails contained in the given list of users are unique. If not, a corresponding error
+     * message is added to given model to be displayed to the user.
+     *
+     * @param users The list of users.
+     * @param model The {@link Model} used to store error messages to be displayed.
+     * @param resourceBundle The {@link ResourceBundle} used to display error messages in the desired language.
+     * @return {@code true} if no duplicate entries exist, or {@code false} otherwise.
+     */
+    private boolean containsDuplicateUsernamesOrEmails(final List<UserDTO> users, final Model model,
+                                                       final ResourceBundle resourceBundle) {
+        Set<String> names = new HashSet<>();
+        Set<String> emails = new HashSet<>();
+        users.forEach(userDTO -> {
+            names.add(userDTO.getUsername());
+            emails.add(userDTO.getEmail());
+        });
+
+        if (names.size() < users.size()) {
+            LOGGER.error("Cannot create users from CSV containing duplicate usernames!");
+            model.addAttribute(ERROR, resourceBundle.getString("duplicate_usernames"));
+            return false;
+        } else if (emails.size() < users.size() && !users.stream().allMatch(userDTO -> userDTO.getEmail() == null)) {
+            LOGGER.error("Cannot create users from CSV containing duplicate email addresses!");
+            model.addAttribute(ERROR, resourceBundle.getString("duplicate_emails"));
+            return false;
+        }
+
+        return true;
     }
 
     /**
