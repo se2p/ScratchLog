@@ -1095,25 +1095,11 @@ public class ExperimentControllerTest {
 
     @Test
     public void testDownloadCSVFile() throws IOException {
-        when(eventService.getBlockEventData(ID)).thenReturn(new ArrayList<>());
-        when(eventService.getClickEventData(ID)).thenReturn(new ArrayList<>());
-        when(eventService.getResourceEventData(ID)).thenReturn(new ArrayList<>());
-        when(eventService.getBlockEventCount(ID)).thenReturn(new ArrayList<>());
-        when(eventService.getClickEventCount(ID)).thenReturn(new ArrayList<>());
-        when(eventService.getResourceEventCount(ID)).thenReturn(new ArrayList<>());
-        when(eventService.getCodesDataForExperiment(ID)).thenReturn(new ArrayList<>());
-        when(experimentService.getExperimentData(ID)).thenReturn(new ArrayList<>());
+        when(eventService.getEventData(ID)).thenReturn(new ArrayList<>());
         assertDoesNotThrow(
                 () -> experimentController.downloadCSVFile(ID_STRING, httpServletResponse)
         );
-        verify(eventService).getBlockEventData(ID);
-        verify(eventService).getClickEventData(ID);
-        verify(eventService).getResourceEventData(ID);
-        verify(eventService).getBlockEventCount(ID);
-        verify(eventService).getClickEventCount(ID);
-        verify(eventService).getResourceEventCount(ID);
-        verify(eventService).getCodesDataForExperiment(ID);
-        verify(experimentService).getExperimentData(ID);
+        verify(eventService).getEventData(ID);
         verify(httpServletResponse).getWriter();
     }
 
@@ -1123,14 +1109,7 @@ public class ExperimentControllerTest {
         assertThrows(RuntimeException.class,
                 () -> experimentController.downloadCSVFile(ID_STRING, httpServletResponse)
         );
-        verify(eventService, never()).getBlockEventData(anyInt());
-        verify(eventService, never()).getClickEventData(anyInt());
-        verify(eventService, never()).getResourceEventData(anyInt());
-        verify(eventService, never()).getBlockEventCount(anyInt());
-        verify(eventService, never()).getClickEventCount(anyInt());
-        verify(eventService, never()).getResourceEventCount(anyInt());
-        verify(eventService, never()).getCodesDataForExperiment(anyInt());
-        verify(experimentService, never()).getExperimentData(anyInt());
+        verify(eventService, never()).getEventData(anyInt());
         verify(httpServletResponse).getWriter();
     }
 
@@ -1139,14 +1118,7 @@ public class ExperimentControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> experimentController.downloadCSVFile(BLANK, httpServletResponse)
         );
-        verify(eventService, never()).getBlockEventData(anyInt());
-        verify(eventService, never()).getClickEventData(anyInt());
-        verify(eventService, never()).getResourceEventData(anyInt());
-        verify(eventService, never()).getBlockEventCount(anyInt());
-        verify(eventService, never()).getClickEventCount(anyInt());
-        verify(eventService, never()).getResourceEventCount(anyInt());
-        verify(eventService, never()).getCodesDataForExperiment(anyInt());
-        verify(experimentService, never()).getExperimentData(anyInt());
+        verify(eventService, never()).getEventData(anyInt());
         verify(httpServletResponse, never()).getWriter();
     }
 
@@ -1155,14 +1127,7 @@ public class ExperimentControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> experimentController.downloadCSVFile(null, httpServletResponse)
         );
-        verify(eventService, never()).getBlockEventData(anyInt());
-        verify(eventService, never()).getClickEventData(anyInt());
-        verify(eventService, never()).getResourceEventData(anyInt());
-        verify(eventService, never()).getBlockEventCount(anyInt());
-        verify(eventService, never()).getClickEventCount(anyInt());
-        verify(eventService, never()).getResourceEventCount(anyInt());
-        verify(eventService, never()).getCodesDataForExperiment(anyInt());
-        verify(experimentService, never()).getExperimentData(anyInt());
+        verify(eventService, never()).getEventData(anyInt());
         verify(httpServletResponse, never()).getWriter();
     }
 

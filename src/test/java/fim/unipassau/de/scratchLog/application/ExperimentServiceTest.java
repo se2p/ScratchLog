@@ -24,9 +24,7 @@ import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.exception.StoreException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
-import fim.unipassau.de.scratchLog.persistence.entity.ExperimentData;
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentProjection;
-import fim.unipassau.de.scratchLog.persistence.repository.ExperimentDataRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import jakarta.persistence.EntityNotFoundException;
@@ -37,8 +35,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -62,22 +58,17 @@ public class ExperimentServiceTest {
     @Mock
     private ExperimentRepository experimentRepository;
 
-    @Mock
-    private ExperimentDataRepository experimentDataRepository;
-
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
     private static final String BLANK = "    ";
     private static final int ID = 1;
     private static final int INVALID_ID = 2;
-    private static final String[] HEADER = {"experiment", "participants", "started", "finished"};
     private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private static final String GUI_URL = "scratch";
     private final Experiment experiment = new Experiment(ID, TITLE, DESCRIPTION, "Some info text", "Some postscript",
             false, true, GUI_URL);
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, "Some info text",
             "Some postscript", false, true, GUI_URL);
-    private final ExperimentData experimentData = new ExperimentData(ID, 5, 3, 2);
     private final ExperimentProjection projection = new ExperimentProjection() {
         @Override
         public Integer getId() {
@@ -389,39 +380,6 @@ public class ExperimentServiceTest {
         verify(experimentRepository).existsById(ID);
         verify(experimentRepository, never()).updateStatusById(ID, true);
         verify(experimentRepository, never()).findById(ID);
-    }
-
-    @Test
-    public void testGetExperimentData() {
-        String[] dataArray = {experimentData.getExperiment().toString(),
-                String.valueOf(experimentData.getParticipants()), String.valueOf(experimentData.getStarted()),
-                String.valueOf(experimentData.getFinished())};
-        when(experimentDataRepository.findByExperiment(ID)).thenReturn(Optional.of(experimentData));
-        List<String[]> data = experimentService.getExperimentData(ID);
-        assertAll(
-                () -> assertEquals(2, data.size()),
-                () -> assertEquals(Arrays.toString(HEADER), Arrays.toString(data.get(0))),
-                () -> assertEquals(Arrays.toString(dataArray), Arrays.toString(data.get(1)))
-        );
-        verify(experimentDataRepository).findByExperiment(ID);
-    }
-
-    @Test
-    public void testGetExperimentDataNull() {
-        List<String[]> data = experimentService.getExperimentData(ID);
-        assertAll(
-                () -> assertEquals(1, data.size()),
-                () -> assertEquals(Arrays.toString(HEADER), Arrays.toString(data.get(0)))
-        );
-        verify(experimentDataRepository).findByExperiment(ID);
-    }
-
-    @Test
-    public void testGetExperimentDataInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getExperimentData(0)
-        );
-        verify(experimentDataRepository, never()).findByExperiment(anyInt());
     }
 
     @Test

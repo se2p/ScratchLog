@@ -1,3 +1,4 @@
-username,language,email
-new,GERMAN,newUser1@user.de
-newUser2,ENGLISH,newUser2user.com
+username,language,email,password
+new,GERMAN,newUser1@user.de,Unicorns1!
+newUser2,ENGLISH,newUser2user.com,Unicorns1!
+newUser3,ENGLISH,newUser3@user.com,bla

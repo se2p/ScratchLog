@@ -541,11 +541,11 @@ public class ExperimentController {
     }
 
     /**
-     * Retrieves all block event, resource event, block and resource event counts, codes and experiment data for the
-     * given experiment and makes them available for download in a csv file.
+     * Retrieves all block, click and resource event data for the given experiment and saves the information in a CSV
+     * file.
      *
      * @param id The experiment id to search for.
-     * @param httpServletResponse The servlet response returning the files.
+     * @param httpServletResponse The servlet response returning the file.
      * @throws IncompleteDataException if the passed id is null or invalid.
      * @throws RuntimeException if an {@link IOException} occurs
      */
@@ -570,24 +570,8 @@ public class ExperimentController {
                     + ".csv");
             httpServletResponse.setStatus(HttpServletResponse.SC_OK);
             CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
-
-            List<String[]> blockEvents = eventService.getBlockEventData(experimentId);
-            List<String[]> clickEvents = eventService.getClickEventData(experimentId);
-            List<String[]> resourceEvents = eventService.getResourceEventData(experimentId);
-            List<String[]> blockEventCounts = eventService.getBlockEventCount(experimentId);
-            List<String[]> clickEventCounts = eventService.getClickEventCount(experimentId);
-            List<String[]> resourceEventCounts = eventService.getResourceEventCount(experimentId);
-            List<String[]> codesData = eventService.getCodesDataForExperiment(experimentId);
-            List<String[]> experimentData = experimentService.getExperimentData(experimentId);
-
-            csvWriter.writeAll(blockEvents);
-            csvWriter.writeAll(clickEvents);
-            csvWriter.writeAll(resourceEvents);
-            csvWriter.writeAll(blockEventCounts);
-            csvWriter.writeAll(clickEventCounts);
-            csvWriter.writeAll(resourceEventCounts);
-            csvWriter.writeAll(codesData);
-            csvWriter.writeAll(experimentData);
+            List<String[]> events = eventService.getEventData(experimentId);
+            csvWriter.writeAll(events);
         } catch (IOException e) {
             LOGGER.error("Could not download csv file due to IOException!", e);
             throw new RuntimeException("Could not download csv file due to IOException!");
