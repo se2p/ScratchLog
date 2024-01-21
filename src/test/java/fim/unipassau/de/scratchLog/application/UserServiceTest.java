@@ -95,7 +95,7 @@ public class UserServiceTest {
     private final User user2 = new User("participant1", "part1@part.de", Role.PARTICIPANT, Language.ENGLISH,
             PASSWORD, SECRET);
     private final User user3 = new User("participant2", "part2@part.de", Role.PARTICIPANT, Language.ENGLISH,
-            PASSWORD, null);
+            PASSWORD, SECRET);
     private final User user4 = new User("participant3", "part3@part.de", Role.PARTICIPANT, Language.ENGLISH,
             PASSWORD, null);
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
@@ -122,6 +122,8 @@ public class UserServiceTest {
         user2.setActive(false);
         user2.setSecret(SECRET);
         user2.setLastLogin(null);
+        user3.setActive(true);
+        user4.setActive(true);
         userDTO.setId(ID);
         userDTO.setUsername(USERNAME);
         userDTO.setPassword(PASSWORD);
@@ -679,10 +681,8 @@ public class UserServiceTest {
         when(participantRepository.findAllByExperimentAndEnd(experiment, null)).thenReturn(participants);
         List<UserDTO> userDTOS = userService.findUnfinishedUsers(ID);
         assertAll(
-                () -> assertEquals(3, userDTOS.size()),
-                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 2)),
-                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 3)),
-                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 4))
+                () -> assertEquals(1, userDTOS.size()),
+                () -> assertTrue(userDTOS.stream().anyMatch(u -> u.getId() == 3))
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperimentAndEnd(experiment, null);

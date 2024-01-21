@@ -459,7 +459,7 @@ public class UserService {
     }
 
     /**
-     * Retrieves a list of {@link UserDTO}s who have not yet finished the experiment with the given id.
+     * Retrieves a list of active {@link UserDTO}s who have not yet finished the experiment with the given id.
      *
      * @param experimentId The experiment id to search for.
      * @return The list of users.
@@ -473,8 +473,10 @@ public class UserService {
                     + experimentId + "!");
         }
 
-        return findUnfinishedParticipants(experimentId).stream().map(participant
+        List<UserDTO> participants = findUnfinishedParticipants(experimentId).stream().map(participant
                 -> createUserDTO(participant.getUser())).collect(Collectors.toList());
+        return participants.stream().filter(userDTO -> userDTO.isActive() && userDTO.getSecret() != null).collect(
+                Collectors.toList());
     }
 
     /**

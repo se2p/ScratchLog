@@ -217,7 +217,66 @@ public class UserControllerTest {
         verify(authenticationProvider).authenticate(any());
         verify(userService).authenticateUser(SECRET);
         verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_PARTICIPANT);
+        verify(securityContext, never()).getAuthentication();
         verify(localeResolver).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserParticipant() {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)).thenReturn(true);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getUsername());
+        when(httpServletRequest.getSession(false)).thenReturn(null);
+        when(httpServletRequest.getSession(true)).thenReturn(session);
+        assertEquals(REDIRECT_EXPERIMENT + ID, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider).authenticate(any());
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_PARTICIPANT);
+        verify(securityContext).getAuthentication();
+        verify(authentication).getName();
+        verify(localeResolver).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserUsernameNotMatching() {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)).thenReturn(true);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getName()).thenReturn(userDTO.getEmail());
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_PARTICIPANT);
+        verify(securityContext).getAuthentication();
+        verify(authentication).getName();
+        verify(localeResolver, never()).setLocale(any(), any(), any());
+    }
+
+    @Test
+    public void testAuthenticateUserAuthenticationNull() {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)).thenReturn(true);
+        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+                httpServletResponse));
+        verify(authenticationProvider, never()).authenticate(any());
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(httpServletRequest).isUserInRole(Constants.ROLE_PARTICIPANT);
+        verify(securityContext).getAuthentication();
+        verify(authentication, never()).getName();
+        verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
     @Test
@@ -228,6 +287,8 @@ public class UserControllerTest {
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).authenticateUser(SECRET);
         verify(userService).existsParticipant(userDTO.getId(), ID);
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(securityContext, never()).getAuthentication();
         verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
@@ -238,7 +299,9 @@ public class UserControllerTest {
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).authenticateUser(SECRET);
-        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(securityContext, never()).getAuthentication();
         verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
@@ -247,8 +310,10 @@ public class UserControllerTest {
         assertEquals(Constants.ERROR, userController.authenticateUser("0", SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
-        verify(userService, never()).authenticateUser(SECRET);
-        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(userService, never()).authenticateUser(anyString());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(securityContext, never()).getAuthentication();
         verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
@@ -257,8 +322,10 @@ public class UserControllerTest {
         assertEquals(Constants.ERROR, userController.authenticateUser(null, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
-        verify(userService, never()).authenticateUser(SECRET);
-        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(userService, never()).authenticateUser(anyString());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(securityContext, never()).getAuthentication();
         verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
@@ -267,8 +334,10 @@ public class UserControllerTest {
         assertEquals(Constants.ERROR, userController.authenticateUser(BLANK, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
-        verify(userService, never()).authenticateUser(SECRET);
-        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(userService, never()).authenticateUser(anyString());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(securityContext, never()).getAuthentication();
         verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
@@ -277,8 +346,10 @@ public class UserControllerTest {
         assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, null, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
-        verify(userService, never()).authenticateUser(SECRET);
-        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(userService, never()).authenticateUser(anyString());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(securityContext, never()).getAuthentication();
         verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
@@ -287,8 +358,10 @@ public class UserControllerTest {
         assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, BLANK, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
-        verify(userService, never()).authenticateUser(SECRET);
-        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
+        verify(userService, never()).authenticateUser(anyString());
+        verify(userService, never()).existsParticipant(anyInt(), anyInt());
+        verify(httpServletRequest, never()).isUserInRole(anyString());
+        verify(securityContext, never()).getAuthentication();
         verify(localeResolver, never()).setLocale(any(), any(), any());
     }
 
