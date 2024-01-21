@@ -28,6 +28,7 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
@@ -44,6 +45,7 @@ import static org.springframework.security.web.context.HttpSessionSecurityContex
  */
 @Controller
 @RequestMapping("/saml2")
+@Profile("saml2")
 public class SAML2Controller {
 
     /**
