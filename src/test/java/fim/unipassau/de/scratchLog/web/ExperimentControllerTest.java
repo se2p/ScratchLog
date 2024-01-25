@@ -24,7 +24,7 @@ import fim.unipassau.de.scratchLog.StringCreator;
 import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.CourseService;
-import fim.unipassau.de.scratchLog.application.service.EventService;
+import fim.unipassau.de.scratchLog.application.service.ExperimentDataService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.MailService;
 import fim.unipassau.de.scratchLog.application.service.PageService;
@@ -109,7 +109,7 @@ public class ExperimentControllerTest {
     private MailService mailService;
 
     @Mock
-    private EventService eventService;
+    private ExperimentDataService experimentDataService;
 
     @Mock
     private Model model;
@@ -1095,11 +1095,11 @@ public class ExperimentControllerTest {
 
     @Test
     public void testDownloadCSVFile() throws IOException {
-        when(eventService.getEventData(ID)).thenReturn(new ArrayList<>());
+        when(experimentDataService.getEventData(ID)).thenReturn(new ArrayList<>());
         assertDoesNotThrow(
                 () -> experimentController.downloadCSVFile(ID_STRING, httpServletResponse)
         );
-        verify(eventService).getEventData(ID);
+        verify(experimentDataService).getEventData(ID);
         verify(httpServletResponse).getWriter();
     }
 
@@ -1109,7 +1109,7 @@ public class ExperimentControllerTest {
         assertThrows(RuntimeException.class,
                 () -> experimentController.downloadCSVFile(ID_STRING, httpServletResponse)
         );
-        verify(eventService, never()).getEventData(anyInt());
+        verify(experimentDataService, never()).getEventData(anyInt());
         verify(httpServletResponse).getWriter();
     }
 
@@ -1118,7 +1118,7 @@ public class ExperimentControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> experimentController.downloadCSVFile(BLANK, httpServletResponse)
         );
-        verify(eventService, never()).getEventData(anyInt());
+        verify(experimentDataService, never()).getEventData(anyInt());
         verify(httpServletResponse, never()).getWriter();
     }
 
@@ -1127,7 +1127,7 @@ public class ExperimentControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> experimentController.downloadCSVFile(null, httpServletResponse)
         );
-        verify(eventService, never()).getEventData(anyInt());
+        verify(experimentDataService, never()).getEventData(anyInt());
         verify(httpServletResponse, never()).getWriter();
     }
 

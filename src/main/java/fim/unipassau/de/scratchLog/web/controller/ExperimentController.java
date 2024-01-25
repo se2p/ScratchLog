@@ -24,7 +24,7 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.CourseService;
-import fim.unipassau.de.scratchLog.application.service.EventService;
+import fim.unipassau.de.scratchLog.application.service.ExperimentDataService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.MailService;
 import fim.unipassau.de.scratchLog.application.service.PageService;
@@ -121,9 +121,9 @@ public class ExperimentController {
     private final MailService mailService;
 
     /**
-     * The event service to use for event management.
+     * The experiment data service to use for retrieving experiment data.
      */
-    private final EventService eventService;
+    private final ExperimentDataService experimentDataService;
 
     /**
      * String corresponding to the experiment page.
@@ -179,20 +179,20 @@ public class ExperimentController {
      * @param participantService The {@link ParticipantService} to use.
      * @param pageService The {@link PageService} to use.
      * @param mailService The {@link MailService} to use.
-     * @param eventService The {@link EventService} to use.
+     * @param experimentDataService The {@link ExperimentDataService} to use.
      */
     @Autowired
     public ExperimentController(final ExperimentService experimentService, final UserService userService,
                                 final CourseService courseService, final ParticipantService participantService,
                                 final PageService pageService, final MailService mailService,
-                                final EventService eventService) {
+                                final ExperimentDataService experimentDataService) {
         this.experimentService = experimentService;
         this.userService = userService;
         this.courseService = courseService;
         this.participantService = participantService;
         this.pageService = pageService;
         this.mailService = mailService;
-        this.eventService = eventService;
+        this.experimentDataService = experimentDataService;
     }
 
     /**
@@ -570,7 +570,7 @@ public class ExperimentController {
                     + ".csv");
             httpServletResponse.setStatus(HttpServletResponse.SC_OK);
             CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
-            List<String[]> events = eventService.getEventData(experimentId);
+            List<String[]> events = experimentDataService.getEventData(experimentId);
             csvWriter.writeAll(events);
         } catch (IOException e) {
             LOGGER.error("Could not download csv file due to IOException!", e);
