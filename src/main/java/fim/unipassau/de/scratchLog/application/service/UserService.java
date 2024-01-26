@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A service providing methods related to users.
@@ -473,9 +474,9 @@ public class UserService {
                     + experimentId + "!");
         }
 
-        List<UserDTO> participants = findUnfinishedParticipants(experimentId).stream().map(participant
-                -> createUserDTO(participant.getUser())).collect(Collectors.toList());
-        return participants.stream().filter(userDTO -> userDTO.isActive() && userDTO.getSecret() != null).collect(
+        Stream<UserDTO> participants = findUnfinishedParticipants(experimentId).stream().map(participant
+                -> createUserDTO(participant.getUser()));
+        return participants.filter(userDTO -> userDTO.isActive() && userDTO.getSecret() != null).collect(
                 Collectors.toList());
     }
 
