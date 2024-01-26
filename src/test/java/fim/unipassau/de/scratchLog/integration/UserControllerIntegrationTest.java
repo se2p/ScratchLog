@@ -186,6 +186,22 @@ public class UserControllerIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
+    public void testAuthenticateUserParticipant() throws Exception {
+        when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
+        when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        mvc.perform(get("/users/authenticate")
+                        .param("id", ID_STRING)
+                        .param("secret", SECRET)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
+        verify(userService).authenticateUser(SECRET);
+        verify(userService).existsParticipant(userDTO.getId(), ID);
+    }
+
+    @Test
     public void testAuthenticateUserNoParticipant() throws Exception {
         when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
         mvc.perform(get("/users/authenticate")
