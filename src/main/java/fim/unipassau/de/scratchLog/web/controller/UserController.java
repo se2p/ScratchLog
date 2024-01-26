@@ -234,6 +234,13 @@ public class UserController {
             LOGGER.error("No participation entry could be found for the user with username "
                     + authenticated.getUsername() + " and experiment with id " + id + "!");
             return Constants.ERROR;
+        } else if (httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || !authenticated.getUsername().equals(authentication.getName())) {
+                LOGGER.error("Cannot authenticate participant with different username!");
+                return Constants.ERROR;
+            }
         }
 
         clearSecurityContext(httpServletRequest);

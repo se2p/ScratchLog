@@ -26,7 +26,7 @@
             <div class="col-12 alert alert-danger" th:text="${error}"></div>
         </div>
 
-        <!-- The buttons for editing and deleting the experiment. -->
+        <!-- The buttons for the dashboard, editing and deleting the experiment. -->
         <div class="d-flex justify-content-between flex-wrap mb-3">
             <!-- The experiment title. -->
             <h1 class="mb-3 h2" th:text="${experimentDTO.title}"></h1>
@@ -112,7 +112,7 @@
             <span class="text-muted mb-3" th:text="#{csv_participants}"></span>
         </div>
 
-        <!-- The table of participants in the experiment and the buttons for adding and removing participants. -->
+        <!-- The table of participants in the experiment and the button to show participant links. -->
         <div class="mb-5" sec:authorize="hasRole('ADMIN')">
             <div class="d-flex justify-content-between flex-wrap mb-3">
                 <h2 class="h3" th:text="#{heading_participants}"></h2>

@@ -77,7 +77,8 @@ public class SecurityConfig {
                 .csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers("/login", "/finish", "/token/password", "/reset",
-                        "/users/reset", "/users/login", "/users/authenticate").anonymous()
+                        "/users/reset", "/users/login").anonymous()
+                .requestMatchers("/users/authenticate").hasAnyRole("PARTICIPANT", "ANONYMOUS")
                 .requestMatchers("/experiment/*", "/users/add", "/users/delete", "/users/forgot", "/users/add",
                         "/users/bulk", "/result", "/search", "/secret", "/search/*").hasRole("ADMIN")
                 .requestMatchers("/experiment", "/users/profile", "/users/logout", "/users/edit",
