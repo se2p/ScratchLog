@@ -1266,6 +1266,35 @@ public class ExperimentControllerTest {
     }
 
     @Test
+    public void testDownloadLitterBoxAnalysis() throws IOException {
+        when(experimentDataService.getLitterBoxAnalysisResults(ID)).thenReturn(new ArrayList<>());
+        assertDoesNotThrow(
+                () -> experimentController.downloadLitterBoxAnalysis(ID_STRING, httpServletResponse)
+        );
+        verify(experimentDataService).getLitterBoxAnalysisResults(ID);
+        verify(httpServletResponse).getWriter();
+    }
+
+    @Test
+    public void testDownloadLitterBoxAnalysisIO() throws IOException {
+        when(httpServletResponse.getWriter()).thenThrow(IOException.class);
+        assertThrows(RuntimeException.class,
+                () -> experimentController.downloadLitterBoxAnalysis(ID_STRING, httpServletResponse)
+        );
+        verify(experimentDataService, never()).getLitterBoxAnalysisResults(anyInt());
+        verify(httpServletResponse).getWriter();
+    }
+
+    @Test
+    public void testDownloadLitterBoxAnalysisInvalidId() throws IOException {
+        assertThrows(IncompleteDataException.class,
+                () -> experimentController.downloadLitterBoxAnalysis("id", httpServletResponse)
+        );
+        verify(experimentDataService, never()).getLitterBoxAnalysisResults(anyInt());
+        verify(httpServletResponse, never()).getWriter();
+    }
+
+    @Test
     public void testUploadProjectFile() throws IOException {
         when(file.getContentType()).thenReturn(FILETYPE_SB3);
         when(file.getOriginalFilename()).thenReturn(FILENAME_SB3);

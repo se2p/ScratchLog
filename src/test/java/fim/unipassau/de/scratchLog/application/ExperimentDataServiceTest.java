@@ -24,12 +24,14 @@ import fim.unipassau.de.scratchLog.application.service.ExperimentDataService;
 import fim.unipassau.de.scratchLog.persistence.entity.BlockEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.ClickEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
+import fim.unipassau.de.scratchLog.persistence.entity.Participant;
 import fim.unipassau.de.scratchLog.persistence.entity.ResourceEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.User;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventJSONProjection;
 import fim.unipassau.de.scratchLog.persistence.repository.BlockEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ClickEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
+import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventType;
@@ -59,10 +61,13 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -84,15 +89,22 @@ public class ExperimentDataServiceTest {
     @Mock
     private ResourceEventRepository resourceEventRepository;
 
+    @Mock
+    private ParticipantRepository participantRepository;
+
     private static final int ID = 1;
     private final User user = new User("participant", "email", Role.PARTICIPANT, Language.GERMAN, "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, "url");
     private static final String[] EVENT_DATA_HEADER = {"id", "user", "username", "experiment", "date", "eventType",
             "event", "spritename", "metadata", "xml", "json", "name", "md5", "filetype", "library", "table"};
+    private static final String[] ISSUE_HEADER = {"user", "issue id", "finder name", "translated finder name",
+            "issue type", "severity", "actor name", "location", "hint", "costumes", "current costumes", "json"};
+    private final Participant participant = new Participant(user, experiment, null, null);
     private final List<BlockEvent> blockEventData = getBlockEvents(3);
     private final List<ClickEvent> clickEventData = getClickEvents(2);
     private final List<ResourceEvent> resourceEventData = getResourceEvents(2);
+    private final List<Participant> participants = List.of(participant, participant);
 
     @BeforeEach
     public void setup() {
@@ -170,7 +182,7 @@ public class ExperimentDataServiceTest {
     }
 
     @Test
-    public void testGetAnalyzedProgramDataCountException() {
+    public void testGetAnalyzedProgramDataCountParsingError() {
         BlockEventJSONProjection projection = new BlockEventJSONProjection() {
             @Override
             public Integer getId() {
@@ -204,6 +216,105 @@ public class ExperimentDataServiceTest {
         assertThrows(IllegalArgumentException.class,
                 () -> experimentDataService.getAnalyzedProgramDataCount(blockEventJSONProjections)
         );
+    }
+
+    @Test
+    public void testGetLitterBoxAnalysisResults() throws IOException, URISyntaxException {
+        URI json = getClass().getClassLoader().getResource("json.txt").toURI();
+        String jsonCode = Files.readString(Paths.get(json));
+        BlockEventJSONProjection projection = new BlockEventJSONProjection() {
+            @Override
+            public Integer getId() {
+                return 1;
+            }
+
+            @Override
+            public String getCode() {
+                return jsonCode;
+            }
+
+            @Override
+            public LocalDateTime getDate() {
+                return LocalDateTime.now();
+            }
+
+            @Override
+            public String getEvent() {
+                return "CREATE";
+            }
+        };
+        List<BlockEventJSONProjection> blockEventJSONProjections = List.of(projection);
+        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(participantRepository.findAllByExperiment(experiment)).thenReturn(participants);
+        when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
+                experiment)).thenReturn(blockEventJSONProjections);
+        List<String[]> results = experimentDataService.getLitterBoxAnalysisResults(ID);
+        assertAll(
+                () -> assertFalse(results.isEmpty()),
+                () -> assertEquals(Arrays.toString(ISSUE_HEADER), Arrays.toString(results.get(0)))
+        );
+        verify(experimentRepository).findById(ID);
+        verify(participantRepository).findAllByExperiment(experiment);
+        verify(blockEventRepository, times(2)).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
+                experiment);
+    }
+
+    @Test
+    public void testGetLitterBoxAnalysisResultsParsingError() {
+        BlockEventJSONProjection projection = new BlockEventJSONProjection() {
+            @Override
+            public Integer getId() {
+                return 1;
+            }
+
+            @Override
+            public String getCode() {
+                return "json";
+            }
+
+            @Override
+            public LocalDateTime getDate() {
+                return LocalDateTime.now();
+            }
+
+            @Override
+            public String getEvent() {
+                return "CREATE";
+            }
+        };
+        List<BlockEventJSONProjection> blockEventJSONProjections = List.of(projection);
+        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(participantRepository.findAllByExperiment(experiment)).thenReturn(participants);
+        when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
+                experiment)).thenReturn(blockEventJSONProjections);
+        assertThrows(RuntimeException.class,
+                () -> experimentDataService.getLitterBoxAnalysisResults(ID)
+        );
+        verify(experimentRepository).findById(ID);
+        verify(participantRepository).findAllByExperiment(experiment);
+        verify(blockEventRepository).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
+    }
+
+    @Test
+    public void testGetLitterBoxAnalysisResultsExperimentNotFound() {
+        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(participantRepository.findAllByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+                () -> experimentDataService.getLitterBoxAnalysisResults(ID)
+        );
+        verify(experimentRepository).findById(ID);
+        verify(participantRepository).findAllByExperiment(experiment);
+        verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
+    }
+
+    @Test
+    public void testGetLitterBoxAnalysisResultsInvalidId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> experimentDataService.getLitterBoxAnalysisResults(0)
+        );
+        verify(experimentRepository, never()).findById(anyInt());
+        verify(participantRepository, never()).findAllByExperiment(any());
+        verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
     }
 
     private List<BlockEvent> getBlockEvents(int number) {

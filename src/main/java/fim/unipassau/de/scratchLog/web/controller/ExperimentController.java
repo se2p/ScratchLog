@@ -547,7 +547,7 @@ public class ExperimentController {
      * @param id The experiment id to search for.
      * @param httpServletResponse The servlet response returning the file.
      * @throws IncompleteDataException if the passed id is null or invalid.
-     * @throws RuntimeException if an {@link IOException} occurs
+     * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
@@ -635,6 +635,41 @@ public class ExperimentController {
             model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
+        }
+    }
+
+    /**
+     * Analysis the stored code data for all users in the experiment with the given id using LitterBox and saves the
+     * information in a CSV file.
+     *
+     * @param id The id of the experiment.
+     * @param httpServletResponse The servlet response returning the file.
+     * @throws IncompleteDataException if the passed id is invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
+     */
+    @GetMapping("/analysis")
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadLitterBoxAnalysis(@RequestParam(ID) final String id,
+                                          final HttpServletResponse httpServletResponse) {
+        int experimentId = NumberParser.parseId(id);
+
+        if (experimentId < Constants.MIN_ID) {
+            LOGGER.error("Cannot download LitterBox analysis results for experiment with invalid id " + id + "!");
+            throw new IncompleteDataException("Cannot download LitterBox analysis results for experiment with invalid "
+                    + "id " + id + "!");
+        }
+
+        try {
+            httpServletResponse.setContentType("text/csv");
+            httpServletResponse.setHeader("Content-Disposition", "attachment;filename=experiment_litterbox_"
+                    + experimentId + ".csv");
+            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+            CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
+            List<String[]> results = experimentDataService.getLitterBoxAnalysisResults(experimentId);
+            csvWriter.writeAll(results);
+        } catch (IOException e) {
+            LOGGER.error("Could not download LitterBox analysis results due to IOException!", e);
+            throw new RuntimeException("Could not download LitterBox analysis results due to IOException!");
         }
     }
 

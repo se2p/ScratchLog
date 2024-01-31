@@ -1193,6 +1193,27 @@ public class ExperimentControllerIntegrationTest {
     }
 
     @Test
+    public void testDownloadLitterBoxAnalysis() throws Exception {
+        when(experimentDataService.getLitterBoxAnalysisResults(ID)).thenReturn(new ArrayList<>());
+        mvc.perform(get("/experiment/analysis")
+                        .param(ID_PARAM, ID_STRING)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(experimentDataService).getLitterBoxAnalysisResults(ID);
+    }
+
+    @Test
+    public void testDownloadLitterBoxAnalysisInvalidId() throws Exception {
+        mvc.perform(get("/experiment/analysis")
+                        .param(ID_PARAM, "0")
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentDataService, never()).getLitterBoxAnalysisResults(anyInt());
+    }
+
+    @Test
     public void testUploadProjectFile() throws Exception {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         mockMvc.perform(multipart("/experiment/upload")

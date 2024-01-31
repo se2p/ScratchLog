@@ -101,11 +101,6 @@ public class DashboardService {
     private final EventCountRepository eventCountRepository;
 
     /**
-     * The maximum number of data points to be returned when calculating event executions per minute.
-     */
-    private static final int MAX_DATA_POINTS = 500;
-
-    /**
      * Constructs an experiment service with the given dependencies.
      *
      * @param experimentRepository The experiment repository to use.
@@ -416,7 +411,7 @@ public class DashboardService {
         int count = 0;
         int i = 1;
 
-        while (i < projections.size() && counts.size() <= MAX_DATA_POINTS) {
+        while (i < projections.size() && counts.size() <= Constants.MAX_DATA_POINTS) {
             if (projections.get(i).getDate().isBefore(startTime.plusMinutes(1))) {
                 i++;
 

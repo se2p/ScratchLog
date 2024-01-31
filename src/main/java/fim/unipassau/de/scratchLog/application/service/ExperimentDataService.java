@@ -22,22 +22,27 @@ package fim.unipassau.de.scratchLog.application.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
 import de.uni_passau.fim.se2.litterbox.analytics.BugAnalyzer;
+import de.uni_passau.fim.se2.litterbox.analytics.Issue;
 import de.uni_passau.fim.se2.litterbox.analytics.MetricAnalyzer;
+import de.uni_passau.fim.se2.litterbox.analytics.metric.MetricResult;
 import de.uni_passau.fim.se2.litterbox.ast.ParsingException;
 import de.uni_passau.fim.se2.litterbox.ast.model.Program;
+import de.uni_passau.fim.se2.litterbox.ast.model.metadata.resources.ImageMetadata;
 import de.uni_passau.fim.se2.litterbox.ast.parser.ProgramParser;
+import de.uni_passau.fim.se2.litterbox.ast.util.AstNodeUtil;
 import de.uni_passau.fim.se2.litterbox.ast.visitor.ParentVisitor;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.persistence.entity.BlockEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.ClickEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
+import fim.unipassau.de.scratchLog.persistence.entity.Participant;
 import fim.unipassau.de.scratchLog.persistence.entity.ResourceEvent;
 import fim.unipassau.de.scratchLog.persistence.projection.BlockEventJSONProjection;
 import fim.unipassau.de.scratchLog.persistence.repository.BlockEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ClickEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
+import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ResourceEventRepository;
 import fim.unipassau.de.scratchLog.util.Constants;
 import jakarta.persistence.EntityNotFoundException;
@@ -85,6 +90,11 @@ public class ExperimentDataService {
     private final ExperimentRepository experimentRepository;
 
     /**
+     * The participant repository to use for participation queries.
+     */
+    private final ParticipantRepository participantRepository;
+
+    /**
      * String used to search for bug patterns in JSON code using LitterBox.
      */
     private static final String BUGS = "bugs";
@@ -100,27 +110,25 @@ public class ExperimentDataService {
     private static final String PERFUMES = "perfumes";
 
     /**
-     * String used to analyze JSON code with different metrics using LitterBox.
-     */
-    private static final String METRICS = "metrics";
-
-    /**
      * Constructs an event service with the given dependencies.
      *
      * @param blockEventRepository The {@link BlockEventRepository} to use.
      * @param clickEventRepository The {@link ClickEventRepository} to use.
      * @param resourceEventRepository The {@link ResourceEventRepository} to use.
      * @param experimentRepository The {@link ExperimentRepository} to use.
+     * @param participantRepository The {@link ParticipantRepository} to use.
      */
     @Autowired
     public ExperimentDataService(final BlockEventRepository blockEventRepository,
                                  final ClickEventRepository clickEventRepository,
                                  final ResourceEventRepository resourceEventRepository,
-                                 final ExperimentRepository experimentRepository) {
+                                 final ExperimentRepository experimentRepository,
+                                 final ParticipantRepository participantRepository) {
         this.blockEventRepository = blockEventRepository;
         this.clickEventRepository = clickEventRepository;
         this.resourceEventRepository = resourceEventRepository;
         this.experimentRepository = experimentRepository;
+        this.participantRepository = participantRepository;
     }
 
     /**
@@ -156,7 +164,6 @@ public class ExperimentDataService {
      * @param jsons The JSON codes to analyze.
      * @return The number of bug patterns, code smells and perfumes for each JSON.
      */
-    @Transactional
     public List<List<Integer>> getAnalyzedProgramDataCount(final List<BlockEventJSONProjection> jsons) {
         if (jsons.isEmpty()) {
             throw new IllegalArgumentException("Cannot analyze empty list of Scratch programs!");
@@ -171,6 +178,38 @@ public class ExperimentDataService {
         results.add(smells);
         results.add(perfumes);
         return results;
+    }
+
+    /**
+     * Analyzes all Scratch codes saved for participants during the experiment with the given id using LitterBox. The
+     * codes are checked for bug patterns, code smells and perfumes. Additionally, code metrics are calculated.
+     *
+     * @param id The experiment ID.
+     * @return The analysis results.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     * @throws NotFoundException if no corresponding experiment could be found.
+     */
+    public List<String[]> getLitterBoxAnalysisResults(final int id) {
+        if (id < Constants.MIN_ID) {
+            throw new IllegalArgumentException("Cannot return analysis results for experiment with invalid id"
+                    + id + "!");
+        }
+
+        Experiment experiment = experimentRepository.findById(id);
+
+        try {
+            List<Participant> participants = participantRepository.findAllByExperiment(experiment);
+            List<String[]> issues = new ArrayList<>();
+            List<String[]> metrics = new ArrayList<>();
+            issues.add(new String[]{"user", "issue id", "finder name", "translated finder name", "issue type",
+                    "severity", "actor name", "location", "hint", "costumes", "current costumes", "json"});
+            participants.forEach(participant -> analyzeCodesForUser(participant, issues, metrics));
+            issues.addAll(metrics);
+            return issues;
+        } catch (EntityNotFoundException e) {
+            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
+            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
+        }
     }
 
     /**
@@ -261,45 +300,153 @@ public class ExperimentDataService {
     private void addAnalyzedBugDataCount(final List<Integer> bugs, final List<Integer> smells,
                                          final List<Integer> perfumes, final String json) {
         try {
-            Map<String, Set<?>> results = analyzeJSON(json, false);
+            Program program = getProgram(json);
+            Map<String, Set<Issue>> results = getProgramIssues(program);
             bugs.add(results.get(BUGS).size());
             smells.add(results.get(SMELLS).size());
             perfumes.add(results.get(PERFUMES).size());
         } catch (ParsingException | JsonProcessingException e) {
-            throw new RuntimeException("Failed to analyze JSON code when trying to compute bug counts!", e);
+            throw new RuntimeException("Failed to parse JSON code when trying to compute bug counts!", e);
         }
     }
 
     /**
-     * Analyzes the given JSON code for bug patterns, code smells, perfumes and metrics and returns the results in a
-     * map.
+     * Analyzes all JSON codes saved for the given participant with LitterBox and adds the found issues and metric
+     * results to the respective list. If more than a certain number of codes has been saved for the participant, only
+     * the first codes are analyzed to limit computation time.
      *
-     * @param json The JSON code to analyze.
-     * @param analyzeMetrics Boolean indicating whether the code metrics should be computed.
-     * @return The analysis results.
+     * @param participant The participant whose codes should be analyzed.
+     * @param issues The list used to store found issues, i.e. bug patterns, code smells and perfumes.
+     * @param metrics The list used to store code metric results.
+     */
+    private void analyzeCodesForUser(final Participant participant, final List<String[]> issues,
+                                     final List<String[]> metrics) {
+        List<BlockEventJSONProjection> projections =
+                blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(participant.getUser(),
+                        participant.getExperiment());
+
+        if (projections.size() > Constants.MAX_DATA_POINTS) {
+            projections = projections.subList(0, Constants.MAX_DATA_POINTS);
+        }
+
+        projections.forEach(projection -> addAnalysisResults(issues, metrics, participant.getUser().getUsername(),
+                projection.getCode()));
+    }
+
+    /**
+     * Adds information on bug patterns, code smells and perfumes discovered in the given Scratch code as well as
+     * computed code metrics to the respective list.
+     *
+     * @param issues The list used to store issue information, i.e. bug patterns, code smells and perfumes.
+     * @param metrics The list used to store code metric information.
+     * @param username The name of the user whose program should be analyzed.
+     * @param json The Scratch code to be analyzed.
+     * @throws RuntimeException if the given code could not be parsed correctly.
+     */
+    private void addAnalysisResults(final List<String[]> issues, final List<String[]> metrics, final String username,
+                                    final String json) {
+        try {
+            Program program = getProgram(json);
+            Map<String, Set<Issue>> results = getProgramIssues(program);
+            results.get(BUGS).forEach(issue -> addIssueData(issues, issue, username, json));
+            results.get(SMELLS).forEach(issue -> addIssueData(issues, issue, username, json));
+            results.get(PERFUMES).forEach(issue -> addIssueData(issues, issue, username, json));
+            addMetricData(program, metrics, username, json);
+        } catch (ParsingException | JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse JSON code for analysis!", e);
+        }
+    }
+
+    /**
+     * Creates a LitterBox program from the given Scratch JSON code for further analysis.
+     *
+     * @param json The string be parsed.
+     * @return The parsed program.
      * @throws JsonProcessingException if the JSON code could not be parsed correctly.
      * @throws ParsingException if LitterBox failed to parse the JSON.
      */
-    private Map<String, Set<?>> analyzeJSON(final String json, final boolean analyzeMetrics)
-            throws JsonProcessingException, ParsingException {
-        Map<String, Set<?>> results = new HashMap<>();
+    private Program getProgram(final String json) throws JsonProcessingException, ParsingException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(json);
+        Program program = ProgramParser.parseProgram("json", rootNode);
+        program.accept(new ParentVisitor());
+        return program;
+    }
+
+    /**
+     * Analyzes the given LitterBox program for bug patterns, code smells and perfumes and returns the results in a map.
+     *
+     * @param program The program to analyze.
+     * @return The analysis results.
+     */
+    private Map<String, Set<Issue>> getProgramIssues(final Program program) {
+        Map<String, Set<Issue>> results = new HashMap<>();
         BugAnalyzer bugAnalyzer = new BugAnalyzer(null, null, BUGS, false, false, false);
         BugAnalyzer smellsAnalyzer = new BugAnalyzer(null, null, SMELLS, false, false, false);
         BugAnalyzer perfumesAnalyzer = new BugAnalyzer(null, null, PERFUMES, false, false, false);
-        Program program = ProgramParser.parseProgram("json", rootNode);
-        program.accept(new ParentVisitor());
         results.put(BUGS, bugAnalyzer.check(program));
         results.put(SMELLS, smellsAnalyzer.check(program));
         results.put(PERFUMES, perfumesAnalyzer.check(program));
+        return results;
+    }
 
-        if (analyzeMetrics) {
-            MetricAnalyzer metricAnalyzer = new MetricAnalyzer(null, null, false);
-            results.put(METRICS, Sets.newHashSet(metricAnalyzer.check(program)));
+    /**
+     * Adds relevant information from the given LitterBox issue, i.e. a bug pattern, code smell or perfume, to the
+     * passed list.
+     *
+     * @param issues The list used to store the information.
+     * @param issue The LitterBox issue from which information is extracted.
+     * @param username The name of the user for whom this issue was created.
+     * @param json The string of the Scratch code in which the issue was found.
+     */
+    private void addIssueData(final List<String[]> issues, final Issue issue, final String username,
+                              final String json) {
+        String issueLocation = issue.getCodeLocation() == null ? null : AstNodeUtil.getBlockId(issue.getCodeLocation());
+        List<String> costumes = issue.getActor().getActorMetadata().getCostumes().getList().stream()
+                .map(ImageMetadata::getAssetId).toList();
+        issues.add(new String[]{username, String.valueOf(issue.getId()), issue.getFinderName(),
+                issue.getTranslatedFinderName(), issue.getIssueType().name(), String.valueOf(
+                issue.getSeverity().getSeverityLevel()), issue.getActorName(), issueLocation, issue.getHint(),
+                String.valueOf(costumes), String.valueOf(issue.getActor().getActorMetadata().getCurrentCostume()),
+                json});
+    }
+
+    /**
+     * Computes all code metrics supported by LitterBox for the given program and adds the results to the given list.
+     *
+     * @param program The program to analyze.
+     * @param metrics The list used for storing results.
+     * @param username The name of the user whose Scratch code is being analyzed.
+     * @param json The corresponding Scratch code as a string.
+     */
+    private void addMetricData(final Program program, final List<String[]> metrics, final String username,
+                               final String json) {
+        List<MetricResult> metricResults = getProgramMetrics(program);
+
+        if (metrics.isEmpty()) {
+            List<String> header = new ArrayList<>();
+            header.add("user");
+            header.add("json");
+            metricResults.forEach(metric -> header.add(metric.name()));
+            metrics.add(header.toArray(String[]::new));
         }
 
-        return results;
+        List<String> results = new ArrayList<>();
+        results.add(username);
+        results.add(json);
+        metricResults.forEach(metric -> results.add(String.valueOf(metric.value())));
+        metrics.add(results.toArray(String[]::new));
+    }
+
+    /**
+     * Analyzes the given LitterBox program using different code metrics.
+     *
+     * @param program The program to analyze.
+     * @return A list containing results for each computed metric.
+     */
+    private List<MetricResult> getProgramMetrics(final Program program) {
+        MetricAnalyzer metricAnalyzer = new MetricAnalyzer(null, null, false);
+        return metricAnalyzer.check(program);
     }
 
 }
