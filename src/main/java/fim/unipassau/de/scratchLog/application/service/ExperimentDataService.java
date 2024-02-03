@@ -52,6 +52,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -202,7 +203,7 @@ public class ExperimentDataService {
             List<String[]> issues = new ArrayList<>();
             List<String[]> metrics = new ArrayList<>();
             issues.add(new String[]{"user", "issue id", "finder name", "translated finder name", "issue type",
-                    "severity", "actor name", "location", "hint", "costumes", "current costumes", "json"});
+                    "severity", "actor name", "location", "hint", "costumes", "current costumes", "json", "timestamp"});
             participants.forEach(participant -> analyzeCodesForUser(participant, issues, metrics));
             issues.addAll(metrics);
             return issues;
@@ -330,7 +331,7 @@ public class ExperimentDataService {
         }
 
         projections.forEach(projection -> addAnalysisResults(issues, metrics, participant.getUser().getUsername(),
-                projection.getCode()));
+                projection.getCode(), projection.getDate()));
     }
 
     /**
@@ -341,17 +342,18 @@ public class ExperimentDataService {
      * @param metrics The list used to store code metric information.
      * @param username The name of the user whose program should be analyzed.
      * @param json The Scratch code to be analyzed.
+     * @param time The date and time at which the Scratch code was created.
      * @throws RuntimeException if the given code could not be parsed correctly.
      */
     private void addAnalysisResults(final List<String[]> issues, final List<String[]> metrics, final String username,
-                                    final String json) {
+                                    final String json, final LocalDateTime time) {
         try {
             Program program = getProgram(json);
             Map<String, Set<Issue>> results = getProgramIssues(program);
-            results.get(BUGS).forEach(issue -> addIssueData(issues, issue, username, json));
-            results.get(SMELLS).forEach(issue -> addIssueData(issues, issue, username, json));
-            results.get(PERFUMES).forEach(issue -> addIssueData(issues, issue, username, json));
-            addMetricData(program, metrics, username, json);
+            results.get(BUGS).forEach(issue -> addIssueData(issues, issue, username, json, time));
+            results.get(SMELLS).forEach(issue -> addIssueData(issues, issue, username, json, time));
+            results.get(PERFUMES).forEach(issue -> addIssueData(issues, issue, username, json, time));
+            addMetricData(program, metrics, username, json, time);
         } catch (ParsingException | JsonProcessingException e) {
             throw new RuntimeException("Failed to parse JSON code for analysis!", e);
         }
@@ -398,9 +400,10 @@ public class ExperimentDataService {
      * @param issue The LitterBox issue from which information is extracted.
      * @param username The name of the user for whom this issue was created.
      * @param json The string of the Scratch code in which the issue was found.
+     * @param time The date and time at which the Scratch code was created.
      */
     private void addIssueData(final List<String[]> issues, final Issue issue, final String username,
-                              final String json) {
+                              final String json, final LocalDateTime time) {
         String issueLocation = issue.getCodeLocation() == null ? null : AstNodeUtil.getBlockId(issue.getCodeLocation());
         List<String> costumes = issue.getActor().getActorMetadata().getCostumes().getList().stream()
                 .map(ImageMetadata::getAssetId).toList();
@@ -408,7 +411,7 @@ public class ExperimentDataService {
                 issue.getTranslatedFinderName(), issue.getIssueType().name(), String.valueOf(
                 issue.getSeverity().getSeverityLevel()), issue.getActorName(), issueLocation, issue.getHint(),
                 String.valueOf(costumes), String.valueOf(issue.getActor().getActorMetadata().getCurrentCostume()),
-                json});
+                json, String.valueOf(time)});
     }
 
     /**
@@ -418,15 +421,17 @@ public class ExperimentDataService {
      * @param metrics The list used for storing results.
      * @param username The name of the user whose Scratch code is being analyzed.
      * @param json The corresponding Scratch code as a string.
+     * @param time The date and time at which the Scratch code was created.
      */
     private void addMetricData(final Program program, final List<String[]> metrics, final String username,
-                               final String json) {
+                               final String json, final LocalDateTime time) {
         List<MetricResult> metricResults = getProgramMetrics(program);
 
         if (metrics.isEmpty()) {
             List<String> header = new ArrayList<>();
             header.add("user");
             header.add("json");
+            header.add("timestamp");
             metricResults.forEach(metric -> header.add(metric.name()));
             metrics.add(header.toArray(String[]::new));
         }
@@ -434,6 +439,7 @@ public class ExperimentDataService {
         List<String> results = new ArrayList<>();
         results.add(username);
         results.add(json);
+        results.add(String.valueOf(time));
         metricResults.forEach(metric -> results.add(String.valueOf(metric.value())));
         metrics.add(results.toArray(String[]::new));
     }

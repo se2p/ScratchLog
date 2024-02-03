@@ -63,7 +63,6 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
@@ -99,7 +98,8 @@ public class ExperimentDataServiceTest {
     private static final String[] EVENT_DATA_HEADER = {"id", "user", "username", "experiment", "date", "eventType",
             "event", "spritename", "metadata", "xml", "json", "name", "md5", "filetype", "library", "table"};
     private static final String[] ISSUE_HEADER = {"user", "issue id", "finder name", "translated finder name",
-            "issue type", "severity", "actor name", "location", "hint", "costumes", "current costumes", "json"};
+            "issue type", "severity", "actor name", "location", "hint", "costumes", "current costumes", "json",
+            "timestamp"};
     private final Participant participant = new Participant(user, experiment, null, null);
     private final List<BlockEvent> blockEventData = getBlockEvents(3);
     private final List<ClickEvent> clickEventData = getClickEvents(2);
