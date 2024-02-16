@@ -66,17 +66,6 @@
                 </a>
             </div>
 
-            <!-- The download button for LitterBox analysis results. -->
-            <div>
-                <h5 th:text="#{litterbox_csv}"></h5>
-                <a class="btn btn-primary" th:unless="${participants.isEmpty()}"
-                   th:href="@{/experiment/analysis(id=${experimentDTO.id})}">
-                    <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download CSV file"></i>
-                    <span th:text="#{code_analysis}"></span>
-                    <span class="sr-only" th:text="#{download}"></span>
-                </a>
-            </div>
-
             <!-- The button to upload an initial sb3 template or delete an existing one. -->
             <div>
                 <h5 th:text="#{heading_sb3}"></h5>

@@ -20,9 +20,7 @@
 package fim.unipassau.de.scratchLog.integration;
 
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
-import fim.unipassau.de.scratchLog.application.service.CodeService;
 import fim.unipassau.de.scratchLog.application.service.EventService;
-import fim.unipassau.de.scratchLog.application.service.ExperimentDataService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.FileService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
@@ -93,13 +91,7 @@ public class ResultControllerIntegrationTest {
     private ExperimentService experimentService;
 
     @MockBean
-    private ExperimentDataService experimentDataService;
-
-    @MockBean
     private EventService eventService;
-
-    @MockBean
-    private CodeService codeService;
 
     @MockBean
     private FileService fileService;
@@ -139,10 +131,6 @@ public class ResultControllerIntegrationTest {
     private final List<BlockEventJSONProjection> jsonProjections = getJsonProjections(3);
     private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(2));
     private final List<ParticipantDTO> participants = List.of(participantDTO1, participantDTO2);
-    private final List<Integer> bugPatterns = List.of(0, 0, 1);
-    private final List<Integer> smells = List.of(0, 0, 0);
-    private final List<Integer> perfumes = List.of(0, 1, 1);
-    private final List<List<Integer>> analysisResults = List.of(bugPatterns, smells, perfumes);
     ExperimentProjection experimentProjection = new ExperimentProjection() {
         @Override
         public Integer getId() {
@@ -168,9 +156,6 @@ public class ResultControllerIntegrationTest {
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
-        when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(
-                jsonProjections);
-        when(experimentDataService.getAnalyzedProgramDataCount(jsonProjections)).thenReturn(analysisResults);
         when(eventService.getCodesData(ID, ID)).thenReturn(codesDataDTO);
         mvc.perform(get("/result")
                 .param(EXPERIMENT_PARAM, ID_STRING)
@@ -184,9 +169,6 @@ public class ResultControllerIntegrationTest {
                 .andExpect(model().attribute("zips", is(zips)))
                 .andExpect(model().attribute("user", is(ID)))
                 .andExpect(model().attribute("experiment", is(ID)))
-                .andExpect(model().attribute("bugs", is(bugPatterns)))
-                .andExpect(model().attribute("smells", is(smells)))
-                .andExpect(model().attribute("perfumes", is(perfumes)))
                 .andExpect(model().attribute("codeCount", is(codesDataDTO.getCount())))
                 .andExpect(status().isOk())
                 .andExpect(view().name(RESULT));
@@ -196,8 +178,6 @@ public class ResultControllerIntegrationTest {
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
-        verify(codeService).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(experimentDataService).getAnalyzedProgramDataCount(jsonProjections);
         verify(eventService).getCodesData(ID, ID);
     }
 
@@ -209,9 +189,6 @@ public class ResultControllerIntegrationTest {
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
-        when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(
-                jsonProjections);
-        when(experimentDataService.getAnalyzedProgramDataCount(jsonProjections)).thenReturn(analysisResults);
         when(eventService.getCodesData(ID, ID)).thenReturn(new CodesDataDTO());
         mvc.perform(get("/result")
                 .param(EXPERIMENT_PARAM, ID_STRING)
@@ -225,9 +202,6 @@ public class ResultControllerIntegrationTest {
                 .andExpect(model().attribute("zips", is(zips)))
                 .andExpect(model().attribute("user", is(ID)))
                 .andExpect(model().attribute("experiment", is(ID)))
-                .andExpect(model().attribute("bugs", is(bugPatterns)))
-                .andExpect(model().attribute("smells", is(smells)))
-                .andExpect(model().attribute("perfumes", is(perfumes)))
                 .andExpect(model().attribute("codeCount", is(0)))
                 .andExpect(status().isOk())
                 .andExpect(view().name(RESULT));
@@ -237,8 +211,6 @@ public class ResultControllerIntegrationTest {
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
-        verify(codeService).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(experimentDataService).getAnalyzedProgramDataCount(jsonProjections);
         verify(eventService).getCodesData(ID, ID);
     }
 
@@ -264,9 +236,6 @@ public class ResultControllerIntegrationTest {
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
-        verify(eventService, never()).getCodesData(anyInt(), anyInt());
     }
 
     @Test
@@ -285,9 +254,6 @@ public class ResultControllerIntegrationTest {
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
-        verify(eventService, never()).getCodesData(anyInt(), anyInt());
     }
 
     @Test
@@ -306,9 +272,6 @@ public class ResultControllerIntegrationTest {
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
-        verify(eventService, never()).getCodesData(anyInt(), anyInt());
     }
 
     @Test
@@ -384,7 +347,7 @@ public class ResultControllerIntegrationTest {
         };
         when(experimentService.getSb3File(ID)).thenReturn(projection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(codeService.findJsonById(ID)).thenReturn(JSON);
+        when(eventService.findJsonById(ID)).thenReturn(JSON);
         mvc.perform(get("/result/generate")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -394,7 +357,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isOk());
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(codeService).findJsonById(ID);
+        verify(eventService).findJsonById(ID);
     }
 
     @Test
@@ -411,7 +374,7 @@ public class ResultControllerIntegrationTest {
         fileDTOS.add(zip);
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(codeService.findJsonById(ID)).thenReturn(JSON);
+        when(eventService.findJsonById(ID)).thenReturn(JSON);
         mvc.perform(get("/result/generate")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -421,7 +384,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isOk());
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(codeService).findJsonById(ID);
+        verify(eventService).findJsonById(ID);
     }
 
     @Test
@@ -436,7 +399,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isNotFound());
         verify(experimentService).getSb3File(ID);
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).findJsonById(anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
     }
 
     @Test
@@ -450,7 +413,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).findJsonById(anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
     }
 
     @Test
@@ -464,7 +427,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).findJsonById(anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
     }
 
     @Test
@@ -478,7 +441,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).findJsonById(anyInt());
+        verify(eventService, never()).findJsonById(anyInt());
     }
 
     @Test
@@ -555,26 +518,26 @@ public class ResultControllerIntegrationTest {
 
     @Test
     public void testDownloadAllXmlFiles() throws Exception {
-        when(codeService.getXMLForUser(ID, ID)).thenReturn(xmlProjections);
+        when(eventService.getXMLForUser(ID, ID)).thenReturn(xmlProjections);
         mvc.perform(get("/result/xmls")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
-        verify(codeService).getXMLForUser(ID, ID);
+        verify(eventService).getXMLForUser(ID, ID);
     }
 
     @Test
     public void testDownloadAllXmlFilesNotFound() throws Exception {
-        when(codeService.getXMLForUser(ID, ID)).thenThrow(NotFoundException.class);
+        when(eventService.getXMLForUser(ID, ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/result/xmls")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isNotFound());
-        verify(codeService).getXMLForUser(ID, ID);
+        verify(eventService).getXMLForUser(ID, ID);
     }
 
     @Test
@@ -585,31 +548,31 @@ public class ResultControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
-        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
+        verify(eventService, never()).getXMLForUser(anyInt(), anyInt());
     }
 
     @Test
     public void testDownloadAllJsonFiles() throws Exception {
-        when(codeService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
         mvc.perform(get("/result/jsons")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
-        verify(codeService).getJsonForUser(ID, ID);
+        verify(eventService).getJsonForUser(ID, ID);
     }
 
     @Test
     public void testDownloadAllJsonFilesNotFound() throws Exception {
-        when(codeService.getJsonForUser(ID, ID)).thenThrow(NotFoundException.class);
+        when(eventService.getJsonForUser(ID, ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/result/jsons")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isNotFound());
-        verify(codeService).getJsonForUser(ID, ID);
+        verify(eventService).getJsonForUser(ID, ID);
     }
 
     @Test
@@ -620,12 +583,12 @@ public class ResultControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
-        verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
     }
 
     @Test
     public void testGetCodes() throws Exception {
-        when(codeService.getCodesForUser(anyInt(), anyInt(), any(PageRequest.class))).thenReturn(blockEventProjections);
+        when(eventService.getCodesForUser(anyInt(), anyInt(), any(PageRequest.class))).thenReturn(blockEventProjections);
         mvc.perform(get("/result/codes")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -633,7 +596,7 @@ public class ResultControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
-        verify(codeService).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(eventService).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -645,7 +608,7 @@ public class ResultControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -657,7 +620,7 @@ public class ResultControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -669,7 +632,7 @@ public class ResultControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -690,7 +653,6 @@ public class ResultControllerIntegrationTest {
         List<FileDTO> fileDTOS = new ArrayList<>();
         fileDTOS.add(fileDTO);
         fileDTOS.add(zip);
-        Optional<Sb3ZipDTO> project = Optional.of(sb3ZipDTO);
         ExperimentProjection projection = new ExperimentProjection() {
             @Override
             public Integer getId() {
@@ -709,8 +671,8 @@ public class ResultControllerIntegrationTest {
         };
         when(experimentService.getSb3File(ID)).thenReturn(projection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(project);
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -721,17 +683,16 @@ public class ResultControllerIntegrationTest {
                         is("attachment;filename=zip_user1_experiment1.zip")));
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(codeService).getFilteredJsons(ID, ID, 0, 0, 0, project);
+        verify(eventService).getJsonForUser(ID, ID);
         verify(fileService).findFinalProject(ID, ID);
     }
 
     @Test
     public void testDownloadSb3FilesNoInitialAndFinalProjects() throws Exception {
-        Optional<Sb3ZipDTO> noSavedProject = Optional.empty();
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
-        when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(noSavedProject);
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.empty());
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -742,17 +703,16 @@ public class ResultControllerIntegrationTest {
                         is("attachment;filename=zip_user1_experiment1.zip")));
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(codeService).getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject);
+        verify(eventService).getJsonForUser(ID, ID);
         verify(fileService).findFinalProject(ID, ID);
     }
 
     @Test
     public void testDownloadSb3FilesStep() throws Exception {
-        Optional<Sb3ZipDTO> project = Optional.of(sb3ZipDTO);
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
-        when(codeService.getFilteredJsons(ID, ID, ID, 0, 0, project)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(project);
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -764,17 +724,16 @@ public class ResultControllerIntegrationTest {
                         is("attachment;filename=zip_user1_experiment1.zip")));
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(codeService).getFilteredJsons(ID, ID, ID, 0, 0, project);
+        verify(eventService).getJsonForUser(ID, ID);
         verify(fileService).findFinalProject(ID, ID);
     }
 
     @Test
     public void testDownloadSb3FilesStartStop() throws Exception {
-        Optional<Sb3ZipDTO> project = Optional.of(sb3ZipDTO);
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
-        when(codeService.getFilteredJsons(ID, ID, 0, ID, 2, project)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(project);
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -788,7 +747,7 @@ public class ResultControllerIntegrationTest {
                         is("attachment;filename=zip_user1_experiment1.zip")));
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(codeService).getFilteredJsons(ID, ID, 0, ID, 2, project);
+        verify(eventService).getJsonForUser(ID, ID);
         verify(fileService).findFinalProject(ID, ID);
     }
 
@@ -802,7 +761,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
     }
 
@@ -816,7 +775,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
     }
 
@@ -831,8 +790,29 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDownloadSb3FilesInvalidEndPosition() throws Exception {
+        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
+        when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
+        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
+        mvc.perform(get("/result/sb3s")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .param(USER_PARAM, ID_STRING)
+                .param(START_PARAM, ID_STRING)
+                .param(END_PARAM, "5")
+                .param(INCLUDE_PARAM, "false")
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentService).getSb3File(ID);
+        verify(fileService).getFileDTOs(ID, ID);
+        verify(eventService).getJsonForUser(ID, ID);
+        verify(fileService).findFinalProject(ID, ID);
     }
 
     @Test
@@ -848,7 +828,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
     }
 
@@ -889,8 +869,7 @@ public class ResultControllerIntegrationTest {
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID)).thenReturn(projection);
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
-        when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(
-                jsonProjections);
+        when(eventService.getJsonForUser(anyInt(), anyInt())).thenReturn(jsonProjections);
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
         mvc.perform(get("/result/sb3s/all")
                         .param(EXPERIMENT_PARAM, ID_STRING)
@@ -901,7 +880,7 @@ public class ResultControllerIntegrationTest {
                         is("attachment;filename=zip_user0_experiment1.zip")));
         verify(experimentService).getSb3File(ID);
         verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, times(2)).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(eventService, times(2)).getJsonForUser(anyInt(), anyInt());
         verify(fileService, times(2)).findFinalProject(anyInt(), anyInt());
     }
 
@@ -942,7 +921,7 @@ public class ResultControllerIntegrationTest {
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID)).thenReturn(projection);
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
-        when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(jsonProjections);
+        when(eventService.getJsonForUser(anyInt(), anyInt())).thenReturn(jsonProjections);
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
         mvc.perform(get("/result/sb3s/all")
                         .param(EXPERIMENT_PARAM, ID_STRING)
@@ -954,7 +933,7 @@ public class ResultControllerIntegrationTest {
                         is("attachment;filename=zip_user0_experiment1.zip")));
         verify(experimentService).getSb3File(ID);
         verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, times(2)).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(eventService, times(2)).getJsonForUser(anyInt(), anyInt());
         verify(fileService, times(2)).findFinalProject(anyInt(), anyInt());
     }
 
@@ -968,7 +947,7 @@ public class ResultControllerIntegrationTest {
                 .andExpect(status().isBadRequest());
         verify(experimentService).getSb3File(ID);
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
     }
 
