@@ -59,10 +59,6 @@ import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -286,70 +282,6 @@ public class EventService {
     }
 
     /**
-     * Returns the json code of the block event with the given id.
-     *
-     * @param id The block event id to search for.
-     * @return The json string.
-     * @throws IllegalArgumentException if the passed id is invalid or the event does not have any JSON code.
-     * @throws NotFoundException if no corresponding block event could be found.
-     */
-    @Transactional
-    public String findJsonById(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot find block event with invalid id " + id + "!");
-        }
-
-        Optional<BlockEvent> projection = blockEventRepository.findById(id);
-
-        if (projection.isEmpty()) {
-            LOGGER.error("Could not find block event with id " + id + "!");
-            throw new NotFoundException("Could not find block event with id " + id + "!");
-        } else if (projection.get().getCode() == null) {
-            throw new IllegalArgumentException("No json string could be found for the block event with id " + id + "!");
-        }
-
-        return projection.get().getCode();
-    }
-
-    /**
-     * Returns the latest saved json code for the user with the given id during the experiment with the given id, if it
-     * exists and a participant entry could be found for the user.
-     *
-     * @param userId The user id to search for.
-     * @param experimentId The experiment id to search for.
-     * @return The json code, or {@code null}.
-     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
-     * @throws NotFoundException if no corresponding user or experiment entry could be found.
-     */
-    @Transactional
-    public String findFirstJSON(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve the last saved json code for user with invalid id "
-                    + userId + " or experiment with invalid id " + experimentId + "!");
-        }
-
-        User user = userRepository.getReferenceById(userId);
-        Experiment experiment = experimentRepository.getReferenceById(experimentId);
-
-        try {
-            BlockEventJSONProjection projection =
-                    blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
-            Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
-
-            if (!checkReturnFirstJson(participant, projection, user, experiment)) {
-                return null;
-            }
-
-            return projection.getCode();
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
-                    + " when trying to retrieve the last json file!", e);
-            throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
-                    + experimentId + " when trying to retrieve the last json file!", e);
-        }
-    }
-
-    /**
      * Returns the block event counts for the user with the given id during the experiment with the given id.
      *
      * @param user The user id to search for.
@@ -408,127 +340,6 @@ public class EventService {
     }
 
     /**
-     * Retrieves all JSON data and corresponding block event ids saved for the user with the given ID during the
-     * experiment with the given ID.
-     *
-     * @param userId The user ID.
-     * @param experimentId The experiment ID.
-     * @return The list holding the data.
-     * @throws IllegalArgumentException if the user or experiment ids are invalid.
-     * @throws NotFoundException if no JSON data could be found or no corresponding user or experiment could be found.
-     */
-    @Transactional
-    public List<BlockEventJSONProjection> getJsonForUser(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve json data for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
-        User user = userRepository.getReferenceById(userId);
-        Experiment experiment = experimentRepository.getReferenceById(experimentId);
-
-        try {
-            List<BlockEventJSONProjection> json =
-                    blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
-
-            if (json.isEmpty()) {
-                LOGGER.error("Could not find any json data for user with id " + user + " for experiment with id "
-                        + experimentId + "!");
-                throw new NotFoundException("Could not find any json data for user with id " + user + " for experiment "
-                        + "with id " + experimentId + "!");
-            }
-
-            return json;
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
-                    + " when trying to download the json files!", e);
-            throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
-                    + experimentId + " when trying to download the json files!", e);
-        }
-    }
-
-    /**
-     * Retrieves all xml data and corresponding block event ids saved for the user with the given ID during the
-     * experiment with the given ID.
-     *
-     * @param userId The user ID.
-     * @param experimentId The experiment ID.
-     * @return The list holding the data.
-     * @throws IllegalArgumentException if the user or experiment ids are invalid.
-     * @throws NotFoundException if no xml data could be found or no corresponding user or experiment could be found.
-     */
-    @Transactional
-    public List<BlockEventXMLProjection> getXMLForUser(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve xml data for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
-        User user = userRepository.getReferenceById(userId);
-        Experiment experiment = experimentRepository.getReferenceById(experimentId);
-
-        try {
-            List<BlockEventXMLProjection> xml = blockEventRepository.findAllByXmlIsNotNullAndUserAndExperiment(user,
-                    experiment);
-
-            if (xml.isEmpty()) {
-                LOGGER.error("Could not find any xml data for user with id " + user + " for experiment with id "
-                        + experimentId + "!");
-                throw new NotFoundException("Could not find any xml data for user with id " + user + " for experiment "
-                        + "with id " + experimentId + "!");
-            }
-
-            return xml;
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
-                    + " when trying to download the xml files!", e);
-            throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
-                    + experimentId + " when trying to download the xml files!", e);
-        }
-    }
-
-    /**
-     * Retrieves a page of {@link BlockEventProjection}s for the user with the given ID during the experiment with the
-     * given ID.
-     *
-     * @param userId The user ID.
-     * @param experimentId The experiment ID.
-     * @param pageable The pageable containing the page size and page number.
-     * @return The page of block event projections.
-     * @throws IllegalArgumentException if the user or experiment ids are invalid or the page size is invalid.
-     * @throws NotFoundException if no corresponding user or experiment could be found.
-     */
-    @Transactional
-    public Page<BlockEventProjection> getCodesForUser(final int userId, final int experimentId,
-                                                      final Pageable pageable) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve codes data for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
-        int pageSize = pageable.getPageSize();
-        int currentPage = pageable.getPageNumber();
-
-        if (pageSize != Constants.PAGE_SIZE) {
-            throw new IllegalArgumentException("Cannot return block event projection page with invalid page size of "
-                    + pageSize + "!");
-        }
-
-        User user = userRepository.getReferenceById(userId);
-        Experiment experiment = experimentRepository.getReferenceById(experimentId);
-
-        try {
-            return blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(user, experiment,
-                    PageRequest.of(currentPage, pageSize, Sort.by("date").ascending()));
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find block event projections for user with id " + userId + " or experiment with id "
-                    + experimentId + "!", e);
-            throw new NotFoundException("Could not find block event projections for user with id " + userId
-                    + " or experiment with id " + experimentId + "!", e);
-        }
-    }
-
-    /**
      * Retrieves the codes data for the user with the given ID during the experiment with the given ID.
      *
      * @param user The user ID.
@@ -550,33 +361,6 @@ public class EventService {
         }
 
         return createCodesDataDTO(codesData.get());
-    }
-
-    /**
-     * Retrieves all block, click and resource events that occurred during the experiment with the given id. The
-     * retrieved events are converted to a list of string arrays containing all information about the events in a fixed
-     * format.
-     *
-     * @param id The experiment ID.
-     * @return A list of string arrays containing information about all events.
-     */
-    @Transactional
-    public List<String[]> getEventData(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve event data for experiment with invalid id " + id + "!");
-        }
-
-        Experiment experiment = experimentRepository.getReferenceById(id);
-
-        try {
-            List<BlockEvent> blockEvents = blockEventRepository.findAllByExperiment(experiment);
-            List<ClickEvent> clickEvents = clickEventRepository.findAllByExperiment(experiment);
-            List<ResourceEvent> resourceEvents = resourceEventRepository.findAllByExperiment(experiment);
-            return createEventList(blockEvents, clickEvents, resourceEvents);
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
-            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
-        }
     }
 
     /**
@@ -633,37 +417,6 @@ public class EventService {
     }
 
     /**
-     * Checks, whether the latest JSON code should be retrieved for the given user and experiment. This is not the case
-     * if no corresponding participant could be found, no JSON code could be retrieved or the user or experiment are
-     * inactive.
-     *
-     * @param participant The {@link Participant} to check.
-     * @param projection The {@link BlockEventJSONProjection} to check.
-     * @param user The {@link User} for whom the code should be retrieved.
-     * @param experiment The {@link Experiment} during which the code was generated.
-     * @return {@code true} if the code should be returned, or {@code false} otherwise.
-     */
-    private boolean checkReturnFirstJson(final Optional<Participant> participant,
-                                         final BlockEventJSONProjection projection,
-                                         final User user, final Experiment experiment) {
-        if (participant.isEmpty()) {
-            LOGGER.error("No corresponding participant entry could be found for user with id " + user.getId()
-                    + " and experiment with id " + experiment.getId() + " when trying to load the last json code!");
-            return false;
-        } else if (projection == null) {
-            LOGGER.info("No json code saved for user with id " + user.getId() + " for experiment with id "
-                    + experiment.getId() + ".");
-            return false;
-        } else if (!user.isActive() || !experiment.isActive()) {
-            LOGGER.error("Tried to load json code for user with id " + user.getId() + " and experiment with id "
-                    + experiment.getId() + " with inactive user or experiment!");
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    /**
      * Sets the properties for every {@link Event} entity using the values from the given attributes.
      *
      * @param event The event for which the properties are to be set.
@@ -680,80 +433,6 @@ public class EventService {
         event.setUser(user);
         event.setExperiment(experiment);
         event.setDate(eventDTO.getDate());
-    }
-
-    /**
-     * Takes the given block, click and resource events and adds the contained information in a fixed format as string
-     * arrays to a list. An additional string entry is added to indicate from which table, i.e. block_event, click_event
-     * or resource_event, the specific string array originated.
-     *
-     * @param blockEvents The block events whose information should be extracted.
-     * @param clickEvents The click events whose information should be extracted.
-     * @param resourceEvents The resource events whose information should be extracted.
-     * @return A list of string arrays containing all the information of the given events.
-     */
-    private List<String[]> createEventList(final List<BlockEvent> blockEvents, final List<ClickEvent> clickEvents,
-                                           final List<ResourceEvent> resourceEvents) {
-        List<String[]> events = new ArrayList<>();
-        String[] header = {"id", "user", "username", "experiment", "date", "eventType", "event", "spritename",
-                "metadata", "xml", "json", "name", "md5", "filetype", "library", "table"};
-        events.add(header);
-        addBlockEventsToList(events, blockEvents);
-        addClickEventsToList(events, clickEvents);
-        addResourceEventsToList(events, resourceEvents);
-        return events;
-    }
-
-    /**
-     * Adds the information contained in the given block events to the passed list.
-     *
-     * @param events The list to which the information should be added.
-     * @param blockEvents The block events.
-     */
-    private void addBlockEventsToList(final List<String[]> events, final List<BlockEvent> blockEvents) {
-        for (BlockEvent blockEvent : blockEvents) {
-            String[] data = {blockEvent.getId().toString(), blockEvent.getUser().getId().toString(),
-                    blockEvent.getUser().getUsername(), blockEvent.getExperiment().getId().toString(),
-                    blockEvent.getDate().toString(), blockEvent.getEventType().toString(),
-                    blockEvent.getEvent().toString(), blockEvent.getSprite(), blockEvent.getMetadata(),
-                    blockEvent.getXml(), blockEvent.getCode(), null, null, null, null, "block_event"};
-            events.add(data);
-        }
-    }
-
-    /**
-     * Adds the information contained in the given click events to the passed list.
-     *
-     * @param events The list to which the information should be added.
-     * @param clickEvents The click events.
-     */
-    private void addClickEventsToList(final List<String[]> events, final List<ClickEvent> clickEvents) {
-        for (ClickEvent clickEvent : clickEvents) {
-            String[] data = {clickEvent.getId().toString(), clickEvent.getUser().getId().toString(),
-                    clickEvent.getUser().getUsername(), clickEvent.getExperiment().getId().toString(),
-                    clickEvent.getDate().toString(), clickEvent.getEventType().toString(),
-                    clickEvent.getEvent().toString(), null, clickEvent.getMetadata(), null, null, null, null, null,
-                    null, "click_event"};
-            events.add(data);
-        }
-    }
-
-    /**
-     * Adds the information contained in the given resource events to the passed list.
-     *
-     * @param events The list to which the information should be added.
-     * @param resourceEvents The resource events.
-     */
-    private void addResourceEventsToList(final List<String[]> events, final List<ResourceEvent> resourceEvents) {
-        for (ResourceEvent resourceEvent : resourceEvents) {
-            String[] data = {resourceEvent.getId().toString(), resourceEvent.getUser().getId().toString(),
-                    resourceEvent.getUser().getUsername(), resourceEvent.getExperiment().getId().toString(),
-                    resourceEvent.getDate().toString(), resourceEvent.getEventType().toString(),
-                    resourceEvent.getEvent().toString(), null, null, null, null, resourceEvent.getResourceName(),
-                    resourceEvent.getHash(), resourceEvent.getResourceType(), resourceEvent.getLibraryResource() == null
-                    ? null : resourceEvent.getLibraryResource().toString(), "resource_event"};
-            events.add(data);
-        }
     }
 
     /**

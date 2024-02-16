@@ -20,6 +20,7 @@
 package fim.unipassau.de.scratchLog.integration;
 
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
+import fim.unipassau.de.scratchLog.application.service.CodeService;
 import fim.unipassau.de.scratchLog.application.service.EventService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.FileService;
@@ -66,6 +67,9 @@ public class EventRestControllerIntegrationTest {
     private EventService eventService;
 
     @MockBean
+    private CodeService codeService;
+
+    @MockBean
     private FileService fileService;
 
     @MockBean
@@ -74,7 +78,7 @@ public class EventRestControllerIntegrationTest {
     @MockBean
     private ParticipantService participantService;
 
-    private static final String JSON = "json";
+    private static final String JSON = "json.txt";
     private static final String SECRET = "secret";
     private static final int USER_ID = 2;
     private static final int Experiment_ID = 3;
@@ -114,7 +118,7 @@ public class EventRestControllerIntegrationTest {
         blockEventObject.put("metadata", "meta");
         blockEventObject.put("spritename", "Figur1");
         blockEventObject.put("xml", "xml");
-        blockEventObject.put("json", "json");
+        blockEventObject.put("json.txt", "json.txt");
         clickEventObject.put("user", USER_ID);
         clickEventObject.put("experiment", Experiment_ID);
         clickEventObject.put(SECRET, SECRET);
@@ -416,14 +420,14 @@ public class EventRestControllerIntegrationTest {
 
     @Test
     public void testRetrieveLastJson() throws Exception {
-        when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenReturn(JSON);
+        when(codeService.findFirstJSON(USER_ID, Experiment_ID)).thenReturn(JSON);
         mvc.perform(post("/store/json")
                         .content(dataObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
+        verify(codeService).findFirstJSON(USER_ID, Experiment_ID);
     }
 
     @Test
@@ -434,19 +438,19 @@ public class EventRestControllerIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
+        verify(codeService).findFirstJSON(USER_ID, Experiment_ID);
     }
 
     @Test
     public void testRetrieveLastJsonNotFound() throws Exception {
-        when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenThrow(NotFoundException.class);
+        when(codeService.findFirstJSON(USER_ID, Experiment_ID)).thenThrow(NotFoundException.class);
         mvc.perform(post("/store/json")
                         .content(dataObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
+        verify(codeService).findFirstJSON(USER_ID, Experiment_ID);
     }
 
     @Test
@@ -458,6 +462,6 @@ public class EventRestControllerIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
+        verify(codeService, never()).findFirstJSON(anyInt(), anyInt());
     }
 }
