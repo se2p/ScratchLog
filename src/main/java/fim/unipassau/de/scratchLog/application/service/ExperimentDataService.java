@@ -22,9 +22,9 @@ package fim.unipassau.de.scratchLog.application.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.uni_passau.fim.se2.litterbox.analytics.BugAnalyzer;
 import de.uni_passau.fim.se2.litterbox.analytics.Issue;
-import de.uni_passau.fim.se2.litterbox.analytics.MetricAnalyzer;
+import de.uni_passau.fim.se2.litterbox.analytics.ProgramBugAnalyzer;
+import de.uni_passau.fim.se2.litterbox.analytics.ProgramMetricAnalyzer;
 import de.uni_passau.fim.se2.litterbox.analytics.metric.MetricResult;
 import de.uni_passau.fim.se2.litterbox.ast.ParsingException;
 import de.uni_passau.fim.se2.litterbox.ast.model.Program;
@@ -383,12 +383,12 @@ public class ExperimentDataService {
      */
     private Map<String, Set<Issue>> getProgramIssues(final Program program) {
         Map<String, Set<Issue>> results = new HashMap<>();
-        BugAnalyzer bugAnalyzer = new BugAnalyzer(null, null, BUGS, false, false, false);
-        BugAnalyzer smellsAnalyzer = new BugAnalyzer(null, null, SMELLS, false, false, false);
-        BugAnalyzer perfumesAnalyzer = new BugAnalyzer(null, null, PERFUMES, false, false, false);
-        results.put(BUGS, bugAnalyzer.check(program));
-        results.put(SMELLS, smellsAnalyzer.check(program));
-        results.put(PERFUMES, perfumesAnalyzer.check(program));
+        ProgramBugAnalyzer bugAnalyzer = new ProgramBugAnalyzer(BUGS, false);
+        ProgramBugAnalyzer smellsAnalyzer = new ProgramBugAnalyzer(SMELLS, false);
+        ProgramBugAnalyzer perfumesAnalyzer = new ProgramBugAnalyzer(PERFUMES, false);
+        results.put(BUGS, bugAnalyzer.analyze(program));
+        results.put(SMELLS, smellsAnalyzer.analyze(program));
+        results.put(PERFUMES, perfumesAnalyzer.analyze(program));
         return results;
     }
 
@@ -451,8 +451,8 @@ public class ExperimentDataService {
      * @return A list containing results for each computed metric.
      */
     private List<MetricResult> getProgramMetrics(final Program program) {
-        MetricAnalyzer metricAnalyzer = new MetricAnalyzer(null, null, false);
-        return metricAnalyzer.check(program);
+        ProgramMetricAnalyzer metricAnalyzer = new ProgramMetricAnalyzer();
+        return metricAnalyzer.analyze(program);
     }
 
 }

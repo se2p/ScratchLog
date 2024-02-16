@@ -29,7 +29,7 @@
         <opencsv.version>5.7.1</opencsv.version>
         <passay.version>1.6.3</passay.version>
         <jaxb.version>4.0.0</jaxb.version>
-        <litterbox.version>1.9-SNAPSHOT</litterbox.version>
+        <litterbox.version>1.9-20240214.081333-18</litterbox.version>
         <junit.version>5.9.2</junit.version>
         <junitplatform.version>1.9.2</junitplatform.version>
         <mockito.version>5.2.0</mockito.version>
