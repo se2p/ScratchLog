@@ -19,7 +19,6 @@
 
 package fim.unipassau.de.scratchLog.application.service;
 
-import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.persistence.entity.BlockEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.ClickEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.CodesData;
@@ -31,9 +30,6 @@ import fim.unipassau.de.scratchLog.persistence.entity.Participant;
 import fim.unipassau.de.scratchLog.persistence.entity.QuestionEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.ResourceEvent;
 import fim.unipassau.de.scratchLog.persistence.entity.User;
-import fim.unipassau.de.scratchLog.persistence.projection.BlockEventJSONProjection;
-import fim.unipassau.de.scratchLog.persistence.projection.BlockEventProjection;
-import fim.unipassau.de.scratchLog.persistence.projection.BlockEventXMLProjection;
 import fim.unipassau.de.scratchLog.persistence.repository.BlockEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ClickEventRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.CodesDataRepository;
