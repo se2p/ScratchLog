@@ -23,7 +23,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
-import fim.unipassau.de.scratchLog.application.service.CodeService;
 import fim.unipassau.de.scratchLog.application.service.EventService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.FileService;
@@ -71,11 +70,6 @@ public class EventRestController {
     private final EventService eventService;
 
     /**
-     * The code service to use for retrieving participant codes.
-     */
-    private final CodeService codeService;
-
-    /**
      * The file service to use to save the received file data.
      */
     private final FileService fileService;
@@ -94,17 +88,14 @@ public class EventRestController {
      * Constructs an event rest controller with the given dependencies.
      *
      * @param eventService The event service to use.
-     * @param codeService The coder service to use.
      * @param fileService The file service to use.
      * @param experimentService The experiment service to use.
      * @param participantService The participant service to use.
      */
     @Autowired
-    public EventRestController(final EventService eventService, final CodeService codeService,
-                               final FileService fileService, final ExperimentService experimentService,
-                               final ParticipantService participantService) {
+    public EventRestController(final EventService eventService, final FileService fileService,
+                               final ExperimentService experimentService, final ParticipantService participantService) {
         this.eventService = eventService;
-        this.codeService = codeService;
         this.fileService = fileService;
         this.experimentService = experimentService;
         this.participantService = participantService;
@@ -284,7 +275,7 @@ public class EventRestController {
         }
 
         try {
-            String json = codeService.findFirstJSON(ids.get(1), ids.get(0));
+            String json = eventService.findFirstJSON(ids.get(1), ids.get(0));
 
             if (json == null) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);

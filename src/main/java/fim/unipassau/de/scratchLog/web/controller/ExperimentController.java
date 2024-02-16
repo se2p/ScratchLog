@@ -24,7 +24,7 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.CourseService;
-import fim.unipassau.de.scratchLog.application.service.ExperimentDataService;
+import fim.unipassau.de.scratchLog.application.service.EventService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.MailService;
 import fim.unipassau.de.scratchLog.application.service.PageService;
@@ -121,9 +121,9 @@ public class ExperimentController {
     private final MailService mailService;
 
     /**
-     * The experiment data service to use for retrieving experiment data.
+     * The event service to use for event management.
      */
-    private final ExperimentDataService experimentDataService;
+    private final EventService eventService;
 
     /**
      * String corresponding to the experiment page.
@@ -179,20 +179,20 @@ public class ExperimentController {
      * @param participantService The {@link ParticipantService} to use.
      * @param pageService The {@link PageService} to use.
      * @param mailService The {@link MailService} to use.
-     * @param experimentDataService The {@link ExperimentDataService} to use.
+     * @param eventService The {@link EventService} to use.
      */
     @Autowired
     public ExperimentController(final ExperimentService experimentService, final UserService userService,
                                 final CourseService courseService, final ParticipantService participantService,
                                 final PageService pageService, final MailService mailService,
-                                final ExperimentDataService experimentDataService) {
+                                final EventService eventService) {
         this.experimentService = experimentService;
         this.userService = userService;
         this.courseService = courseService;
         this.participantService = participantService;
         this.pageService = pageService;
         this.mailService = mailService;
-        this.experimentDataService = experimentDataService;
+        this.eventService = eventService;
     }
 
     /**
@@ -547,7 +547,7 @@ public class ExperimentController {
      * @param id The experiment id to search for.
      * @param httpServletResponse The servlet response returning the file.
      * @throws IncompleteDataException if the passed id is null or invalid.
-     * @throws RuntimeException if an {@link IOException} occurs.
+     * @throws RuntimeException if an {@link IOException} occurs
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
@@ -570,7 +570,7 @@ public class ExperimentController {
                     + ".csv");
             httpServletResponse.setStatus(HttpServletResponse.SC_OK);
             CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
-            List<String[]> events = experimentDataService.getEventData(experimentId);
+            List<String[]> events = eventService.getEventData(experimentId);
             csvWriter.writeAll(events);
         } catch (IOException e) {
             LOGGER.error("Could not download csv file due to IOException!", e);
@@ -635,41 +635,6 @@ public class ExperimentController {
             model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
             addModelInfo(0, experimentDTO, model);
             return EXPERIMENT;
-        }
-    }
-
-    /**
-     * Analysis the stored code data for all users in the experiment with the given id using LitterBox and saves the
-     * information in a CSV file.
-     *
-     * @param id The id of the experiment.
-     * @param httpServletResponse The servlet response returning the file.
-     * @throws IncompleteDataException if the passed id is invalid.
-     * @throws RuntimeException if an {@link IOException} occurs.
-     */
-    @GetMapping("/analysis")
-    @Secured(Constants.ROLE_ADMIN)
-    public void downloadLitterBoxAnalysis(@RequestParam(ID) final String id,
-                                          final HttpServletResponse httpServletResponse) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot download LitterBox analysis results for experiment with invalid id " + id + "!");
-            throw new IncompleteDataException("Cannot download LitterBox analysis results for experiment with invalid "
-                    + "id " + id + "!");
-        }
-
-        try {
-            httpServletResponse.setContentType("text/csv");
-            httpServletResponse.setHeader("Content-Disposition", "attachment;filename=experiment_litterbox_"
-                    + experimentId + ".csv");
-            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
-            CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
-            List<String[]> results = experimentDataService.getLitterBoxAnalysisResults(experimentId);
-            csvWriter.writeAll(results);
-        } catch (IOException e) {
-            LOGGER.error("Could not download LitterBox analysis results due to IOException!", e);
-            throw new RuntimeException("Could not download LitterBox analysis results due to IOException!");
         }
     }
 
