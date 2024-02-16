@@ -18,7 +18,6 @@
     <script type="text/javascript" th:src="@{/node_modules/scratch-blocks/blocks_compressed_vertical.js}"></script>
     <script type="text/javascript" th:src="@{/node_modules/scratch-blocks/blocks_compressed.js}"></script>
     <script type="text/javascript" th:src="@{/node_modules/scratch-blocks/msg/messages.js}"></script>
-    <script type="text/javascript" th:src="@{/node_modules/chart.js/dist/chart.umd.js}"></script>
 </head>
 <body>
 <!-- Navigation bar -->
@@ -123,7 +122,7 @@
             </div>
         </div>
 
-        <!-- The resource events table and the bug patterns chart. -->
+        <!-- The resource events tables. -->
         <div class="row mb-5">
             <div class="col-6">
                 <h4 class="mb-3" th:text="#{resource_events}"></h4>
@@ -149,34 +148,7 @@
                     </table>
                 </div>
             </div>
-            <div class="col-6">
-                <div class="panel-body">
-                    <div th:if="${bugs.isEmpty()}" class="text-muted text-center" th:text="#{no_data}"></div>
-                    <div th:unless="${bugs.isEmpty()}" class="d-flex justify-content-center">
-                        <canvas id="bugsChart" role="img"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- The smells and perfumes charts. -->
-        <div class="row mb-5">
-            <div class="col-6">
-                <div class="panel-body">
-                    <div th:if="${smells.isEmpty()}" class="text-muted text-center" th:text="#{no_data}"></div>
-                    <div th:unless="${smells.isEmpty()}" class="d-flex justify-content-center">
-                        <canvas id="smellsChart" role="img"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-6">
-                <div class="panel-body">
-                    <div th:if="${perfumes.isEmpty()}" class="text-muted text-center" th:text="#{no_data}"></div>
-                    <div th:unless="${perfumes.isEmpty()}" class="d-flex justify-content-center">
-                        <canvas id="perfumesChart" role="img"></canvas>
-                    </div>
-                </div>
-            </div>
+            <div class="col-6"></div>
         </div>
 
         <!-- The download sb3 files heading and the corresponding button. -->
@@ -381,19 +353,12 @@
     </div>
 </div>
 
-<!-- Script to render the charts displaying information from LitterBox. -->
-<script type="module" th:src="@{/js/analysisCharts.js}"></script>
-
-<!-- Let Thymeleaf initialize user, experiment and total variables used for displaying the xml code as well as
-information on bugs patterns, smells and perfumes. -->
+<!-- Let Thymeleaf initialize user, experiment and total variables used for displaying the xml code. -->
 <script>
     const user = [[${user}]];
     const experiment = [[${experiment}]];
     const total = [[${codeCount}]];
     const pageSize = [[${pageSize}]];
-    const bugPatterns = [[${bugs}]];
-    const smells = [[${smells}]];
-    const perfumes = [[${perfumes}]];
 </script>
 
 <!-- Footer -->
@@ -401,5 +366,6 @@ information on bugs patterns, smells and perfumes. -->
 
 <!-- Script to render the blockly area. -->
 <script type="text/javascript" th:src="@{/js/blockly.js}"></script>
+<script th:src="@{/webjars/jquery/3.5.1/jquery.min.js}"></script>
 </body>
 </html>
