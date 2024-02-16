@@ -68,7 +68,7 @@ public class EventCountRepositoryTest {
     private Experiment experiment2 = new Experiment(null, "experiment2", "description", "info", "postscript", true,
             false, GUI_URL);
     private BlockEvent blockEvent1 = new BlockEvent(user1, experiment1, date, BlockEventType.CREATE,
-            BlockEventSpecific.CREATE, "Figur1", null, "xml", "json");
+            BlockEventSpecific.CREATE, "Figur1", null, "xml", "json.txt");
     private BlockEvent blockEvent2 = new BlockEvent(user1, experiment1, date, BlockEventType.DRAG,
             BlockEventSpecific.ENDDRAG, "Figur1", null, null, null);
     private BlockEvent blockEvent3 = new BlockEvent(user1, experiment2, date, BlockEventType.MOVE,

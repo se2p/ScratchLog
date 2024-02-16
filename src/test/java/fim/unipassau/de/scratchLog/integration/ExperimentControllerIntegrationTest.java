@@ -23,7 +23,7 @@ import fim.unipassau.de.scratchLog.MailServerSetter;
 import fim.unipassau.de.scratchLog.StringCreator;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.CourseService;
-import fim.unipassau.de.scratchLog.application.service.EventService;
+import fim.unipassau.de.scratchLog.application.service.ExperimentDataService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.MailService;
 import fim.unipassau.de.scratchLog.application.service.PageService;
@@ -121,7 +121,7 @@ public class ExperimentControllerIntegrationTest {
     private MailService mailService;
 
     @MockBean
-    private EventService eventService;
+    private ExperimentDataService experimentDataService;
 
     private static final String TITLE = "My Experiment";
     private static final String DESCRIPTION = "A description";
@@ -1069,13 +1069,13 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testDownloadCSVFile() throws Exception {
-        when(eventService.getEventData(ID)).thenReturn(new ArrayList<>());
+        when(experimentDataService.getEventData(ID)).thenReturn(new ArrayList<>());
         mvc.perform(get("/experiment/csv")
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
-        verify(eventService).getEventData(ID);
+        verify(experimentDataService).getEventData(ID);
     }
 
     @Test
@@ -1085,7 +1085,7 @@ public class ExperimentControllerIntegrationTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
-        verify(eventService, never()).getEventData(anyInt());
+        verify(experimentDataService, never()).getEventData(anyInt());
     }
 
     @Test
@@ -1190,6 +1190,27 @@ public class ExperimentControllerIntegrationTest {
         verify(userService, never()).isAdmin(anyString());
         verify(courseService, never()).saveCourseParticipants(anyInt(), any());
         verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
+    }
+
+    @Test
+    public void testDownloadLitterBoxAnalysis() throws Exception {
+        when(experimentDataService.getLitterBoxAnalysisResults(ID)).thenReturn(new ArrayList<>());
+        mvc.perform(get("/experiment/analysis")
+                        .param(ID_PARAM, ID_STRING)
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isOk());
+        verify(experimentDataService).getLitterBoxAnalysisResults(ID);
+    }
+
+    @Test
+    public void testDownloadLitterBoxAnalysisInvalidId() throws Exception {
+        mvc.perform(get("/experiment/analysis")
+                        .param(ID_PARAM, "0")
+                        .contentType(MediaType.ALL)
+                        .accept(MediaType.ALL))
+                .andExpect(status().isBadRequest());
+        verify(experimentDataService, never()).getLitterBoxAnalysisResults(anyInt());
     }
 
     @Test
