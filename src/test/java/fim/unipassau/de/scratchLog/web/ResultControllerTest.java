@@ -21,7 +21,9 @@ package fim.unipassau.de.scratchLog.web;
 
 import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
+import fim.unipassau.de.scratchLog.application.service.CodeService;
 import fim.unipassau.de.scratchLog.application.service.EventService;
+import fim.unipassau.de.scratchLog.application.service.ExperimentDataService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.FileService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
@@ -92,6 +94,12 @@ public class ResultControllerTest {
     private EventService eventService;
 
     @Mock
+    private ExperimentDataService experimentDataService;
+
+    @Mock
+    private CodeService codeService;
+
+    @Mock
     private FileService fileService;
 
     @Mock
@@ -129,6 +137,10 @@ public class ResultControllerTest {
     private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(2));
     private List<FileDTO> fileDTOS = new ArrayList<>();
     private final List<ParticipantDTO> participants = List.of(participantDTO1, participantDTO2);
+    private final List<Integer> bugPatterns = List.of(0, 0, 1);
+    private final List<Integer> smells = List.of(0, 0, 0);
+    private final List<Integer> perfumes = List.of(0, 1, 1);
+    private final List<List<Integer>> analysisResults = List.of(bugPatterns, smells, perfumes);
     ExperimentProjection experimentProjection = new ExperimentProjection() {
         @Override
         public Integer getId() {
@@ -160,6 +172,9 @@ public class ResultControllerTest {
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
+        when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(
+                jsonProjections);
+        when(experimentDataService.getAnalyzedProgramDataCount(jsonProjections)).thenReturn(analysisResults);
         when(eventService.getCodesData(ID, ID)).thenReturn(codesDataDTO);
         assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
@@ -168,8 +183,32 @@ public class ResultControllerTest {
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
+        verify(codeService).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(experimentDataService).getAnalyzedProgramDataCount(jsonProjections);
         verify(eventService).getCodesData(ID, ID);
-        verify(model, times(9)).addAttribute(anyString(), any());
+        verify(model, times(12)).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testGetResultNoJsons() {
+        when(userService.existsParticipant(ID, ID)).thenReturn(true);
+        when(eventService.getBlockEventCounts(ID, ID)).thenReturn(blockEvents);
+        when(eventService.getClickEventCounts(ID, ID)).thenReturn(clickEvents);
+        when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
+        when(fileService.getFiles(ID, ID)).thenReturn(files);
+        when(fileService.getZipIds(ID, ID)).thenReturn(zips);
+        when(eventService.getCodesData(ID, ID)).thenReturn(codesDataDTO);
+        assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
+        verify(userService).existsParticipant(ID, ID);
+        verify(eventService).getBlockEventCounts(ID, ID);
+        verify(eventService).getClickEventCounts(ID, ID);
+        verify(eventService).getResourceEventCounts(ID, ID);
+        verify(fileService).getFiles(ID, ID);
+        verify(fileService).getZipIds(ID, ID);
+        verify(codeService).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
+        verify(eventService).getCodesData(ID, ID);
+        verify(model, times(12)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -180,6 +219,9 @@ public class ResultControllerTest {
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
+        when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(
+                jsonProjections);
+        when(experimentDataService.getAnalyzedProgramDataCount(jsonProjections)).thenReturn(analysisResults);
         when(eventService.getCodesData(ID, ID)).thenReturn(new CodesDataDTO());
         assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
@@ -188,8 +230,10 @@ public class ResultControllerTest {
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService).getZipIds(ID, ID);
+        verify(codeService).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(experimentDataService).getAnalyzedProgramDataCount(jsonProjections);
         verify(eventService).getCodesData(ID, ID);
-        verify(model, times(9)).addAttribute(anyString(), any());
+        verify(model, times(12)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -206,6 +250,9 @@ public class ResultControllerTest {
         verify(eventService).getResourceEventCounts(ID, ID);
         verify(fileService).getFiles(ID, ID);
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
+        verify(eventService, never()).getCodesData(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -218,6 +265,9 @@ public class ResultControllerTest {
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
+        verify(eventService, never()).getCodesData(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -230,6 +280,9 @@ public class ResultControllerTest {
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
+        verify(eventService, never()).getCodesData(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -242,6 +295,9 @@ public class ResultControllerTest {
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
+        verify(eventService, never()).getCodesData(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -254,6 +310,9 @@ public class ResultControllerTest {
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
+        verify(eventService, never()).getCodesData(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -266,6 +325,9 @@ public class ResultControllerTest {
         verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
         verify(fileService, never()).getFiles(anyInt(), anyInt());
         verify(fileService, never()).getZipIds(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
+        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
+        verify(eventService, never()).getCodesData(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -344,13 +406,13 @@ public class ResultControllerTest {
         });
         when(experimentService.getSb3File(ID)).thenReturn(projection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        when(codeService.findJsonById(ID)).thenReturn(JSON);
         assertDoesNotThrow(
                 () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).findJsonById(ID);
+        verify(codeService).findJsonById(ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -386,13 +448,13 @@ public class ResultControllerTest {
         });
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        when(codeService.findJsonById(ID)).thenReturn(JSON);
         assertDoesNotThrow(
                 () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).findJsonById(ID);
+        verify(codeService).findJsonById(ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -430,13 +492,13 @@ public class ResultControllerTest {
         });
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        when(codeService.findJsonById(ID)).thenReturn(JSON);
         assertDoesNotThrow(
                 () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).findJsonById(ID);
+        verify(codeService).findJsonById(ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -465,13 +527,13 @@ public class ResultControllerTest {
         });
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        when(codeService.findJsonById(ID)).thenReturn(JSON);
         assertDoesNotThrow(
                 () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).findJsonById(ID);
+        verify(codeService).findJsonById(ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -482,14 +544,14 @@ public class ResultControllerTest {
     public void testGenerateZipFilesIO() throws IOException {
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.findJsonById(ID)).thenReturn(JSON);
+        when(codeService.findJsonById(ID)).thenReturn(JSON);
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertThrows(RuntimeException.class,
                 () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).findJsonById(ID);
+        verify(codeService).findJsonById(ID);
         verify(httpServletResponse).getOutputStream();
     }
 
@@ -500,7 +562,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).findJsonById(anyInt());
+        verify(codeService, never()).findJsonById(anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
 
@@ -511,7 +573,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).findJsonById(anyInt());
+        verify(codeService, never()).findJsonById(anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
 
@@ -522,7 +584,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).findJsonById(anyInt());
+        verify(codeService, never()).findJsonById(anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
 
@@ -533,7 +595,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).findJsonById(anyInt());
+        verify(codeService, never()).findJsonById(anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
 
@@ -544,7 +606,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).findJsonById(anyInt());
+        verify(codeService, never()).findJsonById(anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
 
@@ -555,7 +617,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).findJsonById(anyInt());
+        verify(codeService, never()).findJsonById(anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
 
@@ -672,7 +734,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadAllXmlFiles() throws IOException {
-        when(eventService.getXMLForUser(ID, ID)).thenReturn(xmlProjections);
+        when(codeService.getXMLForUser(ID, ID)).thenReturn(xmlProjections);
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
             public boolean isReady() {
@@ -692,7 +754,7 @@ public class ResultControllerTest {
         assertDoesNotThrow(
                 () -> resultController.downloadAllXmlFiles(ID_STRING, ID_STRING, httpServletResponse)
         );
-        verify(eventService).getXMLForUser(ID, ID);
+        verify(codeService).getXMLForUser(ID, ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -705,7 +767,7 @@ public class ResultControllerTest {
         assertThrows(RuntimeException.class,
                 () -> resultController.downloadAllXmlFiles(ID_STRING, ID_STRING, httpServletResponse)
         );
-        verify(eventService, never()).getXMLForUser(anyInt(), anyInt());
+        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -717,7 +779,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadAllXmlFiles(ID_STRING, "0", httpServletResponse)
         );
-        verify(eventService, never()).getXMLForUser(anyInt(), anyInt());
+        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setHeader(anyString(), anyString());
@@ -729,7 +791,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadAllXmlFiles("-1", ID_STRING, httpServletResponse)
         );
-        verify(eventService, never()).getXMLForUser(anyInt(), anyInt());
+        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setHeader(anyString(), anyString());
@@ -741,7 +803,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadAllXmlFiles(ID_STRING, null, httpServletResponse)
         );
-        verify(eventService, never()).getXMLForUser(anyInt(), anyInt());
+        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setHeader(anyString(), anyString());
@@ -753,7 +815,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadAllXmlFiles(null, ID_STRING, httpServletResponse)
         );
-        verify(eventService, never()).getXMLForUser(anyInt(), anyInt());
+        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setHeader(anyString(), anyString());
@@ -762,7 +824,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadAllJsonFiles() throws IOException {
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
+        when(codeService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
             public boolean isReady() {
@@ -782,7 +844,7 @@ public class ResultControllerTest {
         assertDoesNotThrow(
                 () -> resultController.downloadAllJsonFiles(ID_STRING, ID_STRING, httpServletResponse)
         );
-        verify(eventService).getJsonForUser(ID, ID);
+        verify(codeService).getJsonForUser(ID, ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -795,7 +857,7 @@ public class ResultControllerTest {
         assertThrows(RuntimeException.class,
                 () -> resultController.downloadAllJsonFiles(ID_STRING, ID_STRING, httpServletResponse)
         );
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -807,7 +869,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadAllJsonFiles(ID_STRING, "0", httpServletResponse)
         );
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setHeader(anyString(), anyString());
@@ -819,7 +881,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadAllJsonFiles("-1", ID_STRING, httpServletResponse)
         );
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setHeader(anyString(), anyString());
@@ -831,7 +893,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadAllJsonFiles(ID_STRING, null, httpServletResponse)
         );
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setHeader(anyString(), anyString());
@@ -843,7 +905,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.downloadAllJsonFiles(null, ID_STRING, httpServletResponse)
         );
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setHeader(anyString(), anyString());
@@ -852,7 +914,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetCodes() {
-        when(eventService.getCodesForUser(anyInt(), anyInt(),
+        when(codeService.getCodesForUser(anyInt(), anyInt(),
                 any(PageRequest.class))).thenReturn(blockEventProjections);
         List<BlockEventProjection> projections = resultController.getCodes(ID_STRING, ID_STRING, PAGE);
         assertAll(
@@ -864,7 +926,7 @@ public class ResultControllerTest {
                 () -> assertEquals("xml1", projections.get(1).getXml()),
                 () -> assertEquals("code1", projections.get(1).getCode())
         );
-        verify(eventService).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(codeService).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -872,7 +934,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.getCodes(ID_STRING, ID_STRING, "-1")
         );
-        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -880,7 +942,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.getCodes(ID_STRING, PAGE, PAGE)
         );
-        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -888,7 +950,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.getCodes("-1", ID_STRING, PAGE)
         );
-        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -896,7 +958,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.getCodes(ID_STRING, ID_STRING, null)
         );
-        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -904,7 +966,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.getCodes(ID_STRING, null, PAGE)
         );
-        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -912,7 +974,7 @@ public class ResultControllerTest {
         assertThrows(IncompleteDataException.class,
                 () -> resultController.getCodes(null, ID_STRING, PAGE)
         );
-        verify(eventService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
@@ -925,6 +987,7 @@ public class ResultControllerTest {
         fileInputStream.close();
         fileDTOS.add(fileDTO);
         fileDTOS.add(zip);
+        Optional<Sb3ZipDTO> project = Optional.of(sb3ZipDTO);
         ExperimentProjection projection = new ExperimentProjection() {
             @Override
             public Integer getId() {
@@ -959,15 +1022,15 @@ public class ResultControllerTest {
         });
         when(experimentService.getSb3File(ID)).thenReturn(projection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
+        when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(project);
         assertDoesNotThrow(
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
+        verify(codeService).getFilteredJsons(ID, ID, 0, 0, 0, project);
         verify(fileService).findFinalProject(ID, ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
@@ -977,6 +1040,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesProjectionNull() throws IOException {
+        Optional<Sb3ZipDTO> project = Optional.of(sb3ZipDTO);
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
             public boolean isReady() {
@@ -995,15 +1059,15 @@ public class ResultControllerTest {
         });
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
+        when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(project);
         assertDoesNotThrow(
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
+        verify(codeService).getFilteredJsons(ID, ID, 0, 0, 0, project);
         verify(fileService).findFinalProject(ID, ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
@@ -1013,6 +1077,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesFinalProjectEmpty() throws IOException {
+        Optional<Sb3ZipDTO> noSavedProject = Optional.empty();
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
             public boolean isReady() {
@@ -1031,15 +1096,15 @@ public class ResultControllerTest {
         });
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.empty());
+        when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(noSavedProject);
         assertDoesNotThrow(
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
+        verify(codeService).getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject);
         verify(fileService).findFinalProject(ID, ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
@@ -1057,6 +1122,7 @@ public class ResultControllerTest {
         fileInputStream.close();
         fileDTOS.add(fileDTO);
         fileDTOS.add(zip);
+        Optional<Sb3ZipDTO> project = Optional.of(sb3ZipDTO);
         ExperimentProjection projection = new ExperimentProjection() {
             @Override
             public Integer getId() {
@@ -1091,207 +1157,20 @@ public class ResultControllerTest {
         });
         when(experimentService.getSb3File(ID)).thenReturn(projection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
+        when(fileService.findFinalProject(ID, ID)).thenReturn(project);
+        when(codeService.getFilteredJsons(ID, ID, ID, 0, 0, project)).thenReturn(jsonProjections);
         assertDoesNotThrow(
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, ID_STRING, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
+        verify(codeService).getFilteredJsons(ID, ID, ID, 0, 0, project);
         verify(fileService).findFinalProject(ID, ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
-    }
-
-    @Test
-    public void testDownloadSb3FilesStepMaxAllowedTime() throws IOException {
-        fileDTOS.add(fileDTO);
-        fileDTOS.add(zip);
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
-        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
-        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(getJsonProjectionsWithCustomTimeDifference());
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.empty());
-        assertDoesNotThrow(
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, ID_STRING, null, null, null,
-                        httpServletResponse)
-        );
-        verify(experimentService).getSb3File(ID);
-        verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
-        verify(fileService).findFinalProject(ID, ID);
-        verify(httpServletResponse).getOutputStream();
-        verify(httpServletResponse).setContentType("application/zip");
-        verify(httpServletResponse).setHeader(anyString(), anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
-    }
-
-    @Test
-    public void testDownloadSb3FilesStepNoFinalProject() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
-        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
-        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.empty());
-        assertDoesNotThrow(
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, ID_STRING, null, null, null,
-                        httpServletResponse)
-        );
-        verify(experimentService).getSb3File(ID);
-        verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
-        verify(fileService).findFinalProject(ID, ID);
-        verify(httpServletResponse).getOutputStream();
-        verify(httpServletResponse).setContentType("application/zip");
-        verify(httpServletResponse).setHeader(anyString(), anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
-    }
-
-    @Test
-    public void testDownloadSb3FilesStepSingleJson() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
-        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
-        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(getJsonProjections(1));
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
-        assertDoesNotThrow(
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, ID_STRING, null, null, null,
-                        httpServletResponse)
-        );
-        verify(experimentService).getSb3File(ID);
-        verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
-        verify(fileService).findFinalProject(ID, ID);
-        verify(httpServletResponse).getOutputStream();
-        verify(httpServletResponse).setContentType("application/zip");
-        verify(httpServletResponse).setHeader(anyString(), anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
-    }
-
-    @Test
-    public void testDownloadSb3FilesStartStop() throws IOException {
-        URL sb3 = getClass().getClassLoader().getResource("Scratch-Projekt.sb3");
-        File file = new File(sb3.getFile());
-        byte[] b = new byte[(int) file.length()];
-        FileInputStream fileInputStream = new FileInputStream(file);
-        fileInputStream.read(b);
-        fileInputStream.close();
-        fileDTOS.add(fileDTO);
-        fileDTOS.add(zip);
-        ExperimentProjection projection = new ExperimentProjection() {
-            @Override
-            public Integer getId() {
-                return ID;
-            }
-
-            @Override
-            public boolean isActive() {
-                return true;
-            }
-
-            @Override
-            public byte[] getProject() {
-                return b;
-            }
-        };
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
-        when(experimentService.getSb3File(ID)).thenReturn(projection);
-        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.of(sb3ZipDTO));
-        assertDoesNotThrow(
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, ID_STRING, "3", "false",
-                        httpServletResponse)
-        );
-        verify(experimentService).getSb3File(ID);
-        verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
-        verify(fileService).findFinalProject(ID, ID);
-        verify(httpServletResponse).getOutputStream();
-        verify(httpServletResponse).setContentType("application/zip");
-        verify(httpServletResponse).setHeader(anyString(), anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
-    }
-
-    @Test
-    public void testDownloadSb3FilesStartStopEndPositionTooBig() throws IOException {
-        when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
-        when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.empty());
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, ID_STRING, "5", "true",
-                        httpServletResponse)
-        );
-        verify(experimentService).getSb3File(ID);
-        verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
-        verify(fileService).findFinalProject(ID, ID);
-        verify(httpServletResponse, never()).getOutputStream();
     }
 
     @Test
@@ -1302,7 +1181,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1315,7 +1194,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1328,25 +1207,26 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
 
     @Test
     public void testDownloadSb3FilesIOException() throws IOException {
+        Optional<Sb3ZipDTO> noSavedProject = Optional.empty();
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
-        when(fileService.findFinalProject(ID, ID)).thenReturn(Optional.empty());
+        when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject)).thenReturn(jsonProjections);
+        when(fileService.findFinalProject(ID, ID)).thenReturn(noSavedProject);
         assertThrows(RuntimeException.class,
                 () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID);
         verify(fileService).getFileDTOs(ID, ID);
-        verify(eventService).getJsonForUser(ID, ID);
+        verify(codeService).getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject);
         verify(fileService).findFinalProject(ID, ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
@@ -1362,7 +1242,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1375,7 +1255,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1388,7 +1268,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1401,7 +1281,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1414,7 +1294,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1427,7 +1307,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1440,7 +1320,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1453,7 +1333,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1466,7 +1346,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1479,7 +1359,7 @@ public class ResultControllerTest {
         );
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1505,7 +1385,8 @@ public class ResultControllerTest {
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(anyInt(), anyInt())).thenReturn(jsonProjections);
+        when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(
+                jsonProjections);
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
         assertDoesNotThrow(
                 () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
@@ -1513,7 +1394,7 @@ public class ResultControllerTest {
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID);
         verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, times(2)).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, times(2)).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, times(2)).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
@@ -1542,7 +1423,8 @@ public class ResultControllerTest {
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(anyInt(), anyInt())).thenReturn(jsonProjections);
+        when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(
+                jsonProjections);
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
         assertDoesNotThrow(
                 () -> resultController.downloadExperimentSb3Files(ID_STRING, ID_STRING, httpServletResponse)
@@ -1550,7 +1432,7 @@ public class ResultControllerTest {
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID);
         verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, times(2)).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, times(2)).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, times(2)).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
@@ -1579,7 +1461,8 @@ public class ResultControllerTest {
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
-        when(eventService.getJsonForUser(anyInt(), anyInt())).thenThrow(NotFoundException.class);
+        when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(
+                new ArrayList<>());
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
         assertDoesNotThrow(
                 () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
@@ -1587,7 +1470,7 @@ public class ResultControllerTest {
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID);
         verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, times(2)).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, times(2)).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, times(2)).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
@@ -1606,7 +1489,7 @@ public class ResultControllerTest {
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID);
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
@@ -1624,7 +1507,7 @@ public class ResultControllerTest {
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID);
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }
@@ -1637,7 +1520,7 @@ public class ResultControllerTest {
         verify(participantService, never()).getParticipants(anyInt());
         verify(experimentService, never()).getSb3File(anyInt());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(eventService, never()).getJsonForUser(anyInt(), anyInt());
+        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
     }

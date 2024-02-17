@@ -152,4 +152,9 @@ public final class Constants {
      */
     public static final long COURSE_INACTIVE_DAYS = 180;
 
+    /**
+     * The maximum number of data points to be returned when calculating event executions per minute.
+     */
+    public static final int MAX_DATA_POINTS = 500;
+
 }

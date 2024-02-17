@@ -20,6 +20,7 @@
 package fim.unipassau.de.scratchLog.web;
 
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
+import fim.unipassau.de.scratchLog.application.service.CodeService;
 import fim.unipassau.de.scratchLog.application.service.EventService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.FileService;
@@ -59,6 +60,9 @@ public class EventRestControllerTest {
     private EventService eventService;
 
     @Mock
+    private CodeService codeService;
+
+    @Mock
     private FileService fileService;
 
     @Mock
@@ -70,7 +74,7 @@ public class EventRestControllerTest {
     @Mock
     private HttpServletResponse httpServletResponse;
 
-    private static final String JSON = "json";
+    private static final String JSON = "json.txt";
     private static final String SECRET = "secret";
     private static final int USER_ID = 3;
     private static final int Experiment_ID = 39;
@@ -110,7 +114,7 @@ public class EventRestControllerTest {
         blockEventObject.put("metadata", "meta");
         blockEventObject.put("spritename", "Figur1");
         blockEventObject.put("xml", "xml");
-        blockEventObject.put("json", "json");
+        blockEventObject.put("json.txt", "json.txt");
         clickEventObject.put("user", USER_ID);
         clickEventObject.put("experiment", Experiment_ID);
         clickEventObject.put(SECRET, SECRET);
@@ -472,7 +476,7 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveLastJson() throws IOException {
-        when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenReturn(JSON);
+        when(codeService.findFirstJSON(USER_ID, Experiment_ID)).thenReturn(JSON);
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
             public boolean isReady() {
@@ -493,7 +497,7 @@ public class EventRestControllerTest {
                 () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
+        verify(codeService).findFirstJSON(USER_ID, Experiment_ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/json");
         verify(httpServletResponse).setCharacterEncoding("UTF-8");
@@ -506,7 +510,7 @@ public class EventRestControllerTest {
                 () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
+        verify(codeService).findFirstJSON(USER_ID, Experiment_ID);
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setCharacterEncoding(anyString());
@@ -515,12 +519,12 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveLastJsonNotFound() throws IOException {
-        when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenThrow(NotFoundException.class);
+        when(codeService.findFirstJSON(USER_ID, Experiment_ID)).thenThrow(NotFoundException.class);
         assertDoesNotThrow(
                 () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
+        verify(codeService).findFirstJSON(USER_ID, Experiment_ID);
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setCharacterEncoding(anyString());
@@ -529,13 +533,13 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveLastJsonIO() throws IOException {
-        when(eventService.findFirstJSON(USER_ID, Experiment_ID)).thenReturn(JSON);
+        when(codeService.findFirstJSON(USER_ID, Experiment_ID)).thenReturn(JSON);
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertDoesNotThrow(
                 () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService).findFirstJSON(USER_ID, Experiment_ID);
+        verify(codeService).findFirstJSON(USER_ID, Experiment_ID);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/json");
         verify(httpServletResponse).setCharacterEncoding("UTF-8");
@@ -549,7 +553,7 @@ public class EventRestControllerTest {
                 () -> eventRestController.retrieveLastJson(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService, never()).findFirstJSON(anyInt(), anyInt());
+        verify(codeService, never()).findFirstJSON(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse, never()).setCharacterEncoding(anyString());

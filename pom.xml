@@ -29,6 +29,7 @@
         <opencsv.version>5.7.1</opencsv.version>
         <passay.version>1.6.3</passay.version>
         <jaxb.version>4.0.0</jaxb.version>
+        <litterbox.version>1.9-20240214.081333-18</litterbox.version>
         <junit.version>5.9.2</junit.version>
         <junitplatform.version>1.9.2</junitplatform.version>
         <mockito.version>5.2.0</mockito.version>
@@ -228,6 +229,13 @@
             <version>${jaxb.version}</version>
         </dependency>
 
+        <!-- LitterBox for analyzing Scratch projects -->
+        <dependency>
+            <groupId>de.uni_passau.fim.se2</groupId>
+            <artifactId>Litterbox</artifactId>
+            <version>${litterbox.version}</version>
+        </dependency>
+
         <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -385,13 +393,31 @@
         </plugins>
     </build>
 
-    <!-- Repository for downloading opensaml-saml-api, a dependency of spring security saml2 service provider-->
     <repositories>
+        <!-- Repository for downloading opensaml-saml-api, a dependency of spring security saml2 service provider -->
         <repository>
             <id>shibboleth_repository</id>
             <name>Shibboleth Maven Repository</name>
             <url>https://build.shibboleth.net/nexus/content/repositories/releases/</url>
         </repository>
+
+        <!-- Repository for downloading LitterBox -->
+        <repository>
+            <id>gitlab-maven</id>
+            <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/425/packages/maven</url>
+        </repository>
     </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>gitlab-maven</id>
+            <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/425/packages/maven</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>gitlab-maven</id>
+            <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/425/packages/maven</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>

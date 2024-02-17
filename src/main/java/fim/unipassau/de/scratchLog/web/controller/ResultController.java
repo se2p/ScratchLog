@@ -22,7 +22,9 @@ package fim.unipassau.de.scratchLog.web.controller;
 import com.opencsv.CSVWriter;
 import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
+import fim.unipassau.de.scratchLog.application.service.CodeService;
 import fim.unipassau.de.scratchLog.application.service.EventService;
+import fim.unipassau.de.scratchLog.application.service.ExperimentDataService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.FileService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
@@ -62,7 +64,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -100,6 +101,16 @@ public class ResultController {
     private final EventService eventService;
 
     /**
+     * The experiment data service to use for retrieving experiment data.
+     */
+    private final ExperimentDataService experimentDataService;
+
+    /**
+     * The code service to use for retrieving participant codes.
+     */
+    private final CodeService codeService;
+
+    /**
      * The file service to use for file management.
      */
     private final FileService fileService;
@@ -135,16 +146,21 @@ public class ResultController {
      * @param userService The {@link UserService} to use.
      * @param experimentService The {@link ExperimentService} to use.
      * @param eventService The {@link EventService} to use.
+     * @param experimentDataService The {@link ExperimentDataService} to use.
+     * @param codeService The {@link CodeService} to use.
      * @param fileService The {@link FileService} to use.
      * @param participantService The {@link ParticipantService} to use.
      */
     @Autowired
     public ResultController(final UserService userService, final ExperimentService experimentService,
-                            final EventService eventService, final FileService fileService,
+                            final EventService eventService, final ExperimentDataService experimentDataService,
+                            final CodeService codeService, final FileService fileService,
                             final ParticipantService participantService) {
         this.userService = userService;
         this.experimentService = experimentService;
         this.eventService = eventService;
+        this.experimentDataService = experimentDataService;
+        this.codeService = codeService;
         this.fileService = fileService;
         this.participantService = participantService;
     }
@@ -188,6 +204,8 @@ public class ResultController {
             List<EventCountDTO> resourceEvents = eventService.getResourceEventCounts(userId, experimentId);
             List<FileProjection> files = fileService.getFiles(userId, experimentId);
             List<Integer> zipIds = fileService.getZipIds(userId, experimentId);
+            List<BlockEventJSONProjection> filteredJsons = codeService.getFilteredJsons(userId, experimentId, 1, 0, 0,
+                    Optional.empty());
             CodesDataDTO codesDataDTO = eventService.getCodesData(userId, experimentId);
 
             model.addAttribute("codeCount", Math.max(codesDataDTO.getCount(), 0));
@@ -199,6 +217,18 @@ public class ResultController {
             model.addAttribute("zips", zipIds);
             model.addAttribute("user", userId);
             model.addAttribute("experiment", experimentId);
+
+            if (!filteredJsons.isEmpty()) {
+                List<List<Integer>> bugCountsPerMinute = experimentDataService.getAnalyzedProgramDataCount(
+                        filteredJsons);
+                model.addAttribute("bugs", bugCountsPerMinute.get(0));
+                model.addAttribute("smells", bugCountsPerMinute.get(1));
+                model.addAttribute("perfumes", bugCountsPerMinute.get(2));
+            } else {
+                model.addAttribute("bugs", new ArrayList<>());
+                model.addAttribute("smells", new ArrayList<>());
+                model.addAttribute("perfumes", new ArrayList<>());
+            }
             return new ModelAndView(RESULT);
         } catch (NotFoundException e) {
             return new ModelAndView(Constants.ERROR);
@@ -269,7 +299,7 @@ public class ResultController {
 
         ExperimentProjection projection = experimentService.getSb3File(experimentId);
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
-        byte[] code = eventService.findJsonById(jsonId).getBytes(StandardCharsets.UTF_8);
+        byte[] code = codeService.findJsonById(jsonId).getBytes(StandardCharsets.UTF_8);
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "sb3")) {
             Set<String> fileNames = new HashSet<>();
@@ -394,7 +424,7 @@ public class ResultController {
         }
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "xml")) {
-            List<BlockEventXMLProjection> xml = eventService.getXMLForUser(userId, experimentId);
+            List<BlockEventXMLProjection> xml = codeService.getXMLForUser(userId, experimentId);
 
             for (BlockEventXMLProjection projection : xml) {
                 ZipEntry entry = new ZipEntry("xml" + projection.getId() + ".xml");
@@ -439,7 +469,7 @@ public class ResultController {
         }
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json")) {
-            List<BlockEventJSONProjection> json = eventService.getJsonForUser(userId, experimentId);
+            List<BlockEventJSONProjection> json = codeService.getJsonForUser(userId, experimentId);
             writeCSVData(zos, json, Optional.empty(), false);
 
             for (BlockEventJSONProjection projection : json) {
@@ -490,7 +520,7 @@ public class ResultController {
             throw new IncompleteDataException("Cannot get codes for invalid page number " + currentPage + "!");
         }
 
-        return eventService.getCodesForUser(userId, experimentId, PageRequest.of(currentPage,
+        return codeService.getCodesForUser(userId, experimentId, PageRequest.of(currentPage,
                 Constants.PAGE_SIZE)).getContent();
     }
 
@@ -551,8 +581,8 @@ public class ResultController {
         ExperimentProjection projection = experimentService.getSb3File(experimentId);
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
         Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
-        List<BlockEventJSONProjection> jsons = filterJsons(steps, startPosition, endPosition, userId, experimentId,
-                finalProject);
+        List<BlockEventJSONProjection> jsons = codeService.getFilteredJsons(userId, experimentId, steps, startPosition,
+                endPosition, finalProject);
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip")) {
             writeUserSb3Files(zos, projection, fileDTOS, finalProject, jsons, includeFinalProject);
@@ -654,42 +684,6 @@ public class ResultController {
     }
 
     /**
-     * Filters the json code saved for the given user during the given experiment according to the specified parameters.
-     * If the code is to be filtered in minute intervals, the jsons are filtered according to their generation time. If
-     * the code within a certain range is to be returned, the jsons are filtered according to the specified start and
-     * end positions.
-     *
-     * @param steps The step interval in minutes.
-     * @param startPosition The start of the interval in which all json files should be downloaded.
-     * @param endPosition The end of the interval in which all json files should be downloaded.
-     * @param userId The id of the user.
-     * @param experimentId The id of the experiment.
-     * @param finalProject The final project saved for the user, if any.
-     * @return The filtered code list.
-     * @throws IllegalArgumentException if the given end position is bigger than the number of codes.
-     */
-    private List<BlockEventJSONProjection> filterJsons(final int steps, final int startPosition, final int endPosition,
-                                                       final int userId, final int experimentId,
-                                                       final Optional<Sb3ZipDTO> finalProject) {
-        List<BlockEventJSONProjection> jsons = eventService.getJsonForUser(userId, experimentId);
-
-        if (steps > 0) {
-            LocalDateTime lastDateTime = finalProject.isPresent() ? finalProject.get().getDate()
-                    : jsons.get(jsons.size() - 1).getDate();
-            return filterProjectionsByStep(jsons, steps, lastDateTime);
-        } else if (startPosition > 0) {
-            if (endPosition > jsons.size()) {
-                throw new IncompleteDataException("Cannot generate zip file with invalid end position " + endPosition
-                        + " bigger than the amount of saved json strings " + jsons.size() + "!");
-            }
-
-            return jsons.subList(startPosition - 1, endPosition);
-        }
-
-        return jsons;
-    }
-
-    /**
      * Creates a sb3 file saved as a zip entry for the given json code. Beside the json itself, all saved files and the
      * initial project data are included in the zip file.
      *
@@ -760,11 +754,12 @@ public class ResultController {
      */
     private void writeUserSb3Entry(final ZipOutputStream zos, final ExperimentProjection projection,
                                    final int experimentId, final int userId, final int steps) throws IOException {
-        try {
-            List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
-            Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
-            List<BlockEventJSONProjection> jsons = filterJsons(steps, 0, 0, userId, experimentId,
-                    finalProject);
+        List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
+        Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
+        List<BlockEventJSONProjection> jsons = codeService.getFilteredJsons(userId, experimentId, steps, 0, 0,
+                finalProject);
+
+        if (!jsons.isEmpty()) {
             ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
             ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip));
             writeUserSb3Files(innerZos, projection, fileDTOS, finalProject, jsons, true);
@@ -773,8 +768,8 @@ public class ResultController {
             zos.putNextEntry(createdZip);
             zos.write(innerZip.toByteArray());
             zos.closeEntry();
-        } catch (NotFoundException e) {
-            LOGGER.info("Could not generate zip file entry for participant.", e);
+        } else {
+            LOGGER.info("Could not generate zip file entry for participant with no saved JSON codes.");
         }
     }
 
@@ -931,101 +926,6 @@ public class ResultController {
         zos.putNextEntry(entry);
         zos.write(code);
         zos.closeEntry();
-    }
-
-    /**
-     * Filters the passed {@link BlockEventJSONProjection}s according to the passed steps in minutes. Starting with the
-     * first json, steps minutes are added to its datetime. The remaining json files are traversed until one with a
-     * timestamp after the calculated one is found. Its predecessor is added to filtered list and the calculated time
-     * is increased by one more step. The same json file might be added multiple times if the next calculated timestamp
-     * is more than one time step apart from the timestamp of the next json file. To avoid adding the same file too many
-     * times, the process skips time breaks longer than a certain threshold.
-     *
-     * @param projections A list of {@link BlockEventJSONProjection} containing the relevant block event data.
-     * @param step The time steps the files should be apart in minutes.
-     * @param lastDateTime The datetime of the last file the final project state saved.
-     * @return The filtered {@link BlockEventJSONProjection}s.
-     */
-    private List<BlockEventJSONProjection> filterProjectionsByStep(final List<BlockEventJSONProjection> projections,
-                                                                   final int step, final LocalDateTime lastDateTime) {
-        List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
-        filteredProjections.add(projections.get(0));
-
-        if (projections.size() > 1) {
-            filteredProjections.addAll(addProjections(projections, step, lastDateTime));
-        }
-
-        return filteredProjections;
-    }
-
-    /**
-     * Adds the passed {@link BlockEventJSONProjection}s to a list depending on their datetime. If the datetime of the
-     * current file is after that of the current time, it is added to the list (possibly more than once), unless the
-     * datetime is after the maximum allowed time break. In that case, the project is only added once. Finally, the
-     * last project file is added and the list returned.
-     *
-     * @param projections A list of {@link BlockEventJSONProjection} containing the relevant block event data.
-     * @param steps The regular desired time break between two projections.
-     * @param lastDateTime The {@link LocalDateTime} of the last project.
-     * @return The list of filtered projections.
-     */
-    private List<BlockEventJSONProjection> addProjections(final List<BlockEventJSONProjection> projections,
-                                                          final int steps, final LocalDateTime lastDateTime) {
-        List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
-        LocalDateTime currentTime = projections.get(0).getDate();
-        LocalDateTime maxTime = currentTime.plusMinutes((long) Constants.MAX_ALLOWED_BREAK_FACTOR * steps);
-
-        for (int i = 1; i < projections.size(); i++) {
-            BlockEventJSONProjection projection = projections.get(i);
-            LocalDateTime projectionTime = projection.getDate();
-
-            if (projectionTime.isBefore(maxTime)) {
-                while (projectionTime.isAfter(currentTime)) {
-                    filteredProjections.add(projections.get(i - 1));
-                    currentTime = currentTime.plusMinutes(steps);
-                    maxTime = maxTime.plusMinutes(steps);
-                }
-            } else {
-                filteredProjections.add(projections.get(i - 1));
-                currentTime = projections.get(i - 1).getDate();
-                maxTime = currentTime.plusMinutes((long) Constants.MAX_ALLOWED_BREAK_FACTOR * steps);
-            }
-        }
-
-        addLastProjection(filteredProjections, projections.get(projections.size() - 1), lastDateTime, currentTime,
-                maxTime, steps);
-        return filteredProjections;
-    }
-
-    /**
-     * Adds the participant's final sb3 project file to the given {@link BlockEventJSONProjection} list.
-     *
-     * @param filteredProjections The list of filtered projections.
-     * @param lastProjection The last projection to be added.
-     * @param lastProjectTime The {@link LocalDateTime} of the last saved project change.
-     * @param currentTime The current time to look at.
-     * @param maxTime The maximum allowed break time signifying that the participant has been inactive.
-     * @param steps The desired step size in minutes.
-     */
-    private void addLastProjection(final List<BlockEventJSONProjection> filteredProjections,
-                                   final BlockEventJSONProjection lastProjection, final LocalDateTime lastProjectTime,
-                                   final LocalDateTime currentTime, final LocalDateTime maxTime, final int steps) {
-        int compare = lastProjectTime.compareTo(lastProjection.getDate());
-
-        if (compare <= 0) {
-            filteredProjections.add(lastProjection);
-        }
-
-        LocalDateTime projectTime = lastProjectTime;
-
-        if (projectTime.isBefore(maxTime)) {
-            while (projectTime.isAfter(currentTime)) {
-                filteredProjections.add(lastProjection);
-                projectTime = projectTime.minusMinutes(steps);
-            }
-        } else {
-            filteredProjections.add(lastProjection);
-        }
     }
 
 }
