@@ -19,7 +19,7 @@
         <spring.version>3.0.4</spring.version>
         <security.version>6.0.2</security.version>
         <thymeleaf.version>3.1.1.RELEASE</thymeleaf.version>
-        <lombok.version>1.18.24</lombok.version>
+        <lombok.version>1.18.30</lombok.version>
         <flyway.version>9.16.1</flyway.version>
         <databind.version>2.14.2</databind.version>
         <bouncycastle.version>1.70</bouncycastle.version>
