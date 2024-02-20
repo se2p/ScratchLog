@@ -271,12 +271,13 @@ public class ExperimentService {
      * database.
      *
      * @param id The experiment ID.
+     * @param retrieveInactive Boolean indicating whether information on an inactive experiment should be returned.
      * @return The experiment projection.
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
-    public ExperimentProjection getSb3File(final int id) {
+    public ExperimentProjection getSb3File(final int id, final boolean retrieveInactive) {
         if (id < Constants.MIN_ID) {
             throw new IllegalArgumentException("Cannot retrieve sb3 project for experiment with invalid id " + id
                     + "!");
@@ -288,7 +289,7 @@ public class ExperimentService {
             LOGGER.error("Could not find experiment with " + id + " when trying to retrieve its sb3 file!");
             throw new NotFoundException("Could not find experiment with " + id + " when trying to retrieve its sb3 "
                     + "file!");
-        } else if (!projection.get().isActive()) {
+        } else if (!projection.get().isActive() && !retrieveInactive) {
             LOGGER.error("Tried to retrieve the sb3 file for inactive experiment " + id + "!");
             throw new NotFoundException("Tried to retrieve the sb3 file for inactive experiment " + id + "!");
         }

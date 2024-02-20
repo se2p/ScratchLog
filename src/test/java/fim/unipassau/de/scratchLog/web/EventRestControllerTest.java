@@ -378,7 +378,7 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveSb3File() throws IOException {
-        when(experimentService.getSb3File(Experiment_ID)).thenReturn(experimentProjection);
+        when(experimentService.getSb3File(Experiment_ID, false)).thenReturn(experimentProjection);
         when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
             @Override
             public boolean isReady() {
@@ -399,7 +399,7 @@ public class EventRestControllerTest {
                 () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(experimentService).getSb3File(Experiment_ID);
+        verify(experimentService).getSb3File(Experiment_ID, false);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
@@ -408,13 +408,13 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveSb3FileIO() throws IOException {
-        when(experimentService.getSb3File(Experiment_ID)).thenReturn(experimentProjection);
+        when(experimentService.getSb3File(Experiment_ID, false)).thenReturn(experimentProjection);
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertDoesNotThrow(
                 () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(experimentService).getSb3File(Experiment_ID);
+        verify(experimentService).getSb3File(Experiment_ID, false);
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -422,7 +422,7 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveSb3FileProjectNull() throws IOException {
-        when(experimentService.getSb3File(Experiment_ID)).thenReturn(new ExperimentProjection() {
+        when(experimentService.getSb3File(Experiment_ID, false)).thenReturn(new ExperimentProjection() {
             @Override
             public Integer getId() {
                 return null;
@@ -442,7 +442,7 @@ public class EventRestControllerTest {
                 () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(experimentService).getSb3File(Experiment_ID);
+        verify(experimentService).getSb3File(Experiment_ID, false);
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -450,12 +450,12 @@ public class EventRestControllerTest {
 
     @Test
     public void testRetrieveSb3FileNotFound() throws IOException {
-        when(experimentService.getSb3File(Experiment_ID)).thenThrow(NotFoundException.class);
+        when(experimentService.getSb3File(Experiment_ID, false)).thenThrow(NotFoundException.class);
         assertDoesNotThrow(
                 () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(experimentService).getSb3File(Experiment_ID);
+        verify(experimentService).getSb3File(Experiment_ID, false);
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -468,7 +468,7 @@ public class EventRestControllerTest {
                 () -> eventRestController.retrieveSb3File(dataObject.toString(), httpServletResponse)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(experimentService, never()).getSb3File(anyInt());
+        verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_BAD_REQUEST);

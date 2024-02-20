@@ -297,7 +297,7 @@ public class ResultController {
                     + " or experiment with invalid id " + experiment + "or json with invalid id " + json + "!");
         }
 
-        ExperimentProjection projection = experimentService.getSb3File(experimentId);
+        ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
         byte[] code = codeService.findJsonById(jsonId).getBytes(StandardCharsets.UTF_8);
 
@@ -578,7 +578,7 @@ public class ResultController {
                     + " or experiment with invalid id " + experiment + "!");
         }
 
-        ExperimentProjection projection = experimentService.getSb3File(experimentId);
+        ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
         Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
         List<BlockEventJSONProjection> jsons = codeService.getFilteredJsons(userId, experimentId, steps, startPosition,
@@ -621,7 +621,7 @@ public class ResultController {
 
         int steps = step != null ? getNumberFromString(step, "step interval") : 0;
         List<ParticipantDTO> participants = participantService.getParticipants(experimentId);
-        ExperimentProjection projection = experimentService.getSb3File(experimentId);
+        ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
 
         if (participants.isEmpty()) {
             throw new IncompleteDataException("Cannot download sb3 files for experiment with no participants!");
