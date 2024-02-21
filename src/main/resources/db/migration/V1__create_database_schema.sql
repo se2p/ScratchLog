@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS `block_event` (
     `spritename` varchar(255) DEFAULT NULL,
     `metadata` varchar(255) DEFAULT NULL,
     `xml` text,
-    `json` JSON,
+    `json` text,
     PRIMARY KEY (`id`),
     KEY `user_id` (`user_id`),
     KEY `experiment_id` (`experiment_id`),
