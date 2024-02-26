@@ -242,7 +242,7 @@ public class EventRestController {
         int experimentId = ids.get(0);
 
         try {
-            ExperimentProjection projection = experimentService.getSb3File(experimentId);
+            ExperimentProjection projection = experimentService.getSb3File(experimentId, false);
 
             if (projection.getProject() == null) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);

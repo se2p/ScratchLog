@@ -369,19 +369,19 @@ public class EventRestControllerIntegrationTest {
 
     @Test
     public void testRetrieveSb3File() throws Exception {
-        when(experimentService.getSb3File(Experiment_ID)).thenReturn(experimentProjection);
+        when(experimentService.getSb3File(Experiment_ID, false)).thenReturn(experimentProjection);
         mvc.perform(post("/store/sb3")
                         .content(dataObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(experimentService).getSb3File(Experiment_ID);
+        verify(experimentService).getSb3File(Experiment_ID, false);
     }
 
     @Test
     public void testRetrieveSb3FileProjectionNull() throws Exception {
-        when(experimentService.getSb3File(Experiment_ID)).thenReturn(new ExperimentProjection() {
+        when(experimentService.getSb3File(Experiment_ID, false)).thenReturn(new ExperimentProjection() {
             @Override
             public Integer getId() {
                 return null;
@@ -403,19 +403,19 @@ public class EventRestControllerIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(experimentService).getSb3File(Experiment_ID);
+        verify(experimentService).getSb3File(Experiment_ID, false);
     }
 
     @Test
     public void testRetrieveSb3FileNotFound() throws Exception {
-        when(experimentService.getSb3File(Experiment_ID)).thenThrow(NotFoundException.class);
+        when(experimentService.getSb3File(Experiment_ID, false)).thenThrow(NotFoundException.class);
         mvc.perform(post("/store/sb3")
                         .content(dataObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(experimentService).getSb3File(Experiment_ID);
+        verify(experimentService).getSb3File(Experiment_ID, false);
     }
 
     @Test

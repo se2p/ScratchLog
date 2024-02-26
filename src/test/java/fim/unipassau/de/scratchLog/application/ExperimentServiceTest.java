@@ -450,7 +450,7 @@ public class ExperimentServiceTest {
     @Test
     public void testGetSb3File() {
         when(experimentRepository.findExperimentById(ID)).thenReturn(Optional.of(projection));
-        ExperimentProjection experimentProjection = experimentService.getSb3File(ID);
+        ExperimentProjection experimentProjection = experimentService.getSb3File(ID, false);
         assertAll(
                 () -> assertEquals(ID, experimentProjection.getId()),
                 () -> assertEquals(CONTENT, experimentProjection.getProject())
@@ -459,10 +459,32 @@ public class ExperimentServiceTest {
     }
 
     @Test
+    public void testGetSb3FileReturnInactive() {
+        when(experimentRepository.findExperimentById(ID)).thenReturn(Optional.of(new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return ID;
+            }
+
+            @Override
+            public boolean isActive() {
+                return false;
+            }
+
+            @Override
+            public byte[] getProject() {
+                return new byte[0];
+            }
+        }));
+        assertEquals(ID, experimentService.getSb3File(ID, true).getId());
+        verify(experimentRepository).findExperimentById(ID);
+    }
+
+    @Test
     public void testGetSb3FileEmpty() {
         when(experimentRepository.findExperimentById(ID)).thenReturn(Optional.empty());
         assertThrows(NotFoundException.class,
-                () -> experimentService.getSb3File(ID)
+                () -> experimentService.getSb3File(ID, false)
         );
         verify(experimentRepository).findExperimentById(ID);
     }
@@ -470,7 +492,7 @@ public class ExperimentServiceTest {
     @Test
     public void testGetSb3FileInvalidId() {
         assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getSb3File(0)
+                () -> experimentService.getSb3File(0, false)
         );
         verify(experimentRepository, never()).findExperimentById(anyInt());
     }
@@ -494,7 +516,7 @@ public class ExperimentServiceTest {
             }
         }));
         assertThrows(NotFoundException.class,
-                () -> experimentService.getSb3File(ID)
+                () -> experimentService.getSb3File(ID, false)
         );
         verify(experimentRepository).findExperimentById(ID);
     }
