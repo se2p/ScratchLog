@@ -403,21 +403,8 @@
 
         <!-- Repository for downloading LitterBox -->
         <repository>
-            <id>gitlab-maven</id>
+            <id>gitlab-litterbox</id>
             <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/425/packages/maven</url>
         </repository>
     </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>gitlab-maven</id>
-            <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/425/packages/maven</url>
-        </repository>
-
-        <snapshotRepository>
-            <id>gitlab-maven</id>
-            <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/425/packages/maven</url>
-        </snapshotRepository>
-    </distributionManagement>
-
 </project>
