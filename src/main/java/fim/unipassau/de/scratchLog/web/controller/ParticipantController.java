@@ -76,6 +76,11 @@ public class ParticipantController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParticipantController.class);
 
     /**
+     * The global application config.
+     */
+    private final ApplicationProperties applicationProperties;
+
+    /**
      * The user service to use for user management.
      */
     private final UserService userService;
@@ -143,6 +148,7 @@ public class ParticipantController {
     /**
      * Constructs a new participant controller with the given dependencies.
      *
+     * @param applicationProperties The {@link ApplicationProperties} to use.
      * @param experimentService The experiment service to use.
      * @param userService The user service to use.
      * @param participantService The participant service to use.
@@ -150,9 +156,11 @@ public class ParticipantController {
      * @param mailService The mail service to use.
      */
     @Autowired
-    public ParticipantController(final UserService userService, final ExperimentService experimentService,
+    public ParticipantController(final ApplicationProperties applicationProperties,
+                                 final UserService userService, final ExperimentService experimentService,
                                  final ParticipantService participantService, final PageService pageService,
                                  final MailService mailService) {
+        this.applicationProperties = applicationProperties;
         this.userService = userService;
         this.experimentService = experimentService;
         this.participantService = participantService;
@@ -258,15 +266,16 @@ public class ParticipantController {
             return Constants.ERROR;
         }
 
-        String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
+        String experimentUrl = applicationProperties.getApplicationUrl()
                 + "/users/authenticate?id=" + id + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH);
+        templateModel.put("applicationName", applicationProperties.getApplicationName());
+        templateModel.put("baseUrl", applicationProperties.getApplicationUrl());
         templateModel.put("secret", experimentUrl);
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
-        if (!ApplicationProperties.MAIL_SERVER) {
+        if (!applicationProperties.useMail()) {
             return "redirect:/secret" + "?user=" + saved.getId() + EXPERIMENT_PARAM + id;
         } else if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {

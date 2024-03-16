@@ -24,17 +24,13 @@ import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,14 +44,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
 @WebMvcTest(DashboardRestController.class)
 @Import(SecurityTestConfig.class)
-@ActiveProfiles("test")
-public class DashboardRestControllerIntegrationTest {
-
-    @Autowired
-    private MockMvc mvc;
+public class DashboardRestControllerIntegrationTest extends AbstractControllerTest {
 
     @MockBean
     private DashboardService dashboardService;

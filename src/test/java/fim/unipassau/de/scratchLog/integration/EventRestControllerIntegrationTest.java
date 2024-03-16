@@ -27,20 +27,18 @@ import fim.unipassau.de.scratchLog.application.service.FileService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.EventRestController;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -54,11 +52,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
 @WebMvcTest(EventRestController.class)
 @Import(SecurityTestConfig.class)
-@ActiveProfiles("test")
-public class EventRestControllerIntegrationTest {
+public class EventRestControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired
     private MockMvc mvc;

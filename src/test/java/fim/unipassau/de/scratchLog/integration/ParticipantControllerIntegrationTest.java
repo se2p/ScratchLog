@@ -19,7 +19,6 @@
 
 package fim.unipassau.de.scratchLog.integration;
 
-import fim.unipassau.de.scratchLog.MailServerSetter;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.MailService;
@@ -31,6 +30,7 @@ import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.ParticipantController;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
@@ -77,7 +77,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(ParticipantController.class)
 @Import(SecurityTestConfig.class)
 @ActiveProfiles("test")
-public class ParticipantControllerIntegrationTest {
+public class ParticipantControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired
     private MockMvc mvc;
@@ -219,7 +219,7 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testAddParticipant() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         mvc.perform(post("/participant/add")
@@ -236,7 +236,7 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testAddParticipantNoMailServer() throws Exception {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         mvc.perform(post("/participant/add")
                         .flashAttr(USER_DTO, newUser)
@@ -252,7 +252,7 @@ public class ParticipantControllerIntegrationTest {
 
     @Test
     public void testAddParticipantMessagingError() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         mvc.perform(post("/participant/add")
                 .flashAttr(USER_DTO, newUser)

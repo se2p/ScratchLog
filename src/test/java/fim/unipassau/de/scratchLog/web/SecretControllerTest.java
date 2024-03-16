@@ -23,6 +23,7 @@ import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.UserService;
+import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
@@ -32,10 +33,11 @@ import fim.unipassau.de.scratchLog.web.dto.UserDTO;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.ui.Model;
 
 import java.io.IOException;
@@ -54,16 +56,17 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-public class SecretControllerTest {
+@WebMvcTest(SecretController.class)
+@Import(SecurityTestConfig.class)
+public class SecretControllerTest extends AbstractControllerTest {
 
-    @InjectMocks
+    @Autowired
     private SecretController secretController;
 
-    @Mock
+    @MockBean
     private UserService userService;
 
-    @Mock
+    @MockBean
     private ExperimentService experimentService;
 
     @Mock

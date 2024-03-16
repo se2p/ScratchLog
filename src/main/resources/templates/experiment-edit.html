@@ -83,7 +83,8 @@
                     <div class="mb-5 form-group position-relative">
                         <label for="urlSelect">Scratch-GUI Address</label>
                         <select class="form-control" id="urlSelect" th:field="*{guiURL}">
-                            <option th:each="url : ${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).GUI_URL}"
+                            <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
+                            <option th:each="url : ${applicationConfig.scratchGuiUrls}"
                                     th:value="${url}" th:text="${url}"></option>
                         </select>
                     </div>

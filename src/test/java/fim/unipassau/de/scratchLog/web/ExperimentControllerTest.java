@@ -19,7 +19,6 @@
 
 package fim.unipassau.de.scratchLog.web;
 
-import fim.unipassau.de.scratchLog.MailServerSetter;
 import fim.unipassau.de.scratchLog.StringCreator;
 import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
@@ -33,6 +32,7 @@ import fim.unipassau.de.scratchLog.application.service.UserService;
 import fim.unipassau.de.scratchLog.persistence.entity.Experiment;
 import fim.unipassau.de.scratchLog.persistence.entity.Participant;
 import fim.unipassau.de.scratchLog.persistence.entity.User;
+import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
@@ -46,12 +46,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -78,37 +79,34 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class ExperimentControllerTest {
+@WebMvcTest(ExperimentController.class)
+@Import(SecurityTestConfig.class)
+public class ExperimentControllerTest extends AbstractControllerTest {
 
-    @InjectMocks
+    @Autowired
     private ExperimentController experimentController;
 
-    @Mock
+    @MockBean
     private ExperimentService experimentService;
 
-    @Mock
+    @MockBean
     private UserService userService;
 
-    @Mock
+    @MockBean
     private CourseService courseService;
 
-    @Mock
+    @MockBean
     private ParticipantService participantService;
 
-    @Mock
+    @MockBean
     private PageService pageService;
 
-    @Mock
+    @MockBean
     private MailService mailService;
 
-    @Mock
+    @MockBean
     private ExperimentDataService experimentDataService;
 
     @Mock
@@ -677,7 +675,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusOpen() {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
@@ -697,7 +695,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testChangeExperimentStatusOpenNoMailServer() {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         experimentDTO.setCourseExperiment(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(courseService.isActiveCourse(ID)).thenReturn(true);
@@ -791,7 +789,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUser() {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -808,7 +806,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserCourseExperiment() {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         experimentDTO.setActive(true);
         experimentDTO.setCourseExperiment(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
@@ -828,7 +826,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserNoMailServer() {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -845,7 +843,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserSecretNull() {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -863,7 +861,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserEmailNotSent() {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
@@ -879,7 +877,7 @@ public class ExperimentControllerTest {
 
     @Test
     public void testSearchForUserEmailNull() {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         participant.setEmail(null);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);

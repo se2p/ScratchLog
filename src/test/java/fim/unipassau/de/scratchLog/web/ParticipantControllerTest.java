@@ -19,7 +19,6 @@
 
 package fim.unipassau.de.scratchLog.web;
 
-import fim.unipassau.de.scratchLog.MailServerSetter;
 import fim.unipassau.de.scratchLog.StringCreator;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
@@ -27,6 +26,7 @@ import fim.unipassau.de.scratchLog.application.service.MailService;
 import fim.unipassau.de.scratchLog.application.service.PageService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
 import fim.unipassau.de.scratchLog.application.service.UserService;
+import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
@@ -38,12 +38,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,31 +63,28 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-public class ParticipantControllerTest {
+@WebMvcTest(ParticipantController.class)
+@Import(SecurityTestConfig.class)
+public class ParticipantControllerTest extends AbstractControllerTest {
 
-    @InjectMocks
+    @Autowired
     private ParticipantController participantController;
 
-    @Mock
+    @MockBean
     private UserService userService;
 
-    @Mock
+    @MockBean
     private ExperimentService experimentService;
 
-    @Mock
+    @MockBean
     private ParticipantService participantService;
 
-    @Mock
+    @MockBean
     private PageService pageService;
 
-    @Mock
+    @MockBean
     private MailService mailService;
 
     @Mock
@@ -224,7 +222,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipant() {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
         assertEquals(REDIRECT_EXPERIMENT + ID, participantController.addParticipant(ID_STRING, newUser, model,
@@ -237,7 +235,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipantNoMailServer() {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         assertEquals(REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + ID,
                 participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
@@ -249,7 +247,7 @@ public class ParticipantControllerTest {
 
     @Test
     public void testAddParticipantMessagingException() {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         assertEquals(ERROR, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
         verify(userService).saveUser(newUser);

@@ -19,7 +19,6 @@
 
 package fim.unipassau.de.scratchLog.integration;
 
-import fim.unipassau.de.scratchLog.MailServerSetter;
 import fim.unipassau.de.scratchLog.StringCreator;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.CourseService;
@@ -36,6 +35,7 @@ import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.ExperimentController;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
@@ -94,7 +94,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(ExperimentController.class)
 @Import(SecurityTestConfig.class)
 @ActiveProfiles("test")
-public class ExperimentControllerIntegrationTest {
+public class ExperimentControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired
     private MockMvc mvc;
@@ -668,7 +668,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testChangeExperimentStatusOpen() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         experimentDTO.setActive(true);
         List<UserDTO> userDTOS = new ArrayList<>();
         userDTOS.add(participant);
@@ -706,7 +706,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testChangeExperimentStatusOpenNoMailServer() throws Exception {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         experimentDTO.setActive(true);
         List<UserDTO> userDTOS = new ArrayList<>();
         userDTOS.add(participant);
@@ -759,7 +759,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testChangeExperimentStatusOpenInactiveCourse() throws Exception {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         experimentDTO.setActive(true);
         experimentDTO.setCourseExperiment(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
@@ -806,7 +806,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testSearchForUser() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         experimentDTO.setActive(true);
         participant.setSecret("secret");
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
@@ -829,7 +829,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testSearchForUserSecretNull() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
@@ -851,7 +851,7 @@ public class ExperimentControllerIntegrationTest {
 
     @Test
     public void testSearchForUserNoMailServer() throws Exception {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         experimentDTO.setActive(true);
         participant.setSecret("secret");
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);

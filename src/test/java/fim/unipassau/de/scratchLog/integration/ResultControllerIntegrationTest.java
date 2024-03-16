@@ -33,6 +33,7 @@ import fim.unipassau.de.scratchLog.persistence.projection.BlockEventXMLProjectio
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.FileProjection;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.ResultController;
 import fim.unipassau.de.scratchLog.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratchLog.web.dto.EventCountDTO;
@@ -40,7 +41,6 @@ import fim.unipassau.de.scratchLog.web.dto.FileDTO;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratchLog.web.dto.Sb3ZipDTO;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -49,8 +49,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.File;
@@ -78,11 +76,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-@ExtendWith(SpringExtension.class)
 @WebMvcTest(ResultController.class)
 @Import(SecurityTestConfig.class)
-@ActiveProfiles("test")
-public class ResultControllerIntegrationTest {
+public class ResultControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired
     private MockMvc mvc;

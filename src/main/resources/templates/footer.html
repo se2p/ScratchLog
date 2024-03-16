@@ -10,7 +10,8 @@
     <div id="footer" class="footer">
         <p id="copyright_footer">
             Copyright &copy; 2021
-            <span th:text="${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).APPLICATION_NAME}"></span><br>
+            <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
+            <span th:text="${applicationConfig.applicationName}"></span><br>
             <span th:text="#{address}"></span><br>
             <!--Link to the chair's page-->
             <a class="link" href="https://www.fim.uni-passau.de/lehrstuhl-fuer-software-engineering-ii/"

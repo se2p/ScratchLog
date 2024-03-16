@@ -65,6 +65,11 @@ public class HomeController {
     private static final Logger LOGGER = LoggerFactory.getLogger(HomeController.class);
 
     /**
+     * The global application config.
+     */
+    private final ApplicationProperties applicationProperties;
+
+    /**
      * The experiment service to use for retrieving experiment information.
      */
     private final ExperimentService experimentService;
@@ -98,6 +103,7 @@ public class HomeController {
     /**
      * Constructs a new home controller with the given dependencies.
      *
+     * @param applicationProperties The {@link ApplicationProperties} to use.
      * @param experimentService The {@link ExperimentService} to use.
      * @param pageService The {@link PageService} to use.
      * @param userService The {@link UserService} to use.
@@ -105,9 +111,11 @@ public class HomeController {
      * @param tokenService The {@link TokenService} to use.
      */
     @Autowired
-    public HomeController(final ExperimentService experimentService, final PageService pageService,
+    public HomeController(final ApplicationProperties applicationProperties,
+                          final ExperimentService experimentService, final PageService pageService,
                           final UserService userService, final ParticipantService participantService,
                           final TokenService tokenService) {
+        this.applicationProperties = applicationProperties;
         this.experimentService = experimentService;
         this.pageService = pageService;
         this.userService = userService;
@@ -265,7 +273,7 @@ public class HomeController {
      */
     @GetMapping("/reset")
     public String getResetPage(final UserDTO userDTO) {
-        return ApplicationProperties.MAIL_SERVER ? "password-reset" : Constants.ERROR;
+        return applicationProperties.useMail() ? "password-reset" : Constants.ERROR;
     }
 
 

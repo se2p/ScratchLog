@@ -23,6 +23,7 @@ import fim.unipassau.de.scratchLog.application.service.SAML2Service;
 import fim.unipassau.de.scratchLog.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
+import fim.unipassau.de.scratchLog.web.controller.ApplicationPropertiesAdvice;
 import fim.unipassau.de.scratchLog.web.controller.SAML2Controller;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -46,10 +47,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SAML2ControllerTest {
@@ -81,6 +79,9 @@ public class SAML2ControllerTest {
     @Mock
     private Saml2AuthenticatedPrincipal principal;
 
+    @Mock
+    private ApplicationProperties applicationProperties;
+
     private MockedStatic<SecurityContextHolder> securityContextHolder;
 
     @BeforeEach
@@ -92,6 +93,7 @@ public class SAML2ControllerTest {
     @AfterEach
     public void cleanup() {
         securityContextHolder.close();
+        Mockito.reset(applicationProperties);
     }
 
     @Test
@@ -201,9 +203,8 @@ public class SAML2ControllerTest {
         verify(authenticationProvider, never()).authenticate(any());
     }
 
-    public static void setSAMLAuthentication(boolean isSAMLAuth) {
-        Mockito.mock(ApplicationProperties.class);
-        Whitebox.setInternalState(ApplicationProperties.class, "SAML_AUTHENTICATION", isSAMLAuth);
+    public void setSAMLAuthentication(boolean isSAMLAuth) {
+        doReturn(isSAMLAuth).when(applicationProperties).useSamlAuthentication();
     }
 
 }

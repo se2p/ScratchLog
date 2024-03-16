@@ -25,6 +25,7 @@ import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.DashboardController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,10 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(DashboardController.class)
 @Import(SecurityTestConfig.class)
 @ActiveProfiles("test")
-public class DashboardControllerIntegrationTest {
-
-    @Autowired
-    private MockMvc mvc;
+public class DashboardControllerIntegrationTest extends AbstractControllerTest {
 
     @MockBean
     private DashboardService dashboardService;

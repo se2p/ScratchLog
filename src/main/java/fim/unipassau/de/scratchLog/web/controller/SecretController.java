@@ -56,6 +56,11 @@ public class SecretController {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecretController.class);
 
     /**
+     * The global application config.
+     */
+    private final ApplicationProperties applicationProperties;
+
+    /**
      * The user service to use for user management.
      */
     private final UserService userService;
@@ -73,11 +78,14 @@ public class SecretController {
     /**
      * Constructs a new secret controller with the given dependencies.
      *
+     * @param applicationProperties The {@link ApplicationProperties} to use.
      * @param userService The {@link UserService} to use.
      * @param experimentService The {@link ExperimentService} to use.
      */
     @Autowired
-    public SecretController(final UserService userService, final ExperimentService experimentService) {
+    public SecretController(final ApplicationProperties applicationProperties, final UserService userService,
+                            final ExperimentService experimentService) {
+        this.applicationProperties = applicationProperties;
         this.userService = userService;
         this.experimentService = experimentService;
     }
@@ -256,7 +264,7 @@ public class SecretController {
      * @return A list of string arrays containing the information.
      */
     private List<String[]> transformUserData(final List<UserDTO> userDTOS, final int experimentId) {
-        String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
+        String experimentUrl = applicationProperties.getApplicationUrl()
                 + "/users/authenticate?id=" + experimentId + "&secret=";
         List<String[]> users = new ArrayList<>();
         String[] header = new String[]{"id", "name", "participation link"};
@@ -275,7 +283,7 @@ public class SecretController {
      * @param model The {@link Model} to hold the information.
      */
     private void addModelInfo(final List<UserDTO> userDTOS, final int experimentId, final Model model) {
-        String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
+        String experimentUrl = applicationProperties.getApplicationUrl()
                 + "/users/authenticate?id=" + experimentId + "&secret=";
         model.addAttribute("users", userDTOS);
         model.addAttribute("link", experimentUrl);

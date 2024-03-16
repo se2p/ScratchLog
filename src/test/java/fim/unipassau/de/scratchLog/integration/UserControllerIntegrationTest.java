@@ -19,7 +19,6 @@
 
 package fim.unipassau.de.scratchLog.integration;
 
-import fim.unipassau.de.scratchLog.MailServerSetter;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.MailService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
@@ -31,6 +30,7 @@ import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.util.enums.TokenType;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.UserController;
 import fim.unipassau.de.scratchLog.web.dto.PasswordDTO;
 import fim.unipassau.de.scratchLog.web.dto.TokenDTO;
@@ -82,7 +82,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(UserController.class)
 @Import(SecurityTestConfig.class)
 @ActiveProfiles("test")
-public class UserControllerIntegrationTest {
+public class UserControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired
     private MockMvc mvc;
@@ -408,7 +408,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testAddUser() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenType.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -427,7 +427,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testAddUserEmailNotSent() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenType.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -445,7 +445,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testAddUserNoMailServer() throws Exception {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         userDTO.setId(null);
         when(userService.saveUser(userDTO)).thenReturn(oldDTO);
         when(tokenService.generateToken(TokenType.REGISTER, null, oldDTO.getId())).thenReturn(tokenDTO);
@@ -498,7 +498,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testGetAddParticipants() throws Exception {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         mvc.perform(get("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
@@ -508,7 +508,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testGetAddParticipantsMailServer() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         mvc.perform(get("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
@@ -636,7 +636,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testPasswordReset() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
@@ -654,7 +654,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testPasswordResetMailNotSent() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(userDTO);
         when(tokenService.generateToken(TokenType.FORGOT_PASSWORD, null, userDTO.getId())).thenReturn(tokenDTO);
@@ -671,7 +671,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testPasswordResetNoMailServer() throws Exception {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         mvc.perform(post("/users/reset")
                         .flashAttr(USER_DTO, userDTO)
                         .accept(MediaType.APPLICATION_JSON))
@@ -685,7 +685,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testPasswordResetUsersNotEqual() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         oldDTO.setId(ID + 1);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(userService.getUserByEmail(userDTO.getEmail())).thenReturn(oldDTO);
@@ -702,7 +702,7 @@ public class UserControllerIntegrationTest {
 
     @Test
     public void testPasswordResetUsernameNotFound() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
         mvc.perform(post("/users/reset")
                 .flashAttr(USER_DTO, userDTO)
@@ -995,7 +995,7 @@ public class UserControllerIntegrationTest {
     @Test
     @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangeEmail() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
@@ -1021,7 +1021,7 @@ public class UserControllerIntegrationTest {
     @Test
     @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangeEmailNoMailServer() throws Exception {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);
@@ -1047,7 +1047,7 @@ public class UserControllerIntegrationTest {
     @Test
     @WithMockUser(username = USERNAME, roles = {"PARTICIPANT"})
     public void testUpdateUserParticipantChangeEmailUpdatePassword() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         userDTO.setUsername(null);
         userDTO.setPassword(PASSWORD);
         userDTO.setNewPassword(VALID_PASSWORD);
@@ -1078,7 +1078,7 @@ public class UserControllerIntegrationTest {
     @Test
     @WithMockUser(username = PROFILE, roles = {"ADMIN"})
     public void testUpdateUserChangeEmailNotSent() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         userDTO.setEmail(NEW_EMAIL);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.updateUser(oldDTO)).thenReturn(oldDTO);

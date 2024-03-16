@@ -21,6 +21,7 @@ package fim.unipassau.de.scratchLog.integration;
 
 import fim.unipassau.de.scratchLog.application.service.SearchService;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.SearchRestController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,7 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(SearchRestController.class)
 @Import(SecurityTestConfig.class)
 @ActiveProfiles("test")
-public class SearchRestControllerIntegrationTest {
+public class SearchRestControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired
     private MockMvc mvc;
