@@ -104,6 +104,12 @@ public class BlockEventDTO implements EventDTO {
     private String code;
 
     /**
+     * A secret that can be used to check the event is associated with the correct participant.
+     */
+    @JsonProperty("secret")
+    private String secret;
+
+    /**
      * Constructs a new block event dto with the given attributes.
      *
      * @param user The id of the user who caused the event.
@@ -115,10 +121,11 @@ public class BlockEventDTO implements EventDTO {
      * @param metadata The metadata.
      * @param xml The current xml.
      * @param code The current json code.
+     * @param secret The secret used to identify the participant.
      */
     public BlockEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
                          final BlockEventType eventType, final BlockEventSpecific event, final String sprite,
-                         final String metadata, final String xml, final String code) {
+                         final String metadata, final String xml, final String code, final String secret) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
@@ -128,6 +135,7 @@ public class BlockEventDTO implements EventDTO {
         this.metadata = metadata;
         this.xml = xml;
         this.code = code;
+        this.secret = secret;
     }
 
     /**

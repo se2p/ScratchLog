@@ -20,8 +20,10 @@
 package fim.unipassau.de.scratchLog.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.CodeService;
 import fim.unipassau.de.scratchLog.application.service.EventService;
@@ -91,6 +93,11 @@ public class EventRestController {
     private final ParticipantService participantService;
 
     /**
+     * Converter from/to JSON.
+     */
+    private final ObjectMapper objectMapper;
+
+    /**
      * Constructs an event rest controller with the given dependencies.
      *
      * @param eventService The event service to use.
@@ -108,18 +115,19 @@ public class EventRestController {
         this.fileService = fileService;
         this.experimentService = experimentService;
         this.participantService = participantService;
+
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
     }
 
     /**
      * Saves the block event data passed in the request body.
      *
-     * @param data The string containing the block event data.
+     * @param blockEventDTO The JSON containing the block event data.
      */
     @PostMapping("/block")
-    public void storeBlockEvent(@RequestBody final String data) {
-        BlockEventDTO blockEventDTO = createBlockEventDTO(data);
-
-        if (blockEventDTO == null || isInvalidRequest(data, blockEventDTO)) {
+    public void storeBlockEvent(@RequestBody final BlockEventDTO blockEventDTO) {
+        if (blockEventDTO == null || isInvalidRequest(blockEventDTO)) {
             return;
         }
 
@@ -343,19 +351,36 @@ public class EventRestController {
     }
 
     /**
-     * Creates a {@link BlockEventDTO} with the given data.
+     * Checks, if the data passed to the REST controller should be stored in the database. The data should not be stored
+     * if the participant data is invalid.
      *
-     * @param data The data passed in the request body.
-     * @return The new block event DTO containing the information.
+     * @param blockEvent The data passed in the request body.
+     * @return {@code true} if the event should not be persisted or {@code false} otherwise.
      */
-    private BlockEventDTO createBlockEventDTO(final String data) {
+    private boolean isInvalidRequest(final BlockEventDTO blockEvent) {
+        validateScratchJson(blockEvent.getCode());
+
+        String secret = blockEvent.getSecret();
+        return participantService.isInvalidParticipant(blockEvent.getUser(), blockEvent.getExperiment(), secret, true);
+    }
+
+    /**
+     * Checks that the Scratch project JSON is indeed JSON.
+     *
+     * @param code Some Scratch project json.
+     */
+    private void validateScratchJson(final String code) throws IncompleteDataException {
+        if (code == null) {
+            return;
+        }
+
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(data, BlockEventDTO.class);
+            final JsonNode node = objectMapper.readTree(code);
+            if (!node.isObject()) {
+                throw new IncompleteDataException("Invalid Scratch project json!");
+            }
         } catch (JsonProcessingException e) {
-            LOGGER.error("The block event data sent to the server was incomplete!", e);
-            return null;
+            throw new IncompleteDataException("Invalid Scratch project JSON!");
         }
     }
 
@@ -367,9 +392,7 @@ public class EventRestController {
      */
     private ClickEventDTO createClickEventDTO(final String data) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(data, ClickEventDTO.class);
+            return objectMapper.readValue(data, ClickEventDTO.class);
         } catch (JsonProcessingException e) {
             LOGGER.error("The click event data sent to the server was incomplete!", e);
             return null;
@@ -384,9 +407,7 @@ public class EventRestController {
      */
     private DebuggerEventDTO createDebuggerEventDTO(final String data) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(data, DebuggerEventDTO.class);
+            return objectMapper.readValue(data, DebuggerEventDTO.class);
         } catch (JsonProcessingException e) {
             LOGGER.error("The debugger event data sent to the server was incomplete!", e);
             return null;
@@ -401,9 +422,7 @@ public class EventRestController {
      */
     private QuestionEventDTO createQuestionEventDTO(final String data) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(data, QuestionEventDTO.class);
+            return objectMapper.readValue(data, QuestionEventDTO.class);
         } catch (JsonProcessingException e) {
             LOGGER.error("The question event data sent to the server was incomplete!", e);
             return null;
@@ -418,9 +437,7 @@ public class EventRestController {
      */
     private ResourceEventDTO createResourceEventDTO(final String data) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(data, ResourceEventDTO.class);
+            return objectMapper.readValue(data, ResourceEventDTO.class);
         } catch (JsonProcessingException e) {
             LOGGER.error("The resource event data sent to the server was incomplete!", e);
             return null;
@@ -435,9 +452,7 @@ public class EventRestController {
      */
     private FileDTO createFileDTO(final String data) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(data, FileDTO.class);
+            return objectMapper.readValue(data, FileDTO.class);
         } catch (JsonProcessingException e) {
             LOGGER.error("The file data sent to the server was incomplete!", e);
             return null;
@@ -452,9 +467,7 @@ public class EventRestController {
      */
     private Sb3ZipDTO createSb3ZipDTO(final String data) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.readValue(data, Sb3ZipDTO.class);
+            return objectMapper.readValue(data, Sb3ZipDTO.class);
         } catch (JsonProcessingException e) {
             LOGGER.error("The sb3 zip file data sent to the server was incomplete!", e);
             return null;
