@@ -118,7 +118,7 @@ public class EventRestControllerIntegrationTest {
         blockEventObject.put("metadata", "meta");
         blockEventObject.put("spritename", "Figur1");
         blockEventObject.put("xml", "xml");
-        blockEventObject.put("json.txt", "json.txt");
+        blockEventObject.put("json", "{}");
         clickEventObject.put("user", USER_ID);
         clickEventObject.put("experiment", Experiment_ID);
         clickEventObject.put(SECRET, SECRET);
@@ -212,7 +212,19 @@ public class EventRestControllerIntegrationTest {
                         .content(blockEventObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().is4xxClientError());
+        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
+        verify(eventService, never()).saveBlockEvent(any());
+    }
+
+    @Test
+    public void testStoreBlockEventInvalidProjectJson() throws Exception {
+        blockEventObject.put("json", "{");
+        mvc.perform(post("/store/block")
+                        .content(blockEventObject.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is4xxClientError());
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(eventService, never()).saveBlockEvent(any());
     }

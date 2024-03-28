@@ -119,8 +119,7 @@ public class EventServiceTest {
 
     private static final int ID = 1;
     private static final String GUI_URL = "scratch";
-    private final BlockEventDTO blockEventDTO = new BlockEventDTO(1, 1, LocalDateTime.now(), BlockEventType.CHANGE,
-            BlockEventSpecific.CHANGE, "sprite", "meta", "xml", "json.txt");
+    private BlockEventDTO blockEventDTO;
     private final ClickEventDTO clickEventDTO = new ClickEventDTO(1, 1, LocalDateTime.now(),
             ClickEventType.CODE, ClickEventSpecific.STACKCLICK, "meta");
     private final DebuggerEventDTO debuggerEventDTO = new DebuggerEventDTO(1, 1, LocalDateTime.now(),
@@ -145,6 +144,9 @@ public class EventServiceTest {
 
     @BeforeEach
     public void setup() {
+        blockEventDTO = new BlockEventDTO(1, 1, LocalDateTime.now(), BlockEventType.CHANGE,
+                BlockEventSpecific.CHANGE, "sprite", "meta", "xml", "{}", "empty");
+
         user.setId(ID);
         user.setActive(true);
         experiment.setActive(true);

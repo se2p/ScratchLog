@@ -19,6 +19,7 @@
 
 package fim.unipassau.de.scratchLog.web;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.CodeService;
 import fim.unipassau.de.scratchLog.application.service.EventService;
@@ -26,7 +27,10 @@ import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.FileService;
 import fim.unipassau.de.scratchLog.application.service.ParticipantService;
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentProjection;
+import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
+import fim.unipassau.de.scratchLog.util.enums.BlockEventType;
 import fim.unipassau.de.scratchLog.web.controller.EventRestController;
+import fim.unipassau.de.scratchLog.web.dto.BlockEventDTO;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServletResponse;
@@ -40,6 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,7 +83,7 @@ public class EventRestControllerTest {
     private static final String SECRET = "secret";
     private static final int USER_ID = 3;
     private static final int Experiment_ID = 39;
-    private final JSONObject blockEventObject = new JSONObject();
+    private BlockEventDTO blockEvent;
     private final JSONObject clickEventObject = new JSONObject();
     private final JSONObject debuggerEventObject = new JSONObject();
     private final JSONObject questionEventObject = new JSONObject();
@@ -104,17 +109,10 @@ public class EventRestControllerTest {
     };
 
     @BeforeEach
-    public void setup() throws JSONException {
-        blockEventObject.put("user", USER_ID);
-        blockEventObject.put("experiment", Experiment_ID);
-        blockEventObject.put(SECRET, SECRET);
-        blockEventObject.put("type", "DRAG");
-        blockEventObject.put("time", "2021-06-28T12:36:37.601Z");
-        blockEventObject.put("event", "ENDDRAG");
-        blockEventObject.put("metadata", "meta");
-        blockEventObject.put("spritename", "Figur1");
-        blockEventObject.put("xml", "xml");
-        blockEventObject.put("json.txt", "json.txt");
+    public void setup() throws JSONException, JsonProcessingException {
+        blockEvent = new BlockEventDTO(USER_ID, Experiment_ID, LocalDateTime.now(), BlockEventType.DRAG,
+                BlockEventSpecific.ENDDRAG, "Figur1", "meta", "xml", "{}", SECRET);
+
         clickEventObject.put("user", USER_ID);
         clickEventObject.put("experiment", Experiment_ID);
         clickEventObject.put(SECRET, SECRET);
@@ -176,7 +174,7 @@ public class EventRestControllerTest {
     @Test
     public void testStoreBlockEvent() {
         assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+                () -> eventRestController.storeBlockEvent(blockEvent)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService).saveBlockEvent(any());
@@ -186,19 +184,9 @@ public class EventRestControllerTest {
     public void testStoreBlockEventInvalidParticipant() {
         when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true)).thenReturn(true);
         assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
+                () -> eventRestController.storeBlockEvent(blockEvent)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
-        verify(eventService, never()).saveBlockEvent(any());
-    }
-
-    @Test
-    public void testStoreBlockEventJsonProcessing() throws JSONException {
-        blockEventObject.put("time", "0");
-        assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEventObject.toString())
-        );
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(eventService, never()).saveBlockEvent(any());
     }
 
