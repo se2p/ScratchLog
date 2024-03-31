@@ -36,7 +36,7 @@ import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.FieldErrorHandler;
 import fim.unipassau.de.scratchLog.util.MarkdownHandler;
 import fim.unipassau.de.scratchLog.util.NumberParser;
-import fim.unipassau.de.scratchLog.web.error_handling.PageIdValidator;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import fim.unipassau.de.scratchLog.util.Secrets;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
@@ -536,7 +536,7 @@ public class ExperimentController {
             LOGGER.error("Cannot fetch participant page for invalid id {} or invalid page number {}!", id, page);
             return Constants.ERROR;
         }
-        PageIdValidator.validatePageNumberElseThrow(page);
+        IdValidator.validatePageNumberElseThrow(page);
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);

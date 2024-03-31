@@ -29,8 +29,7 @@ import fim.unipassau.de.scratchLog.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
-import fim.unipassau.de.scratchLog.util.NumberParser;
-import fim.unipassau.de.scratchLog.web.error_handling.PageIdValidator;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
 import fim.unipassau.de.scratchLog.web.error_handling.InvalidIdException;
@@ -182,7 +181,7 @@ public class HomeController {
         if (lastPageInformation == null) {
             throw new InvalidIdException("page", page);
         }
-        PageIdValidator.validatePageNumberElseThrow(page, lastPageInformation.getFirst());
+        IdValidator.validatePageNumberElseThrow(page, lastPageInformation.getFirst());
 
         Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, page,
                 lastPageInformation.getSecond());
@@ -208,7 +207,7 @@ public class HomeController {
         if (lastPageInformation == null) {
             throw new InvalidIdException("page", page);
         }
-        PageIdValidator.validatePageNumberElseThrow(page, lastPageInformation.getFirst());
+        IdValidator.validatePageNumberElseThrow(page, lastPageInformation.getFirst());
 
         Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest, page,
                 lastPageInformation.getSecond());
@@ -229,25 +228,25 @@ public class HomeController {
     /**
      * Loads the experiment finish page for the experiment with the current id.
      *
-     * @param user The user id of the participant.
-     * @param experiment The experiment id.
+     * @param userId The user id of the participant.
+     * @param experimentId The experiment id.
      * @param secret The user's secret.
      * @param model The model used to store the message to be displayed on the page.
      * @return The experiment finish page.
      */
     @GetMapping("/finish")
-    public String getExperimentFinishPage(@RequestParam("user") final String user,
-                                          @RequestParam("experiment") final String experiment,
+    public String getExperimentFinishPage(@RequestParam("user") final int userId,
+                                          @RequestParam("experiment") final int experimentId,
                                           @RequestParam("secret") final String secret,
                                           final Model model) {
-        int experimentId = NumberParser.parseId(experiment);
-        int userId = NumberParser.parseId(user);
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
-
+        IdValidator.validateUserIdElseThrow(userId);
+        IdValidator.validateExperimentIdElseThrow(experimentId);
         if (isInvalidFinishParams(experimentId, userId, secret)) {
             return Constants.ERROR;
         }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);

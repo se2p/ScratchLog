@@ -428,9 +428,9 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                         .param(SECRET, SECRET)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(model().attribute(THANKS, nullValue()))
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(view().name("error"));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(experimentService, never()).getExperiment(anyInt());
     }
@@ -443,9 +443,9 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                         .param(SECRET, SECRET)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(model().attribute(THANKS, nullValue()))
-                .andExpect(view().name(Constants.ERROR));
+                .andExpect(view().name("error"));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(experimentService, never()).getExperiment(anyInt());
     }

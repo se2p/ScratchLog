@@ -30,7 +30,7 @@ import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.FieldErrorHandler;
 import fim.unipassau.de.scratchLog.util.MarkdownHandler;
 import fim.unipassau.de.scratchLog.util.NumberParser;
-import fim.unipassau.de.scratchLog.web.error_handling.PageIdValidator;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.util.validation.StringValidator;
 import fim.unipassau.de.scratchLog.web.dto.CourseDTO;
@@ -453,7 +453,7 @@ public class CourseController {
         }
 
         int lastPage = pageService.getLastParticipantCoursePage(courseId);
-        PageIdValidator.validatePageNumberElseThrow(page, lastPage);
+        IdValidator.validatePageNumberElseThrow(page, lastPage);
 
         Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId, PageRequest.of(page,
                 Constants.PAGE_SIZE));
@@ -481,7 +481,7 @@ public class CourseController {
         }
 
         int lastPage = pageService.getLastCourseExperimentPage(courseId);
-        PageIdValidator.validatePageNumberElseThrow(page, lastPage);
+        IdValidator.validatePageNumberElseThrow(page, lastPage);
 
         Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(page,
                 Constants.PAGE_SIZE), courseId);
