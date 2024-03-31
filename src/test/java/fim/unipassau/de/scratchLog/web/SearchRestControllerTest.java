@@ -48,8 +48,6 @@ public class SearchRestControllerTest {
     @Mock
     private SearchService searchService;
 
-    private static final String ID_STRING = "1";
-    private static final String PAGE_STRING = "2";
     private static final String QUERY = "participant";
     private static final String BLANK = "   ";
     private static final String PARTICIPANT = "PARTICIPANT";
@@ -94,157 +92,121 @@ public class SearchRestControllerTest {
     @Test
     public void testGetMoreUsers() {
         when(searchService.getNextUsers(QUERY, PAGE)).thenReturn(userProjectionData);
-        assertEquals(2, searchRestController.getMoreUsers(QUERY, PAGE_STRING).size());
+        assertEquals(2, searchRestController.getMoreUsers(QUERY, PAGE).size());
         verify(searchService).getNextUsers(QUERY, PAGE);
     }
 
     @Test
     public void testGetMoreUsersInvalidPage() {
-        assertTrue(searchRestController.getMoreUsers(QUERY, "0").isEmpty());
+        assertTrue(searchRestController.getMoreUsers(QUERY, -1).isEmpty());
         verify(searchService, never()).getNextUsers(anyString(), anyInt());
     }
 
     @Test
     public void testGetMoreExperiments() {
         when(searchService.getNextExperiments(QUERY, PAGE)).thenReturn(experimentTableData);
-        assertEquals(2, searchRestController.getMoreExperiments(QUERY, PAGE_STRING).size());
+        assertEquals(2, searchRestController.getMoreExperiments(QUERY, PAGE).size());
         verify(searchService).getNextExperiments(QUERY, PAGE);
-    }
-
-    @Test
-    public void testGetMoreExperimentsPageBlank() {
-        assertTrue(searchRestController.getMoreExperiments(QUERY, BLANK).isEmpty());
-        verify(searchService, never()).getNextExperiments(anyString(), anyInt());
-    }
-
-    @Test
-    public void testGetMoreExperimentsPageNull() {
-        assertTrue(searchRestController.getMoreExperiments(QUERY, null).isEmpty());
-        verify(searchService, never()).getNextExperiments(anyString(), anyInt());
     }
 
     @Test
     public void testGetMoreCourses() {
         when(searchService.getNextCourses(QUERY, PAGE)).thenReturn(courseTableData);
-        assertEquals(3, searchRestController.getMoreCourses(QUERY, PAGE_STRING).size());
+        assertEquals(3, searchRestController.getMoreCourses(QUERY, PAGE).size());
         verify(searchService).getNextCourses(QUERY, PAGE);
-    }
-
-    @Test
-    public void testGetMoreCoursesPageBlank() {
-        assertTrue(searchRestController.getMoreCourses(QUERY, BLANK).isEmpty());
-        verify(searchService, never()).getNextCourses(anyString(), anyInt());
-    }
-
-    @Test
-    public void testGetMoreCoursesPageNull() {
-        assertTrue(searchRestController.getMoreCourses(QUERY, null).isEmpty());
-        verify(searchService, never()).getNextCourses(anyString(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestions() {
         when(searchService.getUserSuggestions(QUERY, ID)).thenReturn(userData);
-        List<String[]> data = searchRestController.getUserSuggestions(QUERY, ID_STRING);
+        List<String[]> data = searchRestController.getUserSuggestions(QUERY, ID);
         assertEquals(5, data.size());
         verify(searchService).getUserSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsInvalidId() {
-        assertTrue(searchRestController.getUserSuggestions(QUERY, "0").isEmpty());
-        verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
-    }
-
-    @Test
-    public void testGetUserSuggestionsIdBlank() {
-        assertTrue(searchRestController.getUserSuggestions(QUERY, BLANK).isEmpty());
-        verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
-    }
-
-    @Test
-    public void testGetUserSuggestionsIdNull() {
-        assertTrue(searchRestController.getUserSuggestions(QUERY, null).isEmpty());
+        assertTrue(searchRestController.getUserSuggestions(QUERY, 0).isEmpty());
         verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsQueryBlank() {
-        assertTrue(searchRestController.getUserSuggestions(BLANK, ID_STRING).isEmpty());
+        assertTrue(searchRestController.getUserSuggestions(BLANK, ID).isEmpty());
         verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetUserSuggestionsQueryNull() {
-        assertTrue(searchRestController.getUserSuggestions(null, ID_STRING).isEmpty());
+        assertTrue(searchRestController.getUserSuggestions(null, ID).isEmpty());
         verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetDeleteUserSuggestions() {
         when(searchService.getUserDeleteSuggestions(QUERY, ID)).thenReturn(userData);
-        List<String[]> data = searchRestController.getDeleteUserSuggestions(QUERY, ID_STRING);
+        List<String[]> data = searchRestController.getDeleteUserSuggestions(QUERY, ID);
         assertEquals(5, data.size());
         verify(searchService).getUserDeleteSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetDeleteUserSuggestionsInvalidParams() {
-        assertTrue(searchRestController.getDeleteUserSuggestions(BLANK, "0").isEmpty());
+        assertTrue(searchRestController.getDeleteUserSuggestions(BLANK, 0).isEmpty());
         verify(searchService, never()).getUserDeleteSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetCourseExperimentSuggestions() {
         when(searchService.getCourseExperimentSuggestions(QUERY, ID)).thenReturn(experimentTableData);
-        List<String[]> data = searchRestController.getCourseExperimentSuggestions(QUERY, ID_STRING);
+        List<String[]> data = searchRestController.getCourseExperimentSuggestions(QUERY, ID);
         assertEquals(2, data.size());
         verify(searchService).getCourseExperimentSuggestions(QUERY, ID);
     }
 
     @Test
     public void testGetCourseExperimentSuggestionsInvalidParams() {
-        assertTrue(searchRestController.getCourseExperimentSuggestions(null, ID_STRING).isEmpty());
+        assertTrue(searchRestController.getCourseExperimentSuggestions(null, ID).isEmpty());
         verify(searchService, never()).getCourseExperimentSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetCourseParticipantSuggestions() {
         when(searchService.getCourseParticipantSuggestions(QUERY, ID)).thenReturn(userData);
-        assertEquals(5, searchRestController.getCourseParticipantSuggestions(QUERY, ID_STRING).size());
+        assertEquals(5, searchRestController.getCourseParticipantSuggestions(QUERY, ID).size());
         verify(searchService).getCourseParticipantSuggestions(QUERY, ID);
     }
 
     @Test
     public void testGetCourseParticipantSuggestionsInvalidParams() {
-        assertTrue(searchRestController.getCourseParticipantSuggestions(QUERY, BLANK).isEmpty());
+        assertTrue(searchRestController.getCourseParticipantSuggestions(QUERY, -1).isEmpty());
         verify(searchService, never()).getCourseParticipantSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetCourseExperimentDeleteSuggestions() {
         when(searchService.getCourseExperimentDeleteSuggestions(QUERY, ID)).thenReturn(experimentTableData);
-        List<String[]> data = searchRestController.getCourseExperimentDeleteSuggestions(QUERY, ID_STRING);
+        List<String[]> data = searchRestController.getCourseExperimentDeleteSuggestions(QUERY, ID);
         assertEquals(2, data.size());
         verify(searchService).getCourseExperimentDeleteSuggestions(QUERY, ID);
     }
 
     @Test
     public void testGetCourseExperimentDeleteSuggestionsInvalidParams() {
-        assertTrue(searchRestController.getCourseExperimentDeleteSuggestions(QUERY, QUERY).isEmpty());
+        assertTrue(searchRestController.getCourseExperimentDeleteSuggestions(QUERY, -1).isEmpty());
         verify(searchService, never()).getCourseExperimentDeleteSuggestions(anyString(), anyInt());
     }
 
     @Test
     public void testGetCourseParticipantDeleteSuggestions() {
         when(searchService.getCourseParticipantDeleteSuggestions(QUERY, ID)).thenReturn(userData);
-        assertEquals(5, searchRestController.getCourseParticipantDeleteSuggestions(QUERY, ID_STRING).size());
+        assertEquals(5, searchRestController.getCourseParticipantDeleteSuggestions(QUERY, ID).size());
         verify(searchService).getCourseParticipantDeleteSuggestions(QUERY, ID);
     }
 
     @Test
     public void testGetCourseParticipantDeleteSuggestionsInvalidParams() {
-        assertTrue(searchRestController.getCourseParticipantDeleteSuggestions(BLANK, ID_STRING).isEmpty());
+        assertTrue(searchRestController.getCourseParticipantDeleteSuggestions(BLANK, ID).isEmpty());
         verify(searchService, never()).getCourseParticipantDeleteSuggestions(anyString(), anyInt());
     }
 
