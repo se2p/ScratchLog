@@ -56,7 +56,26 @@ public final class IdValidator {
         validateIdElseThrow("course", id);
     }
 
-    private static void validateIdElseThrow(final String entity, final int id) {
+    /**
+     * Checks if the given id is within the valid range.
+     *
+     * @param id An id.
+     * @throws InvalidIdException Thrown in case the id is invalid.
+     */
+    public static void validateFileIdElseThrow(final int id) throws InvalidIdException {
+        validateIdElseThrow("file", id);
+    }
+
+    /**
+     * Checks if the given id is within the valid range.
+     *
+     * <p>Prefer the more specific methods if possible (e.g. {@link #validateCourseIdElseThrow(int)}).
+     *
+     * @param entity The name of the entity for which an ID should be checked. E.g. "user", "course".
+     * @param id An id.
+     * @throws InvalidIdException Thrown in case the id is invalid.
+     */
+    public static void validateIdElseThrow(final String entity, final int id) {
         if (id < Constants.MIN_ID) {
             throw new InvalidIdException(entity, id);
         }

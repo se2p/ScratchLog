@@ -92,6 +92,8 @@
         <property name="fileExtensions" value="groovy,java"/>
     </module>
 
+    <module name="SuppressWarningsFilter"/>
+
     <!-- We want a package-info.java for every package! -->
     <module name="JavadocPackage"/>
 
@@ -104,6 +106,7 @@
     <module name="TreeWalker">
 
         <module name="SuppressionCommentFilter"/>
+        <module name="SuppressWarningsHolder"/>
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See https://checkstyle.org/config_javadoc.html -->
