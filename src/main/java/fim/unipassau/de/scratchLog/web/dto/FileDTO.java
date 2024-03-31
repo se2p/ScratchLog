@@ -87,23 +87,31 @@ public class FileDTO implements EventDTO {
     private byte[] content;
 
     /**
+     * A secret that can be used to check the event is associated with the correct participant.
+     */
+    @JsonProperty("secret")
+    private String secret;
+
+    /**
      * Constructs a new file dto with the given attributes.
      *
-     * @param user The id of the user who uploaded the file.
+     * @param user       The id of the user who uploaded the file.
      * @param experiment The id of the experiment during which the file was uploaded.
-     * @param date The time at which the file was uploaded.
-     * @param name The name of the file.
-     * @param filetype The filetype.
-     * @param content The file content.
+     * @param secret     The secret used to identify the participant.
+     * @param name       The name of the file.
+     * @param filetype   The filetype.
+     * @param content    The file content.
+     * @param date       The time at which the file was uploaded.
      */
-    public FileDTO(final Integer user, final Integer experiment, final LocalDateTime date, final String name,
-                   final String filetype, final byte[] content) {
+    public FileDTO(final Integer user, final Integer experiment, final String secret, final String name,
+                   final String filetype, final byte[] content, final LocalDateTime date) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
         this.name = name;
         this.filetype = filetype;
         this.content = content;
+        this.secret = secret;
     }
 
     /**

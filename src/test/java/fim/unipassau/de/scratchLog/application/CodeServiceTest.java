@@ -90,8 +90,8 @@ public class CodeServiceTest {
     private final Participant participant = new Participant(user, experiment, LocalDateTime.now(), null);
     private final BlockEvent blockEvent = new BlockEvent(user, experiment, LocalDateTime.now(), BlockEventType.CREATE,
             BlockEventSpecific.CREATE, "sprite", "", "xml", "json.txt");
-    private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now().plusMinutes(12), "file",
-            new byte[]{1, 2, 3});
+    private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, "secret", "file", new byte[]{1, 2, 3},
+            LocalDateTime.now().plusMinutes(12));
     private final List<BlockEventJSONProjection> jsonProjections = getJsonProjections(2);
     private final List<BlockEventXMLProjection> xmlProjections = getXmlProjections(2);
     private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(5));

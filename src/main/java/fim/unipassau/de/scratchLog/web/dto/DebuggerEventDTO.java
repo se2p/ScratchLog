@@ -104,22 +104,29 @@ public class DebuggerEventDTO implements EventDTO {
     private Integer execution;
 
     /**
+     * A secret that can be used to check the event is associated with the correct participant.
+     */
+    @JsonProperty("secret")
+    private String secret;
+
+    /**
      * Constructs a new debugger event dto with the given attributes.
      *
-     * @param user The id of the user who caused the event.
-     * @param experiment The id of the experiment during which the event occurred.
-     * @param date The time at which the event occurred.
-     * @param eventType The type of event.
-     * @param event The specific event.
+     * @param user            The id of the user who caused the event.
+     * @param experiment      The id of the experiment during which the event occurred.
+     * @param secret          The secret used to identify the participant.
+     * @param eventType       The type of event.
+     * @param event           The specific event.
      * @param blockOrTargetID The block or target ID of the event.
-     * @param nameOrOpcode The target name or block opcode of the event.
-     * @param original Only applicable to the select sprite event.
-     * @param execution The number of the block executions of the event.
+     * @param nameOrOpcode    The target name or block opcode of the event.
+     * @param original        Only applicable to the select sprite event.
+     * @param execution       The number of the block executions of the event.
+     * @param date            The time at which the event occurred.
      */
-    public DebuggerEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
+    public DebuggerEventDTO(final Integer user, final Integer experiment, final String secret,
                             final DebuggerEventType eventType, final DebuggerEventSpecific event,
                             final String blockOrTargetID, final String nameOrOpcode, final Integer original,
-                            final Integer execution) {
+                            final Integer execution, final LocalDateTime date) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
@@ -129,6 +136,7 @@ public class DebuggerEventDTO implements EventDTO {
         this.nameOrOpcode = nameOrOpcode;
         this.original = original;
         this.execution = execution;
+        this.secret = secret;
     }
 
     /**

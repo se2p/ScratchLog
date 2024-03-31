@@ -86,23 +86,32 @@ public class ClickEventDTO implements EventDTO {
     private String metadata;
 
     /**
+     * A secret that can be used to check the event is associated with the correct participant.
+     */
+    @JsonProperty("secret")
+    private String secret;
+
+    /**
      * Constructs a new click event dto with the given attributes.
      *
-     * @param user The id of the user who caused the event.
+     * @param user       The id of the user who caused the event.
      * @param experiment The id of the experiment during which the event occurred.
-     * @param date The time at which the event occurred.
-     * @param eventType The type of event.
-     * @param event The specific event.
-     * @param metadata The metadata.
+     * @param secret     The secret used to identify the participant.
+     * @param eventType  The type of event.
+     * @param event      The specific event.
+     * @param metadata   The metadata.
+     * @param date       The time at which the event occurred.
      */
-    public ClickEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
-                         final ClickEventType eventType, final ClickEventSpecific event, final String metadata) {
+    public ClickEventDTO(final Integer user, final Integer experiment, final String secret,
+                         final ClickEventType eventType, final ClickEventSpecific event, final String metadata,
+                         final LocalDateTime date) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
         this.eventType = eventType;
         this.event = event;
         this.metadata = metadata;
+        this.secret = secret;
     }
 
     /**

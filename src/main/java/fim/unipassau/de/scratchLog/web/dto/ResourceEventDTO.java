@@ -104,21 +104,29 @@ public class ResourceEventDTO implements EventDTO {
     private LibraryResource libraryResource;
 
     /**
+     * A secret that can be used to check the event is associated with the correct participant.
+     */
+    @JsonProperty("secret")
+    private String secret;
+
+    /**
      * Constructs a new resource event dto with the given attributes.
      *
-     * @param user The id of the user who caused the event.
-     * @param experiment The id of the experiment during which the event occurred.
-     * @param date The time at which the event occurred.
-     * @param eventType The type of event.
-     * @param event The specific event.
-     * @param name The name of the resource.
-     * @param md5 The md5 hash of the resource.
-     * @param filetype The filetype of the resource.
-     * @param libraryResource Whether or not the resource is external.
+     * @param user            The id of the user who caused the event.
+     * @param experiment      The id of the experiment during which the event occurred.
+     * @param secret          The secret used to identify the participant.
+     * @param eventType       The type of event.
+     * @param event           The specific event.
+     * @param name            The name of the resource.
+     * @param md5             The md5 hash of the resource.
+     * @param filetype        The filetype of the resource.
+     * @param libraryResource Whether the resource is external.
+     * @param date            The time at which the event occurred.
      */
-    public ResourceEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
+    public ResourceEventDTO(final Integer user, final Integer experiment, final String secret,
                             final ResourceEventType eventType, final ResourceEventSpecific event, final String name,
-                            final String md5, final String filetype, final LibraryResource libraryResource) {
+                            final String md5, final String filetype, final LibraryResource libraryResource,
+                            final LocalDateTime date) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
@@ -128,6 +136,7 @@ public class ResourceEventDTO implements EventDTO {
         this.md5 = md5;
         this.filetype = filetype;
         this.libraryResource = libraryResource;
+        this.secret = secret;
     }
 
     /**

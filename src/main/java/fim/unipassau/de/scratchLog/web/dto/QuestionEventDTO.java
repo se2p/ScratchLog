@@ -117,25 +117,32 @@ public class QuestionEventDTO implements EventDTO {
     private String opcode;
 
     /**
+     * A secret that can be used to check the event is associated with the correct participant.
+     */
+    @JsonProperty("secret")
+    private String secret;
+
+    /**
      * Constructs a new question event dto with the given attributes.
      *
-     * @param user The id of the user who caused the event.
+     * @param user       The id of the user who caused the event.
      * @param experiment The id of the experiment during which the event occurred.
-     * @param date The time at which the event occurred.
-     * @param eventType The type of event.
-     * @param event The specific event.
-     * @param feedback The feedback for the question.
-     * @param type The type of question.
-     * @param values The values of the question.
-     * @param category The question category.
-     * @param form The question form.
-     * @param blockID The block ID of the event.
-     * @param opcode The block opcode of the event.
+     * @param secret     The secret used to identify the participant.
+     * @param eventType  The type of event.
+     * @param event      The specific event.
+     * @param feedback   The feedback for the question.
+     * @param type       The type of question.
+     * @param values     The values of the question.
+     * @param category   The question category.
+     * @param form       The question form.
+     * @param blockID    The block ID of the event.
+     * @param opcode     The block opcode of the event.
+     * @param date       The time at which the event occurred.
      */
-    public QuestionEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
+    public QuestionEventDTO(final Integer user, final Integer experiment, final String secret,
                             final QuestionEventType eventType, final QuestionEventSpecific event,
                             final Integer feedback, final String type, final String[] values, final String category,
-                            final String form, final String blockID, final String opcode) {
+                            final String form, final String blockID, final String opcode, final LocalDateTime date) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
@@ -148,6 +155,7 @@ public class QuestionEventDTO implements EventDTO {
         this.form = form;
         this.blockID = blockID;
         this.opcode = opcode;
+        this.secret = secret;
     }
 
     /**

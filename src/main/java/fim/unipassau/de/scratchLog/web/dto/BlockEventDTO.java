@@ -112,20 +112,20 @@ public class BlockEventDTO implements EventDTO {
     /**
      * Constructs a new block event dto with the given attributes.
      *
-     * @param user The id of the user who caused the event.
+     * @param user       The id of the user who caused the event.
      * @param experiment The id of the experiment during which the event occurred.
-     * @param date The time at which the event occurred.
-     * @param eventType The type of event.
-     * @param event The specific event.
-     * @param sprite The name of the sprite.
-     * @param metadata The metadata.
-     * @param xml The current xml.
-     * @param code The current json code.
-     * @param secret The secret used to identify the participant.
+     * @param secret     The secret used to identify the participant.
+     * @param eventType  The type of event.
+     * @param event      The specific event.
+     * @param sprite     The name of the sprite.
+     * @param metadata   The metadata.
+     * @param xml        The current xml.
+     * @param code       The current json code.
+     * @param date       The time at which the event occurred.
      */
-    public BlockEventDTO(final Integer user, final Integer experiment, final LocalDateTime date,
+    public BlockEventDTO(final Integer user, final Integer experiment, final String secret,
                          final BlockEventType eventType, final BlockEventSpecific event, final String sprite,
-                         final String metadata, final String xml, final String code, final String secret) {
+                         final String metadata, final String xml, final String code, final LocalDateTime date) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;

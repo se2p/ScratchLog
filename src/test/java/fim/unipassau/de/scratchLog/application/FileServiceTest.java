@@ -85,8 +85,8 @@ public class FileServiceTest {
 
     private static final int ID = 1;
     private static final String GUI_URL = "scratch";
-    private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "png", new byte[]{1, 2, 3, 4});
-    private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip", new byte[]{1, 2, 3, 4});
+    private final FileDTO fileDTO = new FileDTO(ID, ID, "secret", "file", "png", new byte[]{1, 2, 3, 4}, LocalDateTime.now());
+    private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, "secret", "zip", new byte[]{1, 2, 3, 4}, LocalDateTime.now());
     private final User user = new User("participant", "email", Role.PARTICIPANT, Language.GERMAN, "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
