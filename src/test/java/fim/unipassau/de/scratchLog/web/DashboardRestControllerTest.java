@@ -26,12 +26,17 @@ import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
 import fim.unipassau.de.scratchLog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -51,10 +56,8 @@ public class DashboardRestControllerTest {
     @Mock
     private DashboardService dashboardService;
 
-    private static final String ID_STRING = "5";
-    private static final String userIds = "[\"1\",\"5\"]";
-    private static final String invalidUsers = "[";
     private static final int ID = 5;
+    private static final List<Integer> userIds = List.of(1, 5);
     private static final String[] experimentData = new String[]{"11", "7", "5"};
     private static final List<String[]> participantData = new ArrayList<>();
     private static final List<Integer[]> eventData = new ArrayList<>();
@@ -62,29 +65,21 @@ public class DashboardRestControllerTest {
     @Test
     public void testGetExperimentData() {
         when(dashboardService.getExperimentData(ID)).thenReturn(experimentData);
-        assertEquals(experimentData, dashboardRestController.getExperimentData(ID_STRING));
+        assertEquals(experimentData, dashboardRestController.getExperimentData(ID));
         verify(dashboardService).getExperimentData(ID);
-    }
-
-    @Test
-    public void testGetExperimentDataInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardRestController.getExperimentData(null)
-        );
-        verify(dashboardService, never()).getExperimentData(anyInt());
     }
 
     @Test
     public void testGetParticipantData() {
         when(dashboardService.getParticipants(ID)).thenReturn(participantData);
-        assertEquals(participantData, dashboardRestController.getParticipantData(ID_STRING));
+        assertEquals(participantData, dashboardRestController.getParticipantData(ID));
         verify(dashboardService).getParticipants(ID);
     }
 
     @Test
     public void testGetParticipantDataInvalidId() {
         assertThrows(IllegalArgumentException.class,
-                () -> dashboardRestController.getParticipantData("0")
+                () -> dashboardRestController.getParticipantData(0)
         );
         verify(dashboardService, never()).getParticipants(anyInt());
     }
@@ -92,61 +87,48 @@ public class DashboardRestControllerTest {
     @Test
     public void testGetBlockEventData() {
         when(dashboardService.getBlockEventCountData(anyList(), anyInt(), any())).thenReturn(eventData);
-        assertEquals(eventData, dashboardRestController.getBlockEventData(ID_STRING, userIds,
+        assertEquals(eventData, dashboardRestController.getBlockEventData(ID, userIds,
                 BlockEventSpecific.CREATE));
         verify(dashboardService).getBlockEventCountData(anyList(), anyInt(), any());
     }
 
-    @Test
-    public void testGetBlockEventDataNoUsers() {
+    @ParameterizedTest
+    @MethodSource("invalidUserIdsProvider")
+    public void testGetBlockEventDataNoUsers(final List<Integer> userIds) {
         assertThrows(IllegalArgumentException.class,
-                () -> dashboardRestController.getBlockEventData(ID_STRING, invalidUsers, BlockEventSpecific.CREATE)
+                () -> dashboardRestController.getBlockEventData(ID, userIds, BlockEventSpecific.CREATE)
         );
         verify(dashboardService, never()).getBlockEventCountData(anyList(), anyInt(), any());
+    }
+
+    private static Stream<Arguments> invalidUserIdsProvider() {
+        return Stream.of(
+            Arguments.of(Collections.emptyList()),
+            Arguments.of(List.of(0, 2)),
+            Arguments.of(List.of(2, 3, 5, -1))
+        );
     }
 
     @Test
     public void testGetClickEventData() {
         when(dashboardService.getClickEventCountData(anyList(), anyInt(), any())).thenReturn(eventData);
-        assertEquals(eventData, dashboardRestController.getClickEventData(ID_STRING, userIds,
-                ClickEventSpecific.GREENFLAG));
+        assertEquals(eventData, dashboardRestController.getClickEventData(ID, userIds, ClickEventSpecific.GREENFLAG));
         verify(dashboardService).getClickEventCountData(anyList(), anyInt(), any());
-    }
-
-    @Test
-    public void testGetClickEventDataInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardRestController.getClickEventData(userIds, userIds, ClickEventSpecific.GREENFLAG));
-        verify(dashboardService, never()).getClickEventCountData(anyList(), anyInt(), any());
     }
 
     @Test
     public void testGetResourceEventData() {
         when(dashboardService.getResourceEventCountData(anyList(), anyInt(), any())).thenReturn(eventData);
-        assertEquals(eventData, dashboardRestController.getResourceEventData(ID_STRING, userIds,
+        assertEquals(eventData, dashboardRestController.getResourceEventData(ID, userIds,
                 ResourceEventSpecific.ADD_COSTUME));
         verify(dashboardService).getResourceEventCountData(anyList(), anyInt(), any());
     }
 
     @Test
-    public void testGetResourceEventDataInvalidIds() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardRestController.getResourceEventData("bla", userIds, ResourceEventSpecific.ADD_COSTUME));
-        verify(dashboardService, never()).getResourceEventCountData(anyList(), anyInt(), any());
-    }
-
-    @Test
     public void testGetEventCounts() {
         when(dashboardService.getEventCountData(anyList(), anyInt())).thenReturn(eventData);
-        assertEquals(eventData, dashboardRestController.getEventCounts(ID_STRING, userIds));
+        assertEquals(eventData, dashboardRestController.getEventCounts(ID, userIds));
         verify(dashboardService).getEventCountData(anyList(), anyInt());
-    }
-
-    @Test
-    public void testGetEventCountsInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardRestController.getEventCounts(null, userIds));
-        verify(dashboardService, never()).getEventCountData(anyList(), anyInt());
     }
 
 }

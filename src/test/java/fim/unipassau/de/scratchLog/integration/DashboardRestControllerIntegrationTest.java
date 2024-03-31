@@ -64,7 +64,7 @@ public class DashboardRestControllerIntegrationTest {
     private static final String ID_PARAM = "id";
     private static final String USER_PARAM = "users";
     private static final String EVENT_PARAM = "event";
-    private static final String userIds = "[\"1\",\"5\"]";
+    private static final String userIds = "1,5";
     private static final int ID = 5;
     private static final String[] experimentData = new String[]{"11", "7", "5"};
     private static final List<String[]> participantData = new ArrayList<>();
