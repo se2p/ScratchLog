@@ -174,7 +174,7 @@ public class SecretControllerIntegrationTest extends AbstractControllerTest {
                         .param(EXPERIMENT_PARAM, "-1")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).getUserById(anyInt());
@@ -187,7 +187,7 @@ public class SecretControllerIntegrationTest extends AbstractControllerTest {
                         .param(EXPERIMENT_PARAM, ID_STRING)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).getUserById(anyInt());
@@ -249,7 +249,7 @@ public class SecretControllerIntegrationTest extends AbstractControllerTest {
                         .param(EXPERIMENT_PARAM, "a")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).findUnfinishedUsers(anyInt());
@@ -261,7 +261,7 @@ public class SecretControllerIntegrationTest extends AbstractControllerTest {
                         .param(EXPERIMENT_PARAM, BLANK)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).findUnfinishedUsers(anyInt());

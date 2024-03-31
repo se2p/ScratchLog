@@ -20,14 +20,13 @@
 package fim.unipassau.de.scratchLog.web.controller;
 
 import com.opencsv.CSVWriter;
-import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.UserService;
 import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
-import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,28 +94,17 @@ public class SecretController {
      * display this information. If no user with a corresponding id could be found, the user's secret is null or the
      * passed parameters are invalid, the error page is returned instead.
      *
-     * @param user The id of the user whose participant link is to be displayed.
-     * @param experiment The id of the experiment in which the user is participating.
+     * @param userId The id of the user whose participant link is to be displayed.
+     * @param experimentId The id of the experiment in which the user is participating.
      * @param model The {@link Model} to hold the information.
      * @return The secret page on success or the error page otherwise.
      */
     @GetMapping
     @Secured(Constants.ROLE_ADMIN)
-    public String displaySecret(@RequestParam("user") final String user,
-                                @RequestParam("experiment") final String experiment, final Model model) {
-        if (user == null || experiment == null || user.trim().isBlank() || experiment.trim().isBlank()) {
-            LOGGER.error("Cannot display secret for user or experiment id null or blank!");
-            return Constants.ERROR;
-        }
-
-        int userId = NumberParser.parseNumber(user);
-        int experimentId = NumberParser.parseNumber(experiment);
-
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot display secret for user with invalid id " + user + " or experiment with invalid id "
-                    + experiment + "!");
-            return Constants.ERROR;
-        }
+    public String displaySecret(@RequestParam("user") final int userId,
+                                @RequestParam("experiment") final int experimentId, final Model model) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
 
         try {
             if (isInactive(experimentId)) {
@@ -145,24 +133,14 @@ public class SecretController {
      * to display each user's individual participation link on the secret page. If no experiment with a corresponding id
      * could be found or passed parameter is invalid, the error page is returned instead.
      *
-     * @param experiment The id of the experiment.
+     * @param experimentId The id of the experiment.
      * @param model The {@link Model} to hold the information.
      * @return The secret page on success or the error page otherwise.
      */
     @GetMapping("/list")
     @Secured(Constants.ROLE_ADMIN)
-    public String displaySecrets(@RequestParam("experiment") final String experiment, final Model model) {
-        if (experiment == null || experiment.trim().isBlank()) {
-            LOGGER.error("Cannot display secrets for experiment id null or blank!");
-            return Constants.ERROR;
-        }
-
-        int experimentId = NumberParser.parseNumber(experiment);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot display secrets for experiment with invalid id " + experiment + "!");
-            return Constants.ERROR;
-        }
+    public String displaySecrets(@RequestParam("experiment") final int experimentId, final Model model) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         try {
             if (isInactive(experimentId)) {
@@ -183,33 +161,27 @@ public class SecretController {
      * Retrieves all participation links for users participating in the experiment with the given id or only that for
      * the particular user with the given id and makes the information available for download in a CSV file.
      *
-     * @param experiment The id of the experiment.
-     * @param user The (optional) id of the user.
+     * @param experimentId The id of the experiment.
+     * @param userId The (optional) id of the user.
      * @param httpServletResponse The {@link HttpServletResponse} returning the file.
-     * @throws IncompleteDataException if the passed experiment id is invalid.
      * @throws RuntimeException if an {@link IOException} occurred.
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
-    public void downloadParticipationLinks(@RequestParam("experiment") final String experiment,
-                                           @RequestParam(required = false, value = "user") final String user,
+    public void downloadParticipationLinks(@RequestParam("experiment") final int experimentId,
+                                           @RequestParam(required = false, value = "user") final Integer userId,
                                            final HttpServletResponse httpServletResponse) {
-        if (experiment == null || experiment.trim().isBlank()) {
-            throw new IncompleteDataException("Cannot download participation links for experiment id null or blank!");
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        if (userId != null) {
+            IdValidator.validateUserIdElseThrow(userId);
         }
 
-        int experimentId = NumberParser.parseNumber(experiment);
-
-        if (experimentId < Constants.MIN_ID) {
-            throw new IncompleteDataException("Cannot download participation links for experiment with invalid id "
-                    + experiment + "!");
-        }
-
-        List<String[]> users = prepareCSVData(experimentId, user);
+        List<String[]> users = prepareCSVData(experimentId, userId);
 
         try {
-            String fileName = user == null ? "experiment_" + experimentId : "experiment_" + experimentId + "_user_"
-                    + user;
+            String fileName = userId == null
+                ? "experiment_" + experimentId
+                : "experiment_" + experimentId + "_user_" + userId;
             httpServletResponse.setContentType("text/csv");
             httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + fileName + ".csv");
             httpServletResponse.setStatus(HttpServletResponse.SC_OK);
@@ -236,22 +208,13 @@ public class SecretController {
      * users who have not yet finished the experiment is returned.
      *
      * @param experimentId The id of the experiment.
-     * @param user The id of the user or null.
+     * @param userId The id of the user or null.
      * @return A list of string arrays containing the information.
-     * @throws IncompleteDataException if the passed user id is invalid.
      */
-    private List<String[]> prepareCSVData(final int experimentId, final String user) {
-        if (user != null) {
-            int userId = NumberParser.parseNumber(user);
-
-            if (userId < Constants.MIN_ID) {
-                throw new IncompleteDataException("Cannot download participation link for user with invalid id "
-                        + user + "!");
-            }
-        }
-
-        List<UserDTO> users = user != null ? List.of(userService.getUserById(NumberParser.parseNumber(user)))
-                : userService.findUnfinishedUsers(experimentId);
+    private List<String[]> prepareCSVData(final int experimentId, final Integer userId) {
+        List<UserDTO> users = userId != null
+            ? List.of(userService.getUserById(userId))
+            : userService.findUnfinishedUsers(experimentId);
         return transformUserData(users, experimentId);
     }
 
