@@ -37,6 +37,17 @@ $(document).ready(function () {
 });
 
 /**
+ * Converts the list to a comma-separated string list.
+ *
+ * @param ids {Array<number>} A list of IDs.
+ * @returns {string} A comma-separated list of the IDs.
+ * @private
+ */
+function _idsAsCommaSeparatedList(ids) {
+    return ids.join(",");
+}
+
+/**
  * Retrieves the data to be displayed on the dashboard from the database. If an error occurred during data fetching, the
  * user is redirected to the error page. This function is executed periodically to refresh the data.
  */
@@ -101,7 +112,7 @@ function fetchBlockEventData() {
     $.ajax({
         type: "get",
         url: contextPath + "/dashboard/data/event/block",
-        data: {id: experimentId, users: JSON.stringify(selectedIds), event: blockEvent},
+        data: {id: experimentId, users: _idsAsCommaSeparatedList(selectedIds), event: blockEvent},
         success: function(data) {
             document.getElementById("blockEventChartDescription").innerText = " " + blockEvent;
             blockEventData = _prepareEventData(data, blockEventData);
@@ -132,7 +143,7 @@ function fetchClickEventData() {
     $.ajax({
         type: "get",
         url: contextPath + "/dashboard/data/event/click",
-        data: {id: experimentId, users: JSON.stringify(selectedIds), event: clickEvent},
+        data: {id: experimentId, users: _idsAsCommaSeparatedList(selectedIds), event: clickEvent},
         success: function(data) {
             document.getElementById("clickEventChartDescription").innerText = " " + clickEvent;
             clickEventData = _prepareEventData(data, clickEventData);
@@ -163,7 +174,7 @@ function fetchResourceEventData() {
     $.ajax({
         type: "get",
         url: contextPath + "/dashboard/data/event/resource",
-        data: {id: experimentId, users: JSON.stringify(selectedIds), event: resourceEvent},
+        data: {id: experimentId, users: _idsAsCommaSeparatedList(selectedIds), event: resourceEvent},
         success: function(data) {
             document.getElementById("resourceEventChartDescription").innerText = " " + resourceEvent;
             resourceEventData = _prepareEventData(data, resourceEventData);
@@ -195,7 +206,7 @@ function fetchRadarChartData() {
     $.ajax({
         type: "get",
         url: contextPath + "/dashboard/data/event/counts",
-        data: {id: experimentId, users: JSON.stringify(selectedIds)},
+        data: {id: experimentId, users: _idsAsCommaSeparatedList(selectedIds)},
         success: function(data) {
             let counts = data.flat().reduce((sum, num) => {return sum + num}, 0);
             radarEventData = data;

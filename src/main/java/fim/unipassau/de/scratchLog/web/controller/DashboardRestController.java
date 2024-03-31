@@ -21,7 +21,6 @@ package fim.unipassau.de.scratchLog.web.controller;
 
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.util.Constants;
-import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
@@ -33,7 +32,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -82,26 +80,26 @@ public class DashboardRestController {
      * Retrieves the experiment data, i.e. how many participants the experiment has and how many of them have started or
      * finished it, to be displayed on the dashboard page.
      *
-     * @param id The id of the experiment.
+     * @param experimentId The id of the experiment.
      * @return The experiment data.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
     @GetMapping("")
-    public String[] getExperimentData(@RequestParam(ID) final String id) {
-        int experimentId = parseId(id);
+    public String[] getExperimentData(@RequestParam(ID) final int experimentId) {
+        validateId(experimentId);
         return dashboardService.getExperimentData(experimentId);
     }
 
     /**
      * Retrieves the ids and usernames of all participants of the experiment with the given id.
      *
-     * @param id The id of the experiment.
+     * @param experimentId The id of the experiment.
      * @return The participant information.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
     @GetMapping("/participants")
-    public List<String[]> getParticipantData(@RequestParam(ID) final String id) {
-        int experimentId = parseId(id);
+    public List<String[]> getParticipantData(@RequestParam(ID) final int experimentId) {
+        validateId(experimentId);
         return dashboardService.getParticipants(experimentId);
     }
 
@@ -109,17 +107,17 @@ public class DashboardRestController {
      * Returns the number of executions per minute of the given block event for the experiment and users with the given
      * ids.
      *
-     * @param id The id of the experiment.
-     * @param users The ids of the users.
+     * @param experimentId The id of the experiment.
+     * @param userIds The ids of the users.
      * @param event The event of interest.
      * @return A list containing an array for each user with the number of executions.
      */
     @GetMapping("/event/block")
-    public List<Integer[]> getBlockEventData(@RequestParam(ID) final String id,
-                                             @RequestParam(USERS) final String users,
+    public List<Integer[]> getBlockEventData(@RequestParam(ID) final int experimentId,
+                                             @RequestParam(USERS) final List<Integer> userIds,
                                              @RequestParam(EVENT) final BlockEventSpecific event) {
-        int experimentId = parseId(id);
-        List<Integer> userIds = parseUserIds(users);
+        validateId(experimentId);
+        validateUserIds(userIds);
         return dashboardService.getBlockEventCountData(userIds, experimentId, event);
     }
 
@@ -127,17 +125,17 @@ public class DashboardRestController {
      * Returns the number of executions per minute of the given click event for the experiment and users with the given
      * ids.
      *
-     * @param id The id of the experiment.
-     * @param users The ids of the users.
+     * @param experimentId The id of the experiment.
+     * @param userIds The ids of the users.
      * @param event The event of interest.
      * @return A list containing an array for each user with the number of executions.
      */
     @GetMapping("/event/click")
-    public List<Integer[]> getClickEventData(@RequestParam(ID) final String id,
-                                             @RequestParam(USERS) final String users,
+    public List<Integer[]> getClickEventData(@RequestParam(ID) final int experimentId,
+                                             @RequestParam(USERS) final List<Integer> userIds,
                                              @RequestParam(EVENT) final ClickEventSpecific event) {
-        int experimentId = parseId(id);
-        List<Integer> userIds = parseUserIds(users);
+        validateId(experimentId);
+        validateUserIds(userIds);
         return dashboardService.getClickEventCountData(userIds, experimentId, event);
     }
 
@@ -145,17 +143,17 @@ public class DashboardRestController {
      * Returns the number of executions per minute of the given resource event for the experiment and users with the
      * given ids.
      *
-     * @param id The id of the experiment.
-     * @param users The ids of the users.
+     * @param experimentId The id of the experiment.
+     * @param userIds The ids of the users.
      * @param event The event of interest.
      * @return A list containing an array for each user with the number of executions.
      */
     @GetMapping("/event/resource")
-    public List<Integer[]> getResourceEventData(@RequestParam(ID) final String id,
-                                                @RequestParam(USERS) final String users,
+    public List<Integer[]> getResourceEventData(@RequestParam(ID) final int experimentId,
+                                                @RequestParam(USERS) final List<Integer> userIds,
                                                 @RequestParam(EVENT) final ResourceEventSpecific event) {
-        int experimentId = parseId(id);
-        List<Integer> userIds = parseUserIds(users);
+        validateId(experimentId);
+        validateUserIds(userIds);
         return dashboardService.getResourceEventCountData(userIds, experimentId, event);
     }
 
@@ -163,55 +161,46 @@ public class DashboardRestController {
      * Returns the total number of executions of specific click and block event for the experiment and users with the
      * given ids.
      *
-     * @param id The id of the experiment.
-     * @param users The ids of the users.
+     * @param experimentId The id of the experiment.
+     * @param userIds The ids of the users.
      * @return A list containing an array for each user with the number of executions.
      */
     @GetMapping("/event/counts")
-    public List<Integer[]> getEventCounts(@RequestParam(ID) final String id, @RequestParam(USERS) final String users) {
-        int experimentId = parseId(id);
-        List<Integer> userIds = parseUserIds(users);
+    public List<Integer[]> getEventCounts(
+        @RequestParam(ID) final int experimentId, @RequestParam(USERS) final List<Integer> userIds
+    ) {
+        validateId(experimentId);
+        validateUserIds(userIds);
         return dashboardService.getEventCountData(userIds, experimentId);
     }
 
     /**
-     * Parses the given id string to an integer.
+     * Validates that the given ID is valid.
      *
-     * @param id The string representation of the id.
-     * @return The integer representation of the id.
-     * @throws IllegalArgumentException if the passed id could not be parsed into a number or is an invalid id.
+     * @param id Some id.
+     * @throws IllegalArgumentException if the passed id is an invalid id.
      */
-    private int parseId(final String id) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
+    private void validateId(final int id) {
+        if (id < Constants.MIN_ID) {
             LOGGER.error("Cannot retrieve data for experiment dashboard with invalid id " + id + "!");
             throw new IllegalArgumentException("Cannot retrieve data for experiment dashboard with invalid id " + id
                     + "!");
         }
-
-        return experimentId;
     }
 
     /**
-     * Parses the user ids passed in the given string to a list of integers.
+     * Validates that all ids are valid IDs.
      *
-     * @param users The string containing the user ids.
-     * @return A list of user ids as integers.
-     * @throws IllegalArgumentException if the string contains no ids or if any of the ids could not be parsed.
+     * @param userIds A list of IDs that should be validated.
+     * @throws IllegalArgumentException if the list contains no ids or if any of the ids could not be validated.
      */
-    private List<Integer> parseUserIds(final String users) {
-        String userIdString = users.replaceAll("\"", "").replaceAll("\\[", "").replaceAll("]", "");
-        List<String> ids = List.of(userIdString.split(","));
-
-        if (ids.isEmpty()) {
+    private void validateUserIds(final List<Integer> userIds) {
+        if (userIds.isEmpty()) {
             LOGGER.error("Cannot retrieve event data without any user ids!");
             throw new IllegalArgumentException("Cannot retrieve event data without any user ids!");
         }
 
-        List<Integer> userIds = new ArrayList<>();
-        ids.forEach(id -> userIds.add(parseId(id)));
-        return userIds;
+        userIds.forEach(this::validateId);
     }
 
 }
