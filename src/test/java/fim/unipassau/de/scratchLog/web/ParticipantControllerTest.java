@@ -54,6 +54,7 @@ import org.springframework.validation.BindingResult;
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
+import static fim.unipassau.de.scratchLog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -121,7 +122,6 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String EMAIL = "participant@participant.de";
     private static final String BLANK = "   ";
-    private static final String ID_STRING = "1";
     private static final String SECRET = "secret";
     private static final String INFO = "info";
     private static final String POSTSCRIPT = "postscript";
@@ -161,7 +161,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testGetParticipantForm() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.findLastId()).thenReturn(ID);
-        assertEquals(PARTICIPANT, participantController.getParticipantForm(ID_STRING, model));
+        assertEquals(PARTICIPANT, participantController.getParticipantForm(ID, model));
         verify(experimentService).getExperiment(ID);
         verify(userService).findLastId();
         verify(model, times(2)).addAttribute(anyString(), any());
@@ -170,7 +170,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     @Test
     public void testGetParticipantFormNotFound() {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, participantController.getParticipantForm(ID_STRING, model));
+        assertEquals(ERROR, participantController.getParticipantForm(ID, model));
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).findLastId();
         verify(model, never()).addAttribute(anyString(), any());
@@ -180,7 +180,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testGetParticipantFormExperimentInactive() {
         experimentDTO.setActive(false);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        assertEquals(ERROR, participantController.getParticipantForm(ID_STRING, model));
+        assertEquals(ERROR, participantController.getParticipantForm(ID, model));
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).findLastId();
         verify(model, never()).addAttribute(anyString(), any());
@@ -190,7 +190,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testGetParticipantFormCourseExperiment() {
         experimentDTO.setCourseExperiment(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        assertEquals(ERROR, participantController.getParticipantForm(ID_STRING, model));
+        assertEquals(ERROR, participantController.getParticipantForm(ID, model));
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).findLastId();
         verify(model, never()).addAttribute(anyString(), any());
@@ -198,23 +198,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetParticipantFormExperimentIdInvalid() {
-        assertEquals(ERROR, participantController.getParticipantForm("0", model));
-        verify(experimentService, never()).getExperiment(ID);
-        verify(userService, never()).findLastId();
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetParticipantFormExperimentIdNull() {
-        assertEquals(ERROR, participantController.getParticipantForm(null, model));
-        verify(experimentService, never()).getExperiment(ID);
-        verify(userService, never()).findLastId();
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetParticipantFormExperimentIdBlank() {
-        assertEquals(ERROR, participantController.getParticipantForm(BLANK, model));
+        assertInvalidIdException(() -> participantController.getParticipantForm(0, model));
         verify(experimentService, never()).getExperiment(ID);
         verify(userService, never()).findLastId();
         verify(model, never()).addAttribute(anyString(), any());
@@ -225,7 +209,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         when(mailService.sendEmail(anyString(), any(), any(), anyString())).thenReturn(true);
-        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.addParticipant(ID_STRING, newUser, model,
+        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.addParticipant(ID, newUser, model,
                 bindingResult));
         verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
@@ -238,7 +222,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         setMailServer(false);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         assertEquals(REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + ID,
-                participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
+                participantController.addParticipant(ID, newUser, model, bindingResult));
         verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -249,7 +233,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testAddParticipantMessagingException() {
         setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
+        assertEquals(ERROR, participantController.addParticipant(ID, newUser, model, bindingResult));
         verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService).sendEmail(anyString(), any(), any(), anyString());
@@ -260,7 +244,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testAddParticipantNotFound() {
         when(userService.saveUser(newUser)).thenReturn(userDTO);
         doThrow(NotFoundException.class).when(participantService).saveParticipant(userDTO.getId(), ID);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
+        assertEquals(ERROR, participantController.addParticipant(ID, newUser, model, bindingResult));
         verify(userService).saveUser(newUser);
         verify(participantService).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -271,7 +255,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testAddParticipantExistsEmail() {
         when(userService.existsEmail(newUser.getEmail())).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID, newUser, model, bindingResult));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -282,7 +266,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testAddParticipantEmailInvalid() {
         newUser.setEmail(PARTICIPANT);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID, newUser, model, bindingResult));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -293,7 +277,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testAddParticipantUsernameExists() {
         when(userService.existsUser(PARTICIPANT)).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID, newUser, model, bindingResult));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -304,7 +288,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testAddParticipantUsernameInvalid() {
         newUser.setUsername(BLANK);
         when(bindingResult.hasErrors()).thenReturn(true);
-        assertEquals(PARTICIPANT, participantController.addParticipant(ID_STRING, newUser, model, bindingResult));
+        assertEquals(PARTICIPANT, participantController.addParticipant(ID, newUser, model, bindingResult));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -313,7 +297,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAddParticipantExperimentIdInvalid() {
-        assertEquals(ERROR, participantController.addParticipant("0", newUser, model, bindingResult));
+        assertInvalidIdException(() -> participantController.addParticipant(0, newUser, model, bindingResult));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -322,7 +306,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAddParticipantUserIdNotNull() {
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult));
+        assertEquals(ERROR, participantController.addParticipant(ID, userDTO, model, bindingResult));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -332,7 +316,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     @Test
     public void testAddParticipantUsernameNull() {
         userDTO.setUsername(null);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult));
+        assertEquals(ERROR, participantController.addParticipant(ID, userDTO, model, bindingResult));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -342,16 +326,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     @Test
     public void testAddParticipantEmailNull() {
         userDTO.setEmail(null);
-        assertEquals(ERROR, participantController.addParticipant(ID_STRING, userDTO, model, bindingResult));
-        verify(userService, never()).saveUser(userDTO);
-        verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
-        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
-        verify(bindingResult, never()).addError(any());
-    }
-
-    @Test
-    public void testAddParticipantExperimentIdNull() {
-        assertEquals(ERROR, participantController.addParticipant(null, userDTO, model, bindingResult));
+        assertEquals(ERROR, participantController.addParticipant(ID, userDTO, model, bindingResult));
         verify(userService, never()).saveUser(userDTO);
         verify(participantService, never()).saveParticipant(userDTO.getId(), ID);
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -364,7 +339,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
         when(userService.updateUser(userDTO)).thenReturn(userDTO);
-        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.deleteParticipant(PARTICIPANT, ID_STRING,
+        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.deleteParticipant(PARTICIPANT, ID,
                 model));
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
@@ -381,7 +356,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
         when(participantService.simultaneousParticipation(ID)).thenReturn(true);
-        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.deleteParticipant(PARTICIPANT, ID_STRING,
+        assertEquals(REDIRECT_EXPERIMENT + ID, participantController.deleteParticipant(PARTICIPANT, ID,
                 model));
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
@@ -398,7 +373,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
         when(userService.updateUser(userDTO)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, ID, model));
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
@@ -416,7 +391,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
         when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
-        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID, model));
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
@@ -431,7 +406,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
-        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID, model));
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService).existsParticipant(userDTO.getId(), ID);
@@ -447,7 +422,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(model.getAttribute(ERROR_ATTRIBUTE)).thenReturn(ERROR_ATTRIBUTE);
-        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID, model));
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
@@ -460,7 +435,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     @Test
     public void testDeleteParticipantUserNull() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        assertEquals(EXPERIMENT, participantController.deleteParticipant(PARTICIPANT, ID, model));
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
@@ -473,7 +448,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     @Test
     public void testDeleteParticipantExperimentNotFound() {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, ID_STRING, model));
+        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, ID, model));
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(experimentService).getExperiment(ID);
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
@@ -485,7 +460,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteParticipantExperimentIdInvalid() {
-        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, "0", model));
+        assertInvalidIdException(() -> participantController.deleteParticipant(PARTICIPANT, 0, model));
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
@@ -497,7 +472,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteParticipantInputTooLong() {
-        assertEquals(ERROR, participantController.deleteParticipant(LONG_INPUT, ID_STRING, model));
+        assertEquals(ERROR, participantController.deleteParticipant(LONG_INPUT, ID, model));
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
@@ -509,7 +484,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteParticipantInputBlank() {
-        assertEquals(ERROR, participantController.deleteParticipant(BLANK, ID_STRING, model));
+        assertEquals(ERROR, participantController.deleteParticipant(BLANK, ID, model));
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
@@ -521,19 +496,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteParticipantInputNull() {
-        assertEquals(ERROR, participantController.deleteParticipant(null, ID_STRING, model));
-        verify(userService, never()).getUserByUsernameOrEmail(anyString());
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(participantService, never()).simultaneousParticipation(anyInt());
-        verify(userService, never()).updateUser(any());
-        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testDeleteParticipantIdNull() {
-        assertEquals(ERROR, participantController.deleteParticipant(PARTICIPANT, null, model));
+        assertEquals(ERROR, participantController.deleteParticipant(null, ID, model));
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
@@ -553,7 +516,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + SECRET_PARAM + SECRET,
-                participantController.startExperiment(ID_STRING, httpServletRequest));
+                participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -570,7 +533,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUser(PARTICIPANT)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.startExperiment(ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -589,7 +552,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + SECRET_PARAM + SECRET + RESTART,
-                participantController.startExperiment(ID_STRING, httpServletRequest));
+                participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -607,7 +570,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUser(PARTICIPANT)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.startExperiment(ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -625,7 +588,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUser(PARTICIPANT)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.startExperiment(ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -643,7 +606,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUser(PARTICIPANT)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.startExperiment(ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -661,7 +624,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUser(PARTICIPANT)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.startExperiment(ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -678,7 +641,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUser(PARTICIPANT)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, participantController.startExperiment(ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, times(2)).getName();
         verify(userService).getUser(PARTICIPANT);
@@ -691,7 +654,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testStartExperimentParticipantAuthenticationNameNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(ERROR, participantController.startExperiment(ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication).getName();
         verify(userService, never()).getUser(anyString());
@@ -703,7 +666,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     @Test
     public void testStartExperimentParticipantUserAdmin() {
         when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
-        assertEquals(ERROR, participantController.startExperiment(ID_STRING, httpServletRequest));
+        assertEquals(ERROR, participantController.startExperiment(ID, httpServletRequest));
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
@@ -714,18 +677,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testStartExperimentParticipantInvalidId() {
-        assertEquals(ERROR, participantController.startExperiment(BLANK, httpServletRequest));
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-        verify(authentication, never()).getName();
-        verify(userService, never()).getUser(anyString());
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(participantService, never()).getParticipant(anyInt(), anyInt());
-        verify(participantService, never()).updateParticipant(any());
-    }
-
-    @Test
-    public void testStartExperimentParticipantIdNull() {
-        assertEquals(ERROR, participantController.startExperiment(null, httpServletRequest));
+        assertInvalidIdException(() -> participantController.startExperiment(-1, httpServletRequest));
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
@@ -741,7 +693,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET,
-                participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+                participantController.stopExperiment(ID, ID, SECRET, httpServletRequest));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -759,7 +711,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(participantService.simultaneousParticipation(ID)).thenReturn(true);
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         assertEquals(REDIRECT_FINISH + ID + EXPERIMENT_PARAM + ID + SECRET_PARAM + SECRET,
-                participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+                participantController.stopExperiment(ID, ID, SECRET, httpServletRequest));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -774,7 +726,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         participantDTO.setStart(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID, ID, SECRET, httpServletRequest));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -790,7 +742,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         participantDTO.setEnd(LocalDateTime.now());
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID, ID, SECRET, httpServletRequest));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -804,7 +756,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testStopExperimentParticipantNotStarted() {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID, ID, SECRET, httpServletRequest));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -818,7 +770,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     public void testStopExperimentParticipantNotFound() {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(participantService.getParticipant(ID, ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, SECRET, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID, ID, SECRET, httpServletRequest));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, true);
         verify(userService).getUserById(ID);
         verify(participantService).getParticipant(ID, ID);
@@ -830,7 +782,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testStopExperimentSecretBlank() {
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, BLANK, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID, ID, BLANK, httpServletRequest));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -842,7 +794,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testStopExperimentSecretNull() {
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, ID_STRING, null, httpServletRequest));
+        assertEquals(ERROR, participantController.stopExperiment(ID, ID, null, httpServletRequest));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -854,7 +806,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testStopExperimentParticipantInvalidUserId() {
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, "0", SECRET, httpServletRequest));
+        assertInvalidIdException(() -> participantController.stopExperiment(ID, 0, SECRET, httpServletRequest));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -866,31 +818,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
 
     @Test
     public void testStopExperimentParticipantInvalidExperimentId() {
-        assertEquals(ERROR, participantController.stopExperiment("-1", ID_STRING, SECRET, httpServletRequest));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
-        verify(userService, never()).getUserById(anyInt());
-        verify(participantService, never()).getParticipant(anyInt(), anyInt());
-        verify(participantService, never()).simultaneousParticipation(anyInt());
-        verify(participantService, never()).updateParticipant(any());
-        verify(userService, never()).saveUser(any());
-        verify(httpServletRequest, never()).getSession(anyBoolean());
-    }
-
-    @Test
-    public void testStopExperimentParticipantUserIdNull() {
-        assertEquals(ERROR, participantController.stopExperiment(ID_STRING, null, SECRET, httpServletRequest));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
-        verify(userService, never()).getUserById(anyInt());
-        verify(participantService, never()).getParticipant(anyInt(), anyInt());
-        verify(participantService, never()).simultaneousParticipation(anyInt());
-        verify(participantService, never()).updateParticipant(any());
-        verify(userService, never()).saveUser(any());
-        verify(httpServletRequest, never()).getSession(anyBoolean());
-    }
-
-    @Test
-    public void testStopExperimentParticipantExperimentIdNull() {
-        assertEquals(ERROR, participantController.stopExperiment(null, ID_STRING, SECRET, httpServletRequest));
+        assertInvalidIdException(() -> participantController.stopExperiment(-1, ID, SECRET, httpServletRequest));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -911,7 +839,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(participantService.updateParticipant(participantDTO)).thenReturn(true);
         assertAll(
                 () -> assertEquals(REDIRECT_GUI + ID + EXP_ID + ID + SECRET_PARAM + SECRET + RESTART,
-                        participantController.restartExperiment(ID_STRING, ID_STRING, SECRET)),
+                        participantController.restartExperiment(ID, ID, SECRET)),
                 () -> assertTrue(userDTO.isActive()),
                 () -> assertNull(participantDTO.getEnd())
         );
@@ -932,7 +860,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
         assertAll(
-                () -> assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING,
+                () -> assertEquals(Constants.ERROR, participantController.restartExperiment(ID, ID,
                         SECRET)),
                 () -> assertFalse(userDTO.isActive()),
                 () -> assertNull(participantDTO.getEnd())
@@ -951,7 +879,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID, ID, SECRET));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
@@ -966,7 +894,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(participantService.getParticipant(ID, ID)).thenReturn(participantDTO);
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID, ID, SECRET));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService).getExperiment(ID);
@@ -978,7 +906,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     @Test
     public void testRestartExperimentNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID, ID, SECRET));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService).getUserById(ID);
         verify(experimentService, never()).getExperiment(anyInt());
@@ -990,7 +918,7 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     @Test
     public void testRestartExperimentInvalidParticipant() {
         when(participantService.isInvalidParticipant(ID, ID, SECRET, false)).thenReturn(true);
-        assertEquals(Constants.ERROR, participantController.restartExperiment(ID_STRING, ID_STRING, SECRET));
+        assertEquals(Constants.ERROR, participantController.restartExperiment(ID, ID, SECRET));
         verify(participantService).isInvalidParticipant(ID, ID, SECRET, false);
         verify(userService, never()).getUserById(anyInt());
         verify(experimentService, never()).getExperiment(anyInt());

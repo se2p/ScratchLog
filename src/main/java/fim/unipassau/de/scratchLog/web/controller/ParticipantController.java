@@ -30,13 +30,13 @@ import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.FieldErrorHandler;
 import fim.unipassau.de.scratchLog.util.MarkdownHandler;
-import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.util.Secrets;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
@@ -178,21 +178,11 @@ public class ParticipantController {
      */
     @GetMapping("/add")
     @Secured(Constants.ROLE_ADMIN)
-    public String getParticipantForm(@RequestParam(value = ID) final String experimentId, final Model model) {
-        if (experimentId == null || experimentId.trim().isBlank()) {
-            LOGGER.error("Cannot add new participant for experiment with id null or blank!");
-            return Constants.ERROR;
-        }
-
-        int id = NumberParser.parseNumber(experimentId);
-
-        if (id < Constants.MIN_ID) {
-            LOGGER.error("Cannot add new participant for experiment with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+    public String getParticipantForm(@RequestParam(value = ID) final int experimentId, final Model model) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         try {
-            ExperimentDTO experimentDTO = experimentService.getExperiment(id);
+            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
 
             if (!experimentDTO.isActive() || experimentDTO.isCourseExperiment()) {
                 return Constants.ERROR;
@@ -204,7 +194,7 @@ public class ParticipantController {
         int lastId = userService.findLastId() + 1;
         UserDTO userDTO = new UserDTO();
         userDTO.setUsername("participant" + lastId);
-        model.addAttribute("experiment", id);
+        model.addAttribute("experiment", experimentId);
         model.addAttribute("userDTO", userDTO);
 
         return "participant";
@@ -224,23 +214,18 @@ public class ParticipantController {
      */
     @PostMapping("/add")
     @Secured(Constants.ROLE_ADMIN)
-    public String addParticipant(@RequestParam(value = "expId") final String experimentId,
+    public String addParticipant(@RequestParam(value = "expId") final int experimentId,
                                  @ModelAttribute("userDTO") final UserDTO userDTO, final Model model,
                                  final BindingResult bindingResult) {
-        if (userDTO.getUsername() == null || userDTO.getEmail() == null || experimentId == null) {
-            LOGGER.error("The new username, email and experiment id cannot be null!");
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+
+        if (userDTO.getUsername() == null || userDTO.getEmail() == null) {
+            LOGGER.error("The new username or email cannot be null!");
             return Constants.ERROR;
         }
 
         if (userDTO.getId() != null) {
             LOGGER.error("Cannot create new user if the id is not null!");
-            return Constants.ERROR;
-        }
-
-        int id = NumberParser.parseNumber(experimentId);
-
-        if (id < Constants.MIN_ID) {
-            LOGGER.error("Cannot add new participant for experiment with invalid id " + id + "!");
             return Constants.ERROR;
         }
 
@@ -250,7 +235,7 @@ public class ParticipantController {
         validateUpdateEmail(userDTO.getEmail(), bindingResult, resourceBundle);
 
         if (bindingResult.hasErrors()) {
-            model.addAttribute("experiment", id);
+            model.addAttribute("experiment", experimentId);
             return "participant";
         }
 
@@ -261,13 +246,13 @@ public class ParticipantController {
         UserDTO saved = userService.saveUser(userDTO);
 
         try {
-            participantService.saveParticipant(saved.getId(), id);
+            participantService.saveParticipant(saved.getId(), experimentId);
         } catch (NotFoundException e) {
             return Constants.ERROR;
         }
 
         String experimentUrl = applicationProperties.getApplicationUrl()
-                + "/users/authenticate?id=" + id + "&secret=" + secret;
+                + "/users/authenticate?id=" + experimentId + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put("applicationName", applicationProperties.getApplicationName());
         templateModel.put("baseUrl", applicationProperties.getApplicationUrl());
@@ -276,10 +261,10 @@ public class ParticipantController {
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
         if (!applicationProperties.useMail()) {
-            return "redirect:/secret" + "?user=" + saved.getId() + EXPERIMENT_PARAM + id;
+            return "redirect:/secret?user=" + saved.getId() + EXPERIMENT_PARAM + experimentId;
         } else if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
-            return REDIRECT_EXPERIMENT + id;
+            return REDIRECT_EXPERIMENT + experimentId;
         } else {
             return Constants.ERROR;
         }
@@ -292,26 +277,21 @@ public class ParticipantController {
      * user is not a participant in the given experiment, the experiment page is returned to display an error message.
      *
      * @param participant The username or email to search for.
-     * @param id The experiment id.
+     * @param experimentId The experiment id.
      * @param model The model used for the id.
      * @return A redirection to the experiment page on success, or the error or experiment page otherwise.
      */
     @GetMapping("/delete")
     @Secured(Constants.ROLE_ADMIN)
     public String deleteParticipant(@RequestParam("participant") final String participant,
-                                    @RequestParam(ID) final String id, final Model model) {
-        if (participant == null || id == null || participant.trim().isBlank()
+                                    @RequestParam(ID) final int experimentId, final Model model) {
+        if (participant == null || participant.trim().isBlank()
                 || participant.length() > Constants.LARGE_FIELD) {
             LOGGER.error("Cannot delete participant with invalid id or input string!");
             return Constants.ERROR;
         }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
-        int experimentId = NumberParser.parseNumber(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot delete a participant for experiment with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
@@ -361,22 +341,19 @@ public class ParticipantController {
      * participants and have not yet finished the experiment. If these requirements are not met, no corresponding
      * participant could be found, or the user is an administrator, they are redirected to the error page instead.
      *
-     * @param id The experiment id.
+     * @param experimentId The experiment id.
      * @param httpServletRequest The servlet request.
      * @return Opens the scratch GUI on success, or redirects to the error page otherwise.
      */
     @GetMapping("/start")
     @Secured(Constants.ROLE_PARTICIPANT)
-    public String startExperiment(@RequestParam(ID) final String id, final HttpServletRequest httpServletRequest) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot start experiment with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+    public String startExperiment(
+        @RequestParam(ID) final int experimentId, final HttpServletRequest httpServletRequest
+    ) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            LOGGER.error("An administrator tried to participate in the experiment with id " + id + "!");
+            LOGGER.error("An administrator tried to participate in the experiment with id {}!", experimentId);
             return Constants.ERROR;
         } else {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -424,19 +401,16 @@ public class ParticipantController {
      * valid. If the passed parameters are invalid or no corresponding participant could be found, the user is
      * redirected to the error page instead.
      *
-     * @param experiment The experiment id.
-     * @param user The user id.
+     * @param experimentId The experiment id.
+     * @param userId The user id.
      * @param secret The user's secret.
      * @param httpServletRequest The servlet request.
      * @return Redirects to the finish page on success, or to the error page otherwise.
      */
     @GetMapping("/stop")
-    public String stopExperiment(@RequestParam("experiment") final String experiment,
-                                 @RequestParam("user") final String user, @RequestParam("secret") final String secret,
+    public String stopExperiment(@RequestParam("experiment") final int experimentId,
+                                 @RequestParam("user") final int userId, @RequestParam("secret") final String secret,
                                  final HttpServletRequest httpServletRequest) {
-        int experimentId = NumberParser.parseId(experiment);
-        int userId = NumberParser.parseId(user);
-
         if (isInvalidPassedParams(experimentId, userId, secret, "stop", true)) {
             return Constants.ERROR;
         }
@@ -482,18 +456,15 @@ public class ParticipantController {
      * passed parameters are invalid, the user is an administrator, or no corresponding participant exists, the user is
      * redirected to the error page instead.
      *
-     * @param experiment The id of the experiment.
-     * @param user The id of the user.
+     * @param experimentId The id of the experiment.
+     * @param userId The id of the user.
      * @param secret The user's secret.
      * @return Opens the Scratch GUI on success, or redirects to the error page.
      */
     @GetMapping("/restart")
-    public String restartExperiment(@RequestParam("experiment") final String experiment,
-                                    @RequestParam("user") final String user,
+    public String restartExperiment(@RequestParam("experiment") final int experimentId,
+                                    @RequestParam("user") final int userId,
                                     @RequestParam("secret") final String secret) {
-        int experimentId = NumberParser.parseId(experiment);
-        int userId = NumberParser.parseId(user);
-
         if (isInvalidPassedParams(experimentId, userId, secret, "restart", false)) {
             return Constants.ERROR;
         }
@@ -647,6 +618,9 @@ public class ParticipantController {
      */
     private boolean isInvalidPassedParams(final int experimentId, final int userId, final String secret,
                                           final String method, final boolean userActive) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+
         if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
             LOGGER.error("Cannot " + method + " experiment with invalid experiment id " + experimentId
                     + " or invalid user id " + userId + "!");

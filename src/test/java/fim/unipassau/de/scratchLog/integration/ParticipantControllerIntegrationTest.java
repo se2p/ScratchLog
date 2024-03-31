@@ -211,8 +211,8 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                 .param(ID_PARAM, "0")
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(ID);
         verify(userService, never()).findLastId();
     }
@@ -338,8 +338,8 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                 .param(EXP_ID_PARAM, "-1")
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
@@ -478,8 +478,8 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                 .param(PARTICIPANT, PARTICIPANT)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
@@ -620,8 +620,8 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                 .param(ID_PARAM, BLANK)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUser(anyString());
         verify(experimentService, never()).getExperiment(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -741,8 +741,8 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                         .param(SECRET, SECRET)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -759,8 +759,8 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                         .param(SECRET, SECRET)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
@@ -871,7 +871,7 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                         .param(SECRET, SECRET)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(userService, never()).getUserById(anyInt());
