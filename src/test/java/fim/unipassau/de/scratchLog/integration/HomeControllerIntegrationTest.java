@@ -286,8 +286,6 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
     @Test
     @WithMockUser(username = "participant", roles = {"PARTICIPANT"})
     public void testGetCoursePagePageInvalid() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(pageService.getLastCoursePage(userDTO.getId())).thenReturn(lastPage);
         mvc.perform(get(PAGE_COURSE)
                         .param(PAGE_PARAM, INVALID_NUMBER)
                         .contentType(MediaType.ALL)
@@ -295,8 +293,8 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(status().is4xxClientError())
                 .andExpect(view().name(ERROR));
         verify(pageService, never()).computeLastCoursePage();
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getLastCoursePage(userDTO.getId());
+        verify(userService, never()).getUser(any());
+        verify(pageService, never()).getLastCoursePage(anyInt());
         verify(pageService, never()).getCourseParticipantPage(any(PageRequest.class), anyInt());
     }
 
@@ -383,7 +381,7 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
                 .andExpect(view().name(ERROR));
-        verify(pageService).computeLastExperimentPage();
+        verify(pageService, never()).computeLastExperimentPage();
         verify(pageService, never()).getExperimentPage(any(PageRequest.class));
         verify(userService, never()).getUser(anyString());
     }

@@ -36,7 +36,7 @@ import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.FieldErrorHandler;
 import fim.unipassau.de.scratchLog.util.MarkdownHandler;
 import fim.unipassau.de.scratchLog.util.NumberParser;
-import fim.unipassau.de.scratchLog.util.PageUtils;
+import fim.unipassau.de.scratchLog.web.error_handling.PageIdValidator;
 import fim.unipassau.de.scratchLog.util.Secrets;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
@@ -523,22 +523,20 @@ public class ExperimentController {
      * numbers are valid.
      *
      * @param id The experiment id.
-     * @param pageNumber The number of the page to be retrieved.
+     * @param page The number of the page to be retrieved.
      * @param model The {@link Model} used to store the information.
      * @return The experiment page on success, or the error page otherwise.
      */
     @GetMapping("/page")
     @Secured(Constants.ROLE_ADMIN)
-    public String getPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String pageNumber,
+    public String getPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final int page,
                           final Model model) {
-        if (PageUtils.isInvalidParams(id, pageNumber)) {
-            LOGGER.error("Cannot fetch participant page for invalid id " + id + " or invalid page number "
-                    + pageNumber + "!");
+        int experimentId = NumberParser.parseId(id);
+        if (experimentId < Constants.MIN_ID) {
+            LOGGER.error("Cannot fetch participant page for invalid id {} or invalid page number {}!", id, page);
             return Constants.ERROR;
         }
-
-        int page = NumberParser.parseNumber(pageNumber);
-        int experimentId = NumberParser.parseId(id);
+        PageIdValidator.validatePageNumberElseThrow(page);
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);

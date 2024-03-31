@@ -1060,8 +1060,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .param(PAGE_PARAM, "-1")
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name("error"));
         verify(experimentService, never()).getExperiment(ID);
         verify(pageService, never()).getLastParticipantPage(ID);
         verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));

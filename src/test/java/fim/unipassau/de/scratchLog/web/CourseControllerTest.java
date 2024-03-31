@@ -35,6 +35,7 @@ import fim.unipassau.de.scratchLog.web.controller.CourseController;
 import fim.unipassau.de.scratchLog.web.dto.CourseDTO;
 import fim.unipassau.de.scratchLog.web.dto.PasswordDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
+import fim.unipassau.de.scratchLog.web.error_handling.InvalidIdException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -114,8 +116,8 @@ public class CourseControllerTest {
     private static final String EXPERIMENT_TABLE = "course::course_experiment_table";
     private static final String PARTICIPANT_TABLE = "course::course_participant_table";
     private static final String COURSE_DTO = "courseDTO";
-    private static final String CURRENT = "3";
-    private static final String LAST = "5";
+    private static final int CURRENT = 3;
+    private static final int LAST = 5;
     private static final String ID_STRING = "1";
     private static final int ID = 1;
     private static final int LAST_PAGE = 5;
@@ -701,7 +703,7 @@ public class CourseControllerTest {
     @Test
     public void testGetParticipantPageInvalidPageNumber() {
         when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
-        assertEquals(ERROR, courseController.getParticipantPage(ID_STRING, LAST).getViewName());
+        assertThrows(InvalidIdException.class, () -> courseController.getParticipantPage(ID_STRING, LAST));
         verify(pageService).getLastParticipantCoursePage(ID);
         verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService, never()).getCourse(anyInt());
@@ -736,7 +738,7 @@ public class CourseControllerTest {
     @Test
     public void testGetExperimentPageInvalidPage() {
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        assertEquals(ERROR, courseController.getExperimentPage(ID_STRING, null).getViewName());
+        assertThrows(InvalidIdException.class, () -> courseController.getExperimentPage(ID_STRING, -1));
         verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());

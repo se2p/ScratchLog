@@ -30,7 +30,7 @@ import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.FieldErrorHandler;
 import fim.unipassau.de.scratchLog.util.MarkdownHandler;
 import fim.unipassau.de.scratchLog.util.NumberParser;
-import fim.unipassau.de.scratchLog.util.PageUtils;
+import fim.unipassau.de.scratchLog.web.error_handling.PageIdValidator;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.util.validation.StringValidator;
 import fim.unipassau.de.scratchLog.web.dto.CourseDTO;
@@ -436,13 +436,13 @@ public class CourseController {
      * Retrieves the course participant page for the given course and page number, if the provided numbers are valid.
      *
      * @param id The course id.
-     * @param pageNumber The number of the page to be retrieved.
+     * @param page The number of the page to be retrieved.
      * @return The retrieved participant page information.
      */
     @GetMapping("/page/participant")
     @Secured(Constants.ROLE_ADMIN)
     public ModelAndView getParticipantPage(@RequestParam("id") final String id,
-                                           @RequestParam("page") final String pageNumber) {
+                                           @RequestParam("page") final int page) {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
@@ -453,15 +453,7 @@ public class CourseController {
         }
 
         int lastPage = pageService.getLastParticipantCoursePage(courseId);
-        int page = NumberParser.parseId(pageNumber);
-
-        if (PageUtils.isInvalidPageNumber(page, lastPage)) {
-            LOGGER.error("Cannot fetch course participant page for invalid page number " + pageNumber
-                    + " with last page " + lastPage + "!");
-            ModelAndView mv = new ModelAndView("error");
-            mv.setStatus(HttpStatus.BAD_REQUEST);
-            return mv;
-        }
+        PageIdValidator.validatePageNumberElseThrow(page, lastPage);
 
         Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId, PageRequest.of(page,
                 Constants.PAGE_SIZE));
@@ -472,13 +464,13 @@ public class CourseController {
      * Retrieves the course experiment page for the given course and page number, if the provided numbers are valid.
      *
      * @param id The course id.
-     * @param pageNumber The number of the page to be retrieved.
+     * @param page The number of the page to be retrieved.
      * @return The retrieved experiment page information.
      */
     @GetMapping("/page/experiment")
     @Secured(Constants.ROLE_PARTICIPANT)
     public ModelAndView getExperimentPage(@RequestParam("id") final String id,
-                                          @RequestParam("page") final String pageNumber) {
+                                          @RequestParam("page") final int page) {
         int courseId = NumberParser.parseId(id);
 
         if (courseId < Constants.MIN_ID) {
@@ -489,15 +481,7 @@ public class CourseController {
         }
 
         int lastPage = pageService.getLastCourseExperimentPage(courseId);
-        int page = NumberParser.parseId(pageNumber);
-
-        if (PageUtils.isInvalidPageNumber(page, lastPage)) {
-            LOGGER.error("Cannot fetch course experiment page for invalid page number " + pageNumber
-                    + " with last page " + lastPage + "!");
-            ModelAndView mv = new ModelAndView("error");
-            mv.setStatus(HttpStatus.BAD_REQUEST);
-            return mv;
-        }
+        PageIdValidator.validatePageNumberElseThrow(page, lastPage);
 
         Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(page,
                 Constants.PAGE_SIZE), courseId);

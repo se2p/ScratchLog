@@ -34,6 +34,7 @@ import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.controller.HomeController;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
+import fim.unipassau.de.scratchLog.web.error_handling.InvalidIdException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +62,7 @@ import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -119,8 +121,8 @@ public class HomeControllerTest extends AbstractControllerTest {
     private static final String ERROR = "error";
     private static final String PASSWORD_RESET = "password-reset";
     private static final String FINISH = "experiment-finish";
-    private static final String CURRENT = "3";
-    private static final String LAST = "5";
+    private static final int CURRENT = 3;
+    private static final int LAST = 5;
     private static final String BLANK = "   ";
     private static final String ID_STRING = "1";
     private static final String SECRET = "secret";
@@ -333,7 +335,7 @@ public class HomeControllerTest extends AbstractControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(userDTO.getUsername());
         when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, homeController.getCoursePage(CURRENT, httpServletRequest).getViewName());
+        assertThrows(InvalidIdException.class, () -> homeController.getCoursePage(CURRENT, httpServletRequest));
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(pageService, never()).computeLastCoursePage();
         verify(pageService, never()).getLastCoursePage(anyInt());
@@ -348,7 +350,7 @@ public class HomeControllerTest extends AbstractControllerTest {
         when(authentication.getName()).thenReturn(userDTO.getUsername());
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
         when(pageService.getLastCoursePage(userDTO.getId())).thenReturn(LAST_PAGE);
-        assertEquals(ERROR, homeController.getCoursePage(LAST, httpServletRequest).getViewName());
+        assertThrows(InvalidIdException.class, () -> homeController.getCoursePage(LAST, httpServletRequest));
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(pageService).getLastCoursePage(userDTO.getId());
         verify(pageService, never()).getExperimentPage(any(PageRequest.class));
@@ -400,7 +402,7 @@ public class HomeControllerTest extends AbstractControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(userDTO.getUsername());
         when(userService.getUser(userDTO.getUsername())).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, homeController.getExperimentPage(CURRENT, httpServletRequest).getViewName());
+        assertThrows(InvalidIdException.class, () -> homeController.getExperimentPage(CURRENT, httpServletRequest));
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(userService).getUser(userDTO.getUsername());
         verify(pageService, never()).getLastExperimentPage(anyInt());
@@ -411,7 +413,7 @@ public class HomeControllerTest extends AbstractControllerTest {
     public void testGetExperimentPageAuthenticationNameNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(ERROR, homeController.getExperimentPage(CURRENT, httpServletRequest).getViewName());
+        assertThrows(InvalidIdException.class, () -> homeController.getExperimentPage(CURRENT, httpServletRequest));
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(userService, never()).getUser(anyString());
         verify(pageService, never()).getLastExperimentPage(anyInt());
@@ -421,7 +423,7 @@ public class HomeControllerTest extends AbstractControllerTest {
     @Test
     public void testGetExperimentPageAuthenticationNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        assertEquals(ERROR, homeController.getExperimentPage(CURRENT, httpServletRequest).getViewName());
+        assertThrows(InvalidIdException.class, () -> homeController.getExperimentPage(CURRENT, httpServletRequest));
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(userService, never()).getUser(anyString());
         verify(pageService, never()).getLastExperimentPage(anyInt());
@@ -432,7 +434,7 @@ public class HomeControllerTest extends AbstractControllerTest {
     public void testGetExperimentPageBiggerLast() {
         when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
         when(pageService.computeLastExperimentPage()).thenReturn(PAGE);
-        assertEquals(ERROR, homeController.getExperimentPage(CURRENT, httpServletRequest).getViewName());
+        assertThrows(InvalidIdException.class, () -> homeController.getExperimentPage(CURRENT, httpServletRequest));
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(userService, never()).getUser(anyString());
         verify(pageService).computeLastExperimentPage();
@@ -441,23 +443,10 @@ public class HomeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetExperimentPageSmallerZero() {
-        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
-        when(pageService.computeLastExperimentPage()).thenReturn(LAST_PAGE);
-        assertEquals(ERROR, homeController.getExperimentPage("-1", httpServletRequest).getViewName());
-        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
+        assertThrows(InvalidIdException.class, () -> homeController.getExperimentPage(-1, httpServletRequest));
+        verify(httpServletRequest, never()).isUserInRole(any());
         verify(userService, never()).getUser(anyString());
-        verify(pageService).computeLastExperimentPage();
-        verify(pageService, never()).getExperimentPage(any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentPageNull() {
-        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
-        when(pageService.computeLastExperimentPage()).thenReturn(LAST_PAGE);
-        assertEquals(ERROR, homeController.getExperimentPage(null, httpServletRequest).getViewName());
-        verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
-        verify(userService, never()).getUser(anyString());
-        verify(pageService).computeLastExperimentPage();
+        verify(pageService, never()).computeLastExperimentPage();
         verify(pageService, never()).getExperimentPage(any(PageRequest.class));
     }
 

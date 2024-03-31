@@ -41,6 +41,7 @@ import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratchLog.web.dto.PasswordDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
+import fim.unipassau.de.scratchLog.web.error_handling.InvalidIdException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -161,8 +162,8 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     private static final String LONG_PASSWORD = StringCreator.createLongString(55);
     private static final String PARTICIPANTS = "participants";
     private static final String PARTICIPANT1 = "participant1";
-    private static final String PAGE = "3";
-    private static final String LAST = "4";
+    private static final int PAGE = 3;
+    private static final int LAST = 4;
     private static final String FILETYPE_SB3 = "application/octet-stream";
     private static final String FILENAME_SB3 = "project.sb3";
     private static final String FILETYPE_CSV = "text/csv";
@@ -1075,16 +1076,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetNextPageInvalidCurrent() {
-        assertEquals(ERROR, experimentController.getPage(ID_STRING, BLANK, model));
-        verify(experimentService, never()).getExperiment(ID);
-        verify(pageService, never()).getLastParticipantPage(ID);
-        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetNextPageCurrentNull() {
-        assertEquals(ERROR, experimentController.getPage(ID_STRING, null, model));
+        assertThrows(InvalidIdException.class, () -> experimentController.getPage(ID_STRING, -1, model));
         verify(experimentService, never()).getExperiment(ID);
         verify(pageService, never()).getLastParticipantPage(ID);
         verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));

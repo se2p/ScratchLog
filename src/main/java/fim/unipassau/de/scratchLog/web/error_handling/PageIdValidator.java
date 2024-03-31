@@ -17,44 +17,37 @@
  * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package fim.unipassau.de.scratchLog.util;
+package fim.unipassau.de.scratchLog.web.error_handling;
 
 /**
  * Utility class for validating parameters passed for retrieving pages.
  */
-public final class PageUtils {
+public final class PageIdValidator {
 
     /**
-     * Checks, whether the passed id and page string are valid numbers.
+     * Checks whether the given page is within the tolerated boundaries. The lower boundary for any page number is
+     * zero.
      *
-     * @param id The id to check.
      * @param page The page number to check.
-     * @return {@code true} if any string is an invalid number, or {@code false} otherwise.
+     * @throws InvalidIdException Thrown in case the ID is outside the valid range.
      */
-    public static boolean isInvalidParams(final String id, final String page) {
-        if (page == null) {
-            return true;
+    public static void validatePageNumberElseThrow(final int page) throws InvalidIdException {
+        if (page < 0) {
+            throw new InvalidIdException("page", page);
         }
-
-        int current = NumberParser.parseNumber(page);
-        int parsedId = NumberParser.parseId(id);
-
-        return parsedId < Constants.MIN_ID || current <= -1;
     }
 
     /**
-     * Checks, whether the given page is within the tolerated boundaries. The lower boundary for any page number is
+     * Checks whether the given page is within the tolerated boundaries. The lower boundary for any page number is
      * zero, while the upper boundary depends on the given last page number.
      *
      * @param page The page number to check.
      * @param lastPage The number of the last page.
-     * @return {@code true} if the page number is invalid, or {@code false} otherwise.
+     * @throws InvalidIdException Thrown in case the ID is outside the valid range.
      */
-    public static boolean isInvalidPageNumber(final int page, final int lastPage) {
-        if (page < 0) {
-            return true;
-        } else {
-            return page >= lastPage;
+    public static void validatePageNumberElseThrow(final int page, final int lastPage) throws InvalidIdException {
+        if (page < 0 || page >= lastPage) {
+            throw new InvalidIdException("page", page);
         }
     }
 
