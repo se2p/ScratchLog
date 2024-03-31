@@ -29,6 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ui.Model;
 
+import static fim.unipassau.de.scratchLog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -51,14 +52,13 @@ public class DashboardControllerTest {
     private Model model;
 
     private static final String DASHBOARD = "dashboard";
-    private static final String ID_STRING = "5";
     private static final int ID = 5;
 
     @Test
     public void testGetDashboard() {
         when(dashboardService.existsExperiment(ID)).thenReturn(true);
         when(dashboardService.existsParticipants(ID)).thenReturn(true);
-        assertEquals(DASHBOARD, dashboardController.getDashboard(ID_STRING, model));
+        assertEquals(DASHBOARD, dashboardController.getDashboard(ID, model));
         verify(dashboardService).existsExperiment(ID);
         verify(dashboardService).existsParticipants(ID);
         verify(model, times(6)).addAttribute(anyString(), any());
@@ -67,7 +67,7 @@ public class DashboardControllerTest {
     @Test
     public void testGetDashboardNoParticipants() {
         when(dashboardService.existsExperiment(ID)).thenReturn(true);
-        assertEquals(Constants.ERROR, dashboardController.getDashboard(ID_STRING, model));
+        assertEquals(Constants.ERROR, dashboardController.getDashboard(ID, model));
         verify(dashboardService).existsExperiment(ID);
         verify(dashboardService).existsParticipants(ID);
         verify(model, never()).addAttribute(anyString(), any());
@@ -75,7 +75,7 @@ public class DashboardControllerTest {
 
     @Test
     public void testGetDashboardNoExperiment() {
-        assertEquals(Constants.ERROR, dashboardController.getDashboard(ID_STRING, model));
+        assertEquals(Constants.ERROR, dashboardController.getDashboard(ID, model));
         verify(dashboardService).existsExperiment(ID);
         verify(dashboardService, never()).existsParticipants(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
@@ -83,7 +83,7 @@ public class DashboardControllerTest {
 
     @Test
     public void testGetDashboardInvalidId() {
-        assertEquals(Constants.ERROR, dashboardController.getDashboard(DASHBOARD, model));
+        assertInvalidIdException(() -> dashboardController.getDashboard(-1, model));
         verify(dashboardService, never()).existsExperiment(anyInt());
         verify(dashboardService, never()).existsParticipants(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
