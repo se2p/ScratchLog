@@ -41,19 +41,18 @@ import fim.unipassau.de.scratchLog.web.dto.ResourceEventDTO;
 import fim.unipassau.de.scratchLog.web.dto.Sb3ZipDTO;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * The REST controller receiving all the logging requests sent by the Scratch GUI and VM.
@@ -137,13 +136,11 @@ public class EventRestController {
     /**
      * Saves the click event data passed in the request body.
      *
-     * @param data The string containing the click event data.
+     * @param clickEventDTO The JSON containing the click event data.
      */
     @PostMapping("/click")
-    public void storeClickEvent(@RequestBody final String data) {
-        ClickEventDTO clickEventDTO = createClickEventDTO(data);
-
-        if (clickEventDTO == null || isInvalidRequest(data, clickEventDTO)) {
+    public void storeClickEvent(@RequestBody final ClickEventDTO clickEventDTO) {
+        if (clickEventDTO == null || hasInvalidParticipant(clickEventDTO)) {
             return;
         }
 
@@ -153,13 +150,11 @@ public class EventRestController {
     /**
      * Saves the debugger event data passed in the request body.
      *
-     * @param data The string containing the debugger event data.
+     * @param debuggerEventDTO The JSON containing the debugger event data.
      */
     @PostMapping("/debugger")
-    public void storeDebuggerEvent(@RequestBody final String data) {
-        DebuggerEventDTO debuggerEventDTO = createDebuggerEventDTO(data);
-
-        if (debuggerEventDTO == null || isInvalidRequest(data, debuggerEventDTO)) {
+    public void storeDebuggerEvent(@RequestBody final DebuggerEventDTO debuggerEventDTO) {
+        if (debuggerEventDTO == null || hasInvalidParticipant(debuggerEventDTO)) {
             return;
         }
 
@@ -169,13 +164,11 @@ public class EventRestController {
     /**
      * Saves the question event data passed in the request body.
      *
-     * @param data The string containing the question event data.
+     * @param questionEventDTO The JSON containing the question event data.
      */
     @PostMapping("/question")
-    public void storeQuestionEvent(@RequestBody final String data) {
-        QuestionEventDTO questionEventDTO = createQuestionEventDTO(data);
-
-        if (questionEventDTO == null || isInvalidRequest(data, questionEventDTO)) {
+    public void storeQuestionEvent(@RequestBody final QuestionEventDTO questionEventDTO) {
+        if (questionEventDTO == null || hasInvalidParticipant(questionEventDTO)) {
             return;
         }
 
@@ -185,13 +178,11 @@ public class EventRestController {
     /**
      * Saves the resource event data passed in the request body.
      *
-     * @param data The string containing the resource event data.
+     * @param resourceEventDTO The JSON containing the resource event data.
      */
     @PostMapping("/resource")
-    public void storeResourceEvent(@RequestBody final String data) {
-        ResourceEventDTO resourceEventDTO = createResourceEventDTO(data);
-
-        if (resourceEventDTO == null || isInvalidRequest(data, resourceEventDTO)) {
+    public void storeResourceEvent(@RequestBody final ResourceEventDTO resourceEventDTO) {
+        if (resourceEventDTO == null || hasInvalidParticipant(resourceEventDTO)) {
             return;
         }
 
@@ -201,13 +192,11 @@ public class EventRestController {
     /**
      * Saves the file data passed in the request body.
      *
-     * @param data The string containing the file data.
+     * @param fileDTO The JSON containing the file data.
      */
     @PostMapping("/file")
-    public void storeFileEvent(@RequestBody final String data) {
-        FileDTO fileDTO = createFileDTO(data);
-
-        if (fileDTO == null || isInvalidRequest(data, fileDTO)) {
+    public void storeFileEvent(@RequestBody final FileDTO fileDTO) {
+        if (fileDTO == null || hasInvalidParticipant(fileDTO)) {
             return;
         }
 
@@ -217,13 +206,11 @@ public class EventRestController {
     /**
      * Saves the sb3 project zip data passed in the request body.
      *
-     * @param data The string containing the project data.
+     * @param sb3ZipDTO The JSON containing the project data.
      */
     @PostMapping("/zip")
-    public void storeZipFile(@RequestBody final String data) {
-        Sb3ZipDTO sb3ZipDTO = createSb3ZipDTO(data);
-
-        if (sb3ZipDTO == null || isInvalidRequest(data, sb3ZipDTO)) {
+    public void storeZipFile(@RequestBody final Sb3ZipDTO sb3ZipDTO) {
+        if (sb3ZipDTO == null || hasInvalidParticipant(sb3ZipDTO)) {
             return;
         }
 
@@ -239,15 +226,10 @@ public class EventRestController {
      * @param response The servlet response.
      */
     @PostMapping("/sb3")
-    public void retrieveSb3File(@RequestBody final String data, final HttpServletResponse response) {
-        List<Integer> ids = checkValidRequestData(data);
+    public void retrieveSb3File(@RequestBody final UserDataRequestDTO data, final HttpServletResponse response) {
+        checkValidDataRequestElseThrow(data);
 
-        if (ids.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-
-        int experimentId = ids.get(0);
+        int experimentId = data.experiment();
 
         try {
             ExperimentProjection projection = experimentService.getSb3File(experimentId, false);
@@ -283,16 +265,11 @@ public class EventRestController {
      * @param response The servlet response.
      */
     @PostMapping("/json")
-    public void retrieveLastJson(@RequestBody final String data, final HttpServletResponse response) {
-        List<Integer> ids = checkValidRequestData(data);
-
-        if (ids.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
+    public void retrieveLastJson(@RequestBody final UserDataRequestDTO data, final HttpServletResponse response) {
+        checkValidDataRequestElseThrow(data);
 
         try {
-            String json = codeService.findFirstJSON(ids.get(1), ids.get(0));
+            String json = codeService.findFirstJSON(data.user(), data.experiment());
 
             if (json == null) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -308,60 +285,42 @@ public class EventRestController {
         } catch (NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
-            LOGGER.error("Could not retrieve the last saved json code for user with id " + ids.get(1)
-                    + " during experiment with id " + ids.get(0) + " due to IOException!", e);
+            LOGGER.error("Could not retrieve the last saved json code for user with id {}"
+                    + " during experiment with id {} due to IOException!", data.user(), data.experiment(), e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
-    /**
-     * Extracts the user and experiment id as well as the user's secret from the given request data and checks if the
-     * user is a valid participant in the experiment with the given secret.
-     *
-     * @param data The data containing the required information.
-     * @return A list containing the user and experiment id, or an empty list, if the passed data is invalid.
-     */
-    private List<Integer> checkValidRequestData(final String data) {
-        List<Integer> ids = new ArrayList<>();
-        JSONObject object = new JSONObject(data);
-        int userId = object.getInt("user");
-        int experimentId = object.getInt("experiment");
-        String secret = object.getString("secret");
+    public record UserDataRequestDTO(int user, int experiment, String secret) { }
 
-        if (!participantService.isInvalidParticipant(userId, experimentId, secret, true)) {
-            ids.add(experimentId);
-            ids.add(userId);
+    private void checkValidDataRequestElseThrow(final UserDataRequestDTO data) {
+        if (participantService.isInvalidParticipant(data.user(), data.experiment(), data.secret(), true)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-
-        return ids;
     }
 
     /**
      * Checks, if the data passed to the REST controller should be stored in the database. The data should not be stored
      * if the participant data is invalid.
      *
-     * @param data The data passed in the request body.
-     * @param eventDTO The {@link EventDTO} to check.
-     * @return {@code true} if the event should not be persisted or {@code false} otherwise.
-     */
-    private boolean isInvalidRequest(final String data, final EventDTO eventDTO) {
-        JSONObject object = new JSONObject(data);
-        String secret = object.getString("secret");
-        return participantService.isInvalidParticipant(eventDTO.getUser(), eventDTO.getExperiment(), secret, true);
-    }
-
-    /**
-     * Checks, if the data passed to the REST controller should be stored in the database. The data should not be stored
-     * if the participant data is invalid.
-     *
-     * @param blockEvent The data passed in the request body.
+     * @param blockEvent The event passed in the request body.
      * @return {@code true} if the event should not be persisted or {@code false} otherwise.
      */
     private boolean isInvalidRequest(final BlockEventDTO blockEvent) {
         validateScratchJson(blockEvent.getCode());
+        return hasInvalidParticipant(blockEvent);
+    }
 
-        String secret = blockEvent.getSecret();
-        return participantService.isInvalidParticipant(blockEvent.getUser(), blockEvent.getExperiment(), secret, true);
+    /**
+     * Checks, if the data passed to the REST controller should be stored in the database. The data should not be stored
+     * if the participant data is invalid.
+     *
+     * @param event The event passed in the request body.
+     * @return {@code true} if the event should not be persisted or {@code false} otherwise.
+     */
+    private boolean hasInvalidParticipant(final EventDTO event) {
+        String secret = event.getSecret();
+        return participantService.isInvalidParticipant(event.getUser(), event.getExperiment(), secret, true);
     }
 
     /**
@@ -381,96 +340,6 @@ public class EventRestController {
             }
         } catch (JsonProcessingException e) {
             throw new IncompleteDataException("Invalid Scratch project JSON!");
-        }
-    }
-
-    /**
-     * Creates a {@link ClickEventDTO} with the given data.
-     *
-     * @param data The data passed in the request body.
-     * @return The new click event DTO containing the information.
-     */
-    private ClickEventDTO createClickEventDTO(final String data) {
-        try {
-            return objectMapper.readValue(data, ClickEventDTO.class);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("The click event data sent to the server was incomplete!", e);
-            return null;
-        }
-    }
-
-    /**
-     * Creates a {@link DebuggerEventDTO} with the given data.
-     *
-     * @param data The data passed in the request body.
-     * @return The new debugger event DTO containing the information.
-     */
-    private DebuggerEventDTO createDebuggerEventDTO(final String data) {
-        try {
-            return objectMapper.readValue(data, DebuggerEventDTO.class);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("The debugger event data sent to the server was incomplete!", e);
-            return null;
-        }
-    }
-
-    /**
-     * Creates a {@link QuestionEventDTO} with the given data.
-     *
-     * @param data The data passed in the request body.
-     * @return The new question event DTO containing the information.
-     */
-    private QuestionEventDTO createQuestionEventDTO(final String data) {
-        try {
-            return objectMapper.readValue(data, QuestionEventDTO.class);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("The question event data sent to the server was incomplete!", e);
-            return null;
-        }
-    }
-
-    /**
-     * Creates a {@link ResourceEventDTO} with the given data.
-     *
-     * @param data The data passed in the request body.
-     * @return The new resource event DTO containing the information.
-     */
-    private ResourceEventDTO createResourceEventDTO(final String data) {
-        try {
-            return objectMapper.readValue(data, ResourceEventDTO.class);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("The resource event data sent to the server was incomplete!", e);
-            return null;
-        }
-    }
-
-    /**
-     * Creates a {@link FileDTO} with the given data.
-     *
-     * @param data The data passed in the request body.
-     * @return The new file DTO containing the information.
-     */
-    private FileDTO createFileDTO(final String data) {
-        try {
-            return objectMapper.readValue(data, FileDTO.class);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("The file data sent to the server was incomplete!", e);
-            return null;
-        }
-    }
-
-    /**
-     * Creates a {@link Sb3ZipDTO} with the given data.
-     *
-     * @param data The data passed in the request body.
-     * @return The new sb3 zip DTO containing the information.
-     */
-    private Sb3ZipDTO createSb3ZipDTO(final String data) {
-        try {
-            return objectMapper.readValue(data, Sb3ZipDTO.class);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("The sb3 zip file data sent to the server was incomplete!", e);
-            return null;
         }
     }
 

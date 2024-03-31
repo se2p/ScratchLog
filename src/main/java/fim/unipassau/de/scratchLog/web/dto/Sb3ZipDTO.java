@@ -81,21 +81,29 @@ public class Sb3ZipDTO implements EventDTO {
     private byte[] content;
 
     /**
+     * A secret that can be used to check the event is associated with the correct participant.
+     */
+    @JsonProperty("secret")
+    private String secret;
+
+    /**
      * Constructs a new sb3 zip dto with the given attributes.
      *
-     * @param user The id of the user for whom the zip file was created.
+     * @param user       The id of the user for whom the zip file was created.
      * @param experiment The id of the experiment during which the zip file was created.
-     * @param date The time at which the zip file was created.
-     * @param name The name of the zip file.
-     * @param content The zip file content.
+     * @param secret     The secret used to identify the participant.
+     * @param name       The name of the zip file.
+     * @param content    The zip file content.
+     * @param date       The time at which the zip file was created.
      */
-    public Sb3ZipDTO(final Integer user, final Integer experiment, final LocalDateTime date, final String name,
-                     final byte[] content) {
+    public Sb3ZipDTO(final Integer user, final Integer experiment, final String secret, final String name,
+                     final byte[] content, final LocalDateTime date) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
         this.name = name;
         this.content = content;
+        this.secret = secret;
     }
 
     /**

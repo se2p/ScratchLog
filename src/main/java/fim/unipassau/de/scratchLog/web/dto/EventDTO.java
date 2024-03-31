@@ -69,6 +69,13 @@ public interface EventDTO {
     void setExperiment(Integer experiment);
 
     /**
+     * Returns the secret that is used to identify for which user the event was generated.
+     *
+     * @return The secret identifying the user.
+     */
+    String getSecret();
+
+    /**
      * Returns the time at which the event occurred.
      *
      * @return The event time.

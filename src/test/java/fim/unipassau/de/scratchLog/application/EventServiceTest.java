@@ -120,17 +120,17 @@ public class EventServiceTest {
     private static final int ID = 1;
     private static final String GUI_URL = "scratch";
     private BlockEventDTO blockEventDTO;
-    private final ClickEventDTO clickEventDTO = new ClickEventDTO(1, 1, LocalDateTime.now(),
-            ClickEventType.CODE, ClickEventSpecific.STACKCLICK, "meta");
-    private final DebuggerEventDTO debuggerEventDTO = new DebuggerEventDTO(1, 1, LocalDateTime.now(),
-            DebuggerEventType.BLOCK, DebuggerEventSpecific.OPEN_BLOCK, "id", "name", 0, 5);
-    private final QuestionEventDTO questionEventDTO = new QuestionEventDTO(1, 1, LocalDateTime.now(),
-            QuestionEventType.QUESTION, QuestionEventSpecific.RATE, 0, "type",
-            new String[]{"value1", "value2"}, "category", "form", "id", "opcode");
-    private final ResourceEventDTO resourceEventDTO = new ResourceEventDTO(1, 1, LocalDateTime.now(),
-            ResourceEventType.ADD, ResourceEventSpecific.ADD_SOUND, "name", "hash",
-            "filetype", LibraryResource.TRUE);
-    private final User user = new User("participant", "email", Role.PARTICIPANT, Language.GERMAN, "password", "secret");
+    private final ClickEventDTO clickEventDTO = new ClickEventDTO(1, 1, "secret", ClickEventType.CODE,
+        ClickEventSpecific.STACKCLICK, "meta", LocalDateTime.now());
+    private final DebuggerEventDTO debuggerEventDTO = new DebuggerEventDTO(1, 1, "secret", DebuggerEventType.BLOCK,
+        DebuggerEventSpecific.OPEN_BLOCK, "id", "name", 0, 5, LocalDateTime.now());
+    private final QuestionEventDTO questionEventDTO = new QuestionEventDTO(1, 1, "secret", QuestionEventType.QUESTION,
+        QuestionEventSpecific.RATE, 0, "type", new String[]{"value1", "value2"}, "category", "form", "id", "opcode",
+        LocalDateTime.now());
+    private final ResourceEventDTO resourceEventDTO = new ResourceEventDTO(1, 1, "secret", ResourceEventType.ADD,
+        ResourceEventSpecific.ADD_SOUND, "name", "hash", "filetype", LibraryResource.TRUE, LocalDateTime.now());
+    private final User user = new User("participant", "email", Role.PARTICIPANT, Language.GERMAN, "password",
+        "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
     private final Participant participant = new Participant(user, experiment, LocalDateTime.now(), null);
@@ -144,8 +144,7 @@ public class EventServiceTest {
 
     @BeforeEach
     public void setup() {
-        blockEventDTO = new BlockEventDTO(1, 1, LocalDateTime.now(), BlockEventType.CHANGE,
-                BlockEventSpecific.CHANGE, "sprite", "meta", "xml", "{}", "empty");
+        blockEventDTO = new BlockEventDTO(1, 1, "empty", BlockEventType.CHANGE, BlockEventSpecific.CHANGE, "sprite", "meta", "xml", "{}", LocalDateTime.now());
 
         user.setId(ID);
         user.setActive(true);

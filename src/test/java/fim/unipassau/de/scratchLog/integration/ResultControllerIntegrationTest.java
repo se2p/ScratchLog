@@ -122,13 +122,14 @@ public class ResultControllerIntegrationTest {
     private static final String PAGE = "0";
     private static final String JSON = "json";
     private static final int ID = 1;
-    private final FileDTO fileDTO = new FileDTO(ID, ID, LocalDateTime.now(), "file", "type",
-            new byte[]{1, 2, 3});
-    private final FileDTO zip = new FileDTO(ID, ID, LocalDateTime.now(), "file.zip", "wav",
-            new byte[]{1, 2, 3, 4});
+    private final FileDTO fileDTO = new FileDTO(ID, ID, "secret", "file", "type", new byte[]{1, 2, 3},
+        LocalDateTime.now());
+    private final FileDTO zip = new FileDTO(ID, ID, "secret", "file.zip", "wav", new byte[]{1, 2, 3, 4},
+        LocalDateTime.now());
     private final ParticipantDTO participantDTO1 = new ParticipantDTO(ID, ID);
     private final ParticipantDTO participantDTO2 = new ParticipantDTO(2, ID);
-    private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "file", new byte[]{1, 2, 3});
+    private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, "secret", "file", new byte[]{1, 2, 3},
+        LocalDateTime.now());
     private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
     private final List<EventCountDTO> clickEvents = getEventCounts(3, "GREENFLAG");
@@ -1004,7 +1005,7 @@ public class ResultControllerIntegrationTest {
         List<Sb3ZipDTO> sb3ZipDTOs = new ArrayList<>();
 
         for (int i = 0; i < number; i++) {
-            sb3ZipDTOs.add(new Sb3ZipDTO(ID, ID, LocalDateTime.now(), "zip" + i, new byte[]{1, 2, 3}));
+            sb3ZipDTOs.add(new Sb3ZipDTO(ID, ID, "secret", "zip" + i, new byte[]{1, 2, 3}, LocalDateTime.now()));
         }
 
         return sb3ZipDTOs;

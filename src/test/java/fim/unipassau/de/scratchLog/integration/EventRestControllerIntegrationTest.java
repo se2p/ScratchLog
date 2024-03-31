@@ -247,7 +247,7 @@ public class EventRestControllerIntegrationTest {
                         .content(clickEventObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(eventService, never()).saveClickEvent(any());
     }
@@ -270,7 +270,7 @@ public class EventRestControllerIntegrationTest {
                         .content(debuggerEventObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(eventService, never()).saveDebuggerEvent(any());
     }
@@ -316,7 +316,7 @@ public class EventRestControllerIntegrationTest {
                         .content(resourceEventObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(eventService, never()).saveResourceEvent(any());
     }
@@ -339,7 +339,7 @@ public class EventRestControllerIntegrationTest {
                         .content(fileEventObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(fileService, never()).saveFile(any());
     }
@@ -374,7 +374,7 @@ public class EventRestControllerIntegrationTest {
                         .content(sb3ZipObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(fileService, never()).saveSb3Zip(any());
     }
