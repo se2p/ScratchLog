@@ -29,6 +29,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -82,25 +85,36 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
-        http.cors(withDefaults())
-                .csrf().disable()
-                .authorizeHttpRequests()
-                .requestMatchers("/login", "/finish", "/token/password", "/reset",
-                        "/users/reset", "/users/login").anonymous()
-                .requestMatchers("/users/authenticate").hasAnyRole("PARTICIPANT", "ANONYMOUS")
-                .requestMatchers("/experiment/*", "/users/add", "/users/delete", "/users/forgot", "/users/add",
-                        "/users/bulk", "/result", "/search", "/secret", "/search/*").hasRole("ADMIN")
-                .requestMatchers("/experiment", "/users/profile", "/users/logout", "/users/edit",
-                        "/users/update", "/course").hasRole("PARTICIPANT")
-                .requestMatchers("/design/*", "/js/*", "/webfonts/*", "/", "/finish",
-                        "/participant/restart", "/participant/stop", "/store/*", "/token", "/error", "/login/saml2",
-                        "/saml2/**").permitAll()
-                .anyRequest().authenticated()
-                .and().formLogin().loginPage("/login")
-                .defaultSuccessUrl("/", true)
-                .and().headers().frameOptions().sameOrigin();
+        http
+            .cors(withDefaults())
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(this::authorizeHttpRequestsConfig)
+            .formLogin(config -> config.loginPage("/login"))
+            .headers(config -> config.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
 
         return http.build();
+    }
+
+    private void authorizeHttpRequestsConfig(
+            final AuthorizeHttpRequestsConfigurer<?>.AuthorizationManagerRequestMatcherRegistry authorize
+    ) {
+        authorize
+                .requestMatchers(
+                        "/login", "/finish", "/token/password", "/reset", "/users/reset", "/users/login"
+                ).anonymous()
+                .requestMatchers("/users/authenticate").hasAnyRole("PARTICIPANT", "ANONYMOUS")
+                .requestMatchers(
+                        "/experiment/*", "/users/add", "/users/delete", "/users/forgot", "/users/add",
+                        "/users/bulk", "/result", "/search", "/secret", "/search/*"
+                ).hasRole("ADMIN")
+                .requestMatchers(
+                        "/experiment", "/users/profile", "/users/logout", "/users/edit", "/users/update", "/course"
+                ).hasRole("PARTICIPANT")
+                .requestMatchers(
+                        "/design/*", "/js/*", "/webfonts/*", "/", "/finish", "/participant/restart",
+                        "/participant/stop", "/store/*", "/token", "/error", "/login/saml2", "/saml2/**"
+                ).permitAll()
+                .anyRequest().authenticated();
     }
 
     /**
