@@ -19,6 +19,7 @@
 
 package fim.unipassau.de.scratchLog.web.error_handling;
 
+import fim.unipassau.de.scratchLog.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -63,7 +64,7 @@ public class InvalidParamBindingControllerAdvice {
     }
 
     private ModelAndView redirectToErrorPage() {
-        ModelAndView mv = new ModelAndView("error");
+        ModelAndView mv = new ModelAndView(Constants.ERROR);
         mv.setStatus(HttpStatus.BAD_REQUEST);
         return mv;
     }

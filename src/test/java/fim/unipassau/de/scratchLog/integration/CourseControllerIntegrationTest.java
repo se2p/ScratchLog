@@ -198,7 +198,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                         .param(ID_PARAM, "0")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(courseService, never()).getCourse(anyInt());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
@@ -248,7 +248,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                         .param(ID_PARAM, TITLE)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(courseService, never()).getCourse(anyInt());
     }
@@ -365,7 +365,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                         .param(ID_PARAM, "0")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -637,7 +637,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(pageService, never()).getLastParticipantCoursePage(anyInt());
         verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService, never()).getCourse(anyInt());
@@ -673,7 +673,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());

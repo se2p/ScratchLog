@@ -1061,7 +1061,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
-                .andExpect(view().name("error"));
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(ID);
         verify(pageService, never()).getLastParticipantPage(ID);
         verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));

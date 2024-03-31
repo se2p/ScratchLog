@@ -97,7 +97,6 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
     private static final String INDEX = "index";
     private static final String INDEX_EXPERIMENT = "index::experiment_table";
     private static final String INDEX_COURSE = "index::course_table";
-    private static final String ERROR = "error";
     private static final String FINISH = "experiment-finish";
     private static final String PASSWORD_RESET = "password-reset";
     private static final String CURRENT = "3";
@@ -291,7 +290,7 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(pageService, never()).computeLastCoursePage();
         verify(userService, never()).getUser(any());
         verify(pageService, never()).getLastCoursePage(anyInt());
@@ -348,7 +347,7 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(pageService, never()).computeLastExperimentPage();
         verify(pageService).getLastExperimentPage(userDTO.getId());
         verify(pageService, never()).getExperimentPage(any(PageRequest.class));
@@ -364,7 +363,7 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(pageService, never()).computeLastExperimentPage();
         verify(userService).getUser(userDTO.getUsername());
         verify(pageService, never()).getLastExperimentPage(userDTO.getId());
@@ -380,7 +379,7 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
-                .andExpect(view().name(ERROR));
+                .andExpect(view().name(Constants.ERROR));
         verify(pageService, never()).computeLastExperimentPage();
         verify(pageService, never()).getExperimentPage(any(PageRequest.class));
         verify(userService, never()).getUser(anyString());
@@ -430,7 +429,7 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
                 .andExpect(model().attribute(THANKS, nullValue()))
-                .andExpect(view().name("error"));
+                .andExpect(view().name(Constants.ERROR));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(experimentService, never()).getExperiment(anyInt());
     }
@@ -445,7 +444,7 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
                 .andExpect(model().attribute(THANKS, nullValue()))
-                .andExpect(view().name("error"));
+                .andExpect(view().name(Constants.ERROR));
         verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
         verify(experimentService, never()).getExperiment(anyInt());
     }

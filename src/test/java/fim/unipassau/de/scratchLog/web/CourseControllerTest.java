@@ -60,6 +60,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static fim.unipassau.de.scratchLog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -118,7 +119,6 @@ public class CourseControllerTest {
     private static final String COURSE_DTO = "courseDTO";
     private static final int CURRENT = 3;
     private static final int LAST = 5;
-    private static final String ID_STRING = "1";
     private static final int ID = 1;
     private static final int LAST_PAGE = 5;
     private static final String TITLE = "Title";
@@ -127,7 +127,6 @@ public class CourseControllerTest {
     private static final String USERNAME = "participant";
     private static final String PASSWORD = "password";
     private static final String ERROR = "error";
-    private static final String BLANK = "  ";
     private static final LocalDateTime CHANGED = LocalDateTime.now();
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
@@ -158,7 +157,7 @@ public class CourseControllerTest {
     public void testGetCourse() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
-        assertEquals(COURSE, courseController.getCourse(ID_STRING, model, httpServletRequest));
+        assertEquals(COURSE, courseController.getCourse(ID, model, httpServletRequest));
         verify(courseService).getCourse(ID);
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
@@ -172,7 +171,7 @@ public class CourseControllerTest {
     public void testGetCourseParticipant() {
         courseDTO.setContent(null);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        assertEquals(COURSE, courseController.getCourse(ID_STRING, model, httpServletRequest));
+        assertEquals(COURSE, courseController.getCourse(ID, model, httpServletRequest));
         verify(courseService).getCourse(ID);
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
@@ -185,7 +184,7 @@ public class CourseControllerTest {
     @Test
     public void testGetCourseNotFound() {
         when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, courseController.getCourse(ID_STRING, model, httpServletRequest));
+        assertEquals(Constants.ERROR, courseController.getCourse(ID, model, httpServletRequest));
         verify(courseService).getCourse(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
@@ -197,7 +196,7 @@ public class CourseControllerTest {
 
     @Test
     public void testGetCourseInvalidId() {
-        assertEquals(Constants.ERROR, courseController.getCourse(BLANK, model, httpServletRequest));
+        assertInvalidIdException(() -> courseController.getCourse(-1, model, httpServletRequest));
         verify(courseService, never()).getCourse(anyInt());
         verify(httpServletRequest, never()).isUserInRole(anyString());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
@@ -215,7 +214,7 @@ public class CourseControllerTest {
     @Test
     public void testGetEditCourseForm() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        assertEquals(COURSE_EDIT, courseController.getEditCourseForm(ID_STRING, model));
+        assertEquals(COURSE_EDIT, courseController.getEditCourseForm(ID, model));
         verify(courseService).getCourse(ID);
         verify(model).addAttribute(COURSE_DTO, courseDTO);
     }
@@ -223,21 +222,14 @@ public class CourseControllerTest {
     @Test
     public void testGetEditCourseFormNotFound() {
         when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, courseController.getEditCourseForm(ID_STRING, model));
+        assertEquals(Constants.ERROR, courseController.getEditCourseForm(ID, model));
         verify(courseService).getCourse(ID);
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testGetEditCourseFormInvalidId() {
-        assertEquals(Constants.ERROR, courseController.getEditCourseForm("0", model));
-        verify(courseService, never()).getCourse(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetEditCourseFormIdNull() {
-        assertEquals(Constants.ERROR, courseController.getEditCourseForm(null, model));
+        assertInvalidIdException(() -> courseController.getEditCourseForm(0, model));
         verify(courseService, never()).getCourse(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
@@ -315,7 +307,7 @@ public class CourseControllerTest {
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
-        assertEquals(SUCCESS, courseController.deleteCourse(passwordDTO, ID_STRING));
+        assertEquals(SUCCESS, courseController.deleteCourse(passwordDTO, ID));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService).matchesPassword(PASSWORD, PASSWORD);
@@ -328,7 +320,7 @@ public class CourseControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
-        assertEquals(REDIRECT_INVALID + ID, courseController.deleteCourse(passwordDTO, ID_STRING));
+        assertEquals(REDIRECT_INVALID + ID, courseController.deleteCourse(passwordDTO, ID));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService).matchesPassword(PASSWORD, PASSWORD);
@@ -342,7 +334,7 @@ public class CourseControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
-        assertEquals(REDIRECT_INVALID + ID, courseController.deleteCourse(passwordDTO, ID_STRING));
+        assertEquals(REDIRECT_INVALID + ID, courseController.deleteCourse(passwordDTO, ID));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -355,7 +347,7 @@ public class CourseControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID_STRING));
+        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -366,7 +358,7 @@ public class CourseControllerTest {
     public void testDeleteCourseAuthenticationNameNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID_STRING));
+        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID));
         verify(authentication).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -375,16 +367,7 @@ public class CourseControllerTest {
 
     @Test
     public void testDeleteCourseInvalidId() {
-        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, PASSWORD));
-        verify(authentication, never()).getName();
-        verify(userService, never()).getUser(anyString());
-        verify(userService, never()).matchesPassword(anyString(), anyString());
-        verify(courseService, never()).deleteCourse(anyInt());
-    }
-
-    @Test
-    public void testDeleteCourseIdNull() {
-        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, null));
+        assertInvalidIdException(() -> courseController.deleteCourse(passwordDTO, -1));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -394,7 +377,7 @@ public class CourseControllerTest {
     @Test
     public void testDeleteCoursePasswordNull() {
         passwordDTO.setPassword(null);
-        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID_STRING));
+        assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
@@ -404,7 +387,7 @@ public class CourseControllerTest {
     @Test
     public void testChangeCourseStatus() {
         when(courseService.changeCourseStatus(true, ID)).thenReturn(courseDTO);
-        assertEquals(COURSE, courseController.changeCourseStatus("open", ID_STRING, model));
+        assertEquals(COURSE, courseController.changeCourseStatus("open", ID, model));
         verify(courseService).changeCourseStatus(true, ID);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
@@ -416,7 +399,7 @@ public class CourseControllerTest {
     @Test
     public void testChangeCourseStatusClose() {
         when(courseService.changeCourseStatus(false, ID)).thenReturn(courseDTO);
-        assertEquals(COURSE, courseController.changeCourseStatus("close", ID_STRING, model));
+        assertEquals(COURSE, courseController.changeCourseStatus("close", ID, model));
         verify(courseService).changeCourseStatus(false, ID);
         verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
@@ -427,7 +410,7 @@ public class CourseControllerTest {
 
     @Test
     public void testChangeCourseStatusInvalidStatus() {
-        assertEquals(Constants.ERROR, courseController.changeCourseStatus("bla", ID_STRING, model));
+        assertEquals(Constants.ERROR, courseController.changeCourseStatus("bla", ID, model));
         verify(courseService, never()).changeCourseStatus(anyBoolean(), anyInt());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService, never()).getLastCourseExperimentPage(anyInt());
@@ -439,7 +422,7 @@ public class CourseControllerTest {
     @Test
     public void testChangeCourseStatusNotFound() {
         when(courseService.changeCourseStatus(true, ID)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, courseController.changeCourseStatus("open", ID_STRING, model));
+        assertEquals(Constants.ERROR, courseController.changeCourseStatus("open", ID, model));
         verify(courseService).changeCourseStatus(true, ID);
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService, never()).getLastCourseExperimentPage(anyInt());
@@ -449,19 +432,8 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testChangeCourseStatusNull() {
-        assertEquals(Constants.ERROR, courseController.changeCourseStatus(null, ID_STRING, model));
-        verify(courseService, never()).changeCourseStatus(anyBoolean(), anyInt());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testChangeCourseStatusInvalidId() {
-        assertEquals(Constants.ERROR, courseController.changeCourseStatus("open", null, model));
+        assertInvalidIdException(() -> courseController.changeCourseStatus("open", -1, model));
         verify(courseService, never()).changeCourseStatus(anyBoolean(), anyInt());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService, never()).getLastCourseExperimentPage(anyInt());
@@ -475,7 +447,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.saveCourseParticipant(ID, USERNAME)).thenReturn(ID);
-        assertEquals(REDIRECT_COURSE + ID, courseController.addParticipant(USERNAME, null, ID_STRING, model));
+        assertEquals(REDIRECT_COURSE + ID, courseController.addParticipant(USERNAME, null, ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
@@ -489,7 +461,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.saveCourseParticipant(ID, USERNAME)).thenReturn(ID);
-        assertEquals(REDIRECT_COURSE + ID, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        assertEquals(REDIRECT_COURSE + ID, courseController.addParticipant(USERNAME, "on", ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
@@ -503,7 +475,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.saveCourseParticipant(ID, USERNAME)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        assertEquals(Constants.ERROR, courseController.addParticipant(USERNAME, "on", ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
@@ -517,7 +489,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.existsInactiveExperiment(ID)).thenReturn(true);
-        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
@@ -533,7 +505,7 @@ public class CourseControllerTest {
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.existsCourseParticipant(ID, USERNAME)).thenReturn(true);
         when(model.getAttribute(ERROR)).thenReturn(USERNAME);
-        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
@@ -548,7 +520,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(model.getAttribute(ERROR)).thenReturn(USERNAME);
-        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
@@ -561,7 +533,7 @@ public class CourseControllerTest {
     public void testAddParticipantNoUser() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(model.getAttribute(ERROR)).thenReturn(USERNAME);
-        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        assertEquals(COURSE, courseController.addParticipant(USERNAME, "on", ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
@@ -574,7 +546,7 @@ public class CourseControllerTest {
     public void testAddParticipantCourseInactive() {
         courseDTO.setActive(false);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        assertEquals(Constants.ERROR, courseController.addParticipant(USERNAME, "on", ID_STRING, model));
+        assertEquals(Constants.ERROR, courseController.addParticipant(USERNAME, "on", ID, model));
         verify(courseService).getCourse(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
@@ -588,7 +560,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.existsCourseParticipant(ID, USERNAME)).thenReturn(true);
-        assertEquals(REDIRECT_COURSE + ID, courseController.deleteParticipant(USERNAME, ID_STRING, model));
+        assertEquals(REDIRECT_COURSE + ID, courseController.deleteParticipant(USERNAME, ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
@@ -602,7 +574,7 @@ public class CourseControllerTest {
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.existsCourseParticipant(ID, USERNAME)).thenReturn(true);
         doThrow(NotFoundException.class).when(courseService).deleteCourseParticipant(ID, USERNAME);
-        assertEquals(Constants.ERROR, courseController.deleteParticipant(USERNAME, ID_STRING, model));
+        assertEquals(Constants.ERROR, courseController.deleteParticipant(USERNAME, ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
@@ -615,7 +587,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(model.getAttribute(ERROR)).thenReturn(USERNAME);
-        assertEquals(COURSE, courseController.deleteParticipant(USERNAME, ID_STRING, model));
+        assertEquals(COURSE, courseController.deleteParticipant(USERNAME, ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
@@ -625,7 +597,7 @@ public class CourseControllerTest {
 
     @Test
     public void testDeleteParticipantInvalidId() {
-        assertEquals(Constants.ERROR, courseController.deleteParticipant(USERNAME, "0", model));
+        assertInvalidIdException(() -> courseController.deleteParticipant(USERNAME, 0, model));
         verify(courseService, never()).getCourse(anyInt());
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
@@ -638,7 +610,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
         when(courseService.existsCourseExperiment(ID, TITLE)).thenReturn(true);
-        assertEquals(REDIRECT_COURSE + ID, courseController.deleteExperiment(TITLE, ID_STRING, model));
+        assertEquals(REDIRECT_COURSE + ID, courseController.deleteExperiment(TITLE, ID, model));
         verify(courseService).getCourse(ID);
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService).existsCourseExperiment(ID, TITLE);
@@ -651,7 +623,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
         when(model.getAttribute(ERROR)).thenReturn(TITLE);
-        assertEquals(COURSE, courseController.deleteExperiment(TITLE, ID_STRING, model));
+        assertEquals(COURSE, courseController.deleteExperiment(TITLE, ID, model));
         verify(courseService).getCourse(ID);
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService).existsCourseExperiment(ID, TITLE);
@@ -663,7 +635,7 @@ public class CourseControllerTest {
     public void testDeleteExperimentNotExistent() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(model.getAttribute(ERROR)).thenReturn(TITLE);
-        assertEquals(COURSE, courseController.deleteExperiment(TITLE, ID_STRING, model));
+        assertEquals(COURSE, courseController.deleteExperiment(TITLE, ID, model));
         verify(courseService).getCourse(ID);
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
@@ -675,7 +647,7 @@ public class CourseControllerTest {
     public void testDeleteExperimentCourseInactive() {
         courseDTO.setActive(false);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        assertEquals(Constants.ERROR, courseController.deleteExperiment(TITLE, ID_STRING, model));
+        assertEquals(Constants.ERROR, courseController.deleteExperiment(TITLE, ID, model));
         verify(courseService).getCourse(ID);
         verify(experimentService, never()).existsExperiment(anyString());
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
@@ -688,7 +660,7 @@ public class CourseControllerTest {
         when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getParticipantPage(ID_STRING, CURRENT);
+        ModelAndView mv = courseController.getParticipantPage(ID, CURRENT);
         assertAll(
                 () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
                 () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
@@ -703,7 +675,7 @@ public class CourseControllerTest {
     @Test
     public void testGetParticipantPageInvalidPageNumber() {
         when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
-        assertThrows(InvalidIdException.class, () -> courseController.getParticipantPage(ID_STRING, LAST));
+        assertThrows(InvalidIdException.class, () -> courseController.getParticipantPage(ID, LAST));
         verify(pageService).getLastParticipantCoursePage(ID);
         verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService, never()).getCourse(anyInt());
@@ -711,7 +683,7 @@ public class CourseControllerTest {
 
     @Test
     public void testGetParticipantPageInvalidId() {
-        assertEquals(ERROR, courseController.getParticipantPage(BLANK, LAST).getViewName());
+        assertInvalidIdException(() -> courseController.getParticipantPage(-1, LAST).getViewName());
         verify(pageService, never()).getLastParticipantCoursePage(anyInt());
         verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService, never()).getCourse(anyInt());
@@ -723,7 +695,7 @@ public class CourseControllerTest {
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        ModelAndView mv = courseController.getExperimentPage(ID_STRING, CURRENT);
+        ModelAndView mv = courseController.getExperimentPage(ID, CURRENT);
         assertAll(
                 () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
                 () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
@@ -738,7 +710,7 @@ public class CourseControllerTest {
     @Test
     public void testGetExperimentPageInvalidPage() {
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        assertThrows(InvalidIdException.class, () -> courseController.getExperimentPage(ID_STRING, -1));
+        assertThrows(InvalidIdException.class, () -> courseController.getExperimentPage(ID, -1));
         verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());
@@ -746,7 +718,7 @@ public class CourseControllerTest {
 
     @Test
     public void testGetExperimentPageInvalidId() {
-        assertEquals(ERROR, courseController.getExperimentPage("0", CURRENT).getViewName());
+        assertInvalidIdException(() -> courseController.getExperimentPage(0, CURRENT).getViewName());
         verify(pageService, never()).getLastCourseExperimentPage(anyInt());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());

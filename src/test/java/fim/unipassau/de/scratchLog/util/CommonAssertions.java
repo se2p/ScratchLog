@@ -17,21 +17,17 @@
  * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package fim.unipassau.de.scratchLog.web.error_handling;
+package fim.unipassau.de.scratchLog.util;
 
-/**
- * Exception to be thrown in case invalid IDs are passed in by the client.
- */
-public class InvalidIdException extends RuntimeException {
+import fim.unipassau.de.scratchLog.web.error_handling.InvalidIdException;
+import org.junit.jupiter.api.function.Executable;
 
-    /**
-     * Creates a new exception instance.
-     *
-     * @param entity The name/type of the entity for which an invalid ID was received. E.g. "user", "page", …
-     * @param id The invalid ID.
-     */
-    public InvalidIdException(final String entity, final int id) {
-        super("Received invalid ID " + id + " for a " + entity);
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+public final class CommonAssertions {
+
+    public static void assertInvalidIdException(final Executable executable) {
+        assertThrows(InvalidIdException.class, executable);
     }
 
 }
