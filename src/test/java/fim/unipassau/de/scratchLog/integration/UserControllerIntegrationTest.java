@@ -236,7 +236,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                 .param("secret", SECRET)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).authenticateUser(SECRET);
         verify(userService, never()).existsParticipant(userDTO.getId(), ID);
@@ -1369,7 +1369,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                 .param(ID_PARAM, USERNAME)
                 .flashAttr(PASSWORD_DTO, passwordDTO)
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
@@ -1433,7 +1433,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
         mvc.perform(get("/users/active")
                 .param("id", USERNAME)
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
@@ -1480,7 +1480,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
         mvc.perform(get("/users/forgot")
                 .param("id", "0")
                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
+                .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUserById(anyInt());
     }

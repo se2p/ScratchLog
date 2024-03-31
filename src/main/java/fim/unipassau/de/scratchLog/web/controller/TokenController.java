@@ -90,7 +90,7 @@ public class TokenController {
      * token could be found or update actions performed, the user is redirected to the error page instead.
      *
      * @param token The token value to search for.
-     * @param model The {@link Model} used to store information..
+     * @param model The {@link Model} used to store information.
      * @return The index page to display status messages, or the error page.
      */
     @GetMapping()
