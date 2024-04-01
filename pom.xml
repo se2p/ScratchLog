@@ -16,32 +16,33 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Library versions -->
-        <spring.version>3.0.4</spring.version>
-        <security.version>6.0.2</security.version>
-        <thymeleaf.version>3.1.1.RELEASE</thymeleaf.version>
-        <lombok.version>1.18.30</lombok.version>
-        <flyway.version>9.16.1</flyway.version>
-        <databind.version>2.14.2</databind.version>
+        <spring.version>3.2.4</spring.version>
+        <security.version>6.2.3</security.version>
+        <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
+        <lombok.version>1.18.32</lombok.version>
+        <flyway.version>10.10.0</flyway.version>
+        <databind.version>2.17.0</databind.version>
         <bouncycastle.version>1.70</bouncycastle.version>
-        <codec.version>1.15</codec.version>
-        <json.version>20230227</json.version>
-        <commonmark.version>0.21.0</commonmark.version>
-        <opencsv.version>5.7.1</opencsv.version>
-        <passay.version>1.6.3</passay.version>
-        <jaxb.version>4.0.0</jaxb.version>
+        <codec.version>1.16.1</codec.version>
+        <json.version>20240303</json.version>
+        <commonmark.version>0.22.0</commonmark.version>
+        <opencsv.version>5.9</opencsv.version>
+        <passay.version>1.6.4</passay.version>
+        <jaxb.version>4.0.2</jaxb.version>
         <litterbox.version>1.9-20240214.081333-18</litterbox.version>
-        <junit.version>5.9.2</junit.version>
-        <junitplatform.version>1.9.2</junitplatform.version>
-        <mockito.version>5.2.0</mockito.version>
+        <junit.version>5.10.2</junit.version>
+        <junitplatform.version>1.10.2</junitplatform.version>
+        <mockito.version>5.11.0</mockito.version>
+        <mockito-inline.version>5.2.0</mockito-inline.version>
         <powermock.version>2.0.9</powermock.version>
         <jakarta.validation.version>3.0.2</jakarta.validation.version>
-        <mysql.version>8.0.32</mysql.version>
-        <h2.version>2.1.214</h2.version>
+        <mysql.version>8.3.0</mysql.version>
+        <h2.version>2.2.224</h2.version>
         <mycila.version>4.2</mycila.version>
-        <maven.checkstyle.version>3.2.1</maven.checkstyle.version>
-        <checkstyle.version>9.3</checkstyle.version>
-        <maven.surefire.version>3.0.0</maven.surefire.version>
-        <jacoco.version>0.8.8</jacoco.version>
+        <maven.checkstyle.version>3.3.1</maven.checkstyle.version>
+        <checkstyle.version>10.14.2</checkstyle.version>
+        <maven.surefire.version>3.2.5</maven.surefire.version>
+        <jacoco.version>0.8.11</jacoco.version>
     </properties>
 
     <dependencies>
@@ -260,7 +261,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
-            <version>${mockito.version}</version>
+            <version>${mockito-inline.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

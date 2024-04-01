@@ -30,7 +30,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.registration.InMemoryRelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
@@ -205,17 +208,14 @@ public class SAML2Configuration {
     @Bean("saml2")
     @Order(1)
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
-        http.cors()
-                .and()
-                .securityMatcher("/saml2/**", "/login/saml2/**")
-                .csrf().disable()
-                .authorizeHttpRequests()
-                .anyRequest().authenticated()
-                .and()
-                .saml2Login()
-                .and().formLogin().loginPage("/login/saml2")
-                .defaultSuccessUrl("/index", true)
-                .and().headers().frameOptions().sameOrigin();
+        http
+            .cors(Customizer.withDefaults())
+            .securityMatcher("/saml2/**", "/login/saml2/**")
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+            .saml2Login(Customizer.withDefaults())
+            .formLogin(config -> config.loginPage("/login/saml2").defaultSuccessUrl("/index", true))
+            .headers(config -> config.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
 
         return http.build();
     }
