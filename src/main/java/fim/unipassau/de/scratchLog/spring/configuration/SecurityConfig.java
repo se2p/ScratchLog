@@ -54,13 +54,22 @@ public class SecurityConfig {
     private final CustomAuthenticationProvider authenticationProvider;
 
     /**
+     * The global application config.
+     */
+    private final ApplicationProperties applicationProperties;
+
+    /**
      * Registers the custom authentication provider with spring security.
      *
      * @param authenticationProvider The custom authentication provider.
+     * @param applicationProperties The application properties.
      */
     @Autowired
-    public SecurityConfig(final CustomAuthenticationProvider authenticationProvider) {
+    public SecurityConfig(
+            final CustomAuthenticationProvider authenticationProvider, final ApplicationProperties applicationProperties
+    ) {
         this.authenticationProvider = authenticationProvider;
+        this.applicationProperties = applicationProperties;
     }
 
     /**
@@ -103,13 +112,13 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(ApplicationProperties.GUI_BASE_URL));
+        configuration.setAllowedOrigins(List.of(applicationProperties.getScratchGuiBaseUrls()));
         configuration.setAllowedHeaders(List.of("content-type"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/store/*", configuration);
         CorsConfiguration saml2Config = new CorsConfiguration();
-        saml2Config.setAllowedOrigins(List.of(ApplicationProperties.SAML2_BASE_URL));
+        saml2Config.setAllowedOrigins(List.of(applicationProperties.getSamlUrl()));
         saml2Config.setAllowedMethods(Arrays.asList("GET", "POST"));
         source.registerCorsConfiguration("/login/saml2", saml2Config);
         source.registerCorsConfiguration("/saml2/**", saml2Config);

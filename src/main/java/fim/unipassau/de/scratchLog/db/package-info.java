@@ -16,7 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
  */
+
 /**
- * Contains the java classes used by flyway to perform database migrations.
+ * Database-related classes.
  */
-package db.migration;
+package fim.unipassau.de.scratchLog.db;

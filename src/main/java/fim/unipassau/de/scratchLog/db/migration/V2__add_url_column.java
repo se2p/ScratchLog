@@ -17,11 +17,13 @@
  * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package db.migration;
+package fim.unipassau.de.scratchLog.db.migration;
 
 import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -31,9 +33,25 @@ import java.sql.Statement;
  * Class to performing an update on the experiment table, adding a column for specifying a Scratch GUI-URL.
  */
 //CHECKSTYLE:OFF
+@Component
 public class V2__add_url_column extends BaseJavaMigration {
 
 //CHECKSTYLE:ON
+
+    /**
+     * The application properties. Contains the Scratch UI URL.
+     */
+    private final ApplicationProperties applicationProperties;
+
+    /**
+     * Default constructor for autowiring.
+     *
+     * @param applicationProperties The application properties.
+     */
+    @Autowired
+    public V2__add_url_column(final ApplicationProperties applicationProperties) {
+        this.applicationProperties = applicationProperties;
+    }
 
     /**
      * Adds a new column for the URL to the instrumented Scratch-GUI to the experiment table. For any existing
@@ -49,7 +67,7 @@ public class V2__add_url_column extends BaseJavaMigration {
         st.execute("ALTER TABLE experiment ADD gui_url varchar(2000) NULL;");
         st.close();
         PreparedStatement stmt = connection.prepareStatement("UPDATE experiment SET gui_url = ?;");
-        stmt.setString(1, ApplicationProperties.GUI_URL[0]);
+        stmt.setString(1, applicationProperties.getScratchGuiBaseUrls()[0]);
         stmt.executeUpdate();
         stmt.close();
     }

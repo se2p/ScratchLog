@@ -99,6 +99,11 @@ public class UserController {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
     /**
+     * The global application config.
+     */
+    private final ApplicationProperties applicationProperties;
+
+    /**
      * The user service to use for user management.
      */
     private final UserService userService;
@@ -176,6 +181,7 @@ public class UserController {
     /**
      * Constructs a new user controller with the given dependencies.
      *
+     * @param applicationProperties The {@link ApplicationProperties} to use.
      * @param userService The {@link UserService} to use.
      * @param participantService The {@link ParticipantService} to use.
      * @param mailService The {@link MailService} to use.
@@ -184,10 +190,12 @@ public class UserController {
      * @param localeResolver The locale resolver to use.
      */
     @Autowired
-    public UserController(final UserService userService, final ParticipantService participantService,
+    public UserController(final ApplicationProperties applicationProperties,
+                          final UserService userService, final ParticipantService participantService,
                           final MailService mailService, final TokenService tokenService,
                           final CustomAuthenticationProvider authenticationProvider,
                           final LocaleResolver localeResolver) {
+        this.applicationProperties = applicationProperties;
         this.userService = userService;
         this.participantService = participantService;
         this.mailService = mailService;
@@ -397,7 +405,7 @@ public class UserController {
         userDTO.setLastLogin(LocalDateTime.now());
         UserDTO saved = userService.saveUser(userDTO);
 
-        if (!ApplicationProperties.MAIL_SERVER) {
+        if (!applicationProperties.useMail()) {
             return "redirect:/users/profile?name=" + saved.getUsername();
         } else {
             TokenDTO tokenDTO = tokenService.generateToken(TokenType.REGISTER, null, saved.getId());
@@ -420,7 +428,7 @@ public class UserController {
     @GetMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
     public String getAddParticipants(final UserBulkDTO userBulkDTO) {
-        if (ApplicationProperties.MAIL_SERVER) {
+        if (applicationProperties.useMail()) {
             return INDEX;
         }
 
@@ -556,7 +564,7 @@ public class UserController {
                 || userDTO.getEmail().length() > Constants.LARGE_FIELD) {
             LOGGER.error("Cannot reset password for user with input username or email too long!");
             return Constants.ERROR;
-        } else if (!ApplicationProperties.MAIL_SERVER) {
+        } else if (!applicationProperties.useMail()) {
             LOGGER.warn("Cannot reset password without a mail server!");
             return Constants.ERROR;
         }
@@ -748,7 +756,7 @@ public class UserController {
         boolean sent = false;
 
         if (!userDTO.getEmail().trim().isBlank() && !userDTO.getEmail().equals(findOldUser.getEmail())) {
-            if (ApplicationProperties.MAIL_SERVER) {
+            if (applicationProperties.useMail()) {
                 sent = updateEmail(userDTO.getEmail(), userDTO.getId(), resourceBundle);
             } else {
                 findOldUser.setEmail(userDTO.getEmail());
@@ -1098,9 +1106,10 @@ public class UserController {
      */
     private boolean sendEmail(final String email, final String value, final String subject, final String template,
                               final ResourceBundle resourceBundle) {
-        String tokenUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH + "/token?value=" + value;
+        String tokenUrl = applicationProperties.getApplicationUrl() + "/token?value=" + value;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH);
+        templateModel.put("applicationName", applicationProperties.getApplicationName());
+        templateModel.put("baseUrl", applicationProperties.getApplicationUrl());
         templateModel.put("token", tokenUrl);
         return mailService.sendEmail(email, resourceBundle.getString(subject), templateModel, template);
     }

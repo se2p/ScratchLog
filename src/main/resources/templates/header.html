@@ -14,8 +14,9 @@
             <ul class="navbar-nav flex-row">
                 <!-- The application name displayed in the header. -->
                 <li class="navbar-brand" id="brand">
+                    <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
                     <a class="navbar-brand"
-                       th:text="${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).APPLICATION_NAME}"
+                       th:text="${applicationConfig.applicationName}"
                        th:href="@{/}"></a>
                 </li>
                 <!-- The home icon. -->
@@ -40,7 +41,8 @@
                         <li>
                             <a class="dropdown-item" th:href="@{/users/add}" th:text="#{new_user}"></a>
                         </li>
-                        <li th:unless="${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).MAIL_SERVER}">
+                        <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
+                        <li th:unless="${applicationConfig.useMail()}">
                             <a class="dropdown-item" th:href="@{/users/bulk}" th:text="#{new_users}"></a>
                         </li>
                         <li>
@@ -95,7 +97,7 @@
     <script type="text/javascript" th:src="@{/js/bootstrap.js}"></script>
     <!-- Let Thymeleaf fetch the context path constant. -->
     <script th:inline="javascript">
-        const contextPath = [[${T(fim.unipassau.de.scratchLog.util.ApplicationProperties).CONTEXT_PATH}]];
+        const contextPath = [[${applicationConfig.contextPath}]];
     </script>
 </div>
 </body>

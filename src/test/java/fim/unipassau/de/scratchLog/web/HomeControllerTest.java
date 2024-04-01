@@ -19,7 +19,6 @@
 
 package fim.unipassau.de.scratchLog.web;
 
-import fim.unipassau.de.scratchLog.MailServerSetter;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.PageService;
@@ -28,6 +27,7 @@ import fim.unipassau.de.scratchLog.application.service.TokenService;
 import fim.unipassau.de.scratchLog.application.service.UserService;
 import fim.unipassau.de.scratchLog.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentTableProjection;
+import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
@@ -38,12 +38,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -69,25 +70,26 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-public class HomeControllerTest {
+@WebMvcTest(HomeController.class)
+@Import(SecurityTestConfig.class)
+public class HomeControllerTest extends AbstractControllerTest {
 
-    @InjectMocks
+    @Autowired
     private HomeController homeController;
 
-    @Mock
+    @MockBean
     private ExperimentService experimentService;
 
-    @Mock
+    @MockBean
     private PageService pageService;
 
-    @Mock
+    @MockBean
     private UserService userService;
 
-    @Mock
+    @MockBean
     private ParticipantService participantService;
 
-    @Mock
+    @MockBean
     private TokenService tokenService;
 
     @Mock
@@ -570,13 +572,13 @@ public class HomeControllerTest {
 
     @Test
     public void testGetResetPage() {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         assertEquals(PASSWORD_RESET, homeController.getResetPage(new UserDTO()));
     }
 
     @Test
     public void testGetResetPageNoMailServer() {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         assertEquals(Constants.ERROR, homeController.getResetPage(new UserDTO()));
     }
 

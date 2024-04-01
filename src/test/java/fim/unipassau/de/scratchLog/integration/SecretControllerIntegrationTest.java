@@ -23,25 +23,20 @@ import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.UserService;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
-import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.SecretController;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
 import java.util.List;
@@ -61,14 +56,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-@ExtendWith(SpringExtension.class)
 @WebMvcTest(SecretController.class)
 @Import(SecurityTestConfig.class)
-@ActiveProfiles("test")
-public class SecretControllerIntegrationTest {
-
-    @Autowired
-    private MockMvc mvc;
+public class SecretControllerIntegrationTest extends AbstractControllerTest {
 
     @MockBean
     private UserService userService;
@@ -84,8 +74,7 @@ public class SecretControllerIntegrationTest {
     private static final String USERS = "users";
     private static final String LINK = "link";
     private static final String INACTIVE = "inactive";
-    private static final String URL = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
-            + "/users/authenticate?id=" + ID + "&secret=";
+    private String URL;
     private static final String USER_PARAM = "user";
     private static final String EXPERIMENT_PARAM = "experiment";
     private final ExperimentDTO experiment = new ExperimentDTO(ID, "experiment", "my experiment", "info", "no", true,
@@ -98,6 +87,8 @@ public class SecretControllerIntegrationTest {
 
     @BeforeEach
     public void setUp() {
+        URL = applicationProperties.getApplicationUrl() + "/users/authenticate?id=" + ID + "&secret=";
+
         user1.setId(ID);
         user1.setSecret(SECRET);
         user2.setId(ID + 1);

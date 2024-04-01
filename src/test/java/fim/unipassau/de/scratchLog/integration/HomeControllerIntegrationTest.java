@@ -19,7 +19,6 @@
 
 package fim.unipassau.de.scratchLog.integration;
 
-import fim.unipassau.de.scratchLog.MailServerSetter;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.ExperimentService;
 import fim.unipassau.de.scratchLog.application.service.PageService;
@@ -32,6 +31,7 @@ import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.HomeController;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
@@ -74,7 +74,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(HomeController.class)
 @Import(SecurityTestConfig.class)
 @ActiveProfiles("test")
-public class HomeControllerIntegrationTest {
+public class HomeControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired
     private MockMvc mvc;
@@ -454,7 +454,7 @@ public class HomeControllerIntegrationTest {
 
     @Test
     public void testGetResetPage() throws Exception {
-        MailServerSetter.setMailServer(true);
+        setMailServer(true);
         mvc.perform(get("/reset")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
@@ -464,7 +464,7 @@ public class HomeControllerIntegrationTest {
 
     @Test
     public void testGetResetPageNoMailServer() throws Exception {
-        MailServerSetter.setMailServer(false);
+        setMailServer(false);
         mvc.perform(get("/reset")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))

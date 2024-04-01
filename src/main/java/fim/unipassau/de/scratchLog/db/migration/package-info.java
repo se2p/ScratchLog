@@ -16,17 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
  */
-
-package fim.unipassau.de.scratchLog;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest
-class ScratchLogApplicationTests {
-
-    @Test
-    void contextLoads() {
-    }
-
-}
+/**
+ * Contains the java classes used by flyway to perform database migrations.
+ */
+package fim.unipassau.de.scratchLog.db.migration;

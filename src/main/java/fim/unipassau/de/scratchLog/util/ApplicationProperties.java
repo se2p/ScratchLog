@@ -19,63 +19,140 @@
 
 package fim.unipassau.de.scratchLog.util;
 
-import java.util.ResourceBundle;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.ApplicationScope;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Utility class providing access to the values specified in the application.properties file needed by the application.
  */
-public final class ApplicationProperties {
+@Component
+@ApplicationScope
+public class ApplicationProperties {
 
     /**
-     * The name of the application to be displayed.
+     * The user-facing name of the application.
      */
-    public static final String APPLICATION_NAME;
+    @Getter
+    private final String applicationName;
 
     /**
-     * The base URL under which the application is deployed.
+     * The context path under which the application is deployed.
      */
-    public static final String BASE_URL;
+    @Getter
+    private final String contextPath;
 
     /**
-     * The context path of the application, if applicable.
+     * The base URL where the application is deployed.
      */
-    public static final String CONTEXT_PATH;
+    private final String baseUrl;
 
     /**
-     * The base URL of the Scratch GUI instance.
+     * The URLs for Scratch UIs that can be configured by the user.
      */
-    public static final String[] GUI_BASE_URL;
+    @Getter
+    private final String[] scratchGuiUrls;
 
     /**
-     * The full path to the Scratch GUI instance.
+     * The corresponding base URLs for {@link #scratchGuiUrls}.
      */
-    public static final String[] GUI_URL;
+    @Getter
+    private final String[] scratchGuiBaseUrls;
 
     /**
-     * The base URL of the SAML2 identity provider.
+     * True, if the application should send emails.
      */
-    public static final String SAML2_BASE_URL;
+    private final boolean mail;
 
     /**
-     * The boolean indicating whether the project uses a mail server or not.
+     * The URL of the SAML authentication provider.
      */
-    public static final boolean MAIL_SERVER;
+    @Getter
+    private final String samlUrl;
 
     /**
-     * The boolean indicating whether the project supports authentication using SAML2 or not.
+     * The Spring profiles configured for the application.
      */
-    public static final boolean SAML_AUTHENTICATION;
+    private final Set<String> springProfiles;
 
-    static {
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("application");
-        APPLICATION_NAME = resourceBundle.getString("app.name");
-        BASE_URL = resourceBundle.getString("app.url");
-        CONTEXT_PATH = resourceBundle.getString("server.servlet.context-path");
-        GUI_BASE_URL = resourceBundle.getString("app.gui.base").split(",");
-        GUI_URL = resourceBundle.getString("app.gui").split(",");
-        SAML2_BASE_URL = resourceBundle.getString("app.saml.base");
-        MAIL_SERVER = resourceBundle.getString("app.mail").equals("true");
-        SAML_AUTHENTICATION = resourceBundle.getString("spring.profiles.active").contains("saml2");
+    /**
+     * Autowiring constructor.
+     *
+     * @param applicationName The application name.
+     * @param contextPath The context path.
+     * @param baseUrl The base URL for the application.
+     * @param scratchGuiUrls The Scratch UI URLs.
+     * @param scratchGuiBaseUrls The corresponding Scratch UI base URLs.
+     * @param mail If the application should send mails.
+     * @param samlBaseUrl The base URL of the SAML authentication provider.
+     * @param springProfiles The active Spring profiles.
+     */
+    @Autowired
+    public ApplicationProperties(
+            @Value("${spring.application.name}") final String applicationName,
+            @Value("${server.servlet.context-path}") final String contextPath,
+            @Value("${server.url}") final String baseUrl,
+            @Value("${app.gui}") final String[] scratchGuiUrls,
+            @Value("${app.gui.base}") final String[] scratchGuiBaseUrls,
+            @Value("${app.mail:false}") final boolean mail,
+            @Value("${app.saml.base:null}") final String samlBaseUrl,
+            @Value("${spring.profiles.active}") final String[] springProfiles
+    ) {
+        this.applicationName = applicationName;
+        this.contextPath = contextPath;
+        this.baseUrl = baseUrl;
+        this.scratchGuiUrls = scratchGuiUrls;
+        this.scratchGuiBaseUrls = scratchGuiBaseUrls;
+        this.mail = mail;
+        this.samlUrl = samlBaseUrl;
+        this.springProfiles = Arrays.stream(springProfiles).collect(Collectors.toUnmodifiableSet());
+    }
+
+    /**
+     * Returns the full application URL.
+     *
+     * @return The URL including the context path.
+     */
+    public String getApplicationUrl() {
+        return baseUrl + contextPath;
+    }
+
+    /**
+     * Returns if mails should be sent.
+     *
+     * @return True, if mails should be sent.
+     */
+    public boolean useMail() {
+        return mail;
+    }
+
+    /**
+     * Checks if SAML authentication is enabled.
+     *
+     * @return True, if SAML authentication is enabled.
+     */
+    public boolean useSamlAuthentication() {
+        return springProfiles.contains("saml2");
+    }
+
+    @Override
+    public final String toString() {
+        return "ApplicationProperties{"
+                + "applicationName='" + applicationName + '\''
+                + ", contextPath='" + contextPath + '\''
+                + ", baseUrl='" + baseUrl + '\''
+                + ", scratchGuiUrls=" + Arrays.toString(scratchGuiUrls)
+                + ", scratchGuiBaseUrls=" + Arrays.toString(scratchGuiBaseUrls)
+                + ", mail=" + mail
+                + ", samlUrl='" + samlUrl + '\''
+                + ", springProfiles=" + springProfiles
+                + '}';
     }
 
 }

@@ -54,6 +54,11 @@ public class SAML2Controller {
     private static final Logger LOGGER = LoggerFactory.getLogger(SAML2Controller.class);
 
     /**
+     * The global application config.
+     */
+    private final ApplicationProperties applicationProperties;
+
+    /**
      * The SAML2 service, if SAML2 authentication has been configured, or empty.
      */
     private final Optional<SAML2Service> saml2Service;
@@ -66,12 +71,14 @@ public class SAML2Controller {
     /**
      * Constructs a new SAML2 controller with the given dependencies.
      *
+     * @param applicationProperties The {@link ApplicationProperties}.
      * @param saml2Service The {@link SAML2Service}, if the saml2 profile is being used, or an empty {@link Optional}.
      * @param authenticationProvider The {@link CustomAuthenticationProvider} to use.
      */
     @Autowired
-    public SAML2Controller(final Optional<SAML2Service> saml2Service,
+    public SAML2Controller(final ApplicationProperties applicationProperties, final Optional<SAML2Service> saml2Service,
                            final CustomAuthenticationProvider authenticationProvider) {
+        this.applicationProperties = applicationProperties;
         this.saml2Service = saml2Service;
         this.authenticationProvider = authenticationProvider;
     }
@@ -87,7 +94,7 @@ public class SAML2Controller {
      */
     @GetMapping("/login")
     public String authorizeSAML2(final HttpServletRequest httpServletRequest) {
-        if (saml2Service.isEmpty() || !ApplicationProperties.SAML_AUTHENTICATION) {
+        if (saml2Service.isEmpty() || !applicationProperties.useSamlAuthentication()) {
             LOGGER.error("Cannot authenticate SAML2 users when SAML2 is disabled!");
             clearSecurityContext(httpServletRequest);
             return Constants.ERROR;

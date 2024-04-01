@@ -91,6 +91,11 @@ public class ExperimentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExperimentController.class);
 
     /**
+     * The global application config.
+     */
+    private final ApplicationProperties applicationProperties;
+
+    /**
      * The user service to use for user management.
      */
     private final UserService userService;
@@ -173,6 +178,7 @@ public class ExperimentController {
     /**
      * Constructs a new experiment controller with the given dependencies.
      *
+     * @param applicationProperties The {@link ApplicationProperties} to use.
      * @param experimentService The {@link ExperimentService} to use.
      * @param userService The {@link UserService} to use.
      * @param courseService The {@link CourseService} to use.
@@ -182,10 +188,12 @@ public class ExperimentController {
      * @param experimentDataService The {@link ExperimentDataService} to use.
      */
     @Autowired
-    public ExperimentController(final ExperimentService experimentService, final UserService userService,
+    public ExperimentController(final ApplicationProperties applicationProperties,
+                                final ExperimentService experimentService, final UserService userService,
                                 final CourseService courseService, final ParticipantService participantService,
                                 final PageService pageService, final MailService mailService,
                                 final ExperimentDataService experimentDataService) {
+        this.applicationProperties = applicationProperties;
         this.experimentService = experimentService;
         this.userService = userService;
         this.courseService = courseService;
@@ -427,7 +435,7 @@ public class ExperimentController {
                 experimentDTO = experimentService.changeExperimentStatus(true, experimentId);
                 List<UserDTO> userDTOS = userService.reactivateUserAccounts(experimentId);
 
-                if (!ApplicationProperties.MAIL_SERVER) {
+                if (!applicationProperties.useMail()) {
                     return REDIRECT_SECRET_LIST + experimentId;
                 } else {
                     userDTOS.forEach(userDTO -> sendEmail(userDTO, id));
@@ -501,7 +509,7 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        if (!ApplicationProperties.MAIL_SERVER) {
+        if (!applicationProperties.useMail()) {
             return REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + experimentId;
         } else if (sendEmail(userDTO, id)) {
             return REDIRECT_EXPERIMENT + id;
@@ -792,10 +800,11 @@ public class ExperimentController {
      * @return The map containing the base URL and the experiment URL.
      */
     private Map<String, Object> getTemplateModel(final String id, final String secret) {
-        String experimentUrl = ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH
+        String experimentUrl = applicationProperties.getApplicationUrl()
                 + "/users/authenticate?id=" + id + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();
-        templateModel.put("baseUrl", ApplicationProperties.BASE_URL + ApplicationProperties.CONTEXT_PATH);
+        templateModel.put("applicationName", applicationProperties.getApplicationName());
+        templateModel.put("baseUrl", applicationProperties.getApplicationUrl());
         templateModel.put("secret", experimentUrl);
         return templateModel;
     }

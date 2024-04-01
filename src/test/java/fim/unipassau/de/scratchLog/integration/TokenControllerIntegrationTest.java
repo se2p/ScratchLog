@@ -26,6 +26,7 @@ import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.util.enums.TokenType;
+import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.TokenController;
 import fim.unipassau.de.scratchLog.web.dto.TokenDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
@@ -33,14 +34,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
@@ -63,10 +62,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(TokenController.class)
 @Import(SecurityTestConfig.class)
 @ActiveProfiles("test")
-public class TokenControllerIntegrationTest {
-
-    @Autowired
-    private MockMvc mvc;
+public class TokenControllerIntegrationTest extends AbstractControllerTest {
 
     @MockBean
     private UserService userService;
