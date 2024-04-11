@@ -29,10 +29,10 @@ import fim.unipassau.de.scratchLog.persistence.projection.CourseTableProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentTableProjection;
 import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
-import fim.unipassau.de.scratchLog.util.NumberParser;
-import fim.unipassau.de.scratchLog.util.PageUtils;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import fim.unipassau.de.scratchLog.web.dto.ExperimentDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
+import fim.unipassau.de.scratchLog.web.error_handling.InvalidIdException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,6 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.util.Pair;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -168,22 +167,21 @@ public class HomeController {
      * information is valid. An administrator will get an overview over all courses while participants will only see
      * courses in which they are participating.
      *
-     * @param pageNumber The number of the page to be retrieved.
+     * @param page The number of the page to be retrieved.
      * @param httpServletRequest The {@link HttpServletRequest} containing providing information on the user's role.
      * @return The retrieved course page information.
      */
     @GetMapping("/page/course")
     @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getCoursePage(@RequestParam(PAGE) final String pageNumber,
+    public ModelAndView getCoursePage(@RequestParam(PAGE) final int page,
                                       final HttpServletRequest httpServletRequest) {
-        int page = getPageNumber(pageNumber);
+        validatePageNumber(page);
         Pair<Integer, Integer> lastPageInformation = getLastPageCourses(httpServletRequest);
 
-        if (lastPageInformation == null || PageUtils.isInvalidPageNumber(page, lastPageInformation.getFirst())) {
-            ModelAndView mv = new ModelAndView("error");
-            mv.setStatus(HttpStatus.BAD_REQUEST);
-            return mv;
+        if (lastPageInformation == null) {
+            throw new InvalidIdException("page", page);
         }
+        IdValidator.validatePageNumberElseThrow(page, lastPageInformation.getFirst());
 
         Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, page,
                 lastPageInformation.getSecond());
@@ -195,22 +193,21 @@ public class HomeController {
      * information is valid. An administrator will get an overview over all experiments while participants will only see
      * experiments in which they are participating.
      *
-     * @param pageNumber The number of the page to be retrieved.
+     * @param page The number of the page to be retrieved.
      * @param httpServletRequest The {@link HttpServletRequest} containing providing information on the user's role.
      * @return The retrieved experiment page information.
      */
     @GetMapping("/page/experiment")
     @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getExperimentPage(@RequestParam(PAGE) final String pageNumber,
+    public ModelAndView getExperimentPage(@RequestParam(PAGE) final int page,
                                           final HttpServletRequest httpServletRequest) {
-        int page = getPageNumber(pageNumber);
+        validatePageNumber(page);
         Pair<Integer, Integer> lastPageInformation = getLastPageExperiments(httpServletRequest);
 
-        if (lastPageInformation == null || PageUtils.isInvalidPageNumber(page, lastPageInformation.getFirst())) {
-            ModelAndView mv = new ModelAndView("error");
-            mv.setStatus(HttpStatus.BAD_REQUEST);
-            return mv;
+        if (lastPageInformation == null) {
+            throw new InvalidIdException("page", page);
         }
+        IdValidator.validatePageNumberElseThrow(page, lastPageInformation.getFirst());
 
         Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest, page,
                 lastPageInformation.getSecond());
@@ -231,25 +228,25 @@ public class HomeController {
     /**
      * Loads the experiment finish page for the experiment with the current id.
      *
-     * @param user The user id of the participant.
-     * @param experiment The experiment id.
+     * @param userId The user id of the participant.
+     * @param experimentId The experiment id.
      * @param secret The user's secret.
      * @param model The model used to store the message to be displayed on the page.
      * @return The experiment finish page.
      */
     @GetMapping("/finish")
-    public String getExperimentFinishPage(@RequestParam("user") final String user,
-                                          @RequestParam("experiment") final String experiment,
+    public String getExperimentFinishPage(@RequestParam("user") final int userId,
+                                          @RequestParam("experiment") final int experimentId,
                                           @RequestParam("secret") final String secret,
                                           final Model model) {
-        int experimentId = NumberParser.parseId(experiment);
-        int userId = NumberParser.parseId(user);
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
-
+        IdValidator.validateUserIdElseThrow(userId);
+        IdValidator.validateExperimentIdElseThrow(experimentId);
         if (isInvalidFinishParams(experimentId, userId, secret)) {
             return Constants.ERROR;
         }
+
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
@@ -329,24 +326,14 @@ public class HomeController {
     }
 
     /**
-     * Parses the given string to a number. If the string is not a valid number, -1 is returned.
+     * Checks that the page number is valid.
      *
-     * @param pageNumber The current page number represented as a string.
-     * @return The page number, or -1.
+     * @param page The current page number represented as a string.
      */
-    private int getPageNumber(final String pageNumber) {
-        if (pageNumber == null) {
-            LOGGER.error("Cannot return a page for page number null!");
-            return -1;
-        }
-
-        int page = NumberParser.parseNumber(pageNumber);
-
+    private void validatePageNumber(final int page) {
         if (page <= -1) {
-            LOGGER.error("Cannot return a page for invalid page number " + pageNumber + "!");
+            throw new InvalidIdException("page", page);
         }
-
-        return page;
     }
 
     /**

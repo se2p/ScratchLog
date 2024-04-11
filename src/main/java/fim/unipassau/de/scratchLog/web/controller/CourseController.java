@@ -29,8 +29,7 @@ import fim.unipassau.de.scratchLog.persistence.projection.CourseExperimentProjec
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.FieldErrorHandler;
 import fim.unipassau.de.scratchLog.util.MarkdownHandler;
-import fim.unipassau.de.scratchLog.util.NumberParser;
-import fim.unipassau.de.scratchLog.util.PageUtils;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.util.validation.StringValidator;
 import fim.unipassau.de.scratchLog.web.dto.CourseDTO;
@@ -43,7 +42,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -130,21 +128,16 @@ public class CourseController {
      * parameter passed is invalid, no entry can be found in the database, the user is redirected to the error page
      * instead.
      *
-     * @param id The id of the course.
+     * @param courseId The id of the course.
      * @param model The {@link Model} to hold the information.
      * @param httpServletRequest The {@link HttpServletRequest} for retrieving information about the user.
      * @return The course page on success, or the error page otherwise.
      */
     @GetMapping
     @Secured(Constants.ROLE_PARTICIPANT)
-    public String getCourse(@RequestParam(ID) final String id, final Model model,
+    public String getCourse(@RequestParam(ID) final int courseId, final Model model,
                             final HttpServletRequest httpServletRequest) {
-        int courseId = NumberParser.parseId(id);
-
-        if (courseId < Constants.MIN_ID) {
-            LOGGER.error("Cannot return the course page with an invalid id parameter!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateCourseIdElseThrow(courseId);
 
         try {
             CourseDTO courseDTO = courseService.getCourse(courseId);
@@ -171,19 +164,14 @@ public class CourseController {
      * Returns the course edit page for the course with the given id. If no entry can be found in the database, the user
      * is redirected to the error page instead.
      *
-     * @param id The id to search for.
+     * @param courseId The id to search for.
      * @param model The {@link Model} to hold the information.
      * @return The course edit page on success, or the error page otherwise.
      */
     @GetMapping("/edit")
     @Secured(Constants.ROLE_ADMIN)
-    public String getEditCourseForm(@RequestParam(ID) final String id, final Model model) {
-        int courseId = NumberParser.parseId(id);
-
-        if (courseId < Constants.MIN_ID) {
-            LOGGER.error("Cannot return the course edit page with an invalid id parameter!");
-            return Constants.ERROR;
-        }
+    public String getEditCourseForm(@RequestParam(ID) final int courseId, final Model model) {
+        IdValidator.validateCourseIdElseThrow(courseId);
 
         try {
             CourseDTO courseDTO = courseService.getCourse(courseId);
@@ -233,24 +221,18 @@ public class CourseController {
      * error message is displayed. If anything else goes wrong, the user is redirected to the error page.
      *
      * @param passwordDTO The {@link PasswordDTO} containing the password necessary to perform the delete operation.
-     * @param id The id of the course to be deleted.
+     * @param courseId The id of the course to be deleted.
      * @return The index page on success, the course page if the password was invalid, or the error page.
      */
     @PostMapping("/delete")
     @Secured(Constants.ROLE_ADMIN)
     public String deleteCourse(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
-                               @RequestParam(ID) final String id) {
-        if (id == null || passwordDTO.getPassword() == null) {
+                               @RequestParam(ID) final int courseId) {
+        if (passwordDTO.getPassword() == null) {
             LOGGER.error("Cannot delete course with id null or input password null!");
             return Constants.ERROR;
         }
-
-        int courseId = NumberParser.parseId(id);
-
-        if (courseId < Constants.MIN_ID) {
-            LOGGER.error("Cannot delete the course with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateCourseIdElseThrow(courseId);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -278,21 +260,16 @@ public class CourseController {
      * Changes the course status to the given request parameter value. If the passed id or status values are invalid, or
      * no corresponding course exists in the database, the user is redirected to the error page instead.
      *
-     * @param id The id of the course.
+     * @param courseId The id of the course.
      * @param status The new status of the course.
      * @param model The {@link Model} to hold the information.
      * @return The course page on success, or the error page otherwise.
      */
     @GetMapping("/status")
     @Secured(Constants.ROLE_ADMIN)
-    public String changeCourseStatus(@RequestParam("stat") final String status, @RequestParam(ID) final String id,
+    public String changeCourseStatus(@RequestParam("stat") final String status, @RequestParam(ID) final int courseId,
                                      final Model model) {
-        int courseId = NumberParser.parseId(id);
-
-        if (courseId < Constants.MIN_ID || status == null) {
-            LOGGER.error("Cannot change the status of the course with invalid id or status parameters!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateCourseIdElseThrow(courseId);
 
         try {
             CourseDTO courseDTO;
@@ -321,7 +298,7 @@ public class CourseController {
      *
      * @param participant The username or email to search for.
      * @param add Whether the user should be added as a participant to all experiments.
-     * @param id The id of the course.
+     * @param courseId The id of the course.
      * @param model The {@link Model} used to store information on errors.
      * @return The updated course page on success, the course page displaying an error message, or the error page.
      */
@@ -329,9 +306,9 @@ public class CourseController {
     @Secured(Constants.ROLE_ADMIN)
     public String addParticipant(@RequestParam("participant") final String participant,
                                  @RequestParam(required = false, name = "add") final String add,
-                                 @RequestParam("id") final String id,
+                                 @RequestParam("id") final int courseId,
                                  final Model model) {
-        int courseId = NumberParser.parseId(id);
+        IdValidator.validateCourseIdElseThrow(courseId);
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
         if (courseDTO == null) {
@@ -370,15 +347,15 @@ public class CourseController {
      * corresponding error message is displayed.
      *
      * @param participant The username or email to search for.
-     * @param id The id of the course.
+     * @param courseId The id of the course.
      * @param model The {@link Model} used to store information on errors.
      * @return The updated course page on success, the course page displaying an error message, or the error page.
      */
     @GetMapping("/participant/delete")
     @Secured(Constants.ROLE_ADMIN)
     public String deleteParticipant(@RequestParam("participant") final String participant,
-                                    @RequestParam("id") final String id, final Model model) {
-        int courseId = NumberParser.parseId(id);
+                                    @RequestParam("id") final int courseId, final Model model) {
+        IdValidator.validateCourseIdElseThrow(courseId);
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
         if (courseDTO == null) {
@@ -407,15 +384,15 @@ public class CourseController {
      * error page instead.
      *
      * @param title The title of the experiment to be removed.
-     * @param id The id of the course.
+     * @param courseId The id of the course.
      * @param model The {@link Model} to store information on errors.
      * @return The updated course page on success, the course page displaying an error message, or the error page.
      */
     @GetMapping("/experiment/delete")
     @Secured(Constants.ROLE_ADMIN)
-    public String deleteExperiment(@RequestParam("title") final String title, @RequestParam("id") final String id,
+    public String deleteExperiment(@RequestParam("title") final String title, @RequestParam("id") final int courseId,
                                    final Model model) {
-        int courseId = NumberParser.parseId(id);
+        IdValidator.validateCourseIdElseThrow(courseId);
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
         if (courseDTO == null) {
@@ -435,33 +412,18 @@ public class CourseController {
     /**
      * Retrieves the course participant page for the given course and page number, if the provided numbers are valid.
      *
-     * @param id The course id.
-     * @param pageNumber The number of the page to be retrieved.
+     * @param courseId The course id.
+     * @param page The number of the page to be retrieved.
      * @return The retrieved participant page information.
      */
     @GetMapping("/page/participant")
     @Secured(Constants.ROLE_ADMIN)
-    public ModelAndView getParticipantPage(@RequestParam("id") final String id,
-                                           @RequestParam("page") final String pageNumber) {
-        int courseId = NumberParser.parseId(id);
-
-        if (courseId < Constants.MIN_ID) {
-            LOGGER.error("Cannot fetch course participant page for invalid course id " + id + "!");
-            ModelAndView mv = new ModelAndView("error");
-            mv.setStatus(HttpStatus.BAD_REQUEST);
-            return mv;
-        }
+    public ModelAndView getParticipantPage(@RequestParam("id") final int courseId,
+                                           @RequestParam("page") final int page) {
+        IdValidator.validateCourseIdElseThrow(courseId);
 
         int lastPage = pageService.getLastParticipantCoursePage(courseId);
-        int page = NumberParser.parseId(pageNumber);
-
-        if (PageUtils.isInvalidPageNumber(page, lastPage)) {
-            LOGGER.error("Cannot fetch course participant page for invalid page number " + pageNumber
-                    + " with last page " + lastPage + "!");
-            ModelAndView mv = new ModelAndView("error");
-            mv.setStatus(HttpStatus.BAD_REQUEST);
-            return mv;
-        }
+        IdValidator.validatePageNumberElseThrow(page, lastPage);
 
         Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId, PageRequest.of(page,
                 Constants.PAGE_SIZE));
@@ -471,33 +433,18 @@ public class CourseController {
     /**
      * Retrieves the course experiment page for the given course and page number, if the provided numbers are valid.
      *
-     * @param id The course id.
-     * @param pageNumber The number of the page to be retrieved.
+     * @param courseId The course id.
+     * @param page The number of the page to be retrieved.
      * @return The retrieved experiment page information.
      */
     @GetMapping("/page/experiment")
     @Secured(Constants.ROLE_PARTICIPANT)
-    public ModelAndView getExperimentPage(@RequestParam("id") final String id,
-                                          @RequestParam("page") final String pageNumber) {
-        int courseId = NumberParser.parseId(id);
-
-        if (courseId < Constants.MIN_ID) {
-            LOGGER.error("Cannot fetch course experiment page for invalid course id " + courseId + "!");
-            ModelAndView mv = new ModelAndView("error");
-            mv.setStatus(HttpStatus.BAD_REQUEST);
-            return mv;
-        }
+    public ModelAndView getExperimentPage(@RequestParam("id") final int courseId,
+                                          @RequestParam("page") final int page) {
+        IdValidator.validateCourseIdElseThrow(courseId);
 
         int lastPage = pageService.getLastCourseExperimentPage(courseId);
-        int page = NumberParser.parseId(pageNumber);
-
-        if (PageUtils.isInvalidPageNumber(page, lastPage)) {
-            LOGGER.error("Cannot fetch course experiment page for invalid page number " + pageNumber
-                    + " with last page " + lastPage + "!");
-            ModelAndView mv = new ModelAndView("error");
-            mv.setStatus(HttpStatus.BAD_REQUEST);
-            return mv;
-        }
+        IdValidator.validatePageNumberElseThrow(page, lastPage);
 
         Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(page,
                 Constants.PAGE_SIZE), courseId);

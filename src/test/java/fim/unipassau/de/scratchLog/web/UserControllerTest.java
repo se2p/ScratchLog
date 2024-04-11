@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import static fim.unipassau.de.scratchLog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -161,7 +162,6 @@ public class UserControllerTest extends AbstractControllerTest {
     private static final String PASSWORD_PAGE = "password";
     private static final String PARTICIPANTS_ADD = "participants-add";
     private static final String USER_DTO = "userDTO";
-    private static final String ID_STRING = "1";
     private static final String SECRET = "secret";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String FILETYPE = "text/csv";
@@ -211,7 +211,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(httpServletRequest.getSession(false)).thenReturn(null);
         when(httpServletRequest.getSession(true)).thenReturn(session);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        assertEquals(REDIRECT_EXPERIMENT + ID, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+        assertEquals(REDIRECT_EXPERIMENT + ID, userController.authenticateUser(ID, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider).authenticate(any());
         verify(userService).authenticateUser(SECRET);
@@ -231,7 +231,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(authentication.getName()).thenReturn(userDTO.getUsername());
         when(httpServletRequest.getSession(false)).thenReturn(null);
         when(httpServletRequest.getSession(true)).thenReturn(session);
-        assertEquals(REDIRECT_EXPERIMENT + ID, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+        assertEquals(REDIRECT_EXPERIMENT + ID, userController.authenticateUser(ID, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider).authenticate(any());
         verify(userService).authenticateUser(SECRET);
@@ -250,7 +250,7 @@ public class UserControllerTest extends AbstractControllerTest {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(userDTO.getEmail());
-        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).authenticateUser(SECRET);
@@ -267,7 +267,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
         when(httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)).thenReturn(true);
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).authenticateUser(SECRET);
@@ -281,7 +281,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testAuthenticateUserNoParticipant() {
         when(userService.authenticateUser(SECRET)).thenReturn(userDTO);
-        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).authenticateUser(SECRET);
@@ -294,7 +294,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testAuthenticateUserNotFound() {
         when(userService.authenticateUser(SECRET)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, SECRET, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID, SECRET, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService).authenticateUser(SECRET);
@@ -306,32 +306,9 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAuthenticateUserInvalidId() {
-        assertEquals(Constants.ERROR, userController.authenticateUser("0", SECRET, httpServletRequest,
-                httpServletResponse));
-        verify(authenticationProvider, never()).authenticate(any());
-        verify(userService, never()).authenticateUser(anyString());
-        verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-        verify(securityContext, never()).getAuthentication();
-        verify(localeResolver, never()).setLocale(any(), any(), any());
-    }
-
-    @Test
-    public void testAuthenticateUserIdNull() {
-        assertEquals(Constants.ERROR, userController.authenticateUser(null, SECRET, httpServletRequest,
-                httpServletResponse));
-        verify(authenticationProvider, never()).authenticate(any());
-        verify(userService, never()).authenticateUser(anyString());
-        verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-        verify(securityContext, never()).getAuthentication();
-        verify(localeResolver, never()).setLocale(any(), any(), any());
-    }
-
-    @Test
-    public void testAuthenticateUserIdBlank() {
-        assertEquals(Constants.ERROR, userController.authenticateUser(BLANK, SECRET, httpServletRequest,
-                httpServletResponse));
+        assertInvalidIdException(
+            () -> userController.authenticateUser(0, SECRET, httpServletRequest, httpServletResponse)
+        );
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).authenticateUser(anyString());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
@@ -342,7 +319,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAuthenticateUserSecretNull() {
-        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, null, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID, null, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).authenticateUser(anyString());
@@ -354,7 +331,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAuthenticateUserSecretBlank() {
-        assertEquals(Constants.ERROR, userController.authenticateUser(ID_STRING, BLANK, httpServletRequest,
+        assertEquals(Constants.ERROR, userController.authenticateUser(ID, BLANK, httpServletRequest,
                 httpServletResponse));
         verify(authenticationProvider, never()).authenticate(any());
         verify(userService, never()).authenticateUser(anyString());
@@ -1778,7 +1755,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
-        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(passwordDTO, ID, httpServletRequest));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
@@ -1797,7 +1774,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
-        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(passwordDTO, ID, httpServletRequest));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
@@ -1817,7 +1794,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.getUserById(ID)).thenReturn(oldDTO);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
-        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(REDIRECT_SUCCESS, userController.deleteUser(passwordDTO, ID, httpServletRequest));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
@@ -1836,7 +1813,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(userService.matchesPassword(PASSWORD, PASSWORD)).thenReturn(true);
         when(userService.isLastAdmin()).thenReturn(true);
-        assertEquals(LAST_ADMIN, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(LAST_ADMIN, userController.deleteUser(passwordDTO, ID, httpServletRequest));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
@@ -1853,7 +1830,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(INVALID + USERNAME, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(INVALID + USERNAME, userController.deleteUser(passwordDTO, ID, httpServletRequest));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
@@ -1871,7 +1848,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(INVALID + USERNAME, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(INVALID + USERNAME, userController.deleteUser(passwordDTO, ID, httpServletRequest));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService).getUserById(ID);
@@ -1887,7 +1864,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.getName()).thenReturn(USERNAME);
         when(userService.getUser(USERNAME)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID, httpServletRequest));
         verify(authentication, times(2)).getName();
         verify(userService).getUser(USERNAME);
         verify(userService, never()).getUserById(anyInt());
@@ -1901,7 +1878,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testDeleteUserAuthenticationNameNull() {
         securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
         when(securityContext.getAuthentication()).thenReturn(authentication);
-        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID, httpServletRequest));
         verify(authentication).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
@@ -1913,31 +1890,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteUserInvalidId() {
-        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, "0", httpServletRequest));
-        verify(authentication, never()).getName();
-        verify(userService, never()).getUser(anyString());
-        verify(userService, never()).getUserById(anyInt());
-        verify(userService, never()).matchesPassword(anyString(), anyString());
-        verify(userService, never()).isLastAdmin();
-        verify(userService, never()).deleteUser(anyInt());
-        verify(httpServletRequest, never()).getSession(anyBoolean());
-    }
-
-    @Test
-    public void testDeleteUserNumberFormat() {
-        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, BLANK, httpServletRequest));
-        verify(authentication, never()).getName();
-        verify(userService, never()).getUser(anyString());
-        verify(userService, never()).getUserById(anyInt());
-        verify(userService, never()).matchesPassword(anyString(), anyString());
-        verify(userService, never()).isLastAdmin();
-        verify(userService, never()).deleteUser(anyInt());
-        verify(httpServletRequest, never()).getSession(anyBoolean());
-    }
-
-    @Test
-    public void testDeleteUserIdNull() {
-        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, null, httpServletRequest));
+        assertInvalidIdException(() -> userController.deleteUser(passwordDTO, 0, httpServletRequest));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
@@ -1950,7 +1903,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testDeleteUserPasswordNull() {
         passwordDTO.setPassword(null);
-        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID_STRING, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID, httpServletRequest));
         verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).getUserById(anyInt());
@@ -1966,7 +1919,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         assertAll(
                 () -> assertEquals(PROFILE_REDIRECT + userDTO.getUsername(),
-                        userController.changeActiveStatus(ID_STRING)),
+                        userController.changeActiveStatus(ID)),
                 () -> assertFalse(userDTO.isActive()),
                 () -> assertNull(userDTO.getSecret())
         );
@@ -1982,7 +1935,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(userService.getUserById(ID)).thenReturn(userDTO);
         assertAll(
                 () -> assertEquals(PROFILE_REDIRECT + userDTO.getUsername(),
-                        userController.changeActiveStatus(ID_STRING)),
+                        userController.changeActiveStatus(ID)),
                 () -> assertTrue(userDTO.isActive()),
                 () -> assertEquals(0, userDTO.getAttempts())
         );
@@ -1993,7 +1946,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testChangeActiveStatusUserAdmin() {
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(Constants.ERROR, userController.changeActiveStatus(ID_STRING));
+        assertEquals(Constants.ERROR, userController.changeActiveStatus(ID));
         verify(userService).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
@@ -2001,21 +1954,14 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testChangeActiveStatusNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, userController.changeActiveStatus(ID_STRING));
+        assertEquals(Constants.ERROR, userController.changeActiveStatus(ID));
         verify(userService).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
 
     @Test
     public void testChangeActiveStatusIdInvalid() {
-        assertEquals(Constants.ERROR, userController.changeActiveStatus(BLANK));
-        verify(userService, never()).getUserById(ID);
-        verify(userService, never()).updateUser(userDTO);
-    }
-
-    @Test
-    public void testChangeActiveStatusIdNull() {
-        assertEquals(Constants.ERROR, userController.changeActiveStatus(null));
+        assertInvalidIdException(() -> userController.changeActiveStatus(-1));
         verify(userService, never()).getUserById(ID);
         verify(userService, never()).updateUser(userDTO);
     }
@@ -2025,7 +1971,7 @@ public class UserControllerTest extends AbstractControllerTest {
         userDTO.setRole(Role.PARTICIPANT);
         when(userService.getUserById(ID)).thenReturn(userDTO);
         when(httpServletRequest.isUserInRole(ROLE_ADMIN)).thenReturn(true);
-        assertEquals(PASSWORD_PAGE, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
+        assertEquals(PASSWORD_PAGE, userController.getPasswordResetForm(ID, model, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
     }
@@ -2033,7 +1979,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testGetPasswordResetFormNoAdmin() {
         when(userService.getUserById(ID)).thenReturn(userDTO);
-        assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID, model, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest).isUserInRole(ROLE_ADMIN);
     }
@@ -2041,21 +1987,14 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testGetPasswordResetFormUserNotFound() {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
-        assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID_STRING, model, httpServletRequest));
+        assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID, model, httpServletRequest));
         verify(userService).getUserById(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
     }
 
     @Test
     public void testGetPasswordResetFormInvalidId() {
-        assertEquals(Constants.ERROR, userController.getPasswordResetForm("-1", model, httpServletRequest));
-        verify(userService, never()).getUserById(anyInt());
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-    }
-
-    @Test
-    public void testGetPasswordResetFormIdNull() {
-        assertEquals(Constants.ERROR, userController.getPasswordResetForm(null, model, httpServletRequest));
+        assertInvalidIdException(() -> userController.getPasswordResetForm(-1, model, httpServletRequest));
         verify(userService, never()).getUserById(anyInt());
         verify(httpServletRequest, never()).isUserInRole(anyString());
     }

@@ -21,7 +21,6 @@ package fim.unipassau.de.scratchLog.web.controller;
 
 import fim.unipassau.de.scratchLog.application.service.SearchService;
 import fim.unipassau.de.scratchLog.util.Constants;
-import fim.unipassau.de.scratchLog.util.NumberParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -79,7 +78,7 @@ public class SearchRestController {
     @GetMapping("/suggestions")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getSearchSuggestions(@RequestParam(QUERY) final String query) {
-        if (query == null || query.trim().isBlank()) {
+        if (isInvalidQuery(query)) {
             return new ArrayList<>();
         }
 
@@ -98,13 +97,12 @@ public class SearchRestController {
     @GetMapping("/users")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getMoreUsers(@RequestParam(QUERY) final String query,
-                                       @RequestParam(PAGE) final String page) {
-        if (invalidParams(query, page)) {
+                                       @RequestParam(PAGE) final int page) {
+        if (isInvalidQuery(query) || isInvalidPageId(page)) {
             return new ArrayList<>();
         }
 
-        int pageNumber = NumberParser.parseNumber(page);
-        return searchService.getNextUsers(query, pageNumber);
+        return searchService.getNextUsers(query, page);
     }
 
     /**
@@ -119,13 +117,12 @@ public class SearchRestController {
     @GetMapping("/experiments")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getMoreExperiments(@RequestParam(QUERY) final String query,
-                                             @RequestParam(PAGE) final String page) {
-        if (invalidParams(query, page)) {
+                                             @RequestParam(PAGE) final int page) {
+        if (isInvalidQuery(query) || isInvalidPageId(page)) {
             return new ArrayList<>();
         }
 
-        int pageNumber = NumberParser.parseNumber(page);
-        return searchService.getNextExperiments(query, pageNumber);
+        return searchService.getNextExperiments(query, page);
     }
 
     /**
@@ -140,13 +137,12 @@ public class SearchRestController {
     @GetMapping("/courses")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getMoreCourses(@RequestParam(QUERY) final String query,
-                                         @RequestParam(PAGE) final String page) {
-        if (invalidParams(query, page)) {
+                                         @RequestParam(PAGE) final int page) {
+        if (isInvalidQuery(query) || isInvalidPageId(page)) {
             return new ArrayList<>();
         }
 
-        int pageNumber = NumberParser.parseNumber(page);
-        return searchService.getNextCourses(query, pageNumber);
+        return searchService.getNextCourses(query, page);
     }
 
     /**
@@ -154,18 +150,17 @@ public class SearchRestController {
      * are not already participating in the experiment with the given id.
      *
      * @param query The username or email to search for.
-     * @param id The experiment id.
+     * @param experimentId The experiment id.
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
     @GetMapping("/user")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getUserSuggestions(@RequestParam(QUERY) final String query,
-                                             @RequestParam(ID) final String id) {
-        if (invalidParams(query, id)) {
+                                             @RequestParam(ID) final int experimentId) {
+        if (isInvalidQuery(query) || isInvalidId(experimentId)) {
             return new ArrayList<>();
         }
 
-        int experimentId = NumberParser.parseNumber(id);
         return searchService.getUserSuggestions(query, experimentId);
     }
 
@@ -174,18 +169,17 @@ public class SearchRestController {
      * where the user is participating in the experiment with the given id.
      *
      * @param query The username or email to search for.
-     * @param id The experiment id.
+     * @param experimentId The experiment id.
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
     @GetMapping("/delete")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getDeleteUserSuggestions(@RequestParam(QUERY) final String query,
-                                                   @RequestParam(ID) final String id) {
-        if (invalidParams(query, id)) {
+                                                   @RequestParam(ID) final int experimentId) {
+        if (isInvalidQuery(query) || isInvalidId(experimentId)) {
             return new ArrayList<>();
         }
 
-        int experimentId = NumberParser.parseNumber(id);
         return searchService.getUserDeleteSuggestions(query, experimentId);
     }
 
@@ -194,18 +188,17 @@ public class SearchRestController {
      * is not yet part of the course with the given id.
      *
      * @param query The experiment title to search for.
-     * @param id The course id.
+     * @param courseId The course id.
      * @return A list of experiment ids and titles, or an empty list, if no entries could be found.
      */
     @GetMapping("/course/experiment")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getCourseExperimentSuggestions(@RequestParam(QUERY) final String query,
-                                                         @RequestParam(ID) final String id) {
-        if (invalidParams(query, id)) {
+                                                         @RequestParam(ID) final int courseId) {
+        if (isInvalidQuery(query) || isInvalidId(courseId)) {
             return new ArrayList<>();
         }
 
-        int courseId = NumberParser.parseNumber(id);
         return searchService.getCourseExperimentSuggestions(query, courseId);
     }
 
@@ -214,18 +207,17 @@ public class SearchRestController {
      * not yet part of the course with the given id.
      *
      * @param query The username or email to search for.
-     * @param id The course id.
+     * @param courseId The course id.
      * @return A list of usernames and email addresses, or an empty list, if no entries could be found.
      */
     @GetMapping("/course/participant")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getCourseParticipantSuggestions(@RequestParam(QUERY) final String query,
-                                                          @RequestParam(ID) final String id) {
-        if (invalidParams(query, id)) {
+                                                          @RequestParam(ID) final int courseId) {
+        if (isInvalidQuery(query) || isInvalidId(courseId)) {
             return new ArrayList<>();
         }
 
-        int courseId = NumberParser.parseNumber(id);
         return searchService.getCourseParticipantSuggestions(query, courseId);
     }
 
@@ -234,18 +226,17 @@ public class SearchRestController {
      * is part of the course with the given id.
      *
      * @param query The experiment title to search for.
-     * @param id The course id.
+     * @param courseId The course id.
      * @return A list of experiment ids and titles, or an empty list, if no entries could be found.
      */
     @GetMapping("/course/delete/experiment")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getCourseExperimentDeleteSuggestions(@RequestParam(QUERY) final String query,
-                                                               @RequestParam(ID) final String id) {
-        if (invalidParams(query, id)) {
+                                                               @RequestParam(ID) final int courseId) {
+        if (isInvalidQuery(query) || isInvalidId(courseId)) {
             return new ArrayList<>();
         }
 
-        int courseId = NumberParser.parseNumber(id);
         return searchService.getCourseExperimentDeleteSuggestions(query, courseId);
     }
 
@@ -254,34 +245,48 @@ public class SearchRestController {
      * part of the course with the given id.
      *
      * @param query The username or email to search for.
-     * @param id The course id.
+     * @param courseId The course id.
      * @return A list of usernames and email addresses, or an empty list, if no entries could be found.
      */
     @GetMapping("/course/delete/participant")
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getCourseParticipantDeleteSuggestions(@RequestParam(QUERY) final String query,
-                                                                @RequestParam(ID) final String id) {
-        if (invalidParams(query, id)) {
+                                                                @RequestParam(ID) final int courseId) {
+        if (isInvalidQuery(query) || isInvalidId(courseId)) {
             return new ArrayList<>();
         }
 
-        int courseId = NumberParser.parseNumber(id);
         return searchService.getCourseParticipantDeleteSuggestions(query, courseId);
     }
 
     /**
-     * Checks, whether the given query and id parameters are invalid.
+     * Checks whether the given query is invalid.
      *
      * @param query The query string to check.
-     * @param id The id to check.
-     * @return {@code true} if one of the parameters is invalid, or {@code false} otherwise.
+     * @return {@code true} if the query is invalid, or {@code false} otherwise.
      */
-    private boolean invalidParams(final String query, final String id) {
-        if (query == null || query.trim().isBlank() || id == null || id.trim().isBlank()) {
-            return true;
-        }
+    private boolean isInvalidQuery(final String query) {
+        return query == null || query.trim().isBlank();
+    }
 
-        return NumberParser.parseNumber(id) < Constants.MIN_ID;
+    /**
+     * Checks whether the given id is invalid.
+     *
+     * @param id The id to check.
+     * @return {@code true} if the id is invalid, or {@code false} otherwise.
+     */
+    private boolean isInvalidId(final int id) {
+        return id < Constants.MIN_ID;
+    }
+
+    /**
+     * Checks whether the given page id is invalid.
+     *
+     * @param pageId The page id to check.
+     * @return {@code true} if the page id is invalid, or {@code false} otherwise.
+     */
+    private boolean isInvalidPageId(final int pageId) {
+        return pageId < 0;
     }
 
 }

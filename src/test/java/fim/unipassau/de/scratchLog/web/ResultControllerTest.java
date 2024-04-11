@@ -66,6 +66,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static fim.unipassau.de.scratchLog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -114,8 +115,7 @@ public class ResultControllerTest {
 
     private static final String RESULT = "result";
     private static final String ERROR = "redirect:/error";
-    private static final String ID_STRING = "1";
-    private static final String PAGE = "0";
+    private static final int PAGE = 0;
     private static final String JSON = "json";
     private static final int ID = 1;
     private final FileDTO fileDTO = new FileDTO(ID, ID, "secret", "file", "type", new byte[]{1, 2, 3},
@@ -177,7 +177,7 @@ public class ResultControllerTest {
                 jsonProjections);
         when(experimentDataService.getAnalyzedProgramDataCount(jsonProjections)).thenReturn(analysisResults);
         when(eventService.getCodesData(ID, ID)).thenReturn(codesDataDTO);
-        assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
+        assertEquals(RESULT, resultController.getResult(ID, ID, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
         verify(eventService).getClickEventCounts(ID, ID);
@@ -199,7 +199,7 @@ public class ResultControllerTest {
         when(fileService.getFiles(ID, ID)).thenReturn(files);
         when(fileService.getZipIds(ID, ID)).thenReturn(zips);
         when(eventService.getCodesData(ID, ID)).thenReturn(codesDataDTO);
-        assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
+        assertEquals(RESULT, resultController.getResult(ID, ID, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
         verify(eventService).getClickEventCounts(ID, ID);
@@ -224,7 +224,7 @@ public class ResultControllerTest {
                 jsonProjections);
         when(experimentDataService.getAnalyzedProgramDataCount(jsonProjections)).thenReturn(analysisResults);
         when(eventService.getCodesData(ID, ID)).thenReturn(new CodesDataDTO());
-        assertEquals(RESULT, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
+        assertEquals(RESULT, resultController.getResult(ID, ID, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
         verify(eventService).getClickEventCounts(ID, ID);
@@ -244,7 +244,7 @@ public class ResultControllerTest {
         when(eventService.getClickEventCounts(ID, ID)).thenReturn(clickEvents);
         when(eventService.getResourceEventCounts(ID, ID)).thenReturn(resourceEvents);
         when(fileService.getFiles(ID, ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
+        assertEquals(ERROR, resultController.getResult(ID, ID, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService).getBlockEventCounts(ID, ID);
         verify(eventService).getClickEventCounts(ID, ID);
@@ -259,7 +259,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetResultNoParticipant() {
-        assertEquals(ERROR, resultController.getResult(ID_STRING, ID_STRING, model).getViewName());
+        assertEquals(ERROR, resultController.getResult(ID, ID, model).getViewName());
         verify(userService).existsParticipant(ID, ID);
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
@@ -274,7 +274,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetResultInvalidExperimentId() {
-        assertEquals(ERROR, resultController.getResult("0", ID_STRING, model).getViewName());
+        assertInvalidIdException(() -> resultController.getResult(0, ID, model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
@@ -289,37 +289,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetResultInvalidUserId() {
-        assertEquals(ERROR, resultController.getResult(ID_STRING, "  ", model).getViewName());
-        verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
-        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
-        verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
-        verify(fileService, never()).getFiles(anyInt(), anyInt());
-        verify(fileService, never()).getZipIds(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
-        verify(eventService, never()).getCodesData(anyInt(), anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetResultExperimentIdNull() {
-        assertEquals(ERROR, resultController.getResult(null, ID_STRING, model).getViewName());
-        verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
-        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
-        verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
-        verify(fileService, never()).getFiles(anyInt(), anyInt());
-        verify(fileService, never()).getZipIds(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
-        verify(eventService, never()).getCodesData(anyInt(), anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetResultUserIdNull() {
-        assertEquals(ERROR, resultController.getResult(ID_STRING, null, model).getViewName());
+        assertInvalidIdException(() -> resultController.getResult(ID, -1, model).getViewName());
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
@@ -335,7 +305,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadFile() {
         when(fileService.findFile(ID)).thenReturn(fileDTO);
-        Object responseEntity = resultController.downloadFile(ID_STRING);
+        Object responseEntity = resultController.downloadFile(ID);
         assertAll(
                 () -> assertEquals(responseEntity.getClass(), ResponseEntity.class),
                 () -> assertEquals(HttpStatus.OK, ((ResponseEntity<?>) responseEntity).getStatusCode()),
@@ -347,19 +317,13 @@ public class ResultControllerTest {
     @Test
     public void testDownloadFileNotFound() {
         when(fileService.findFile(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, resultController.downloadFile(ID_STRING));
+        assertEquals(ERROR, resultController.downloadFile(ID));
         verify(fileService).findFile(ID);
     }
 
     @Test
     public void testDownloadFileInvalidId() {
-        assertEquals(ERROR, resultController.downloadFile("-5"));
-        verify(fileService, never()).findFile(anyInt());
-    }
-
-    @Test
-    public void testDownloadFileIdNull() {
-        assertEquals(ERROR, resultController.downloadFile(null));
+        assertInvalidIdException(() -> resultController.downloadFile(-5));
         verify(fileService, never()).findFile(anyInt());
     }
 
@@ -409,7 +373,7 @@ public class ResultControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.findJsonById(ID)).thenReturn(JSON);
         assertDoesNotThrow(
-                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.generateZipFile(ID, ID, ID, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
         verify(fileService).getFileDTOs(ID, ID);
@@ -451,7 +415,7 @@ public class ResultControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.findJsonById(ID)).thenReturn(JSON);
         assertDoesNotThrow(
-                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.generateZipFile(ID, ID, ID, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
         verify(fileService).getFileDTOs(ID, ID);
@@ -495,7 +459,7 @@ public class ResultControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.findJsonById(ID)).thenReturn(JSON);
         assertDoesNotThrow(
-                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.generateZipFile(ID, ID, ID, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
         verify(fileService).getFileDTOs(ID, ID);
@@ -530,7 +494,7 @@ public class ResultControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.findJsonById(ID)).thenReturn(JSON);
         assertDoesNotThrow(
-                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.generateZipFile(ID, ID, ID, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
         verify(fileService).getFileDTOs(ID, ID);
@@ -548,7 +512,7 @@ public class ResultControllerTest {
         when(codeService.findJsonById(ID)).thenReturn(JSON);
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertThrows(RuntimeException.class,
-                () -> resultController.generateZipFile(ID_STRING, ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.generateZipFile(ID, ID, ID, httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
         verify(fileService).getFileDTOs(ID, ID);
@@ -558,9 +522,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGenerateZipFilesInvalidJsonId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.generateZipFile(ID_STRING, ID_STRING, "0", httpServletResponse)
-        );
+        assertInvalidIdException(() -> resultController.generateZipFile(ID, ID, 0, httpServletResponse));
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
         verify(codeService, never()).findJsonById(anyInt());
@@ -569,9 +531,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGenerateZipFilesInvalidUserId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.generateZipFile(ID_STRING, "-1", ID_STRING, httpServletResponse)
-        );
+        assertInvalidIdException(() -> resultController.generateZipFile(ID, -1, ID, httpServletResponse));
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
         verify(codeService, never()).findJsonById(anyInt());
@@ -580,42 +540,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGenerateZipFilesInvalidExperimentId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.generateZipFile("ID_STRING", ID_STRING, ID_STRING, httpServletResponse)
-        );
-        verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
-        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).findJsonById(anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-    }
-
-    @Test
-    public void testGenerateZipFilesJsonNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.generateZipFile(ID_STRING, ID_STRING, null, httpServletResponse)
-        );
-        verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
-        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).findJsonById(anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-    }
-
-    @Test
-    public void testGenerateZipFilesUserNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.generateZipFile(ID_STRING, null, ID_STRING, httpServletResponse)
-        );
-        verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
-        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).findJsonById(anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-    }
-
-    @Test
-    public void testGenerateZipFilesExperimentNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.generateZipFile(null, ID_STRING, ID_STRING, httpServletResponse)
-        );
+        assertInvalidIdException(() -> resultController.generateZipFile(-1, ID, ID, httpServletResponse));
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
         verify(codeService, never()).findJsonById(anyInt());
@@ -625,7 +550,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadZip() {
         when(fileService.findZip(ID)).thenReturn(sb3ZipDTO);
-        Object responseEntity = resultController.downloadZip(ID_STRING);
+        Object responseEntity = resultController.downloadZip(ID);
         assertAll(
                 () -> assertEquals(responseEntity.getClass(), ResponseEntity.class),
                 () -> assertEquals(HttpStatus.OK, ((ResponseEntity<?>) responseEntity).getStatusCode()),
@@ -637,20 +562,14 @@ public class ResultControllerTest {
     @Test
     public void testDownloadZipNotFound() {
         when(fileService.findZip(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, resultController.downloadZip(ID_STRING));
+        assertEquals(ERROR, resultController.downloadZip(ID));
         verify(fileService).findZip(ID);
     }
 
     @Test
     public void testDownloadZipInvalidId() {
-        assertEquals(ERROR, resultController.downloadZip("ab"));
+        assertInvalidIdException(() -> resultController.downloadZip(-1));
         verify(fileService, never()).findZip(anyInt());
-    }
-
-    @Test
-    public void testDownloadZipIdNull() {
-        assertEquals(ERROR, resultController.downloadZip(null));
-        verify(fileService, never()).findFile(anyInt());
     }
 
     @Test
@@ -673,7 +592,7 @@ public class ResultControllerTest {
             }
         });
         assertDoesNotThrow(
-                () -> resultController.downloadAllZips(ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.downloadAllZips(ID, ID, httpServletResponse)
         );
         verify(fileService).getZipFiles(ID, ID);
         verify(httpServletResponse).getOutputStream();
@@ -686,7 +605,7 @@ public class ResultControllerTest {
     public void testDownloadAllZipsIO() throws IOException {
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertThrows(RuntimeException.class,
-                () -> resultController.downloadAllZips(ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.downloadAllZips(ID, ID, httpServletResponse)
         );
         verify(fileService, never()).getZipFiles(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
@@ -695,9 +614,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadAllZipsInvalidExperimentId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllZips("0", ID_STRING, httpServletResponse)
-        );
+        assertInvalidIdException(() -> resultController.downloadAllZips(0, ID, httpServletResponse));
         verify(fileService, never()).getZipFiles(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setStatus(anyInt());
@@ -705,29 +622,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadAllZipsInvalidUserId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllZips(ID_STRING, "-1", httpServletResponse)
-        );
-        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setStatus(anyInt());
-    }
-
-    @Test
-    public void testDownloadAllZipsUserIdNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllZips(ID_STRING, null, httpServletResponse)
-        );
-        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setStatus(anyInt());
-    }
-
-    @Test
-    public void testDownloadAllZipsExperimentIdNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllZips(null, ID_STRING, httpServletResponse)
-        );
+        assertInvalidIdException(() -> resultController.downloadAllZips(ID, -1, httpServletResponse));
         verify(fileService, never()).getZipFiles(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setStatus(anyInt());
@@ -753,7 +648,7 @@ public class ResultControllerTest {
             }
         });
         assertDoesNotThrow(
-                () -> resultController.downloadAllXmlFiles(ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.downloadAllXmlFiles(ID, ID, httpServletResponse)
         );
         verify(codeService).getXMLForUser(ID, ID);
         verify(httpServletResponse).getOutputStream();
@@ -766,7 +661,7 @@ public class ResultControllerTest {
     public void testDownloadAllXmlFilesIO() throws IOException {
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertThrows(RuntimeException.class,
-                () -> resultController.downloadAllXmlFiles(ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.downloadAllXmlFiles(ID, ID, httpServletResponse)
         );
         verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
@@ -777,9 +672,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadAllXmlFilesInvalidExperimentId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllXmlFiles(ID_STRING, "0", httpServletResponse)
-        );
+        assertInvalidIdException(() -> resultController.downloadAllXmlFiles(ID, 0, httpServletResponse));
         verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
@@ -789,33 +682,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadAllXmlFilesInvalidUserId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllXmlFiles("-1", ID_STRING, httpServletResponse)
-        );
-        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setContentType(anyString());
-        verify(httpServletResponse, never()).setHeader(anyString(), anyString());
-        verify(httpServletResponse, never()).setStatus(anyInt());
-    }
-
-    @Test
-    public void testDownloadAllXmlFilesExperimentIdNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllXmlFiles(ID_STRING, null, httpServletResponse)
-        );
-        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setContentType(anyString());
-        verify(httpServletResponse, never()).setHeader(anyString(), anyString());
-        verify(httpServletResponse, never()).setStatus(anyInt());
-    }
-
-    @Test
-    public void testDownloadAllXmlFilesUserIdNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllXmlFiles(null, ID_STRING, httpServletResponse)
-        );
+        assertInvalidIdException(() -> resultController.downloadAllXmlFiles(-1, ID, httpServletResponse));
         verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
@@ -843,7 +710,7 @@ public class ResultControllerTest {
             }
         });
         assertDoesNotThrow(
-                () -> resultController.downloadAllJsonFiles(ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.downloadAllJsonFiles(ID, ID, httpServletResponse)
         );
         verify(codeService).getJsonForUser(ID, ID);
         verify(httpServletResponse).getOutputStream();
@@ -856,7 +723,7 @@ public class ResultControllerTest {
     public void testDownloadAllJsonFilesIO() throws IOException {
         when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
         assertThrows(RuntimeException.class,
-                () -> resultController.downloadAllJsonFiles(ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.downloadAllJsonFiles(ID, ID, httpServletResponse)
         );
         verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
@@ -867,9 +734,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadAllJsonFilesInvalidExperimentId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllJsonFiles(ID_STRING, "0", httpServletResponse)
-        );
+        assertInvalidIdException(() -> resultController.downloadAllJsonFiles(ID, 0, httpServletResponse));
         verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
@@ -879,33 +744,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadAllJsonFilesInvalidUserId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllJsonFiles("-1", ID_STRING, httpServletResponse)
-        );
-        verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setContentType(anyString());
-        verify(httpServletResponse, never()).setHeader(anyString(), anyString());
-        verify(httpServletResponse, never()).setStatus(anyInt());
-    }
-
-    @Test
-    public void testDownloadAllJsonFilesExperimentIdNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllJsonFiles(ID_STRING, null, httpServletResponse)
-        );
-        verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-        verify(httpServletResponse, never()).setContentType(anyString());
-        verify(httpServletResponse, never()).setHeader(anyString(), anyString());
-        verify(httpServletResponse, never()).setStatus(anyInt());
-    }
-
-    @Test
-    public void testDownloadAllJsonFilesUserIdNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadAllJsonFiles(null, ID_STRING, httpServletResponse)
-        );
+        assertInvalidIdException(() -> resultController.downloadAllJsonFiles(-1, ID, httpServletResponse));
         verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
         verify(httpServletResponse, never()).setContentType(anyString());
@@ -917,7 +756,7 @@ public class ResultControllerTest {
     public void testGetCodes() {
         when(codeService.getCodesForUser(anyInt(), anyInt(),
                 any(PageRequest.class))).thenReturn(blockEventProjections);
-        List<BlockEventProjection> projections = resultController.getCodes(ID_STRING, ID_STRING, PAGE);
+        List<BlockEventProjection> projections = resultController.getCodes(ID, ID, PAGE);
         assertAll(
                 () -> assertEquals(2, projections.size()),
                 () -> assertEquals(0, projections.get(0).getId()),
@@ -932,49 +771,19 @@ public class ResultControllerTest {
 
     @Test
     public void testGetCodesInvalidPage() {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.getCodes(ID_STRING, ID_STRING, "-1")
-        );
+        assertInvalidIdException(() -> resultController.getCodes(ID, ID, -1));
         verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
     public void testGetCodesInvalidExperimentId() {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.getCodes(ID_STRING, PAGE, PAGE)
-        );
+        assertInvalidIdException(() -> resultController.getCodes(ID, PAGE, PAGE));
         verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
     @Test
     public void testGetCodesInvalidUserId() {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.getCodes("-1", ID_STRING, PAGE)
-        );
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesPageNull() {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.getCodes(ID_STRING, ID_STRING, null)
-        );
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesExperimentNull() {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.getCodes(ID_STRING, null, PAGE)
-        );
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesUserNull() {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.getCodes(null, ID_STRING, PAGE)
-        );
+        assertInvalidIdException(() -> resultController.getCodes(-1, ID, PAGE));
         verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
     }
 
@@ -1026,7 +835,7 @@ public class ResultControllerTest {
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
         assertDoesNotThrow(
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, null,
+                () -> resultController.downloadSb3Files(ID, ID, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
@@ -1063,7 +872,7 @@ public class ResultControllerTest {
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
         assertDoesNotThrow(
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, null,
+                () -> resultController.downloadSb3Files(ID, ID, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
@@ -1100,7 +909,7 @@ public class ResultControllerTest {
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(noSavedProject);
         assertDoesNotThrow(
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, null,
+                () -> resultController.downloadSb3Files(ID, ID, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
@@ -1161,7 +970,7 @@ public class ResultControllerTest {
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
         when(codeService.getFilteredJsons(ID, ID, ID, 0, 0, project)).thenReturn(jsonProjections);
         assertDoesNotThrow(
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, ID_STRING, null, null, null,
+                () -> resultController.downloadSb3Files(ID, ID, ID, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
@@ -1177,7 +986,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesStartStopStartBiggerEnd() throws IOException {
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, "2", ID_STRING, "true",
+                () -> resultController.downloadSb3Files(ID, ID, null, 2, ID, true,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1190,7 +999,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesStartStopStartInvalidStart() throws IOException {
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, "abc", "3", "true",
+                () -> resultController.downloadSb3Files(ID, ID, null, -1, 3, true,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1203,7 +1012,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesStartStopStartInvalidEnd() throws IOException {
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, ID_STRING, "0", "true",
+                () -> resultController.downloadSb3Files(ID, ID, null, ID, 0, true,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1222,7 +1031,7 @@ public class ResultControllerTest {
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(noSavedProject);
         assertThrows(RuntimeException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, null,
+                () -> resultController.downloadSb3Files(ID, ID, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService).getSb3File(ID, true);
@@ -1237,8 +1046,8 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesInvalidUserId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, "0", null, null, null, null,
+        assertInvalidIdException(
+                () -> resultController.downloadSb3Files(ID, 0, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1250,8 +1059,8 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesInvalidExperimentId() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files("ID_STRING", ID_STRING, null, null, null, null,
+        assertInvalidIdException(
+                () -> resultController.downloadSb3Files(-1, ID, null, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1264,33 +1073,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesStepInvalid() throws IOException {
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, "0", null, null, null,
-                        httpServletResponse)
-        );
-        verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
-        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-    }
-
-    @Test
-    public void testDownloadSb3FilesUserNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, null, null, null, null, null,
-                        httpServletResponse)
-        );
-        verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
-        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
-        verify(httpServletResponse, never()).getOutputStream();
-    }
-
-    @Test
-    public void testDownloadSb3FilesExperimentNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(null, ID_STRING, null, null, null, null,
+                () -> resultController.downloadSb3Files(ID, ID, 0, null, null, null,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1303,7 +1086,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesStartAndStepNotNull() throws IOException {
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, ID_STRING, ID_STRING, "3", "false",
+                () -> resultController.downloadSb3Files(ID, ID, ID, ID, 3, false,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1316,7 +1099,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesIncludeNull() throws IOException {
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, ID_STRING, "3", null,
+                () -> resultController.downloadSb3Files(ID, ID, null, ID, 3, null,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1329,7 +1112,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesEndNull() throws IOException {
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, ID_STRING, null, "false",
+                () -> resultController.downloadSb3Files(ID, ID, null, ID, null, false,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1342,7 +1125,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesStartNull() throws IOException {
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, "3", "false",
+                () -> resultController.downloadSb3Files(ID, ID, null, null, 3, false,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1355,7 +1138,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesStartAndEndNull() throws IOException {
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadSb3Files(ID_STRING, ID_STRING, null, null, null, "false",
+                () -> resultController.downloadSb3Files(ID, ID, null, null, null, false,
                         httpServletResponse)
         );
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
@@ -1390,7 +1173,7 @@ public class ResultControllerTest {
                 jsonProjections);
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
         assertDoesNotThrow(
-                () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
+                () -> resultController.downloadExperimentSb3Files(ID, 0, httpServletResponse)
         );
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID, true);
@@ -1428,7 +1211,7 @@ public class ResultControllerTest {
                 jsonProjections);
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
         assertDoesNotThrow(
-                () -> resultController.downloadExperimentSb3Files(ID_STRING, ID_STRING, httpServletResponse)
+                () -> resultController.downloadExperimentSb3Files(ID, ID, httpServletResponse)
         );
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID, true);
@@ -1466,7 +1249,7 @@ public class ResultControllerTest {
                 new ArrayList<>());
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
         assertDoesNotThrow(
-                () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
+                () -> resultController.downloadExperimentSb3Files(ID, 0, httpServletResponse)
         );
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID, true);
@@ -1485,7 +1268,7 @@ public class ResultControllerTest {
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         assertThrows(RuntimeException.class,
-                () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
+                () -> resultController.downloadExperimentSb3Files(ID, 0, httpServletResponse)
         );
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID, true);
@@ -1503,7 +1286,7 @@ public class ResultControllerTest {
         when(participantService.getParticipants(ID)).thenReturn(new ArrayList<>());
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadExperimentSb3Files(ID_STRING, null, httpServletResponse)
+                () -> resultController.downloadExperimentSb3Files(ID, 0, httpServletResponse)
         );
         verify(participantService).getParticipants(ID);
         verify(experimentService).getSb3File(ID, true);
@@ -1515,8 +1298,8 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadExperimentSb3FilesInvalidExperiment() throws IOException {
-        assertThrows(IncompleteDataException.class,
-                () -> resultController.downloadExperimentSb3Files(RESULT, null, httpServletResponse)
+        assertInvalidIdException(
+            () -> resultController.downloadExperimentSb3Files(-1, 0, httpServletResponse)
         );
         verify(participantService, never()).getParticipants(anyInt());
         verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());

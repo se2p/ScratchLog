@@ -21,7 +21,6 @@ package fim.unipassau.de.scratchLog.web.controller;
 
 import com.opencsv.CSVWriter;
 import com.opencsv.bean.CsvToBeanBuilder;
-import fim.unipassau.de.scratchLog.application.exception.IncompleteDataException;
 import fim.unipassau.de.scratchLog.application.exception.NotFoundException;
 import fim.unipassau.de.scratchLog.application.service.CourseService;
 import fim.unipassau.de.scratchLog.application.service.ExperimentDataService;
@@ -35,8 +34,7 @@ import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.FieldErrorHandler;
 import fim.unipassau.de.scratchLog.util.MarkdownHandler;
-import fim.unipassau.de.scratchLog.util.NumberParser;
-import fim.unipassau.de.scratchLog.util.PageUtils;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import fim.unipassau.de.scratchLog.util.Secrets;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
@@ -208,21 +206,16 @@ public class ExperimentController {
      * request parameter passed is invalid, no entry can be found in the database, the user profile is inactive, or no
      * participant entry could be found for a participant, the user is redirected to the error page instead.
      *
-     * @param id The id of the experiment.
+     * @param experimentId The id of the experiment.
      * @param model The model to hold the information.
      * @param httpServletRequest The servlet request.
      * @return The experiment page on success, or the error page otherwise.
      */
     @GetMapping
     @Secured(Constants.ROLE_PARTICIPANT)
-    public String getExperiment(@RequestParam(ID) final String id, final Model model,
+    public String getExperiment(@RequestParam(ID) final int experimentId, final Model model,
                                 final HttpServletRequest httpServletRequest) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot return the experiment page with an invalid id parameter!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
@@ -256,25 +249,20 @@ public class ExperimentController {
     /**
      * Returns the form used to create or edit an experiment.
      *
-     * @param course The ID of the course to which the new experiment should be added, if applicable.
+     * @param courseId The ID of the course to which the new experiment should be added, if applicable.
      * @param model The {@link Model} used to store the information.
      * @return A new empty form.
      */
     @GetMapping("/create")
     @Secured(Constants.ROLE_ADMIN)
-    public String getExperimentForm(@RequestParam(required = false, name = "course") final String course,
+    public String getExperimentForm(@RequestParam(required = false, name = "course") final Integer courseId,
                                     final Model model) {
         ExperimentDTO experimentDTO = new ExperimentDTO();
 
-        if (course != null) {
-            int courseId = NumberParser.parseId(course);
-
-            if (courseId < Constants.MIN_ID) {
-                return Constants.ERROR;
-            } else {
-                experimentDTO.setCourse(courseId);
-                experimentDTO.setCourseExperiment(true);
-            }
+        if (courseId != null) {
+            IdValidator.validateCourseIdElseThrow(courseId);
+            experimentDTO.setCourse(courseId);
+            experimentDTO.setCourseExperiment(true);
         }
 
         model.addAttribute("experimentDTO", experimentDTO);
@@ -285,19 +273,14 @@ public class ExperimentController {
      * Returns the experiment edit page for the experiment with the given id. If no entry can be found in the database,
      * the user is redirected to the error page instead.
      *
-     * @param id The id to search for.
+     * @param experimentId The id to search for.
      * @param model The model to hold the information.
      * @return The experiment edit page on success, or the error page otherwise.
      */
     @GetMapping("/edit")
     @Secured(Constants.ROLE_ADMIN)
-    public String getEditExperimentForm(@RequestParam(ID) final String id, final Model model) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot return the experiment edit page with an invalid id parameter!");
-            return Constants.ERROR;
-        }
+    public String getEditExperimentForm(@RequestParam(ID) final int experimentId, final Model model) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         try {
             ExperimentDTO findExperiment = experimentService.getExperiment(experimentId);
@@ -355,24 +338,18 @@ public class ExperimentController {
      * Deletes the experiment with the given id from the database and redirects to the index page on success.
      *
      * @param passwordDTO The {@link PasswordDTO} containing the input password.
-     * @param id The id of the experiment.
+     * @param experimentId The id of the experiment.
      * @return The index page.
      */
     @PostMapping("/delete")
     @Secured(Constants.ROLE_ADMIN)
     public String deleteExperiment(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
-                                   @RequestParam(ID) final String id) {
-        if (id == null || passwordDTO.getPassword() == null) {
-            LOGGER.error("Cannot delete experiment with id null or input password null!");
+                                   @RequestParam(ID) final int experimentId) {
+        if (passwordDTO.getPassword() == null) {
+            LOGGER.error("Cannot delete experiment with password null!");
             return Constants.ERROR;
         }
-
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot delete the experiment with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -402,19 +379,19 @@ public class ExperimentController {
      * currently participating in a different one. If the passed id or status values are invalid, or no corresponding
      * experiment exists in the database, the user is redirected to the error page instead.
      *
-     * @param id The id of the experiment.
+     * @param experimentId The id of the experiment.
      * @param status The new status of the experiment.
      * @param model The model to hold the information.
      * @return The experiment page.
      */
     @GetMapping("/status")
     @Secured(Constants.ROLE_ADMIN)
-    public String changeExperimentStatus(@RequestParam("stat") final String status, @RequestParam(ID) final String id,
+    public String changeExperimentStatus(@RequestParam("stat") final String status,
+                                         @RequestParam(ID) final int experimentId,
                                          final Model model) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID || status == null) {
-            LOGGER.error("Cannot change the status of the experiment with invalid id or status parameters!");
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        if (status == null) {
+            LOGGER.error("Cannot change the status of the experiment with invalid status parameters!");
             return Constants.ERROR;
         }
 
@@ -438,7 +415,7 @@ public class ExperimentController {
                 if (!applicationProperties.useMail()) {
                     return REDIRECT_SECRET_LIST + experimentId;
                 } else {
-                    userDTOS.forEach(userDTO -> sendEmail(userDTO, id));
+                    userDTOS.forEach(userDTO -> sendEmail(userDTO, experimentId));
                 }
             } else if (status.equals("close")) {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
@@ -461,21 +438,17 @@ public class ExperimentController {
      * added as a participant to the given experiment. If no experiment with the corresponding id could be found or the
      * id is invalid, the user is redirected to the error page instead.
      *
-     * @param id The id of the experiment.
+     * @param experimentId The id of the experiment.
      * @param search The username or email address to search for.
      * @param model The model used to store the error messages.
      * @return The experiment page on success, or the error page otherwise.
      */
     @RequestMapping("/search")
     @Secured(Constants.ROLE_ADMIN)
-    public String searchForUser(@RequestParam("participant") final String search, @RequestParam(ID) final String id,
+    public String searchForUser(@RequestParam("participant") final String search,
+                                @RequestParam(ID) final int experimentId,
                                 final Model model) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot search for a user to add as participant with an invalid experiment id!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
@@ -511,8 +484,8 @@ public class ExperimentController {
 
         if (!applicationProperties.useMail()) {
             return REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + experimentId;
-        } else if (sendEmail(userDTO, id)) {
-            return REDIRECT_EXPERIMENT + id;
+        } else if (sendEmail(userDTO, experimentId)) {
+            return REDIRECT_EXPERIMENT + experimentId;
         } else {
             return Constants.ERROR;
         }
@@ -522,23 +495,17 @@ public class ExperimentController {
      * Loads the participant page with the given page number for the experiment with the given id, if the provided
      * numbers are valid.
      *
-     * @param id The experiment id.
-     * @param pageNumber The number of the page to be retrieved.
+     * @param experimentId The experiment id.
+     * @param page The number of the page to be retrieved.
      * @param model The {@link Model} used to store the information.
      * @return The experiment page on success, or the error page otherwise.
      */
     @GetMapping("/page")
     @Secured(Constants.ROLE_ADMIN)
-    public String getPage(@RequestParam(ID) final String id, @RequestParam(PAGE) final String pageNumber,
+    public String getPage(@RequestParam(ID) final int experimentId, @RequestParam(PAGE) final int page,
                           final Model model) {
-        if (PageUtils.isInvalidParams(id, pageNumber)) {
-            LOGGER.error("Cannot fetch participant page for invalid id " + id + " or invalid page number "
-                    + pageNumber + "!");
-            return Constants.ERROR;
-        }
-
-        int page = NumberParser.parseNumber(pageNumber);
-        int experimentId = NumberParser.parseId(id);
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validatePageNumberElseThrow(page);
 
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
@@ -552,25 +519,16 @@ public class ExperimentController {
      * Retrieves all block, click and resource event data for the given experiment and saves the information in a CSV
      * file.
      *
-     * @param id The experiment id to search for.
+     * @param experimentId The experiment id to search for.
      * @param httpServletResponse The servlet response returning the file.
-     * @throws IncompleteDataException if the passed id is null or invalid.
      * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
-    public void downloadCSVFile(@RequestParam(ID) final String id, final HttpServletResponse httpServletResponse) {
-        if (id == null) {
-            LOGGER.error("Cannot download CSV file for experiment with id null!");
-            throw new IncompleteDataException("Cannot download CSV file for experiment with id null!");
-        }
-
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot download CSV file for experiment with invalid id " + id + "!");
-            throw new IncompleteDataException("Cannot download CSV file for experiment with invalid id " + id + "!");
-        }
+    public void downloadCSVFile(
+        @RequestParam(ID) final int experimentId, final HttpServletResponse httpServletResponse
+    ) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         try {
             httpServletResponse.setContentType("text/csv");
@@ -593,25 +551,19 @@ public class ExperimentController {
      * corresponding error message is displayed.
      *
      * @param file The file containing the user information.
-     * @param id The id of the experiment to which the users should be added.
+     * @param experimentId The id of the experiment to which the users should be added.
      * @param model The model used to return error messages.
      * @return The experiment page on success or if an error message should be displayed, or the error page otherwise.
      */
     @PostMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
     public String addParticipantsFromCSV(@RequestParam("file") final MultipartFile file,
-                                         @RequestParam(ID) final String id, final Model model) {
+                                         @RequestParam(ID) final int experimentId, final Model model) {
         if (file == null) {
             LOGGER.error("Cannot add participants from CSV for experiment with file null!");
             return Constants.ERROR;
         }
-
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot add participants from CSV for experiment with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
@@ -650,22 +602,15 @@ public class ExperimentController {
      * Analysis the stored code data for all users in the experiment with the given id using LitterBox and saves the
      * information in a CSV file.
      *
-     * @param id The id of the experiment.
+     * @param experimentId The id of the experiment.
      * @param httpServletResponse The servlet response returning the file.
-     * @throws IncompleteDataException if the passed id is invalid.
      * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/analysis")
     @Secured(Constants.ROLE_ADMIN)
-    public void downloadLitterBoxAnalysis(@RequestParam(ID) final String id,
+    public void downloadLitterBoxAnalysis(@RequestParam(ID) final int experimentId,
                                           final HttpServletResponse httpServletResponse) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot download LitterBox analysis results for experiment with invalid id " + id + "!");
-            throw new IncompleteDataException("Cannot download LitterBox analysis results for experiment with invalid "
-                    + "id " + id + "!");
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         try {
             httpServletResponse.setContentType("text/csv");
@@ -687,7 +632,7 @@ public class ExperimentController {
      * parameters are invalid, no corresponding experiment could be found, or an {@link IOException} occurred, the user
      * is redirected to the error page instead.
      *
-     * @param id The experiment id to search for.
+     * @param experimentId The experiment id to search for.
      * @param file The sb3 file to be uploaded.
      * @param model The model used to return error messages.
      * @return The experiment page on success, or if the file was invalid, or the error page otherwise.
@@ -695,18 +640,12 @@ public class ExperimentController {
     @PostMapping("/upload")
     @Secured(Constants.ROLE_ADMIN)
     public String uploadProjectFile(@RequestParam("file") final MultipartFile file,
-                                    @RequestParam(ID) final String id, final Model model) {
-        if (id == null || file == null) {
-            LOGGER.error("Cannot upload file for experiment with id null or with file null!");
+                                    @RequestParam(ID) final int experimentId, final Model model) {
+        if (file == null) {
+            LOGGER.error("Cannot upload file for experiment with file null!");
             return Constants.ERROR;
         }
-
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot upload project file for experiment with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
@@ -738,23 +677,13 @@ public class ExperimentController {
      * Deletes the sb3 file currently saved for the experiment with the given id. If the id is invalid, or no
      * corresponding experiment could be found, the user is redirected to the error page instead.
      *
-     * @param id The experiment id to search for.
+     * @param experimentId The experiment id to search for.
      * @return The experiment page on success, or the error page otherwise.
      */
     @GetMapping("/sb3")
     @Secured(Constants.ROLE_ADMIN)
-    public String deleteProjectFile(@RequestParam(ID) final String id) {
-        if (id == null) {
-            LOGGER.error("Cannot delete file for experiment with id null!");
-            return Constants.ERROR;
-        }
-
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot delete project file for experiment with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+    public String deleteProjectFile(@RequestParam(ID) final int experimentId) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         try {
             experimentService.deleteSb3Project(experimentId);
@@ -772,7 +701,7 @@ public class ExperimentController {
      * @param experimentId The id of the experiment in which the user is participating.
      * @return {@code true} if the message has been sent successfully or {@code false} otherwise.
      */
-    private boolean sendEmail(final UserDTO userDTO, final String experimentId) {
+    private boolean sendEmail(final UserDTO userDTO, final int experimentId) {
         if (userDTO.getEmail() == null) {
             LOGGER.error("Cannot send invitation mail to user with email null!");
             return false;
@@ -799,7 +728,7 @@ public class ExperimentController {
      * @param secret The user's secret.
      * @return The map containing the base URL and the experiment URL.
      */
-    private Map<String, Object> getTemplateModel(final String id, final String secret) {
+    private Map<String, Object> getTemplateModel(final int id, final String secret) {
         String experimentUrl = applicationProperties.getApplicationUrl()
                 + "/users/authenticate?id=" + id + "&secret=" + secret;
         Map<String, Object> templateModel = new HashMap<>();

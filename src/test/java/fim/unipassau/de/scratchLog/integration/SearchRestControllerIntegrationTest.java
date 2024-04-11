@@ -156,8 +156,7 @@ public class SearchRestControllerIntegrationTest extends AbstractControllerTest 
                         .param(PAGE_PARAM, BLANK)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().is4xxClientError());
         verify(searchService, never()).getNextUsers(anyString(), anyInt());
     }
 
@@ -196,7 +195,7 @@ public class SearchRestControllerIntegrationTest extends AbstractControllerTest 
     public void testGetMoreExperimentsInvalidPage() throws Exception {
         mvc.perform(get("/search/experiments")
                         .param(QUERY_PARAM, QUERY)
-                        .param(PAGE_PARAM, "0")
+                        .param(PAGE_PARAM, "-1")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -211,8 +210,7 @@ public class SearchRestControllerIntegrationTest extends AbstractControllerTest 
                         .param(PAGE_PARAM, "a")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().is4xxClientError());
         verify(searchService, never()).getNextExperiments(anyString(), anyInt());
     }
 
@@ -293,8 +291,7 @@ public class SearchRestControllerIntegrationTest extends AbstractControllerTest 
                 .param(ID_PARAM, BLANK)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().is4xxClientError());
         verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
     }
 
@@ -360,7 +357,7 @@ public class SearchRestControllerIntegrationTest extends AbstractControllerTest 
     public void testGetCourseExperimentSuggestionsInvalidParams() throws Exception {
         mvc.perform(get("/search/course/experiment")
                         .param(QUERY_PARAM, QUERY)
-                        .param(ID_PARAM, BLANK)
+                        .param(ID_PARAM, "-1")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
@@ -448,8 +445,7 @@ public class SearchRestControllerIntegrationTest extends AbstractControllerTest 
                         .param(ID_PARAM, BLANK)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(status().is4xxClientError());
         verify(searchService, never()).getCourseParticipantDeleteSuggestions(anyString(), anyInt());
     }
 

@@ -33,6 +33,7 @@ import fim.unipassau.de.scratchLog.persistence.projection.BlockEventXMLProjectio
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.FileProjection;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.web.AbstractControllerTest;
 import fim.unipassau.de.scratchLog.web.controller.ResultController;
 import fim.unipassau.de.scratchLog.web.dto.CodesDataDTO;
@@ -296,8 +297,8 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("blockEvents", nullValue()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
         verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
         verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
@@ -341,8 +342,8 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
                 .param(ID_PARAM, "  ")
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(fileService, never()).findFile(anyInt());
     }
 
@@ -511,8 +512,8 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
                 .param(ID_PARAM, "0")
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(fileService, never()).findZip(anyInt());
     }
 

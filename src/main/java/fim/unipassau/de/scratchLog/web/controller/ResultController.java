@@ -35,12 +35,12 @@ import fim.unipassau.de.scratchLog.persistence.projection.BlockEventXMLProjectio
 import fim.unipassau.de.scratchLog.persistence.projection.ExperimentProjection;
 import fim.unipassau.de.scratchLog.persistence.projection.FileProjection;
 import fim.unipassau.de.scratchLog.util.Constants;
-import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.web.dto.CodesDataDTO;
 import fim.unipassau.de.scratchLog.web.dto.EventCountDTO;
 import fim.unipassau.de.scratchLog.web.dto.FileDTO;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
 import fim.unipassau.de.scratchLog.web.dto.Sb3ZipDTO;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,28 +170,18 @@ public class ResultController {
      * with the given id. If the passed parameters are invalid, the user is not a participant in the given experiment,
      * or no corresponding user or experiment could be found, the user is redirected to the error page instead.
      *
-     * @param experiment The experiment id.
-     * @param user The user id.
+     * @param experimentId The experiment id.
+     * @param userId The user id.
      * @param model The model used to store information.
      * @return The result page on success, or the error page otherwise.
      */
     @GetMapping("")
     @Secured(Constants.ROLE_ADMIN)
-    public ModelAndView getResult(@RequestParam(EXPERIMENT) final String experiment,
-                                  @RequestParam(USER) final String user, final Model model) {
-        if (user == null || experiment == null) {
-            LOGGER.error("Cannot return result page for user with id null or experiment with id null!");
-            return new ModelAndView(Constants.ERROR);
-        }
+    public ModelAndView getResult(@RequestParam(EXPERIMENT) final int experimentId,
+                                  @RequestParam(USER) final int userId, final Model model) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
 
-        int userId = NumberParser.parseNumber(user);
-        int experimentId = NumberParser.parseNumber(experiment);
-
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot return result page for user with invalid id " + userId + " or experiment with invalid "
-                    + "id " + experimentId + "!");
-            return new ModelAndView(Constants.ERROR);
-        }
         if (!userService.existsParticipant(userId, experimentId)) {
             LOGGER.error("Could not find participant entry for user with id " + userId + " for experiment with id "
                     + experimentId);
@@ -239,23 +229,13 @@ public class ResultController {
      * Makes the file with the given id available for download, if it exists. If the given id is invalid or no file
      * could be found in the database, the user is redirected to the error page instead.
      *
-     * @param id The file id to search for.
+     * @param fileId The file id to search for.
      * @return The file for download on success, or the error page otherwise.
      */
     @GetMapping("/file")
     @Secured(Constants.ROLE_ADMIN)
-    public Object downloadFile(@RequestParam(ID) final String id) {
-        if (id == null) {
-            LOGGER.error("Cannot download file with invalid id null!");
-            return Constants.ERROR;
-        }
-
-        int fileId = NumberParser.parseNumber(id);
-
-        if (fileId < Constants.MIN_ID) {
-            LOGGER.error("Cannot download file with invalid id " + fileId + "!");
-            return Constants.ERROR;
-        }
+    public Object downloadFile(@RequestParam(ID) final int fileId) {
+        IdValidator.validateFileIdElseThrow(fileId);
 
         try {
             FileDTO fileDTO = fileService.findFile(fileId);
@@ -272,30 +252,22 @@ public class ResultController {
      * from the saved json string, all costumes and sounds present in the experiment project file are added to the sb3
      * file as well as all files saved for the user during the experiment.
      *
-     * @param experiment The id of the experiment.
-     * @param user The id of the user.
-     * @param json The block event id to search for.
+     * @param experimentId The id of the experiment.
+     * @param userId The id of the user.
+     * @param jsonId The block event id to search for.
      * @param httpServletResponse The servlet response.
      * @throws IncompleteDataException if the passed user, experiment or json ids are invalid.
      * @throws RuntimeException if an {@link IOException} occurs during the sb3 file creation.
      */
     @GetMapping("/generate")
     @Secured(Constants.ROLE_ADMIN)
-    public void generateZipFile(@RequestParam(EXPERIMENT) final String experiment,
-                                @RequestParam(USER) final String user, @RequestParam("json") final String json,
+    public void generateZipFile(@RequestParam(EXPERIMENT) final int experimentId,
+                                @RequestParam(USER) final int userId,
+                                @RequestParam("json") final int jsonId,
                                 final HttpServletResponse httpServletResponse) {
-        if (json == null || experiment == null || user == null) {
-            throw new IncompleteDataException("Cannot generate zip file with JSON, experiment or user null!");
-        }
-
-        int userId = NumberParser.parseNumber(user);
-        int experimentId = NumberParser.parseNumber(experiment);
-        int jsonId = NumberParser.parseNumber(json);
-
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID || jsonId < Constants.MIN_ID) {
-            throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + user
-                    + " or experiment with invalid id " + experiment + "or json with invalid id " + json + "!");
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+        IdValidator.validateIdElseThrow("json", jsonId);
 
         ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
@@ -323,23 +295,13 @@ public class ResultController {
      * Retrieves the zip file with the given id and makes it available for download, if it exists. If the id is invalid
      * or no zip file could be found in the database, the user is redirected to the error page instead.
      *
-     * @param id The zip file id to search for.
+     * @param zipId The zip file id to search for.
      * @return The zip file for download on success, or the error page otherwise.
      */
     @GetMapping("/zip")
     @Secured(Constants.ROLE_ADMIN)
-    public Object downloadZip(@RequestParam(ID) final String id) {
-        if (id == null) {
-            LOGGER.error("Cannot download zip file with invalid id null!");
-            return Constants.ERROR;
-        }
-
-        int zipId = NumberParser.parseNumber(id);
-
-        if (zipId < Constants.MIN_ID) {
-            LOGGER.error("Cannot download zip file with invalid id " + zipId + "!");
-            return Constants.ERROR;
-        }
+    public Object downloadZip(@RequestParam(ID) final int zipId) {
+        IdValidator.validateIdElseThrow("zip", zipId);
 
         try {
             Sb3ZipDTO sb3ZipDTO = fileService.findZip(zipId);
@@ -354,29 +316,19 @@ public class ResultController {
      * Retrieves all zip files created for the given user during the given experiment and makes them available for
      * download in a zip file.
      *
-     * @param experiment The experiment id to search for.
-     * @param user The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
      * @throws IncompleteDataException if the passed user or experiment ids are invalid.
      * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/zips")
     @Secured(Constants.ROLE_ADMIN)
-    public void downloadAllZips(@RequestParam(EXPERIMENT) final String experiment,
-                                @RequestParam(USER) final String user,
+    public void downloadAllZips(@RequestParam(EXPERIMENT) final int experimentId,
+                                @RequestParam(USER) final int userId,
                                 final HttpServletResponse httpServletResponse) {
-        if (user == null || experiment == null) {
-            throw new IncompleteDataException("Cannot download zip files for user with id null or experiment with id "
-                    + "null!");
-        }
-
-        int userId = NumberParser.parseNumber(user);
-        int experimentId = NumberParser.parseNumber(experiment);
-
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IncompleteDataException("Cannot download zip files for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "projects")) {
             List<Sb3ZipDTO> sb3ZipDTOS = fileService.getZipFiles(userId, experimentId);
@@ -399,29 +351,19 @@ public class ResultController {
      * Retrieves all the xml codes that were saved for the given user during the given experiment and makes them
      * available for download in a zip file.
      *
-     * @param experiment The experiment id to search for.
-     * @param user The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
      * @throws IncompleteDataException if the passed user or experiment ids are invalid.
      * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/xmls")
     @Secured(Constants.ROLE_ADMIN)
-    public void downloadAllXmlFiles(@RequestParam(EXPERIMENT) final String experiment,
-                                    @RequestParam(USER) final String user,
+    public void downloadAllXmlFiles(@RequestParam(EXPERIMENT) final int experimentId,
+                                    @RequestParam(USER) final int userId,
                                     final HttpServletResponse httpServletResponse) {
-        if (user == null || experiment == null) {
-            throw new IncompleteDataException("Cannot download xml files for user with id null or experiment with id "
-                    + "null!");
-        }
-
-        int userId = NumberParser.parseNumber(user);
-        int experimentId = NumberParser.parseNumber(experiment);
-
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IncompleteDataException("Cannot download xml files for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "xml")) {
             List<BlockEventXMLProjection> xml = codeService.getXMLForUser(userId, experimentId);
@@ -444,29 +386,19 @@ public class ResultController {
      * Retrieves all the json strings that were saved for the given user during the given experiment and makes them
      * available for download in a zip file.
      *
-     * @param experiment The experiment id to search for.
-     * @param user The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
      * @throws IncompleteDataException if the passed user or experiment ids are invalid.
      * @throws RuntimeException if an {@link IOException} occurs.
      */
     @GetMapping("/jsons")
     @Secured(Constants.ROLE_ADMIN)
-    public void downloadAllJsonFiles(@RequestParam(EXPERIMENT) final String experiment,
-                                     @RequestParam(USER) final String user,
+    public void downloadAllJsonFiles(@RequestParam(EXPERIMENT) final int experimentId,
+                                     @RequestParam(USER) final int userId,
                                      final HttpServletResponse httpServletResponse) {
-        if (user == null || experiment == null) {
-            throw new IncompleteDataException("Cannot download json files for user with id null or experiment with id "
-                    + "null!");
-        }
-
-        int userId = NumberParser.parseNumber(user);
-        int experimentId = NumberParser.parseNumber(experiment);
-
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IncompleteDataException("Cannot download json files for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json")) {
             List<BlockEventJSONProjection> json = codeService.getJsonForUser(userId, experimentId);
@@ -490,8 +422,8 @@ public class ResultController {
      * Loads a list of {@link BlockEventProjection}s for the given page number, user and experiment from the
      * database.
      *
-     * @param experiment The experiment id to search for.
-     * @param user The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
      * @param page The current page number.
      * @return The list of block event projections.
      * @throws IncompleteDataException if the passed user or experiment id or the page are invalid.
@@ -499,29 +431,16 @@ public class ResultController {
     @GetMapping("/codes")
     @Secured(Constants.ROLE_ADMIN)
     @ResponseBody
-    public List<BlockEventProjection> getCodes(@RequestParam(EXPERIMENT) final String experiment,
-                                               @RequestParam(USER) final String user,
-                                               @RequestParam("page") final String page) {
-        if (user == null || experiment == null || page == null) {
-            throw new IncompleteDataException("Cannot get codes for user with id null or experiment with id null or "
-                    + "page null!");
-        }
+    public List<BlockEventProjection> getCodes(@RequestParam(EXPERIMENT) final int experimentId,
+                                               @RequestParam(USER) final int userId,
+                                               @RequestParam("page") final int page) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+        IdValidator.validatePageNumberElseThrow(page);
 
-        int userId = NumberParser.parseNumber(user);
-        int experimentId = NumberParser.parseNumber(experiment);
-        int currentPage = NumberParser.parseNumber(page);
-
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IncompleteDataException("Cannot get codes for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "or invalid page number" + page + "!");
-        }
-
-        if (currentPage < 0) {
-            throw new IncompleteDataException("Cannot get codes for invalid page number " + currentPage + "!");
-        }
-
-        return codeService.getCodesForUser(userId, experimentId, PageRequest.of(currentPage,
-                Constants.PAGE_SIZE)).getContent();
+        return codeService
+            .getCodesForUser(userId, experimentId, PageRequest.of(page, Constants.PAGE_SIZE))
+            .getContent();
     }
 
     /**
@@ -533,8 +452,8 @@ public class ResultController {
      * not resources that can be loaded from the Scratch library. The resulting sb3 zip file is then written into
      * another zip file made available for download containing all the created sb3 files.
      *
-     * @param experiment The experiment id to search for.
-     * @param user The user id to search for.
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
      * @param step The step interval in minutes.
      * @param start The start of the interval in which all json files should be downloaded.
      * @param end The end of the interval in which all json files should be downloaded.
@@ -545,47 +464,44 @@ public class ResultController {
      */
     @GetMapping("/sb3s")
     @Secured(Constants.ROLE_ADMIN)
-    public void downloadSb3Files(@RequestParam(EXPERIMENT) final String experiment,
-                                 @RequestParam(USER) final String user,
-                                 @RequestParam(value = "step", required = false) final String step,
-                                 @RequestParam(value = "start", required = false) final String start,
-                                 @RequestParam(value = "end", required = false) final String end,
-                                 @RequestParam(value = "include", required = false) final String include,
-                                 final HttpServletResponse httpServletResponse) {
-        checkDownloadParameters(experiment, user, step, start, end, include);
-        int userId = NumberParser.parseNumber(user);
-        int experimentId = NumberParser.parseNumber(experiment);
-        int steps = 0;
-        int startPosition = 0;
-        int endPosition = 0;
-        boolean includeFinalProject = true;
+    @SuppressWarnings("checkstyle:finalparameters")
+    public void downloadSb3Files(
+        @RequestParam(EXPERIMENT) final int experimentId,
+        @RequestParam(USER) final int userId,
+        @RequestParam(value = "step", required = false) Integer step,
+        @RequestParam(value = "start", required = false) Integer start,
+        @RequestParam(value = "end", required = false) Integer end,
+        @RequestParam(value = "include", required = false) Boolean include,
+        final HttpServletResponse httpServletResponse
+    ) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+        checkDownloadParameters(step, start, end, include);
 
-        if (step != null) {
-            steps = getNumberFromString(step, "step interval");
-        } else if (start != null) {
-            startPosition = getNumberFromString(start, "start position");
-            endPosition = getNumberFromString(end, "end position");
-            includeFinalProject = !include.equals("false");
-
-            if (startPosition > endPosition) {
-                throw new IncompleteDataException("Cannot generate zip file for start position " + start
-                        + " bigger than end position " + end + "!");
-            }
+        // the checkDownloadParameters above expects certain parameters to be null/non-null. Therefore, we cannot use
+        // defaultValue in the RequestParam annotation.
+        if (step == null) {
+            step = 0;
         }
-
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IncompleteDataException("Cannot generate zip file for user with invalid id " + user
-                    + " or experiment with invalid id " + experiment + "!");
+        if (include == null) {
+            include = true;
+        }
+        if (start == null) {
+            start = 0;
+        }
+        if (end == null) {
+            end = 0;
         }
 
         ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
         Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
-        List<BlockEventJSONProjection> jsons = codeService.getFilteredJsons(userId, experimentId, steps, startPosition,
-                endPosition, finalProject);
+        List<BlockEventJSONProjection> jsons = codeService.getFilteredJsons(
+            userId, experimentId, step, start, end, finalProject
+        );
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip")) {
-            writeUserSb3Files(zos, projection, fileDTOS, finalProject, jsons, includeFinalProject);
+            writeUserSb3Files(zos, projection, fileDTOS, finalProject, jsons, include);
             zos.finish();
         } catch (IOException e) {
             throw new RuntimeException("Could not generate zip file due to IOException!", e);
@@ -601,7 +517,7 @@ public class ResultController {
      * written into another zip containing all entries for a given user. All zip files generated for each experiment
      * participant is then placed in another zip file which is made available for download.
      *
-     * @param experiment The experiment id to search for.
+     * @param experimentId The experiment id to search for.
      * @param step The step interval in minutes.
      * @param httpServletResponse The servlet response returning the files.
      * @throws IncompleteDataException if any of the passed parameters are invalid.
@@ -609,17 +525,13 @@ public class ResultController {
      */
     @GetMapping("/sb3s/all")
     @Secured(Constants.ROLE_ADMIN)
-    public void downloadExperimentSb3Files(@RequestParam(EXPERIMENT) final String experiment,
-                                           @RequestParam(value = "step", required = false) final String step,
-                                           final HttpServletResponse httpServletResponse) {
-        int experimentId = NumberParser.parseNumber(experiment);
+    public void downloadExperimentSb3Files(
+        @RequestParam(EXPERIMENT) final int experimentId,
+        @RequestParam(value = "step", required = false, defaultValue = "0") final int step,
+        final HttpServletResponse httpServletResponse
+    ) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
-        if (experimentId < Constants.MIN_ID) {
-            throw new IncompleteDataException("Cannot download experiment sb3 files for experiment with invalid id "
-                    + experiment + "!");
-        }
-
-        int steps = step != null ? getNumberFromString(step, "step interval") : 0;
         List<ParticipantDTO> participants = participantService.getParticipants(experimentId);
         ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
 
@@ -629,7 +541,7 @@ public class ResultController {
 
         try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, 0, experimentId, "zip")) {
             for (ParticipantDTO participantDTO : participants) {
-                writeUserSb3Entry(zos, projection, experimentId, participantDTO.getUser(), steps);
+                writeUserSb3Entry(zos, projection, experimentId, participantDTO.getUser(), step);
             }
         } catch (IOException e) {
             throw new RuntimeException("Could not download sb3 files for experiment due to IOException!", e);
@@ -642,45 +554,47 @@ public class ResultController {
      * end and include parameters need to be present. If sb3 files are downloaded in minute intervals, the start
      * parameter cannot be specified.
      *
-     * @param experiment The id of the experiment.
-     * @param user The id of the user.
      * @param step The step interval in minutes.
      * @param start The start of the interval in which all json files should be downloaded.
      * @param end The end of the interval in which all json files should be downloaded.
      * @param include Whether the final project should be included.
      * @throws IncompleteDataException if the required parameters are not specified.
      */
-    private void checkDownloadParameters(final String experiment, final String user, final String step,
-                                         final String start, final String end, final String include) {
-        if (experiment == null || user == null) {
-            throw new IncompleteDataException("Cannot generate zip file with experiment or user null!");
-        } else if ((start != null || end != null || include != null)
-                && (start == null || end == null || include == null)) {
-            throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
-                    + "parameters start, end and include are specified!");
-        } else if (start != null && step != null) {
+    private void checkDownloadParameters(
+        final Integer step, final Integer start, final Integer end, final Boolean include
+    ) {
+        if (step == null && start == null && end == null && Boolean.FALSE.equals(include)) {
+            throw new IncompleteDataException(
+                "Either step or start and end must be specified when not including final project!"
+            );
+        }
+
+        if (step != null && step <= 0) {
+            throw new IncompleteDataException("step must be >= 0");
+        }
+        if (start != null && start < 0) {
+            throw new IncompleteDataException("start must be >= 0");
+        }
+        if (end != null && end < 0) {
+            throw new IncompleteDataException("end must be >= 0");
+        }
+
+        if (start != null && step != null) {
             throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
                     + "parameters are specified!");
         }
-    }
 
-    /**
-     * Parses the given string to a number and checks if it is larger than one.
-     *
-     * @param number The string representation of the number.
-     * @param parameterName The name of the parameter that is checked.
-     * @return The parsed valid number.
-     * @throws IllegalArgumentException if the passed number is invalid.
-     */
-    private int getNumberFromString(final String number, final String parameterName) {
-        int num = NumberParser.parseNumber(number);
-
-        if (num < 1) {
-            throw new IncompleteDataException("Cannot generate zip file for invalid " + parameterName + " " + num
-                    + "!");
+        if (start != null || end != null) {
+            if (start == null || end == null || include == null) {
+                throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
+                    + "parameters start, end and include are specified!");
+            }
         }
 
-        return num;
+        if (start != null && end != null && start > end) {
+            throw new IncompleteDataException("Cannot generate zip file for start position " + start
+                + " bigger than end position " + end + "!");
+        }
     }
 
     /**

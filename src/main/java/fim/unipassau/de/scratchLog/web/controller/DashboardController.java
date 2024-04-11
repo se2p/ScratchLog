@@ -21,12 +21,10 @@ package fim.unipassau.de.scratchLog.web.controller;
 
 import fim.unipassau.de.scratchLog.application.service.DashboardService;
 import fim.unipassau.de.scratchLog.util.Constants;
-import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.util.enums.BlockEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific;
 import fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
@@ -47,11 +45,6 @@ import java.util.List;
 public class DashboardController {
 
     /**
-     * The log instance associated with this class for logging purposes.
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardController.class);
-
-    /**
      * The dashboard service to use for retrieving information displayed on the experiment dashboard.
      */
     private final DashboardService dashboardService;
@@ -70,19 +63,14 @@ public class DashboardController {
      * Retrieves the dashboard page for the experiment with the given id. If no corresponding experiment could be found,
      * or the id is invalid, the user is returned to the error page instead.
      *
-     * @param id The experiment id.
+     * @param experimentId The experiment id.
      * @param model The {@link Model} used to store the experiment id.
      * @return The dashboard page on success, or the error page otherwise.
      */
     @GetMapping("")
     @Secured(Constants.ROLE_ADMIN)
-    public String getDashboard(@RequestParam("id") final String id, final Model model) {
-        int experimentId = NumberParser.parseId(id);
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.error("Cannot return dashboard for experiment with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+    public String getDashboard(@RequestParam("id") final int experimentId, final Model model) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         if (dashboardService.existsExperiment(experimentId) && dashboardService.existsParticipants(experimentId)) {
             model.addAttribute("experiment", experimentId);

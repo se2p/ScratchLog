@@ -30,7 +30,6 @@ import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.CustomPasswordGenerator;
 import fim.unipassau.de.scratchLog.util.FieldErrorHandler;
-import fim.unipassau.de.scratchLog.util.NumberParser;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.util.enums.TokenType;
@@ -43,6 +42,7 @@ import fim.unipassau.de.scratchLog.web.dto.PasswordDTO;
 import fim.unipassau.de.scratchLog.web.dto.TokenDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserBulkDTO;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
+import fim.unipassau.de.scratchLog.web.error_handling.IdValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -209,29 +209,24 @@ public class UserController {
      * redirected to the corresponding experiment page. If an error occurred during authentication, the user is
      * redirected to the error page instead.
      *
-     * @param id The id of the experiment in which the user is participating.
+     * @param experimentId The id of the experiment in which the user is participating.
      * @param secret The user's secret.
      * @param httpServletRequest The servlet request.
      * @param httpServletResponse The servlet response.
      * @return The experiment page on success, or the error page, otherwise.
      */
     @GetMapping("/authenticate")
-    public String authenticateUser(@RequestParam("id") final String id, @RequestParam("secret") final String secret,
+    public String authenticateUser(@RequestParam("id") final int experimentId,
+                                   @RequestParam("secret") final String secret,
                                    final HttpServletRequest httpServletRequest,
                                    final HttpServletResponse httpServletResponse) {
-        if (id == null || id.trim().isBlank() || secret == null || secret.trim().isBlank()) {
+        if (secret == null || secret.trim().isBlank()) {
             LOGGER.error("Cannot authenticate participant with id or secret null or blank!");
             return Constants.ERROR;
         }
+        IdValidator.validateExperimentIdElseThrow(experimentId);
 
-        int experimentId = NumberParser.parseNumber(id);
         UserDTO authenticated;
-
-        if (experimentId < Constants.MIN_ID) {
-            LOGGER.debug("Cannot authenticate user with invalid experiment id " + id + "!");
-            return Constants.ERROR;
-        }
-
         try {
             authenticated = userService.authenticateUser(secret);
         } catch (NotFoundException e) {
@@ -239,8 +234,11 @@ public class UserController {
         }
 
         if (!userService.existsParticipant(authenticated.getId(), experimentId)) {
-            LOGGER.error("No participation entry could be found for the user with username "
-                    + authenticated.getUsername() + " and experiment with id " + id + "!");
+            LOGGER.error(
+                "No participation entry could be found for the user with username {} and experiment with id {}!",
+                authenticated.getUsername(),
+                experimentId
+            );
             return Constants.ERROR;
         } else if (httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -791,25 +789,19 @@ public class UserController {
      * see an error message instead.
      *
      * @param passwordDTO The {@link PasswordDTO} containing the input password.
-     * @param id The id of the user to be deleted.
+     * @param userId The id of the user to be deleted.
      * @param httpServletRequest The servlet request.
      * @return The index page on success, or the profile or error page.
      */
     @PostMapping("/delete")
     @Secured(Constants.ROLE_ADMIN)
     public String deleteUser(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
-                             @RequestParam("id") final String id, final HttpServletRequest httpServletRequest) {
-        if (id == null || passwordDTO.getPassword() == null) {
+                             @RequestParam("id") final int userId, final HttpServletRequest httpServletRequest) {
+        if (passwordDTO.getPassword() == null) {
             LOGGER.error("Cannot delete user with id null or input password null!");
             return Constants.ERROR;
         }
-
-        int userId = NumberParser.parseNumber(id);
-
-        if (userId < Constants.MIN_ID) {
-            LOGGER.error("Cannot delete user with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateUserIdElseThrow(userId);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -847,23 +839,13 @@ public class UserController {
      * If the operation was successful, the user is redirected to the profile page. If anything went wrong, the user is
      * redirected to the error page instead.
      *
-     * @param id The participant's id.
+     * @param userId The participant's id.
      * @return The participant's profile page on success, or the error page, otherwise.
      */
     @GetMapping("/active")
     @Secured(Constants.ROLE_ADMIN)
-    public String changeActiveStatus(@RequestParam("id") final String id) {
-        if (id == null) {
-            LOGGER.debug("Cannot change active status of user with id null!");
-            return Constants.ERROR;
-        }
-
-        int userId = NumberParser.parseNumber(id);
-
-        if (userId < Constants.MIN_ID) {
-            LOGGER.debug("Cannot change active status of user with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+    public String changeActiveStatus(@RequestParam("id") final int userId) {
+        IdValidator.validateUserIdElseThrow(userId);
 
         try {
             UserDTO userDTO = userService.getUserById(userId);
@@ -892,26 +874,16 @@ public class UserController {
      * Retrieves the password page to (re)set the password of the user with the given id. If the user could not be
      * found or the passed id is invalid, the user is redirected to the error page instead.
      *
-     * @param id The id of the user whose password is to be reset.
+     * @param userId The id of the user whose password is to be reset.
      * @param model The user dto containing the old user information.
      * @param httpServletRequest The servlet request.
      * @return The password page on success, or the error page otherwise.
      */
     @GetMapping("/forgot")
     @Secured(Constants.ROLE_ADMIN)
-    public String getPasswordResetForm(@RequestParam("id") final String id, final Model model,
+    public String getPasswordResetForm(@RequestParam("id") final int userId, final Model model,
                                        final HttpServletRequest httpServletRequest) {
-        if (id == null) {
-            LOGGER.debug("Cannot reset password for user with id null!");
-            return Constants.ERROR;
-        }
-
-        int userId = NumberParser.parseNumber(id);
-
-        if (userId < Constants.MIN_ID) {
-            LOGGER.debug("Cannot reset password for user with invalid id " + id + "!");
-            return Constants.ERROR;
-        }
+        IdValidator.validateUserIdElseThrow(userId);
 
         try {
             UserDTO userDTO = userService.getUserById(userId);

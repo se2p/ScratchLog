@@ -399,8 +399,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .param(ID_PARAM, INVALID_ID)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(ID);
     }
 
@@ -469,8 +469,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                         .param(ID_PARAM, INFO)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(ID);
     }
 
@@ -659,8 +659,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .flashAttr(PASSWORD_DTO, passwordDTO)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(experimentService, never()).deleteExperiment(anyInt());
@@ -1046,8 +1046,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .param(PAGE_PARAM, CURRENT)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(ID);
         verify(pageService, never()).getLastParticipantPage(ID);
         verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
@@ -1060,8 +1060,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .param(PAGE_PARAM, "-1")
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(ID);
         verify(pageService, never()).getLastParticipantPage(ID);
         verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
@@ -1183,8 +1183,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                         .param(ID_PARAM, ID_PARAM)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).isAdmin(anyString());
@@ -1282,8 +1282,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .param(ID_PARAM, BLANK)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).getExperiment(anyInt());
         verify(experimentService, never()).uploadSb3Project(anyInt(), any());
     }
@@ -1317,8 +1317,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .param(ID_PARAM, "0")
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError())
+                .andExpect(view().name(Constants.ERROR));
         verify(experimentService, never()).deleteSb3Project(anyInt());
     }
 
