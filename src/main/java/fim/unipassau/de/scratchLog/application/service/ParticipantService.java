@@ -34,6 +34,7 @@ import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.Constants;
+import fim.unipassau.de.scratchLog.util.InactivityConfiguration;
 import fim.unipassau.de.scratchLog.util.Secrets;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
@@ -62,6 +63,11 @@ public class ParticipantService {
      * The log instance associated with this class for logging purposes.
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(ParticipantService.class);
+
+    /**
+     * The inactivity configuration.
+     */
+    private final InactivityConfiguration inactivityConfiguration;
 
     /**
      * The user repository to use for database queries related to user data.
@@ -96,6 +102,7 @@ public class ParticipantService {
     /**
      * Constructs a participant service with the given dependencies.
      *
+     * @param inactivityConfiguration The {@link InactivityConfiguration}.
      * @param userRepository The {@link UserRepository} to use.
      * @param participantRepository The {@link ParticipantRepository} to use.
      * @param courseRepository The {@link CourseRepository} to use.
@@ -104,11 +111,14 @@ public class ParticipantService {
      * @param experimentRepository The {@link ExperimentRepository} to use.
      */
     @Autowired
-    public ParticipantService(final UserRepository userRepository, final ParticipantRepository participantRepository,
+    public ParticipantService(final InactivityConfiguration inactivityConfiguration,
+                              final UserRepository userRepository,
+                              final ParticipantRepository participantRepository,
                               final CourseRepository courseRepository,
                               final CourseExperimentRepository courseExperimentRepository,
                               final CourseParticipantRepository courseParticipantRepository,
                               final ExperimentRepository experimentRepository) {
+        this.inactivityConfiguration = inactivityConfiguration;
         this.userRepository = userRepository;
         this.participantRepository = participantRepository;
         this.courseRepository = courseRepository;
@@ -505,8 +515,9 @@ public class ParticipantService {
     private void checkDeactivateExperiment(final Experiment experiment) {
         List<Participant> participants = participantRepository.findAllByExperiment(experiment);
 
-        if (participants.size() > 0) {
-            LocalDateTime maxInactiveTime = LocalDateTime.now().minusDays(Constants.EXPERIMENT_INACTIVE_DAYS);
+        if (!participants.isEmpty()) {
+            int allowedInactiveDays = inactivityConfiguration.getDisableInactiveExperimentAfterDays();
+            LocalDateTime maxInactiveTime = LocalDateTime.now().minusDays(allowedInactiveDays);
             LocalDateTime lastStart = participants.stream().map(
                     Participant::getStart).filter(Objects::nonNull).max(LocalDateTime::compareTo).orElse(null);
             LocalDateTime lastEnd = participants.stream().map(

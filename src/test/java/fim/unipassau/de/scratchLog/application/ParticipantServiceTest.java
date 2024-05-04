@@ -33,6 +33,7 @@ import fim.unipassau.de.scratchLog.persistence.repository.CourseRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
+import fim.unipassau.de.scratchLog.util.InactivityConfiguration;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.ParticipantDTO;
@@ -42,7 +43,6 @@ import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -71,7 +71,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class ParticipantServiceTest {
 
-    @InjectMocks
     private ParticipantService participantService;
 
     @Mock
@@ -91,6 +90,8 @@ public class ParticipantServiceTest {
 
     @Mock
     private ParticipantRepository participantRepository;
+
+    private final InactivityConfiguration inactivityConfiguration = new InactivityConfiguration(30, 90, 180);
 
     private static final String USERNAME = "participant";
     private static final String PASSWORD = "participant1";
@@ -129,6 +130,11 @@ public class ParticipantServiceTest {
         experiment2.setActive(true);
         participant2.setStart(MAX_TIME);
         participant2.setEnd(MAX_TIME);
+
+        participantService = new ParticipantService(
+            inactivityConfiguration, userRepository, participantRepository, courseRepository,
+            courseExperimentRepository, courseParticipantRepository, experimentRepository
+        );
     }
 
     @Test

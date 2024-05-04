@@ -38,6 +38,7 @@ import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.Constants;
+import fim.unipassau.de.scratchLog.util.InactivityConfiguration;
 import fim.unipassau.de.scratchLog.util.Secrets;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.CourseDTO;
@@ -64,6 +65,11 @@ public class CourseService {
      * The log instance associated with this class for logging purposes.
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(CourseService.class);
+
+    /**
+     * The inactivity configuration.
+     */
+    private final InactivityConfiguration inactivityConfiguration;
 
     /**
      * The course repository to use for database queries related to course data.
@@ -98,6 +104,7 @@ public class CourseService {
     /**
      * Constructs a new course service with the given dependencies.
      *
+     * @param inactivityConfiguration The {@link InactivityConfiguration}.
      * @param courseRepository The {@link CourseRepository} to use.
      * @param courseParticipantRepository The {@link CourseParticipantRepository} to use.
      * @param courseExperimentRepository The {@link CourseExperimentRepository} to use.
@@ -106,12 +113,14 @@ public class CourseService {
      * @param participantRepository The {@link ParticipantRepository} to use.
      */
     @Autowired
-    public CourseService(final CourseRepository courseRepository,
+    public CourseService(final InactivityConfiguration inactivityConfiguration,
+                         final CourseRepository courseRepository,
                          final CourseParticipantRepository courseParticipantRepository,
                          final CourseExperimentRepository courseExperimentRepository,
                          final ExperimentRepository experimentRepository,
                          final UserRepository userRepository,
                          final ParticipantRepository participantRepository) {
+        this.inactivityConfiguration = inactivityConfiguration;
         this.courseRepository = courseRepository;
         this.courseParticipantRepository = courseParticipantRepository;
         this.courseExperimentRepository = courseExperimentRepository;
@@ -726,7 +735,7 @@ public class CourseService {
                 courseExperiment -> courseExperiment.getExperiment().isActive());
 
         if (experimentsInactive && course.getLastChanged().isBefore(LocalDateTime.now().minusDays(
-                Constants.COURSE_INACTIVE_DAYS))) {
+                inactivityConfiguration.getDisableInactiveCourseAfterDays()))) {
             course.setActive(false);
             courseRepository.save(course);
         }

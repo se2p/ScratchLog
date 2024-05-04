@@ -35,6 +35,7 @@ import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.Constants;
+import fim.unipassau.de.scratchLog.util.InactivityConfiguration;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.CourseDTO;
@@ -44,7 +45,6 @@ import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -73,7 +73,6 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 public class CourseServiceTest {
 
-    @InjectMocks
     private CourseService courseService;
 
     @Mock
@@ -93,6 +92,8 @@ public class CourseServiceTest {
 
     @Mock
     private ParticipantRepository participantRepository;
+
+    private final InactivityConfiguration inactivityConfiguration = new InactivityConfiguration(30, 90, 180);
 
     private static final String TITLE = "My Course";
     private static final String DESCRIPTION = "A description";
@@ -129,6 +130,11 @@ public class CourseServiceTest {
         user.setId(ID);
         user.setActive(false);
         user.setSecret("secret");
+
+        courseService = new CourseService(
+            inactivityConfiguration, courseRepository, courseParticipantRepository, courseExperimentRepository,
+            experimentRepository, userRepository, participantRepository
+        );
     }
 
     @Test

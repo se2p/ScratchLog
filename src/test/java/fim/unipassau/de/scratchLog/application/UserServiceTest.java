@@ -29,6 +29,7 @@ import fim.unipassau.de.scratchLog.persistence.projection.UserProjection;
 import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
+import fim.unipassau.de.scratchLog.util.InactivityConfiguration;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
@@ -38,7 +39,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -66,7 +66,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
-    @InjectMocks
     private UserService userService;
 
     @Mock
@@ -80,6 +79,8 @@ public class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    private final InactivityConfiguration inactivityConfiguration = new InactivityConfiguration(30, 90, 180);
 
     private static final String USERNAME = "admin";
     private static final String BLANK = "   ";
@@ -127,6 +128,10 @@ public class UserServiceTest {
         userDTO.setId(ID);
         userDTO.setUsername(USERNAME);
         userDTO.setPassword(PASSWORD);
+
+        userService = new UserService(
+            inactivityConfiguration, userRepository, participantRepository, experimentRepository, passwordEncoder
+        );
     }
 
     @Test

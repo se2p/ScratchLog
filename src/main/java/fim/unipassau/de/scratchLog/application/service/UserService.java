@@ -29,6 +29,7 @@ import fim.unipassau.de.scratchLog.persistence.repository.ExperimentRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.ParticipantRepository;
 import fim.unipassau.de.scratchLog.persistence.repository.UserRepository;
 import fim.unipassau.de.scratchLog.util.Constants;
+import fim.unipassau.de.scratchLog.util.InactivityConfiguration;
 import fim.unipassau.de.scratchLog.util.Secrets;
 import fim.unipassau.de.scratchLog.util.enums.Role;
 import fim.unipassau.de.scratchLog.web.dto.UserDTO;
@@ -61,6 +62,11 @@ public class UserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
     /**
+     * The inactivity configuration.
+     */
+    private final InactivityConfiguration inactivityConfiguration;
+
+    /**
      * The user repository to use for database queries related to user data.
      */
     private final UserRepository userRepository;
@@ -83,14 +89,19 @@ public class UserService {
     /**
      * Constructs a user service with the given dependencies.
      *
+     * @param inactivityConfiguration The inactivity configuration.
      * @param userRepository The user repository to use.
      * @param participantRepository The participant repository to use.
      * @param experimentRepository The experiment repository to use.
      * @param passwordEncoder The password encoder to use.
      */
     @Autowired
-    public UserService(final UserRepository userRepository, final ParticipantRepository participantRepository,
-                       final ExperimentRepository experimentRepository, final PasswordEncoder passwordEncoder) {
+    public UserService(final InactivityConfiguration inactivityConfiguration,
+                       final UserRepository userRepository,
+                       final ParticipantRepository participantRepository,
+                       final ExperimentRepository experimentRepository,
+                       final PasswordEncoder passwordEncoder) {
+        this.inactivityConfiguration = inactivityConfiguration;
         this.userRepository = userRepository;
         this.participantRepository = participantRepository;
         this.experimentRepository = experimentRepository;
@@ -449,7 +460,7 @@ public class UserService {
     @Transactional
     public void deactivateOldParticipantAccounts() {
         List<User> inactiveUsers = userRepository.findAllByRoleAndLastLoginBefore(Role.PARTICIPANT,
-                LocalDateTime.now().minusDays(Constants.PARTICIPANT_INACTIVE_DAYS));
+                LocalDateTime.now().minusDays(inactivityConfiguration.getDisableInactiveAccountAfterDays()));
 
         for (User user : inactiveUsers) {
             user.setActive(false);
