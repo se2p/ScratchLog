@@ -594,8 +594,9 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk());
-        verify(userService, times(2)).existsUser(anyString());
-        verify(userService, times(2)).existsEmail(anyString());
+        verify(userService, never()).existsUser(anyString());
+        verify(userService, never()).existsEmail(anyString());
+        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, times(2)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
@@ -611,8 +612,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PARTICIPANTS_CSV));
-        verify(userService, times(2)).existsUser(anyString());
-        verify(userService, times(2)).existsEmail(anyString());
+        verify(userService, never()).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
     }

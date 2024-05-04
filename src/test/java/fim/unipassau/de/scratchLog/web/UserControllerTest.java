@@ -27,6 +27,7 @@ import fim.unipassau.de.scratchLog.application.service.TokenService;
 import fim.unipassau.de.scratchLog.application.service.UserService;
 import fim.unipassau.de.scratchLog.spring.authentication.CustomAuthenticationProvider;
 import fim.unipassau.de.scratchLog.spring.configuration.SecurityTestConfig;
+import fim.unipassau.de.scratchLog.util.ApplicationProperties;
 import fim.unipassau.de.scratchLog.util.Constants;
 import fim.unipassau.de.scratchLog.util.enums.Language;
 import fim.unipassau.de.scratchLog.util.enums.Role;
@@ -68,6 +69,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import static fim.unipassau.de.scratchLog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -84,6 +86,9 @@ import static org.mockito.Mockito.*;
 @WebMvcTest(UserController.class)
 @Import(SecurityTestConfig.class)
 public class UserControllerTest extends AbstractControllerTest {
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     @Autowired
     private UserController userController;
@@ -766,7 +771,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAddParticipantsAmountBiggerMax() {
-        userBulkDTO.setAmount(Constants.MAX_ADD_PARTICIPANTS + 1);
+        userBulkDTO.setAmount(applicationProperties.getMaxUserBulkImportCount() + 1);
         assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).findLastId();
@@ -820,8 +825,7 @@ public class UserControllerTest extends AbstractControllerTest {
         ResponseEntity entity = (ResponseEntity) userController.addCSVParticipants(file, model);
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
-        verify(userService, times(2)).existsUser(anyString());
-        verify(userService, times(2)).existsEmail(anyString());
+        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, times(2)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
@@ -833,7 +837,6 @@ public class UserControllerTest extends AbstractControllerTest {
         ResponseEntity entity = (ResponseEntity) userController.addCSVParticipants(file, model);
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
-        verify(userService, times(2)).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, times(2)).encodePassword(anyString());
         verify(userService).saveUsers(any());
@@ -846,7 +849,6 @@ public class UserControllerTest extends AbstractControllerTest {
         ResponseEntity entity = (ResponseEntity) userController.addCSVParticipants(file, model);
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
-        verify(userService, times(2)).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, times(2)).encodePassword(anyString());
         verify(userService).saveUsers(any());
@@ -857,11 +859,9 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipantsEmailExists() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("users.csv").getInputStream());
-        when(userService.existsEmail(anyString())).thenReturn(true);
+        when(userService.findAlreadyExistingByUsernameOrEmail(any())).thenReturn(Set.of("dummyUser"));
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
-        verify(userService, times(2)).existsUser(anyString());
-        verify(userService, times(2)).existsEmail(anyString());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
     }
@@ -870,11 +870,9 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipantsUsernameExists() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("users.csv").getInputStream());
-        when(userService.existsUser(anyString())).thenReturn(true);
+        when(userService.findAlreadyExistingByUsernameOrEmail(any())).thenReturn(Set.of("dummyUser"));
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
-        verify(userService, times(2)).existsUser(anyString());
-        verify(userService, times(2)).existsEmail(anyString());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
     }
@@ -885,7 +883,6 @@ public class UserControllerTest extends AbstractControllerTest {
                 new ClassPathResource("usersInvalidPassword.csv").getInputStream());
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
-        verify(userService, times(2)).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
@@ -897,8 +894,7 @@ public class UserControllerTest extends AbstractControllerTest {
                 new ClassPathResource("usersInvalid.csv").getInputStream());
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
-        verify(userService, times(2)).existsUser(anyString());
-        verify(userService, times(2)).existsEmail(anyString());
+        verify(userService, never()).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
     }
@@ -909,8 +905,7 @@ public class UserControllerTest extends AbstractControllerTest {
                 new ClassPathResource("usersUsernames.csv").getInputStream());
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
-        verify(userService, times(2)).existsUser(anyString());
-        verify(userService, times(2)).existsEmail(anyString());
+        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
     }
@@ -921,8 +916,7 @@ public class UserControllerTest extends AbstractControllerTest {
                 new ClassPathResource("usersEmails.csv").getInputStream());
         assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
-        verify(userService, times(2)).existsUser(anyString());
-        verify(userService, times(2)).existsEmail(anyString());
+        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
     }

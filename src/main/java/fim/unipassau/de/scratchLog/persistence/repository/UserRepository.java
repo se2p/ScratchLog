@@ -29,11 +29,30 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A repository providing functionality for retrieving user data.
  */
 public interface UserRepository extends JpaRepository<User, Integer> {
+
+    /**
+     * Finds the usernames of all users that are already in the database either by exising username or email.
+     *
+     * @param usernames The usernames to search for.
+     * @param emails The emails to search for.
+     * @return The usernames of all users that have either one of the given usernames or emails.
+     */
+    @Query("""
+            select u.username
+            from User u
+            where u.username in :usernames
+                or u.email in :emails
+            """)
+    Set<String> findAllByUsernameOrEmailExisting(
+        @Param("usernames") Set<String> usernames,
+        @Param("emails") Set<String> emails
+    );
 
      /**
      * Checks, whether a user with the given username already exists in the database.

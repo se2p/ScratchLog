@@ -43,7 +43,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -93,6 +95,25 @@ public class UserService {
         this.participantRepository = participantRepository;
         this.experimentRepository = experimentRepository;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    /**
+     * Finds all users that already exist in the database.
+     *
+     * @param users Some new users.
+     * @return The usernames of the users that already exist, either because the username or email is already in use.
+     */
+    public Set<String> findAlreadyExistingByUsernameOrEmail(final List<UserDTO> users) {
+        final Set<String> usernames = users.stream()
+            .map(UserDTO::getUsername)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+        final Set<String> emails = users.stream()
+            .map(UserDTO::getEmail)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        return userRepository.findAllByUsernameOrEmailExisting(usernames, emails);
     }
 
     /**

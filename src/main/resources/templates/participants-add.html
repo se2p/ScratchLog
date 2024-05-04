@@ -38,8 +38,9 @@
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="amount" th:text="#{amount}"></label>
                 <div class="input-group">
+                    <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
                     <input name="amount" id="amount" class="w-100" type="range" th:field="*{amount}" min="1"
-                           th:max="${T(fim.unipassau.de.scratchLog.util.Constants).MAX_ADD_PARTICIPANTS}"/>
+                           th:max="${applicationConfig.maxUserBulkImportCount}"/>
                 </div>
                 <div class="form-text">
                     <span th:text="#{value}"></span>

@@ -80,7 +80,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.Set;
 
@@ -451,8 +450,10 @@ public class UserController {
         if (userBulkDTO.getUsername() == null || userBulkDTO.getLanguage() == null) {
             LOGGER.error("Cannot add participants with username or language null!");
             return Constants.ERROR;
-        } else if (userBulkDTO.getAmount() < 1 || userBulkDTO.getAmount() > Constants.MAX_ADD_PARTICIPANTS) {
-            LOGGER.error("Cannot add an illegal number of " + userBulkDTO.getAmount() + " participants!");
+        } else if (
+            userBulkDTO.getAmount() < 1 || userBulkDTO.getAmount() > applicationProperties.getMaxUserBulkImportCount()
+        ) {
+            LOGGER.error("Cannot add an illegal number of {} participants!", userBulkDTO.getAmount());
             return Constants.ERROR;
         }
 
@@ -529,12 +530,21 @@ public class UserController {
             List<UserDTO> users = new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
 
             if (isValidUserInfo(users, model, resourceBundle)) {
-                Random random = new Random();
-                StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
-                users.forEach(userDTO -> completeUserInformation(userDTO, random, builder));
+                users.stream().parallel().forEach(this::completeUserInformation);
                 userService.saveUsers(users);
-                return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv"
-                        + "\"").body(builder.toString());
+
+                final StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
+                users.forEach(userDTO ->
+                    builder
+                        .append(userDTO.getUsername())
+                        .append(", ")
+                        .append(userDTO.getConfirmPassword())
+                        .append(System.lineSeparator())
+                );
+
+                return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
+                    .body(builder.toString());
             } else {
                 return "participants-csv";
             }
@@ -1119,27 +1129,36 @@ public class UserController {
     private boolean isValidUserInfo(final List<UserDTO> users, final Model model, final ResourceBundle resourceBundle) {
         List<String> invalidAttributes = new ArrayList<>();
         List<String> invalidPasswords = new ArrayList<>();
-        List<String> existingAttributes = new ArrayList<>();
 
-        if (users.size() > Constants.MAX_ADD_PARTICIPANTS) {
-            LOGGER.error("Cannot add an invalid number of participants " + users.size() + " from CSV!");
-            model.addAttribute(ERROR, resourceBundle.getString("max_participants"));
+        if (users.size() > applicationProperties.getMaxUserBulkImportCount()) {
+            LOGGER.error(
+                "Cannot add too many participants {} (max: {}) from CSV!",
+                users.size(),
+                applicationProperties.getMaxUserBulkImportCount()
+            );
+            String errorMessage = resourceBundle.getString("max_participants")
+                .replace("{0}", Integer.toString(applicationProperties.getMaxUserBulkImportCount()));
+            model.addAttribute(ERROR, errorMessage);
             return false;
         }
 
-        users.forEach(userDTO -> checkValidUserInfo(userDTO, invalidAttributes, invalidPasswords, existingAttributes));
+        users.forEach(userDTO -> checkValidUserInfo(userDTO, invalidAttributes, invalidPasswords));
 
         if (!invalidAttributes.isEmpty()) {
             LOGGER.error("Cannot create users from CSV with invalid usernames or emails!");
             model.addAttribute(ERROR, resourceBundle.getString("invalid_attributes") + " " + invalidAttributes);
             return false;
-        } else if (!existingAttributes.isEmpty()) {
-            LOGGER.error("Cannot create users from CSV with existing usernames or emails!");
-            model.addAttribute(ERROR, resourceBundle.getString("existing_attributes") + " " + existingAttributes);
-            return false;
-        } else if (!invalidPasswords.isEmpty()) {
+        }
+        if (!invalidPasswords.isEmpty()) {
             LOGGER.error("Cannot create users from CSV with invalid passwords!");
             model.addAttribute(ERROR, resourceBundle.getString("invalid_passwords") + " " + invalidPasswords);
+            return false;
+        }
+
+        Set<String> existingAttributes = userService.findAlreadyExistingByUsernameOrEmail(users);
+        if (!existingAttributes.isEmpty()) {
+            LOGGER.error("Cannot create users from CSV with existing usernames or emails!");
+            model.addAttribute(ERROR, resourceBundle.getString("existing_attributes") + " " + existingAttributes);
             return false;
         }
 
@@ -1153,10 +1172,8 @@ public class UserController {
      * @param userDTO The DTO containing the information to check.
      * @param invalid A list used to store all invalid usernames and emails.
      * @param passwords A list used to store all usernames with invalid passwords.
-     * @param existing A list used to store all usernames and emails that already exist.
      */
-    private void checkValidUserInfo(final UserDTO userDTO, final List<String> invalid, final List<String> passwords,
-                                    final List<String> existing) {
+    private void checkValidUserInfo(final UserDTO userDTO, final List<String> invalid, final List<String> passwords) {
         userDTO.setRole(Role.PARTICIPANT);
 
         if (userDTO.getLanguage() == null) {
@@ -1164,20 +1181,13 @@ public class UserController {
         }
         if (UsernameValidator.validate(userDTO.getUsername()) != null) {
             invalid.add(userDTO.getUsername());
-        } else if (userService.existsUser(userDTO.getUsername())) {
-            existing.add(userDTO.getUsername());
         }
-        if (userDTO.getEmail() != null) {
-            if (EmailValidator.validate(userDTO.getEmail()) != null) {
-                invalid.add(userDTO.getEmail());
-            } else if (userService.existsEmail(userDTO.getEmail())) {
-                existing.add(userDTO.getEmail());
-            }
+        if (userDTO.getEmail() != null && EmailValidator.validate(userDTO.getEmail()) != null) {
+            invalid.add(userDTO.getEmail());
         }
-        if (userDTO.getPassword() != null) {
-            if (PasswordValidator.validate(userDTO.getPassword(), userDTO.getPassword()) != null) {
-                passwords.add(userDTO.getUsername());
-            }
+        if (userDTO.getPassword() != null
+                && PasswordValidator.validate(userDTO.getPassword(), userDTO.getPassword()) != null) {
+            passwords.add(userDTO.getUsername());
         }
     }
 
@@ -1218,19 +1228,17 @@ public class UserController {
      * to be returned later.
      *
      * @param userDTO The user to be added.
-     * @param random Instance used to generating a random number for the password length.
-     * @param builder The {@link StringBuilder} used to store the information.
      */
-    private void completeUserInformation(final UserDTO userDTO, final Random random, final StringBuilder builder) {
-        String password;
-        password = userDTO.getPassword() != null ? userDTO.getPassword() : CustomPasswordGenerator.generatePassword(
-                random.nextInt(Constants.PASSWORD_MIN * 2 - Constants.PASSWORD_MIN) + Constants.PASSWORD_MIN);
+    private void completeUserInformation(final UserDTO userDTO) {
+        String password = userDTO.getPassword();
+        if (userDTO.getPassword() == null) {
+            password = CustomPasswordGenerator.generatePassword(Constants.PASSWORD_MIN);
+        }
+
         userDTO.setPassword(userService.encodePassword(password));
         userDTO.setConfirmPassword(password);
         userDTO.setActive(true);
         userDTO.setLastLogin(LocalDateTime.now());
-        builder.append(userDTO.getUsername()).append(", ").append(userDTO.getConfirmPassword()).append(
-                System.lineSeparator());
     }
 
     /**

@@ -117,11 +117,6 @@ public final class Constants {
     public static final int SECRET_LENGTH = 32;
 
     /**
-     * The maximum number of participants that can be added in a bulk.
-     */
-    public static final int MAX_ADD_PARTICIPANTS = 50;
-
-    /**
      * The maximum allowed break time factor when downloading sb3 files in steps.
      */
     public static final int MAX_ALLOWED_BREAK_FACTOR = 4;
