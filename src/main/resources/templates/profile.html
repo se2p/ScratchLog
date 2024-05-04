@@ -47,7 +47,7 @@
 
         <!-- The administrator profile information. -->
         <!--suppress ThymeleafVariablesResolveInspection -->
-        <div class="row mb-5" th:if="${userDTO.role == T(fim.unipassau.de.scratchLog.util.enums.Role).ADMIN}">
+        <div class="row mb-5" th:if="${userDTO.role == T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).ADMIN}">
             <div class="text-danger fs-5" th:text="#{admin}"></div>
         </div>
 
@@ -64,7 +64,7 @@
             </div>
             <div class="col-3 text-end" sec:authorize="hasRole('ADMIN')">
                 <a class="btn btn-primary" th:text="#{deactivate}" th:if="${userDTO.active
-                and userDTO.role != T(fim.unipassau.de.scratchLog.util.enums.Role).ADMIN}"
+                and userDTO.role != T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).ADMIN}"
                    th:href="@{/users/active(id=${userDTO.id})}"></a>
                 <a class="btn btn-primary" th:text="#{activate}" th:unless="${userDTO.active}"
                    th:href="@{/users/active(id=${userDTO.id})}"></a>
@@ -74,7 +74,7 @@
         <!-- The list of experiments the user participated in. -->
         <!--suppress ThymeleafVariablesResolveInspection -->
         <div class="row mb-5"
-             th:if="${userDTO.role == T(fim.unipassau.de.scratchLog.util.enums.Role).PARTICIPANT}"
+             th:if="${userDTO.role == T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).PARTICIPANT}"
              sec:authorize="hasRole('PARTICIPANT')">
             <h4 th:text="#{experiments}"></h4>
             <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${experiments.isEmpty()}">
@@ -155,7 +155,7 @@
                             <span class="sr-only" th:text="#{password}"></span>
                         </span>
                     <input th:name="password" id="password" type="password" th:placeholder="#{password}"
-                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
+                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
                            th:field="*{password}" th:class="${#fields.hasErrors('password')
                                ? 'form-control is-invalid' : 'form-control'}" required/>
                 </div>

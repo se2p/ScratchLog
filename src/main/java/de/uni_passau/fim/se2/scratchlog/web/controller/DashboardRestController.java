@@ -1,0 +1,206 @@
+/*
+ * Copyright (C) 2023 ScratchLog contributors
+ *
+ * This file is part of ScratchLog.
+ *
+ * ScratchLog is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ScratchLog is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package de.uni_passau.fim.se2.scratchlog.web.controller;
+
+import de.uni_passau.fim.se2.scratchlog.application.service.DashboardService;
+import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
+import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
+import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+/**
+ * The REST controller for retrieving data to be displayed on the experiment dashboard.
+ */
+@RestController
+@RequestMapping("/dashboard/data")
+public class DashboardRestController {
+
+    /**
+     * The log instance associated with this class for logging purposes.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardRestController.class);
+
+    /**
+     * The dashboard service to use for retrieving information displayed on the experiment dashboard.
+     */
+    private final DashboardService dashboardService;
+
+    /**
+     * String corresponding to the id request parameter.
+     */
+    private static final String ID = "id";
+
+    /**
+     * String corresponding to the users request parameter.
+     */
+    private static final String USERS = "users";
+
+    /**
+     * String corresponding to the event request parameter.
+     */
+    private static final String EVENT = "event";
+
+    /**
+     * Constructs a new dashboard REST controller with the given dependencies.
+     *
+     * @param dashboardService The {@link DashboardService} to use.
+     */
+    @Autowired
+    public DashboardRestController(final DashboardService dashboardService) {
+        this.dashboardService = dashboardService;
+    }
+
+    /**
+     * Retrieves the experiment data, i.e. how many participants the experiment has and how many of them have started or
+     * finished it, to be displayed on the dashboard page.
+     *
+     * @param experimentId The id of the experiment.
+     * @return The experiment data.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     */
+    @GetMapping("")
+    public String[] getExperimentData(@RequestParam(ID) final int experimentId) {
+        validateId(experimentId);
+        return dashboardService.getExperimentData(experimentId);
+    }
+
+    /**
+     * Retrieves the ids and usernames of all participants of the experiment with the given id.
+     *
+     * @param experimentId The id of the experiment.
+     * @return The participant information.
+     * @throws IllegalArgumentException if the passed id is invalid.
+     */
+    @GetMapping("/participants")
+    public List<String[]> getParticipantData(@RequestParam(ID) final int experimentId) {
+        validateId(experimentId);
+        return dashboardService.getParticipants(experimentId);
+    }
+
+    /**
+     * Returns the number of executions per minute of the given block event for the experiment and users with the given
+     * ids.
+     *
+     * @param experimentId The id of the experiment.
+     * @param userIds The ids of the users.
+     * @param event The event of interest.
+     * @return A list containing an array for each user with the number of executions.
+     */
+    @GetMapping("/event/block")
+    public List<Integer[]> getBlockEventData(@RequestParam(ID) final int experimentId,
+                                             @RequestParam(USERS) final List<Integer> userIds,
+                                             @RequestParam(EVENT) final BlockEventSpecific event) {
+        validateId(experimentId);
+        validateUserIds(userIds);
+        return dashboardService.getBlockEventCountData(userIds, experimentId, event);
+    }
+
+    /**
+     * Returns the number of executions per minute of the given click event for the experiment and users with the given
+     * ids.
+     *
+     * @param experimentId The id of the experiment.
+     * @param userIds The ids of the users.
+     * @param event The event of interest.
+     * @return A list containing an array for each user with the number of executions.
+     */
+    @GetMapping("/event/click")
+    public List<Integer[]> getClickEventData(@RequestParam(ID) final int experimentId,
+                                             @RequestParam(USERS) final List<Integer> userIds,
+                                             @RequestParam(EVENT) final ClickEventSpecific event) {
+        validateId(experimentId);
+        validateUserIds(userIds);
+        return dashboardService.getClickEventCountData(userIds, experimentId, event);
+    }
+
+    /**
+     * Returns the number of executions per minute of the given resource event for the experiment and users with the
+     * given ids.
+     *
+     * @param experimentId The id of the experiment.
+     * @param userIds The ids of the users.
+     * @param event The event of interest.
+     * @return A list containing an array for each user with the number of executions.
+     */
+    @GetMapping("/event/resource")
+    public List<Integer[]> getResourceEventData(@RequestParam(ID) final int experimentId,
+                                                @RequestParam(USERS) final List<Integer> userIds,
+                                                @RequestParam(EVENT) final ResourceEventSpecific event) {
+        validateId(experimentId);
+        validateUserIds(userIds);
+        return dashboardService.getResourceEventCountData(userIds, experimentId, event);
+    }
+
+    /**
+     * Returns the total number of executions of specific click and block event for the experiment and users with the
+     * given ids.
+     *
+     * @param experimentId The id of the experiment.
+     * @param userIds The ids of the users.
+     * @return A list containing an array for each user with the number of executions.
+     */
+    @GetMapping("/event/counts")
+    public List<Integer[]> getEventCounts(
+        @RequestParam(ID) final int experimentId, @RequestParam(USERS) final List<Integer> userIds
+    ) {
+        validateId(experimentId);
+        validateUserIds(userIds);
+        return dashboardService.getEventCountData(userIds, experimentId);
+    }
+
+    /**
+     * Validates that the given ID is valid.
+     *
+     * @param id Some id.
+     * @throws IllegalArgumentException if the passed id is an invalid id.
+     */
+    private void validateId(final int id) {
+        if (id < Constants.MIN_ID) {
+            LOGGER.error("Cannot retrieve data for experiment dashboard with invalid id " + id + "!");
+            throw new IllegalArgumentException("Cannot retrieve data for experiment dashboard with invalid id " + id
+                    + "!");
+        }
+    }
+
+    /**
+     * Validates that all ids are valid IDs.
+     *
+     * @param userIds A list of IDs that should be validated.
+     * @throws IllegalArgumentException if the list contains no ids or if any of the ids could not be validated.
+     */
+    private void validateUserIds(final List<Integer> userIds) {
+        if (userIds.isEmpty()) {
+            LOGGER.error("Cannot retrieve event data without any user ids!");
+            throw new IllegalArgumentException("Cannot retrieve event data without any user ids!");
+        }
+
+        userIds.forEach(this::validateId);
+    }
+
+}

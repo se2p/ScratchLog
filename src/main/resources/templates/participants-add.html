@@ -32,13 +32,13 @@
         </div>
 
         <!-- The form for adding new participants. -->
-        <!--/*@thymesVar id="userBulkDTO" type="fim.unipassau.de.scratchLog.web.dto.UserBulkDTO"*/-->
+        <!--/*@thymesVar id="userBulkDTO" type="de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO"*/-->
         <form th:action="@{/users/bulk}" th:object="${userBulkDTO}" th:name="userBulkDTO" method="post">
             <!-- The input group for the range. -->
             <div class="mb-3 form-group position-relative">
                 <label class="form-label" for="amount" th:text="#{amount}"></label>
                 <div class="input-group">
-                    <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
+                    <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
                     <input name="amount" id="amount" class="w-100" type="range" th:field="*{amount}" min="1"
                            th:max="${applicationConfig.maxUserBulkImportCount}"/>
                 </div>
@@ -56,7 +56,7 @@
                         <span class="sr-only" th:text="#{username}"></span>
                     </span>
                     <input name="username" id="username" type="text" th:placeholder="#{username}"
-                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
+                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
                            th:field="*{username}" th:class="${#fields.hasErrors('username')
                                    ? 'form-control is-invalid' : 'form-control'}" required/>
                 </div>
@@ -83,7 +83,7 @@
                     </span>
                     <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
                         <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="lang : ${T(fim.unipassau.de.scratchLog.util.enums.Language).values()}"
+                        <option th:each="lang : ${T(de.uni_passau.fim.se2.scratchlog.util.enums.Language).values()}"
                                 th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
                     </select>
                 </div>

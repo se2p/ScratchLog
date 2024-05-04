@@ -3,8 +3,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>fim.uni-passau.de</groupId>
-    <artifactId>scratchLog</artifactId>
+    <groupId>de.uni_passau.fim.se2</groupId>
+    <artifactId>scratchlog</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>ScratchLog</name>
 
@@ -295,7 +295,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.version}</version>
                 <configuration>
-                    <mainClass>fim.unipassau.de.scratchLog.ScratchLogApplication</mainClass>
+                    <mainClass>de.uni_passau.fim.se2.scratchlog.ScratchLogApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
@@ -354,7 +354,7 @@
                 </dependencies>
                 <configuration>
                     <configLocation>checkstyle.xml</configLocation>
-                    <excludes>fim.unipassau.de.scratchLog.ScratchLogApplication</excludes>
+                    <excludes>de.uni_passau.fim.se2.scratchlog.ScratchLogApplication</excludes>
                 </configuration>
             </plugin>
 
@@ -363,11 +363,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven.surefire.version}</version>
-                <configuration>
-                    <excludes>
-                        <exclude>fim.unipassau.de.scratchLog.ScratchLogApplicationTests</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
 
             <!-- JaCoCo Test report -->

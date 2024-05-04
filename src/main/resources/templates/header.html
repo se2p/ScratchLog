@@ -14,7 +14,7 @@
             <ul class="navbar-nav flex-row">
                 <!-- The application name displayed in the header. -->
                 <li class="navbar-brand" id="brand">
-                    <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
+                    <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
                     <a class="navbar-brand"
                        th:text="${applicationConfig.applicationName}"
                        th:href="@{/}"></a>
@@ -41,7 +41,7 @@
                         <li>
                             <a class="dropdown-item" th:href="@{/users/add}" th:text="#{new_user}"></a>
                         </li>
-                        <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
+                        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
                         <li th:unless="${applicationConfig.useMail()}">
                             <a class="dropdown-item" th:href="@{/users/bulk}" th:text="#{new_users}"></a>
                         </li>
@@ -57,7 +57,7 @@
             <form th:action="@{/search/result}" method="get">
                 <div class="input-group" sec:authorize="hasRole('ADMIN')">
                     <input class="form-control form-text mt-0" id="search" th:name="query" th:placeholder="#{search}"
-                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"/>
+                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
                     <button class="input-group-text btn btn-outline-primary" type="submit"
                             th:aria-label="#{search_label}" th:href="@{/search}">
                         <i aria-hidden="true" class="fa fa-search"></i>

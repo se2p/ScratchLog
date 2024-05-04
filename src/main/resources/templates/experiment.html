@@ -337,7 +337,7 @@
                             <span class="sr-only" th:text="#{password}"></span>
                         </span>
                     <input th:name="password" id="password" type="password" th:placeholder="#{password}"
-                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).SMALL_FIELD}"
+                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
                            th:field="*{password}" th:class="${#fields.hasErrors('password')
                                ? 'form-control is-invalid' : 'form-control'}" required/>
                 </div>
@@ -374,7 +374,7 @@
                 <input id="experimentId" type="hidden" th:name="id" th:value="${experimentDTO.id}">
                 <div class="input-group">
                     <input class="form-control" type="text" th:name="participant" id="participantInput"
-                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"/>
+                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
                 </div>
                 <div id="results"></div>
             </div>
@@ -396,7 +396,7 @@
                 <input id="deleteId" type="hidden" th:name="id" th:value="${experimentDTO.id}">
                 <div class="input-group">
                     <input class="form-control" type="text" th:name="participant" id="deleteParticipantInput"
-                           th:maxlength="${T(fim.unipassau.de.scratchLog.util.Constants).LARGE_FIELD}"/>
+                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
                 </div>
                 <div id="deleteResults"></div>
             </div>

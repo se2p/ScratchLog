@@ -1,0 +1,845 @@
+/*
+ * Copyright (C) 2023 ScratchLog contributors
+ *
+ * This file is part of ScratchLog.
+ *
+ * ScratchLog is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ScratchLog is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package de.uni_passau.fim.se2.scratchlog.web.controller;
+
+import com.opencsv.CSVWriter;
+import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
+import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
+import de.uni_passau.fim.se2.scratchlog.application.service.CodeService;
+import de.uni_passau.fim.se2.scratchlog.application.service.EventService;
+import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataService;
+import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
+import de.uni_passau.fim.se2.scratchlog.application.service.FileService;
+import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
+import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
+import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.projection.FileProjection;
+import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import de.uni_passau.fim.se2.scratchlog.web.dto.CodesDataDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.EventCountDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
+import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
+/**
+ * The controller for result management.
+ */
+@Controller
+@RequestMapping(value = "/result")
+public class ResultController {
+
+    /**
+     * The log instance associated with this class for logging purposes.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(ResultController.class);
+
+    /**
+     * The user service to use for user management.
+     */
+    private final UserService userService;
+
+    /**
+     * The experiment service to use for experiment management.
+     */
+    private final ExperimentService experimentService;
+
+    /**
+     * The event service to use for event management.
+     */
+    private final EventService eventService;
+
+    /**
+     * The experiment data service to use for retrieving experiment data.
+     */
+    private final ExperimentDataService experimentDataService;
+
+    /**
+     * The code service to use for retrieving participant codes.
+     */
+    private final CodeService codeService;
+
+    /**
+     * The file service to use for file management.
+     */
+    private final FileService fileService;
+
+    /**
+     * The participant service to use for participant management.
+     */
+    private final ParticipantService participantService;
+
+    /**
+     * String corresponding to the result page.
+     */
+    private static final String RESULT = "result";
+
+    /**
+     * String corresponding to the id request parameter.
+     */
+    private static final String ID = "id";
+
+    /**
+     * String corresponding to the user request parameter.
+     */
+    private static final String USER = "user";
+
+    /**
+     * String corresponding to the experiment request parameter.
+     */
+    private static final String EXPERIMENT = "experiment";
+
+    /**
+     * Constructs a new result controller with the given dependencies.
+     *
+     * @param userService The {@link UserService} to use.
+     * @param experimentService The {@link ExperimentService} to use.
+     * @param eventService The {@link EventService} to use.
+     * @param experimentDataService The {@link ExperimentDataService} to use.
+     * @param codeService The {@link CodeService} to use.
+     * @param fileService The {@link FileService} to use.
+     * @param participantService The {@link ParticipantService} to use.
+     */
+    @Autowired
+    public ResultController(final UserService userService, final ExperimentService experimentService,
+                            final EventService eventService, final ExperimentDataService experimentDataService,
+                            final CodeService codeService, final FileService fileService,
+                            final ParticipantService participantService) {
+        this.userService = userService;
+        this.experimentService = experimentService;
+        this.eventService = eventService;
+        this.experimentDataService = experimentDataService;
+        this.codeService = codeService;
+        this.fileService = fileService;
+        this.participantService = participantService;
+    }
+
+    /**
+     * Returns the result page containing the result information for the user with the given id during the experiment
+     * with the given id. If the passed parameters are invalid, the user is not a participant in the given experiment,
+     * or no corresponding user or experiment could be found, the user is redirected to the error page instead.
+     *
+     * @param experimentId The experiment id.
+     * @param userId The user id.
+     * @param model The model used to store information.
+     * @return The result page on success, or the error page otherwise.
+     */
+    @GetMapping("")
+    @Secured(Constants.ROLE_ADMIN)
+    public ModelAndView getResult(@RequestParam(EXPERIMENT) final int experimentId,
+                                  @RequestParam(USER) final int userId, final Model model) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+
+        if (!userService.existsParticipant(userId, experimentId)) {
+            LOGGER.error("Could not find participant entry for user with id " + userId + " for experiment with id "
+                    + experimentId);
+            return new ModelAndView(Constants.ERROR);
+        }
+
+        try {
+            List<EventCountDTO> blockEvents = eventService.getBlockEventCounts(userId, experimentId);
+            List<EventCountDTO> clickEvents = eventService.getClickEventCounts(userId, experimentId);
+            List<EventCountDTO> resourceEvents = eventService.getResourceEventCounts(userId, experimentId);
+            List<FileProjection> files = fileService.getFiles(userId, experimentId);
+            List<Integer> zipIds = fileService.getZipIds(userId, experimentId);
+            List<BlockEventJSONProjection> filteredJsons = codeService.getFilteredJsons(userId, experimentId, 1, 0, 0,
+                    Optional.empty());
+            CodesDataDTO codesDataDTO = eventService.getCodesData(userId, experimentId);
+
+            model.addAttribute("codeCount", Math.max(codesDataDTO.getCount(), 0));
+            model.addAttribute("pageSize", Constants.PAGE_SIZE);
+            model.addAttribute("blockEvents", blockEvents);
+            model.addAttribute("clickEvents", clickEvents);
+            model.addAttribute("resourceEvents", resourceEvents);
+            model.addAttribute("files", files);
+            model.addAttribute("zips", zipIds);
+            model.addAttribute("user", userId);
+            model.addAttribute("experiment", experimentId);
+
+            if (!filteredJsons.isEmpty()) {
+                List<List<Integer>> bugCountsPerMinute = experimentDataService.getAnalyzedProgramDataCount(
+                        filteredJsons);
+                model.addAttribute("bugs", bugCountsPerMinute.get(0));
+                model.addAttribute("smells", bugCountsPerMinute.get(1));
+                model.addAttribute("perfumes", bugCountsPerMinute.get(2));
+            } else {
+                model.addAttribute("bugs", new ArrayList<>());
+                model.addAttribute("smells", new ArrayList<>());
+                model.addAttribute("perfumes", new ArrayList<>());
+            }
+            return new ModelAndView(RESULT);
+        } catch (NotFoundException e) {
+            return new ModelAndView(Constants.ERROR);
+        }
+    }
+
+    /**
+     * Makes the file with the given id available for download, if it exists. If the given id is invalid or no file
+     * could be found in the database, the user is redirected to the error page instead.
+     *
+     * @param fileId The file id to search for.
+     * @return The file for download on success, or the error page otherwise.
+     */
+    @GetMapping("/file")
+    @Secured(Constants.ROLE_ADMIN)
+    public Object downloadFile(@RequestParam(ID) final int fileId) {
+        IdValidator.validateFileIdElseThrow(fileId);
+
+        try {
+            FileDTO fileDTO = fileService.findFile(fileId);
+            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""
+                    + fileDTO.getName() + "\"").body(fileDTO.getContent());
+        } catch (NotFoundException e) {
+            return Constants.ERROR;
+        }
+    }
+
+    /**
+     * Generates a sb3 file for the user and experiment with the given id with the project.json corresponding to the
+     * json string saved during the block event with the given id and makes the file available for download. Apart
+     * from the saved json string, all costumes and sounds present in the experiment project file are added to the sb3
+     * file as well as all files saved for the user during the experiment.
+     *
+     * @param experimentId The id of the experiment.
+     * @param userId The id of the user.
+     * @param jsonId The block event id to search for.
+     * @param httpServletResponse The servlet response.
+     * @throws IncompleteDataException if the passed user, experiment or json ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs during the sb3 file creation.
+     */
+    @GetMapping("/generate")
+    @Secured(Constants.ROLE_ADMIN)
+    public void generateZipFile(@RequestParam(EXPERIMENT) final int experimentId,
+                                @RequestParam(USER) final int userId,
+                                @RequestParam("json") final int jsonId,
+                                final HttpServletResponse httpServletResponse) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+        IdValidator.validateIdElseThrow("json", jsonId);
+
+        ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
+        List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
+        byte[] code = codeService.findJsonById(jsonId).getBytes(StandardCharsets.UTF_8);
+
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "sb3")) {
+            Set<String> fileNames = new HashSet<>();
+
+            if (projection.getProject() != null) {
+                writeInitialProjectData(zos, projection.getProject());
+            }
+
+            for (FileDTO fileDTO : fileDTOS) {
+                writeFileData(zos, fileDTO, fileNames);
+            }
+
+            writeJsonData(zos, code);
+            zos.finish();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not generate zip file due to IOException!", e);
+        }
+    }
+
+    /**
+     * Retrieves the zip file with the given id and makes it available for download, if it exists. If the id is invalid
+     * or no zip file could be found in the database, the user is redirected to the error page instead.
+     *
+     * @param zipId The zip file id to search for.
+     * @return The zip file for download on success, or the error page otherwise.
+     */
+    @GetMapping("/zip")
+    @Secured(Constants.ROLE_ADMIN)
+    public Object downloadZip(@RequestParam(ID) final int zipId) {
+        IdValidator.validateIdElseThrow("zip", zipId);
+
+        try {
+            Sb3ZipDTO sb3ZipDTO = fileService.findZip(zipId);
+            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""
+                    + sb3ZipDTO.getName() + "\"").body(sb3ZipDTO.getContent());
+        } catch (NotFoundException e) {
+            return Constants.ERROR;
+        }
+    }
+
+    /**
+     * Retrieves all zip files created for the given user during the given experiment and makes them available for
+     * download in a zip file.
+     *
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
+     * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
+     */
+    @GetMapping("/zips")
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadAllZips(@RequestParam(EXPERIMENT) final int experimentId,
+                                @RequestParam(USER) final int userId,
+                                final HttpServletResponse httpServletResponse) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "projects")) {
+            List<Sb3ZipDTO> sb3ZipDTOS = fileService.getZipFiles(userId, experimentId);
+
+            for (Sb3ZipDTO sb3ZipDTO : sb3ZipDTOS) {
+                ZipEntry entry = new ZipEntry(sb3ZipDTO.getId() + sb3ZipDTO.getName());
+                entry.setSize(sb3ZipDTO.getContent().length);
+                zos.putNextEntry(entry);
+                zos.write(sb3ZipDTO.getContent());
+                zos.closeEntry();
+            }
+
+            zos.finish();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not download zip files due to IOException!", e);
+        }
+    }
+
+    /**
+     * Retrieves all the xml codes that were saved for the given user during the given experiment and makes them
+     * available for download in a zip file.
+     *
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
+     * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
+     */
+    @GetMapping("/xmls")
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadAllXmlFiles(@RequestParam(EXPERIMENT) final int experimentId,
+                                    @RequestParam(USER) final int userId,
+                                    final HttpServletResponse httpServletResponse) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "xml")) {
+            List<BlockEventXMLProjection> xml = codeService.getXMLForUser(userId, experimentId);
+
+            for (BlockEventXMLProjection projection : xml) {
+                ZipEntry entry = new ZipEntry("xml" + projection.getId() + ".xml");
+                entry.setSize(projection.getXml().length());
+                zos.putNextEntry(entry);
+                zos.write(projection.getXml().getBytes(StandardCharsets.UTF_8));
+                zos.closeEntry();
+            }
+
+            zos.finish();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not download xml files due to IOException!", e);
+        }
+    }
+
+    /**
+     * Retrieves all the json strings that were saved for the given user during the given experiment and makes them
+     * available for download in a zip file.
+     *
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
+     * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
+     */
+    @GetMapping("/jsons")
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadAllJsonFiles(@RequestParam(EXPERIMENT) final int experimentId,
+                                     @RequestParam(USER) final int userId,
+                                     final HttpServletResponse httpServletResponse) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "json")) {
+            List<BlockEventJSONProjection> json = codeService.getJsonForUser(userId, experimentId);
+            writeCSVData(zos, json, Optional.empty(), false);
+
+            for (BlockEventJSONProjection projection : json) {
+                ZipEntry entry = new ZipEntry("json" + projection.getId() + ".json");
+                entry.setSize(projection.getCode().length());
+                zos.putNextEntry(entry);
+                zos.write(projection.getCode().getBytes(StandardCharsets.UTF_8));
+                zos.closeEntry();
+            }
+
+            zos.finish();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not download json files due to IOException!", e);
+        }
+    }
+
+    /**
+     * Loads a list of {@link BlockEventProjection}s for the given page number, user and experiment from the
+     * database.
+     *
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
+     * @param page The current page number.
+     * @return The list of block event projections.
+     * @throws IncompleteDataException if the passed user or experiment id or the page are invalid.
+     */
+    @GetMapping("/codes")
+    @Secured(Constants.ROLE_ADMIN)
+    @ResponseBody
+    public List<BlockEventProjection> getCodes(@RequestParam(EXPERIMENT) final int experimentId,
+                                               @RequestParam(USER) final int userId,
+                                               @RequestParam("page") final int page) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+        IdValidator.validatePageNumberElseThrow(page);
+
+        return codeService
+            .getCodesForUser(userId, experimentId, PageRequest.of(page, Constants.PAGE_SIZE))
+            .getContent();
+    }
+
+    /**
+     * Generates sb3 files for the desired json codes saved for the given user during the given experiment and makes
+     * them available for download in a zip file. The json files loaded from the database are filtered according to the
+     * specified step parameter, or the specified start, end and include parameters, if present. Every json code is put
+     * in a zip file as a project.json file together with all costumes and sounds present in the experiment project file
+     * as well as all files saved for the user during the experiment that were not saved as zip files, meaning they are
+     * not resources that can be loaded from the Scratch library. The resulting sb3 zip file is then written into
+     * another zip file made available for download containing all the created sb3 files.
+     *
+     * @param experimentId The experiment id to search for.
+     * @param userId The user id to search for.
+     * @param step The step interval in minutes.
+     * @param start The start of the interval in which all json files should be downloaded.
+     * @param end The end of the interval in which all json files should be downloaded.
+     * @param include Whether the final project should be included.
+     * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if any of the passed parameters are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
+     */
+    @GetMapping("/sb3s")
+    @Secured(Constants.ROLE_ADMIN)
+    @SuppressWarnings("checkstyle:finalparameters")
+    public void downloadSb3Files(
+        @RequestParam(EXPERIMENT) final int experimentId,
+        @RequestParam(USER) final int userId,
+        @RequestParam(value = "step", required = false) Integer step,
+        @RequestParam(value = "start", required = false) Integer start,
+        @RequestParam(value = "end", required = false) Integer end,
+        @RequestParam(value = "include", required = false) Boolean include,
+        final HttpServletResponse httpServletResponse
+    ) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+        IdValidator.validateUserIdElseThrow(userId);
+        checkDownloadParameters(step, start, end, include);
+
+        // the checkDownloadParameters above expects certain parameters to be null/non-null. Therefore, we cannot use
+        // defaultValue in the RequestParam annotation.
+        if (step == null) {
+            step = 0;
+        }
+        if (include == null) {
+            include = true;
+        }
+        if (start == null) {
+            start = 0;
+        }
+        if (end == null) {
+            end = 0;
+        }
+
+        ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
+        List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
+        Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
+        List<BlockEventJSONProjection> jsons = codeService.getFilteredJsons(
+            userId, experimentId, step, start, end, finalProject
+        );
+
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, userId, experimentId, "zip")) {
+            writeUserSb3Files(zos, projection, fileDTOS, finalProject, jsons, include);
+            zos.finish();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not generate zip file due to IOException!", e);
+        }
+    }
+
+    /**
+     * Generates sb3 files for all users of an experiment, if any code was saved for them during the experiment. The
+     * JSON files loaded from the database are filtered according to the specified step parameter, if present. Every
+     * JSON code is put in a zip file as a project.json file together with all costumes and sounds present in the
+     * experiment project file as well as all files saved for the user during the experiment that were not saved as zip
+     * files, meaning they are not resources that can be loaded from the Scratch library. Any resulting sb3 files are
+     * written into another zip containing all entries for a given user. All zip files generated for each experiment
+     * participant is then placed in another zip file which is made available for download.
+     *
+     * @param experimentId The experiment id to search for.
+     * @param step The step interval in minutes.
+     * @param httpServletResponse The servlet response returning the files.
+     * @throws IncompleteDataException if any of the passed parameters are invalid.
+     * @throws RuntimeException if an {@link IOException} occurs.
+     */
+    @GetMapping("/sb3s/all")
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadExperimentSb3Files(
+        @RequestParam(EXPERIMENT) final int experimentId,
+        @RequestParam(value = "step", required = false, defaultValue = "0") final int step,
+        final HttpServletResponse httpServletResponse
+    ) {
+        IdValidator.validateExperimentIdElseThrow(experimentId);
+
+        List<ParticipantDTO> participants = participantService.getParticipants(experimentId);
+        ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
+
+        if (participants.isEmpty()) {
+            throw new IncompleteDataException("Cannot download sb3 files for experiment with no participants!");
+        }
+
+        try (ZipOutputStream zos = getZipOutputStream(httpServletResponse, 0, experimentId, "zip")) {
+            for (ParticipantDTO participantDTO : participants) {
+                writeUserSb3Entry(zos, projection, experimentId, participantDTO.getUser(), step);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Could not download sb3 files for experiment due to IOException!", e);
+        }
+    }
+
+    /**
+     * Checks, whether the parameters for downloading sb3 files are valid. For the parameters to be valid, both the
+     * experiment and user ids have to be specified. If sb3 files in a certain range are to be downloaded, the start,
+     * end and include parameters need to be present. If sb3 files are downloaded in minute intervals, the start
+     * parameter cannot be specified.
+     *
+     * @param step The step interval in minutes.
+     * @param start The start of the interval in which all json files should be downloaded.
+     * @param end The end of the interval in which all json files should be downloaded.
+     * @param include Whether the final project should be included.
+     * @throws IncompleteDataException if the required parameters are not specified.
+     */
+    private void checkDownloadParameters(
+        final Integer step, final Integer start, final Integer end, final Boolean include
+    ) {
+        if (step == null && start == null && end == null && Boolean.FALSE.equals(include)) {
+            throw new IncompleteDataException(
+                "Either step or start and end must be specified when not including final project!"
+            );
+        }
+
+        if (step != null && step <= 0) {
+            throw new IncompleteDataException("step must be >= 0");
+        }
+        if (start != null && start < 0) {
+            throw new IncompleteDataException("start must be >= 0");
+        }
+        if (end != null && end < 0) {
+            throw new IncompleteDataException("end must be >= 0");
+        }
+
+        if (start != null && step != null) {
+            throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
+                    + "parameters are specified!");
+        }
+
+        if (start != null || end != null) {
+            if (start == null || end == null || include == null) {
+                throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
+                    + "parameters start, end and include are specified!");
+            }
+        }
+
+        if (start != null && end != null && start > end) {
+            throw new IncompleteDataException("Cannot generate zip file for start position " + start
+                + " bigger than end position " + end + "!");
+        }
+    }
+
+    /**
+     * Creates a sb3 file saved as a zip entry for the given json code. Beside the json itself, all saved files and the
+     * initial project data are included in the zip file.
+     *
+     * @param json The json code to be used.
+     * @param zos The {@link ZipOutputStream} in which the zip file should be written.
+     * @param counter The file counter.
+     * @param projection The initial experiment project data.
+     * @param fileDTOS The saved files.
+     * @throws IOException if the data could not be written correctly.
+     */
+    private void createSb3File(final BlockEventJSONProjection json, final ZipOutputStream zos, final int counter,
+                               final ExperimentProjection projection, final List<FileDTO> fileDTOS) throws IOException {
+        ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
+
+        try (ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip))) {
+            Set<String> fileNames = new HashSet<>();
+
+            if (projection.getProject() != null) {
+                writeInitialProjectData(innerZos, projection.getProject());
+            }
+
+            for (FileDTO fileDTO : fileDTOS) {
+                writeFileData(innerZos, fileDTO, fileNames);
+            }
+
+            byte[] code = json.getCode().getBytes(StandardCharsets.UTF_8);
+            writeJsonData(innerZos, code);
+            innerZos.flush();
+        }
+
+        ZipEntry createdZip = new ZipEntry("project_" + json.getId() + "_" + counter + ".sb3");
+        zos.putNextEntry(createdZip);
+        zos.write(innerZip.toByteArray());
+        zos.closeEntry();
+    }
+
+    /**
+     * Returns a {@link ZipOutputStream} from the given {@link HttpServletResponse} output stream and sets the content
+     * type, header and status of the servlet response accordingly.
+     *
+     * @param httpServletResponse The servlet response.
+     * @param userId The user id to use to name the zip file.
+     * @param experimentId The experiment id to use to name the zip file.
+     * @param filetype The filetype to use to name the zip file.
+     * @return The zip output stream.
+     */
+    private ZipOutputStream getZipOutputStream(final HttpServletResponse httpServletResponse, final int userId,
+                                               final int experimentId, final String filetype) throws IOException {
+        String fileEnding = filetype.equals("sb3") ? ".sb3" : ".zip";
+        httpServletResponse.setContentType("application/zip");
+        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + filetype + "_user" + userId
+                + "_experiment" + experimentId + fileEnding);
+        httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+        return new ZipOutputStream(httpServletResponse.getOutputStream());
+    }
+
+
+    /**
+     * Generates sb3 files for the desired json codes saved for the given user during the given experiment and puts them
+     * in a ZIP file which is made available for download.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param projection The initial experiment project data.
+     * @param experimentId The id of the experiment.
+     * @param userId The id of the user.
+     * @param steps The step interval in minutes.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeUserSb3Entry(final ZipOutputStream zos, final ExperimentProjection projection,
+                                   final int experimentId, final int userId, final int steps) throws IOException {
+        List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
+        Optional<Sb3ZipDTO> finalProject = fileService.findFinalProject(userId, experimentId);
+        List<BlockEventJSONProjection> jsons = codeService.getFilteredJsons(userId, experimentId, steps, 0, 0,
+                finalProject);
+
+        if (!jsons.isEmpty()) {
+            ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
+            ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip));
+            writeUserSb3Files(innerZos, projection, fileDTOS, finalProject, jsons, true);
+            innerZos.flush();
+            ZipEntry createdZip = new ZipEntry("user_" + userId + ".zip");
+            zos.putNextEntry(createdZip);
+            zos.write(innerZip.toByteArray());
+            zos.closeEntry();
+        } else {
+            LOGGER.info("Could not generate zip file entry for participant with no saved JSON codes.");
+        }
+    }
+
+
+    /**
+     * Generates sb3 files for the given list of JSON codes including the given list of file DTOs generated by a
+     * specific user and the initial project information. If the final project should be included, it is also added as
+     * an additional entry.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param projection The initial experiment project data.
+     * @param fileDTOS The saved file data.
+     * @param finalProject The final project state saved for the user.
+     * @param jsons The JSON codes used to generate sb3 files.
+     * @param includeFinalProject Whether the final project should be included or not.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeUserSb3Files(final ZipOutputStream zos, final ExperimentProjection projection,
+                                   final List<FileDTO> fileDTOS, final Optional<Sb3ZipDTO> finalProject,
+                                   final List<BlockEventJSONProjection> jsons, final boolean includeFinalProject)
+            throws IOException {
+        writeCSVData(zos, jsons, finalProject, includeFinalProject);
+
+        for (int i = 0; i < jsons.size(); i++) {
+            createSb3File(jsons.get(i), zos, i, projection, fileDTOS);
+        }
+
+        if (finalProject.isPresent() && includeFinalProject) {
+            writeFinalProjectData(zos, finalProject.get());
+        }
+    }
+
+    /**
+     * Creates a zip file entry for a CSV file containing information on the filtered {@link BlockEventJSONProjection}s
+     * for which a sb3 file will be generated. For each projection, its id, the date at which it was created and the
+     * event that triggered it are written to the csv file. If the final sb3 project is present, and it is to be
+     * included, its information is added as well.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param projections The filtered projections.
+     * @param finalProject The {@link Optional} {@link Sb3ZipDTO} containing the information on the final project.
+     * @param includeFinalProject Boolean indicating whether the final project data should be added.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeCSVData(final ZipOutputStream zos, final List<BlockEventJSONProjection> projections,
+                              final Optional<Sb3ZipDTO> finalProject, final boolean includeFinalProject)
+            throws IOException {
+        List<String[]> data = new ArrayList<>();
+        String[] header = {"id", "date", "event"};
+        data.add(header);
+        projections.forEach(projection -> data.add(new String[]{String.valueOf(projection.getId()),
+                String.valueOf(projection.getDate()), projection.getEvent()}));
+
+        if (finalProject.isPresent() && includeFinalProject) {
+            data.add(new String[]{"final project", String.valueOf(finalProject.get().getDate()), "FINISH"});
+        }
+
+        ZipEntry entry = new ZipEntry("events.csv");
+        zos.putNextEntry(entry);
+        CSVWriter csvWriter = new CSVWriter(new OutputStreamWriter(zos));
+        csvWriter.writeAll(data);
+        csvWriter.flush();
+        zos.closeEntry();
+    }
+
+    /**
+     * Writes the content of the given byte[] representing the initial sb3 project loaded on experiment start to the
+     * given {@link ZipOutputStream}.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param project The initial sb3 project.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeInitialProjectData(final ZipOutputStream zos, final byte[] project) throws IOException {
+        try (InputStream file = new ByteArrayInputStream(project); ZipInputStream zin = new ZipInputStream(file)) {
+            ZipEntry ze;
+
+            while ((ze = zin.getNextEntry()) != null) {
+                if (!ze.getName().equals("project.json")) {
+                    zos.putNextEntry(ze);
+                    int current;
+                    while ((current = zin.read()) >= 0) {
+                        zos.write(current);
+                    }
+                    zos.closeEntry();
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes the content of the given {@link FileDTO} representing a file the participant uploaded during the
+     * experiment to the given {@link ZipOutputStream} if the file was not saved in a zip format.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param fileDTO The {@link FileDTO} containing the file data.
+     * @param names The names of the files already added as entries.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeFileData(final ZipOutputStream zos, final FileDTO fileDTO,
+                               final Set<String> names) throws IOException {
+        if (!fileDTO.getName().endsWith("zip") && !names.contains(fileDTO.getName())) {
+            names.add(fileDTO.getName());
+            ZipEntry entry = new ZipEntry(fileDTO.getName());
+            entry.setSize(fileDTO.getContent().length);
+            zos.putNextEntry(entry);
+            zos.write(fileDTO.getContent());
+            zos.closeEntry();
+        } else {
+            try (InputStream file = new ByteArrayInputStream(fileDTO.getContent());
+                 ZipInputStream zin = new ZipInputStream(file)) {
+                ZipEntry ze = zin.getNextEntry();
+
+                if (ze != null && !names.contains(ze.getName())) {
+                    names.add(ze.getName());
+                    ZipEntry entry = new ZipEntry(ze.getName());
+                    zos.putNextEntry(entry);
+                    int current;
+                    while ((current = zin.read()) >= 0) {
+                        zos.write(current);
+                    }
+                    zos.closeEntry();
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes the content of the given {@link Sb3ZipDTO} representing the final project of a participant during the
+     * experiment to the given {@link ZipOutputStream}.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param sb3ZipDTO The {@link Sb3ZipDTO} containing the file data.
+     * @throws IOException if the file content could not be written correctly.
+     */
+    private void writeFinalProjectData(final ZipOutputStream zos, final Sb3ZipDTO sb3ZipDTO) throws IOException {
+        ZipEntry lastEntry = new ZipEntry("final_project.sb3");
+        lastEntry.setSize(sb3ZipDTO.getContent().length);
+        zos.putNextEntry(lastEntry);
+        zos.write(sb3ZipDTO.getContent());
+        zos.closeEntry();
+    }
+
+    /**
+     * Writes the content of the given json data to the given {@link ZipOutputStream}.
+     *
+     * @param zos The {@link ZipOutputStream} returning the generated file to the user.
+     * @param code The byte[] containing the json data.
+     * @throws IOException if the content could not be written correctly.
+     */
+    private void writeJsonData(final ZipOutputStream zos, final byte[] code) throws IOException {
+        ZipEntry entry = new ZipEntry("project.json");
+        entry.setSize(code.length);
+        zos.putNextEntry(entry);
+        zos.write(code);
+        zos.closeEntry();
+    }
+
+}

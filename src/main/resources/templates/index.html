@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
+    <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
     <title th:text="${applicationConfig.applicationName}"></title>
     <link rel="stylesheet" th:href="@{/design/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/design/all.min.css}">
@@ -41,7 +41,7 @@
 
         <!-- The standard index page content shown to unauthenticated users. -->
         <div sec:authorize="!hasRole('PARTICIPANT')">
-            <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
+            <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
             <h2 class="mb-5" th:text="${applicationConfig.applicationName}">
             </h2>
             <div class="mx-5" th:text="#{project_info}"></div>

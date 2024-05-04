@@ -100,7 +100,7 @@
                             <div class="input-group">
                                 <select id="clickEvents" class="form-select" th:aria-label="#{click_events}">
                                     <option th:each="event
-                                        : ${T(fim.unipassau.de.scratchLog.util.enums.ClickEventSpecific).values()}"
+                                        : ${T(de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific).values()}"
                                             th:value="${event}" th:text="${event}"></option>
                                 </select>
                             </div>
@@ -124,7 +124,7 @@
                             <div class="input-group">
                                 <select id="resourceEvents" class="form-select" th:aria-label="#{resource_events}">
                                     <option th:each="event
-                                        : ${T(fim.unipassau.de.scratchLog.util.enums.ResourceEventSpecific).values()}"
+                                        : ${T(de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific).values()}"
                                             th:value="${event}" th:text="${event}"></option>
                                 </select>
                             </div>

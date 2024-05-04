@@ -1,0 +1,168 @@
+/*
+ * Copyright (C) 2023 ScratchLog contributors
+ *
+ * This file is part of ScratchLog.
+ *
+ * ScratchLog is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * ScratchLog is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package de.uni_passau.fim.se2.scratchlog.util;
+
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.ApplicationScope;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Utility class providing access to the values specified in the application.properties file needed by the application.
+ */
+@Component
+@ApplicationScope
+public class ApplicationProperties {
+
+    /**
+     * The user-facing name of the application.
+     */
+    @Getter
+    private final String applicationName;
+
+    /**
+     * The context path under which the application is deployed.
+     */
+    @Getter
+    private final String contextPath;
+
+    /**
+     * The base URL where the application is deployed.
+     */
+    private final String baseUrl;
+
+    /**
+     * The URLs for Scratch UIs that can be configured by the user.
+     */
+    @Getter
+    private final String[] scratchGuiUrls;
+
+    /**
+     * The corresponding base URLs for {@link #scratchGuiUrls}.
+     */
+    @Getter
+    private final String[] scratchGuiBaseUrls;
+
+    /**
+     * True, if the application should send emails.
+     */
+    private final boolean mail;
+
+    /**
+     * The URL of the SAML authentication provider.
+     */
+    @Getter
+    private final String samlUrl;
+
+    /**
+     * The Spring profiles configured for the application.
+     */
+    private final Set<String> springProfiles;
+
+    /**
+     * The maximum number of users that can be imported in bulk.
+     */
+    @Getter
+    private final int maxUserBulkImportCount;
+
+    /**
+     * Autowiring constructor.
+     *
+     * @param applicationName The application name.
+     * @param contextPath The context path.
+     * @param baseUrl The base URL for the application.
+     * @param scratchGuiUrls The Scratch UI URLs.
+     * @param scratchGuiBaseUrls The corresponding Scratch UI base URLs.
+     * @param mail If the application should send mails.
+     * @param samlBaseUrl The base URL of the SAML authentication provider.
+     * @param springProfiles The active Spring profiles.
+     * @param maxUserBulkImportCount The maximum number of users that can be imported in bulk.
+     */
+    @Autowired
+    public ApplicationProperties(
+            @Value("${spring.application.name}") final String applicationName,
+            @Value("${server.servlet.context-path}") final String contextPath,
+            @Value("${server.url}") final String baseUrl,
+            @Value("${app.gui}") final String[] scratchGuiUrls,
+            @Value("${app.gui.base}") final String[] scratchGuiBaseUrls,
+            @Value("${app.mail:false}") final boolean mail,
+            @Value("${app.saml.base:null}") final String samlBaseUrl,
+            @Value("${spring.profiles.active}") final String[] springProfiles,
+            @Value("${scratchlog.users.max-count-bulk-import:1000}") final int maxUserBulkImportCount
+    ) {
+        this.applicationName = applicationName;
+        this.contextPath = contextPath;
+        this.baseUrl = baseUrl;
+        this.scratchGuiUrls = scratchGuiUrls;
+        this.scratchGuiBaseUrls = scratchGuiBaseUrls;
+        this.mail = mail;
+        this.samlUrl = samlBaseUrl;
+        this.springProfiles = Arrays.stream(springProfiles).collect(Collectors.toUnmodifiableSet());
+        this.maxUserBulkImportCount = maxUserBulkImportCount;
+    }
+
+    /**
+     * Returns the full application URL.
+     *
+     * @return The URL including the context path.
+     */
+    public String getApplicationUrl() {
+        return baseUrl + contextPath;
+    }
+
+    /**
+     * Returns if mails should be sent.
+     *
+     * @return True, if mails should be sent.
+     */
+    public boolean useMail() {
+        return mail;
+    }
+
+    /**
+     * Checks if SAML authentication is enabled.
+     *
+     * @return True, if SAML authentication is enabled.
+     */
+    public boolean useSamlAuthentication() {
+        return springProfiles.contains("saml2");
+    }
+
+    @Override
+    public final String toString() {
+        return "ApplicationProperties{"
+                + "applicationName='" + applicationName + '\''
+                + ", contextPath='" + contextPath + '\''
+                + ", baseUrl='" + baseUrl + '\''
+                + ", scratchGuiUrls=" + Arrays.toString(scratchGuiUrls)
+                + ", scratchGuiBaseUrls=" + Arrays.toString(scratchGuiBaseUrls)
+                + ", mail=" + mail
+                + ", samlUrl='" + samlUrl + '\''
+                + ", springProfiles=" + springProfiles
+                + ", maxUserBulkImportCount" + maxUserBulkImportCount
+                + '}';
+    }
+
+}

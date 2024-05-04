@@ -24,7 +24,7 @@
         <h2 class="mb-5" th:text="#{csv_create}"></h2>
 
         <!-- The information shown on the page if the mail server constant is set to true. -->
-        <!--/*@thymesVar id="applicationConfig" type="fim.unipassau.de.scratchLog.util.ApplicationProperties"*/-->
+        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
         <div class="row" th:if="${applicationConfig.useMail()}">
             <div class="col-12 mb-5" th:text="#{csv_info}"></div>
         </div>
