@@ -133,4 +133,8 @@ public class User {
         this.secret = secret;
     }
 
+    @Override
+    public String toString() {
+        return "User{id=" + id + ", username='" + username + '\'' + '}';
+    }
 }
