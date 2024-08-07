@@ -133,8 +133,12 @@ public class User {
         this.secret = secret;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String toString() {
         return "User{id=" + id + ", username='" + username + '\'' + '}';
     }
+
 }
