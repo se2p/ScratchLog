@@ -29,7 +29,10 @@
         <opencsv.version>5.9</opencsv.version>
         <passay.version>1.6.4</passay.version>
         <jaxb.version>4.0.2</jaxb.version>
+        <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/litterbox/-/packages/38 for available versions -->
         <litterbox.version>1.9-20240511.065840-1</litterbox.version>
+        <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/scratch/litterbox/litterbox-ml/-/packages/49 for available versions -->
+        <litterbox-ml.version>1.0-20240511.070501-24</litterbox-ml.version>
         <junit.version>5.10.2</junit.version>
         <junitplatform.version>1.10.2</junitplatform.version>
         <mockito.version>5.11.0</mockito.version>
@@ -422,6 +425,10 @@
         <repository>
             <id>gitlab-litterbox</id>
             <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/425/packages/maven</url>
+        </repository>
+        <repository>
+            <id>gitlab-litterbox-ml</id>
+            <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/1245/packages/maven</url>
         </repository>
     </repositories>
 </project>
