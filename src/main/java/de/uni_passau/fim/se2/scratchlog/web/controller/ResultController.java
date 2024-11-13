@@ -677,7 +677,10 @@ public class ResultController {
             ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
             ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip));
             writeUserSb3Files(innerZos, projection, fileDTOS, finalProject, jsons, true);
+            // innerZos is the zip file for a single user, which has all the needed data written to it after
+            // writeUserSb3Files, so close the ZOS here to avoid malformed zip data.
             innerZos.flush();
+            innerZos.close();
             ZipEntry createdZip = new ZipEntry("user_" + userId + ".zip");
             zos.putNextEntry(createdZip);
             zos.write(innerZip.toByteArray());
