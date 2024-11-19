@@ -187,6 +187,7 @@ public class SecretController {
             httpServletResponse.setStatus(HttpServletResponse.SC_OK);
             CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
             csvWriter.writeAll(users);
+            csvWriter.flush();
         } catch (IOException e) {
             throw new RuntimeException("Could not download participation links due to IOException!", e);
         }
