@@ -20,8 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.uni_passau.fim.se2.litterbox.analytics.Issue;
 import de.uni_passau.fim.se2.litterbox.analytics.ProgramBugAnalyzer;
 import de.uni_passau.fim.se2.litterbox.analytics.ProgramMetricAnalyzer;
@@ -29,7 +27,7 @@ import de.uni_passau.fim.se2.litterbox.analytics.metric.MetricResult;
 import de.uni_passau.fim.se2.litterbox.ast.ParsingException;
 import de.uni_passau.fim.se2.litterbox.ast.model.Program;
 import de.uni_passau.fim.se2.litterbox.ast.model.metadata.resources.ImageMetadata;
-import de.uni_passau.fim.se2.litterbox.ast.parser.ProgramParser;
+import de.uni_passau.fim.se2.litterbox.ast.parser.Scratch3Parser;
 import de.uni_passau.fim.se2.litterbox.ast.util.AstNodeUtil;
 import de.uni_passau.fim.se2.litterbox.ast.visitor.ParentVisitor;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
@@ -69,6 +67,11 @@ public class ExperimentDataService {
      * The log instance associated with this class for logging purposes.
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(ExperimentDataService.class);
+
+    /**
+     * A parser for Scratch programs.
+     */
+    private final Scratch3Parser scratch3Parser = new Scratch3Parser();
 
     /**
      * The block event repository to use for block event queries.
@@ -368,9 +371,7 @@ public class ExperimentDataService {
      * @throws ParsingException if LitterBox failed to parse the JSON.
      */
     private Program getProgram(final String json) throws JsonProcessingException, ParsingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode rootNode = mapper.readTree(json);
-        Program program = ProgramParser.parseProgram("json", rootNode);
+        Program program = scratch3Parser.parseString("json", json);
         program.accept(new ParentVisitor());
         return program;
     }

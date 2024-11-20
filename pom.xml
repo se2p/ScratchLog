@@ -2,6 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
 
     <groupId>de.uni_passau.fim.se2</groupId>
     <artifactId>scratchlog</artifactId>
@@ -11,85 +17,84 @@
     <properties>
         <!-- Compiler and Source settings -->
         <java.version>17</java.version>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Library versions -->
-        <spring.version>3.2.5</spring.version>
-        <security.version>6.2.4</security.version>
-        <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
-        <lombok.version>1.18.32</lombok.version>
-        <flyway.version>10.12.0</flyway.version>
-        <databind.version>2.17.0</databind.version>
         <bouncycastle.version>1.70</bouncycastle.version>
-        <codec.version>1.17.0</codec.version>
-        <json.version>20240303</json.version>
-        <commonmark.version>0.22.0</commonmark.version>
-        <opencsv.version>5.9</opencsv.version>
-        <passay.version>1.6.4</passay.version>
-        <jaxb.version>4.0.2</jaxb.version>
-        <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/litterbox/-/packages/38 for available versions -->
-        <litterbox.version>1.9-20240511.065840-1</litterbox.version>
-        <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/scratch/litterbox/litterbox-ml/-/packages/49 for available versions -->
-        <litterbox-ml.version>1.0-20240511.070501-24</litterbox-ml.version>
-        <junit.version>5.10.2</junit.version>
-        <junitplatform.version>1.10.2</junitplatform.version>
-        <mockito.version>5.11.0</mockito.version>
-        <mockito-inline.version>5.2.0</mockito-inline.version>
-        <powermock.version>2.0.9</powermock.version>
-        <jakarta.validation.version>3.0.2</jakarta.validation.version>
-        <mysql.version>8.4.0</mysql.version>
-        <h2.version>2.2.224</h2.version>
-        <mycila.version>4.2</mycila.version>
-        <maven.checkstyle.version>3.3.1</maven.checkstyle.version>
-        <checkstyle.version>10.16.0</checkstyle.version>
-        <maven.surefire.version>3.2.5</maven.surefire.version>
+        <checkstyle.version>10.20.1</checkstyle.version>
+        <codec.version>1.17.1</codec.version>
+        <commonmark.version>0.24.0</commonmark.version>
+        <databind.version>2.18.1</databind.version>
+        <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/scratch/litterbox/embeddedkittens/-/packages/ for available versions -->
+        <embeddedkittens.version>1.1.0-20241110.172915-1</embeddedkittens.version>
+        <flyway.version>10.22.0</flyway.version>
+        <glassfish-jaxb.version>4.0.5</glassfish-jaxb.version>
+        <h2.version>2.3.232</h2.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <jakarta.validation.version>3.1.0</jakarta.validation.version>
+        <jaxb.version>4.0.2</jaxb.version>
+        <json.version>20240303</json.version>
+        <junit.version>5.11.3</junit.version>
+        <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/litterbox/-/packages/ for available versions -->
+        <litterbox.version>1.10-20241021.070926-2</litterbox.version>
+        <maven.checkstyle.version>3.6.0</maven.checkstyle.version>
+        <maven.surefire.version>3.5.2</maven.surefire.version>
+        <mockito-inline.version>5.2.0</mockito-inline.version>
+        <mockito.version>5.14.2</mockito.version>
+        <mycila.version>4.2</mycila.version>
+        <mysql.version>9.1.0</mysql.version>
+        <opencsv.version>5.9</opencsv.version>
+        <passay.version>1.6.6</passay.version>
+        <powermock.version>2.0.9</powermock.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
-            <version>${spring.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>${spring.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-tomcat</artifactId>
-            <version>${spring.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
-            <version>${spring.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
-            <version>${spring.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
-            <version>${spring.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
-            <version>${spring.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <version>${spring.version}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -103,7 +108,6 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
-            <version>${security.version}</version>
             <scope>compile</scope>
         </dependency>
 
@@ -111,14 +115,12 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-saml2-service-provider</artifactId>
-            <version>${security.version}</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
-            <version>${security.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -126,39 +128,33 @@
         <dependency>
             <groupId>org.thymeleaf.extras</groupId>
             <artifactId>thymeleaf-extras-springsecurity6</artifactId>
-            <version>${thymeleaf.version}</version>
         </dependency>
 
         <!-- Lombok for automatic method generation -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
         </dependency>
 
         <!-- Flyway for database version management -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
-            <version>${flyway.version}</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
-            <version>${flyway.version}</version>
         </dependency>
 
         <!-- Jackson for parsing JSON to DTOs -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${databind.version}</version>
         </dependency>
         <!-- For parsing DateTime properties -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${databind.version}</version>
         </dependency>
 
         <!-- Used in SAML2Configuration -->
@@ -230,7 +226,7 @@
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
-            <version>${jaxb.version}</version>
+            <version>${glassfish-jaxb.version}</version>
         </dependency>
 
         <!-- LitterBox for analyzing Scratch projects -->
@@ -239,24 +235,17 @@
             <artifactId>Litterbox</artifactId>
             <version>${litterbox.version}</version>
         </dependency>
+        <dependency>
+            <groupId>de.uni_passau.fim.se2</groupId>
+            <artifactId>embedded-kittens</artifactId>
+            <version>${embeddedkittens.version}</version>
+        </dependency>
 
         <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
+            <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-launcher</artifactId>
-            <version>${junitplatform.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -296,7 +285,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -306,7 +295,7 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.2.5</version>
+                                    <version>3.6.3</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
@@ -317,7 +306,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring.version}</version>
                 <configuration>
                     <mainClass>de.uni_passau.fim.se2.scratchlog.ScratchLogApplication</mainClass>
                 </configuration>
@@ -427,7 +415,7 @@
             <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/425/packages/maven</url>
         </repository>
         <repository>
-            <id>gitlab-litterbox-ml</id>
+            <id>gitlab-embeddedkittens</id>
             <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/1245/packages/maven</url>
         </repository>
     </repositories>
