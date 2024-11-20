@@ -56,10 +56,10 @@ Compile:
   stage: build
   needs: []
   script:
-    - "mvn $MAVEN_ARGS package"
+    - "mvn $MAVEN_ARGS -DskipTests package"
   artifacts:
     paths:
-      - target/
+      - target/scratchlog-*.jar
 
 Unit-Tests:
   stage: test
