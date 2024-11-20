@@ -66,7 +66,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.LocaleResolver;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -1049,6 +1051,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     @Test
     public void testDownloadCSVFile() throws IOException {
         when(experimentDataService.getEventData(ID)).thenReturn(new ArrayList<>());
+        when(httpServletResponse.getWriter()).thenReturn(new PrintWriter(new ByteArrayOutputStream()));
         assertDoesNotThrow(
                 () -> experimentController.downloadCSVFile(ID, httpServletResponse)
         );
@@ -1210,6 +1213,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     @Test
     public void testDownloadLitterBoxAnalysis() throws IOException {
         when(experimentDataService.getLitterBoxAnalysisResults(ID)).thenReturn(new ArrayList<>());
+        when(httpServletResponse.getWriter()).thenReturn(new PrintWriter(new ByteArrayOutputStream()));
         assertDoesNotThrow(
                 () -> experimentController.downloadLitterBoxAnalysis(ID, httpServletResponse)
         );

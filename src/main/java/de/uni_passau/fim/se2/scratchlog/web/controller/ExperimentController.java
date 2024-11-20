@@ -538,6 +538,7 @@ public class ExperimentController {
             CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
             List<String[]> events = experimentDataService.getEventData(experimentId);
             csvWriter.writeAll(events);
+            csvWriter.flush();
         } catch (IOException e) {
             LOGGER.error("Could not download csv file due to IOException!", e);
             throw new RuntimeException("Could not download csv file due to IOException!");
@@ -620,6 +621,7 @@ public class ExperimentController {
             CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
             List<String[]> results = experimentDataService.getLitterBoxAnalysisResults(experimentId);
             csvWriter.writeAll(results);
+            csvWriter.flush();
         } catch (IOException e) {
             LOGGER.error("Could not download LitterBox analysis results due to IOException!", e);
             throw new RuntimeException("Could not download LitterBox analysis results due to IOException!");
