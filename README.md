@@ -76,13 +76,7 @@ accordingly, e.g. to `/scratchlog` while the *app.url* value is `scratch.fim.uni
 
 #### Configuring the instrumented Scratch instance
 
-You also have to make some changes to the instrumented Scratch instance:
-- Change the *baseUrl* in `logging.js` in the instrumented `scratch-vm` to `<app.url> + <server.servlet.context-path> +
-  '/participant/store...'`.
-- Change the `window.location.href` in the *handleFinishExperiment()* method in `menu-bar.jsx` in the instrumented
-  `scratch-gui` to `<app.url> + <server.servlet.context-path>`.
-- The instrumented `scratch-gui` and `scratch-vm` need to be linked via the `npm link` setting, as described
-  [here](https://github.com/LLK/scratch-gui/wiki/Getting-Started).
+To configure the Scratch instance, set the appropriate values in the `.env` file as described in the README file of the scratch-gui repository before building the instance.
 
 On application startup, a first administrator is added automatically, if no other administrator could be found in the
 database. The login credentials are specified in the `UserInitialization` class. You should change these credentials
