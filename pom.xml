@@ -47,6 +47,16 @@
         <opencsv.version>5.9</opencsv.version>
         <passay.version>1.6.6</passay.version>
         <powermock.version>2.0.9</powermock.version>
+
+        <!-- webjars versions -->
+        <!-- might have to deploy new versions on https://www.webjars.org/ first when updating -->
+        <webjars.locator.version>0.52</webjars.locator.version>
+        <webjars.bootstrap.version>5.0.2</webjars.bootstrap.version>
+        <webjars.chartjs.version>4.4.0</webjars.chartjs.version>
+        <webjars.fontawesome.version>5.15.3</webjars.fontawesome.version>
+        <webjars.jquery.version>3.6.4</webjars.jquery.version>
+        <webjars.nouislider.version>15.7.1</webjars.nouislider.version>
+        <webjars.simplemde.version>1.11.2</webjars.simplemde.version>
     </properties>
 
     <dependencyManagement>
@@ -144,6 +154,43 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
+        </dependency>
+
+        <!-- webjars for UI JavaScript dependencies -->
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>webjars-locator</artifactId>
+            <version>${webjars.locator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>bootstrap</artifactId>
+            <version>${webjars.bootstrap.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery</artifactId>
+            <version>${webjars.jquery.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>font-awesome</artifactId>
+            <version>${webjars.fontawesome.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>chart.js</artifactId>
+            <version>${webjars.chartjs.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>nouislider</artifactId>
+            <version>${webjars.nouislider.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>simplemde</artifactId>
+            <version>${webjars.simplemde.version}</version>
         </dependency>
 
         <!-- Jackson for parsing JSON to DTOs -->
