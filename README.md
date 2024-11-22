@@ -6,7 +6,6 @@
 
 - Apache Maven
 - A MySQL database
-- npm
 - for data acquisition: instrumented Scratch GUI and Scratch VM
 
 To access the database, you only need to change the connection details in the `application.properties` file.
@@ -17,12 +16,8 @@ Create a new database with a database user to grant the application access and s
 `application.properties` file. Add the necessary tables and constraints using the `schema.sql` file in the
 `main/resources` folder.
 
-Install npm in the `resources/static` folder via the following command:
-```bash
-npm install
-```
-The result page of this project uses Google's `Blockly` and `Scratch Blocks` to display the participant code. Since this
-project is build with the Spring framework, you can run this project from within an IDE. You will still need to do the
+The result page of this project uses `Scratch Blocks` (which is a fork of Google's `Blockly`) to display the participant code. Since this
+project is built with the Spring framework, you can run this project from within an IDE. You will still need to do the
 necessary configurations described below.
 
 #### Standard configuration
