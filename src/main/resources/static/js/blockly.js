@@ -1,7 +1,10 @@
 var blocklyArea = document.getElementById('blocklyArea');
 var blocklyDiv = document.getElementById('blocklyDiv');
 var toolbox = document.getElementById('toolbox');
-var workspace = Blockly.inject('blocklyDiv', {toolbox: toolbox});
+var workspace = Blockly.inject('blocklyDiv', {
+    toolbox: toolbox,
+    media: window.location.origin + contextPath + "/static/lib/scratch-blocks/media/"
+});
 var blocklyCode = '';
 
 let xmlButton = document.getElementById("xml");
@@ -57,13 +60,13 @@ var onresize = function (e) {
 var renderBlockly = function () {
     this.blocklyDiv.innerHTML = '';
     this.workspace = Blockly.inject('blocklyDiv',
-        {toolbox: null,
+        {
+            toolbox: null,
             readOnly: true,
-            scrollbars:  true
+            scrollbars: true,
+            media: window.location.origin + contextPath + "/static/lib/scratch-blocks/media/"
         });
-    this.workspace.options.pathToMedia = window.location.origin + contextPath
-        + "/static/node_modules/scratch-blocks/media/";
-    if(blocklyCode) {
+    if (blocklyCode) {
         var xml = Blockly.Xml.textToDom(blocklyCode);
         Blockly.Xml.domToWorkspace(xml, this.workspace);
         this.workspace.scrollCenter();
