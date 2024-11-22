@@ -1,0 +1,3 @@
+The files in this directory were copied from our scratch-blocks repository at
+
+https://gitlab.infosun.fim.uni-passau.de/se2/scratch/interrogative-debugging/scratch-blocks/-/tree/eea668222ddc70170a2a47354f1cb7216d0efebf
