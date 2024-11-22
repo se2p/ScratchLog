@@ -1,3 +1,12 @@
 The files in this directory were copied from our scratch-blocks repository at
 
 https://gitlab.infosun.fim.uni-passau.de/se2/scratch/interrogative-debugging/scratch-blocks/-/tree/eea668222ddc70170a2a47354f1cb7216d0efebf
+
+To update this dependency, build the scratch-blocks repository according to its documentation, then copy these files:
+
+- blockly_compressed_vertical.js
+- blocks_compressed.js
+- blocks_compressed_vertical.js
+- msg/messages.js
+- msg/scratch_msgs.js
+- media/*
