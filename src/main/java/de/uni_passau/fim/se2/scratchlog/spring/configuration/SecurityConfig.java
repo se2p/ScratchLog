@@ -65,12 +65,11 @@ public class SecurityConfig {
      * Registers the custom authentication provider with spring security.
      *
      * @param authenticationProvider The custom authentication provider.
-     * @param applicationProperties The application properties.
+     * @param applicationProperties  The application properties.
      */
     @Autowired
     public SecurityConfig(
-            final CustomAuthenticationProvider authenticationProvider, final ApplicationProperties applicationProperties
-    ) {
+        final CustomAuthenticationProvider authenticationProvider, final ApplicationProperties applicationProperties) {
         this.authenticationProvider = authenticationProvider;
         this.applicationProperties = applicationProperties;
     }
@@ -96,25 +95,62 @@ public class SecurityConfig {
     }
 
     private void authorizeHttpRequestsConfig(
-            final AuthorizeHttpRequestsConfigurer<?>.AuthorizationManagerRequestMatcherRegistry authorize
-    ) {
+        final AuthorizeHttpRequestsConfigurer<?>.AuthorizationManagerRequestMatcherRegistry authorize) {
+
         authorize
-                .requestMatchers(
-                        "/login", "/finish", "/token/password", "/reset", "/users/reset", "/users/login"
-                ).anonymous()
-                .requestMatchers("/users/authenticate").hasAnyRole("PARTICIPANT", "ANONYMOUS")
-                .requestMatchers(
-                        "/experiment/*", "/users/add", "/users/delete", "/users/forgot", "/users/add",
-                        "/users/bulk", "/result", "/search", "/secret", "/search/*"
-                ).hasRole("ADMIN")
-                .requestMatchers(
-                        "/experiment", "/users/profile", "/users/logout", "/users/edit", "/users/update", "/course"
-                ).hasRole("PARTICIPANT")
-                .requestMatchers(
-                        "/design/*", "/js/*", "/webfonts/*", "/", "/finish", "/participant/restart",
-                        "/participant/stop", "/store/*", "/token", "/error", "/login/saml2", "/saml2/**"
-                ).permitAll()
-                .anyRequest().authenticated();
+
+            .requestMatchers(
+                "/login",
+                "/finish",
+                "/token/password",
+                "/reset",
+                "/users/reset",
+                "/users/login"
+            ).anonymous()
+
+            .requestMatchers(
+                "/users/authenticate"
+            ).hasAnyRole("PARTICIPANT", "ANONYMOUS")
+
+            .requestMatchers(
+                "/experiment/*",
+                "/users/add",
+                "/users/delete",
+                "/users/forgot",
+                "/users/add",
+                "/users/bulk",
+                "/result",
+                "/search",
+                "/secret",
+                "/search/*"
+            ).hasRole("ADMIN")
+
+            .requestMatchers(
+                "/experiment",
+                "/users/profile",
+                "/users/logout",
+                "/users/edit",
+                "/users/update",
+                "/course"
+            ).hasRole("PARTICIPANT")
+
+            .requestMatchers(
+                "/css/*",
+                "/js/*",
+                "/lib/**",
+                "/",
+                "/finish",
+                "/participant/restart",
+                "/participant/stop",
+                "/store/*",
+                "/token",
+                "/error",
+                "/login/saml2",
+                "/saml2/**",
+                "/webjars/**"
+            ).permitAll()
+
+            .anyRequest().authenticated();
     }
 
     /**
