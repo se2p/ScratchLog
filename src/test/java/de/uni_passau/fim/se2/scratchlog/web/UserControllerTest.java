@@ -826,7 +826,7 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, times(2)).encodePassword(anyString());
+        verify(userService, times(3)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 

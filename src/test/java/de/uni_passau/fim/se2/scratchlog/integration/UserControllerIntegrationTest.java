@@ -597,7 +597,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, times(2)).encodePassword(anyString());
+        verify(userService, times(3)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 

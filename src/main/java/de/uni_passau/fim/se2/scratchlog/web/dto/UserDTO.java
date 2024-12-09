@@ -20,6 +20,8 @@
 package de.uni_passau.fim.se2.scratchlog.web.dto;
 
 import com.opencsv.bean.CsvBindByName;
+import com.opencsv.bean.CsvCustomBindByName;
+import de.uni_passau.fim.se2.scratchlog.util.CsvParserUtils;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import lombok.AllArgsConstructor;
@@ -49,13 +51,13 @@ public class UserDTO {
     /**
      * The user's unique username.
      */
-    @CsvBindByName(required = true)
+    @CsvCustomBindByName(required = true, converter = CsvParserUtils.TrimValueConverter.class)
     private String username;
 
     /**
      * The user's email.
      */
-    @CsvBindByName()
+    @CsvCustomBindByName(converter = CsvParserUtils.TrimValueConverter.class)
     private String email;
 
     /**
@@ -66,7 +68,7 @@ public class UserDTO {
     /**
      * The user's preferred language.
      */
-    @CsvBindByName()
+    @CsvCustomBindByName(converter = CsvParserUtils.LanguageConverter.class)
     private Language language;
 
     /**
