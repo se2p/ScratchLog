@@ -64,13 +64,13 @@ public class MailConfiguration {
     private String mailServerPassword;
 
     /**
-     * Whether or not to use mail server authentication as defined in the application properties file.
+     * Whether to use mail server authentication as defined in the application properties file.
      */
     @Value("${spring.mail.properties.mail.smtp.auth}")
     private String mailServerAuth;
 
     /**
-     * Whether or not to use tls as defined in the application properties file.
+     * Whether to use TLS as defined in the application properties file.
      */
     @Value("${spring.mail.properties.mail.smtp.starttls.enable}")
     private String mailServerStartTls;
