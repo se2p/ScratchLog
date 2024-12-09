@@ -66,11 +66,6 @@ public class ApplicationProperties {
     private final String[] scratchGuiBaseUrls;
 
     /**
-     * True, if the application should send emails.
-     */
-    private final boolean mail;
-
-    /**
      * The URL of the SAML authentication provider.
      */
     @Getter
@@ -95,7 +90,6 @@ public class ApplicationProperties {
      * @param baseUrl The base URL for the application.
      * @param scratchGuiUrls The Scratch UI URLs.
      * @param scratchGuiBaseUrls The corresponding Scratch UI base URLs.
-     * @param mail If the application should send mails.
      * @param samlBaseUrl The base URL of the SAML authentication provider.
      * @param springProfiles The active Spring profiles.
      * @param maxUserBulkImportCount The maximum number of users that can be imported in bulk.
@@ -107,7 +101,6 @@ public class ApplicationProperties {
             @Value("${server.url}") final String baseUrl,
             @Value("${app.gui}") final String[] scratchGuiUrls,
             @Value("${app.gui.base}") final String[] scratchGuiBaseUrls,
-            @Value("${app.mail:false}") final boolean mail,
             @Value("${app.saml.base:null}") final String samlBaseUrl,
             @Value("${spring.profiles.active}") final String[] springProfiles,
             @Value("${scratchlog.users.max-count-bulk-import:1000}") final int maxUserBulkImportCount
@@ -117,7 +110,6 @@ public class ApplicationProperties {
         this.baseUrl = baseUrl;
         this.scratchGuiUrls = scratchGuiUrls;
         this.scratchGuiBaseUrls = scratchGuiBaseUrls;
-        this.mail = mail;
         this.samlUrl = samlBaseUrl;
         this.springProfiles = Arrays.stream(springProfiles).collect(Collectors.toUnmodifiableSet());
         this.maxUserBulkImportCount = maxUserBulkImportCount;
@@ -138,7 +130,7 @@ public class ApplicationProperties {
      * @return True, if mails should be sent.
      */
     public boolean useMail() {
-        return mail;
+        return springProfiles.contains("mail");
     }
 
     /**
@@ -158,7 +150,6 @@ public class ApplicationProperties {
                 + ", baseUrl='" + baseUrl + '\''
                 + ", scratchGuiUrls=" + Arrays.toString(scratchGuiUrls)
                 + ", scratchGuiBaseUrls=" + Arrays.toString(scratchGuiBaseUrls)
-                + ", mail=" + mail
                 + ", samlUrl='" + samlUrl + '\''
                 + ", springProfiles=" + springProfiles
                 + ", maxUserBulkImportCount" + maxUserBulkImportCount

@@ -80,6 +80,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
 
@@ -115,7 +116,7 @@ public class UserController {
     /**
      * The mail service to use for sending emails.
      */
-    private final MailService mailService;
+    private final Optional<MailService> mailService;
 
     /**
      * The token service to use for generating tokens.
@@ -191,7 +192,7 @@ public class UserController {
     @Autowired
     public UserController(final ApplicationProperties applicationProperties,
                           final UserService userService, final ParticipantService participantService,
-                          final MailService mailService, final TokenService tokenService,
+                          final Optional<MailService> mailService, final TokenService tokenService,
                           final CustomAuthenticationProvider authenticationProvider,
                           final LocaleResolver localeResolver) {
         this.applicationProperties = applicationProperties;
@@ -1088,12 +1089,16 @@ public class UserController {
      */
     private boolean sendEmail(final String email, final String value, final String subject, final String template,
                               final ResourceBundle resourceBundle) {
+        if (mailService.isEmpty()) {
+            LOGGER.error("Cannot send emails when mailing is disabled!");
+            return false;
+        }
         String tokenUrl = applicationProperties.getApplicationUrl() + "/token?value=" + value;
         Map<String, Object> templateModel = new HashMap<>();
         templateModel.put("applicationName", applicationProperties.getApplicationName());
         templateModel.put("baseUrl", applicationProperties.getApplicationUrl());
         templateModel.put("token", tokenUrl);
-        return mailService.sendEmail(email, resourceBundle.getString(subject), templateModel, template);
+        return mailService.get().sendEmail(email, resourceBundle.getString(subject), templateModel, template);
     }
 
     /**

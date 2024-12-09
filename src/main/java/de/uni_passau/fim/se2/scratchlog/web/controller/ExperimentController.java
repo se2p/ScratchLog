@@ -74,6 +74,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
@@ -121,7 +122,7 @@ public class ExperimentController {
     /**
      * The mail service to use for sending emails.
      */
-    private final MailService mailService;
+    private final Optional<MailService> mailService;
 
     /**
      * The experiment data service to use for retrieving experiment data.
@@ -189,7 +190,7 @@ public class ExperimentController {
     public ExperimentController(final ApplicationProperties applicationProperties,
                                 final ExperimentService experimentService, final UserService userService,
                                 final CourseService courseService, final ParticipantService participantService,
-                                final PageService pageService, final MailService mailService,
+                                final PageService pageService, final Optional<MailService> mailService,
                                 final ExperimentDataService experimentDataService) {
         this.applicationProperties = applicationProperties;
         this.experimentService = experimentService;
@@ -704,6 +705,10 @@ public class ExperimentController {
      * @return {@code true} if the message has been sent successfully or {@code false} otherwise.
      */
     private boolean sendEmail(final UserDTO userDTO, final int experimentId) {
+        if (mailService.isEmpty()) {
+            LOGGER.error("Cannot send emails when mailing is disabled!");
+            return false;
+        }
         if (userDTO.getEmail() == null) {
             LOGGER.error("Cannot send invitation mail to user with email null!");
             return false;
@@ -713,7 +718,7 @@ public class ExperimentController {
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
-        if (!mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
+        if (!mailService.get().sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
             LOGGER.error("Could not send invitation mail to user with email " + userDTO.getEmail() + ".");
             return false;

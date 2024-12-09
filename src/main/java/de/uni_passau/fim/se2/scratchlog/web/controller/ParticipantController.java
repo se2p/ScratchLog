@@ -61,6 +61,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
@@ -103,7 +104,7 @@ public class ParticipantController {
     /**
      * The mail service to use for sending emails.
      */
-    private final MailService mailService;
+    private final Optional<MailService> mailService;
 
     /**
      * String corresponding to redirecting to the experiment page.
@@ -159,7 +160,7 @@ public class ParticipantController {
     public ParticipantController(final ApplicationProperties applicationProperties,
                                  final UserService userService, final ExperimentService experimentService,
                                  final ParticipantService participantService, final PageService pageService,
-                                 final MailService mailService) {
+                                 final Optional<MailService> mailService) {
         this.applicationProperties = applicationProperties;
         this.userService = userService;
         this.experimentService = experimentService;
@@ -260,9 +261,9 @@ public class ParticipantController {
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
                 getLocaleFromLanguage(userDTO.getLanguage()));
 
-        if (!applicationProperties.useMail()) {
+        if (!applicationProperties.useMail() || mailService.isEmpty()) {
             return "redirect:/secret?user=" + saved.getId() + EXPERIMENT_PARAM + experimentId;
-        } else if (mailService.sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
+        } else if (mailService.get().sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
             return REDIRECT_EXPERIMENT + experimentId;
         } else {
