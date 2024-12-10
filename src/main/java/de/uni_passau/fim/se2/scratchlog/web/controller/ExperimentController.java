@@ -706,7 +706,7 @@ public class ExperimentController {
      */
     private boolean sendEmail(final UserDTO userDTO, final int experimentId) {
         if (mailService.isEmpty()) {
-            LOGGER.error("Cannot send emails when mailing is disabled!");
+            LOGGER.debug("Cannot send emails when mailing is disabled!");
             return false;
         }
         if (userDTO.getEmail() == null) {

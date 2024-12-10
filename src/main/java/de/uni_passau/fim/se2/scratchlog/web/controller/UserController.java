@@ -1090,7 +1090,7 @@ public class UserController {
     private boolean sendEmail(final String email, final String value, final String subject, final String template,
                               final ResourceBundle resourceBundle) {
         if (mailService.isEmpty()) {
-            LOGGER.error("Cannot send emails when mailing is disabled!");
+            LOGGER.debug("Cannot send emails when mailing is disabled!");
             return false;
         }
         String tokenUrl = applicationProperties.getApplicationUrl() + "/token?value=" + value;
