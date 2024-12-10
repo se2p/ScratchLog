@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ import java.util.Map;
  * A service providing methods related to sending emails to users.
  */
 @Service
+@Profile("mail")
 public class MailService {
 
     /**
@@ -106,8 +108,8 @@ public class MailService {
      * Sends a new template message to the given addresses with the content specified in the given template.
      *
      * @param to The recipient of the email.
-     * @param cc The address to which a copy of this email should be send.
-     * @param bcc The address to which a blind copy of this email should be send.
+     * @param cc The address to which a copy of this email should be sent.
+     * @param bcc The address to which a blind copy of this email should be sent.
      * @param replyTo The reply to address.
      * @param subject The subject of this email.
      * @param templateModel The template model containing additional properties.
@@ -129,8 +131,8 @@ public class MailService {
      * Sends the given html message to the given addresses.
      *
      * @param to The recipient of the email.
-     * @param cc The address to which a copy of this email should be send.
-     * @param bcc The address to which a blind copy of this email should be send.
+     * @param cc The address to which a copy of this email should be sent.
+     * @param bcc The address to which a blind copy of this email should be sent.
      * @param replyTo The reply to address.
      * @param subject The subject of this email.
      * @param htmlBody The html representation of the mail template.

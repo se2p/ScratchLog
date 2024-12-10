@@ -25,7 +25,8 @@ necessary configurations described below.
 To get the project up and running, you need to adapt the `application.properties` file in the `resources` folder as
 follows:
 - Configure the database connection and mail sending to match your system.
-- If you want to use the application without a mail server, set the *app.mail* boolean to false. With this setting,
+- If you want to use the application with a mail server, add the `mail` profile to `spring.profiles.active` (takes a 
+  comma-separated list). Without this setting,
   you will not be able to use the reset password functionality of this application. Please note that switching between
   mail server options, e.g. first using the application without a mail server and then using one, might cause the
   application to not work properly anymore.

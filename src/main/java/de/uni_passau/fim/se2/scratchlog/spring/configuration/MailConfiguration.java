@@ -22,6 +22,7 @@ package de.uni_passau.fim.se2.scratchlog.spring.configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -35,6 +36,7 @@ import java.util.Properties;
  */
 @Configuration
 @PropertySource(value = {"classpath:application.properties"})
+@Profile("mail")
 public class MailConfiguration {
 
     /**
@@ -62,13 +64,13 @@ public class MailConfiguration {
     private String mailServerPassword;
 
     /**
-     * Whether or not to use mail server authentication as defined in the application properties file.
+     * Whether to use mail server authentication as defined in the application properties file.
      */
     @Value("${spring.mail.properties.mail.smtp.auth}")
     private String mailServerAuth;
 
     /**
-     * Whether or not to use tls as defined in the application properties file.
+     * Whether to use TLS as defined in the application properties file.
      */
     @Value("${spring.mail.properties.mail.smtp.starttls.enable}")
     private String mailServerStartTls;
