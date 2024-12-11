@@ -50,7 +50,13 @@ Checkstyle:
   stage: validate
   needs: []
   script:
-    - "mvn $MAVEN_ARGS checkstyle:check"
+    - "mvn $MAVEN_ARGS checkstyle:checkstyle"
+    - cat target/checkstyle-result.xml | ./scripts/checkstyle_report.sh > checkstyle-report.json
+  artifacts:
+    when: always
+    reports:
+      codequality:
+        - checkstyle-report.json
 
 Compile:
   stage: build
