@@ -449,6 +449,10 @@
     </build>
 
     <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
         <!-- Repository for downloading opensaml-saml-api, a dependency of spring security saml2 service provider -->
         <repository>
             <id>shibboleth_repository</id>
