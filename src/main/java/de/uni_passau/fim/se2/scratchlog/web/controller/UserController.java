@@ -303,15 +303,6 @@ public class UserController {
                         + " due to exceeding the maximum number of login attempts!");
                 model.addAttribute(ERROR, resourceBundle.getString("account_deactivated"));
                 return LOGIN;
-            } else if (findUser.getRole().equals(Role.ADMIN) && userService.matchesPassword(Constants.ADMIN_PASSWORD,
-                    findUser.getPassword())) {
-                if (tokenService.checkDefaultPasswordToken(findUser.getId(), true)
-                        >= Constants.MAX_DEFAULT_ATTEMPTS) {
-                    LOGGER.info("Deactivated administrator account of " + findUser.getUsername() + " as they logged in "
-                            + "too often with the default admin password!");
-                    model.addAttribute(ERROR, resourceBundle.getString("admin_deactivated"));
-                    return LOGIN;
-                }
             }
 
             if (userService.loginUser(userDTO)) {

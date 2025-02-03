@@ -76,7 +76,6 @@ public class TokenServiceTest {
     private final Token token = new Token(TokenType.CHANGE_EMAIL, LocalDateTime.now(), EMAIL, user);
     private final Token registerToken1 = new Token(TokenType.REGISTER, date, null, user);
     private final Token registerToken2 = new Token(TokenType.REGISTER, date, null, user);
-    private final Token defaultPasswordToken = new Token(TokenType.DEFAULT_PASSWORD, date, "1", user);
     private final List<Token> registerTokens = new ArrayList<>();
     private final List<Token> defaultTokens = new ArrayList<>();
 
@@ -90,9 +89,6 @@ public class TokenServiceTest {
         registerToken1.setUser(user);
         registerTokens.add(registerToken1);
         registerTokens.add(registerToken2);
-        defaultPasswordToken.setValue(VALUE);
-        defaultPasswordToken.setMetadata("1");
-        defaultTokens.add(defaultPasswordToken);
     }
 
     @Test
@@ -368,105 +364,4 @@ public class TokenServiceTest {
         verify(userRepository, never()).save(any());
     }
 
-    @Test
-    public void testCheckDefaultPasswordToken() {
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(tokenRepository.findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user)).thenReturn(defaultTokens);
-        assertEquals(1, tokenService.checkDefaultPasswordToken(ID, false));
-        verify(userRepository).getReferenceById(ID);
-        verify(tokenRepository).findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user);
-        verify(tokenRepository, never()).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testCheckDefaultPasswordTokenNoToken() {
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(tokenRepository.findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user)).thenReturn(new ArrayList<>());
-        assertEquals(0, tokenService.checkDefaultPasswordToken(ID, false));
-        verify(userRepository).getReferenceById(ID);
-        verify(tokenRepository).findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user);
-        verify(tokenRepository, never()).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testCheckDefaultPasswordTokenLoginGenerateToken() {
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(tokenRepository.findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user)).thenReturn(new ArrayList<>());
-        assertEquals(0, tokenService.checkDefaultPasswordToken(ID, true));
-        verify(userRepository).getReferenceById(ID);
-        verify(tokenRepository).findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user);
-        verify(tokenRepository).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testCheckDefaultPasswordTokenLoginUpdateToken() {
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(tokenRepository.findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user)).thenReturn(defaultTokens);
-        assertAll(
-                () -> assertEquals(1, tokenService.checkDefaultPasswordToken(ID, true)),
-                () -> assertEquals("2", defaultPasswordToken.getMetadata())
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(tokenRepository).findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user);
-        verify(tokenRepository).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testCheckDefaultPasswordTokenLoginDeactivateUser() {
-        defaultPasswordToken.setMetadata("5");
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(tokenRepository.findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user)).thenReturn(defaultTokens);
-        assertEquals(Constants.MAX_DEFAULT_ATTEMPTS, tokenService.checkDefaultPasswordToken(ID, true));
-        verify(userRepository).getReferenceById(ID);
-        verify(tokenRepository).findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user);
-        verify(tokenRepository, never()).save(any());
-        verify(tokenRepository).deleteById(defaultPasswordToken.getValue());
-        verify(userRepository).save(any());
-    }
-
-    @Test
-    public void testCheckDefaultPasswordTokenIllegalState() {
-        List<Token> tokens = List.of(defaultPasswordToken, defaultPasswordToken);
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(tokenRepository.findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user)).thenReturn(tokens);
-        assertThrows(IllegalStateException.class,
-                () -> tokenService.checkDefaultPasswordToken(ID, false)
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(tokenRepository).findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user);
-        verify(tokenRepository, never()).save(any());
-        verify(tokenRepository, never()).deleteById(anyString());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testCheckDefaultPasswordTokenNotFound() {
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(tokenRepository.findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD,
-                user)).thenThrow(EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> tokenService.checkDefaultPasswordToken(ID, false)
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(tokenRepository).findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user);
-        verify(tokenRepository, never()).save(any());
-        verify(tokenRepository, never()).deleteById(anyString());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testCheckDefaultPasswordTokenInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> tokenService.checkDefaultPasswordToken(0, false)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(tokenRepository, never()).findAllByTypeAndUser(any(), any());
-        verify(tokenRepository, never()).save(any());
-        verify(tokenRepository, never()).deleteById(anyString());
-        verify(userRepository, never()).save(any());
-    }
 }

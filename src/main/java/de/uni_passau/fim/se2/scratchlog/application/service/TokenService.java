@@ -252,48 +252,6 @@ public class TokenService {
     }
 
     /**
-     * Checks whether a default password token for the user with the given id exists. This token is meant to track how
-     * often administrator accounts have logged in using the default admin password. The number of times the user has
-     * logged in with the default password is returned. If the user tries to log in with the default password and a
-     * corresponding token could be found, the number of login attempts saved in the token metadata is increased. If the
-     * login attempts are larger than the allowed number, the user account is deactivated and the token deleted. If no
-     * token could be found, a new token is generated for the user.
-     *
-     * @param userId The id of the user.
-     * @param isLogin Boolean indicating whether this method is called during login, meaning that a token should be
-     *                created or updated.
-     * @return The number of times the user has logged in with the default password.
-     * @throws IllegalArgumentException if the given user id is invalid.
-     * @throws IllegalStateException if the number of default password tokens found for the user is larger than one.
-     * @throws NotFoundException if no no user account with the given id could be found.
-     */
-    @Transactional
-    public int checkDefaultPasswordToken(final int userId, final boolean isLogin) {
-        if (userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for default password token with invalid user id "
-                    + userId + "!");
-        }
-
-        User user = userRepository.getReferenceById(userId);
-
-        try {
-            List<Token> tokens = tokenRepository.findAllByTypeAndUser(TokenType.DEFAULT_PASSWORD, user);
-
-            if (tokens.size() > 1) {
-                throw new IllegalStateException("More than one default password token exists for user with id " + userId
-                        + "!");
-            } else if (isLogin) {
-                return generateOrUpdateToken(tokens, user);
-            } else {
-                return tokens.isEmpty() ? 0 : Integer.parseInt(tokens.get(0).getMetadata());
-            }
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + " in the database!", e);
-            throw new NotFoundException("Could not find user with id " + userId + " in the database!", e);
-        }
-    }
-
-    /**
      * Returns the {@link LocalDateTime} expiration date for a token with the given type.
      *
      * @param type The {@link TokenType}.
@@ -312,62 +270,6 @@ public class TokenService {
             return dateTime.plusDays(REGISTER_TOKEN_EXPIRES);
         } else {
             return dateTime.plusYears(DEFAULT_PASSWORD_TOKEN_EXPIRES);
-        }
-    }
-
-    /**
-     * Generates or updates the default password token for the given user, depending on whether such a token already
-     * exists.
-     *
-     * @param tokens A list of default password tokens saved for the given user.
-     * @param user The user for whom a token should be generated or updated.
-     * @return The number of times the user has logged in with the default password.
-     */
-    private int generateOrUpdateToken(final List<Token> tokens, final User user) {
-        if (tokens.isEmpty()) {
-            generateDefaultPasswordToken(user);
-            return 0;
-        } else {
-            return updateDefaultPasswordToken(tokens.get(0), user);
-        }
-    }
-
-    /**
-     * Generates a default password token for the given user to track how often this user has logged in using the
-     * default admin password.
-     *
-     * @param user The {@link User} for whom the token should be generated.
-     */
-    private void generateDefaultPasswordToken(final User user) {
-        TokenDTO tokenDTO = new TokenDTO(TokenType.DEFAULT_PASSWORD,
-                computeExpirationDate(TokenType.DEFAULT_PASSWORD), "1", user.getId());
-        Token token = createToken(tokenDTO);
-        token.setUser(user);
-        tokenRepository.save(token);
-    }
-
-    /**
-     * Updates the default password token of the given user. If the user has logged in with the default admin password
-     * more times than allowed, the account is deactivated and the token deleted. Otherwise, the login counter is
-     * increased and the token updated.
-     *
-     * @param token The default password token to be updated.
-     * @param user The user whose account is deactivated if the maximum number of login attempts is reached.
-     * @return The number of times the user has logged in with the default password.
-     */
-    private int updateDefaultPasswordToken(final Token token, final User user) {
-        int logins = Integer.parseInt(token.getMetadata());
-
-        if (logins >= Constants.MAX_DEFAULT_ATTEMPTS) {
-            user.setActive(false);
-            tokenRepository.deleteById(token.getValue());
-            userRepository.save(user);
-            return Constants.MAX_DEFAULT_ATTEMPTS;
-        } else {
-            logins++;
-            token.setMetadata(Integer.toString(logins));
-            tokenRepository.save(token);
-            return logins - 1;
         }
     }
 
