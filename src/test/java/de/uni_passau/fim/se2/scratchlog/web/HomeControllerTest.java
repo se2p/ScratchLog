@@ -164,56 +164,12 @@ public class HomeControllerTest extends AbstractControllerTest {
         when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
         when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
         assertEquals(INDEX, homeController.getIndexPage(httpServletRequest, model));
-        verify(httpServletRequest, times(2)).isUserInRole(Constants.ROLE_ADMIN);
+        verify(httpServletRequest, times(1)).isUserInRole(Constants.ROLE_ADMIN);
         verify(httpServletRequest).isUserInRole(Constants.ROLE_PARTICIPANT);
         verify(userService).getUser(userDTO.getUsername());
         verify(pageService).getExperimentPage(any(PageRequest.class));
         verify(pageService).getCoursePage(any(PageRequest.class));
         verify(model, times(6)).addAttribute(anyString(), any());
-        verify(tokenService, never()).checkDefaultPasswordToken(anyInt(), anyBoolean());
-    }
-
-    @Test
-    public void testGetIndexPageAdminDefaultPassword() {
-        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
-        when(httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)).thenReturn(true);
-        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(userDTO.getUsername());
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())).thenReturn(true);
-        when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
-        assertEquals(INDEX, homeController.getIndexPage(httpServletRequest, model));
-        verify(httpServletRequest, times(2)).isUserInRole(Constants.ROLE_ADMIN);
-        verify(httpServletRequest).isUserInRole(Constants.ROLE_PARTICIPANT);
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getExperimentPage(any(PageRequest.class));
-        verify(pageService).getCoursePage(any(PageRequest.class));
-        verify(model, times(6)).addAttribute(anyString(), any());
-        verify(tokenService).checkDefaultPasswordToken(userDTO.getId(), false);
-    }
-
-    @Test
-    public void testGetIndexPageAdminDefaultPasswordAttemptsUsed() {
-        when(httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)).thenReturn(true);
-        when(httpServletRequest.isUserInRole(Constants.ROLE_PARTICIPANT)).thenReturn(true);
-        securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn(userDTO.getUsername());
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())).thenReturn(true);
-        when(tokenService.checkDefaultPasswordToken(userDTO.getId(), false)).thenReturn(2);
-        when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
-        assertEquals(INDEX, homeController.getIndexPage(httpServletRequest, model));
-        verify(httpServletRequest, times(2)).isUserInRole(Constants.ROLE_ADMIN);
-        verify(httpServletRequest).isUserInRole(Constants.ROLE_PARTICIPANT);
-        verify(userService).getUser(userDTO.getUsername());
-        verify(pageService).getExperimentPage(any(PageRequest.class));
-        verify(pageService).getCoursePage(any(PageRequest.class));
-        verify(model, times(8)).addAttribute(anyString(), any());
-        verify(tokenService).checkDefaultPasswordToken(userDTO.getId(), false);
     }
 
     @Test

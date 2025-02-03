@@ -44,9 +44,4 @@ public enum TokenType {
      */
     DEACTIVATED,
 
-    /**
-     * A token for tracking how many login attempts administrators using the default password have left.
-     */
-    DEFAULT_PASSWORD
-
 }

@@ -144,16 +144,6 @@ public class HomeController {
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
                 getIndexPageInfo(userDTO.getId(), httpServletRequest.isUserInRole(Constants.ROLE_ADMIN), model);
-
-                if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)
-                        && userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())) {
-                    int attempts = tokenService.checkDefaultPasswordToken(userDTO.getId(), false);
-
-                    if (attempts > 0) {
-                        model.addAttribute("warn", true);
-                        model.addAttribute("attempts", Constants.MAX_DEFAULT_ATTEMPTS - attempts);
-                    }
-                }
             } catch (NotFoundException e) {
                 return Constants.ERROR;
             }

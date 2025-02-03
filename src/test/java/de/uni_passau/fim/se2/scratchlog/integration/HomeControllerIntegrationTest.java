@@ -168,35 +168,6 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(model().attribute(COURSE_PAGE, is(0)))
                 .andExpect(view().name(INDEX));
         verify(userService).getUser(userDTO.getUsername());
-        verify(userService).matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword());
-        verify(pageService).getExperimentPage(any(PageRequest.class));
-        verify(pageService).getCoursePage(any(PageRequest.class));
-    }
-
-    @Test
-    @WithMockUser(username = "participant", roles = {"ADMIN", "PARTICIPANT"})
-    public void testGetIndexPageAdminTokenExists() throws Exception {
-        when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
-        when(userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())).thenReturn(true);
-        when(tokenService.checkDefaultPasswordToken(userDTO.getId(), false)).thenReturn(1);
-        when(pageService.getExperimentPage(any(PageRequest.class))).thenReturn(experimentPage);
-        when(pageService.getCoursePage(any(PageRequest.class))).thenReturn(coursePage);
-        mvc.perform(get("/")
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(model().attribute(EXPERIMENTS, is(experimentPage)))
-                .andExpect(model().attribute(LAST_EXPERIMENT_PAGE, is(0)))
-                .andExpect(model().attribute(EXPERIMENT_PAGE, is(0)))
-                .andExpect(model().attribute(COURSES, is(coursePage)))
-                .andExpect(model().attribute(LAST_COURSE_PAGE, is(0)))
-                .andExpect(model().attribute(COURSE_PAGE, is(0)))
-                .andExpect(model().attribute("warn", is(true)))
-                .andExpect(model().attribute("attempts", is(4)))
-                .andExpect(view().name(INDEX));
-        verify(userService).getUser(userDTO.getUsername());
-        verify(userService).matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword());
-        verify(tokenService).checkDefaultPasswordToken(userDTO.getId(), false);
         verify(pageService).getExperimentPage(any(PageRequest.class));
         verify(pageService).getCoursePage(any(PageRequest.class));
     }
