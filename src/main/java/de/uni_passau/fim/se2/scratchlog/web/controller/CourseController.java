@@ -19,6 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.web.controller;
 
+import com.opencsv.bean.CsvToBeanBuilder;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CourseService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
@@ -29,6 +30,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseExperimentP
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.MarkdownHandler;
+import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
 import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
@@ -53,10 +55,16 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -337,6 +345,48 @@ public class CourseController {
             return "redirect:/course?id=" + courseId;
         } catch (NotFoundException e) {
             return Constants.ERROR;
+        }
+    }
+
+    // TODO: improve javadoc
+    /**
+     * Add existing participants that are listed in the given CSV file to a course.
+     *
+     * @param file The CSV file containing the usernames of the participants to add.
+     * @param courseId The id of the course to add the participants to.
+     * @param model The model used to display error messages.
+     * @return Redirection to the course page.
+     */
+    @PostMapping("/participant/add-csv")
+    @Secured(Constants.ROLE_ADMIN)
+    public String addParticipantsFromCSV(@RequestParam("file") final MultipartFile file,
+                                         @RequestParam(ID) final int courseId, final Model model) {
+        if (file == null) {
+            return Constants.ERROR;
+        }
+
+        IdValidator.validateCourseIdElseThrow(courseId);
+        CourseDTO courseDto = courseService.getCourse(courseId);
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+            LocaleContextHolder.getLocale());
+        addModelInfo(model, courseDto, true);
+
+        String fileValidation = FiletypeValidator.validate(file, "text/csv", ".csv");
+        if (fileValidation != null) {
+            model.addAttribute(ERROR, resourceBundle.getString(fileValidation));
+            return "course";
+        }
+
+        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            List<UserDTO> users = new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
+            // TODO: Error handling, validate file
+            courseService.saveCourseParticipants(courseId, users);
+
+            return "course";
+        } catch (IOException e) {
+            LOGGER.error("Error parsing CSV file!", e);
+            model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
+            return "course";
         }
     }
 
