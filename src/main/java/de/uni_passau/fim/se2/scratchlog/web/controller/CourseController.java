@@ -367,27 +367,23 @@ public class CourseController {
 
         IdValidator.validateCourseIdElseThrow(courseId);
         CourseDTO courseDto = courseService.getCourse(courseId);
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-            LocaleContextHolder.getLocale());
+
+        try {
+            List<UserDTO> users = userService.parseUserListCsv(file);
+            List<String> invalidUsernames = userService.getInvalidUsernames(users);
+            if (invalidUsernames.isEmpty()) {
+                courseService.saveCourseParticipants(courseId, users);
+            } else {
+                // handle the error
+            }
+        } catch (IllegalArgumentException e) {
+            // handle error
+        } catch(IOException e) {
+            // handle error
+        }
+
         addModelInfo(model, courseDto, true);
-
-        String fileValidation = FiletypeValidator.validate(file, "text/csv", ".csv");
-        if (fileValidation != null) {
-            model.addAttribute(ERROR, resourceBundle.getString(fileValidation));
-            return "course";
-        }
-
-        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-            List<UserDTO> users = new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
-            // TODO: Error handling, validate file
-            courseService.saveCourseParticipants(courseId, users);
-
-            return "course";
-        } catch (IOException e) {
-            LOGGER.error("Error parsing CSV file!", e);
-            model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
-            return "course";
-        }
+        return "course";
     }
 
     /**
