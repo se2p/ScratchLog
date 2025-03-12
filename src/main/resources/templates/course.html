@@ -141,10 +141,11 @@
                     <input id="addParticipant" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
                 </div>
                 <div class="mb-3">
-                   <form method="post" th:action="@{/course/participant/add-csv}" enctype="multipart/form-data">
+                   <form method="post" th:action="@{/course/participant/add-csv}" enctype="multipart/form-data"
+                         class="d-flex gap-1 align-items-center">
                        <input type="hidden" th:name="id" th:value="${courseDTO.id}">
-                       <input type="file" th:name="file" accept="text/csv">
                        <input type="submit" th:value="#{add_csv_participants}" class="btn btn-secondary">
+                       <input type="file" th:name="file" accept="text/csv">
                     </form>
                 </div>
                 <div class="mb-3">

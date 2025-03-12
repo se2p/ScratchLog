@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.web.controller;
 
-import com.opencsv.bean.CsvToBeanBuilder;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CourseService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
@@ -30,7 +29,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseExperimentP
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.MarkdownHandler;
-import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
 import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
@@ -58,10 +56,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -364,22 +359,24 @@ public class CourseController {
         if (file == null) {
             return Constants.ERROR;
         }
-
         IdValidator.validateCourseIdElseThrow(courseId);
+
         CourseDTO courseDto = courseService.getCourse(courseId);
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages", LocaleContextHolder.getLocale());
 
         try {
             List<UserDTO> users = userService.parseUserListCsv(file);
-            List<String> invalidUsernames = userService.getInvalidUsernames(users);
+            List<String> invalidUsernames = userService.getInvalidParticipantUsernames(users);
             if (invalidUsernames.isEmpty()) {
                 courseService.saveCourseParticipants(courseId, users);
             } else {
-                // handle the error
+                model.addAttribute(ERROR, resourceBundle.getString("invalid_usernames") + " " + invalidUsernames);
             }
         } catch (IllegalArgumentException e) {
-            // handle error
+            model.addAttribute(ERROR, resourceBundle.getString(e.getMessage()));
         } catch(IOException e) {
-            // handle error
+            LOGGER.error("Error parsing CSV file!", e);
+            model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
         }
 
         addModelInfo(model, courseDto, true);

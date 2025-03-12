@@ -599,7 +599,16 @@ public class UserService {
         return passwordEncoder.encode(password);
     }
 
-    // TODO: javadoc
+    /**
+     * Parse the given CSV file into a list of {@link UserDTO}s.
+     *
+     * @param file The CSV file to parse user information from.
+     * @return A list of user DTO objects with the information provided in the CSV file.
+     * @throws IllegalArgumentException If the given CSV file is not valid according to
+     *         {@link FiletypeValidator#validate(MultipartFile, String, String)}. The error message is the validation
+     *         string of said method.
+     * @throws IOException If the CSV file could not be read.
+     */
     public List<UserDTO> parseUserListCsv(final MultipartFile file) throws IOException {
         String fileValidation = FiletypeValidator.validate(file, "text/csv", ".csv");
         if (fileValidation != null) {
@@ -611,16 +620,15 @@ public class UserService {
         }
     }
 
-    // TODO: javadoc
     /**
-     * Checks, whether the provided list of users are valid to add as participants, i.e. the users exist and they are
-     * not administrators.
+     * Returns the usernames of the users in the given list who would not be valid participants to add to a course or
+     * experiment. This includes administrators and users that don't exist.
      *
-     * @param users The list of users to check.
-     * @return {@code true} if all provided users are valid, or {@code false} otherwise.
+     * @param users The list of users to filter for invalid usernames.
+     * @return The list of invalid usernames according to the above criteria.
      */
     @Transactional
-    public List<String> getInvalidUsernames(final List<UserDTO> users) {
+    public List<String> getInvalidParticipantUsernames(final List<UserDTO> users) {
         List<String> invalidUsernames = new ArrayList<>();
 
         users.forEach(userDTO -> {

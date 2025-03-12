@@ -90,17 +90,6 @@
                        th:unless="${project == null}"/>
             </div>
 
-            <!-- The button to add existing participants from a CSV file. -->
-            <div th:if="${experimentDTO.active}">
-                <h5 th:text="#{add_csv_participants}"></h5>
-                <form method="post" th:action="@{/experiment/csv}" enctype="multipart/form-data"
-                      class="align-items-start d-flex flex-column gap-3">
-                    <input type="hidden" name="id" th:value="${experimentDTO.id}"/>
-                    <input type="file" name="file" accept=".csv"/>
-                    <input class="btn btn-primary" type="submit" th:value="#{upload}"/>
-                </form>
-            </div>
-
             <!-- The experiment status and the button to start or stop the experiment. -->
             <div>
                 <div>
@@ -231,6 +220,12 @@
                         <span th:text="#{add_new_participant}"></span>
                     </a>
                 </div>
+                <form method="post" th:action="@{/experiment/csv}" enctype="multipart/form-data"
+                      class="d-flex gap-1 align-items-center mb-3">
+                    <input type="hidden" th:name="id" th:value="${experimentDTO.id}">
+                    <input type="submit" th:value="#{add_csv_participants}" class="btn btn-secondary">
+                    <input type="file" th:name="file" accept="text/csv">
+                </form>
                 <div class="mb-3">
                     <input id="deleteParticipant" type="submit" class="btn btn-danger"
                            th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
