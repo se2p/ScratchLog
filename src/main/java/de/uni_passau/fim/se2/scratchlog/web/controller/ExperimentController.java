@@ -569,16 +569,13 @@ public class ExperimentController {
 
         try {
             List<UserDTO> users = userService.parseUserListCsv(file);
-            System.out.println(users);
             List<String> invalidUsernames = userService.getInvalidParticipantUsernames(users);
-            System.out.println(invalidUsernames);
             if (invalidUsernames.isEmpty()) {
                 if (experimentDTO.isCourseExperiment()) {
                     courseService.saveCourseParticipants(courseService.getCourseIdForExperiment(experimentId), users);
                 }
                 participantService.saveParticipantsFromCSV(experimentId, users);
             } else {
-                System.out.println("invalid usernames what");
                 model.addAttribute(ERROR, resourceBundle.getString("invalid_usernames") + " " + invalidUsernames);
             }
         } catch (IllegalArgumentException e) {
