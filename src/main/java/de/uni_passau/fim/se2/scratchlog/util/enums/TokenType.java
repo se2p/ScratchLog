@@ -44,4 +44,10 @@ public enum TokenType {
      */
     DEACTIVATED,
 
+    /**
+     * A token indicating that the initially created admin account has not yet chosen their password and uses a
+     * password randomly generated at startup to log in.
+     */
+    ADMIN_WITH_RANDOM_PASSWORD,
+
 }

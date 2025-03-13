@@ -260,23 +260,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testLoginUserDefaultPassword() throws Exception {
-        when(userService.getUser(USERNAME)).thenReturn(userDTO);
-        when(userService.matchesPassword(Constants.ADMIN_PASSWORD, userDTO.getPassword())).thenReturn(true);
-        when(userService.loginUser(userDTO)).thenReturn(true);
-        mvc.perform(post("/users/login")
-                        .flashAttr(USER_DTO, userDTO)
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT));
-        verify(userService).getUser(USERNAME);
-        verify(userService, never()).updateUser(any());
-        verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
-        verify(userService).loginUser(userDTO);
-    }
-
-    @Test
     public void testLoginUserFalse() throws Exception {
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
         mvc.perform(post("/users/login")

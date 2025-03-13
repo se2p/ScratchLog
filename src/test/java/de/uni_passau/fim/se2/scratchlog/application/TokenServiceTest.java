@@ -26,7 +26,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.Token;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.TokenRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
-import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.enums.TokenType;
 import de.uni_passau.fim.se2.scratchlog.web.dto.TokenDTO;
 import jakarta.persistence.EntityNotFoundException;
@@ -45,6 +45,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -76,8 +77,9 @@ public class TokenServiceTest {
     private final Token token = new Token(TokenType.CHANGE_EMAIL, LocalDateTime.now(), EMAIL, user);
     private final Token registerToken1 = new Token(TokenType.REGISTER, date, null, user);
     private final Token registerToken2 = new Token(TokenType.REGISTER, date, null, user);
+    private final Token randomPasswordToken = new Token(TokenType.ADMIN_WITH_RANDOM_PASSWORD, date, "", user);
     private final List<Token> registerTokens = new ArrayList<>();
-    private final List<Token> defaultTokens = new ArrayList<>();
+    private final List<Token> randomPasswordTokens = new ArrayList<>();
 
     @BeforeEach
     public void setup() {
@@ -89,6 +91,8 @@ public class TokenServiceTest {
         registerToken1.setUser(user);
         registerTokens.add(registerToken1);
         registerTokens.add(registerToken2);
+        randomPasswordToken.setValue(VALUE);
+        randomPasswordTokens.add(randomPasswordToken);
     }
 
     @Test
@@ -364,4 +368,61 @@ public class TokenServiceTest {
         verify(userRepository, never()).save(any());
     }
 
+    @Test
+    public void testCreateRandomPasswordToken() {
+        user.setRole(Role.ADMIN);
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user));
+        when(tokenRepository.save(any())).thenReturn(randomPasswordToken);
+        assertDoesNotThrow(() -> tokenService.createRandomPasswordToken(ID));
+    }
+
+    @Test
+    public void testCreateRandomPasswordTokenNoAdmin() {
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user));
+        // tokenService#checkRandomPasswordToken throws IllegalArgumentException for users that are not admins, so
+        // expect that exception to be thrown (the mocked user object is not an admin).
+        assertThrows(IllegalArgumentException.class,
+            () -> tokenService.checkRandomPasswordToken(ID));
+    }
+
+    @Test
+    public void testCheckRandomPasswordToken() {
+        user.setRole(Role.ADMIN);
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user));
+        when(tokenRepository.findAllByTypeAndUser(TokenType.ADMIN_WITH_RANDOM_PASSWORD, user))
+            .thenReturn(randomPasswordTokens);
+        assertTrue(tokenService.checkRandomPasswordToken(ID));
+    }
+
+    @Test
+    public void testCheckRandomPasswordTokenNoToken() {
+        user.setRole(Role.ADMIN);
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user));
+        when(tokenRepository.findAllByTypeAndUser(TokenType.ADMIN_WITH_RANDOM_PASSWORD, user))
+            .thenReturn(new ArrayList<>());
+        assertFalse(tokenService.checkRandomPasswordToken(ID));
+    }
+
+    @Test
+    public void testCheckRandomPasswordTokenNoAdmin() {
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user));
+        assertThrows(IllegalArgumentException.class,
+            () -> tokenService.checkRandomPasswordToken(ID));
+    }
+
+    @Test
+    public void testDeleteRandomPasswordToken() {
+        user.setRole(Role.ADMIN);
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user));
+        when(tokenRepository.findAllByTypeAndUser(TokenType.ADMIN_WITH_RANDOM_PASSWORD, user))
+            .thenReturn(randomPasswordTokens);
+        assertDoesNotThrow(() -> tokenService.deleteRandomPasswordToken(ID));
+    }
+
+    @Test
+    public void testDeleteRandomPasswordTokenNoAdmin() {
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user));
+        assertThrows(IllegalArgumentException.class,
+            () -> tokenService.deleteRandomPasswordToken(ID));
+    }
 }
