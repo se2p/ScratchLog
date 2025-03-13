@@ -26,6 +26,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.TokenRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.enums.TokenType;
 import de.uni_passau.fim.se2.scratchlog.web.dto.TokenDTO;
 import jakarta.persistence.EntityNotFoundException;
@@ -79,11 +80,6 @@ public class TokenService {
      * The time in days until a registration token expires.
      */
     private static final int REGISTER_TOKEN_EXPIRES = 1;
-
-    /**
-     * The time in years until a default password token expires.
-     */
-    private static final int DEFAULT_PASSWORD_TOKEN_EXPIRES = 10;
 
     /**
      * Constructs a token service with the given dependencies.
@@ -252,6 +248,87 @@ public class TokenService {
     }
 
     /**
+     * Create a token for the given admin that indicates that they have no traditional stored password, but should
+     * instead log in with a random password that is generated and printed upon app startup.
+     *
+     * @param userId The id of the admin account to create the token for.
+     * @throws IllegalArgumentException If the given user is not an admin.
+     * @throws IllegalStateException If the given user already has such a token associated with them.
+     * @throws NotFoundException If the user can not be found in the database.
+     */
+    @Transactional
+    public void createRandomPasswordToken(final int userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (user.getRole() != Role.ADMIN) {
+                throw new IllegalArgumentException("Cannot create random password for non-admin user " + userId + ".");
+            }
+
+            generateToken(TokenType.ADMIN_WITH_RANDOM_PASSWORD, "", userId);
+        } else {
+            LOGGER.error("Could not find user with id " + userId + " in the database.");
+            throw new NotFoundException("Could not find user with id " + userId + " in the database.");
+        }
+    }
+
+    /**
+     * Return whether the given admin uses a random password generated at app startup to log in, by checking whether
+     * they have that token associated with them.
+     *
+     * @param userId The id of the admin account to check the token for.
+     * @return Whether the given admin uses the random password login method.
+     * @throws IllegalArgumentException If the given user is not an admin.
+     * @throws IllegalStateException If the given user has more than one token of this kind.
+     * @throws NotFoundException If the user can not be found in the database.
+     */
+    @Transactional
+    public boolean checkRandomPasswordToken(final int userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (user.getRole() != Role.ADMIN) {
+                throw new IllegalArgumentException("Cannot check for random password token for non-admin user with id "
+                    + userId + ".");
+            }
+
+            List<Token> tokens = tokenRepository.findAllByTypeAndUser(TokenType.ADMIN_WITH_RANDOM_PASSWORD, user);
+            if (tokens.size() > 1) {
+                throw new IllegalStateException("More than one random password token exist for user " + userId + ".");
+            } else {
+                return !tokens.isEmpty();
+            }
+        } else {
+            LOGGER.error("Could not find user with id " + userId + " in the database.");
+            throw new NotFoundException("Could not find user with id " + userId + " in the database.");
+        }
+    }
+
+    /**
+     * Delete the random password tokens for the given admin, if they exist.
+     *
+     * @param userId The id of the admin account to delete the tokens for.
+     * @throws IllegalArgumentException If the given user is not an admin.
+     * @throws NotFoundException If the user can not be found in the database.
+     */
+    @Transactional
+    public void deleteRandomPasswordToken(final int userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (user.getRole() != Role.ADMIN) {
+                throw new IllegalArgumentException("Cannot delete random password token for non-admin user with id "
+                    + userId + ".");
+            }
+            List<Token> tokens = tokenRepository.findAllByTypeAndUser(TokenType.ADMIN_WITH_RANDOM_PASSWORD, user);
+            tokenRepository.deleteAllInBatch(tokens);
+        } else {
+            LOGGER.error("Could not find user with id " + userId + " in the database.");
+            throw new NotFoundException("Could not find user with id " + userId + " in the database.");
+        }
+    }
+
+    /**
      * Returns the {@link LocalDateTime} expiration date for a token with the given type.
      *
      * @param type The {@link TokenType}.
@@ -260,17 +337,13 @@ public class TokenService {
     private LocalDateTime computeExpirationDate(final TokenType type) {
         LocalDateTime dateTime = LocalDateTime.now();
 
-        if (type == TokenType.CHANGE_EMAIL) {
-            return dateTime.plusHours(EMAIL_TOKEN_EXPIRES);
-        } else if (type == TokenType.FORGOT_PASSWORD) {
-            return dateTime.plusHours(PASSWORD_TOKEN_EXPIRES);
-        } else if (type == TokenType.DEACTIVATED) {
-            return dateTime.plusHours(DEACTIVATED_TOKEN_EXPIRES);
-        } else if (type == TokenType.REGISTER) {
-            return dateTime.plusDays(REGISTER_TOKEN_EXPIRES);
-        } else {
-            return dateTime.plusYears(DEFAULT_PASSWORD_TOKEN_EXPIRES);
-        }
+        return switch (type) {
+            case CHANGE_EMAIL -> dateTime.plusHours(EMAIL_TOKEN_EXPIRES);
+            case FORGOT_PASSWORD -> dateTime.plusHours(PASSWORD_TOKEN_EXPIRES);
+            case DEACTIVATED -> dateTime.plusHours(DEACTIVATED_TOKEN_EXPIRES);
+            case REGISTER -> dateTime.plusDays(REGISTER_TOKEN_EXPIRES);
+            case ADMIN_WITH_RANDOM_PASSWORD -> Constants.MAX_DATETIME;                  // Make this token never expire.
+        };
     }
 
     /**
