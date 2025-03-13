@@ -19,6 +19,8 @@
 
 package de.uni_passau.fim.se2.scratchlog.util;
 
+import java.time.LocalDateTime;
+
 /**
  * Collection of application-wide constants.
  */
@@ -52,11 +54,6 @@ public final class Constants {
     public static final String SB3 = "sb3";
 
     /**
-     * The default admin password to use when creating the first administrator account.
-     */
-    public static final String ADMIN_PASSWORD = "!ISeeYou!";
-
-    /**
      * The minimum length of usernames.
      */
     public static final int USERNAME_MIN = 4;
@@ -65,6 +62,11 @@ public final class Constants {
      * The minimum length of passwords.
      */
     public static final int PASSWORD_MIN = 8;
+
+    /**
+     * The length of randomly generated passwords for admins.
+     */
+    public static final int RANDOM_PASSWORD_LENGTH = 16;
 
     /**
      * The maximum length of inputs in small or normal text boxes.
@@ -131,5 +133,11 @@ public final class Constants {
      * The maximum number of data points to be returned when calculating event executions per minute.
      */
     public static final int MAX_DATA_POINTS = 500;
+
+    /**
+     * The maximum datetime to use. We cannot use {@link LocalDateTime#MAX} here since that is out of the range of
+     * valid dates for a MySQL datetime (where the maximum is 9999-12-31).
+     */
+    public static final LocalDateTime MAX_DATETIME = LocalDateTime.of(9999, 12, 31, 23, 59);
 
 }

@@ -737,6 +737,11 @@ public class UserController {
                 UserDTO admin = userService.getUser(httpServletRequest.getUserPrincipal().getName());
                 validateUpdatePassword(userDTO, admin.getPassword(), findOldUser.getPassword(), bindingResult,
                         resourceBundle);
+
+                // If the admin changed their own password, delete the associated ADMIN_WITH_RANDOM_PASSWORD token.
+                if (admin.equals(findOldUser)) {
+                    tokenService.deleteRandomPasswordToken(admin.getId());
+                }
             } else {
                 validateUpdatePassword(userDTO, findOldUser.getPassword(), findOldUser.getPassword(), bindingResult,
                         resourceBundle);

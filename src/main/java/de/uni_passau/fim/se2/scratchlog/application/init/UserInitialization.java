@@ -19,9 +19,11 @@
 
 package de.uni_passau.fim.se2.scratchlog.application.init;
 
+import de.uni_passau.fim.se2.scratchlog.application.service.TokenService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import de.uni_passau.fim.se2.scratchlog.util.CustomPasswordGenerator;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import jakarta.annotation.PostConstruct;
@@ -56,20 +58,30 @@ public class UserInitialization {
     private final PasswordEncoder passwordEncoder;
 
     /**
+     * The token service to use for storing information about admins who have no set password.
+     */
+    private final TokenService tokenService;
+
+    /**
      * Constructs a new user initialization with the given dependencies.
      *
      * @param userRepository The user repository to use.
      * @param passwordEncoder The password encoder to use.
+     * @param tokenService The token service to use.
      */
     @Autowired
-    public UserInitialization(final UserRepository userRepository, final PasswordEncoder passwordEncoder) {
+    public UserInitialization(final UserRepository userRepository, final PasswordEncoder passwordEncoder,
+                              final TokenService tokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
     }
 
     /**
      * Searches for existing administrators in the database and adds a new administrator with the given values, if
-     * none exist.
+     * none exist. This new admin will receive a randomly generated password that is printed to console for logging in.
+     * In future app starts, admins that have yet to set their own password will continue to receive new random
+     * passwords.
      */
     @PostConstruct
     public void init() {
@@ -81,10 +93,26 @@ public class UserInitialization {
             user.setUsername("admin");
             user.setRole(Role.ADMIN);
             user.setLanguage(Language.ENGLISH);
-            user.setPassword(passwordEncoder.encode(Constants.ADMIN_PASSWORD)); // default: !ISeeYou!
+
+            // Store the random password in the database, even though it will reset at the next startup, so that
+            // existing login logic can stay mostly unchanged.
+            String password = CustomPasswordGenerator.generatePassword(Constants.RANDOM_PASSWORD_LENGTH);
+            user.setPassword(passwordEncoder.encode(password));
+
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
-            logger.info("User admin:admin was added to the database as a first administrator.");
+            tokenService.createRandomPasswordToken(user.getId());
+            logger.info(
+                "User \"admin\" was added to the database as a first administrator with password " + password);
+        } else {
+            for (User user : users) {
+                if (tokenService.checkRandomPasswordToken(user.getId())) {
+                    String password = CustomPasswordGenerator.generatePassword(Constants.RANDOM_PASSWORD_LENGTH);
+                    user.setPassword(passwordEncoder.encode(password));
+                    userRepository.save(user);
+                    logger.info("Random password for admin with id " + user.getId() + " this session is: " + password);
+                }
+            }
         }
     }
 
