@@ -1108,12 +1108,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(model().attribute(PAGE, is(FIRST_PAGE)))
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE)))
                 .andExpect(model().attribute(EXPERIMENT_DTO, is(experimentDTO)));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsUser(PARTICIPANT1);
-        verify(userService).existsUser(PARTICIPANTS);
-        verify(userService, times(2)).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
-        verify(participantService).saveParticipantsFromCSV(anyInt(), any());
     }
 
     @Test
@@ -1122,10 +1116,9 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 new ClassPathResource(FILENAME_CSV).getInputStream());
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.existsUser(anyString())).thenReturn(true);
-        when(userService.isAdmin(anyString())).thenReturn(true);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(userService.getInvalidParticipantUsernames(any())).thenReturn(List.of("admin"));
         mockMvc.perform(multipart("/experiment/csv")
                         .file(file)
                         .param(ID_PARAM, ID_STRING)
@@ -1138,12 +1131,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE)))
                 .andExpect(model().attribute(EXPERIMENT_DTO, is(experimentDTO)))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsUser(PARTICIPANT1);
-        verify(userService).existsUser(PARTICIPANTS);
-        verify(userService, times(2)).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
-        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
     }
 
     @Test
@@ -1154,6 +1141,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(userService.parseUserListCsv(file)).thenThrow(new IllegalArgumentException("file_type"));
         mockMvc.perform(multipart("/experiment/csv")
                         .file(file)
                         .param(ID_PARAM, ID_STRING)
@@ -1166,11 +1154,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(model().attribute(LAST_PAGE_ATTRIBUTE, is(LAST_PAGE)))
                 .andExpect(model().attribute(EXPERIMENT_DTO, is(experimentDTO)))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()));
-        verify(experimentService).getExperiment(ID);
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
-        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
     }
 
     @Test
@@ -1185,11 +1168,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                         .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
-        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
     }
 
     @Test

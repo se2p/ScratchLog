@@ -41,8 +41,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,6 +94,8 @@ public class UserServiceTest {
     private static final String GUI_URL = "scratch";
     private static final int ID = 1;
     private static final long INACTIVE_DAYS = 90;
+    private static final String CSV_FILENAME = "users.csv";
+    private static final String CSV_FILETYPE = "text/csv";
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
             false, GUI_URL);
     private final User user1 = new User(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
@@ -105,6 +111,12 @@ public class UserServiceTest {
     private final Participant participant3 = new Participant(user4, experiment, null, null);
     private List<User> admins;
     private List<Participant> participants;
+    // User DTOs of the users in users.csv.
+    private final UserDTO userDTO1 = new UserDTO("newUser1", "newUser1@user.de", null, Language.GERMAN, null, null);
+    private final List<UserDTO> userDTOs = List.of(
+        userDTO1,
+        new UserDTO("newUser2", "newUser2@user.com", null, Language.ENGLISH, null, null),
+        new UserDTO("newUser3", "newUser3@example.com", null, Language.ENGLISH, null, null));
 
     @BeforeEach
     public void setup() {
@@ -857,6 +869,49 @@ public class UserServiceTest {
         );
         verify(userRepository, never()).findLastUsername(anyString());
     }
+
+    @Test
+    public void testParseUserListCsv() throws IOException  {
+        MultipartFile file = new MockMultipartFile("file", CSV_FILENAME, CSV_FILETYPE,
+            new ClassPathResource(CSV_FILENAME).getInputStream());
+        assertEquals(userDTOs, userService.parseUserListCsv(file));
+    }
+
+    @Test
+    public void testParseUserListCsvInvalidFile() throws IOException {
+        MultipartFile file = new MockMultipartFile("file", CSV_FILENAME, "text/plain",
+            new ClassPathResource(CSV_FILENAME).getInputStream());
+        assertThrows(IllegalArgumentException.class, () -> userService.parseUserListCsv(file));
+    }
+
+    @Test
+    public void testGetInvalidParticipantUsernamesAllValid() {
+        // Doing `when(userService.existsUser(anyString()).thenReturn(true)` throws an error here.
+        for (UserDTO userDTO : userDTOs) {
+            when(userService.existsUser(userDTO.getUsername())).thenReturn(true);
+        }
+        assertEquals(List.of(), userService.getInvalidParticipantUsernames(userDTOs));
+    }
+
+    @Test
+    public void testGetInvalidParticipantUsernamesAdmin() {
+        when(userService.isAdmin(userDTO1.getUsername())).thenReturn(true);
+        // Doing `when(userService.existsUser(anyString()).thenReturn(true)` throws an error here.
+        for (UserDTO userDTO : userDTOs) {
+            when(userService.existsUser(userDTO.getUsername())).thenReturn(true);
+        }
+        assertEquals(List.of(userDTO1.getUsername()), userService.getInvalidParticipantUsernames(userDTOs));
+    }
+
+    @Test
+    public void testGetInvalidParticipantUsernamesUsersDontExist() {
+        // Doing `when(userService.existsUser(anyString()).thenReturn(false)` throws an error here.
+        for (UserDTO userDTO : userDTOs) {
+            when(userService.existsUser(userDTO.getUsername())).thenReturn(false);
+        }
+        assertEquals(userDTOs.stream().map(UserDTO::getUsername).toList(),
+            userService.getInvalidParticipantUsernames(userDTOs));
+   }
 
     private UserProjection getProjection(Integer number) {
         return new UserProjection() {
