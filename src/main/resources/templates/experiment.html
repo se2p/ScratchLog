@@ -211,25 +211,27 @@
                 </div>
             </div>
             <!-- The buttons for participant management. -->
-            <div class="d-flex gap-3 flex-wrap" th:if="${experimentDTO.active}">
-                <div class="mb-3">
-                    <input id="add" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
-                </div>
-                <div class="mb-3" th:unless="${experimentDTO.courseExperiment}">
-                    <a class="btn btn-secondary" th:href="@{/participant/add(id=${experimentDTO.id})}">
-                        <span th:text="#{add_new_participant}"></span>
-                    </a>
+            <div class="d-inline-block gap-2" th:if="${experimentDTO.active}" style="width: fit-content;">
+                <div class="row row-cols-2 mb-2">
+                    <div class="col pe-0">
+                        <input id="addParticipant" class="btn btn-secondary w-100" type="submit"
+                               th:value="#{add_existing}">
+                    </div>
+                    <div class="col">
+                        <input id="deleteParticipant" type="submit" class="btn btn-danger"
+                               th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
+                    </div>
                 </div>
                 <form method="post" th:action="@{/experiment/csv}" enctype="multipart/form-data"
-                      class="d-flex gap-1 align-items-center mb-3">
+                      class="row row-cols-2">
                     <input type="hidden" th:name="id" th:value="${experimentDTO.id}">
-                    <input type="submit" th:value="#{add_csv_participants}" class="btn btn-secondary">
-                    <input type="file" th:name="file" accept="text/csv">
+                    <div class="col pe-0">
+                        <input type="submit" th:value="#{add_csv_participants}" class="btn btn-secondary w-100">
+                    </div>
+                    <div class="col d-flex align-items-center">
+                        <input type="file" th:name="file" accept="text/csv">
+                    </div>
                 </form>
-                <div class="mb-3">
-                    <input id="deleteParticipant" type="submit" class="btn btn-danger"
-                           th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
-                </div>
             </div>
         </div>
 
