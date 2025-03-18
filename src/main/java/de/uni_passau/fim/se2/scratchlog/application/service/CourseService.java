@@ -367,8 +367,9 @@ public class CourseService {
             courseExperiments.forEach(experiment -> experimentRepository.delete(experiment.getExperiment()));
             courseRepository.deleteById(id);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find the course when trying to delete the course experiments of course with id "
-                    + id + "!", e);
+            LOGGER.error(
+                "Could not find the course when trying to delete the course experiments of course with id {}!", id, e
+            );
             throw new NotFoundException("Could not find the course when trying to delete the course experiments of "
                     + "course with id " + id + "!", e);
         }
@@ -440,8 +441,10 @@ public class CourseService {
 
         try {
             if (user.isEmpty()) {
-                LOGGER.error("Could not find the user with username or email " + participant + " when trying to delete "
-                        + "a course participant!");
+                LOGGER.error(
+                    "Could not find the user with username or email {} when trying to delete a course participant!",
+                    participant
+                );
                 throw new NotFoundException("Could not find the user with username or email " + participant + " when "
                         + "trying to delete a course participant!");
             }
@@ -501,8 +504,10 @@ public class CourseService {
 
         try {
             if (experiment.isEmpty()) {
-                LOGGER.error("Could not find the experiment with title " + experimentTitle + " when trying to delete a "
-                        + "course experiment!");
+                LOGGER.error(
+                    "Could not find the experiment with title {} when trying to delete a course experiment!",
+                    experimentTitle
+                );
                 throw new NotFoundException("Could not find the experiment with title " + experimentTitle
                         + " when trying to delete a course experiment!");
             }
@@ -572,7 +577,7 @@ public class CourseService {
         Optional<Course> course = courseRepository.findById(id);
 
         if (course.isEmpty()) {
-            LOGGER.error("Could not find course with id " + id + " in the database!");
+            LOGGER.error("Could not find course with id {} in the database!", id);
             throw new NotFoundException("Could not find course with id " + id + " in the database!");
         }
 
@@ -631,7 +636,7 @@ public class CourseService {
             Course updated = courseRepository.save(course);
             return createCourseDTO(updated);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not update the status for non-existent course with id " + id + "!");
+            LOGGER.error("Could not update the status for non-existent course with id {}!", id);
             throw new NotFoundException("Could not update the status for non-existent course with id " + id + "!");
         }
     }
@@ -758,8 +763,10 @@ public class CourseService {
             if (!course.isActive()) {
                 throw new IllegalStateException("Cannot add participant to an inactive course!");
             } else if (optionalUser.isEmpty()) {
-                LOGGER.error("Could not find the user with username or email " + participant + " when trying to add a "
-                        + "course participant!");
+                LOGGER.error(
+                    "Could not find the user with username or email {} when trying to add a course participant!",
+                    participant
+                );
                 throw new NotFoundException("Could not find the user with username or email " + participant
                         + " when trying to add a course participant!");
             } else if (!optionalUser.get().getRole().equals(Role.PARTICIPANT)) {
@@ -810,7 +817,7 @@ public class CourseService {
             Optional<CourseExperiment> courseExperiment = courseExperimentRepository.findByExperiment(experiment);
 
             if (courseExperiment.isEmpty()) {
-                LOGGER.error("Could not find a course for experiment with id " + id + "!");
+                LOGGER.error("Could not find a course for experiment with id {}!", id);
                 throw new NotFoundException("Could not find a course for experiment with id " + id + "!");
             }
 

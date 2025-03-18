@@ -226,8 +226,10 @@ public class ExperimentController {
                 UserDTO userDTO = userService.getUser(authentication.getName());
 
                 if (!userDTO.isActive()) {
-                    LOGGER.debug("Cannot display experiment page for user with id " + userDTO.getId() + " since their "
-                            + "account is inactive!");
+                    LOGGER.debug(
+                        "Cannot display experiment page for user with id {} since their account is inactive!",
+                        userDTO.getId()
+                    );
                     return Constants.ERROR;
                 } else if (userDTO.getSecret() == null) {
                     model.addAttribute("secret", false);
@@ -355,7 +357,7 @@ public class ExperimentController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
-            LOGGER.error("An unauthenticated user tried to delete experiment with id " + experimentId + "!");
+            LOGGER.error("An unauthenticated user tried to delete experiment with id {}!", experimentId);
             return Constants.ERROR;
         }
 
@@ -422,8 +424,7 @@ public class ExperimentController {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
                 participantService.deactivateParticipantAccounts(experimentId);
             } else {
-                LOGGER.debug("Cannot return the corresponding experiment page for requested status change " + status
-                        + "!");
+                LOGGER.debug("Cannot return the corresponding experiment page for requested status change {}!", status);
                 return Constants.ERROR;
             }
 
@@ -720,7 +721,7 @@ public class ExperimentController {
 
         if (!mailService.get().sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
-            LOGGER.error("Could not send invitation mail to user with email " + userDTO.getEmail() + ".");
+            LOGGER.error("Could not send invitation mail to user with email {}.", userDTO.getEmail());
             return false;
         }
 

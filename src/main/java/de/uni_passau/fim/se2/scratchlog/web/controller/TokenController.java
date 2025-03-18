@@ -106,7 +106,7 @@ public class TokenController {
         LocalDateTime localDateTime = LocalDateTime.now();
 
         if (localDateTime.isAfter(tokenDTO.getExpirationDate())) {
-            LOGGER.debug("The token for the user with id " + tokenDTO.getUser() + " has already expired!");
+            LOGGER.debug("The token for the user with id {} has already expired!", tokenDTO.getUser());
             return "redirect:/?error=true";
         }
 

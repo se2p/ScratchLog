@@ -101,7 +101,7 @@ public class SAML2Service {
             user = createUserFromAuth(username, principal);
 
             if (user.getId() == null) {
-                LOGGER.error("Could not save new user " + username + " authenticated with SAML2!");
+                LOGGER.error("Could not save new user {} authenticated with SAML2!", username);
                 throw new IllegalStateException("Could not save new user " + username + " authenticated with SAML2!");
             }
         } else {

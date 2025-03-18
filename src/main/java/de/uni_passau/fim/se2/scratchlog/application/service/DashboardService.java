@@ -163,7 +163,7 @@ public class DashboardService {
         try {
             return participantRepository.existsByExperiment(experiment);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
+            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
             return false;
         }
     }
@@ -186,7 +186,7 @@ public class DashboardService {
         Optional<ExperimentData> experimentData = experimentDataRepository.findByExperiment(id);
 
         if (experimentData.isEmpty()) {
-            LOGGER.error("Could not find experiment data for experiment with id " + id + "!");
+            LOGGER.error("Could not find experiment data for experiment with id {}!", id);
             throw new NotFoundException("Could not find experiment data for experiment with id " + id + "!");
         }
 
@@ -223,7 +223,7 @@ public class DashboardService {
                     participant.getUser().getUsername()}));
             return userInfo;
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
+            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }
