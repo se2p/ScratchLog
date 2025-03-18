@@ -343,7 +343,6 @@ public class CourseController {
         }
     }
 
-    // TODO: improve javadoc
     /**
      * Add existing participants that are listed in the given CSV file to a course.
      *
@@ -374,7 +373,7 @@ public class CourseController {
             }
         } catch (IllegalArgumentException e) {
             model.addAttribute(ERROR, resourceBundle.getString(e.getMessage()));
-        } catch(IOException e) {
+        } catch (IOException e) {
             LOGGER.error("Error parsing CSV file!", e);
             model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
         }
