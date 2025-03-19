@@ -424,8 +424,9 @@ public class HomeController {
      */
     private boolean isInvalidFinishParams(final int experimentId, final int userId, final String secret) {
         if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            LOGGER.error("Cannot finish experiment with invalid experiment id " + experimentId + " or invalid user id "
-                    + userId + "!");
+            LOGGER.error(
+                "Cannot finish experiment with invalid experiment id {} or invalid user id {}!", experimentId, userId
+            );
             return true;
         } else if (secret == null || secret.isBlank()) {
             LOGGER.error("Cannot finish experiment with secret null or blank!");

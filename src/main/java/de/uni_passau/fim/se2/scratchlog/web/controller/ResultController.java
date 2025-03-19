@@ -183,8 +183,9 @@ public class ResultController {
         IdValidator.validateUserIdElseThrow(userId);
 
         if (!userService.existsParticipant(userId, experimentId)) {
-            LOGGER.error("Could not find participant entry for user with id " + userId + " for experiment with id "
-                    + experimentId);
+            LOGGER.error(
+                "Could not find participant entry for user with id {} for experiment with id {}", userId, experimentId
+            );
             return new ModelAndView(Constants.ERROR);
         }
 

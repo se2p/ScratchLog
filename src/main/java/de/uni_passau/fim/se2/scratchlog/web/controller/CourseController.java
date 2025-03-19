@@ -204,8 +204,7 @@ public class CourseController {
                 bindingResult, resourceBundle);
 
         if (existsCourseTitle(courseDTO.getId(), courseDTO.getTitle())) {
-            LOGGER.error("Cannot save the course as a course with the title " + courseDTO.getTitle()
-                    + " already exists!");
+            LOGGER.error("Cannot save the course as a course with the title {} already exists!", courseDTO.getTitle());
             FieldErrorHandler.addTitleExistsError(bindingResult, COURSE_DTO, resourceBundle);
         }
 
@@ -240,7 +239,7 @@ public class CourseController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
-            LOGGER.error("An unauthenticated user tried to delete the course with id " + courseId + "!");
+            LOGGER.error("An unauthenticated user tried to delete the course with id {}!", courseId);
             return Constants.ERROR;
         }
 
@@ -282,7 +281,7 @@ public class CourseController {
             } else if (status.equals("close")) {
                 courseDTO = courseService.changeCourseStatus(false, courseId);
             } else {
-                LOGGER.debug("Cannot return the corresponding course page for requested status change " + status + "!");
+                LOGGER.debug("Cannot return the corresponding course page for requested status change {}!", status);
                 return Constants.ERROR;
             }
 

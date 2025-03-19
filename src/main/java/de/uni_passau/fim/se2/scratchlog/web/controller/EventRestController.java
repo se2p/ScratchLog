@@ -250,8 +250,7 @@ public class EventRestController {
         } catch (NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
-            LOGGER.error("Could not retrieve sb3 file for experiment with id " + experimentId + " due to IOException!",
-                    e);
+            LOGGER.error("Could not retrieve sb3 file for experiment with id {} due to IOException!", experimentId, e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }

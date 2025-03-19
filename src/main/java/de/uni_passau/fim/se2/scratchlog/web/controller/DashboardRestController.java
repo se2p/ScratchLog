@@ -182,7 +182,7 @@ public class DashboardRestController {
      */
     private void validateId(final int id) {
         if (id < Constants.MIN_ID) {
-            LOGGER.error("Cannot retrieve data for experiment dashboard with invalid id " + id + "!");
+            LOGGER.error("Cannot retrieve data for experiment dashboard with invalid id {}!", id);
             throw new IllegalArgumentException("Cannot retrieve data for experiment dashboard with invalid id " + id
                     + "!");
         }

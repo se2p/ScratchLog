@@ -129,8 +129,10 @@ public class PageService {
                 PageRequest.of(currentPage, pageSize, Sort.by("id").descending()));
 
         if (experiments.isEmpty()) {
-            LOGGER.info("Could not find any experiments for the page with page size of " + pageSize
-                    + ", current page of " + currentPage + " and offset of " + pageable.getOffset() + "!");
+            LOGGER.info(
+                "Could not find any experiments for the page with page size {}, current page: {} and offset {}!",
+                pageSize, currentPage, pageable.getOffset()
+            );
         }
 
         return experiments;
@@ -150,8 +152,10 @@ public class PageService {
                 PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id").descending()));
 
         if (courses.isEmpty()) {
-            LOGGER.info("Could not find any courses for the page with page size of " + pageable.getPageSize()
-                    + ", current page of " + pageable.getPageNumber() + " and offset of " + pageable.getOffset() + "!");
+            LOGGER.info(
+                "Could not find any courses for the page with page size of {}, current page of {} and offset of {}!",
+                pageable.getPageSize(), pageable.getPageNumber(), pageable.getOffset()
+            );
         }
 
         return courses;
@@ -179,8 +183,10 @@ public class PageService {
                 course);
 
         if (experiments.isEmpty()) {
-            LOGGER.info("Could not find any course experiments for the page with page size of " + pageable.getPageSize()
-                    + ", current page of " + pageable.getPageNumber() + " and offset of " + pageable.getOffset() + "!");
+            LOGGER.info(
+                "Could not find any course experiments for the page with size {}, current page: {} and offset {}!",
+                pageable.getPageSize(), pageable.getPageNumber(), pageable.getOffset()
+            );
         }
 
         return experiments;
@@ -249,7 +255,7 @@ public class PageService {
             return participantRepository.findAllByExperiment(experiment,
                     PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("user").descending()));
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
+            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }
@@ -276,7 +282,7 @@ public class PageService {
             return courseParticipantRepository.findAllByCourse(course, PageRequest.of(pageable.getPageNumber(),
                     pageable.getPageSize(), Sort.by("added").descending()));
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find course with id " + id + " in the database!", e);
+            LOGGER.error("Could not find course with id {} in the database!", id, e);
             throw new NotFoundException("Could not find course with id " + id + " in the database!", e);
         }
     }

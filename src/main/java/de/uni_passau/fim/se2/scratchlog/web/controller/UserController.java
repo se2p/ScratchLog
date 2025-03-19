@@ -292,15 +292,18 @@ public class UserController {
             UserDTO findUser = userService.getUser(userDTO.getUsername());
 
             if (!findUser.isActive()) {
-                LOGGER.debug("Tried to log in inactive user with username " + userDTO.getUsername() + ".");
+                LOGGER.debug("Tried to log in inactive user with username {}.", userDTO.getUsername());
                 model.addAttribute(ERROR, resourceBundle.getString("activate_first"));
                 return LOGIN;
             } else if (findUser.getAttempts() >= Constants.MAX_LOGIN_ATTEMPTS) {
                 findUser.setActive(false);
                 userService.updateUser(findUser);
                 tokenService.generateToken(TokenType.DEACTIVATED, "", findUser.getId());
-                LOGGER.info("Deactivated account of user with username " + userDTO.getUsername()
-                        + " due to exceeding the maximum number of login attempts!");
+                LOGGER.info(
+                    "Deactivated account of user with username {}"
+                    + "due to exceeding the maximum number of login attempts!",
+                    userDTO.getUsername()
+                );
                 model.addAttribute(ERROR, resourceBundle.getString("account_deactivated"));
                 return LOGIN;
             }
@@ -316,7 +319,7 @@ public class UserController {
                 return LOGIN;
             }
         } catch (NotFoundException e) {
-            LOGGER.error("Failed to log in user with username " + userDTO.getUsername() + ".", e);
+            LOGGER.error("Failed to log in user with username {}.", userDTO.getUsername(), e);
             model.addAttribute(ERROR, resourceBundle.getString("authentication_error"));
             return LOGIN;
         }
@@ -340,7 +343,7 @@ public class UserController {
         }
 
         if (!userService.existsUser(authentication.getName())) {
-            LOGGER.error("Can't find user with username " + authentication.getName() + " in the database!");
+            LOGGER.error("Can't find user with username {} in the database!", authentication.getName());
             return Constants.ERROR;
         }
 
@@ -716,11 +719,13 @@ public class UserController {
 
         if (!httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             if (!findOldUser.equals(userDTO)) {
-                LOGGER.error("Participant with id " + userDTO.getId() + " tried to edit the profile of user with id "
-                        + findOldUser.getId() + "!");
+                LOGGER.error(
+                    "Participant with id {} tried to edit the profile of user with id {}!",
+                    userDTO.getId(), findOldUser.getId()
+                );
                 return Constants.ERROR;
             } else if (userDTO.getUsername() != null) {
-                LOGGER.error("Participant with id " + userDTO.getId() + " tried to change their username!");
+                LOGGER.error("Participant with id {} tried to change their username!", userDTO.getId());
                 return Constants.ERROR;
             }
         }
@@ -813,7 +818,7 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
-            LOGGER.error("User with authentication name null tried to delete user with id " + userId + "!");
+            LOGGER.error("User with authentication name null tried to delete user with id {}!", userId);
             return Constants.ERROR;
         }
 
@@ -937,8 +942,9 @@ public class UserController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication.getName() == null) {
-                LOGGER.error("Cannot reset the password for user " + userDTO.getId() + " with authentication with name "
-                        + "null!");
+                LOGGER.error(
+                    "Cannot reset the password for user {} with authentication with name null!", userDTO.getId()
+                );
                 return Constants.ERROR;
             }
 

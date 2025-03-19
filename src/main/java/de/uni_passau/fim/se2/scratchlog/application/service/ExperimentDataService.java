@@ -157,7 +157,7 @@ public class ExperimentDataService {
             List<ResourceEvent> resourceEvents = resourceEventRepository.findAllByExperiment(experiment);
             return createEventList(blockEvents, clickEvents, resourceEvents);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
+            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }
@@ -211,7 +211,7 @@ public class ExperimentDataService {
             issues.addAll(metrics);
             return issues;
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id " + id + " in the database!", e);
+            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }

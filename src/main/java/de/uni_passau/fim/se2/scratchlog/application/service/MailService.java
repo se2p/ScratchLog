@@ -97,7 +97,7 @@ public class MailService {
                 return true;
             } catch (MessagingException e) {
                 tries++;
-                LOGGER.error("Failed to send message to address " + to + " on try #" + tries + "!", e);
+                LOGGER.error("Failed to send message to address {} on try #{}!", to, tries, e);
             }
         }
 
@@ -140,7 +140,7 @@ public class MailService {
      */
     private void sendHtmlMessage(final String to, final String cc, final String bcc, final String replyTo,
                                  final String subject, final String htmlBody) throws MessagingException {
-        LOGGER.debug("Sending email to " + to + " with subject " + subject);
+        LOGGER.debug("Sending email to {} with subject {}", to, subject);
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         helper.setFrom(email);

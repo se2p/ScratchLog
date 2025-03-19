@@ -179,9 +179,11 @@ public class EventService {
                 blockEventRepository.save(blockEvent);
             }
         } catch (ConstraintViolationException e) {
-            LOGGER.error("Could not store the block event data for user with id " + blockEventDTO.getUser()
-                    + " for experiment with id " + blockEventDTO.getExperiment() + " since the block event violates the"
-                    + " block event table constraints!", e);
+            LOGGER.error(
+                "Could not store the block event data for user with id {} for experiment with id {} "
+                + "since the block event violates the block event table constraints!",
+                blockEventDTO.getUser(), blockEventDTO.getExperiment(), e
+            );
         }
     }
 
@@ -202,9 +204,11 @@ public class EventService {
                 clickEventRepository.save(clickEvent);
             }
         } catch (ConstraintViolationException e) {
-            LOGGER.error("Could not store the click event data for user with id " + clickEventDTO.getUser()
-                    + " for experiment with id " + clickEventDTO.getExperiment() + " since the click event violates the"
-                    + " click event table constraints!", e);
+            LOGGER.error(
+                "Could not store the click event data for user with id {} for experiment with id {} "
+                + "since the click event violates the click event table constraints!",
+                clickEventDTO.getUser(), clickEventDTO.getExperiment(), e
+            );
         }
     }
 
@@ -225,9 +229,11 @@ public class EventService {
                 debuggerEventRepository.save(debuggerEvent);
             }
         } catch (ConstraintViolationException e) {
-            LOGGER.error("Could not store the debugger event data for user with id " + debuggerEventDTO.getUser()
-                    + " for experiment with id " + debuggerEventDTO.getExperiment() + " since the debugger event "
-                    + "violates the debugger event table constraints!", e);
+            LOGGER.error(
+                "Could not store the debugger event data for user with id {} for experiment with id {} "
+                + "since the debugger event violates the debugger event table constraints!",
+                debuggerEventDTO.getUser(), debuggerEventDTO.getExperiment(), e
+            );
         }
     }
 
@@ -248,9 +254,11 @@ public class EventService {
                 questionEventRepository.save(questionEvent);
             }
         } catch (ConstraintViolationException e) {
-            LOGGER.error("Could not store the question event data for user with id " + questionEventDTO.getUser()
-                    + " for experiment with id " + questionEventDTO.getExperiment() + " since the question event "
-                    + "violates the question event table constraints!", e);
+            LOGGER.error(
+                "Could not store the question event data for user with id {} for experiment with id {} "
+                + "since the question event violates the question event table constraints!",
+                questionEventDTO.getUser(), questionEventDTO.getExperiment(), e
+            );
         }
     }
 
@@ -271,9 +279,11 @@ public class EventService {
                 resourceEventRepository.save(resourceEvent);
             }
         } catch (ConstraintViolationException e) {
-            LOGGER.error("Could not store the resource event data for user with id " + resourceEventDTO.getUser()
-                    + " for experiment with id " + resourceEventDTO.getExperiment() + " since the resource event "
-                    + "violates the resource event table constraints!", e);
+            LOGGER.error(
+                "Could not store the resource event data for user with id {} for experiment with id {} "
+                + "since the resource event violates the resource event table constraints!",
+                resourceEventDTO.getUser(), resourceEventDTO.getExperiment(), e
+            );
         }
     }
 
@@ -375,19 +385,25 @@ public class EventService {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
             if (participant.isEmpty()) {
-                LOGGER.error("No corresponding participant entry could be found for user with id " + userId
-                        + " and experiment " + experimentId + " when trying to save an event!");
+                LOGGER.error(
+                    "No participant entry could be found for user {} and experiment {} when trying to save an event!",
+                    userId, experimentId
+                );
                 return false;
             } else if (participant.get().getEnd() != null) {
-                LOGGER.error("Tried to insert an event for participant " + userId + " during experiment "
-                        + experimentId + " who has already finished!");
+                LOGGER.error(
+                    "Tried to insert an event for participant {} during experiment {} who has already finished!",
+                    userId, experimentId
+                );
                 return false;
             }
 
             return true;
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
-                    + " when trying to save an event!", e);
+            LOGGER.error(
+                "Could not find user with id {} or experiment with id {} when trying to save an event!",
+                userId, experimentId, e
+            );
             return false;
         }
     }

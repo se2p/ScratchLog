@@ -150,16 +150,19 @@ public class ParticipantService {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
 
             if (participant.isEmpty()) {
-                LOGGER.error("Could not find any participant entry for user with id " + userId + " for experiment with "
-                        + "id " + experimentId + "!");
+                LOGGER.error(
+                    "Could not find any participant entry for user with id {} for experiment with id {}!",
+                    userId, experimentId
+                );
                 throw new NotFoundException("Could not find any participant entry for user with id " + userId
                         + " for experiment with id " + experimentId + "!");
             }
 
             return createParticipantDTO(participant.get());
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
-                    + " in the database!", e);
+            LOGGER.error(
+                "Could not find user with id {} or experiment with id {} in the database!", userId, experimentId, e
+            );
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " in the database!", e);
         }
@@ -297,11 +300,15 @@ public class ParticipantService {
             participantRepository.save(createParticipant(participantDTO, user, experiment));
             return true;
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find the user with id " + participantDTO.getUser() + " or experiment with id "
-                    + participantDTO.getExperiment() + " when trying to update a participant!", e);
+            LOGGER.error(
+                "Could not find the user with id {} or experiment with id {} when trying to update a participant!",
+                participantDTO.getUser(), participantDTO.getExperiment(), e
+            );
         } catch (ConstraintViolationException e) {
-            LOGGER.error("No participant entry could be found for user with id " + participantDTO.getUser()
-                    + " for experiment with id " + participantDTO.getExperiment() + "!", e);
+            LOGGER.error(
+                "No participant entry could be found for user with id {} for experiment with id {}!",
+                participantDTO.getUser(), participantDTO.getExperiment(), e
+            );
         }
 
         return false;
@@ -328,7 +335,7 @@ public class ParticipantService {
         try {
             participants = participantRepository.findAllByExperiment(experiment);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id " + experimentId + "!");
+            LOGGER.error("Could not find experiment with id {}!", experimentId);
             throw new NotFoundException("Could not find experiment with id " + experimentId + "!");
         }
 
@@ -371,7 +378,7 @@ public class ParticipantService {
         try {
             participants = participantRepository.findAllByUser(user);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + "!");
+            LOGGER.error("Could not find user with id {}!", userId);
             throw new NotFoundException("Could not find user with id " + userId + "!");
         }
 
@@ -421,7 +428,7 @@ public class ParticipantService {
             List<Participant> participation = participantRepository.findAllByEndIsNullAndUser(user);
             return participation.size() > 1;
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find participation entries for user with id " + userId + "!", e);
+            LOGGER.error("Could not find participation entries for user with id {}!", userId, e);
             throw new NotFoundException("Could not find participation entries for user with id " + userId + "!", e);
         }
     }

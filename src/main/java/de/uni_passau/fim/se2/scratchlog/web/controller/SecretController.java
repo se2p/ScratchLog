@@ -114,8 +114,9 @@ public class SecretController {
                 UserDTO userDTO = userService.getUserById(userId);
 
                 if (userDTO.getSecret() == null) {
-                    LOGGER.error("Cannot display newly created secret for user " + userDTO.getId() + " as the user's "
-                            + "secret is null!");
+                    LOGGER.error(
+                        "Cannot display newly created secret for user {} as the user's secret is null!", userDTO.getId()
+                    );
                     return Constants.ERROR;
                 }
 

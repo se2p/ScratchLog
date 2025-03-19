@@ -116,7 +116,7 @@ public class CodeService {
         Optional<BlockEvent> projection = blockEventRepository.findById(id);
 
         if (projection.isEmpty()) {
-            LOGGER.error("Could not find block event with id " + id + "!");
+            LOGGER.error("Could not find block event with id {}!", id);
             throw new NotFoundException("Could not find block event with id " + id + "!");
         } else if (projection.get().getCode() == null) {
             throw new IllegalArgumentException("No json string could be found for the block event with id " + id + "!");
@@ -156,8 +156,10 @@ public class CodeService {
 
             return projection.getCode();
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
-                    + " when trying to retrieve the last json file!", e);
+            LOGGER.error(
+                "Could not find user with id {} or experiment with id {} when trying to retrieve the last json file!",
+                userId, experimentId, e
+            );
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " when trying to retrieve the last json file!", e);
         }
@@ -188,16 +190,20 @@ public class CodeService {
                     blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
 
             if (json.isEmpty()) {
-                LOGGER.error("Could not find any json data for user with id " + user + " for experiment with id "
-                        + experimentId + "!");
+                LOGGER.error(
+                    "Could not find any json data for user with id {} for experiment with id {}!",
+                    user, experimentId
+                );
                 throw new NotFoundException("Could not find any json data for user with id " + user + " for experiment "
                         + "with id " + experimentId + "!");
             }
 
             return json;
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
-                    + " when trying to download the json files!", e);
+            LOGGER.error(
+                "Could not find user with id {} or experiment with id {} when trying to download the json files!",
+                userId, experimentId, e
+            );
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " when trying to download the json files!", e);
         }
@@ -273,16 +279,19 @@ public class CodeService {
                     experiment);
 
             if (xml.isEmpty()) {
-                LOGGER.error("Could not find any xml data for user with id " + user + " for experiment with id "
-                        + experimentId + "!");
+                LOGGER.error(
+                    "Could not find any xml data for user with id {} for experiment with id {}!", user, experimentId
+                );
                 throw new NotFoundException("Could not find any xml data for user with id " + user + " for experiment "
                         + "with id " + experimentId + "!");
             }
 
             return xml;
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + userId + " or experiment with id " + experimentId
-                    + " when trying to download the xml files!", e);
+            LOGGER.error(
+                "Could not find user with id {} or experiment with id {} when trying to download the xml files!",
+                userId, experimentId, e
+            );
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " when trying to download the xml files!", e);
         }
@@ -322,8 +331,10 @@ public class CodeService {
             return blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(user, experiment,
                     PageRequest.of(currentPage, pageSize, Sort.by("date").ascending()));
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find block event projections for user with id " + userId + " or experiment with id "
-                    + experimentId + "!", e);
+            LOGGER.error(
+                "Could not find block event projections for user with id {} or experiment with id {}!",
+                userId, experimentId, e
+            );
             throw new NotFoundException("Could not find block event projections for user with id " + userId
                     + " or experiment with id " + experimentId + "!", e);
         }
@@ -344,16 +355,21 @@ public class CodeService {
                                          final BlockEventJSONProjection projection,
                                          final User user, final Experiment experiment) {
         if (participant.isEmpty()) {
-            LOGGER.error("No corresponding participant entry could be found for user with id " + user.getId()
-                    + " and experiment with id " + experiment.getId() + " when trying to load the last json code!");
+            LOGGER.error(
+                "No corresponding participant entry could be found for user with id {} and experiment with id {} "
+                    + "when trying to load the last json code!", user.getId(), experiment.getId()
+            );
             return false;
         } else if (projection == null) {
-            LOGGER.info("No json code saved for user with id " + user.getId() + " for experiment with id "
-                    + experiment.getId() + ".");
+            LOGGER.info(
+                "No json code saved for user with id {} for experiment with id {}.", user.getId(), experiment.getId()
+            );
             return false;
         } else if (!user.isActive() || !experiment.isActive()) {
-            LOGGER.error("Tried to load json code for user with id " + user.getId() + " and experiment with id "
-                    + experiment.getId() + " with inactive user or experiment!");
+            LOGGER.error(
+                "Tried to load json code for user with id {} and experiment with id {} "
+                    + "with inactive user or experiment!", user.getId(), experiment.getId()
+            );
             return false;
         } else {
             return true;

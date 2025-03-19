@@ -122,11 +122,15 @@ public class FileService {
             File file = createFile(fileDTO, user, experiment);
             fileRepository.save(file);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + fileDTO.getUser() + " or experiment with id "
-                    + fileDTO.getExperiment() + " when trying to save a file!", e);
+            LOGGER.error(
+                "Could not find user with id {} or experiment with id {} when trying to save a file!",
+                fileDTO.getUser(), fileDTO.getExperiment(), e
+            );
         } catch (ConstraintViolationException e) {
-            LOGGER.error("Could not store the file for user with id " + fileDTO.getUser() + " for experiment with id "
-                    + fileDTO.getExperiment() + " since the file violates the" + " file table constraints!", e);
+            LOGGER.error(
+                "Could not store file for user {} for experiment {} since the file violates file table constraints!",
+                fileDTO.getUser(), fileDTO.getExperiment(), e
+            );
         }
     }
 
@@ -150,11 +154,15 @@ public class FileService {
             Sb3Zip sb3Zip = createSb3Zip(sb3ZipDTO, user, experiment);
             sb3ZipRepository.save(sb3Zip);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id " + sb3ZipDTO.getUser() + " or experiment with id "
-                    + sb3ZipDTO.getExperiment() + " when trying to save an sb3 zip file!", e);
+            LOGGER.error(
+                "Could not find user with id {} or experiment with id {} when trying to save an sb3 zip file!",
+                sb3ZipDTO.getUser(), sb3ZipDTO.getExperiment(), e
+            );
         } catch (ConstraintViolationException e) {
-            LOGGER.error("Could not store the zip for user with id " + sb3ZipDTO.getUser() + " for experiment with id "
-                    + sb3ZipDTO.getExperiment() + " since the sb3 zip violates the" + " file table constraints!", e);
+            LOGGER.error(
+                "Could not store the zip for user {} for experiment {} since the zip violates file table constraints!",
+                sb3ZipDTO.getUser(), sb3ZipDTO.getExperiment(), e
+            );
         }
     }
 
@@ -181,8 +189,10 @@ public class FileService {
         try {
             return fileRepository.findFilesByUserAndExperiment(user, experiment);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not retrieve the file names and ids since the  user with id " + userId
-                    + " or experiment with id " + experimentId + " could not be found!", e);
+            LOGGER.error(
+                "Could not retrieve the file names and ids since the user {} or experiment {} could not be found!",
+                userId, experimentId, e
+            );
             throw new NotFoundException("Could not retrieve the file names and ids since the  user with id " + userId
                     + " or experiment with id " + experimentId + " could not be found!", e);
         }
@@ -210,8 +220,10 @@ public class FileService {
             List<File> files = fileRepository.findAllByUserAndExperiment(user, experiment);
             return createFileDTOList(files);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not retrieve the files since the user with id " + userId + " or experiment with id "
-                    + experimentId + " could not be found!", e);
+            LOGGER.error(
+                "Could not retrieve the files since the user with id {} or experiment with id {} could not be found!",
+                userId, experimentId, e
+            );
             throw new NotFoundException("Could not retrieve the files since the  user with id " + userId
                     + " or experiment with id " + experimentId + " could not be found!", e);
         }
@@ -240,8 +252,10 @@ public class FileService {
         try {
             return sb3ZipRepository.findAllIdsByUserAndExperiment(user, experiment);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not retrieve the zip file ids since the  user with id " + userId
-                    + " or experiment with id " + experimentId + " could not be found!", e);
+            LOGGER.error(
+                "Could not retrieve the zip file ids since the user {} or experiment {} could not be found!",
+                userId, experimentId, e
+            );
             throw new NotFoundException("Could not retrieve the zip file ids since the  user with id " + userId
                     + " or experiment with id " + experimentId + " could not be found!", e);
         }
@@ -264,7 +278,7 @@ public class FileService {
         Optional<File> file = fileRepository.findById(id);
 
         if (file.isEmpty()) {
-            LOGGER.error("Could not find file with id " + id + "!");
+            LOGGER.error("Could not find file with id {}!", id);
             throw new NotFoundException("Could not find file with id " + id + "!");
         }
 
@@ -288,7 +302,7 @@ public class FileService {
         Optional<Sb3Zip> zip = sb3ZipRepository.findById(id);
 
         if (zip.isEmpty()) {
-            LOGGER.error("Could not find zip file with id " + id + "!");
+            LOGGER.error("Could not find zip file with id {}!", id);
             throw new NotFoundException("Could not find zip file with id " + id + "!");
         }
 
@@ -320,15 +334,19 @@ public class FileService {
                     experiment);
 
             if (finalProject.isEmpty()) {
-                LOGGER.info("Could not find final project file for user with id " + userId + " for experiment with id "
-                        + experimentId + "!");
+                LOGGER.info(
+                    "Could not find final project file for user with id {} for experiment with id {}!",
+                    userId, experimentId
+                );
                 return Optional.empty();
             }
 
             return Optional.of(createSb3ZipDTO(finalProject.get()));
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not retrieve the final project file since the  user with id " + userId
-                    + " or experiment with id " + experimentId + " could not be found!", e);
+            LOGGER.error(
+                "Could not retrieve the final project file since the  user {} or experiment {} could not be found!",
+                userId, experimentId, e
+            );
             throw new NotFoundException("Could not retrieve the final project file since the  user with id " + userId
                     + " or experiment with id " + experimentId + " could not be found!", e);
         }
@@ -358,16 +376,20 @@ public class FileService {
             List<Sb3Zip> sb3Zips = sb3ZipRepository.findAllByUserAndExperiment(user, experiment);
 
             if (sb3Zips.isEmpty()) {
-                LOGGER.error("Could not find any zip files for user with id " + userId + " for experiment with id "
-                        + experimentId + "!");
+                LOGGER.error(
+                    "Could not find any zip files for user with id {} for experiment with id {}!",
+                    userId, experimentId
+                );
                 throw new NotFoundException("Could not find any zip files for user with id " + userId
                         + " for experiment with id " + experimentId + "!");
             }
 
             return createSb3ZipDTOList(sb3Zips);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Cannot download zip files as no user with id " + userId + " or no experiment with id "
-                    + experimentId + " could be found in the database!", e);
+            LOGGER.error(
+                "Cannot download zip files as no user with id {} or no experiment {} could be found in the database!",
+                userId, experimentId, e
+            );
             throw new NotFoundException("Cannot download zip files as no user with id " + userId
                     + " or no experiment with id " + experimentId + " could be found in the database!", e);
         }
@@ -386,16 +408,22 @@ public class FileService {
     private boolean isInvalidParticipant(final Optional<Participant> participant, final User user,
                                          final Experiment experiment, final String fileType) {
         if (participant.isEmpty()) {
-            LOGGER.error("No corresponding participant entry could be found for user with id " + user.getId()
-                    + " and experiment " + experiment.getId() + " when trying to save a " + fileType + "!");
+            LOGGER.error(
+                "No participant entry could be found for user {} and experiment {} when trying to save a {}!",
+                user.getId(), experiment.getId(), fileType
+            );
             return true;
         } else if (participant.get().getEnd() != null) {
-            LOGGER.error("Tried to save a " + fileType + " for participant " + user.getId() + " during experiment "
-                    + experiment.getId() + " who has already finished!");
+            LOGGER.error(
+                "Tried to save a {} for participant {} during experiment {} who has already finished!",
+                fileType, user.getId(), experiment.getId()
+            );
             return true;
         } else if (!user.isActive() || !experiment.isActive()) {
-            LOGGER.error("Tried to save a " + fileType + " for participant " + user.getId() + " during experiment "
-                    + experiment.getId() + " with user or experiment inactive!");
+            LOGGER.error(
+                "Tried to save a {} for participant {} during experiment {} with user or experiment inactive!",
+                fileType, user.getId(), experiment.getId()
+            );
             return true;
         } else {
             return false;
