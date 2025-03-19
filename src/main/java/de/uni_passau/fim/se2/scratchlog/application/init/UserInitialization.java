@@ -102,15 +102,18 @@ public class UserInitialization {
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
             tokenService.createRandomPasswordToken(user.getId());
-            logger.info(
-                "User \"admin\" was added to the database as a first administrator with password " + password);
+            logger.info("********************");
+            logger.info("User \"admin\" was added to the database as a first administrator with password {}", password);
+            logger.info("********************");
         } else {
             for (User user : users) {
                 if (tokenService.checkRandomPasswordToken(user.getId())) {
                     String password = CustomPasswordGenerator.generatePassword(Constants.RANDOM_PASSWORD_LENGTH);
                     user.setPassword(passwordEncoder.encode(password));
                     userRepository.save(user);
-                    logger.info("Random password for admin with id " + user.getId() + " this session is: " + password);
+                    logger.info("********************");
+                    logger.info("Random password for admin with id {} this session is: {}", user.getId(), password);
+                    logger.info("********************");
                 }
             }
         }
