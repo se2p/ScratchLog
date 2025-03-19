@@ -20,7 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.web.controller;
 
 import com.opencsv.CSVWriter;
-import com.opencsv.bean.CsvToBeanBuilder;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CourseService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataService;
@@ -65,10 +64,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -568,36 +564,29 @@ public class ExperimentController {
         IdValidator.validateExperimentIdElseThrow(experimentId);
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
-        String fileValidation = FiletypeValidator.validate(file, "text/csv", ".csv");
+            LocaleContextHolder.getLocale());
         ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
 
-        if (fileValidation != null) {
-            LOGGER.error("Could not add participants from CSV file due to invalid filetype or empty file!");
-            model.addAttribute(ERROR, resourceBundle.getString(fileValidation));
-            addModelInfo(0, experimentDTO, model);
-            return EXPERIMENT;
-        }
-
-        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-            List<UserDTO> users = new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
-
-            if (isValidUserList(users, model, resourceBundle)) {
+        try {
+            List<UserDTO> users = userService.parseUserListCsv(file);
+            List<String> invalidUsernames = userService.getInvalidParticipantUsernames(users);
+            if (invalidUsernames.isEmpty()) {
                 if (experimentDTO.isCourseExperiment()) {
                     courseService.saveCourseParticipants(courseService.getCourseIdForExperiment(experimentId), users);
                 }
-
                 participantService.saveParticipantsFromCSV(experimentId, users);
+            } else {
+                model.addAttribute(ERROR, resourceBundle.getString("invalid_usernames") + " " + invalidUsernames);
             }
-
-            addModelInfo(0, experimentDTO, model);
-            return EXPERIMENT;
+        } catch (IllegalArgumentException e) {
+            model.addAttribute(ERROR, resourceBundle.getString(e.getMessage()));
         } catch (IOException e) {
             LOGGER.error("Error parsing CSV file!", e);
             model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
-            addModelInfo(0, experimentDTO, model);
-            return EXPERIMENT;
         }
+
+        addModelInfo(0, experimentDTO, model);
+        return EXPERIMENT;
     }
 
     /**
@@ -910,33 +899,6 @@ public class ExperimentController {
                 userDTO.getId())) {
             model.addAttribute(ERROR, resourceBundle.getString("course_participant_not_found"));
         }
-    }
-
-    /**
-     * Checks, whether the provided list of users are valid to add as participants, i.e. the users exist and they are
-     * not administrators.
-     *
-     * @param users The list of users to check.
-     * @param model The model used to return error messages.
-     * @param resourceBundle The resource bundle used to return specific messages in the desired language.
-     * @return {@code true} if all provided users are valid, or {@code false} otherwise.
-     */
-    private boolean isValidUserList(final List<UserDTO> users, final Model model, final ResourceBundle resourceBundle) {
-        List<String> invalidUsernames = new ArrayList<>();
-
-        users.forEach(userDTO -> {
-            if (!userService.existsUser(userDTO.getUsername()) || userService.isAdmin(userDTO.getUsername())) {
-                invalidUsernames.add(userDTO.getUsername());
-            }
-        });
-
-        if (!invalidUsernames.isEmpty()) {
-            LOGGER.error("Cannot add participants from CSV with invalid usernames!");
-            model.addAttribute(ERROR, resourceBundle.getString("invalid_usernames") + " " + invalidUsernames);
-            return false;
-        }
-
-        return true;
     }
 
 }

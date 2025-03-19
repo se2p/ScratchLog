@@ -53,10 +53,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -338,6 +341,45 @@ public class CourseController {
         } catch (NotFoundException e) {
             return Constants.ERROR;
         }
+    }
+
+    /**
+     * Add existing participants that are listed in the given CSV file to a course.
+     *
+     * @param file The CSV file containing the usernames of the participants to add.
+     * @param courseId The id of the course to add the participants to.
+     * @param model The model used to display error messages.
+     * @return Redirection to the course page.
+     */
+    @PostMapping("/participant/add-csv")
+    @Secured(Constants.ROLE_ADMIN)
+    public String addParticipantsFromCSV(@RequestParam("file") final MultipartFile file,
+                                         @RequestParam(ID) final int courseId, final Model model) {
+        if (file == null) {
+            return Constants.ERROR;
+        }
+        IdValidator.validateCourseIdElseThrow(courseId);
+
+        CourseDTO courseDto = courseService.getCourse(courseId);
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages", LocaleContextHolder.getLocale());
+
+        try {
+            List<UserDTO> users = userService.parseUserListCsv(file);
+            List<String> invalidUsernames = userService.getInvalidParticipantUsernames(users);
+            if (invalidUsernames.isEmpty()) {
+                courseService.saveCourseParticipants(courseId, users);
+            } else {
+                model.addAttribute(ERROR, resourceBundle.getString("invalid_usernames") + " " + invalidUsernames);
+            }
+        } catch (IllegalArgumentException e) {
+            model.addAttribute(ERROR, resourceBundle.getString(e.getMessage()));
+        } catch (IOException e) {
+            LOGGER.error("Error parsing CSV file!", e);
+            model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
+        }
+
+        addModelInfo(model, courseDto, true);
+        return "course";
     }
 
     /**

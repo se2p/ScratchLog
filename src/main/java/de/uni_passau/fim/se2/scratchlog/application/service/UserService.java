@@ -19,6 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
+import com.opencsv.bean.CsvToBeanBuilder;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
@@ -32,6 +33,7 @@ import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.InactivityConfiguration;
 import de.uni_passau.fim.se2.scratchlog.util.Secrets;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
+import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -40,7 +42,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -590,6 +597,47 @@ public class UserService {
      */
     public String encodePassword(final String password) {
         return passwordEncoder.encode(password);
+    }
+
+    /**
+     * Parse the given CSV file into a list of {@link UserDTO}s.
+     *
+     * @param file The CSV file to parse user information from.
+     * @return A list of user DTO objects with the information provided in the CSV file.
+     * @throws IllegalArgumentException If the given CSV file is not valid according to
+     *         {@link FiletypeValidator#validate(MultipartFile, String, String)}. The error message is the validation
+     *         string of said method.
+     * @throws IOException If the CSV file could not be read.
+     */
+    public List<UserDTO> parseUserListCsv(final MultipartFile file) throws IOException {
+        String fileValidation = FiletypeValidator.validate(file, "text/csv", ".csv");
+        if (fileValidation != null) {
+            throw new IllegalArgumentException(fileValidation);
+        }
+
+        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            return new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
+        }
+    }
+
+    /**
+     * Returns the usernames of the users in the given list who would not be valid participants to add to a course or
+     * experiment. This includes administrators and users that don't exist.
+     *
+     * @param users The list of users to filter for invalid usernames.
+     * @return The list of invalid usernames according to the above criteria.
+     */
+    @Transactional
+    public List<String> getInvalidParticipantUsernames(final List<UserDTO> users) {
+        List<String> invalidUsernames = new ArrayList<>();
+
+        users.forEach(userDTO -> {
+            if (!existsUser(userDTO.getUsername()) || isAdmin(userDTO.getUsername())) {
+                invalidUsernames.add(userDTO.getUsername());
+            }
+        });
+
+        return invalidUsernames;
     }
 
     /**

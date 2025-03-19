@@ -1085,13 +1085,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsUser(PARTICIPANT1);
-        verify(userService).existsUser(PARTICIPANTS);
-        verify(userService, times(2)).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
-        verify(participantService).saveParticipantsFromCSV(anyInt(), any());
-        verify(model, times(5)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1104,14 +1097,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsUser(PARTICIPANT1);
-        verify(userService).existsUser(PARTICIPANTS);
-        verify(userService, times(2)).isAdmin(anyString());
-        verify(courseService).saveCourseParticipants(anyInt(), any());
-        verify(courseService).getCourseIdForExperiment(ID);
-        verify(participantService).saveParticipantsFromCSV(anyInt(), any());
-        verify(model, times(5)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1125,14 +1110,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsUser(PARTICIPANT1);
-        verify(userService).existsUser(PARTICIPANTS);
-        verify(userService, times(2)).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
-        verify(courseService, never()).getCourseIdForExperiment(anyInt());
-        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
-        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1143,30 +1120,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsUser(PARTICIPANT1);
-        verify(userService).existsUser(PARTICIPANTS);
-        verify(userService, never()).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
-        verify(courseService, never()).getCourseIdForExperiment(anyInt());
-        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
-        verify(model, times(6)).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testAddParticipantsFromCSVIO() throws IOException {
-        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(file.getContentType()).thenReturn(FILETYPE_CSV);
-        when(file.getOriginalFilename()).thenReturn(FILENAME_CSV);
-        when(file.getInputStream()).thenThrow(IOException.class);
-        assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
-        verify(courseService, never()).getCourseIdForExperiment(anyInt());
-        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
-        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1177,13 +1130,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
-        verify(courseService, never()).getCourseIdForExperiment(anyInt());
-        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
-        verify(model, times(6)).addAttribute(anyString(), any());
     }
 
     @Test

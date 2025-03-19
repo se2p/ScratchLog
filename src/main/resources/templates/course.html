@@ -136,14 +136,27 @@
                 </a>
             </div>
             <!-- The buttons for participant management. -->
-            <div class="d-flex gap-3 flex-wrap" th:if="${courseDTO.active}">
-                <div class="mb-3">
-                    <input id="addParticipant" class="btn btn-secondary" type="submit" th:value="#{add_existing}">
+            <div class="d-inline-block gap-2" th:if="${courseDTO.active}" style="width: fit-content;">
+                <div class="row row-cols-2 mb-2">
+                    <div class="col pe-0">
+                        <input id="addParticipant" class="btn btn-secondary w-100" type="submit"
+                               th:value="#{add_existing}">
+                    </div>
+                    <div class="col">
+                        <input id="deleteParticipant" type="submit" class="btn btn-danger"
+                               th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <input id="deleteParticipant" type="submit" class="btn btn-danger"
-                           th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
-                </div>
+               <form method="post" th:action="@{/course/participant/add-csv}" enctype="multipart/form-data"
+                     class="row row-cols-2">
+                   <input type="hidden" th:name="id" th:value="${courseDTO.id}">
+                   <div class="col pe-0">
+                       <input type="submit" th:value="#{add_csv_participants}" class="btn btn-secondary w-100">
+                   </div>
+                   <div class="col d-flex align-items-center">
+                       <input type="file" th:name="file" accept="text/csv">
+                   </div>
+                </form>
             </div>
             <!-- Let Thymeleaf fetch the current and the last participant page numbers. -->
             <script>
