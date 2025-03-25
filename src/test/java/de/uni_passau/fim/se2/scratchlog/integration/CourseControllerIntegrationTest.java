@@ -108,7 +108,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     private static final String CURRENT = "3";
     private static final String ID_PARAM = "id";
     private static final String TITLE_PARAM = "title";
-    private static final String PARTICIPANT_PARAM = "participant";
+    private static final String PARTICIPANT_PARAM = "participants";
     private static final String PAGE_PARAM = "page";
     private static final String STATUS_PARAM = "stat";
     private static final String ERROR = "error";
@@ -118,6 +118,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
     private static final String USERNAME = "participant";
+    private static final String[] USERNAMES = new String[] { USERNAME, "participant2" };
     private static final String PASSWORD = "password";
     private static final String FILETYPE_CSV = "text/csv";
     private static final String FILENAME_CSV = "participants.csv";
@@ -437,11 +438,11 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipant() throws Exception {
+    public void testAddParticipants() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.saveCourseParticipant(ID, USERNAME)).thenReturn(ID);
-        mvc.perform(get("/course/participant/add")
+        mvc.perform(post("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
                         .contentType(MediaType.ALL)
@@ -460,7 +461,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.existsInactiveExperiment(ID)).thenReturn(true);
-        mvc.perform(get("/course/participant/add")
+        mvc.perform(post("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
                         .contentType(MediaType.ALL)
@@ -479,7 +480,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     @Test
     public void testAddParticipantInvalidInput() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/participant/add")
+        mvc.perform(post("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, " ")
                         .contentType(MediaType.ALL)
@@ -497,7 +498,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     @Test
     public void testAddParticipantCourseNotFound() throws Exception {
         when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
-        mvc.perform(get("/course/participant/add")
+        mvc.perform(post("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
                         .contentType(MediaType.ALL)

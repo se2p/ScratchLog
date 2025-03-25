@@ -310,7 +310,7 @@
     <div class="modal-content">
         <h2 th:text="#{add_participant}"></h2>
         <div class="mb-3" th:text="#{add_course_participant_info}"></div>
-        <form th:action="@{/course/participant/add}">
+        <form th:action="@{/course/participant/add}" th:method="POST">
             <div class="mb-3 form-group position-relative">
                 <input id="addParticipantId" type="hidden" th:name="id" th:value="${courseDTO.id}">
                 <div class="form-check mb-3">
@@ -318,11 +318,12 @@
                     <label class="form-check-label" for="experimentParticipant" th:text="#{add_experiment_participant}">
                     </label>
                 </div>
-                <div class="input-group">
-                    <input class="form-control" type="text" th:name="participant" id="participantInput"
-                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
-                </div>
-                <div id="participantResults"></div>
+                <input type="text" id="participantInput" class="form-control"
+                       th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}">
+            </div>
+            <div class="list-group">
+                <select multiple id="addParticipantsSelect" th:name="participants" class="d-none mb-3">
+                </select>
             </div>
             <div class="d-flex justify-content-between">
                 <a id="abortAddParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
@@ -341,10 +342,13 @@
             <div class="mb-3 form-group position-relative">
                 <input id="deleteParticipantId" type="hidden" th:name="id" th:value="${courseDTO.id}">
                 <div class="input-group">
-                    <input class="form-control" type="text" th:name="participant" id="deleteParticipantInput"
+                    <input class="form-control" type="text" id="deleteParticipantInput"
                            th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
                 </div>
-                <div id="deleteParticipantResults"></div>
+            </div>
+            <div class="list-group">
+                <select multiple id="deleteParticipantsSelect" th:name="participants" class="d-none mb-3">
+                </select>
             </div>
             <div class="d-flex justify-content-between">
                 <a id="abortDeleteParticipant" class="btn btn-secondary" th:text="#{abort}"></a>

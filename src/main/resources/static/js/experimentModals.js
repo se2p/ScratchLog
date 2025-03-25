@@ -21,7 +21,7 @@ function addEventListeners() {
     addClickEventListenerCloseModal("abortDelete", deleteModal);
     addClickEventListenerOpenModal("close", stopModal);
     addClickEventListenerCloseModal("abortStop", stopModal);
-    addClickEventListenerOpenModal("add", addModal);
+    addClickEventListenerOpenModal("addParticipant", addModal);
     addClickEventListenerCloseModal("abortAdd", addModal);
     addClickEventListenerOpenModal("deleteParticipant", deleteParticipantModal);
     addClickEventListenerCloseModal("abortDeleteParticipant", deleteParticipantModal);

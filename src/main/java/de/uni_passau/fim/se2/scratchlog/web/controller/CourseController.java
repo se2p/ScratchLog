@@ -293,23 +293,24 @@ public class CourseController {
     }
 
     /**
-     * Adds the user with the given username or email as a participant to the course with the given id. If the add
-     * parameter is specified, the user is also added as a participant to all experiments offered in the course. If no
-     * corresponding course could be found, the user is redirected to the error page instead. If the given username or
-     * email is invalid, the user is returned to the course page where a corresponding error message is displayed.
+     * Adds the list of users with the given usernames or emails as participants to the course with the given id. If the
+     * add parameter is specified, the users are also added as participants to all experiments offered in the course. If
+     * no corresponding course could be found, the user is redirected to the error page instead. If one of the given
+     * usernames or emails is invalid, the user is returned to the course page where a corresponding error message is
+     * displayed.
      *
-     * @param participant The username or email to search for.
-     * @param add Whether the user should be added as a participant to all experiments.
+     * @param participants A list of usernames or emails of users to add to the course.
+     * @param add Whether the users should be added as participants to all experiments.
      * @param courseId The id of the course.
      * @param model The {@link Model} used to store information on errors.
      * @return The updated course page on success, the course page displaying an error message, or the error page.
      */
-    @GetMapping("/participant/add")
+    @PostMapping("/participant/add")
     @Secured(Constants.ROLE_ADMIN)
-    public String addParticipant(@RequestParam("participant") final String participant,
-                                 @RequestParam(required = false, name = "add") final String add,
-                                 @RequestParam("id") final int courseId,
-                                 final Model model) {
+    public String addParticipants(@RequestParam("participants") final List<String> participants,
+                                  @RequestParam(required = false, name = "add") final String add,
+                                  @RequestParam("id") final int courseId,
+                                  final Model model) {
         IdValidator.validateCourseIdElseThrow(courseId);
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
@@ -318,22 +319,26 @@ public class CourseController {
             return Constants.ERROR;
         }
 
-        if (checkReturnCoursePage(courseId, participant, true, true, model)) {
+        if (participants.stream().anyMatch(username -> checkReturnCoursePage(courseId, username, true, true, model))) {
             addModelInfo(model, courseDTO, true);
             return "course";
         } else if (courseService.existsInactiveExperiment(courseId)) {
             ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                    LocaleContextHolder.getLocale());
+                LocaleContextHolder.getLocale());
             model.addAttribute(ERROR, resourceBundle.getString("course_experiment_inactive"));
             addModelInfo(model, courseDTO, true);
             return "course";
         }
 
         try {
-            int userId = courseService.saveCourseParticipant(courseId, participant);
-
-            if (add != null) {
-                courseService.addParticipantToCourseExperiments(courseId, userId);
+            // We don't use CourseService#saveCourseParticipants here and instead loop over them manually, because the
+            // single method returns the user id which we need for adding to the courses. Additionally, we don't have to
+            // construct user DTO objects that are used as the parameter to the batch method.
+            for (String username : participants) {
+                int userId = courseService.saveCourseParticipant(courseId, username);
+                if (add != null) {
+                    courseService.addParticipantToCourseExperiments(courseId, userId);
+                }
             }
 
             return "redirect:/course?id=" + courseId;
@@ -382,19 +387,19 @@ public class CourseController {
     }
 
     /**
-     * Removes the user with the given username or email as a participant of the course with the given id and of all
+     * Removes the users with the given usernames or emails as participants of the course with the given id and of all
      * experiments offered in the course. If no corresponding course could be found, the user is redirected to the error
-     * page instead. If the given username or email is invalid, the user is returned to the course page where a
+     * page instead. If one of the given usernames or emails is invalid, the user is returned to the course page where a
      * corresponding error message is displayed.
      *
-     * @param participant The username or email to search for.
+     * @param participants A list of usernames or emails of the users to remove from the course.
      * @param courseId The id of the course.
      * @param model The {@link Model} used to store information on errors.
      * @return The updated course page on success, the course page displaying an error message, or the error page.
      */
     @GetMapping("/participant/delete")
     @Secured(Constants.ROLE_ADMIN)
-    public String deleteParticipant(@RequestParam("participant") final String participant,
+    public String deleteParticipants(@RequestParam("participants") final List<String> participants,
                                     @RequestParam("id") final int courseId, final Model model) {
         IdValidator.validateCourseIdElseThrow(courseId);
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
@@ -404,13 +409,15 @@ public class CourseController {
             return Constants.ERROR;
         }
 
-        if (checkReturnCoursePage(courseId, participant, false, true, model)) {
+        if (participants.stream().anyMatch(username -> checkReturnCoursePage(courseId, username, false, true, model))) {
             addModelInfo(model, courseDTO, true);
             return "course";
         }
 
         try {
-            courseService.deleteCourseParticipant(courseId, participant);
+            for (String participant : participants) {
+                courseService.deleteCourseParticipant(courseId, participant);
+            }
             return "redirect:/course?id=" + courseId;
         } catch (NotFoundException e) {
             return Constants.ERROR;
