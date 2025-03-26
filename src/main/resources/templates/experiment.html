@@ -212,12 +212,17 @@
             </div>
             <!-- The buttons for participant management. -->
             <div class="d-inline-block gap-2" th:if="${experimentDTO.active}" style="width: fit-content;">
-                <div class="row row-cols-2 mb-2">
+                <div class="row row-cols-3 mb-2 gap-2 flex-nowrap">
                     <div class="col pe-0">
                         <input id="addParticipant" class="btn btn-secondary w-100" type="submit"
                                th:value="#{add_existing}">
                     </div>
-                    <div class="col">
+                    <div class="col p-0" th:unless="${experimentDTO.courseExperiment}">
+                        <a th:href="@{/participant/add(id=${experimentDTO.id})}" class="btn btn-secondary w-100">
+                           <span th:text="#{add_new_participant}"></span>
+                        </a>
+                    </div>
+                    <div class="col p-0">
                         <input id="deleteParticipant" type="submit" class="btn btn-danger"
                                th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
                     </div>
