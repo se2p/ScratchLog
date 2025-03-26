@@ -108,10 +108,6 @@
             </div>
         </div>
 
-        <div class="mb-5" sec:authorize="hasRole('ADMIN')" th:if="${experimentDTO.active}">
-            <span class="text-muted mb-3" th:text="#{csv_participants}"></span>
-        </div>
-
         <!-- The table of participants in the experiment and the button to show participant links. -->
         <div class="mb-5" sec:authorize="hasRole('ADMIN')">
             <div class="d-flex justify-content-between flex-wrap mb-3">
@@ -237,6 +233,10 @@
                         <input type="file" th:name="file" accept="text/csv">
                     </div>
                 </form>
+            </div>
+
+            <div class="mb-5 mt-2" sec:authorize="hasRole('ADMIN')" th:if="${experimentDTO.active}">
+                <span class="text-muted mb-3" th:text="#{csv_participants}"></span>
             </div>
         </div>
 
