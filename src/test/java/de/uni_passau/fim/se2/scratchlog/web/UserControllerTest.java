@@ -155,7 +155,7 @@ public class UserControllerTest extends AbstractControllerTest {
     private static final String LOGIN = "login";
     private static final String PROFILE = "profile";
     private static final String PROFILE_EDIT = "profile-edit";
-    private static final String PARTICIPANTS_CSV = "participants-csv";
+    private static final String USERS_CSV = "users-csv";
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
@@ -165,7 +165,7 @@ public class UserControllerTest extends AbstractControllerTest {
     private static final String INVALID = "redirect:/users/profile?invalid=true&name=";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
-    private static final String PARTICIPANTS_ADD = "participants-add";
+    private static final String USERS_ADD = "users-add";
     private static final String USER_DTO = "userDTO";
     private static final String SECRET = "secret";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
@@ -684,7 +684,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testGetAddParticipants() {
         setMailServer(false);
-        assertEquals(PARTICIPANTS_ADD, userController.getAddParticipants(userBulkDTO));
+        assertEquals(USERS_ADD, userController.getAddParticipants(userBulkDTO));
     }
 
     @Test
@@ -709,7 +709,7 @@ public class UserControllerTest extends AbstractControllerTest {
         List<String> existingNames = List.of("admin0");
         userBulkDTO.setStartAtOne(true);
         when(userService.existsUser(existingNames.get(0))).thenReturn(true);
-        assertEquals(PARTICIPANTS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
+        assertEquals(USERS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).findLastId();
         verify(userService, times(AMOUNT)).existsUser(anyString());
@@ -720,7 +720,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testAddParticipantsInvalidUsername() {
         userBulkDTO.setUsername(BLANK);
-        assertEquals(PARTICIPANTS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
+        assertEquals(USERS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
         verify(bindingResult).addError(any());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
@@ -774,7 +774,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetCSVParticipants() {
-        assertEquals(PARTICIPANTS_CSV, userController.getCSVParticipants());
+        assertEquals(USERS_CSV, userController.getCSVParticipants());
     }
 
     @Test
@@ -819,7 +819,7 @@ public class UserControllerTest extends AbstractControllerTest {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("users.csv").getInputStream());
         when(userService.findAlreadyExistingByUsernameOrEmail(any())).thenReturn(Set.of("dummyUser"));
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
@@ -830,7 +830,7 @@ public class UserControllerTest extends AbstractControllerTest {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("users.csv").getInputStream());
         when(userService.findAlreadyExistingByUsernameOrEmail(any())).thenReturn(Set.of("dummyUser"));
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
@@ -840,7 +840,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipantsInvalidPassword() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("usersInvalidPassword.csv").getInputStream());
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).encodePassword(anyString());
@@ -851,7 +851,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipantsInvalidAttributes() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("usersInvalid.csv").getInputStream());
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
         verify(userService, never()).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, never()).encodePassword(anyString());
@@ -862,7 +862,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipantsDuplicateUsernames() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("usersUsernames.csv").getInputStream());
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
         verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, never()).encodePassword(anyString());
@@ -873,7 +873,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipantsDuplicateEmails() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("usersEmails.csv").getInputStream());
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(model).addAttribute(anyString(), any());
         verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, never()).encodePassword(anyString());
@@ -885,7 +885,7 @@ public class UserControllerTest extends AbstractControllerTest {
         when(file.getOriginalFilename()).thenReturn(FILENAME);
         when(file.getContentType()).thenReturn(FILETYPE);
         when(file.getInputStream()).thenThrow(IOException.class);
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(file, times(2)).getContentType();
         verify(file, times(2)).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
@@ -899,7 +899,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipantsInvalidFilename() {
         when(file.getOriginalFilename()).thenReturn(EMAIL);
         when(file.getContentType()).thenReturn(FILETYPE);
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(file, times(2)).getContentType();
         verify(file, times(2)).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
@@ -912,7 +912,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testAddCSVParticipantsFilenameNull() {
         when(file.getContentType()).thenReturn(FILETYPE);
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(file, times(2)).getContentType();
         verify(file).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
@@ -925,7 +925,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testAddCSVParticipantsInvalidContentType() {
         when(file.getContentType()).thenReturn(FILENAME);
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(file, times(2)).getContentType();
         verify(file, never()).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
@@ -937,7 +937,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAddCSVParticipantsContentTypeNull() {
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(file).getContentType();
         verify(file, never()).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
@@ -950,7 +950,7 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testAddCSVParticipantsFileEmpty() {
         when(file.isEmpty()).thenReturn(true);
-        assertEquals(PARTICIPANTS_CSV, userController.addCSVParticipants(file, model));
+        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
         verify(file, never()).getContentType();
         verify(file, never()).getOriginalFilename();
         verify(model).addAttribute(anyString(), any());
