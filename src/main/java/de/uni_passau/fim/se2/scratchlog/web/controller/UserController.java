@@ -164,9 +164,9 @@ public class UserController {
     private static final String USER = "user";
 
     /**
-     * String corresponding to the add participants page.
+     * String corresponding to the page for adding users in bulk.
      */
-    private static final String PARTICIPANTS_ADD = "participants-add";
+    private static final String USERS_ADD = "users-add";
 
     /**
      * String corresponding to the userDTO model attribute.
@@ -424,7 +424,7 @@ public class UserController {
             return INDEX;
         }
 
-        return PARTICIPANTS_ADD;
+        return USERS_ADD;
     }
 
     /**
@@ -458,7 +458,7 @@ public class UserController {
                 resourceBundle);
 
         if (usernameValidation != null) {
-            return PARTICIPANTS_ADD;
+            return USERS_ADD;
         }
 
         int number = userBulkDTO.isStartAtOne() ? userService.findValidNumberForUsername(userBulkDTO.getUsername())
@@ -485,7 +485,7 @@ public class UserController {
             return "redirect:/?success=true";
         } else {
             model.addAttribute(ERROR, invalidUsernames);
-            return PARTICIPANTS_ADD;
+            return USERS_ADD;
         }
     }
 
@@ -497,7 +497,7 @@ public class UserController {
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
     public String getCSVParticipants() {
-        return "participants-csv";
+        return "users-csv";
     }
 
     /**
@@ -518,7 +518,7 @@ public class UserController {
                 LocaleContextHolder.getLocale());
 
         if (isInvalidFile(file, model, resourceBundle)) {
-            return "participants-csv";
+            return "users-csv";
         }
 
         try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
@@ -541,12 +541,12 @@ public class UserController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
                     .body(builder.toString());
             } else {
-                return "participants-csv";
+                return "users-csv";
             }
         } catch (IOException e) {
             LOGGER.error("Error parsing CSV file!", e);
             model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
-            return "participants-csv";
+            return "users-csv";
         }
     }
 
@@ -1143,7 +1143,7 @@ public class UserController {
                 users.size(),
                 applicationProperties.getMaxUserBulkImportCount()
             );
-            String errorMessage = resourceBundle.getString("max_participants")
+            String errorMessage = resourceBundle.getString("max_users")
                 .replace("{0}", Integer.toString(applicationProperties.getMaxUserBulkImportCount()));
             model.addAttribute(ERROR, errorMessage);
             return false;
