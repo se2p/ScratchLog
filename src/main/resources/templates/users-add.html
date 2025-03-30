@@ -15,7 +15,7 @@
 <!-- Page content -->
 <div class="row" id="content">
     <div class="inside">
-        <!-- The error message shown at the top of the page when some participants couldn't be added. -->
+        <!-- The error message shown at the top of the page when some users couldn't be added. -->
         <div class="row" th:if="${error != null}">
             <div class="col-12 alert alert-warning">
                 <div th:text="#{names_exists}"></div>
@@ -23,15 +23,15 @@
             </div>
         </div>
 
-        <!-- The add participants page heading. -->
+        <!-- The 'add users in bulk' page heading. -->
         <h2 class="mb-5" th:text="#{add_users_bulk}"></h2>
 
-        <!-- The information shown on the add participants page -->
+        <!-- The information shown on the 'add users in bulk' page -->
         <div class="row">
             <div class="col-12 mb-5" th:text="#{add_users_bulk_info}"></div>
         </div>
 
-        <!-- The form for adding new participants. -->
+        <!-- The form for adding new users in bulk. -->
         <!--/*@thymesVar id="userBulkDTO" type="de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO"*/-->
         <form th:action="@{/users/bulk}" th:object="${userBulkDTO}" th:name="userBulkDTO" method="post">
             <!-- The input group for the range. -->
