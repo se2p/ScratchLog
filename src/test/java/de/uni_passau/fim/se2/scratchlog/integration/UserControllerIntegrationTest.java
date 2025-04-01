@@ -115,7 +115,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     private static final String LOGIN = "login";
     private static final String PROFILE = "profile";
     private static final String PROFILE_EDIT = "profile-edit";
-    private static final String PARTICIPANTS_CSV = "participants-csv";
+    private static final String USERS_ADD_CSV = "users-csv";
     private static final String PROFILE_REDIRECT = "redirect:/users/profile?name=";
     private static final String EMAIL_REDIRECT = "redirect:/users/profile?update=true&name=";
     private static final String REDIRECT_SUCCESS = "redirect:/?success=true";
@@ -125,7 +125,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     private static final String INVALID = "redirect:/users/profile?invalid=true&name=";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
-    private static final String PARTICIPANTS_ADD = "participants-add";
+    private static final String USERS_ADD = "users-add";
     private static final String USER_DTO = "userDTO";
     private static final String PASSWORD_DTO = "passwordDTO";
     private static final String USER_BULK_DTO = "userBulkDTO";
@@ -467,7 +467,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(view().name(PARTICIPANTS_ADD));
+                .andExpect(view().name(USERS_ADD));
     }
 
     @Test
@@ -503,7 +503,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(view().name(PARTICIPANTS_ADD))
+                .andExpect(view().name(USERS_ADD))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, is(existingNames)));
         verify(userService).findValidNumberForUsername(userBulkDTO.getUsername());
         verify(userService, never()).findLastId();
@@ -518,7 +518,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(view().name(PARTICIPANTS_ADD))
+                .andExpect(view().name(USERS_ADD))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
         verify(userService, never()).findValidNumberForUsername(anyString());
         verify(userService, never()).findLastId();
@@ -545,7 +545,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     public void testGetCSVParticipants() throws Exception {
         mvc.perform(get("/users/csv"))
                 .andExpect(status().isOk())
-                .andExpect(view().name(PARTICIPANTS_CSV));
+                .andExpect(view().name(USERS_ADD_CSV));
     }
 
     @Test
@@ -575,7 +575,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
-                .andExpect(view().name(PARTICIPANTS_CSV));
+                .andExpect(view().name(USERS_ADD_CSV));
         verify(userService, never()).findAlreadyExistingByUsernameOrEmail(any());
         verify(userService, never()).encodePassword(anyString());
         verify(userService, never()).saveUsers(any());
@@ -591,7 +591,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
-                .andExpect(view().name(PARTICIPANTS_CSV));
+                .andExpect(view().name(USERS_ADD_CSV));
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, never()).encodePassword(anyString());

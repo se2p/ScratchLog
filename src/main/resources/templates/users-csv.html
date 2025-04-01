@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="#{csv_participants_title}"></title>
+    <title th:text="#{add_users_csv_title}"></title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
     <link rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.min.css}">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -20,7 +20,7 @@
             <div class="col-12 alert alert-danger" th:text="${error}"></div>
         </div>
 
-        <!-- The CSV participant page heading. -->
+        <!-- The CSV users page heading. -->
         <h2 class="mb-5" th:text="#{csv_create}"></h2>
 
         <!-- The information shown on the page if the mail server constant is set to true. -->

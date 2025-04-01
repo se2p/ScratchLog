@@ -163,6 +163,10 @@
                 var participantPage = [[${participantPage}]];
                 var lastParticipantPage = [[${lastParticipantPage}]];
             </script>
+
+            <div class="mb-5 mt-2" sec:authorize="hasRole('ADMIN')">
+                <span class="text-muted mb-3" th:text="#{csv_participants}"></span>
+            </div>
         </div>
 
         <!-- The experiment table containing experiments that are part of this course. -->
