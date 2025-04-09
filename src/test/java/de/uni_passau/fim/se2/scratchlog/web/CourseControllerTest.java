@@ -133,6 +133,8 @@ public class CourseControllerTest {
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
     private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", Role.PARTICIPANT, Language.ENGLISH, PASSWORD,
             "secret");
+    private final UserDTO userDTO2 = new UserDTO(USERNAMES.get(1), "part@part.com", Role.PARTICIPANT, Language.GERMAN,
+        PASSWORD, "secret");
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(3));
     private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
@@ -446,13 +448,16 @@ public class CourseControllerTest {
     @Test
     public void testAddParticipants() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getUserByUsernameOrEmail(anyString())).thenReturn(userDTO);
-        when(courseService.saveCourseParticipant(anyInt(),anyString())).thenReturn(ID);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
+        when(courseService.saveCourseParticipant(ID, USERNAMES.get(0))).thenReturn(ID);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
+        when(courseService.saveCourseParticipant(ID, USERNAMES.get(1))).thenReturn(ID);
         assertEquals(REDIRECT_COURSE + ID, courseController.addParticipants(USERNAMES, null, ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
         verify(courseService).saveCourseParticipant(ID, USERNAME);
+        verify(courseService).saveCourseParticipant(ID, USERNAMES.get(1));
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
 
@@ -461,8 +466,10 @@ public class CourseControllerTest {
     @Test
     public void testAddParticipantsAddToExperiments() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getUserByUsernameOrEmail(anyString())).thenReturn(userDTO);
-        when(courseService.saveCourseParticipant(anyInt(),anyString())).thenReturn(ID);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
+        when(courseService.saveCourseParticipant(ID, USERNAMES.get(0))).thenReturn(ID);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
+        when(courseService.saveCourseParticipant(ID, USERNAMES.get(1))).thenReturn(ID);
         assertEquals(REDIRECT_COURSE + ID, courseController.addParticipants(USERNAMES, "on", ID, model));
         // Verify that the users actually get added to the experiment.
         verify(courseService, times(2)).addParticipantToCourseExperiments(ID, ID);
@@ -471,8 +478,10 @@ public class CourseControllerTest {
     @Test
     public void testAddParticipantsNotFound() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getUserByUsernameOrEmail(anyString())).thenReturn(userDTO);
-        when(courseService.saveCourseParticipant(anyInt(), anyString())).thenThrow(NotFoundException.class);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
+        when(courseService.saveCourseParticipant(ID, USERNAMES.get(0))).thenThrow(NotFoundException.class);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
+        // Also throwing the exception for user 2 throws an UnnecessaryStubbingException for this test.
         assertEquals(Constants.ERROR, courseController.addParticipants(USERNAMES, "on", ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
@@ -485,7 +494,8 @@ public class CourseControllerTest {
     @Test
     public void testAddParticipantsInactiveExperiment() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getUserByUsernameOrEmail(anyString())).thenReturn(userDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
         when(courseService.existsInactiveExperiment(ID)).thenReturn(true);
         assertEquals(COURSE, courseController.addParticipants(USERNAMES, "on", ID, model));
         verify(courseService).getCourse(ID);
@@ -500,8 +510,9 @@ public class CourseControllerTest {
     @Test
     public void testAddParticipantsExists() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getUserByUsernameOrEmail(anyString())).thenReturn(userDTO);
-        when(courseService.existsCourseParticipant(anyInt(), anyString())).thenReturn(true);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
+        when(courseService.existsCourseParticipant(ID, USERNAMES.get(0))).thenReturn(true);
+        // Mocking the second user throws an UnnecessaryStubbingException for this test.
         when(model.getAttribute(ERROR)).thenReturn(USERNAME);
         assertEquals(COURSE, courseController.addParticipants(USERNAMES, "on", ID, model));
         verify(courseService).getCourse(ID);
@@ -517,6 +528,8 @@ public class CourseControllerTest {
         userDTO.setRole(Role.ADMIN);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(anyString())).thenReturn(userDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
+        // Mocking the second user throws an UnnecessaryStubbingException for this test.
         when(model.getAttribute(ERROR)).thenReturn(USERNAME);
         assertEquals(COURSE, courseController.addParticipants(USERNAMES, "on", ID, model));
         verify(courseService).getCourse(ID);
@@ -541,7 +554,7 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testAddParticipantCourseInactive() {
+    public void testAddParticipantsCourseInactive() {
         courseDTO.setActive(false);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         assertEquals(Constants.ERROR, courseController.addParticipants(USERNAMES, "on", ID, model));
@@ -556,8 +569,10 @@ public class CourseControllerTest {
     @Test
     public void testDeleteParticipants() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getUserByUsernameOrEmail(anyString())).thenReturn(userDTO);
-        when(courseService.existsCourseParticipant(anyInt(), anyString())).thenReturn(true);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
+        when(courseService.existsCourseParticipant(ID, USERNAMES.get(0))).thenReturn(true);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
+        when(courseService.existsCourseParticipant(ID, USERNAMES.get(1))).thenReturn(true);
         assertEquals(REDIRECT_COURSE + ID, courseController.deleteParticipants(USERNAMES, ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
@@ -589,7 +604,7 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testDeleteParticipantInvalidId() {
+    public void testDeleteParticipantsInvalidId() {
         assertInvalidIdException(() -> courseController.deleteParticipants(USERNAMES, 0, model));
         verify(courseService, never()).getCourse(anyInt());
         verify(userService, never()).getUserByUsernameOrEmail(anyString());

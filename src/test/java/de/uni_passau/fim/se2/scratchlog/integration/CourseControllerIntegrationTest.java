@@ -127,6 +127,8 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
     private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", Role.PARTICIPANT, Language.ENGLISH,
             PASSWORD, "secret");
+    private final UserDTO userDTO2 = new UserDTO(USERNAMES[1], "part@part.com", Role.PARTICIPANT, Language.GERMAN,
+            PASSWORD, "secret");
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(2));
     private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
@@ -438,22 +440,37 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipants() throws Exception {
+    public void testAddSingleParticipant() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.saveCourseParticipant(ID, USERNAME)).thenReturn(ID);
         mvc.perform(post("/course/participant/add")
+                .param(ID_PARAM, ID_STRING)
+                .param(PARTICIPANT_PARAM, USERNAME)
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(view().name(REDIRECT_COURSE + ID));
+        verify(courseService).saveCourseParticipant(ID, USERNAME);
+    }
+
+    @Test
+    public void testAddMultipleParticipants() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAMES[0])).thenReturn(userDTO);
+        when(courseService.saveCourseParticipant(ID, USERNAMES[0])).thenReturn(ID);
+        when(userService.getUserByUsernameOrEmail(USERNAMES[1])).thenReturn(userDTO2);
+        when(courseService.saveCourseParticipant(ID, USERNAMES[1])).thenReturn(ID);
+        mvc.perform(post("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
-                        .param(PARTICIPANT_PARAM, USERNAME)
+                        .param(PARTICIPANT_PARAM, USERNAMES[0])
+                        .param(PARTICIPANT_PARAM, USERNAMES[1])
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_COURSE + ID));
-        verify(courseService).getCourse(ID);
-        verify(userService).getUserByUsernameOrEmail(USERNAME);
-        verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService).saveCourseParticipant(ID, USERNAME);
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+        verify(courseService).saveCourseParticipant(ID, USERNAMES[0]);
+        verify(courseService).saveCourseParticipant(ID, USERNAMES[1]);
     }
 
     @Test
