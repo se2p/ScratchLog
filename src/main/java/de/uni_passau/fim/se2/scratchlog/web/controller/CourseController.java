@@ -319,7 +319,9 @@ public class CourseController {
             return Constants.ERROR;
         }
 
-        if (participants.stream().anyMatch(username -> checkReturnCoursePage(courseId, username, true, true, model))) {
+        boolean returnToCoursePage = participants.stream().anyMatch(
+                   usernameOrEmail -> checkReturnCoursePage(courseId, usernameOrEmail, true, true, model));
+        if (returnToCoursePage) {
             addModelInfo(model, courseDTO, true);
             return "course";
         } else if (courseService.existsInactiveExperiment(courseId)) {
@@ -409,7 +411,9 @@ public class CourseController {
             return Constants.ERROR;
         }
 
-        if (participants.stream().anyMatch(username -> checkReturnCoursePage(courseId, username, false, true, model))) {
+        boolean returnToCoursePage = participants.stream().anyMatch(
+            usernameOrEmail -> checkReturnCoursePage(courseId, usernameOrEmail, false, true, model));
+        if (returnToCoursePage) {
             addModelInfo(model, courseDTO, true);
             return "course";
         }
