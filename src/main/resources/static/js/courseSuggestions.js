@@ -42,8 +42,6 @@ function getParticipantSuggestions(searchUrl, searchData, selectElementId) {
 
     request.done(function(result) {
         const participantsSelect = document.getElementById(selectElementId);
-        let html = "";
-
         participantsSelect.size = participantsSelect.length;
 
         // Use display-none to hide the select element when there are currently no suggestions.
@@ -54,16 +52,16 @@ function getParticipantSuggestions(searchUrl, searchData, selectElementId) {
             participantsSelect.size = participantsSelect.length;
             participantsSelect.classList.remove("d-none");
 
-            result.forEach(([username, email]) =>  {
-                html += `
-                <option value="${sanitize(username)}" class="list-group-item list-group-item-action p-3">
-                    ${sanitize(username)} (${sanitize(email)})
-                </option>
-                `
+            const options = result.map(([username, email]) => {
+                const option = new Option(
+                    `${sanitize(username)} (${sanitize(email)})`,
+                    sanitize(username)
+                );
+                option.classList.add("list-group-item", "list-group-item-action", "p-3");
+                return option;
             });
+            participantsSelect.replaceChildren(...options);
         }
-
-        participantsSelect.innerHTML = html;
     });
 }
 
