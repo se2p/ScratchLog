@@ -293,13 +293,13 @@ public class CourseController {
     }
 
     /**
-     * Adds the list of users with the given usernames or emails as participants to the course with the given id. If the
+     * Adds the list of users with the given usernames as participants to the course with the given id. If the
      * add parameter is specified, the users are also added as participants to all experiments offered in the course. If
      * no corresponding course could be found, the user is redirected to the error page instead. If one of the given
-     * usernames or emails is invalid, the user is returned to the course page where a corresponding error message is
+     * usernames is invalid, the user is returned to the course page where a corresponding error message is
      * displayed.
      *
-     * @param participants A list of usernames or emails of users to add to the course.
+     * @param participants A list of usernames of users to add to the course.
      * @param add Whether the users should be added as participants to all experiments.
      * @param courseId The id of the course.
      * @param model The {@link Model} used to store information on errors.
@@ -319,8 +319,8 @@ public class CourseController {
             return Constants.ERROR;
         }
 
-        boolean returnToCoursePage = participants.stream().anyMatch(
-                   usernameOrEmail -> checkReturnCoursePage(courseId, usernameOrEmail, true, true, model));
+        boolean returnToCoursePage =
+            participants.stream().anyMatch(username -> checkReturnCoursePage(courseId, username, true, true, model));
         if (returnToCoursePage) {
             addModelInfo(model, courseDTO, true);
             return "course";
@@ -333,15 +333,9 @@ public class CourseController {
         }
 
         try {
-            // We don't use CourseService#saveCourseParticipants here and instead loop over them manually, because the
-            // single method returns the user id which we need for adding to the courses. Additionally, we don't have to
-            // construct user DTO objects that are used as the parameter to the batch method.
-            for (String username : participants) {
-                int userId = courseService.saveCourseParticipant(courseId, username);
-                if (add != null) {
-                    courseService.addParticipantToCourseExperiments(courseId, userId);
-                }
-            }
+            List<UserDTO> userDtos = participants.stream().map(username ->
+                new UserDTO(username, null, null, null, null, null)).toList();
+            courseService.saveCourseParticipants(courseId, userDtos, add != null);
 
             return "redirect:/course?id=" + courseId;
         } catch (NotFoundException e) {
@@ -373,7 +367,7 @@ public class CourseController {
             List<UserDTO> users = userService.parseUserListCsv(file);
             List<String> invalidUsernames = userService.getInvalidParticipantUsernames(users);
             if (invalidUsernames.isEmpty()) {
-                courseService.saveCourseParticipants(courseId, users);
+                courseService.saveCourseParticipants(courseId, users, false);
             } else {
                 model.addAttribute(ERROR, resourceBundle.getString("invalid_usernames") + " " + invalidUsernames);
             }
@@ -419,9 +413,7 @@ public class CourseController {
         }
 
         try {
-            for (String participant : participants) {
-                courseService.deleteCourseParticipant(courseId, participant);
-            }
+            courseService.deleteCourseParticipants(courseId, participants);
             return "redirect:/course?id=" + courseId;
         } catch (NotFoundException e) {
             return Constants.ERROR;

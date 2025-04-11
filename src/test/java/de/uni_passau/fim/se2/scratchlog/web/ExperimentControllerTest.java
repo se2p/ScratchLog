@@ -1138,7 +1138,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any(), anyBoolean());
         verify(courseService, never()).getCourseIdForExperiment(anyInt());
         verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
         verify(model, never()).addAttribute(anyString(), any());
@@ -1150,7 +1150,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any());
+        verify(courseService, never()).saveCourseParticipants(anyInt(), any(), anyBoolean());
         verify(courseService, never()).getCourseIdForExperiment(anyInt());
         verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
         verify(model, never()).addAttribute(anyString(), any());

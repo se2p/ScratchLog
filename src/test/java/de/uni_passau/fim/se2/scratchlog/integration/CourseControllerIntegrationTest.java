@@ -57,6 +57,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
@@ -129,6 +130,8 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
             PASSWORD, "secret");
     private final UserDTO userDTO2 = new UserDTO(USERNAMES[1], "part@part.com", Role.PARTICIPANT, Language.GERMAN,
             PASSWORD, "secret");
+    private final List<UserDTO> userDTOs = Stream.of(USERNAMES)
+        .map(username -> new UserDTO(username, null, null, null, null, null)).toList();
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(2));
     private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
@@ -451,7 +454,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .accept(MediaType.ALL))
             .andExpect(status().is3xxRedirection())
             .andExpect(view().name(REDIRECT_COURSE + ID));
-        verify(courseService).saveCourseParticipant(ID, USERNAME);
+        verify(courseService).saveCourseParticipants(ID, List.of(userDTO), false);
     }
 
     @Test
@@ -469,8 +472,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_COURSE + ID));
-        verify(courseService).saveCourseParticipant(ID, USERNAMES[0]);
-        verify(courseService).saveCourseParticipant(ID, USERNAMES[1]);
+        verify(courseService).saveCourseParticipants(ID, userDTOs, false);
     }
 
     @Test
@@ -544,7 +546,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService).deleteCourseParticipant(ID, USERNAME);
+        verify(courseService).deleteCourseParticipants(ID, List.of(USERNAME));
     }
 
     @Test

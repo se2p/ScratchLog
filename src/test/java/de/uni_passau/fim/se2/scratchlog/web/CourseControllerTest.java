@@ -135,6 +135,8 @@ public class CourseControllerTest {
             "secret");
     private final UserDTO userDTO2 = new UserDTO(USERNAMES.get(1), "part@part.com", Role.PARTICIPANT, Language.GERMAN,
         PASSWORD, "secret");
+    private final List<UserDTO> userDTOs = USERNAMES.stream()
+        .map(username -> new UserDTO(username, null, null, null, null, null)).toList();
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(3));
     private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
@@ -449,44 +451,33 @@ public class CourseControllerTest {
     public void testAddParticipants() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
-        when(courseService.saveCourseParticipant(ID, USERNAMES.get(0))).thenReturn(ID);
         when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
-        when(courseService.saveCourseParticipant(ID, USERNAMES.get(1))).thenReturn(ID);
         assertEquals(REDIRECT_COURSE + ID, courseController.addParticipants(USERNAMES, null, ID, model));
-        verify(courseService).getCourse(ID);
-        verify(userService).getUserByUsernameOrEmail(USERNAME);
-        verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService).saveCourseParticipant(ID, USERNAME);
-        verify(courseService).saveCourseParticipant(ID, USERNAMES.get(1));
+        verify(courseService).saveCourseParticipants(ID, userDTOs, false);
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
-
     }
 
     @Test
     public void testAddParticipantsAddToExperiments() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
-        when(courseService.saveCourseParticipant(ID, USERNAMES.get(0))).thenReturn(ID);
         when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
-        when(courseService.saveCourseParticipant(ID, USERNAMES.get(1))).thenReturn(ID);
         assertEquals(REDIRECT_COURSE + ID, courseController.addParticipants(USERNAMES, "on", ID, model));
         // Verify that the users actually get added to the experiment.
-        verify(courseService, times(2)).addParticipantToCourseExperiments(ID, ID);
+        verify(courseService).saveCourseParticipants(ID, userDTOs, true);
     }
 
     @Test
     public void testAddParticipantsNotFound() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
-        when(courseService.saveCourseParticipant(ID, USERNAMES.get(0))).thenThrow(NotFoundException.class);
         when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
-        // Also throwing the exception for user 2 throws an UnnecessaryStubbingException for this test.
+        doThrow(NotFoundException.class).when(courseService).saveCourseParticipants(ID, userDTOs, true);
         assertEquals(Constants.ERROR, courseController.addParticipants(USERNAMES, "on", ID, model));
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService).saveCourseParticipant(ID, USERNAME);
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
@@ -574,10 +565,7 @@ public class CourseControllerTest {
         when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
         when(courseService.existsCourseParticipant(ID, USERNAMES.get(1))).thenReturn(true);
         assertEquals(REDIRECT_COURSE + ID, courseController.deleteParticipants(USERNAMES, ID, model));
-        verify(courseService).getCourse(ID);
-        verify(userService).getUserByUsernameOrEmail(USERNAME);
-        verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService).deleteCourseParticipant(ID, USERNAME);
+        verify(courseService).deleteCourseParticipants(ID, USERNAMES);
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -586,7 +574,7 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(anyString())).thenReturn(userDTO);
         when(courseService.existsCourseParticipant(anyInt(), anyString())).thenReturn(true);
-        doThrow(NotFoundException.class).when(courseService).deleteCourseParticipant(anyInt(), anyString());
+        doThrow(NotFoundException.class).when(courseService).deleteCourseParticipants(ID, USERNAMES);
         assertEquals(Constants.ERROR, courseController.deleteParticipants(USERNAMES, ID, model));
     }
 
