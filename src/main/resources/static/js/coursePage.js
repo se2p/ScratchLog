@@ -132,16 +132,16 @@ function updateCourseExperimentTable(data) {
  * Adds the event listeners for opening and closing all modals on the course page.
  */
 function addModalOnclickFunctions() {
-    let stopModal = document.getElementById("openStop");
-    let deleteModal = document.getElementById("openDelete");
+    let stopCourse = document.getElementById("openStopCourse");
+    let deleteCourseModal = document.getElementById("openDeleteCourse");
     let addParticipantModal = document.getElementById("openAddParticipant");
     let deleteParticipantModal = document.getElementById("openDeleteParticipant");
     let deleteExperimentModal = document.getElementById("openDeleteExperiment");
 
-    addClickEventListenerOpenModal("close", stopModal);
-    addClickEventListenerCloseModal("abortStop", stopModal);
-    addClickEventListenerOpenModal("delete", deleteModal);
-    addClickEventListenerCloseModal("abortDelete", deleteModal);
+    addClickEventListenerOpenModal("stopCourse", stopCourse);
+    addClickEventListenerCloseModal("abortStopCourse", stopCourse);
+    addClickEventListenerOpenModal("deleteCourse", deleteCourseModal);
+    addClickEventListenerCloseModal("abortDeleteCourse", deleteCourseModal);
     addClickEventListenerOpenModal("addParticipant", addParticipantModal);
     addClickEventListenerCloseModal("abortAddParticipant", addParticipantModal);
     addClickEventListenerOpenModal("deleteParticipant", deleteParticipantModal);

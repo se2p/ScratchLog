@@ -1,8 +1,8 @@
 import {addClickEventListenerCloseModal, addClickEventListenerOpenModal} from "./eventListeners.js";
 
-let deleteModal = document.getElementById("openDelete");
-let stopModal = document.getElementById("openStop");
-let addModal = document.getElementById("openAdd");
+let deleteExperimentModal = document.getElementById("openDeleteExperiment");
+let stopExperimentModal = document.getElementById("openStopExperiment");
+let addModal = document.getElementById("openAddParticipant");
 let deleteParticipantModal = document.getElementById("openDeleteParticipant");
 let deleteSb3Modal = document.getElementById("openDeleteSb3");
 
@@ -17,12 +17,12 @@ $(document).ready(function () {
  * Adds the required event listeners to open and close all modals on the experiment page.
  */
 function addEventListeners() {
-    addClickEventListenerOpenModal("delete", deleteModal);
-    addClickEventListenerCloseModal("abortDelete", deleteModal);
-    addClickEventListenerOpenModal("close", stopModal);
-    addClickEventListenerCloseModal("abortStop", stopModal);
+    addClickEventListenerOpenModal("deleteExperiment", deleteExperimentModal);
+    addClickEventListenerCloseModal("abortDeleteExperiment", deleteExperimentModal);
+    addClickEventListenerOpenModal("stopExperiment", stopExperimentModal);
+    addClickEventListenerCloseModal("abortStopExperiment", stopExperimentModal);
     addClickEventListenerOpenModal("addParticipant", addModal);
-    addClickEventListenerCloseModal("abortAdd", addModal);
+    addClickEventListenerCloseModal("abortAddParticipant", addModal);
     addClickEventListenerOpenModal("deleteParticipant", deleteParticipantModal);
     addClickEventListenerCloseModal("abortDeleteParticipant", deleteParticipantModal);
     addClickEventListenerOpenModal("deleteSb3", deleteSb3Modal);
