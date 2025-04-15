@@ -125,7 +125,8 @@ public class CourseControllerTest {
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
     private static final String USERNAME = "participant";
-    private static final List<String> USERNAMES = List.of(USERNAME, "participant2");
+    private static final String USERNAME2 = "participant2";
+    private static final List<String> USERNAMES = List.of(USERNAME, USERNAME2);
     private static final String PASSWORD = "password";
     private static final String ERROR = "error";
     private static final LocalDateTime CHANGED = LocalDateTime.now();
@@ -133,10 +134,9 @@ public class CourseControllerTest {
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
     private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", Role.PARTICIPANT, Language.ENGLISH, PASSWORD,
             "secret");
-    private final UserDTO userDTO2 = new UserDTO(USERNAMES.get(1), "part@part.com", Role.PARTICIPANT, Language.GERMAN,
+    private final UserDTO userDTO2 = new UserDTO(USERNAME2, "part@part.com", Role.PARTICIPANT, Language.GERMAN,
         PASSWORD, "secret");
-    private final List<UserDTO> userDTOs = USERNAMES.stream()
-        .map(username -> new UserDTO(username, null, null, null, null, null)).toList();
+    private final List<UserDTO> userDTOs = List.of(userDTO, userDTO2);
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(3));
     private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
@@ -518,7 +518,6 @@ public class CourseControllerTest {
     public void testAddParticipantsAdmin() {
         userDTO.setRole(Role.ADMIN);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getUserByUsernameOrEmail(anyString())).thenReturn(userDTO);
         when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
         // Mocking the second user throws an UnnecessaryStubbingException for this test.
         when(model.getAttribute(ERROR)).thenReturn(USERNAME);
