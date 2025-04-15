@@ -108,7 +108,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     private static final String CURRENT = "3";
     private static final String ID_PARAM = "id";
     private static final String TITLE_PARAM = "title";
-    private static final String PARTICIPANT_PARAM = "participant";
+    private static final String PARTICIPANT_PARAM = "participants";
     private static final String PAGE_PARAM = "page";
     private static final String STATUS_PARAM = "stat";
     private static final String ERROR = "error";
@@ -118,6 +118,8 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
     private static final String USERNAME = "participant";
+    private static final String USERNAME2 = "participant2";
+    private static final List<String> USERNAMES = List.of(USERNAME, USERNAME2);
     private static final String PASSWORD = "password";
     private static final String FILETYPE_CSV = "text/csv";
     private static final String FILENAME_CSV = "participants.csv";
@@ -125,7 +127,9 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
     private final UserDTO userDTO = new UserDTO(USERNAME, "part@part.de", Role.PARTICIPANT, Language.ENGLISH,
-            PASSWORD, "secret");
+        PASSWORD, "secret");
+    private final UserDTO userDTO2 = new UserDTO(USERNAME2, "part@part.com", Role.PARTICIPANT, Language.GERMAN,
+        PASSWORD, "secret");
     private final Page<CourseExperimentProjection> experiments = new PageImpl<>(getCourseExperiments(2));
     private final Page<CourseParticipant> participants = new PageImpl<>(new ArrayList<>());
 
@@ -437,22 +441,33 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipant() throws Exception {
+    public void testAddSingleParticipant() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
-        when(courseService.saveCourseParticipant(ID, USERNAME)).thenReturn(ID);
-        mvc.perform(get("/course/participant/add")
-                        .param(ID_PARAM, ID_STRING)
-                        .param(PARTICIPANT_PARAM, USERNAME)
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT_COURSE + ID));
-        verify(courseService).getCourse(ID);
-        verify(userService).getUserByUsernameOrEmail(USERNAME);
-        verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService).saveCourseParticipant(ID, USERNAME);
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
+        mvc.perform(post("/course/participant/add")
+                .param(ID_PARAM, ID_STRING)
+                .param(PARTICIPANT_PARAM, USERNAME)
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(view().name(REDIRECT_COURSE + ID));
+        verify(courseService).saveCourseParticipants(ID, List.of(userDTO), false);
+    }
+
+    @Test
+    public void testAddMultipleParticipants() throws Exception {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
+        mvc.perform(post("/course/participant/add")
+                .param(ID_PARAM, ID_STRING)
+                .param(PARTICIPANT_PARAM, USERNAMES.get(0))
+                .param(PARTICIPANT_PARAM, USERNAMES.get(1))
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(view().name(REDIRECT_COURSE + ID));
+        verify(courseService).saveCourseParticipants(ID, List.of(userDTO, userDTO2), false);
     }
 
     @Test
@@ -460,7 +475,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(courseService.existsInactiveExperiment(ID)).thenReturn(true);
-        mvc.perform(get("/course/participant/add")
+        mvc.perform(post("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
                         .contentType(MediaType.ALL)
@@ -479,7 +494,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     @Test
     public void testAddParticipantInvalidInput() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mvc.perform(get("/course/participant/add")
+        mvc.perform(post("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, " ")
                         .contentType(MediaType.ALL)
@@ -497,7 +512,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     @Test
     public void testAddParticipantCourseNotFound() throws Exception {
         when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
-        mvc.perform(get("/course/participant/add")
+        mvc.perform(post("/course/participant/add")
                         .param(ID_PARAM, ID_STRING)
                         .param(PARTICIPANT_PARAM, USERNAME)
                         .contentType(MediaType.ALL)
@@ -526,7 +541,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService).deleteCourseParticipant(ID, USERNAME);
+        verify(courseService).deleteCourseParticipants(ID, List.of(USERNAME));
     }
 
     @Test

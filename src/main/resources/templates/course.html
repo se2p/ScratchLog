@@ -36,7 +36,7 @@
                     <i aria-hidden="true" class="fas fa-edit fa-inverse" th:title="#{edit}"></i>
                     <span th:text="#{edit}"></span>
                 </a>
-                <a id="delete" class="btn btn-danger">
+                <a id="deleteCourse" class="btn btn-danger">
                     <i aria-hidden="true" class="fas fa-trash-alt fa-inverse" th:title="#{delete}"></i>
                     <span th:text="#{delete}"></span>
                 </a>
@@ -64,7 +64,7 @@
                 </div>
                 <a id="open" class="btn btn-primary" type="submit" th:text="#{start_course}"
                    th:unless="${courseDTO.active}" th:href="@{/course/status(id=${courseDTO.id}, stat='open')}"></a>
-                <input th:if="${courseDTO.active}" id="close" class="btn btn-secondary" type="submit"
+                <input th:if="${courseDTO.active}" id="stopCourse" class="btn btn-secondary" type="submit"
                        th:value="#{stop_course}">
             </div>
 
@@ -268,7 +268,7 @@
 </div>
 
 <!-- The popup dialog to delete the course. -->
-<div id="openDelete" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="openDeleteCourse" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_course}"></h2>
         <div class="mb-3" th:text="#{delete_course_warn}"></div>
@@ -289,7 +289,7 @@
                 <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
             </div>
             <div class="d-flex justify-content-between">
-                <a id="abortDelete" class="btn btn-secondary" th:text="#{abort}"></a>
+                <a id="abortDeleteCourse" class="btn btn-secondary" th:text="#{abort}"></a>
                 <input class="btn btn-danger" type="submit" th:value="#{delete}">
             </div>
         </form>
@@ -297,12 +297,12 @@
 </div>
 
 <!-- The popup dialog to stop the course. -->
-<div id="openStop" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="openStopCourse" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{close_course}"></h2>
         <div class="mb-3" th:text="#{close_course_warn}"></div>
         <div class="d-flex justify-content-between">
-            <input id="abortStop" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <input id="abortStopCourse" class="btn btn-secondary" type="submit" th:value="#{abort}">
             <a class="btn btn-danger" th:text="#{stop_course}" th:href="@{/course/status(id=${courseDTO.id},
             stat='close')}"></a>
         </div>
@@ -314,7 +314,7 @@
     <div class="modal-content">
         <h2 th:text="#{add_participant}"></h2>
         <div class="mb-3" th:text="#{add_course_participant_info}"></div>
-        <form th:action="@{/course/participant/add}">
+        <form th:action="@{/course/participant/add}" th:method="POST">
             <div class="mb-3 form-group position-relative">
                 <input id="addParticipantId" type="hidden" th:name="id" th:value="${courseDTO.id}">
                 <div class="form-check mb-3">
@@ -322,11 +322,12 @@
                     <label class="form-check-label" for="experimentParticipant" th:text="#{add_experiment_participant}">
                     </label>
                 </div>
-                <div class="input-group">
-                    <input class="form-control" type="text" th:name="participant" id="participantInput"
-                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
-                </div>
-                <div id="participantResults"></div>
+                <input type="text" id="participantInput" class="form-control"
+                       th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}">
+            </div>
+            <div class="list-group">
+                <select multiple id="addParticipantsSelect" th:name="participants" class="d-none mb-3">
+                </select>
             </div>
             <div class="d-flex justify-content-between">
                 <a id="abortAddParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
@@ -345,10 +346,13 @@
             <div class="mb-3 form-group position-relative">
                 <input id="deleteParticipantId" type="hidden" th:name="id" th:value="${courseDTO.id}">
                 <div class="input-group">
-                    <input class="form-control" type="text" th:name="participant" id="deleteParticipantInput"
+                    <input class="form-control" type="text" id="deleteParticipantInput"
                            th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
                 </div>
-                <div id="deleteParticipantResults"></div>
+            </div>
+            <div class="list-group">
+                <select multiple id="deleteParticipantsSelect" th:name="participants" class="d-none mb-3">
+                </select>
             </div>
             <div class="d-flex justify-content-between">
                 <a id="abortDeleteParticipant" class="btn btn-secondary" th:text="#{abort}"></a>

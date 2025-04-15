@@ -40,7 +40,7 @@
                     <i aria-hidden="true" class="fas fa-edit fa-inverse" th:title="#{edit}"></i>
                     <span th:text="#{edit}"></span>
                 </a>
-                <a id="delete" class="btn btn-danger">
+                <a id="deleteExperiment" class="btn btn-danger">
                     <i aria-hidden="true" class="fas fa-trash-alt fa-inverse" th:title="#{delete}"></i>
                     <span th:text="#{delete}"></span>
                 </a>
@@ -103,7 +103,7 @@
                 </div>
                 <a id="open" class="btn btn-primary" type="submit" th:text="#{open}" th:unless="${experimentDTO.active}"
                    th:href="@{/experiment/status(id=${experimentDTO.id}, stat='open')}"></a>
-                <input th:if="${experimentDTO.active}" id="close" class="btn btn-secondary" type="submit"
+                <input th:if="${experimentDTO.active}" id="stopExperiment" class="btn btn-secondary" type="submit"
                        th:value="#{close}">
             </div>
         </div>
@@ -325,7 +325,7 @@
 </div>
 
 <!-- The popup dialog to delete the experiment. -->
-<div id="openDelete" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="openDeleteExperiment" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_experiment}"></h2>
         <div class="mb-3" th:text="#{delete_experiment_warn}"></div>
@@ -346,7 +346,7 @@
                 <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
             </div>
             <div class="d-flex justify-content-between">
-                <a id="abortDelete" class="btn btn-secondary" th:text="#{abort}"></a>
+                <a id="abortDeleteExperiment" class="btn btn-secondary" th:text="#{abort}"></a>
                 <input class="btn btn-danger" type="submit" th:value="#{delete}">
             </div>
         </form>
@@ -354,12 +354,12 @@
 </div>
 
 <!-- The popup dialog to stop the experiment. -->
-<div id="openStop" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="openStopExperiment" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{close_experiment}"></h2>
         <div class="mb-3" th:text="#{close_experiment_warn}"></div>
         <div class="d-flex justify-content-between">
-            <input id="abortStop" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <input id="abortStopExperiment" class="btn btn-secondary" type="submit" th:value="#{abort}">
             <a class="btn btn-danger" th:text="#{close}" th:href="@{/experiment/status(id=${experimentDTO.id},
             stat='close')}"></a>
         </div>
@@ -367,7 +367,7 @@
 </div>
 
 <!-- The popup dialog to add an existing participant to the experiment. -->
-<div id="openAdd" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="openAddParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{add_participant}"></h2>
         <div class="mb-3" th:text="#{add_participant_info}"></div>
@@ -381,7 +381,7 @@
                 <div id="results"></div>
             </div>
             <div class="d-flex justify-content-between">
-                <a id="abortAdd" class="btn btn-secondary" th:text="#{abort}"></a>
+                <a id="abortAddParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
                 <input class="btn btn-primary" type="submit" th:value="#{add}"/>
             </div>
         </form>

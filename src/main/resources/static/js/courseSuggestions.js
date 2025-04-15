@@ -3,76 +3,65 @@
  */
 function addKeyupFunctions() {
     document.getElementById("participantInput").addEventListener("keyup", function () {
-        getCourseParticipantSuggestions();
+        getParticipantSuggestions(
+            "/search/course/participant",
+            { query: $("#participantInput").val(), id: $('#addParticipantId').val() },
+            "addParticipantsSelect",
+        );
     });
     document.getElementById("deleteParticipantInput").addEventListener("keyup", function () {
-        getCourseParticipantDeleteSuggestions();
+        getParticipantSuggestions(
+            "/search/course/delete/participant",
+            { query: $('#deleteParticipantInput').val(), id: $('#deleteParticipantId').val() },
+            "deleteParticipantsSelect"
+        )
     });
     document.getElementById("deleteExperimentInput").addEventListener("keyup", function () {
         getCourseExperimentDeleteSuggestions();
     });
 }
 
+
 /**
- * Fires an ajax request to the search REST controller to retrieve suggestions based on the input query in the
- * participant input field on the course page for the course in question. On success, all retrieved suggestions are
- * added to the participant result div to be displayed as a list of participant usernames and emails matching the query.
+ * Fires an AJAX request to the given search URL with the given search data to retrieve participant suggestions.
+ * On success, all retrieved suggestions are added as options to the select element with the given id, displaying
+ * username and email of the suggested user.
+ * Assumes the requested URL returns an array of 2-element arrays of username and email.
+ *
+ * @param searchUrl The URL of the search controller to make the request to.
+ * @param searchData The data passed to the controller, as an object.
+ * @param selectElementId The ID of the <select> element to fill with the suggested options.
  */
-function getCourseParticipantSuggestions() {
-    let request = $.ajax({
+function getParticipantSuggestions(searchUrl, searchData, selectElementId) {
+    const request = $.ajax({
         dataType: "json",
-        url: contextPath + "/search/course/participant",
+        url: contextPath + searchUrl,
         delay: 250,
-        data: {query: $('#participantInput').val(), id: $('#addParticipantId').val()}
+        data: searchData,
     });
 
     request.done(function(result) {
-        let html = "<ul class='list-group'>";
-        result.forEach(function(element) {
-            html += `
-            <li class="list-group-item list-group-item-action">
-                <div class='ms-2 me-auto no_decoration'
-                onclick="setParticipantInput(this.getElementsByClassName('fw-bold')[0])">
-                    <div class="fw-bold">${sanitize(element[0])}</div>
-                    <div>${sanitize(element[1])}</div>
-                </div>
-            </li>
-            `
-        });
-        html += "</ul>";
-        $("#participantResults").html(html);
-    });
-}
+        const participantsSelect = document.getElementById(selectElementId);
+        participantsSelect.size = participantsSelect.length;
 
-/**
- * Fires an ajax request to the search REST controller to retrieve suggestions based on the input query in the delete
- * participant input field on the course page for the course in question. On success, all retrieved suggestions are
- * added to the delete participant result div to be displayed as a list of participant usernames and emails matching
- * the query.
- */
-function getCourseParticipantDeleteSuggestions() {
-    let request = $.ajax({
-        dataType: "json",
-        url: contextPath + "/search/course/delete/participant",
-        delay: 250,
-        data: {query: $('#deleteParticipantInput').val(), id: $('#deleteParticipantId').val()}
-    });
+        // Use display-none to hide the select element when there are currently no suggestions.
+        if (result.length === 0) {
+            participantsSelect.classList.add("d-none");
+        } else {
+            // Shrink the select if the returned options do not fill its entire height.
+            participantsSelect.size = participantsSelect.length;
+            participantsSelect.classList.remove("d-none");
 
-    request.done(function(result) {
-        let html = "<ul class='list-group'>";
-        result.forEach(function(element) {
-            html += `
-            <li class="list-group-item list-group-item-action">
-                <div class='ms-2 me-auto no_decoration'
-                onclick="setDeleteParticipantInput(this.getElementsByClassName('fw-bold')[0])">
-                    <div class="fw-bold">${sanitize(element[0])}</div>
-                    <div>${sanitize(element[1])}</div>
-                </div>
-            </li>
-            `
-        });
-        html += "</ul>";
-        $("#deleteParticipantResults").html(html);
+            const options = result.map(([username, email]) => {
+                const option = new Option(
+                    `${sanitize(username)} (${sanitize(email)})`,
+                    sanitize(username)
+                );
+                option.classList.add("list-group-item", "list-group-item-action", "p-3");
+                return option;
+            });
+            participantsSelect.replaceChildren(...options);
+        }
     });
 }
 
@@ -105,24 +94,6 @@ function getCourseExperimentDeleteSuggestions() {
         html += "</ul>";
         $("#deleteExperimentResults").html(html);
     });
-}
-
-/**
- * Sets the value of the participant input field on the course page to the given value.
- *
- * @param element The value to be set.
- */
-function setParticipantInput(element) {
-    document.getElementById("participantInput").value = element.innerText;
-}
-
-/**
- * Sets the value of the delete participant input field on the course page to the given value.
- *
- * @param element The value to be set.
- */
-function setDeleteParticipantInput(element) {
-    document.getElementById("deleteParticipantInput").value = element.innerText;
 }
 
 /**

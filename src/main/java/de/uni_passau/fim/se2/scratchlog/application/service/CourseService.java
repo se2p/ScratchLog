@@ -376,24 +376,33 @@ public class CourseService {
     }
 
     /**
-     * Adds the given list of users as participants to the course with the given id.
+     * Adds the given list of users as participants to the course with the given id and optionally adds them to all
+     * experiments associated with the given course.
      *
      * @param courseId The id of the course.
      * @param participants The list of users to be added as participants.
+     * @param addToExperiments Whether to add the users to all experiments associated with the course.
      * @throws IllegalArgumentException if the passed course id is invalid or the user list empty.
      * @throws NotFoundException if one of the provided users or the course could not be found.
      * @throws IllegalStateException if one of the provided users is an administrator.
      * @throws StoreException if saving a course participant violated the foreign key constraints.
      */
     @Transactional
-    public void saveCourseParticipants(final int courseId, final List<UserDTO> participants) {
+    public void saveCourseParticipants(final int courseId, final List<UserDTO> participants,
+                                       final boolean addToExperiments) {
         if (courseId < Constants.MIN_ID || participants.isEmpty()) {
             throw new IllegalArgumentException("Cannot add participants to course with participant list empty or "
                     + "invalid course id!");
         }
 
         Course course = courseRepository.getReferenceById(courseId);
-        participants.forEach(participant -> addCourseParticipant(course, participant.getUsername()));
+
+        for (UserDTO participant : participants) {
+            int userId = addCourseParticipant(course, participant.getUsername());
+            if (addToExperiments) {
+                addParticipantToCourseExperiments(courseId, userId);
+            }
+        }
     }
 
     /**
@@ -460,6 +469,26 @@ public class CourseService {
             LOGGER.error("Could not find the course when deleting the course participant data!", e);
             throw new NotFoundException("Could not find the course when deleting the course participant data!", e);
         }
+    }
+
+    /**
+     * Removes the users with the given usernames or emails as participants from the course with the given id.
+     * Additionally, the users are removed as participants from all experiments offered in the course.
+     *
+     * @param courseId The id of the course.
+     * @param participants The usernames or emails of the participants to be removed.
+     * @throws IllegalArgumentException if the passed course id or one of the participant strings are invalid.
+     * @throws NotFoundException if one of the corresponding user entries could not be found.
+     * @throws EntityNotFoundException if no course could be found for the given id.
+     */
+    @Transactional
+    public void deleteCourseParticipants(final int courseId, final List<String> participants) {
+        if (courseId < Constants.MIN_ID || participants == null) {
+            throw new IllegalArgumentException("Cannot delete participants from course with null participants or"
+                + " invalid course ID!");
+        }
+
+        participants.forEach(participant -> deleteCourseParticipant(courseId, participant));
     }
 
     /**

@@ -573,7 +573,8 @@ public class ExperimentController {
             List<String> invalidUsernames = userService.getInvalidParticipantUsernames(users);
             if (invalidUsernames.isEmpty()) {
                 if (experimentDTO.isCourseExperiment()) {
-                    courseService.saveCourseParticipants(courseService.getCourseIdForExperiment(experimentId), users);
+                    courseService.saveCourseParticipants(
+                        courseService.getCourseIdForExperiment(experimentId), users, false);
                 }
                 participantService.saveParticipantsFromCSV(experimentId, users);
             } else {
