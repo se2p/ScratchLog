@@ -43,11 +43,11 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 
@@ -73,19 +73,19 @@ public class ParticipantControllerTest extends AbstractControllerTest {
     @Autowired
     private ParticipantController participantController;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private ExperimentService experimentService;
 
-    @MockBean
+    @MockitoBean
     private ParticipantService participantService;
 
-    @MockBean
+    @MockitoBean
     private PageService pageService;
 
-    @MockBean
+    @MockitoBean
     private MailService mailService;
 
     @Mock

@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.3</version>
+        <version>3.5.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -21,30 +21,29 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Library versions -->
-        <bouncycastle.version>1.80</bouncycastle.version>
-        <checkstyle.version>10.21.4</checkstyle.version>
+        <bouncycastle.version>1.81</bouncycastle.version>
+        <checkstyle.version>10.26.1</checkstyle.version>
         <codec.version>1.18.0</codec.version>
-        <commonmark.version>0.24.0</commonmark.version>
-        <databind.version>2.18.1</databind.version>
+        <commonmark.version>0.25.0</commonmark.version>
+        <databind.version>2.19.0</databind.version>
         <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/scratch/litterbox/embeddedkittens/-/packages/ for available versions -->
         <embeddedkittens.version>1.1.0-20241110.172915-1</embeddedkittens.version>
-        <flyway.version>11.4.0</flyway.version>
+        <flyway.version>11.10.0</flyway.version>
         <glassfish-jaxb.version>4.0.5</glassfish-jaxb.version>
         <h2.version>2.3.232</h2.version>
-        <jacoco.version>0.8.12</jacoco.version>
+        <jacoco.version>0.8.13</jacoco.version>
         <jakarta.validation.version>3.1.1</jakarta.validation.version>
         <jaxb.version>4.0.2</jaxb.version>
-        <json.version>20250107</json.version>
-        <junit.version>5.12.1</junit.version>
+        <json.version>20250517</json.version>
         <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/litterbox/-/packages/ for available versions -->
         <litterbox.version>1.10-20241021.070926-2</litterbox.version>
         <maven.checkstyle.version>3.6.0</maven.checkstyle.version>
-        <maven.surefire.version>3.5.2</maven.surefire.version>
+        <maven.surefire.version>3.5.3</maven.surefire.version>
         <mockito-inline.version>5.2.0</mockito-inline.version>
-        <mockito.version>5.16.1</mockito.version>
+        <mockito.version>5.18.0</mockito.version>
         <mycila.version>4.2</mycila.version>
-        <mysql.version>9.2.0</mysql.version>
-        <opencsv.version>5.10</opencsv.version>
+        <mysql.version>9.3.0</mysql.version>
+        <opencsv.version>5.11.2</opencsv.version>
         <passay.version>1.6.6</passay.version>
         <powermock.version>2.0.9</powermock.version>
 
@@ -52,24 +51,12 @@
         <!-- might have to deploy new versions on https://www.webjars.org/ first when updating -->
         <webjars.locator.version>0.52</webjars.locator.version>
         <webjars.bootstrap.version>5.0.2</webjars.bootstrap.version>
-        <webjars.chartjs.version>4.4.8</webjars.chartjs.version>
+        <webjars.chartjs.version>4.5.0</webjars.chartjs.version>
         <webjars.fontawesome.version>5.15.3</webjars.fontawesome.version>
-        <webjars.jquery.version>3.6.1</webjars.jquery.version>
+        <webjars.jquery.version>3.7.1</webjars.jquery.version>
         <webjars.nouislider.version>15.8.1</webjars.nouislider.version>
         <webjars.simplemde.version>1.11.2</webjars.simplemde.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>${junit.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <!-- Spring -->
@@ -292,7 +279,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
