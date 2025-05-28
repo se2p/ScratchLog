@@ -27,6 +27,7 @@ import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.application.service.FileService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
+import de.uni_passau.fim.se2.scratchlog.application.service.ZipExportService;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -104,6 +106,9 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
 
     @MockBean
     private ParticipantService participantService;
+
+    @SpyBean
+    private ZipExportService zipExportService;
 
     private static final String RESULT = "result";
     private static final String ERROR = "redirect:/error";
