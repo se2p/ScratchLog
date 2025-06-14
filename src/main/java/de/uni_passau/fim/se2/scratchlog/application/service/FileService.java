@@ -31,7 +31,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.repository.FileRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.Sb3ZipRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
-import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
 import jakarta.persistence.EntityNotFoundException;
@@ -176,13 +175,7 @@ public class FileService {
      * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      * @throws NotFoundException if no corresponding user or experiment could be found.
      */
-    @Transactional
     public List<FileProjection> getFiles(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot get file ids and names for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -208,11 +201,6 @@ public class FileService {
      * @throws NotFoundException if no corresponding user or experiment could be found.
      */
     public List<FileDTO> getFileDTOs(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot get files for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -239,13 +227,7 @@ public class FileService {
      * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      * @throws NotFoundException if no corresponding user or experiment could be found.
      */
-    @Transactional
     public List<Integer> getZipIds(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot get zip file ids for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -269,12 +251,7 @@ public class FileService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding file could be found.
      */
-    @Transactional
     public FileDTO findFile(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for file with invalid id " + id + "!");
-        }
-
         Optional<File> file = fileRepository.findById(id);
 
         if (file.isEmpty()) {
@@ -293,12 +270,7 @@ public class FileService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding sb3 zip could be found.
      */
-    @Transactional
     public Sb3ZipDTO findZip(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for zip file with invalid id " + id + "!");
-        }
-
         Optional<Sb3Zip> zip = sb3ZipRepository.findById(id);
 
         if (zip.isEmpty()) {
@@ -319,13 +291,7 @@ public class FileService {
      * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      * @throws NotFoundException if no corresponding user or experiment could be found.
      */
-    @Transactional
     public Optional<Sb3ZipDTO> findFinalProject(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for final project for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -362,13 +328,7 @@ public class FileService {
      * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      * @throws NotFoundException if no corresponding user or experiment could be found.
      */
-    @Transactional
     public List<Sb3ZipDTO> getZipFiles(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot download zip files for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
