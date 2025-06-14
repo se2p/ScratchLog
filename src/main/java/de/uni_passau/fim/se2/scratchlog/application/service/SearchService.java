@@ -31,7 +31,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,11 +85,10 @@ public class SearchService {
      * contains the search query string.
      *
      * @param query The username or email to search for.
-     * @param limit The maximum amount of results to return.
+     * @param limit The maximum number of results to return.
      * @return A list of matching {@link UserProjection}s, or an empty list, if no entries could be found.
      * @throws IllegalArgumentException if the query is null or blank or the passed limit is invalid.
      */
-    @Transactional
     public List<UserProjection> getUserList(final String query, final int limit) {
         if (query == null || query.trim().isBlank()) {
             throw new IllegalArgumentException("Cannot search for users with invalid query string null or blank!");
@@ -110,7 +108,6 @@ public class SearchService {
      * @return A list of matching {@link ExperimentTableProjection}s, or an empty list, if no entries could be found.
      * @throws IllegalArgumentException if the query is null or blank or the passed limit is invalid.
      */
-    @Transactional
     public List<ExperimentTableProjection> getExperimentList(final String query, final int limit) {
         if (query == null || query.trim().isBlank()) {
             throw new IllegalArgumentException("Cannot search for experiments with invalid query string null or "
@@ -132,7 +129,6 @@ public class SearchService {
      * @return A list of matching {@link CourseTableProjection}s, or an empty list, if no entries could be found.
      * @throws IllegalArgumentException if the query is null or blank or the passed limit is invalid.
      */
-    @Transactional
     public List<CourseTableProjection> getCourseList(final String query, final int limit) {
         if (query == null || query.trim().isBlank()) {
             throw new IllegalArgumentException("Cannot search for courses with invalid query string null or "
@@ -152,7 +148,6 @@ public class SearchService {
      * @return The number of matching user results.
      * @throws IllegalArgumentException if the query is null or blank.
      */
-    @Transactional
     public int getUserCount(final String query) {
         if (query == null || query.trim().isBlank()) {
             throw new IllegalArgumentException("Cannot get the number of user results with invalid query string null or"
@@ -169,7 +164,6 @@ public class SearchService {
      * @return The number of matching experiment results.
      * @throws IllegalArgumentException if the query is null or blank.
      */
-    @Transactional
     public int getExperimentCount(final String query) {
         if (query == null || query.trim().isBlank()) {
             throw new IllegalArgumentException("Cannot get the number of experiment results with invalid query string "
@@ -186,7 +180,6 @@ public class SearchService {
      * @return The number of matching course results.
      * @throws IllegalArgumentException if the query is null or blank.
      */
-    @Transactional
     public int getCourseCount(final String query) {
         if (query == null || query.trim().isBlank()) {
             throw new IllegalArgumentException("Cannot get the number of course results with invalid query string "
@@ -203,7 +196,6 @@ public class SearchService {
      * @param query The username, email, or title to search for.
      * @return A list of matching suggestions, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getSearchSuggestions(final String query) {
         List<UserProjection> users = userRepository.findUserSuggestions(query, Constants.MAX_SEARCH_RESULTS);
         List<ExperimentTableProjection> experiments = experimentRepository.findExperimentSuggestions(query,
@@ -224,7 +216,6 @@ public class SearchService {
      * @param id The experiment id.
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getUserSuggestions(final String query, final int id) {
         Experiment experiment = experimentRepository.findById(id);
 
@@ -248,7 +239,6 @@ public class SearchService {
      * @param id The experiment id.
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getUserDeleteSuggestions(final String query, final int id) {
         List<UserProjection> users = userRepository.findDeleteParticipantSuggestions(query, id,
                 Constants.MAX_SUGGESTION_RESULTS);
@@ -263,7 +253,6 @@ public class SearchService {
      * @param id The course id.
      * @return A list of experiment ids and titles, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getCourseExperimentSuggestions(final String query, final int id) {
         List<ExperimentTableProjection> experiments = experimentRepository.findCourseExperimentSuggestions(query, id,
                 Constants.MAX_SUGGESTION_RESULTS);
@@ -278,7 +267,6 @@ public class SearchService {
      * @param id The course id.
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getCourseParticipantSuggestions(final String query, final int id) {
         List<UserProjection> users = userRepository.findCourseParticipantSuggestions(query, id,
                 Constants.MAX_SUGGESTION_RESULTS);
@@ -293,7 +281,6 @@ public class SearchService {
      * @param id The course id.
      * @return A list of experiment ids and titles, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getCourseExperimentDeleteSuggestions(final String query, final int id) {
         List<ExperimentTableProjection> experiments = experimentRepository.findCourseExperimentDeleteSuggestions(query,
                 id, Constants.MAX_SUGGESTION_RESULTS);
@@ -308,7 +295,6 @@ public class SearchService {
      * @param id The course id.
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getCourseParticipantDeleteSuggestions(final String query, final int id) {
         List<UserProjection> users = userRepository.findDeleteCourseParticipantSuggestions(query, id,
                 Constants.MAX_SUGGESTION_RESULTS);
@@ -323,7 +309,6 @@ public class SearchService {
      * @param page The current page used to compute the offset.
      * @return A list of ids, usernames, emails and roles, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getNextUsers(final String query, final int page) {
         int offset = Constants.PAGE_SIZE * page;
         List<UserProjection> users = userRepository.findUserResults(query, Constants.PAGE_SIZE, offset);
@@ -338,7 +323,6 @@ public class SearchService {
      * @param page The current page used to compute the offset.
      * @return A list of ids, titles and descriptions, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getNextExperiments(final String query, final int page) {
         int offset = Constants.PAGE_SIZE * page;
         List<ExperimentTableProjection> projections = experimentRepository.findExperimentResults(query,
@@ -354,7 +338,6 @@ public class SearchService {
      * @param page The current page used to compute the offset.
      * @return A list of ids, titles and descriptions, or an empty list, if no entries could be found.
      */
-    @Transactional
     public List<String[]> getNextCourses(final String query, final int page) {
         int offset = Constants.PAGE_SIZE * page;
         List<CourseTableProjection> projections = courseRepository.findCourseResults(query, Constants.PAGE_SIZE,

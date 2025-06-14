@@ -334,26 +334,6 @@ public class FileServiceTest {
     }
 
     @Test
-    public void testGetFilesInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.getFiles(ID, 0)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(fileRepository, never()).findFilesByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testGetFilesInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.getFiles(-1, ID)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(fileRepository, never()).findFilesByUserAndExperiment(any(), any());
-    }
-
-    @Test
     public void testGetFileDTOs() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
@@ -387,26 +367,6 @@ public class FileServiceTest {
     }
 
     @Test
-    public void testGetFileDTOsInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.getFileDTOs(ID, 0)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(fileRepository, never()).findAllByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testGetFileDTOsInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.getFileDTOs(-1, ID)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(fileRepository, never()).findAllByUserAndExperiment(any(), any());
-    }
-
-    @Test
     public void testGetZipIds() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
@@ -428,26 +388,6 @@ public class FileServiceTest {
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(sb3ZipRepository).findAllIdsByUserAndExperiment(user, experiment);
-    }
-
-    @Test
-    public void testGetZipIdsInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.getZipIds(ID, -10)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(sb3ZipRepository, never()).findAllIdsByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testGetZipIdsInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.getZipIds(0, ID)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(sb3ZipRepository, never()).findAllIdsByUserAndExperiment(any(), any());
     }
 
     @Test
@@ -474,14 +414,6 @@ public class FileServiceTest {
     }
 
     @Test
-    public void testFindFileInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.findFile(0)
-        );
-        verify(fileRepository, never()).findById(anyInt());
-    }
-
-    @Test
     public void testFindZip() {
         when(sb3ZipRepository.findById(ID)).thenReturn(java.util.Optional.of(sb3Zip));
         Sb3ZipDTO sb3ZipDTO = fileService.findZip(ID);
@@ -501,14 +433,6 @@ public class FileServiceTest {
                 () -> fileService.findZip(ID)
         );
         verify(sb3ZipRepository).findById(ID);
-    }
-
-    @Test
-    public void testFindZipInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.findZip(0)
-        );
-        verify(sb3ZipRepository, never()).findById(anyInt());
     }
 
     @Test
@@ -544,26 +468,6 @@ public class FileServiceTest {
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(sb3ZipRepository).findFirstByUserAndExperimentOrderByIdDesc(user, experiment);
-    }
-
-    @Test
-    public void testFindFinalProjectInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.findFinalProject(ID, 0)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(sb3ZipRepository, never()).findFirstByUserAndExperimentOrderByIdDesc(any(), any());
-    }
-
-    @Test
-    public void testFindFinalProjectInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.findFinalProject(-1, ID)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(sb3ZipRepository, never()).findFirstByUserAndExperimentOrderByIdDesc(any(), any());
     }
 
     @Test
@@ -609,26 +513,6 @@ public class FileServiceTest {
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(sb3ZipRepository).findAllByUserAndExperiment(user, experiment);
-    }
-
-    @Test
-    public void testGetZipFilesInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.getZipFiles(ID, 0)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(sb3ZipRepository, never()).findAllByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testGetZipFilesInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> fileService.getZipFiles(-1, ID)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(sb3ZipRepository, never()).findAllByUserAndExperiment(any(), any());
     }
 
     private List<FileProjection> getFileProjections(int number) {

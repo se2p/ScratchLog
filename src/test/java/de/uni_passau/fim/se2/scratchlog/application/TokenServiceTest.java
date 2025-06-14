@@ -190,15 +190,6 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void testGenerateTokenInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> tokenService.generateToken(TokenType.CHANGE_EMAIL, EMAIL, 0)
-        );
-        verify(userRepository, never()).getReferenceById(ID);
-        verify(tokenRepository, never()).save(any());
-    }
-
-    @Test
     public void testFindToken() {
         when(tokenRepository.findByValue(VALUE)).thenReturn(Optional.of(token));
         TokenDTO tokenDTO = tokenService.findToken(VALUE);

@@ -152,14 +152,6 @@ public class CodeServiceTest {
     }
 
     @Test
-    public void testFindJsonByIdInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.findJsonById(0)
-        );
-        verify(blockEventRepository, never()).findById(anyInt());
-    }
-
-    @Test
     public void testFindFirstJSON() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
@@ -244,28 +236,6 @@ public class CodeServiceTest {
     }
 
     @Test
-    public void testFindFirstJSONInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.findFirstJSON(ID, 0)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(any(), any());
-        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testFindFirstJSONInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.findFirstJSON(-1, ID)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(any(), any());
-        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
-    }
-
-    @Test
     public void testGetJsonForUser() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
@@ -309,26 +279,6 @@ public class CodeServiceTest {
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(blockEventRepository).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
-    }
-
-    @Test
-    public void testGetJsonForUserInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.getJsonForUser(ID, 0)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
-    }
-
-    @Test
-    public void testGetJsonForUserInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.getJsonForUser(-1, ID)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
     }
 
     @Test
@@ -502,26 +452,6 @@ public class CodeServiceTest {
     }
 
     @Test
-    public void testGetXMLForUserInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.getXMLForUser(ID, -5)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByXmlIsNotNullAndUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testGetXMLForUserInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.getXMLForUser(0, ID)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByXmlIsNotNullAndUserAndExperiment(any(), any());
-    }
-
-    @Test
     public void testGetCodesForUser() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
@@ -557,28 +487,6 @@ public class CodeServiceTest {
         PageRequest invalid = PageRequest.of(0, Constants.PAGE_SIZE + 2);
         assertThrows(IllegalArgumentException.class,
                 () -> codeService.getCodesForUser(ID, ID, invalid)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
-                any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesForUserInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.getCodesForUser(ID, 0, pageRequest)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
-                any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesForUserInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.getCodesForUser(-1, ID, pageRequest)
         );
         verify(userRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).getReferenceById(anyInt());

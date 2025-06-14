@@ -204,21 +204,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetCourseInvalidId() throws Exception {
-        mvc.perform(get("/course")
-                        .param(ID_PARAM, "0")
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(courseService, never()).getCourse(anyInt());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
-    }
-
-    @Test
     public void testGetCourseForm() throws Exception {
         mvc.perform(get("/course/create")
                         .flashAttr(COURSE_DTO, courseDTO)
@@ -367,20 +352,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(userService).getUser(USERNAME);
         verify(userService).matchesPassword(PASSWORD, PASSWORD);
         verify(courseService).deleteCourse(ID);
-    }
-
-    @Test
-    public void testDeleteCourseInvalidId() throws Exception {
-        mvc.perform(post("/course/delete")
-                        .flashAttr(PASSWORD_DTO, passwordDTO)
-                        .param(ID_PARAM, "0")
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(userService, never()).getUser(anyString());
-        verify(userService, never()).matchesPassword(anyString(), anyString());
-        verify(courseService, never()).deleteCourse(anyInt());
     }
 
     @Test
@@ -649,20 +620,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(pageService).getLastParticipantCoursePage(ID);
         verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
         verify(courseService).getCourse(ID);
-    }
-
-    @Test
-    public void testGetParticipantPageError() throws Exception {
-        mvc.perform(get("/course/page/participant")
-                        .param(ID_PARAM, "0")
-                        .param(PAGE_PARAM, CURRENT)
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService, never()).getCourse(anyInt());
     }
 
     @Test

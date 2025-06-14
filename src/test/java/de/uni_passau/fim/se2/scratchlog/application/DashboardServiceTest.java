@@ -121,14 +121,6 @@ public class DashboardServiceTest {
     }
 
     @Test
-    public void testExistsExperimentInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardService.existsExperiment(0)
-        );
-        verify(experimentRepository, never()).existsById(anyInt());
-    }
-
-    @Test
     public void testExistsParticipants() {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         assertFalse(dashboardService.existsParticipants(ID));
@@ -146,15 +138,6 @@ public class DashboardServiceTest {
     }
 
     @Test
-    public void testExistsParticipantsNoExperimentInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardService.existsParticipants(0)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).existsByExperiment(any());
-    }
-
-    @Test
     public void testGetExperimentData() {
         when(experimentDataRepository.findByExperiment(ID)).thenReturn(Optional.of(experimentData));
         assertEquals(Arrays.toString(stringExperimentData), Arrays.toString(dashboardService.getExperimentData(ID)));
@@ -167,14 +150,6 @@ public class DashboardServiceTest {
                 () -> dashboardService.getExperimentData(ID)
         );
         verify(experimentDataRepository).findByExperiment(ID);
-    }
-
-    @Test
-    public void testGetExperimentDataInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardService.getExperimentData(-1)
-        );
-        verify(experimentDataRepository, never()).findByExperiment(anyInt());
     }
 
     @Test
@@ -212,15 +187,6 @@ public class DashboardServiceTest {
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperiment(experiment);
-    }
-
-    @Test
-    public void testGetParticipantsInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardService.getParticipants(-3)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).findAllByExperiment(any());
     }
 
     @Test
@@ -270,26 +236,6 @@ public class DashboardServiceTest {
         verify(experimentRepository).getReferenceById(ID);
         verify(userRepository).getReferenceById(ID);
         verify(blockEventRepository).findAllByUserAndExperimentAndEvent(user1, experiment, BLOCK_EVENT);
-    }
-
-    @Test
-    public void testGetBlockEventCountDataInvalidUserIds() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardService.getBlockEventCountData(List.of(ID, 0), ID, BLOCK_EVENT)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByUserAndExperimentAndEvent(any(), any(), any());
-    }
-
-    @Test
-    public void testGetBlockEventCountDataInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardService.getBlockEventCountData(userIds, -1, BLOCK_EVENT)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByUserAndExperimentAndEvent(any(), any(), any());
     }
 
     @Test
@@ -377,7 +323,6 @@ public class DashboardServiceTest {
                 () -> assertEquals(0, counts.get(0)[4]),
                 () -> assertEquals(0, counts.get(0)[5])
         );
-        verify(experimentRepository).getReferenceById(ID);
         verify(eventCountRepository, times(6)).findBlockEventCountByUserAndExperiment(anyInt(), anyInt(), anyString());
         verify(eventCountRepository, times(6)).findClickEventCountByUserAndExperiment(anyInt(), anyInt(), anyString());
     }

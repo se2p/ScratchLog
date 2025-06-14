@@ -80,7 +80,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -142,12 +141,10 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     private static final String EXPERIMENT_DTO = "experimentDTO";
     private static final String PASSWORD_DTO = "passwordDTO";
     private static final String ID_STRING = "1";
-    private static final String INVALID_ID = "-1";
     private static final String ID_PARAM = "id";
     private static final String STATUS_PARAM = "stat";
     private static final String PAGE_PARAM = "page";
     private static final String PARTICIPANTS = "participants";
-    private static final String PARTICIPANT1 = "participant1";
     private static final String PARTICIPANT = "participant";
     private static final String PAGE = "page";
     private static final String LAST_PAGE_ATTRIBUTE = "lastPage";
@@ -391,17 +388,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
         verify(userService).getUser(anyString());
         verify(participantService, never()).getParticipant(anyInt(), anyInt());
         verify(experimentService).getExperiment(anyInt());
-    }
-
-    @Test
-    public void testGetExperimentInvalidId() throws Exception {
-        mvc.perform(get("/experiment")
-                .param(ID_PARAM, INVALID_ID)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(experimentService, never()).getExperiment(ID);
     }
 
     @Test
@@ -1079,16 +1065,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     }
 
     @Test
-    public void testDownloadCSVFileInvalidId() throws Exception {
-        mvc.perform(get("/experiment/csv")
-                .param(ID_PARAM, "0")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(experimentDataService, never()).getEventData(anyInt());
-    }
-
-    @Test
     public void testAddCSVParticipants() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", FILENAME_CSV, FILETYPE_CSV,
                 new ClassPathResource(FILENAME_CSV).getInputStream());
@@ -1179,16 +1155,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk());
         verify(experimentDataService).getLitterBoxAnalysisResults(ID);
-    }
-
-    @Test
-    public void testDownloadLitterBoxAnalysisInvalidId() throws Exception {
-        mvc.perform(get("/experiment/analysis")
-                        .param(ID_PARAM, "0")
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(experimentDataService, never()).getLitterBoxAnalysisResults(anyInt());
     }
 
     @Test
@@ -1287,17 +1253,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).deleteSb3Project(ID);
-    }
-
-    @Test
-    public void testDeleteProjectFileInvalidId() throws Exception {
-        mvc.perform(get("/experiment/sb3")
-                .param(ID_PARAM, "0")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(experimentService, never()).deleteSb3Project(anyInt());
     }
 
     private List<Participant> getParticipants(int number) {

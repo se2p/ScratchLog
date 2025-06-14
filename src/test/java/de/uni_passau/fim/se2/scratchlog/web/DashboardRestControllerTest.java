@@ -77,36 +77,11 @@ public class DashboardRestControllerTest {
     }
 
     @Test
-    public void testGetParticipantDataInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardRestController.getParticipantData(0)
-        );
-        verify(dashboardService, never()).getParticipants(anyInt());
-    }
-
-    @Test
     public void testGetBlockEventData() {
         when(dashboardService.getBlockEventCountData(anyList(), anyInt(), any())).thenReturn(eventData);
         assertEquals(eventData, dashboardRestController.getBlockEventData(ID, userIds,
                 BlockEventSpecific.CREATE));
         verify(dashboardService).getBlockEventCountData(anyList(), anyInt(), any());
-    }
-
-    @ParameterizedTest
-    @MethodSource("invalidUserIdsProvider")
-    public void testGetBlockEventDataNoUsers(final List<Integer> userIds) {
-        assertThrows(IllegalArgumentException.class,
-                () -> dashboardRestController.getBlockEventData(ID, userIds, BlockEventSpecific.CREATE)
-        );
-        verify(dashboardService, never()).getBlockEventCountData(anyList(), anyInt(), any());
-    }
-
-    private static Stream<Arguments> invalidUserIdsProvider() {
-        return Stream.of(
-            Arguments.of(Collections.emptyList()),
-            Arguments.of(List.of(0, 2)),
-            Arguments.of(List.of(2, 3, 5, -1))
-        );
     }
 
     @Test

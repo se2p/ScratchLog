@@ -74,9 +74,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -617,18 +615,6 @@ public class EventServiceTest {
     }
 
     @Test
-    public void testGetBlockEventCountsInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class, () -> eventService.getBlockEventCounts(ID, 0));
-        verify(eventCountRepository, never()).findAllBlockEventsByUserAndExperiment(anyInt(), anyInt());
-    }
-
-    @Test
-    public void testGetBlockEventCountsInvalidUserId() {
-        assertThrows(IllegalArgumentException.class, () -> eventService.getBlockEventCounts(-1, ID));
-        verify(eventCountRepository, never()).findAllBlockEventsByUserAndExperiment(anyInt(), anyInt());
-    }
-
-    @Test
     public void testGetClickEventCounts() {
         when(eventCountRepository.findAllClickEventsByUserAndExperiment(ID, ID)).thenReturn(clickEvents);
         List<EventCountDTO> eventCountDTOS = eventService.getClickEventCounts(ID, ID);
@@ -645,18 +631,6 @@ public class EventServiceTest {
     }
 
     @Test
-    public void testGetClickEventCountsInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class, () -> eventService.getClickEventCounts(ID, 0));
-        verify(eventCountRepository, never()).findAllClickEventsByUserAndExperiment(anyInt(), anyInt());
-    }
-
-    @Test
-    public void testGetClickEventCountsInvalidUserId() {
-        assertThrows(IllegalArgumentException.class, () -> eventService.getClickEventCounts(0, ID));
-        verify(eventCountRepository, never()).findAllClickEventsByUserAndExperiment(anyInt(), anyInt());
-    }
-
-    @Test
     public void testGetResourceEventCounts() {
         when(eventCountRepository.findAllResourceEventsByUserIdAndExperimentId(ID, ID)).thenReturn(resourceEvents);
         List<EventCountDTO> eventCountDTOS = eventService.getResourceEventCounts(ID, ID);
@@ -670,18 +644,6 @@ public class EventServiceTest {
                 () -> assertEquals("RENAME2", eventCountDTOS.get(2).getEvent())
         );
         verify(eventCountRepository).findAllResourceEventsByUserIdAndExperimentId(ID, ID);
-    }
-
-    @Test
-    public void testGetResourceEventCountsInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class, () -> eventService.getResourceEventCounts(ID, -1));
-        verify(eventCountRepository, never()).findAllResourceEventsByUserIdAndExperimentId(anyInt(), anyInt());
-    }
-
-    @Test
-    public void testGetResourceEventCountsInvalidUserId() {
-        assertThrows(IllegalArgumentException.class, () -> eventService.getResourceEventCounts(0, ID));
-        verify(eventCountRepository, never()).findAllResourceEventsByUserIdAndExperimentId(anyInt(), anyInt());
     }
 
     @Test
@@ -705,18 +667,6 @@ public class EventServiceTest {
                 () -> assertEquals(0, codesDataDTO.getCount())
         );
         verify(codesDataRepository).findByUserAndExperiment(ID, ID);
-    }
-
-    @Test
-    public void testGetCodesDataInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class, () -> eventService.getCodesData(ID, -1));
-        verify(codesDataRepository, never()).findByUserAndExperiment(anyInt(), anyInt());
-    }
-
-    @Test
-    public void testGetCodesDataInvalidUserId() {
-        assertThrows(IllegalArgumentException.class, () -> eventService.getCodesData(0, ID));
-        verify(codesDataRepository, never()).findByUserAndExperiment(anyInt(), anyInt());
     }
 
     private List<EventCount> getEventCounts(int number, String event) {

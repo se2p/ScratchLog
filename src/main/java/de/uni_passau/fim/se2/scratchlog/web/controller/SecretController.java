@@ -26,7 +26,6 @@ import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,9 +102,6 @@ public class SecretController {
     @Secured(Constants.ROLE_ADMIN)
     public String displaySecret(@RequestParam("user") final int userId,
                                 @RequestParam("experiment") final int experimentId, final Model model) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        IdValidator.validateUserIdElseThrow(userId);
-
         try {
             if (isInactive(experimentId)) {
                 model.addAttribute("inactive", true);
@@ -141,8 +137,6 @@ public class SecretController {
     @GetMapping("/list")
     @Secured(Constants.ROLE_ADMIN)
     public String displaySecrets(@RequestParam("experiment") final int experimentId, final Model model) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         try {
             if (isInactive(experimentId)) {
                 model.addAttribute("inactive", true);
@@ -172,11 +166,6 @@ public class SecretController {
     public void downloadParticipationLinks(@RequestParam("experiment") final int experimentId,
                                            @RequestParam(required = false, value = "user") final Integer userId,
                                            final HttpServletResponse httpServletResponse) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        if (userId != null) {
-            IdValidator.validateUserIdElseThrow(userId);
-        }
-
         List<String[]> users = prepareCSVData(experimentId, userId);
 
         try {

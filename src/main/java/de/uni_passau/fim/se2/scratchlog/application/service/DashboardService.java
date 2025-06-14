@@ -138,10 +138,6 @@ public class DashboardService {
      * @throws IllegalArgumentException if the passed id is invalid.
      */
     public boolean existsExperiment(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check if experiment exists with invalid id " + id + "!");
-        }
-
         return experimentRepository.existsById(id);
     }
 
@@ -153,11 +149,6 @@ public class DashboardService {
      * @throws IllegalArgumentException if the passed id is invalid.
      */
     public boolean existsParticipants(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check if participants exist for experiment with invalid id "
-                    + id + "!");
-        }
-
         Experiment experiment = experimentRepository.getReferenceById(id);
 
         try {
@@ -178,11 +169,6 @@ public class DashboardService {
      * @throws NotFoundException if no corresponding experiment data could be found.
      */
     public String[] getExperimentData(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot fetch experiment data for experiment with invalid id " + id
-                    + "!");
-        }
-
         Optional<ExperimentData> experimentData = experimentDataRepository.findByExperiment(id);
 
         if (experimentData.isEmpty()) {
@@ -204,11 +190,6 @@ public class DashboardService {
      * @throws NotFoundException if no corresponding experiment could be found.
      */
     public List<String[]> getParticipants(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve participant data for experiment with invalid id " + id
-                    + "!");
-        }
-
         Experiment experiment = experimentRepository.getReferenceById(id);
 
         try {
@@ -239,7 +220,7 @@ public class DashboardService {
      */
     public List<Integer[]> getBlockEventCountData(final List<Integer> userIds, final int experimentId,
                                                   final BlockEventSpecific event) {
-        Experiment experiment = checkInputsAndGetExperiment(userIds, experimentId);
+        Experiment experiment = getExperiment(experimentId);
         List<Integer[]> eventNumbers = new ArrayList<>();
         userIds.forEach(id -> eventNumbers.add(getBlockEventCounts(id, experiment, event)));
         return eventNumbers;
@@ -256,7 +237,7 @@ public class DashboardService {
      */
     public List<Integer[]> getClickEventCountData(final List<Integer> userIds, final int experimentId,
                                                   final ClickEventSpecific event) {
-        Experiment experiment = checkInputsAndGetExperiment(userIds, experimentId);
+        Experiment experiment = getExperiment(experimentId);
         List<Integer[]> eventNumbers = new ArrayList<>();
         userIds.forEach(id -> eventNumbers.add(getClickEventCounts(id, experiment, event)));
         return eventNumbers;
@@ -273,7 +254,7 @@ public class DashboardService {
      */
     public List<Integer[]> getResourceEventCountData(final List<Integer> userIds, final int experimentId,
                                                      final ResourceEventSpecific event) {
-        Experiment experiment = checkInputsAndGetExperiment(userIds, experimentId);
+        Experiment experiment = getExperiment(experimentId);
         List<Integer[]> eventNumbers = new ArrayList<>();
         userIds.forEach(id -> eventNumbers.add(getResourceEventCounts(id, experiment, event)));
         return eventNumbers;
@@ -288,27 +269,19 @@ public class DashboardService {
      * @return A list of arrays with the numbers of executions for every user.
      */
     public List<Integer[]> getEventCountData(final List<Integer> userIds, final int experimentId) {
-        checkInputsAndGetExperiment(userIds, experimentId);
         List<Integer[]> eventNumbers = new ArrayList<>();
         userIds.forEach(id -> eventNumbers.add(getEventCounts(id, experimentId)));
         return eventNumbers;
     }
 
     /**
-     * Checks, whether the passed list of user ids and the experiment id are valid and returns the corresponding
-     * experiment.
+     * Returns the corresponding experiment.
      *
-     * @param userIds A list of user ids to check.
      * @param experimentId The experiment id to check.
      * @return The corresponding experiment, if all ids are valid.
      * @throws IllegalArgumentException if any of the passed ids are invalid.
      */
-    private Experiment checkInputsAndGetExperiment(final List<Integer> userIds, final int experimentId) {
-        if (experimentId < Constants.MIN_ID || userIds.stream().anyMatch(id -> id < Constants.MIN_ID)) {
-            throw new IllegalArgumentException("Cannot retrieve event data for experiment with invalid experiment or "
-                    + "user ids!");
-        }
-
+    private Experiment getExperiment(final int experimentId) {
         return experimentRepository.getReferenceById(experimentId);
     }
 
@@ -459,7 +432,7 @@ public class DashboardService {
     private int getBlockEventCount(final int userId, final int experimentId, final BlockEventSpecific blockEvent) {
         Optional<EventCount> count = eventCountRepository.findBlockEventCountByUserAndExperiment(userId, experimentId,
                 blockEvent.toString());
-        return count.isEmpty() ? 0 : count.get().getCount();
+        return count.map(EventCount::getCount).orElse(0);
     }
 
     /**
@@ -474,7 +447,7 @@ public class DashboardService {
     private int getClickEventCount(final int userId, final int experimentId, final ClickEventSpecific clickEvent) {
         Optional<EventCount> count = eventCountRepository.findClickEventCountByUserAndExperiment(userId, experimentId,
                 clickEvent.toString());
-        return count.isEmpty() ? 0 : count.get().getCount();
+        return count.map(EventCount::getCount).orElse(0);
     }
 
 }

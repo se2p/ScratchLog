@@ -193,15 +193,6 @@ public class PageServiceTest {
     }
 
     @Test
-    public void testGetCourseExperimentInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getCourseExperimentPage(pageRequest, 0)
-        );
-        verify(courseRepository, never()).getReferenceById(anyInt());
-        verify(courseExperimentRepository, never()).findAllProjectedByCourse(any(PageRequest.class), any());
-    }
-
-    @Test
     public void testGetExperimentParticipantPage() {
         List<ExperimentTableProjection> experiments = getExperimentProjections(4);
         experimentPage = new PageImpl<>(experiments);
@@ -234,14 +225,6 @@ public class PageServiceTest {
     }
 
     @Test
-    public void testGetExperimentParticipantPageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getExperimentParticipantPage(pageRequest, 0)
-        );
-        verify(experimentRepository, never()).findExperimentsByParticipant(anyInt(), any(PageRequest.class));
-    }
-
-    @Test
     public void testGetCourseParticipantPage() {
         List<CourseTableProjection> courses = getCourseProjections(1);
         coursePage = new PageImpl<>(courses);
@@ -260,14 +243,6 @@ public class PageServiceTest {
         PageRequest wrongPageSize = PageRequest.of(0, 5);
         assertThrows(IllegalArgumentException.class,
                 () -> pageService.getCourseParticipantPage(wrongPageSize, ID)
-        );
-        verify(courseRepository, never()).findCoursesByParticipant(anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCourseParticipantPageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getCourseParticipantPage(pageRequest, -1)
         );
         verify(courseRepository, never()).findCoursesByParticipant(anyInt(), any(PageRequest.class));
     }
@@ -302,15 +277,6 @@ public class PageServiceTest {
     }
 
     @Test
-    public void testGetParticipantPageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getParticipantPage(0, pageRequest)
-        );
-        verify(participantRepository, never()).findAllByExperiment(any(), any(PageRequest.class));
-        verify(experimentRepository, never()).getReferenceById(ID);
-    }
-
-    @Test
     public void testGetParticipantCoursePage() {
         List<CourseParticipant> participants = getCourseParticipants(3);
         courseParticipantPage = new PageImpl<>(participants);
@@ -331,15 +297,6 @@ public class PageServiceTest {
         );
         verify(courseRepository).getReferenceById(ID);
         verify(courseParticipantRepository).findAllByCourse(any(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetParticipantCoursePageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getParticipantCoursePage(0, pageRequest)
-        );
-        verify(courseRepository, never()).getReferenceById(anyInt());
-        verify(courseParticipantRepository, never()).findAllByCourse(any(), any(PageRequest.class));
     }
 
     @Test
@@ -385,14 +342,6 @@ public class PageServiceTest {
     }
 
     @Test
-    public void testGetLastCourseExperimentPageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getLastCourseExperimentPage(-1)
-        );
-        verify(courseExperimentRepository, never()).getCourseExperimentRowCount(anyInt());
-    }
-
-    @Test
     public void testGetLastExperimentPage() {
         when(experimentRepository.getParticipantPageCount(ID)).thenReturn(Constants.PAGE_SIZE);
         assertEquals(1, pageService.getLastExperimentPage(ID));
@@ -400,27 +349,10 @@ public class PageServiceTest {
     }
 
     @Test
-    public void testGetLastExperimentPageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getLastExperimentPage(-1)
-        );
-        verify(experimentRepository, never()).getParticipantPageCount(anyInt());
-    }
-
-    @Test
     public void testGetLastCoursePage() {
         when(courseRepository.getParticipantPageCount(ID)).thenReturn(Constants.PAGE_SIZE);
         assertEquals(1, pageService.getLastCoursePage(ID));
         verify(courseRepository).getParticipantPageCount(ID);
-    }
-
-
-    @Test
-    public void testGetLastCoursePageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getLastCoursePage(0)
-        );
-        verify(courseRepository, never()).getParticipantPageCount(anyInt());
     }
 
     @Test
@@ -457,14 +389,6 @@ public class PageServiceTest {
         when(courseParticipantRepository.getCourseParticipantRowCount(ID)).thenReturn(Constants.PAGE_SIZE + 1);
         assertEquals(2, pageService.getLastParticipantCoursePage(ID));
         verify(courseParticipantRepository).getCourseParticipantRowCount(ID);
-    }
-
-    @Test
-    public void testGetLastParticipantCoursePageInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getLastParticipantCoursePage(-1)
-        );
-        verify(courseParticipantRepository, never()).getCourseParticipantRowCount(anyInt());
     }
 
     private List<ExperimentTableProjection> getExperimentProjections(int number) {

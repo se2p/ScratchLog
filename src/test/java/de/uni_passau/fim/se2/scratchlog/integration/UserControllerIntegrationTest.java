@@ -230,19 +230,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAuthenticateUserInvalidId() throws Exception {
-        mvc.perform(get("/users/authenticate")
-                .param("id", "0")
-                .param("secret", SECRET)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(userService, never()).authenticateUser(SECRET);
-        verify(userService, never()).existsParticipant(userDTO.getId(), ID);
-    }
-
-    @Test
     public void testLoginUser() throws Exception {
         userDTO.setRole(Role.PARTICIPANT);
         when(userService.getUser(USERNAME)).thenReturn(userDTO);
@@ -1437,16 +1424,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(userService).getUserById(ID);
-    }
-
-    @Test
-    public void testGetPasswordResetFormInvalidId() throws Exception {
-        mvc.perform(get("/users/forgot")
-                .param("id", "0")
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(userService, never()).getUserById(anyInt());
     }
 
     @Test

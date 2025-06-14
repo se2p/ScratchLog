@@ -391,21 +391,6 @@ public class HomeControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetExperimentFinishPageInvalidExperimentId() throws Exception {
-        mvc.perform(get("/finish")
-                        .param(EXPERIMENT, INVALID_NUMBER)
-                        .param(USER, ID_STRING)
-                        .param(SECRET, SECRET)
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(model().attribute(THANKS, nullValue()))
-                .andExpect(view().name(Constants.ERROR));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
-        verify(experimentService, never()).getExperiment(anyInt());
-    }
-
-    @Test
     public void testGetExperimentFinishPageUserIdBlank() throws Exception {
         mvc.perform(get("/finish")
                         .param(EXPERIMENT, ID_STRING)

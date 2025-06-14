@@ -36,7 +36,6 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
@@ -180,8 +179,6 @@ public class ParticipantController {
     @GetMapping("/add")
     @Secured(Constants.ROLE_ADMIN)
     public String getParticipantForm(@RequestParam(value = ID) final int experimentId, final Model model) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
 
@@ -218,8 +215,6 @@ public class ParticipantController {
     public String addParticipant(@RequestParam(value = "expId") final int experimentId,
                                  @ModelAttribute("userDTO") final UserDTO userDTO, final Model model,
                                  final BindingResult bindingResult) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         if (userDTO.getUsername() == null || userDTO.getEmail() == null) {
             LOGGER.error("The new username or email cannot be null!");
             return Constants.ERROR;
@@ -291,8 +286,6 @@ public class ParticipantController {
             LOGGER.error("Cannot delete participant with invalid id or input string!");
             return Constants.ERROR;
         }
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
@@ -351,8 +344,6 @@ public class ParticipantController {
     public String startExperiment(
         @RequestParam(ID) final int experimentId, final HttpServletRequest httpServletRequest
     ) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             LOGGER.error("An administrator tried to participate in the experiment with id {}!", experimentId);
             return Constants.ERROR;
@@ -633,16 +624,7 @@ public class ParticipantController {
      */
     private boolean isInvalidPassedParams(final int experimentId, final int userId, final String secret,
                                           final String method, final boolean userActive) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        IdValidator.validateUserIdElseThrow(userId);
-
-        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            LOGGER.error(
-                "Cannot {} experiment with invalid experiment id {} or invalid user id {}!",
-                method, experimentId, userId
-            );
-            return true;
-        } else if (secret == null || secret.isBlank()) {
+        if (secret == null || secret.isBlank()) {
             LOGGER.error("Cannot {} experiment with secret null or blank!", method);
             return true;
         } else {

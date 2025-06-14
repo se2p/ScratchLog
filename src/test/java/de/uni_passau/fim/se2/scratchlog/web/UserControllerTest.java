@@ -310,19 +310,6 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAuthenticateUserInvalidId() {
-        assertInvalidIdException(
-            () -> userController.authenticateUser(0, SECRET, httpServletRequest, httpServletResponse)
-        );
-        verify(authenticationProvider, never()).authenticate(any());
-        verify(userService, never()).authenticateUser(anyString());
-        verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-        verify(securityContext, never()).getAuthentication();
-        verify(localeResolver, never()).setLocale(any(), any(), any());
-    }
-
-    @Test
     public void testAuthenticateUserSecretNull() {
         assertEquals(Constants.ERROR, userController.authenticateUser(ID, null, httpServletRequest,
                 httpServletResponse));
@@ -1842,18 +1829,6 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDeleteUserInvalidId() {
-        assertInvalidIdException(() -> userController.deleteUser(passwordDTO, 0, httpServletRequest));
-        verify(authentication, never()).getName();
-        verify(userService, never()).getUser(anyString());
-        verify(userService, never()).getUserById(anyInt());
-        verify(userService, never()).matchesPassword(anyString(), anyString());
-        verify(userService, never()).isLastAdmin();
-        verify(userService, never()).deleteUser(anyInt());
-        verify(httpServletRequest, never()).getSession(anyBoolean());
-    }
-
-    @Test
     public void testDeleteUserPasswordNull() {
         passwordDTO.setPassword(null);
         assertEquals(Constants.ERROR, userController.deleteUser(passwordDTO, ID, httpServletRequest));
@@ -1913,13 +1888,6 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testChangeActiveStatusIdInvalid() {
-        assertInvalidIdException(() -> userController.changeActiveStatus(-1));
-        verify(userService, never()).getUserById(ID);
-        verify(userService, never()).updateUser(userDTO);
-    }
-
-    @Test
     public void testGetPasswordResetForm() {
         userDTO.setRole(Role.PARTICIPANT);
         when(userService.getUserById(ID)).thenReturn(userDTO);
@@ -1942,13 +1910,6 @@ public class UserControllerTest extends AbstractControllerTest {
         when(userService.getUserById(ID)).thenThrow(NotFoundException.class);
         assertEquals(Constants.ERROR, userController.getPasswordResetForm(ID, model, httpServletRequest));
         verify(userService).getUserById(ID);
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-    }
-
-    @Test
-    public void testGetPasswordResetFormInvalidId() {
-        assertInvalidIdException(() -> userController.getPasswordResetForm(-1, model, httpServletRequest));
-        verify(userService, never()).getUserById(anyInt());
         verify(httpServletRequest, never()).isUserInRole(anyString());
     }
 

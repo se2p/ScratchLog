@@ -142,17 +142,6 @@ public class ExperimentDataServiceTest {
     }
 
     @Test
-    public void testGetEventDataInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentDataService.getEventData(-1)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByExperiment(any());
-        verify(clickEventRepository, never()).findAllByExperiment(any());
-        verify(resourceEventRepository, never()).findAllByExperiment(any());
-    }
-
-    @Test
     public void testGetAnalyzedProgramDataCount() throws URISyntaxException, IOException {
         URI json = getClass().getClassLoader().getResource("json.txt").toURI();
         String jsonCode = Files.readString(Paths.get(json));
@@ -304,16 +293,6 @@ public class ExperimentDataServiceTest {
         );
         verify(experimentRepository).findById(ID);
         verify(participantRepository).findAllByExperiment(experiment);
-        verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
-    }
-
-    @Test
-    public void testGetLitterBoxAnalysisResultsInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentDataService.getLitterBoxAnalysisResults(0)
-        );
-        verify(experimentRepository, never()).findById(anyInt());
-        verify(participantRepository, never()).findAllByExperiment(any());
         verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
     }
 

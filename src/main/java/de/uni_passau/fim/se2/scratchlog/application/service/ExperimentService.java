@@ -21,11 +21,9 @@ package de.uni_passau.fim.se2.scratchlog.application.service;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
-import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -69,12 +67,7 @@ public class ExperimentService {
      * @return {@code true} if an experiment exists, or {@code false} if not.
      * @throws IllegalArgumentException if the passed title is null or blank.
      */
-    @Transactional
     public boolean existsExperiment(final String title) {
-        if (title == null || title.trim().isBlank()) {
-            throw new IllegalArgumentException("Cannot check if experiment exists with title null or blank!");
-        }
-
         return experimentRepository.existsByTitle(title);
     }
 
@@ -87,13 +80,7 @@ public class ExperimentService {
      * @return {@code true} if such an experiment exists, or {@code false} if not.
      * @throws IllegalArgumentException if the passed title is null or blank or the id is invalid.
      */
-    @Transactional
     public boolean existsExperiment(final String title, final int id) {
-        if (title == null || title.trim().isBlank() || id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check if experiment exists with title null or blank or invalid "
-                    + "id " + id + "!");
-        }
-
         Optional<Experiment> experiment = experimentRepository.findByTitle(title);
 
         if (experiment.isEmpty()) {
@@ -110,13 +97,7 @@ public class ExperimentService {
      * @return {@code true} if such an experiment exists, or {@code false} if not.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public boolean hasProjectFile(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check if the experiment has a project file with invalid id "
-                    + id + "!");
-        }
-
         return experimentRepository.existsByIdAndProjectIsNotNull(id);
     }
 
@@ -126,7 +107,6 @@ public class ExperimentService {
      * @param experimentDTO The dto containing the experiment information to set.
      * @return The newly created experiment, if the information was persisted.
      * @throws IncompleteDataException if the experiment title, description or GUI URL are null or blank.
-     * @throws StoreException if the experiment could not be persisted.
      */
     @Transactional
     public ExperimentDTO saveExperiment(final ExperimentDTO experimentDTO) {
@@ -146,11 +126,6 @@ public class ExperimentService {
         }
 
         Experiment saved = experimentRepository.save(experiment);
-
-        if (saved.getId() == null) {
-            throw new StoreException("Failed to store experiment with title " + experimentDTO.getTitle());
-        }
-
         return createExperimentDTO(saved);
     }
 
@@ -162,12 +137,7 @@ public class ExperimentService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding experiment could be found.
      */
-    @Transactional
     public ExperimentDTO getExperiment(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for experiment with invalid id " + id + "!");
-        }
-
         Experiment experiment = experimentRepository.findById(id);
 
         if (experiment == null) {
@@ -186,11 +156,6 @@ public class ExperimentService {
      */
     @Transactional
     public void deleteExperiment(final int id) {
-        if (id < Constants.MIN_ID) {
-            LOGGER.error("Cannot delete experiment with invalid id {}!", id);
-            throw new IllegalArgumentException("Cannot delete experiment with invalid id " + id + "!");
-        }
-
         experimentRepository.deleteById(id);
     }
 
@@ -227,8 +192,6 @@ public class ExperimentService {
     public void uploadSb3Project(final int id, final byte[] project) {
         if (project == null) {
             throw new IllegalArgumentException("Cannot upload sb3 project null!");
-        } else if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot upload sb3 project for experiment with invalid id " + id + "!");
         }
 
         try {
@@ -251,10 +214,6 @@ public class ExperimentService {
      */
     @Transactional
     public void deleteSb3Project(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot delete sb3 project for experiment with invalid id " + id + "!");
-        }
-
         try {
             Experiment experiment = experimentRepository.getReferenceById(id);
             experiment.setProject(null);
@@ -276,13 +235,7 @@ public class ExperimentService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding experiment could be found.
      */
-    @Transactional
     public ExperimentProjection getSb3File(final int id, final boolean retrieveInactive) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve sb3 project for experiment with invalid id " + id
-                    + "!");
-        }
-
         Optional<ExperimentProjection> projection = experimentRepository.findExperimentById(id);
 
         if (projection.isEmpty()) {

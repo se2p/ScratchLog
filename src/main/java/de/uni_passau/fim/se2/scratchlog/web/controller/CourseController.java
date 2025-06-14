@@ -140,8 +140,6 @@ public class CourseController {
     @Secured(Constants.ROLE_PARTICIPANT)
     public String getCourse(@RequestParam(ID) final int courseId, final Model model,
                             final HttpServletRequest httpServletRequest) {
-        IdValidator.validateCourseIdElseThrow(courseId);
-
         try {
             CourseDTO courseDTO = courseService.getCourse(courseId);
             addModelInfo(model, courseDTO, httpServletRequest.isUserInRole(Constants.ROLE_ADMIN));
@@ -174,8 +172,6 @@ public class CourseController {
     @GetMapping("/edit")
     @Secured(Constants.ROLE_ADMIN)
     public String getEditCourseForm(@RequestParam(ID) final int courseId, final Model model) {
-        IdValidator.validateCourseIdElseThrow(courseId);
-
         try {
             CourseDTO courseDTO = courseService.getCourse(courseId);
             model.addAttribute("courseDTO", courseDTO);
@@ -234,7 +230,6 @@ public class CourseController {
             LOGGER.error("Cannot delete course with id null or input password null!");
             return Constants.ERROR;
         }
-        IdValidator.validateCourseIdElseThrow(courseId);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -271,8 +266,6 @@ public class CourseController {
     @Secured(Constants.ROLE_ADMIN)
     public String changeCourseStatus(@RequestParam("stat") final String status, @RequestParam(ID) final int courseId,
                                      final Model model) {
-        IdValidator.validateCourseIdElseThrow(courseId);
-
         try {
             CourseDTO courseDTO;
 
@@ -311,7 +304,6 @@ public class CourseController {
                                   @RequestParam(required = false, name = "add") final String add,
                                   @RequestParam("id") final int courseId,
                                   final Model model) {
-        IdValidator.validateCourseIdElseThrow(courseId);
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
         if (courseDTO == null) {
@@ -358,7 +350,6 @@ public class CourseController {
         if (file == null) {
             return Constants.ERROR;
         }
-        IdValidator.validateCourseIdElseThrow(courseId);
 
         CourseDTO courseDto = courseService.getCourse(courseId);
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages", LocaleContextHolder.getLocale());
@@ -397,7 +388,6 @@ public class CourseController {
     @Secured(Constants.ROLE_ADMIN)
     public String deleteParticipants(@RequestParam("participants") final List<String> participants,
                                     @RequestParam("id") final int courseId, final Model model) {
-        IdValidator.validateCourseIdElseThrow(courseId);
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
         if (courseDTO == null) {
@@ -436,7 +426,6 @@ public class CourseController {
     @Secured(Constants.ROLE_ADMIN)
     public String deleteExperiment(@RequestParam("title") final String title, @RequestParam("id") final int courseId,
                                    final Model model) {
-        IdValidator.validateCourseIdElseThrow(courseId);
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
 
         if (courseDTO == null) {
@@ -464,8 +453,6 @@ public class CourseController {
     @Secured(Constants.ROLE_ADMIN)
     public ModelAndView getParticipantPage(@RequestParam("id") final int courseId,
                                            @RequestParam("page") final int page) {
-        IdValidator.validateCourseIdElseThrow(courseId);
-
         int lastPage = pageService.getLastParticipantCoursePage(courseId);
         IdValidator.validatePageNumberElseThrow(page, lastPage);
 
@@ -485,8 +472,6 @@ public class CourseController {
     @Secured(Constants.ROLE_PARTICIPANT)
     public ModelAndView getExperimentPage(@RequestParam("id") final int courseId,
                                           @RequestParam("page") final int page) {
-        IdValidator.validateCourseIdElseThrow(courseId);
-
         int lastPage = pageService.getLastCourseExperimentPage(courseId);
         IdValidator.validatePageNumberElseThrow(page, lastPage);
 
@@ -514,10 +499,6 @@ public class CourseController {
      * @return The corresponding course dto, or null.
      */
     private CourseDTO getActiveCourseDTO(final int courseId) {
-        if (courseId < Constants.MIN_ID) {
-            return null;
-        }
-
         try {
             CourseDTO courseDTO = courseService.getCourse(courseId);
             return courseDTO.isActive() ? courseDTO : null;

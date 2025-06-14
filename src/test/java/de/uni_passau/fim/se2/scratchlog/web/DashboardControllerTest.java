@@ -81,12 +81,4 @@ public class DashboardControllerTest {
         verify(model, never()).addAttribute(anyString(), any());
     }
 
-    @Test
-    public void testGetDashboardInvalidId() {
-        assertInvalidIdException(() -> dashboardController.getDashboard(-1, model));
-        verify(dashboardService, never()).existsExperiment(anyInt());
-        verify(dashboardService, never()).existsParticipants(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
 }

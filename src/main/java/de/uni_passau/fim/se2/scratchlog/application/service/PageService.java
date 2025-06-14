@@ -44,7 +44,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -120,7 +119,6 @@ public class PageService {
      * @param pageable The pageable containing the page size and page number.
      * @return The experiment page.
      */
-    @Transactional
     public Page<ExperimentTableProjection> getExperimentPage(final Pageable pageable) {
         checkPageable(pageable);
         int pageSize = pageable.getPageSize();
@@ -144,7 +142,6 @@ public class PageService {
      * @param pageable The {@link Pageable} containing the page size and page number.
      * @return The course page.
      */
-    @Transactional
     public Page<CourseTableProjection> getCoursePage(final Pageable pageable) {
         checkPageable(pageable);
 
@@ -170,13 +167,7 @@ public class PageService {
      * @return The course experiment page.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public Page<CourseExperimentProjection> getCourseExperimentPage(final Pageable pageable, final int courseId) {
-        if (courseId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot return course experiment page for course with invalid id "
-                    + courseId + "!");
-        }
-
         checkPageable(pageable);
         Course course = courseRepository.getReferenceById(courseId);
         Page<CourseExperimentProjection> experiments = courseExperimentRepository.findAllProjectedByCourse(pageable,
@@ -201,13 +192,7 @@ public class PageService {
      * @return The page of {@link ExperimentTableProjection}s.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public Page<ExperimentTableProjection> getExperimentParticipantPage(final Pageable pageable, final int userId) {
-        if (userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot return participant experiment page for user with invalid id "
-                    + userId + "!");
-        }
-
         checkPageable(pageable);
         return experimentRepository.findExperimentsByParticipant(userId, pageable);
     }
@@ -222,11 +207,6 @@ public class PageService {
      * @throws IllegalArgumentException if the passed id is invalid.
      */
     public Page<CourseTableProjection> getCourseParticipantPage(final Pageable pageable, final int userId) {
-        if (userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot return participant course page for user with invalid id "
-                    + userId + "!");
-        }
-
         checkPageable(pageable);
         return courseRepository.findCoursesByParticipant(userId, pageable);
     }
@@ -240,14 +220,8 @@ public class PageService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding experiment entry could be found.
      */
-    @Transactional
     public Page<Participant> getParticipantPage(final int id, final Pageable pageable) {
         checkPageable(pageable);
-
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot find participant data for experiment with invalid id " + id
-                    + "!");
-        }
 
         Experiment experiment = experimentRepository.getReferenceById(id);
 
@@ -269,12 +243,7 @@ public class PageService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding course entry could be found.
      */
-    @Transactional
     public Page<CourseParticipant> getParticipantCoursePage(final int id, final Pageable pageable) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot find participant data for course with invalid id " + id + "!");
-        }
-
         checkPageable(pageable);
         Course course = courseRepository.getReferenceById(id);
 
@@ -292,7 +261,6 @@ public class PageService {
      *
      * @return The last page value.
      */
-    @Transactional
     public int computeLastExperimentPage() {
         int rows = countExperimentRows();
         return computeLastPage(rows) + 1;
@@ -303,7 +271,6 @@ public class PageService {
      *
      * @return The last page value.
      */
-    @Transactional
     public int computeLastCoursePage() {
         int rows = countCourseRows();
         return computeLastPage(rows) + 1;
@@ -316,13 +283,7 @@ public class PageService {
      * @return The last page value.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public int getLastCourseExperimentPage(final int courseId) {
-        if (courseId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot calculate the last course experiment page for course with "
-                    + "invalid id " + courseId + "!");
-        }
-
         int rows = courseExperimentRepository.getCourseExperimentRowCount(courseId);
         return computeLastPage(rows) + 1;
     }
@@ -334,13 +295,7 @@ public class PageService {
      * @return The last page value.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public int getLastExperimentPage(final int userId) {
-        if (userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot calculate the last participant experiment page for user with "
-                    + "invalid id " + userId + "!");
-        }
-
         int rows = experimentRepository.getParticipantPageCount(userId);
         return computeLastPage(rows) + 1;
     }
@@ -352,13 +307,7 @@ public class PageService {
      * @return The last page value.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public int getLastCoursePage(final int userId) {
-        if (userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot calculate the last participant course page for user with "
-                    + "invalid id " + userId + "!");
-        }
-
         int rows = courseRepository.getParticipantPageCount(userId);
         return computeLastPage(rows) + 1;
     }
@@ -369,7 +318,6 @@ public class PageService {
      * @param id The experiment id to search for.
      * @return The last page value.
      */
-    @Transactional
     public int getLastParticipantPage(final int id) {
         Optional<ExperimentData> experimentData = experimentDataRepository.findByExperiment(id);
 
@@ -388,13 +336,7 @@ public class PageService {
      * @return The last page value.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public int getLastParticipantCoursePage(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot calculate the last course participant page for course with "
-                    + "invalid id " + id + "!");
-        }
-
         int rows = courseParticipantRepository.getCourseParticipantRowCount(id);
         return computeLastPage(rows) + 1;
     }

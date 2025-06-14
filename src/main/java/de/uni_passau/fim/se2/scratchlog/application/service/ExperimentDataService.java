@@ -48,7 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -143,12 +142,7 @@ public class ExperimentDataService {
      * @param id The experiment ID.
      * @return A list of string arrays containing information about all events.
      */
-    @Transactional
     public List<String[]> getEventData(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve event data for experiment with invalid id " + id + "!");
-        }
-
         Experiment experiment = experimentRepository.getReferenceById(id);
 
         try {
@@ -194,11 +188,6 @@ public class ExperimentDataService {
      * @throws NotFoundException if no corresponding experiment could be found.
      */
     public List<String[]> getLitterBoxAnalysisResults(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot return analysis results for experiment with invalid id"
-                    + id + "!");
-        }
-
         Experiment experiment = experimentRepository.findById(id);
 
         try {

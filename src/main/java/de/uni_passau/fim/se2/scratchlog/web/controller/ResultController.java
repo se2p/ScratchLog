@@ -147,9 +147,6 @@ public class ResultController {
     @Secured(Constants.ROLE_ADMIN)
     public ModelAndView getResult(@RequestParam(EXPERIMENT) final int experimentId,
                                   @RequestParam(USER) final int userId, final Model model) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        IdValidator.validateUserIdElseThrow(userId);
-
         if (!userService.existsParticipant(userId, experimentId)) {
             LOGGER.error(
                 "Could not find participant entry for user with id {} for experiment with id {}", userId, experimentId
@@ -204,8 +201,6 @@ public class ResultController {
     @GetMapping("/file")
     @Secured(Constants.ROLE_ADMIN)
     public Object downloadFile(@RequestParam(ID) final int fileId) {
-        IdValidator.validateFileIdElseThrow(fileId);
-
         try {
             FileDTO fileDTO = fileService.findFile(fileId);
             return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""
@@ -234,10 +229,6 @@ public class ResultController {
                                 @RequestParam(USER) final int userId,
                                 @RequestParam("json") final int jsonId,
                                 final HttpServletResponse httpServletResponse) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        IdValidator.validateUserIdElseThrow(userId);
-        IdValidator.validateIdElseThrow("json", jsonId);
-
         prepareZipFileResponse(httpServletResponse, userId, experimentId, "sb3");
 
         try {
@@ -257,8 +248,6 @@ public class ResultController {
     @GetMapping("/zip")
     @Secured(Constants.ROLE_ADMIN)
     public Object downloadZip(@RequestParam(ID) final int zipId) {
-        IdValidator.validateIdElseThrow("zip", zipId);
-
         try {
             Sb3ZipDTO sb3ZipDTO = fileService.findZip(zipId);
             return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""
@@ -283,9 +272,6 @@ public class ResultController {
     public void downloadAllZips(@RequestParam(EXPERIMENT) final int experimentId,
                                 @RequestParam(USER) final int userId,
                                 final HttpServletResponse httpServletResponse) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        IdValidator.validateUserIdElseThrow(userId);
-
         prepareZipFileResponse(httpServletResponse, userId, experimentId, "projects");
 
         try {
@@ -310,9 +296,6 @@ public class ResultController {
     public void downloadAllXmlFiles(@RequestParam(EXPERIMENT) final int experimentId,
                                     @RequestParam(USER) final int userId,
                                     final HttpServletResponse httpServletResponse) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        IdValidator.validateUserIdElseThrow(userId);
-
         prepareZipFileResponse(httpServletResponse, userId, experimentId, "xml");
 
         try {
@@ -337,9 +320,6 @@ public class ResultController {
     public void downloadAllJsonFiles(@RequestParam(EXPERIMENT) final int experimentId,
                                      @RequestParam(USER) final int userId,
                                      final HttpServletResponse httpServletResponse) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        IdValidator.validateUserIdElseThrow(userId);
-
         prepareZipFileResponse(httpServletResponse, userId, experimentId, "json");
 
         try {
@@ -365,8 +345,6 @@ public class ResultController {
     public List<BlockEventProjection> getCodes(@RequestParam(EXPERIMENT) final int experimentId,
                                                @RequestParam(USER) final int userId,
                                                @RequestParam("page") final int page) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        IdValidator.validateUserIdElseThrow(userId);
         IdValidator.validatePageNumberElseThrow(page);
 
         return codeService
@@ -405,8 +383,6 @@ public class ResultController {
         @RequestParam(value = "include", required = false) Boolean includeFinalProject,
         final HttpServletResponse httpServletResponse
     ) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-        IdValidator.validateUserIdElseThrow(userId);
         checkDownloadParameters(step, start, end, includeFinalProject);
 
         // the checkDownloadParameters above expects certain parameters to be null/non-null. Therefore, we cannot use
@@ -457,8 +433,6 @@ public class ResultController {
         @RequestParam(value = "step", required = false, defaultValue = "0") final int step,
         final HttpServletResponse httpServletResponse
     ) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         prepareZipFileResponse(httpServletResponse, 0, experimentId, "zip");
 
         try {

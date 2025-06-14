@@ -168,19 +168,6 @@ public class SecretControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDisplaySecretInvalidId() throws Exception {
-        mvc.perform(get("/secret")
-                        .param(USER_PARAM, ID_STRING)
-                        .param(EXPERIMENT_PARAM, "-1")
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(userService, never()).getUserById(anyInt());
-    }
-
-    @Test
     public void testDisplaySecretIdBlank() throws Exception {
         mvc.perform(get("/secret")
                         .param(USER_PARAM, BLANK)
@@ -293,18 +280,6 @@ public class SecretControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(header().string("Content-Disposition", is("attachment;filename=experiment_"
                         + ID + "_user_" + ID + ".csv")));
         verify(userService).getUserById(ID);
-        verify(userService, never()).findUnfinishedUsers(anyInt());
-    }
-
-    @Test
-    public void testDownloadParticipationLinksInvalidUserId() throws Exception {
-        mvc.perform(get("/secret/csv")
-                        .param(EXPERIMENT_PARAM, ID_STRING)
-                        .param(USER_PARAM, "0")
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(userService, never()).getUserById(anyInt());
         verify(userService, never()).findUnfinishedUsers(anyInt());
     }
 
