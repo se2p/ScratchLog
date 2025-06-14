@@ -42,7 +42,6 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.TokenDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -224,7 +223,6 @@ public class UserController {
             LOGGER.error("Cannot authenticate participant with id or secret null or blank!");
             return Constants.ERROR;
         }
-        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         UserDTO authenticated;
         try {
@@ -813,7 +811,6 @@ public class UserController {
             LOGGER.error("Cannot delete user with id null or input password null!");
             return Constants.ERROR;
         }
-        IdValidator.validateUserIdElseThrow(userId);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -857,8 +854,6 @@ public class UserController {
     @GetMapping("/active")
     @Secured(Constants.ROLE_ADMIN)
     public String changeActiveStatus(@RequestParam("id") final int userId) {
-        IdValidator.validateUserIdElseThrow(userId);
-
         try {
             UserDTO userDTO = userService.getUserById(userId);
 
@@ -895,8 +890,6 @@ public class UserController {
     @Secured(Constants.ROLE_ADMIN)
     public String getPasswordResetForm(@RequestParam("id") final int userId, final Model model,
                                        final HttpServletRequest httpServletRequest) {
-        IdValidator.validateUserIdElseThrow(userId);
-
         try {
             UserDTO userDTO = userService.getUserById(userId);
 

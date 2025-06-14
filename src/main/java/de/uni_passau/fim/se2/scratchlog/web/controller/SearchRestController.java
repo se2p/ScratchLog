@@ -157,7 +157,7 @@ public class SearchRestController {
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getUserSuggestions(@RequestParam(QUERY) final String query,
                                              @RequestParam(ID) final int experimentId) {
-        if (isInvalidQuery(query) || isInvalidId(experimentId)) {
+        if (isInvalidQuery(query)) {
             return new ArrayList<>();
         }
 
@@ -176,7 +176,7 @@ public class SearchRestController {
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getDeleteUserSuggestions(@RequestParam(QUERY) final String query,
                                                    @RequestParam(ID) final int experimentId) {
-        if (isInvalidQuery(query) || isInvalidId(experimentId)) {
+        if (isInvalidQuery(query)) {
             return new ArrayList<>();
         }
 
@@ -195,7 +195,7 @@ public class SearchRestController {
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getCourseExperimentSuggestions(@RequestParam(QUERY) final String query,
                                                          @RequestParam(ID) final int courseId) {
-        if (isInvalidQuery(query) || isInvalidId(courseId)) {
+        if (isInvalidQuery(query)) {
             return new ArrayList<>();
         }
 
@@ -214,7 +214,7 @@ public class SearchRestController {
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getCourseParticipantSuggestions(@RequestParam(QUERY) final String query,
                                                           @RequestParam(ID) final int courseId) {
-        if (isInvalidQuery(query) || isInvalidId(courseId)) {
+        if (isInvalidQuery(query)) {
             return new ArrayList<>();
         }
 
@@ -233,7 +233,7 @@ public class SearchRestController {
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getCourseExperimentDeleteSuggestions(@RequestParam(QUERY) final String query,
                                                                @RequestParam(ID) final int courseId) {
-        if (isInvalidQuery(query) || isInvalidId(courseId)) {
+        if (isInvalidQuery(query)) {
             return new ArrayList<>();
         }
 
@@ -252,7 +252,7 @@ public class SearchRestController {
     @Secured(Constants.ROLE_ADMIN)
     public List<String[]> getCourseParticipantDeleteSuggestions(@RequestParam(QUERY) final String query,
                                                                 @RequestParam(ID) final int courseId) {
-        if (isInvalidQuery(query) || isInvalidId(courseId)) {
+        if (isInvalidQuery(query)) {
             return new ArrayList<>();
         }
 
@@ -267,16 +267,6 @@ public class SearchRestController {
      */
     private boolean isInvalidQuery(final String query) {
         return query == null || query.trim().isBlank();
-    }
-
-    /**
-     * Checks whether the given id is invalid.
-     *
-     * @param id The id to check.
-     * @return {@code true} if the id is invalid, or {@code false} otherwise.
-     */
-    private boolean isInvalidId(final int id) {
-        return id < Constants.MIN_ID;
     }
 
     /**

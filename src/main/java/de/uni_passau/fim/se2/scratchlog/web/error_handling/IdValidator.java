@@ -19,66 +19,13 @@
 
 package de.uni_passau.fim.se2.scratchlog.web.error_handling;
 
-import de.uni_passau.fim.se2.scratchlog.util.Constants;
-
 /**
  * Utility class for validating ID parameters.
  */
 public final class IdValidator {
 
-    /**
-     * Checks if the given id is within the valid range.
-     *
-     * @param id An id.
-     * @throws InvalidIdException Thrown in case the id is invalid.
-     */
-    public static void validateUserIdElseThrow(final int id) throws InvalidIdException {
-        validateIdElseThrow("user", id);
-    }
-
-    /**
-     * Checks if the given id is within the valid range.
-     *
-     * @param id An id.
-     * @throws InvalidIdException Thrown in case the id is invalid.
-     */
-    public static void validateExperimentIdElseThrow(final int id) throws InvalidIdException {
-        validateIdElseThrow("experiment", id);
-    }
-
-    /**
-     * Checks if the given id is within the valid range.
-     *
-     * @param id An id.
-     * @throws InvalidIdException Thrown in case the id is invalid.
-     */
-    public static void validateCourseIdElseThrow(final int id) throws InvalidIdException {
-        validateIdElseThrow("course", id);
-    }
-
-    /**
-     * Checks if the given id is within the valid range.
-     *
-     * @param id An id.
-     * @throws InvalidIdException Thrown in case the id is invalid.
-     */
-    public static void validateFileIdElseThrow(final int id) throws InvalidIdException {
-        validateIdElseThrow("file", id);
-    }
-
-    /**
-     * Checks if the given id is within the valid range.
-     *
-     * <p>Prefer the more specific methods if possible (e.g. {@link #validateCourseIdElseThrow(int)}).
-     *
-     * @param entity The name of the entity for which an ID should be checked. E.g. "user", "course".
-     * @param id An id.
-     * @throws InvalidIdException Thrown in case the id is invalid.
-     */
-    public static void validateIdElseThrow(final String entity, final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new InvalidIdException(entity, id);
-        }
+    private IdValidator() {
+        // intentionally empty, utility class
     }
 
     /**

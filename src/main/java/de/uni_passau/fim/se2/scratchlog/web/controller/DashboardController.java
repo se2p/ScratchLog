@@ -24,7 +24,6 @@ import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
@@ -70,8 +69,6 @@ public class DashboardController {
     @GetMapping("")
     @Secured(Constants.ROLE_ADMIN)
     public String getDashboard(@RequestParam("id") final int experimentId, final Model model) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         if (dashboardService.existsExperiment(experimentId) && dashboardService.existsParticipants(experimentId)) {
             model.addAttribute("experiment", experimentId);
             model.addAttribute("blockEvents", getBlockEvents());

@@ -23,7 +23,6 @@ import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.application.service.PageService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
-import de.uni_passau.fim.se2.scratchlog.application.service.TokenService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseTableProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentTableProjection;
@@ -89,11 +88,6 @@ public class HomeController {
     private final ParticipantService participantService;
 
     /**
-     * The token service to use for retrieving tokens.
-     */
-    private final TokenService tokenService;
-
-    /**
      * String corresponding to the name of the model attribute containing the current page number or the corresponding
      * request parameter.
      */
@@ -107,19 +101,16 @@ public class HomeController {
      * @param pageService The {@link PageService} to use.
      * @param userService The {@link UserService} to use.
      * @param participantService The {@link ParticipantService} to use.
-     * @param tokenService The {@link TokenService} to use.
      */
     @Autowired
     public HomeController(final ApplicationProperties applicationProperties,
                           final ExperimentService experimentService, final PageService pageService,
-                          final UserService userService, final ParticipantService participantService,
-                          final TokenService tokenService) {
+                          final UserService userService, final ParticipantService participantService) {
         this.applicationProperties = applicationProperties;
         this.experimentService = experimentService;
         this.pageService = pageService;
         this.userService = userService;
         this.participantService = participantService;
-        this.tokenService = tokenService;
     }
 
     /**
@@ -229,8 +220,6 @@ public class HomeController {
                                           @RequestParam("experiment") final int experimentId,
                                           @RequestParam("secret") final String secret,
                                           final Model model) {
-        IdValidator.validateUserIdElseThrow(userId);
-        IdValidator.validateExperimentIdElseThrow(experimentId);
         if (isInvalidFinishParams(experimentId, userId, secret)) {
             return Constants.ERROR;
         }
@@ -423,12 +412,7 @@ public class HomeController {
      * @return {@code true} if the passed parameters are invalid or {@code false} otherwise.
      */
     private boolean isInvalidFinishParams(final int experimentId, final int userId, final String secret) {
-        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            LOGGER.error(
-                "Cannot finish experiment with invalid experiment id {} or invalid user id {}!", experimentId, userId
-            );
-            return true;
-        } else if (secret == null || secret.isBlank()) {
+        if (secret == null || secret.isBlank()) {
             LOGGER.error("Cannot finish experiment with secret null or blank!");
             return true;
         } else {

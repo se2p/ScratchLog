@@ -206,18 +206,6 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
     }
 
     @Test
-    public void testGetParticipantFormExperimentIdInvalid() throws Exception {
-        mvc.perform(get("/participant/add")
-                .param(ID_PARAM, "0")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(experimentService, never()).getExperiment(ID);
-        verify(userService, never()).findLastId();
-    }
-
-    @Test
     public void testAddParticipant() throws Exception {
         setMailServer(true);
         when(userService.saveUser(newUser)).thenReturn(userDTO);
@@ -326,20 +314,6 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                 .andExpect(status().isOk())
                 .andExpect(model().attribute(EXPERIMENT, is(ID)))
                 .andExpect(view().name(PARTICIPANT));
-        verify(userService, never()).saveUser(any());
-        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
-        verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());
-    }
-
-    @Test
-    public void testAddParticipantExperimentIdInvalid() throws Exception {
-        mvc.perform(post("/participant/add")
-                .flashAttr(USER_DTO, newUser)
-                .param(EXP_ID_PARAM, "-1")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
         verify(userService, never()).saveUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), any(), any(), anyString());

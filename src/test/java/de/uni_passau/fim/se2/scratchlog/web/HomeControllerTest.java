@@ -466,14 +466,6 @@ public class HomeControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetExperimentFinishPageExperimentIdInvalid() {
-        assertThrows(InvalidIdException.class, () -> homeController.getExperimentFinishPage(0, ID, SECRET, model));
-        verify(participantService, never()).isInvalidParticipant(anyInt(), anyInt(), anyString(), anyBoolean());
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testGetResetPage() {
         setMailServer(true);
         assertEquals(PASSWORD_RESET, homeController.getResetPage(new UserDTO()));

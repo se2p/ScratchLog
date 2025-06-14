@@ -200,18 +200,6 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testGetCourseInvalidId() {
-        assertInvalidIdException(() -> courseController.getCourse(-1, model, httpServletRequest));
-        verify(courseService, never()).getCourse(anyInt());
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testGetCourseForm() {
         assertEquals(COURSE_EDIT, courseController.getCourseForm(new CourseDTO()));
     }
@@ -229,13 +217,6 @@ public class CourseControllerTest {
         when(courseService.getCourse(ID)).thenThrow(NotFoundException.class);
         assertEquals(Constants.ERROR, courseController.getEditCourseForm(ID, model));
         verify(courseService).getCourse(ID);
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetEditCourseFormInvalidId() {
-        assertInvalidIdException(() -> courseController.getEditCourseForm(0, model));
-        verify(courseService, never()).getCourse(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -371,15 +352,6 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testDeleteCourseInvalidId() {
-        assertInvalidIdException(() -> courseController.deleteCourse(passwordDTO, -1));
-        verify(authentication, never()).getName();
-        verify(userService, never()).getUser(anyString());
-        verify(userService, never()).matchesPassword(anyString(), anyString());
-        verify(courseService, never()).deleteCourse(anyInt());
-    }
-
-    @Test
     public void testDeleteCoursePasswordNull() {
         passwordDTO.setPassword(null);
         assertEquals(Constants.ERROR, courseController.deleteCourse(passwordDTO, ID));
@@ -429,17 +401,6 @@ public class CourseControllerTest {
         when(courseService.changeCourseStatus(true, ID)).thenThrow(NotFoundException.class);
         assertEquals(Constants.ERROR, courseController.changeCourseStatus("open", ID, model));
         verify(courseService).changeCourseStatus(true, ID);
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testChangeCourseStatusInvalidId() {
-        assertInvalidIdException(() -> courseController.changeCourseStatus("open", -1, model));
-        verify(courseService, never()).changeCourseStatus(anyBoolean(), anyInt());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(pageService, never()).getLastCourseExperimentPage(anyInt());
         verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
@@ -591,16 +552,6 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testDeleteParticipantsInvalidId() {
-        assertInvalidIdException(() -> courseController.deleteParticipants(USERNAMES, 0, model));
-        verify(courseService, never()).getCourse(anyInt());
-        verify(userService, never()).getUserByUsernameOrEmail(anyString());
-        verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).deleteCourseParticipant(anyInt(), anyString());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testDeleteExperiment() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
@@ -677,14 +628,6 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testGetParticipantPageInvalidId() {
-        assertInvalidIdException(() -> courseController.getParticipantPage(-1, LAST).getViewName());
-        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
     public void testGetExperimentPage() {
         courseDTO.setContent(null);
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
@@ -707,14 +650,6 @@ public class CourseControllerTest {
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
         assertThrows(InvalidIdException.class, () -> courseController.getExperimentPage(ID, -1));
         verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
-    }
-
-    @Test
-    public void testGetExperimentPageInvalidId() {
-        assertInvalidIdException(() -> courseController.getExperimentPage(0, CURRENT).getViewName());
-        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
         verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
         verify(courseService, never()).getCourse(anyInt());
     }

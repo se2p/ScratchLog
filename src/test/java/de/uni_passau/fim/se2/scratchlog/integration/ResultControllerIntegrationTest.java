@@ -295,27 +295,6 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetResultInvalidId() throws Exception {
-        mvc.perform(get("/result")
-                .param(EXPERIMENT_PARAM, "0")
-                .param(USER_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(model().attribute("blockEvents", nullValue()))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(eventService, never()).getBlockEventCounts(anyInt(), anyInt());
-        verify(eventService, never()).getClickEventCounts(anyInt(), anyInt());
-        verify(eventService, never()).getResourceEventCounts(anyInt(), anyInt());
-        verify(fileService, never()).getFiles(anyInt(), anyInt());
-        verify(fileService, never()).getZipIds(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
-        verify(eventService, never()).getCodesData(anyInt(), anyInt());
-    }
-
-    @Test
     public void testDownloadFile() throws Exception {
         when(fileService.findFile(ID)).thenReturn(fileDTO);
         mvc.perform(get("/result/file")
@@ -458,34 +437,6 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGenerateZipFileInvalidExperimentId() throws Exception {
-        mvc.perform(get("/result/generate")
-                .param(EXPERIMENT_PARAM, "0")
-                .param(USER_PARAM, ID_STRING)
-                .param(JSON, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
-        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).findJsonById(anyInt());
-    }
-
-    @Test
-    public void testGenerateZipFileInvalidUserId() throws Exception {
-        mvc.perform(get("/result/generate")
-                .param(EXPERIMENT_PARAM, ID_STRING)
-                .param(USER_PARAM, "-1")
-                .param(JSON, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
-        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).findJsonById(anyInt());
-    }
-
-    @Test
     public void testDownloadZip() throws Exception {
         when(fileService.findZip(ID)).thenReturn(sb3ZipDTO);
         mvc.perform(get("/result/zip")
@@ -509,17 +460,6 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(fileService).findZip(ID);
-    }
-
-    @Test
-    public void testDownloadZipInvalidId() throws Exception {
-        mvc.perform(get("/result/zip")
-                .param(ID_PARAM, "0")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(fileService, never()).findZip(anyInt());
     }
 
     @Test
@@ -547,17 +487,6 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDownloadAllZipsInvalidId() throws Exception {
-        mvc.perform(get("/result/zips")
-                .param(EXPERIMENT_PARAM, ID_STRING)
-                .param(USER_PARAM, "0")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
-    }
-
-    @Test
     public void testDownloadAllXmlFiles() throws Exception {
         when(codeService.getXMLForUser(ID, ID)).thenReturn(xmlProjections);
         mvc.perform(get("/result/xmls")
@@ -579,17 +508,6 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
                 .accept(MediaType.ALL))
                 .andExpect(status().isNotFound());
         verify(codeService).getXMLForUser(ID, ID);
-    }
-
-    @Test
-    public void testDownloadAllXmlFilesInvalidId() throws Exception {
-        mvc.perform(get("/result/xmls")
-                .param(EXPERIMENT_PARAM, "-1")
-                .param(USER_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
     }
 
     @Test
@@ -646,30 +564,6 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
                 .param(PAGE_PARAM, "-3")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesInvalidExperimentId() throws Exception {
-        mvc.perform(get("/result/codes")
-                .param(EXPERIMENT_PARAM, "-1")
-                .param(USER_PARAM, ID_STRING)
-                .param(PAGE_PARAM, PAGE)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesInvalidUserId() throws Exception {
-        mvc.perform(get("/result/codes")
-                .param(EXPERIMENT_PARAM, ID_STRING)
-                .param(USER_PARAM, PAGE)
-                .param(PAGE_PARAM, PAGE)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
@@ -801,20 +695,6 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, "ID_STRING")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(experimentService, never()).getSb3File(anyInt(), anyBoolean());
-        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
-    }
-
-    @Test
-    public void testDownloadSb3FilesInvalidExperimentId() throws Exception {
-        mvc.perform(get("/result/sb3s")
-                .param(EXPERIMENT_PARAM, "0")
-                .param(USER_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());

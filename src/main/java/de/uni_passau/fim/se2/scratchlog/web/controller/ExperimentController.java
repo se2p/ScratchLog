@@ -212,8 +212,6 @@ public class ExperimentController {
     @Secured(Constants.ROLE_PARTICIPANT)
     public String getExperiment(@RequestParam(ID) final int experimentId, final Model model,
                                 final HttpServletRequest httpServletRequest) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
 
@@ -259,7 +257,6 @@ public class ExperimentController {
         ExperimentDTO experimentDTO = new ExperimentDTO();
 
         if (courseId != null) {
-            IdValidator.validateCourseIdElseThrow(courseId);
             experimentDTO.setCourse(courseId);
             experimentDTO.setCourseExperiment(true);
         }
@@ -279,8 +276,6 @@ public class ExperimentController {
     @GetMapping("/edit")
     @Secured(Constants.ROLE_ADMIN)
     public String getEditExperimentForm(@RequestParam(ID) final int experimentId, final Model model) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         try {
             ExperimentDTO findExperiment = experimentService.getExperiment(experimentId);
             model.addAttribute("experimentDTO", findExperiment);
@@ -348,8 +343,6 @@ public class ExperimentController {
             LOGGER.error("Cannot delete experiment with password null!");
             return Constants.ERROR;
         }
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
@@ -388,7 +381,6 @@ public class ExperimentController {
     public String changeExperimentStatus(@RequestParam("stat") final String status,
                                          @RequestParam(ID) final int experimentId,
                                          final Model model) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
         if (status == null) {
             LOGGER.error("Cannot change the status of the experiment with invalid status parameters!");
             return Constants.ERROR;
@@ -446,8 +438,6 @@ public class ExperimentController {
     public String searchForUser(@RequestParam("participant") final String search,
                                 @RequestParam(ID) final int experimentId,
                                 final Model model) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
         ExperimentDTO experimentDTO;
@@ -502,7 +492,6 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String getPage(@RequestParam(ID) final int experimentId, @RequestParam(PAGE) final int page,
                           final Model model) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
         IdValidator.validatePageNumberElseThrow(page);
 
         try {
@@ -526,8 +515,6 @@ public class ExperimentController {
     public void downloadCSVFile(
         @RequestParam(ID) final int experimentId, final HttpServletResponse httpServletResponse
     ) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         try {
             httpServletResponse.setContentType("text/csv");
             httpServletResponse.setHeader("Content-Disposition", "attachment;filename=experiment_" + experimentId
@@ -562,7 +549,6 @@ public class ExperimentController {
             LOGGER.error("Cannot add participants from CSV for experiment with file null!");
             return Constants.ERROR;
         }
-        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
             LocaleContextHolder.getLocale());
@@ -603,8 +589,6 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public void downloadLitterBoxAnalysis(@RequestParam(ID) final int experimentId,
                                           final HttpServletResponse httpServletResponse) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         try {
             httpServletResponse.setContentType("text/csv");
             httpServletResponse.setHeader("Content-Disposition", "attachment;filename=experiment_litterbox_"
@@ -639,7 +623,6 @@ public class ExperimentController {
             LOGGER.error("Cannot upload file for experiment with file null!");
             return Constants.ERROR;
         }
-        IdValidator.validateExperimentIdElseThrow(experimentId);
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
                 LocaleContextHolder.getLocale());
@@ -677,8 +660,6 @@ public class ExperimentController {
     @GetMapping("/sb3")
     @Secured(Constants.ROLE_ADMIN)
     public String deleteProjectFile(@RequestParam(ID) final int experimentId) {
-        IdValidator.validateExperimentIdElseThrow(experimentId);
-
         try {
             experimentService.deleteSb3Project(experimentId);
             return REDIRECT_EXPERIMENT + experimentId;

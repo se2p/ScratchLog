@@ -162,7 +162,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     private static final String EMAIL = "participant@part.de";
     private static final String LONG_PASSWORD = StringCreator.createLongString(55);
     private static final String PARTICIPANTS = "participants";
-    private static final String PARTICIPANT1 = "participant1";
     private static final int PAGE = 3;
     private static final int LAST = 4;
     private static final String FILETYPE_SB3 = "application/octet-stream";
@@ -355,14 +354,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetExperimentIdInvalid() {
-        assertInvalidIdException(() -> experimentController.getExperiment(INVALID_ID, model, httpServletRequest));
-        verify(httpServletRequest, never()).isUserInRole(anyString());
-        verify(experimentService, never()).getExperiment(ID);
-        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
-    }
-
-    @Test
     public void testGetExperimentForm() {
         assertEquals(EXPERIMENT_EDIT, experimentController.getExperimentForm(null, model));
         verify(model).addAttribute(anyString(), any());
@@ -372,12 +363,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     public void testGetExperimentFormCourse() {
         assertEquals(EXPERIMENT_EDIT, experimentController.getExperimentForm(ID, model));
         verify(model).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetExperimentFormInvalidCourseId() {
-        assertInvalidIdException(() -> experimentController.getExperimentForm(0, model));
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
@@ -395,13 +380,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         String returnString = experimentController.getEditExperimentForm(ID, model);
         assertEquals(ERROR, returnString);
         verify(experimentService).getExperiment(ID);
-        verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
-    }
-
-    @Test
-    public void testGetExperimentEditFormIdInvalid() {
-        assertInvalidIdException(() -> experimentController.getEditExperimentForm(INVALID_ID, model));
-        verify(experimentService, never()).getExperiment(ID);
         verify(model, never()).addAttribute(EXPERIMENT_DTO, experimentDTO);
     }
 
@@ -622,15 +600,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         assertEquals(ERROR, experimentController.deleteExperiment(passwordDTO, ID));
         verify(authentication).getName();
-        verify(userService, never()).getUser(anyString());
-        verify(userService, never()).matchesPassword(anyString(), anyString());
-        verify(experimentService, never()).deleteExperiment(anyInt());
-    }
-
-    @Test
-    public void testDeleteExperimentInvalidId() {
-        assertInvalidIdException(() -> experimentController.deleteExperiment(passwordDTO, INVALID_ID));
-        verify(authentication, never()).getName();
         verify(userService, never()).getUser(anyString());
         verify(userService, never()).matchesPassword(anyString(), anyString());
         verify(experimentService, never()).deleteExperiment(anyInt());
@@ -987,17 +956,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSearchForUserInvalidId() {
-        assertInvalidIdException(() -> experimentController.searchForUser(PARTICIPANTS, -1, model));
-        verify(experimentService, never()).getExperiment(ID);
-        verify(userService, never()).getUserByUsernameOrEmail(anyString());
-        verify(userService, never()).updateUser(any());
-        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
-        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testGetPage() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
@@ -1031,15 +989,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetNextPageInvalidId() {
-        assertInvalidIdException(() -> experimentController.getPage(INVALID_ID, PAGE, model));
-        verify(experimentService, never()).getExperiment(ID);
-        verify(pageService, never()).getLastParticipantPage(ID);
-        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testGetNextPageInvalidCurrent() {
         assertThrows(InvalidIdException.class, () -> experimentController.getPage(ID, -1, model));
         verify(experimentService, never()).getExperiment(ID);
@@ -1067,13 +1016,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         );
         verify(experimentDataService, never()).getEventData(anyInt());
         verify(httpServletResponse).getWriter();
-    }
-
-    @Test
-    public void testDownloadCSVFileInvalidId() throws IOException {
-        assertInvalidIdException(() -> experimentController.downloadCSVFile(INVALID_ID, httpServletResponse));
-        verify(experimentDataService, never()).getEventData(anyInt());
-        verify(httpServletResponse, never()).getWriter();
     }
 
     @Test
@@ -1133,18 +1075,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsFromCSVInvalidId() {
-        assertInvalidIdException(() -> experimentController.addParticipantsFromCSV(file, INVALID_ID, model));
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).isAdmin(anyString());
-        verify(courseService, never()).saveCourseParticipants(anyInt(), any(), anyBoolean());
-        verify(courseService, never()).getCourseIdForExperiment(anyInt());
-        verify(participantService, never()).saveParticipantsFromCSV(anyInt(), any());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testAddParticipantsFromCSVNoFile() {
         assertEquals(ERROR, experimentController.addParticipantsFromCSV(null, ID, model));
         verify(experimentService, never()).getExperiment(anyInt());
@@ -1175,13 +1105,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         );
         verify(experimentDataService, never()).getLitterBoxAnalysisResults(anyInt());
         verify(httpServletResponse).getWriter();
-    }
-
-    @Test
-    public void testDownloadLitterBoxAnalysisInvalidId() throws IOException {
-        assertInvalidIdException(() -> experimentController.downloadLitterBoxAnalysis(INVALID_ID, httpServletResponse));
-        verify(experimentDataService, never()).getLitterBoxAnalysisResults(anyInt());
-        verify(httpServletResponse, never()).getWriter();
     }
 
     @Test
@@ -1298,17 +1221,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testUploadProjectFileInvalidId() throws IOException {
-        assertInvalidIdException(() -> experimentController.uploadProjectFile(file, INVALID_ID, model));
-        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
-        verify(file, never()).isEmpty();
-        verify(file, never()).getOriginalFilename();
-        verify(file, never()).getContentType();
-        verify(file, never()).getBytes();
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testUploadProjectFileFileNull() throws IOException {
         assertEquals(ERROR, experimentController.uploadProjectFile(null, ID, model));
         verify(experimentService, never()).uploadSb3Project(anyInt(), any());
@@ -1330,12 +1242,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         doThrow(NotFoundException.class).when(experimentService).deleteSb3Project(ID);
         assertEquals(ERROR, experimentController.deleteProjectFile(ID));
         verify(experimentService).deleteSb3Project(ID);
-    }
-
-    @Test
-    public void testDeleteProjectFileInvalidId() {
-        assertInvalidIdException(() -> experimentController.deleteProjectFile(0));
-        verify(experimentService, never()).deleteSb3Project(anyInt());
     }
 
     private List<Participant> getParticipants(int number) {

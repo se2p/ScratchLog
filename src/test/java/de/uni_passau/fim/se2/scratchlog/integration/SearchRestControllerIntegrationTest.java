@@ -273,18 +273,6 @@ public class SearchRestControllerIntegrationTest extends AbstractControllerTest 
     }
 
     @Test
-    public void testGetUserSuggestionsInvalidId() throws Exception {
-        mvc.perform(get("/search/user")
-                .param(QUERY_PARAM, QUERY)
-                .param(ID_PARAM, "0")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
-        verify(searchService, never()).getUserSuggestions(anyString(), anyInt());
-    }
-
-    @Test
     public void testGetUserSuggestionsIdBlank() throws Exception {
         mvc.perform(get("/search/user")
                 .param(QUERY_PARAM, QUERY)
@@ -354,18 +342,6 @@ public class SearchRestControllerIntegrationTest extends AbstractControllerTest 
     }
 
     @Test
-    public void testGetCourseExperimentSuggestionsInvalidParams() throws Exception {
-        mvc.perform(get("/search/course/experiment")
-                        .param(QUERY_PARAM, QUERY)
-                        .param(ID_PARAM, "-1")
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
-        verify(searchService, never()).getCourseExperimentSuggestions(anyString(), anyInt());
-    }
-
-    @Test
     public void testGetCourseParticipantSuggestions() throws Exception {
         when(searchService.getCourseParticipantSuggestions(QUERY, ID)).thenReturn(userData);
         mvc.perform(get("/search/course/participant")
@@ -378,18 +354,6 @@ public class SearchRestControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(jsonPath("$.[0].[0]").value("participant0"))
                 .andExpect(jsonPath("$.[0].[1]").value("participant0@participant.de"));
         verify(searchService).getCourseParticipantSuggestions(QUERY, ID);
-    }
-
-    @Test
-    public void testGetCourseParticipantSuggestionsInvalidParams() throws Exception {
-        mvc.perform(get("/search/course/participant")
-                        .param(QUERY_PARAM, QUERY)
-                        .param(ID_PARAM, "0")
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
-        verify(searchService, never()).getCourseParticipantSuggestions(anyString(), anyInt());
     }
 
     @Test

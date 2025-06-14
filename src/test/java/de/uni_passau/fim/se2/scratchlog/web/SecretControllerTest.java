@@ -141,22 +141,6 @@ public class SecretControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDisplaySecretInvalidUserId() {
-        assertInvalidIdException(() -> secretController.displaySecret(0, ID, model));
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(userService, never()).getUserById(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testDisplaySecretInvalidExperimentId() {
-        assertInvalidIdException(() -> secretController.displaySecret(ID, -1, model));
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(userService, never()).getUserById(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testDisplaySecrets() {
         when(experimentService.getExperiment(ID)).thenReturn(experiment);
         when(userService.findUnfinishedUsers(ID)).thenReturn(users);
@@ -181,14 +165,6 @@ public class SecretControllerTest extends AbstractControllerTest {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         assertEquals(Constants.ERROR, secretController.displaySecrets(ID, model));
         verify(experimentService).getExperiment(ID);
-        verify(userService, never()).findUnfinishedUsers(anyInt());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testDisplaySecretsInvalidId() {
-        assertInvalidIdException(() -> secretController.displaySecrets(0, model));
-        verify(experimentService, never()).getExperiment(anyInt());
         verify(userService, never()).findUnfinishedUsers(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
@@ -220,15 +196,6 @@ public class SecretControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDownloadParticipationLinksUserInvalid() throws IOException {
-        assertInvalidIdException(() -> secretController.downloadParticipationLinks(ID, -1, httpServletResponse));
-        verify(userService, never()).getUserById(anyInt());
-        verify(userService, never()).findUnfinishedUsers(anyInt());
-        verify(httpServletResponse, never()).setStatus(anyInt());
-        verify(httpServletResponse, never()).getWriter();
-    }
-
-    @Test
     public void testDownloadParticipationLinksIO() throws IOException {
         when(userService.findUnfinishedUsers(ID)).thenReturn(users);
         when(httpServletResponse.getWriter()).thenThrow(IOException.class);
@@ -241,14 +208,4 @@ public class SecretControllerTest extends AbstractControllerTest {
         verify(httpServletResponse).getWriter();
     }
 
-    @Test
-    public void testDownloadParticipationLinksInvalidExperimentId() throws IOException {
-        assertInvalidIdException(
-                () -> secretController.downloadParticipationLinks(0, null, httpServletResponse)
-        );
-        verify(userService, never()).getUserById(anyInt());
-        verify(userService, never()).findUnfinishedUsers(anyInt());
-        verify(httpServletResponse, never()).setStatus(anyInt());
-        verify(httpServletResponse, never()).getWriter();
-    }
 }
