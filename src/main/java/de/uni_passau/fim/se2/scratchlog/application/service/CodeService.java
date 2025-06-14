@@ -42,7 +42,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -107,12 +106,7 @@ public class CodeService {
      * @throws IllegalArgumentException if the passed id is invalid or the event does not have any JSON code.
      * @throws NotFoundException if no corresponding block event could be found.
      */
-    @Transactional
     public String findJsonById(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot find block event with invalid id " + id + "!");
-        }
-
         Optional<BlockEvent> projection = blockEventRepository.findById(id);
 
         if (projection.isEmpty()) {
@@ -135,13 +129,7 @@ public class CodeService {
      * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      * @throws NotFoundException if no corresponding user or experiment entry could be found.
      */
-    @Transactional
     public String findFirstJSON(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve the last saved json code for user with invalid id "
-                    + userId + " or experiment with invalid id " + experimentId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -175,13 +163,7 @@ public class CodeService {
      * @throws IllegalArgumentException if the user or experiment ids are invalid.
      * @throws NotFoundException if no JSON data could be found or no corresponding user or experiment could be found.
      */
-    @Transactional
     public List<BlockEventJSONProjection> getJsonForUser(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve json data for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -225,7 +207,6 @@ public class CodeService {
      * @throws IllegalArgumentException if the given end position is bigger than the number of codes or if it is smaller
      * than the start position.
      */
-    @Transactional
     public List<BlockEventJSONProjection> getFilteredJsons(final int userId, final int experimentId, final int steps,
                                                            final int startPosition, final int endPosition,
                                                            final Optional<Sb3ZipDTO> finalProject) {
@@ -264,13 +245,7 @@ public class CodeService {
      * @throws IllegalArgumentException if the user or experiment ids are invalid.
      * @throws NotFoundException if no xml data could be found or no corresponding user or experiment could be found.
      */
-    @Transactional
     public List<BlockEventXMLProjection> getXMLForUser(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve xml data for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -308,14 +283,8 @@ public class CodeService {
      * @throws IllegalArgumentException if the user or experiment ids are invalid or the page size is invalid.
      * @throws NotFoundException if no corresponding user or experiment could be found.
      */
-    @Transactional
     public Page<BlockEventProjection> getCodesForUser(final int userId, final int experimentId,
                                                       final Pageable pageable) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve codes data for user with invalid id " + userId
-                    + " or experiment with invalid id " + experimentId + "!");
-        }
-
         int pageSize = pageable.getPageSize();
         int currentPage = pageable.getPageNumber();
 
