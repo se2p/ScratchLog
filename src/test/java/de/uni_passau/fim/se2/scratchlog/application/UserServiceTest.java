@@ -60,7 +60,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -160,22 +159,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testExistsUserUsernameNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.existsUser(null)
-        );
-        verify(userRepository, never()).existsByUsername(USERNAME);
-    }
-
-    @Test
-    public void testExistsUserUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.existsUser(BLANK)
-        );
-        verify(userRepository, never()).existsByUsername(USERNAME);
-    }
-
-    @Test
     public void testExistsEmail() {
         when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
         assertTrue(userService.existsEmail(EMAIL));
@@ -186,22 +169,6 @@ public class UserServiceTest {
     public void testExistsEmailFalse() {
         assertFalse(userService.existsEmail(EMAIL));
         verify(userRepository).existsByEmail(EMAIL);
-    }
-
-    @Test
-    public void testExistsEmailNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.existsEmail(null)
-        );
-        verify(userRepository, never()).existsByEmail(EMAIL);
-    }
-
-    @Test
-    public void testExistsEmailBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.existsEmail(BLANK)
-        );
-        verify(userRepository, never()).existsByEmail(EMAIL);
     }
 
     @Test
@@ -220,26 +187,6 @@ public class UserServiceTest {
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).existsByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testExistsParticipantUserIdInvalid() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.existsParticipant(-1, ID)
-        );
-        verify(userRepository, never()).getReferenceById(ID);
-        verify(experimentRepository, never()).getReferenceById(ID);
-        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testExistsParticipantExperimentIdInvalid() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.existsParticipant(ID, 0)
-        );
-        verify(userRepository, never()).getReferenceById(ID);
-        verify(experimentRepository, never()).getReferenceById(ID);
-        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
     }
 
     @Test
@@ -360,14 +307,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testGetUserByIdInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.getUserById(0)
-        );
-        verify(userRepository, never()).findById(anyInt());
-    }
-
-    @Test
     public void testGetUserByEmail() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(java.util.Optional.of(user1));
         UserDTO found = userService.getUserByEmail(EMAIL);
@@ -390,22 +329,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testGetUserByEmailBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.getUserByEmail(BLANK)
-        );
-        verify(userRepository, never()).findByEmail(anyString());
-    }
-
-    @Test
-    public void testGetUserByEmailNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.getUserByEmail(null)
-        );
-        verify(userRepository, never()).findByEmail(anyString());
-    }
-
-    @Test
     public void testGetUserByUsernameOrEmail() {
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user1));
         UserDTO found = userService.getUserByUsernameOrEmail(USERNAME);
@@ -421,22 +344,6 @@ public class UserServiceTest {
     public void testGetUserByUsernameOrEmailUserNull() {
         assertNull(userService.getUserByUsernameOrEmail(USERNAME));
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
-    }
-
-    @Test
-    public void testGetUserByUsernameOrEmailBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.getUserByUsernameOrEmail(BLANK)
-        );
-        verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
-    }
-
-    @Test
-    public void testGetUserByUsernameOrEmailNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.getUserByUsernameOrEmail(null)
-        );
-        verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
     }
 
     @Test
@@ -566,15 +473,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testUpdateUserIdInvalid() {
-        userDTO.setId(0);
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.updateUser(userDTO)
-        );
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     public void testUpdateEmail() {
         when(userRepository.findById(ID)).thenReturn(java.util.Optional.of(user1));
         assertDoesNotThrow(() -> userService.updateEmail(ID, EMAIL));
@@ -602,14 +500,6 @@ public class UserServiceTest {
     public void testUpdateEmailBlank() {
         assertThrows(IllegalArgumentException.class,
                 () -> userService.updateEmail(ID, BLANK)
-        );
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testUpdateEmailIdInvalid() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.updateEmail(0, EMAIL)
         );
         verify(userRepository, never()).save(any());
     }
@@ -683,16 +573,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testReactivateUserAccountsInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.reactivateUserAccounts(0)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).findAllByExperimentAndEnd(any(), any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     public void testFindUnfinishedUsers() {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperimentAndEnd(experiment, null)).thenReturn(participants);
@@ -718,35 +598,10 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testFindUnfinishedUsersInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.findUnfinishedUsers(0)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).findAllByExperimentAndEnd(any(), any());
-    }
-
-    @Test
     public void testIsAdmin() {
         when(userRepository.existsByRoleAndUsername(Role.ADMIN, USERNAME)).thenReturn(true);
         assertTrue(userService.isAdmin(USERNAME));
         verify(userRepository).existsByRoleAndUsername(Role.ADMIN, USERNAME);
-    }
-
-    @Test
-    public void testIsAdminUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.isAdmin(BLANK)
-        );
-        verify(userRepository, never()).existsByRoleAndUsername(any(), anyString());
-    }
-
-    @Test
-    public void testIsAdminUsernameNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.isAdmin(null)
-        );
-        verify(userRepository, never()).existsByRoleAndUsername(any(), anyString());
     }
 
     @Test
@@ -777,14 +632,6 @@ public class UserServiceTest {
     public void testDeleteUser() {
         userService.deleteUser(ID);
         verify(userRepository).deleteById(ID);
-    }
-
-    @Test
-    public void testDeleteUserIdInvalid() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.deleteUser(0)
-        );
-        verify(userRepository, never()).deleteById(anyInt());
     }
 
     @Test
