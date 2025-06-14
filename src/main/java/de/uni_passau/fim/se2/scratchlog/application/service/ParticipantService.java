@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -136,13 +137,7 @@ public class ParticipantService {
      * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      * @throws NotFoundException if no corresponding user, experiment or participant entry could be found.
      */
-    @Transactional
     public ParticipantDTO getParticipant(final int experimentId, final int userId) {
-        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for participant with invalid experiment id "
-                    + experimentId + " or invalid user id " + userId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -175,13 +170,7 @@ public class ParticipantService {
      * @return The list of participants.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public List<ParticipantDTO> getParticipants(final int experimentId) {
-        if (experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve participant information for experiment with invalid id "
-                    + experimentId + "!");
-        }
-
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
         return participantRepository.findAllByExperiment(experiment).stream()
                 .map(this::createParticipantDTO).toList();
@@ -199,11 +188,6 @@ public class ParticipantService {
      */
     @Transactional
     public void saveParticipants(final int experimentId, final int courseId) {
-        if (experimentId < Constants.MIN_ID || courseId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot add participants to course experiment with invalid experiment "
-                    + "id " + experimentId + " or invalid course id " + courseId + "!");
-        }
-
         Course course = courseRepository.getReferenceById(courseId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -238,11 +222,6 @@ public class ParticipantService {
      */
     @Transactional
     public void saveParticipantsFromCSV(final int experimentId, final List<UserDTO> users) {
-        if (experimentId < Constants.MIN_ID || users.isEmpty()) {
-            throw new IllegalArgumentException("Cannot add participants to experiment with invalid id " + experimentId
-                    + " or empty user list!");
-        }
-
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
@@ -269,11 +248,6 @@ public class ParticipantService {
      */
     @Transactional
     public void saveParticipant(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot add participant with invalid user id " + userId
-                    + " or invalid experiment id " + experimentId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
         createParticipant(experiment, user);
@@ -288,11 +262,6 @@ public class ParticipantService {
      */
     @Transactional
     public boolean updateParticipant(final ParticipantDTO participantDTO) {
-        if (participantDTO.getExperiment() < Constants.MIN_ID || participantDTO.getUser() < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for participant with invalid experiment id "
-                    + participantDTO.getExperiment() + " or invalid user id " + participantDTO.getUser() + "!");
-        }
-
         User user = userRepository.getReferenceById(participantDTO.getUser());
         Experiment experiment = experimentRepository.getReferenceById(participantDTO.getExperiment());
 
@@ -324,11 +293,6 @@ public class ParticipantService {
      */
     @Transactional
     public void deactivateParticipantAccounts(final int experimentId) {
-        if (experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot find participant data for experiment with invalid id "
-                    + experimentId + "!");
-        }
-
         List<Participant> participants;
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -364,13 +328,7 @@ public class ParticipantService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding user entry could be found.
      */
-    @Transactional
-    public HashMap<Integer, String> getExperimentInfoForParticipant(final int userId) {
-        if (userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot find participant data for user with invalid id "
-                    + userId + "!");
-        }
-
+    public Map<Integer, String> getExperimentInfoForParticipant(final int userId) {
         List<Participant> participants;
         HashMap<Integer, String> experiments = new HashMap<>();
         User user = userRepository.getReferenceById(userId);
@@ -398,11 +356,6 @@ public class ParticipantService {
      */
     @Transactional
     public void deleteParticipant(final int userId, final int experimentId) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot delete participant with invalid user id " + userId
-                    + " or invalid experiment id " + experimentId + "!");
-        }
-
         ParticipantId participantId = new ParticipantId(userId, experimentId);
         participantRepository.deleteById(participantId);
     }
@@ -415,13 +368,7 @@ public class ParticipantService {
      * @throws IllegalArgumentException if the passed user id is invalid.
      * @throws NotFoundException if no corresponding user entry could be found.
      */
-    @Transactional
     public boolean simultaneousParticipation(final int userId) {
-        if (userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for experiment participation for user with invalid id "
-                    + userId + "!");
-        }
-
         User user = userRepository.getReferenceById(userId);
 
         try {
@@ -444,13 +391,9 @@ public class ParticipantService {
      * @return {@code true} if the user is a participant with the given secret or {@code false} otherwise.
      * @throws IllegalArgumentException if the passed secret, user or experiment id are invalid.
      */
-    @Transactional
     public boolean isInvalidParticipant(final int userId, final int experimentId, final String secret,
                                         final boolean userActive) {
-        if (userId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot verify participant with invalid user id " + userId
-                    + " or invalid experiment id " + experimentId + "!");
-        } else if (secret == null || secret.trim().isBlank()) {
+        if (secret == null || secret.trim().isBlank()) {
             throw new IllegalArgumentException("Cannot verify participant with secret null or blank!");
         }
 

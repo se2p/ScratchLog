@@ -49,8 +49,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -180,26 +180,6 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testGetParticipantInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.getParticipant(ID, 0)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testGetParticipantInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.getParticipant(-1, ID)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
-    }
-
-    @Test
     public void testGetParticipants() {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
         when(participantRepository.findAllByExperiment(experiment1)).thenReturn(participantList);
@@ -210,15 +190,6 @@ public class ParticipantServiceTest {
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperiment(experiment1);
-    }
-
-    @Test
-    public void testGetParticipantsInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.getParticipants(0)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).findAllByExperiment(any());
     }
 
     @Test
@@ -306,19 +277,6 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testSaveParticipantsInvalidIds() {
-        assertAll(
-                () -> assertThrows(IllegalArgumentException.class, () -> participantService.saveParticipants(0, ID)),
-                () -> assertThrows(IllegalArgumentException.class, () -> participantService.saveParticipants(ID, -1))
-        );
-        verify(courseRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(courseParticipantRepository, never()).findAllByCourse(any());
-        verify(participantRepository, never()).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     public void testSaveParticipantsFromCSV() {
         user.setActive(true);
         user.setSecret(null);
@@ -399,28 +357,6 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testSaveParticipantsFromCSVNoParticipants() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.saveParticipantsFromCSV(ID, new ArrayList<>())
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(userRepository, never()).findUserByUsername(anyString());
-        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveParticipantsFromCSVInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.saveParticipantsFromCSV(0, users)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(userRepository, never()).findUserByUsername(anyString());
-        verify(participantRepository, never()).existsByUserAndExperiment(any(), any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     public void testSaveParticipant() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
@@ -453,17 +389,6 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testSaveParticipantInvalidIds() {
-        assertAll(
-                () -> assertThrows(IllegalArgumentException.class, () -> participantService.saveParticipant(ID, 0)),
-                () -> assertThrows(IllegalArgumentException.class, () -> participantService.saveParticipant(-1, ID))
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).save(any());
-    }
-
-    @Test
     public void testUpdateParticipant() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
@@ -493,28 +418,6 @@ public class ParticipantServiceTest {
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).save(any());
-    }
-
-    @Test
-    public void testUpdateParticipantInvalidUserId() {
-        participantDTO.setUser(-1);
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.updateParticipant(participantDTO)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).save(any());
-    }
-
-    @Test
-    public void testUpdateParticipantInvalidExperimentId() {
-        participantDTO.setExperiment(0);
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.updateParticipant(participantDTO)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).save(any());
     }
 
     @Test
@@ -569,21 +472,10 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testDeactivateParticipantAccountsInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.deactivateParticipantAccounts(0)
-        );
-        verify(experimentRepository, never()).getReferenceById(ID);
-        verify(participantRepository, never()).findAllByExperiment(experiment1);
-        verify(userRepository, never()).findById(any(Integer.class));
-        verify(userRepository, never()).save(user);
-    }
-
-    @Test
     public void testGetExperimentIdsForParticipant() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(participantRepository.findAllByUser(user)).thenReturn(participantList);
-        HashMap<Integer, String> experiments = participantService.getExperimentInfoForParticipant(ID);
+        Map<Integer, String> experiments = participantService.getExperimentInfoForParticipant(ID);
         assertAll(
                 () -> assertEquals(5, experiments.size()),
                 () -> assertTrue(experiments.containsKey(1)),
@@ -613,34 +505,9 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testGetExperimentIdsForParticipantIdInvalid() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.getExperimentInfoForParticipant(0)
-        );
-        verify(userRepository, never()).getReferenceById(ID);
-        verify(participantRepository, never()).findAllByUser(user);
-    }
-
-    @Test
     public void testDeleteParticipant() {
         assertDoesNotThrow(() -> participantService.deleteParticipant(ID, ID));
         verify(participantRepository).deleteById(any());
-    }
-
-    @Test
-    public void testDeleteParticipantInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.deleteParticipant(0, ID)
-        );
-        verify(participantRepository, never()).deleteById(any());
-    }
-
-    @Test
-    public void testDeleteParticipantInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.deleteParticipant(ID, -1)
-        );
-        verify(participantRepository, never()).deleteById(any());
     }
 
     @Test
@@ -672,15 +539,6 @@ public class ParticipantServiceTest {
         );
         verify(userRepository).getReferenceById(ID);
         verify(participantRepository).findAllByEndIsNullAndUser(user);
-    }
-
-    @Test
-    public void testSimultaneousParticipationInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.simultaneousParticipation(0)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).findAllByEndIsNullAndUser(any());
     }
 
     @Test
@@ -777,26 +635,6 @@ public class ParticipantServiceTest {
     public void testIsInvalidParticipantSecretNull() {
         assertThrows(IllegalArgumentException.class,
                 () -> participantService.isInvalidParticipant(ID, ID, null, true)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testIsInvalidParticipantInvalidExperimentId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.isInvalidParticipant(ID, 0, SECRET, true)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(participantRepository, never()).findByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testIsInvalidParticipantInvalidUserId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> participantService.isInvalidParticipant(-9, ID, SECRET, true)
         );
         verify(userRepository, never()).getReferenceById(anyInt());
         verify(experimentRepository, never()).getReferenceById(anyInt());

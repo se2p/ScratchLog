@@ -615,7 +615,7 @@ public class UserController {
         }
 
         UserDTO userDTO;
-        HashMap<Integer, String> experiments = new HashMap<>();
+        Map<Integer, String> experiments = new HashMap<>();
 
         if (username == null || username.trim().isBlank() || !httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             try {
