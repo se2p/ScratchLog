@@ -136,12 +136,7 @@ public class CourseService {
      * @return {@code true} iff a course with the given id was found.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public boolean existsActiveCourse(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check for existing course with invalid id " + id + "!");
-        }
-
         try {
             Course course = courseRepository.getReferenceById(id);
             return course.isActive();
@@ -157,12 +152,7 @@ public class CourseService {
      * @return {@code true} iff a course with the given title was found.
      * @throws IllegalArgumentException if the passed title is null or blank.
      */
-    @Transactional
     public boolean existsCourse(final String title) {
-        if (title == null || title.trim().isBlank()) {
-            throw new IllegalArgumentException("Cannot check for existing course with title null or blank!");
-        }
-
         return courseRepository.existsByTitle(title);
     }
 
@@ -174,13 +164,7 @@ public class CourseService {
      * @return {@code true} if such a course exists, or {@code false} if not.
      * @throws IllegalArgumentException if the passed title is null or blank or the id is invalid.
      */
-    @Transactional
     public boolean existsCourse(final int id, final String title) {
-        if (title == null || title.trim().isBlank() || id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check for existing course without a title or invalid id " + id
-                    + "!");
-        }
-
         Optional<Course> course = courseRepository.findByTitle(title);
 
         if (course.isEmpty()) {
@@ -199,13 +183,7 @@ public class CourseService {
      * @return {@code true} if such an entry exists, or {@code false} if not.
      * @throws IllegalArgumentException if the experiment title is null or blank or the course id is invalid.
      */
-    @Transactional
     public boolean existsCourseExperiment(final int courseId, final String experimentTitle) {
-        if (experimentTitle == null || experimentTitle.trim().isBlank() || courseId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check for an existing course experiment without an experiment "
-                    + "title or an invalid course id " + courseId + "!");
-        }
-
         Course course = courseRepository.getReferenceById(courseId);
         Optional<Experiment> experiment = experimentRepository.findByTitle(experimentTitle);
 
@@ -226,13 +204,7 @@ public class CourseService {
      * @return {@code true} if such an entry exists, or {@code false} if not.
      * @throws IllegalArgumentException if the given username or email is null or blank or the course id is invalid.
      */
-    @Transactional
     public boolean existsCourseParticipant(final int courseId, final String input) {
-        if (input == null || input.trim().isBlank() || courseId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check for existing course participant without an search string "
-                    + "or an invalid course id " + courseId + "!");
-        }
-
         Course course = courseRepository.getReferenceById(courseId);
         Optional<User> user = userRepository.findUserByUsernameOrEmail(input, input);
 
@@ -253,13 +225,7 @@ public class CourseService {
      * @return {@code true} if such an entry exists, or {@code false} if not.
      * @throws IllegalArgumentException if the experiment or user ids are invalid.
      */
-    @Transactional
     public boolean existsCourseParticipant(final int experimentId, final int userId) {
-        if (experimentId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check for existing course participant with invalid user id "
-                    + userId + " or invalid experiment id " + experimentId + "!");
-        }
-
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
         User user = userRepository.getReferenceById(userId);
 
@@ -283,13 +249,7 @@ public class CourseService {
      * @return {@code true} if the course contains an inactive experiment, or {@code false} otherwise.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public boolean existsInactiveExperiment(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check if any inactive experiments exist for a course with "
-                    + "invalid id " + id + "!");
-        }
-
         Course course = courseRepository.getReferenceById(id);
 
         try {
@@ -308,13 +268,7 @@ public class CourseService {
      * @return The course status.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    @Transactional
     public boolean isActiveCourse(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot check if course is active for course experiment with invalid id "
-                    + id + "!");
-        }
-
         return getCourseForExperiment(id).getCourse().isActive();
     }
 
@@ -339,10 +293,6 @@ public class CourseService {
         Course course = createCourse(courseDTO);
         course = courseRepository.save(course);
 
-        if (course.getId() == null || course.getId() < Constants.MIN_ID) {
-            throw new StoreException("Failed to store course with title " + course.getTitle() + "!");
-        }
-
         return course.getId();
     }
 
@@ -355,10 +305,6 @@ public class CourseService {
      */
     @Transactional
     public void deleteCourse(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot delete course with invalid id " + id);
-        }
-
         Course course = courseRepository.getReferenceById(id);
 
         try {
@@ -390,11 +336,6 @@ public class CourseService {
     @Transactional
     public void saveCourseParticipants(final int courseId, final List<UserDTO> participants,
                                        final boolean addToExperiments) {
-        if (courseId < Constants.MIN_ID || participants.isEmpty()) {
-            throw new IllegalArgumentException("Cannot add participants to course with participant list empty or "
-                    + "invalid course id!");
-        }
-
         Course course = courseRepository.getReferenceById(courseId);
 
         for (UserDTO participant : participants) {
@@ -419,9 +360,8 @@ public class CourseService {
      */
     @Transactional
     public int saveCourseParticipant(final int courseId, final String participant) {
-        if (participant == null || participant.trim().isBlank() || courseId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot save course participant with participant null or blank or "
-                    + "invalid course id!");
+        if (participant == null || participant.trim().isBlank()) {
+            throw new IllegalArgumentException("Cannot save course participant with participant null or blank!");
         }
 
         Course course = courseRepository.getReferenceById(courseId);
@@ -440,11 +380,6 @@ public class CourseService {
      */
     @Transactional
     public void deleteCourseParticipant(final int courseId, final String participant) {
-        if (participant == null || participant.trim().isBlank() || courseId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot delete course experiment with participant null or blank or "
-                    + "invalid course id!");
-        }
-
         Course course = courseRepository.getReferenceById(courseId);
         Optional<User> user = userRepository.findUserByUsernameOrEmail(participant, participant);
 
@@ -483,9 +418,8 @@ public class CourseService {
      */
     @Transactional
     public void deleteCourseParticipants(final int courseId, final List<String> participants) {
-        if (courseId < Constants.MIN_ID || participants == null) {
-            throw new IllegalArgumentException("Cannot delete participants from course with null participants or"
-                + " invalid course ID!");
+        if (participants == null) {
+            throw new IllegalArgumentException("Cannot delete participants from course with null participants!");
         }
 
         participants.forEach(participant -> deleteCourseParticipant(courseId, participant));
@@ -502,11 +436,6 @@ public class CourseService {
      */
     @Transactional
     public void saveCourseExperiment(final int courseId, final int experimentId) {
-        if (courseId < Constants.MIN_ID || experimentId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot save course experiment with invalid course id " + courseId
-                    + " or experiment id " + experimentId + "!");
-        }
-
         Course course = courseRepository.getReferenceById(courseId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
         persistCourseExperiment(course, experiment);
@@ -523,11 +452,6 @@ public class CourseService {
      */
     @Transactional
     public void deleteCourseExperiment(final int courseId, final String experimentTitle) {
-        if (experimentTitle == null || experimentTitle.trim().isBlank() || courseId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot delete course experiment with experiment title null or blank or "
-                    + "invalid course id!");
-        }
-
         Course course = courseRepository.getReferenceById(courseId);
         Optional<Experiment> experiment = experimentRepository.findByTitle(experimentTitle);
 
@@ -562,11 +486,6 @@ public class CourseService {
      */
     @Transactional
     public void addParticipantToCourseExperiments(final int courseId, final int userId) {
-        if (courseId < Constants.MIN_ID || userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot add participant to course experiment with invalid course id "
-                    + courseId + " or invalid user id " + userId);
-        }
-
         Course course = courseRepository.getReferenceById(courseId);
         User user = userRepository.getReferenceById(userId);
 
@@ -597,12 +516,7 @@ public class CourseService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding course entry could be found.
      */
-    @Transactional
     public CourseDTO getCourse(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for course with invalid id " + id + "!");
-        }
-
         Optional<Course> course = courseRepository.findById(id);
 
         if (course.isEmpty()) {
@@ -622,12 +536,7 @@ public class CourseService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding experiment or course could be found.
      */
-    @Transactional
     public int getCourseIdForExperiment(final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot search for experiment with invalid id " + id + "!");
-        }
-
         return getCourseForExperiment(id).getCourse().getId();
     }
 
@@ -644,10 +553,6 @@ public class CourseService {
      */
     @Transactional
     public CourseDTO changeCourseStatus(final boolean status, final int id) {
-        if (id < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot update status for course with invalid id " + id + "!");
-        }
-
         Course course = courseRepository.getReferenceById(id);
 
         try {
