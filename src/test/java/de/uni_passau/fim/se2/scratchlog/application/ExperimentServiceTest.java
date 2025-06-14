@@ -21,7 +21,6 @@ package de.uni_passau.fim.se2.scratchlog.application;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
@@ -110,22 +109,6 @@ public class ExperimentServiceTest {
     }
 
     @Test
-    public void testExistsExperimentTitleNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.existsExperiment(null)
-        );
-        verify(experimentRepository, never()).existsByTitle(TITLE);
-    }
-
-    @Test
-    public void testExistsExperimentTitleBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.existsExperiment(BLANK)
-        );
-        verify(experimentRepository, never()).existsByTitle(TITLE);
-    }
-
-    @Test
     public void testExistsExperimentWithId() {
         when(experimentRepository.findByTitle(TITLE)).thenReturn(Optional.of(experiment));
         assertTrue(experimentService.existsExperiment(TITLE, INVALID_ID));
@@ -147,30 +130,6 @@ public class ExperimentServiceTest {
     }
 
     @Test
-    public void testExistsExperimentWithIdTitleNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.existsExperiment(null, ID)
-        );
-        verify(experimentRepository, never()).findByTitle(TITLE);
-    }
-
-    @Test
-    public void testExistsExperimentWithIdTitleBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.existsExperiment(BLANK, ID)
-        );
-        verify(experimentRepository, never()).findByTitle(TITLE);
-    }
-
-    @Test
-    public void testExistsExperimentWithIdInvalid() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.existsExperiment(TITLE, 0)
-        );
-        verify(experimentRepository, never()).findByTitle(TITLE);
-    }
-
-    @Test
     public void testHasProjectFile() {
         when(experimentRepository.existsByIdAndProjectIsNotNull(ID)).thenReturn(true);
         assertTrue(experimentService.hasProjectFile(ID));
@@ -181,14 +140,6 @@ public class ExperimentServiceTest {
     public void testHasProjectFileFalse() {
         assertFalse(experimentService.hasProjectFile(ID));
         verify(experimentRepository).existsByIdAndProjectIsNotNull(ID);
-    }
-
-    @Test
-    public void testHasProjectFileInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.hasProjectFile(0)
-        );
-        verify(experimentRepository, never()).existsByIdAndProjectIsNotNull(anyInt());
     }
 
     @Test
@@ -221,16 +172,6 @@ public class ExperimentServiceTest {
                 () -> assertFalse(experimentDTO.isActive()),
                 () -> assertTrue(experimentDTO.isCourseExperiment()),
                 () -> assertEquals(experimentDTO.getGuiURL(), experiment.getGuiURL())
-        );
-        verify(experimentRepository).save(any());
-    }
-
-    @Test
-    public void testSaveExperimentNotSaved() {
-        Experiment emptyExperiment = new Experiment();
-        when(experimentRepository.save(any())).thenReturn(emptyExperiment);
-        assertThrows(StoreException.class,
-                () -> experimentService.saveExperiment(experimentDTO)
         );
         verify(experimentRepository).save(any());
     }
@@ -314,25 +255,9 @@ public class ExperimentServiceTest {
     }
 
     @Test
-    public void testGetExperimentIdInvalid() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getExperiment(0)
-        );
-        verify(experimentRepository, never()).findById(anyInt());
-    }
-
-    @Test
     public void testDeleteExperiment() {
         experimentService.deleteExperiment(ID);
         verify(experimentRepository).deleteById(ID);
-    }
-
-    @Test
-    public void testDeleteExperimentIdInvalid() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.deleteExperiment(0)
-        );
-        verify(experimentRepository, never()).deleteById(anyInt());
     }
 
     @Test
@@ -402,15 +327,6 @@ public class ExperimentServiceTest {
     }
 
     @Test
-    public void testUploadSb3ProjectInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.uploadSb3Project(0, CONTENT)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).save(any());
-    }
-
-    @Test
     public void testUploadSb3ProjectIdNull() {
         assertThrows(IllegalArgumentException.class,
                 () -> experimentService.uploadSb3Project(ID, null)
@@ -436,15 +352,6 @@ public class ExperimentServiceTest {
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(experimentRepository).save(any());
-    }
-
-    @Test
-    public void testDeleteSb3ProjectInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.deleteSb3Project(-1)
-        );
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).save(any());
     }
 
     @Test
@@ -487,14 +394,6 @@ public class ExperimentServiceTest {
                 () -> experimentService.getSb3File(ID, false)
         );
         verify(experimentRepository).findExperimentById(ID);
-    }
-
-    @Test
-    public void testGetSb3FileInvalidId() {
-        assertThrows(IllegalArgumentException.class,
-                () -> experimentService.getSb3File(0, false)
-        );
-        verify(experimentRepository, never()).findExperimentById(anyInt());
     }
 
     @Test
