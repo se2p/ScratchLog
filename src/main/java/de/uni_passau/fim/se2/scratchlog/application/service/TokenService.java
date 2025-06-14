@@ -106,9 +106,7 @@ public class TokenService {
      */
     @Transactional
     public TokenDTO generateToken(final TokenType type, final String metadata, final int userId) {
-        if (userId < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot generate token with invalid user id " + userId + "!");
-        } else if (type == null) {
+        if (type == null) {
             throw new IllegalArgumentException("Cannot generate token with type null " + "!");
         }
 
@@ -139,7 +137,6 @@ public class TokenService {
      * @throws IllegalArgumentException if the passed value is null or blank.
      * @throws NotFoundException if no corresponding token could be found.
      */
-    @Transactional
     public TokenDTO findToken(final String value) {
         if (value == null || value.trim().isBlank()) {
             throw new IllegalArgumentException("Cannot search for token with null or empty value!");
