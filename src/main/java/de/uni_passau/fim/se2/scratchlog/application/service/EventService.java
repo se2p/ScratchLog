@@ -40,7 +40,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantReposi
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.QuestionEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ResourceEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
-import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.LibraryResource;
 import de.uni_passau.fim.se2.scratchlog.web.dto.BlockEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ClickEventDTO;
@@ -295,13 +294,7 @@ public class EventService {
      * @return A list of event count DTOs with the block event counts.
      * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      */
-    @Transactional
     public List<EventCountDTO> getBlockEventCounts(final int user, final int experiment) {
-        if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve block event count for user with invalid id " + user
-                    + " or experiment with invalid id " + experiment + "!");
-        }
-
         List<EventCount> blockEvents = eventCountRepository.findAllBlockEventsByUserAndExperiment(user, experiment);
         return createEventCountDTOList(blockEvents);
     }
@@ -314,13 +307,7 @@ public class EventService {
      * @return A list of event count DTOs with the click event counts.
      * @throws IllegalArgumentException if the user or experiment ids are invalid.
      */
-    @Transactional
     public List<EventCountDTO> getClickEventCounts(final int user, final int experiment) {
-        if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve click event count for user with invalid id " + user
-                    + " or experiment with invalid id " + experiment + "!");
-        }
-
         List<EventCount> clickEvents = eventCountRepository.findAllClickEventsByUserAndExperiment(user, experiment);
         return createEventCountDTOList(clickEvents);
     }
@@ -333,13 +320,7 @@ public class EventService {
      * @return A list of event count DTOs with the resource event counts.
      * @throws IllegalArgumentException if the user or experiment ids are invalid.
      */
-    @Transactional
     public List<EventCountDTO> getResourceEventCounts(final int user, final int experiment) {
-        if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve resource event count for user with invalid id " + user
-                    + " or experiment with invalid id " + experiment + "!");
-        }
-
         List<EventCount> resourceEvents = eventCountRepository.findAllResourceEventsByUserIdAndExperimentId(user,
                 experiment);
         return createEventCountDTOList(resourceEvents);
@@ -353,13 +334,7 @@ public class EventService {
      * @return The {@link CodesData}, or {@code null}, if no corresponding data could be found.
      * @throws IllegalArgumentException if the user or experiment ids are invalid.
      */
-    @Transactional
     public CodesDataDTO getCodesData(final int user, final int experiment) {
-        if (user < Constants.MIN_ID || experiment < Constants.MIN_ID) {
-            throw new IllegalArgumentException("Cannot retrieve codes data for user with invalid id " + user
-                    + " or experiment with invalid id " + experiment + "!");
-        }
-
         Optional<CodesData> codesData = codesDataRepository.findByUserAndExperiment(user, experiment);
 
         if (codesData.isEmpty()) {
