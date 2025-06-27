@@ -35,6 +35,16 @@ public enum ClickEventSpecific {
     STOPALL,
 
     /**
+     * The user startet the test-execution.
+     */
+    START_TESTS,
+
+    /**
+     * The user startet the next Step.
+     */
+    NEXT_STEP,
+
+    /**
      * The user clicked on a block.
      */
     STACKCLICK,
