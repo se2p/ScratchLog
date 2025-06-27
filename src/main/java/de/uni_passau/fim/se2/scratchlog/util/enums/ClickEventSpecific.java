@@ -35,12 +35,12 @@ public enum ClickEventSpecific {
     STOPALL,
 
     /**
-     * The user startet the test-execution.
+     * The user started the test execution.
      */
     START_TESTS,
 
     /**
-     * The user startet the next Step.
+     * The user started the next tutorial step.
      */
     NEXT_STEP,
 
