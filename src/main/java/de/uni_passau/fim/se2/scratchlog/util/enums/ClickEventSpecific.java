@@ -45,9 +45,9 @@ public enum ClickEventSpecific {
     NEXT_STEP,
 
     /**
-     * The user opened the help-Menu for a specific test.
+     * The user opened the help menu for a specific test.
      */
-    OPEN_HELP,
+    OPEN_HELP_PAGE,
 
     /**
      * The user clicked the button to generate a new hint.
