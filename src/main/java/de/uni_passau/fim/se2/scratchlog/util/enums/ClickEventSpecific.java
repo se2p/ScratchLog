@@ -45,6 +45,16 @@ public enum ClickEventSpecific {
     NEXT_STEP,
 
     /**
+     * The user opened the help-Menu for a specific test.
+     */
+    OPEN_HELP,
+
+    /**
+     * The user clicked the button to generate a new hint.
+     */
+    GENERATE_NEW_HINT,
+
+    /**
      * The user clicked on a block.
      */
     STACKCLICK,
