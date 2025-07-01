@@ -120,7 +120,7 @@
         </module>
         <module name="JavadocType"/>
         <module name="JavadocVariable">
-            <property name="excludeScope" value="private"/>
+            <property name="accessModifiers" value="public,protected,package"/>
         </module>
         <module name="JavadocStyle"/>
         <module name="MissingJavadocMethod">
