@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.web;
 
-import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
@@ -36,8 +35,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.ui.Model;
 
 import java.io.IOException;
@@ -64,10 +63,10 @@ public class SecretControllerTest extends AbstractControllerTest {
     @Autowired
     private SecretController secretController;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private ExperimentService experimentService;
 
     @Mock

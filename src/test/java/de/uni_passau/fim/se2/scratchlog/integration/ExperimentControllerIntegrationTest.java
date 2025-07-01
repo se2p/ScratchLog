@@ -58,6 +58,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -101,25 +102,25 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     @Autowired
     private WebApplicationContext webApplicationContext;
 
-    @MockBean
+    @MockitoBean
     private ExperimentService experimentService;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private CourseService courseService;
 
-    @MockBean
+    @MockitoBean
     private ParticipantService participantService;
 
-    @MockBean
+    @MockitoBean
     private PageService pageService;
 
-    @MockBean
+    @MockitoBean
     private MailService mailService;
 
-    @MockBean
+    @MockitoBean
     private ExperimentDataService experimentDataService;
 
     private static final String TITLE = "My Experiment";

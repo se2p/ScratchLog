@@ -28,9 +28,9 @@ import de.uni_passau.fim.se2.scratchlog.web.AbstractControllerTest;
 import de.uni_passau.fim.se2.scratchlog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityTestConfig.class)
 public class DashboardRestControllerIntegrationTest extends AbstractControllerTest {
 
-    @MockBean
+    @MockitoBean
     private DashboardService dashboardService;
 
     private static final String ID_STRING = "5";

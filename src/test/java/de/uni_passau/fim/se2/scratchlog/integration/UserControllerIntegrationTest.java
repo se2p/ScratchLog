@@ -42,13 +42,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -90,19 +90,19 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private ParticipantService participantService;
 
-    @MockBean
+    @MockitoBean
     private TokenService tokenService;
 
-    @MockBean
+    @MockitoBean
     private MailService mailService;
 
-    @MockBean
+    @MockitoBean
     private CustomAuthenticationProvider authenticationProvider;
 
     private static final String USERNAME = "admin";

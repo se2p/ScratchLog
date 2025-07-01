@@ -45,13 +45,13 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.File;
@@ -86,25 +86,25 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private ExperimentService experimentService;
 
-    @MockBean
+    @MockitoBean
     private ExperimentDataService experimentDataService;
 
-    @MockBean
+    @MockitoBean
     private EventService eventService;
 
-    @MockBean
+    @MockitoBean
     private CodeService codeService;
 
-    @MockBean
+    @MockitoBean
     private FileService fileService;
 
-    @MockBean
+    @MockitoBean
     private ParticipantService participantService;
 
     @SpyBean

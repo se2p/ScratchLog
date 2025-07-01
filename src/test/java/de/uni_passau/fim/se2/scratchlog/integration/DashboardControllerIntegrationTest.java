@@ -30,10 +30,10 @@ import de.uni_passau.fim.se2.scratchlog.web.controller.DashboardController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import static org.hamcrest.Matchers.notNullValue;
@@ -53,7 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 public class DashboardControllerIntegrationTest extends AbstractControllerTest {
 
-    @MockBean
+    @MockitoBean
     private DashboardService dashboardService;
 
     private static final String DASHBOARD = "dashboard";

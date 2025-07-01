@@ -44,7 +44,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -52,6 +51,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.ModelAndView;
@@ -79,19 +79,19 @@ public class HomeControllerTest extends AbstractControllerTest {
     @Autowired
     private HomeController homeController;
 
-    @MockBean
+    @MockitoBean
     private ExperimentService experimentService;
 
-    @MockBean
+    @MockitoBean
     private PageService pageService;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private ParticipantService participantService;
 
-    @MockBean
+    @MockitoBean
     private TokenService tokenService;
 
     @Mock
