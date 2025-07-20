@@ -8,4 +8,10 @@
     "prConcurrentLimit": 0,
     "semanticCommits": "enabled",
     "semanticCommitScope": "chore",
+    "packageRules": [
+        {
+            "matchUpdateTypes": ["major"],
+            "dependencyDashboardApproval": true,
+        },
+    ],
 }
