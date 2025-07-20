@@ -1,0 +1,11 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "config:recommended",
+        "group:allNonMajor"
+    ],
+    "rebaseWhen": "conflicted",
+    "prConcurrentLimit": 0,
+    "semanticCommits": "enabled",
+    "semanticCommitScope": "chore",
+}
