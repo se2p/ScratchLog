@@ -13,131 +13,122 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
+<div class="container mb-4 mt-4">
 
-        <!-- The error message shown at the top of the page when the password is invalid. -->
-        <div class="row" th:if="${param.invalid != null}">
-            <div class="col-12 alert alert-danger" th:text="#{invalid_password}"></div>
+    <!-- Profile Actions card -->
+    <div class="card mb-4">
+        <div class="bg-holder d-md block bg-card"
+             style="background-image: url(/img/corner-4.png)"></div>
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-3 h2">
+                    <span th:text="#{profile_of}"></span> <span th:text="${userDTO.username}"></span>
+                </h1>
+                <span th:if="${userDTO.role == T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).ADMIN}"
+                      th:text="#{admin}" class="text-danger"></span>
+            </div>
+            <div style="z-index: 1">
+                <a class="btn btn-primary me-2" th:text="#{edit}" th:href="@{/users/edit(name=${userDTO.username})}"
+                   sec:authorize="hasRole('PARTICIPANT')"></a>
+                <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}"
+                       sec:authorize="hasRole('ADMIN')">
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Card -->
+    <div class="card mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <i th:class="${userDTO.active} ? 'fa fa-lock-open text-success fa-2x' : 'fa fa-lock text-danger fa-2x'" aria-hidden="true"></i>
+                <span class="ms-2" th:text="${userDTO.active} ? #{activated} : #{inactive}"></span>
+            </div>
+            <div sec:authorize="hasRole('ADMIN')">
+                <a class="btn btn-primary" th:text="${userDTO.active} ? #{deactivate} : #{activate}"
+                   th:href="@{/users/active(id=${userDTO.id})}"></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts Card -->
+    <div th:if="${param.invalid != null || param.update != null || param.lastAdmin != null}" class="card mb-4">
+        <div class="card-body">
+            <div th:if="${param.invalid != null}" class="alert alert-danger" th:text="#{invalid_password}"></div>
+            <div th:if="${param.update != null}" class="alert alert-warning" th:text="#{change_email_verify}"></div>
+            <div th:if="${param.lastAdmin != null}" class="alert alert-danger" th:text="#{delete_last_admin}"></div>
+        </div>
+    </div>
+
+    <!-- Profile Information Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{profile_info}"></h5>
         </div>
 
-        <!-- The warning message shown at the top of the page when updating the email address. -->
-        <div class="row" th:if="${param.update != null}">
-            <div class="col-12 alert alert-warning" th:text="#{change_email_verify}"></div>
-        </div>
+        <div class="card-body">
+            <!-- Username Information -->
+            <div class="row mb-3">
+                <div class="col-auto">
+                    <i class="fa fa-user-circle fa-3x" aria-hidden="true"></i>
+                </div>
+                <div class="col">
+                    <div class="fs-5" th:text="${userDTO.username}"></div>
+                    <div class="text-muted" th:text="#{username}"></div>
+                </div>
+            </div>
 
-        <!-- The error message shown at the top of the page when trying to delete the last administrator. -->
-        <div class="row" th:if="${param.lastAdmin != null}">
-            <div class="col-12 alert alert-danger" th:text="#{delete_last_admin}"></div>
-        </div>
+            <!-- Email Information -->
+            <div class="row mb-3">
+                <div class="col-auto">
+                    <i class="fa fa-envelope fa-3x" aria-hidden="true"></i>
+                </div>
+                <div class="col">
+                    <div th:if="${userDTO.email != null}" class="fs-5" th:text="${userDTO.email}"></div>
+                    <div th:unless="${userDTO.email != null}" class="text-muted" th:text="#{no_email}"></div>
+                    <div class="text-muted" th:text="#{email}"></div>
+                </div>
+            </div>
 
-        <!-- The buttons to edit and delete the profile. -->
-        <div class="d-flex justify-content-between mb-3">
-            <a class="btn btn-primary" th:text="#{edit}" th:href="@{/users/edit(name=${userDTO.username})}"
-               sec:authorize="hasRole('PARTICIPANT')"></a>
-            <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}"
-                   sec:authorize="hasRole('ADMIN')">
+            <!-- Language Information -->
+            <div class="row mb-3">
+                <div class="col-auto">
+                    <i class="fa fa-flag fa-3x" aria-hidden="true"></i>
+                </div>
+                <div class="col">
+                    <div class="fs-5" th:text="${language}"></div>
+                    <div class="text-muted" th:text="#{language}"></div>
+                </div>
+            </div>
         </div>
-
-        <!-- The profile page heading. -->
-        <h2 class="mb-3">
-            <span th:text="#{profile_of}"></span>
-            <span th:text="${userDTO.username}"></span>
-        </h2>
+    </div>
 
         <!-- The administrator profile information. -->
         <!--suppress ThymeleafVariablesResolveInspection -->
-        <div class="row mb-5" th:if="${userDTO.role == T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).ADMIN}">
-            <div class="text-danger fs-5" th:text="#{admin}"></div>
+<!--        <div class="row mb-5" th:if="${userDTO.role == T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).ADMIN}">-->
+<!--            <div class="text-danger fs-5" th:text="#{admin}"></div>-->
+<!--        </div>-->
+
+    <!-- Experiments Card -->
+    <div class="card mb-4" th:if="${userDTO.role == T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).PARTICIPANT}">
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{experiments}"></h5>
         </div>
 
-        <!-- The profile activation status information and the button to activate or deactivate the profile. -->
-        <!--suppress ThymeleafVariablesResolveInspection -->
-        <div class="row mb-3">
-            <div class="col-9" th:if="${userDTO.active}">
-                <i aria-hidden="true" class="fa fa-lock-open fa-2x" title="Participant profile inactive"></i>
-                <span class="text-muted ms-1" th:text="#{activated}"></span>
-            </div>
-            <div class="col-9" th:unless="${userDTO.active}">
-                <i aria-hidden="true" class="fa fa-lock fa-2x" title="Participant profile active"></i>
-                <span class="text-muted ms-1" th:text="#{inactive}"></span>
-            </div>
-            <div class="col-3 text-end" sec:authorize="hasRole('ADMIN')">
-                <a class="btn btn-primary" th:text="#{deactivate}" th:if="${userDTO.active
-                and userDTO.role != T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).ADMIN}"
-                   th:href="@{/users/active(id=${userDTO.id})}"></a>
-                <a class="btn btn-primary" th:text="#{activate}" th:unless="${userDTO.active}"
-                   th:href="@{/users/active(id=${userDTO.id})}"></a>
-            </div>
-        </div>
-
-        <!-- The list of experiments the user participated in. -->
-        <!--suppress ThymeleafVariablesResolveInspection -->
-        <div class="row mb-5"
-             th:if="${userDTO.role == T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).PARTICIPANT}"
-             sec:authorize="hasRole('PARTICIPANT')">
-            <h4 th:text="#{experiments}"></h4>
-            <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${experiments.isEmpty()}">
+        <div class="card-body">
+            <ul class="list-group" th:if="${experiments.isEmpty()}">
                 <li class="list-group-item" th:text="#{table_empty}"></li>
             </ul>
-            <ul class="list-group mx-3 w-auto" th:unless="${experiments.isEmpty()}">
+            <ul class="list-group" th:unless="${experiments.isEmpty()}">
                 <li class="list-group-item" th:each="experiment : ${experiments}">
-                    <a class="text-dark d-flex justify-content-between" th:href="@{/experiment(id=${experiment.key})}">
-                        <span class="me-1" th:text="${experiment.value}"></span>
-                        <i aria-hidden="true" class="fas fa-external-link-alt ms-1" title="Go to experiment"></i>
-                        <span class="sr-only" th:text="#{experiment_label}"></span>
+                    <a class="d-flex justify-content-between text-dark" th:href="@{/experiment(id=${experiment.key})}">
+                        <span th:text="${experiment.value}"></span>
+                        <i class="fas fa-external-link-alt" aria-hidden="true"></i>
                     </a>
                 </li>
             </ul>
         </div>
-
-        <!-- The profile information saved for the given user. -->
-        <div class="card mx-5 profile-info">
-            <h4 class="card-header" th:text="#{profile_info}"></h4>
-            <div class="card-body">
-                <p class="card-text">
-                    <!-- The username information. -->
-                    <div class="row mx-4 mb-3">
-                        <div class="col-3">
-                            <i aria-hidden="true" class="fa fa-user-circle fa-3x" title="Username"></i>
-                            <span class="sr-only" th:text="#{username}"></span>
-                        </div>
-                        <div class="col-9">
-                            <div class="fs-5" th:text="${userDTO.username}"></div>
-                            <div class="text-muted" th:text="#{username}"></div>
-                        </div>
-                    </div>
-                    <!-- The email information. -->
-                    <div class="row mx-4 mb-3">
-                        <div class="col-3">
-                            <i aria-hidden="true" class="fa fa-envelope fa-3x" title="Email address"></i>
-                            <span class="sr-only" th:text="#{email}"></span>
-                        </div>
-                        <div class="col-9">
-                            <div th:if="${userDTO.email != null}">
-                                <div class="fs-5" th:text="${userDTO.email}"></div>
-                            </div>
-                            <div th:unless="${userDTO.email != null}">
-                                <div class="text-muted" th:text="#{no_email}"></div>
-                            </div>
-                            <div class="text-muted" th:text="#{email}"></div>
-                        </div>
-                    </div>
-                    <!-- The language information. -->
-                    <div class="row mx-4 mb-3">
-                        <div class="col-3">
-                            <i aria-hidden="true" class="fa fa-flag fa-3x" title="Preferred language"></i>
-                            <span class="sr-only" th:text="#{language}"></span>
-                        </div>
-                        <div class="col-9">
-                            <div class="fs-5" th:text="${language}"></div>
-                            <div class="text-muted" th:text="#{language}"></div>
-                        </div>
-                    </div>
-                </p>
-            </div>
-        </div>
     </div>
+
 </div>
 
 <!-- The popup dialog to delete the user. -->

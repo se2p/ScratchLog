@@ -14,36 +14,42 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
+<div class="container mt-4 mb-4">
+    <!-- The standard index page content shown to unauthenticated users. -->
+    <div sec:authorize="!hasRole('PARTICIPANT')" class="card p-4 mb-4">
+        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+        <div class="bg-holder d-none d-md-block bg-card"
+             style="background-image: url(/img/corner-4.png)">
+        </div>
+        <h2 class="mb-3" th:text="${applicationConfig.applicationName}"></h2>
+        <p class="lead" th:text="#{project_info}"></p>
+    </div>
 
-        <!-- The success message shown at the top of the page after a successfully completed operation. -->
+    <!-- Success and Info Messages Card -->
+    <div class="card p-3 mb-4" th:if="${param.success != null} or ${param.info != null} or ${param.error != null}">
+        <!-- The success message shown after a successfully completed operation. -->
         <div class="row" th:if="${param.success != null}">
             <div class="col-12 alert alert-success" th:text="#{success}"></div>
         </div>
 
-        <!-- The information shown at the top of the page if the application has attempted to send an email for password
-        reset. -->
+        <!-- The information shown if the application has attempted to send an email for password reset. -->
         <div class="row" th:if="${param.info != null}">
             <div class="col-12 alert alert-info" th:text="#{reset_info}"></div>
         </div>
 
-        <!-- The error message shown at the top of the page when an error occurs. -->
+        <!-- The error message shown of the page when an error occurs. -->
         <div class="row" th:if="${param.error != null}">
             <div class="col-12 alert alert-danger" th:text="#{error}"></div>
         </div>
+    </div>
 
-        <!-- The standard index page content shown to unauthenticated users. -->
-        <div sec:authorize="!hasRole('PARTICIPANT')">
-            <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
-            <h2 class="mb-5" th:text="${applicationConfig.applicationName}">
-            </h2>
-            <div class="mx-5" th:text="#{project_info}"></div>
+    <!-- The course heading and table shown to administrators or participants. -->
+    <div sec:authorize="hasRole('PARTICIPANT')" th:fragment="course_table" id="course_table" class="card mt-5">
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{course_heading}"></h5>
         </div>
 
-        <!-- The course heading and table shown to administrators or participants. -->
-        <div sec:authorize="hasRole('PARTICIPANT')" th:fragment="course_table" id="course_table">
-            <h2 class="mb-5" th:text="#{course_heading}"></h2>
+        <div class="card-body">
             <!-- The table containing the course information. -->
             <div class="table-container">
                 <table class="table table-hover">
@@ -57,7 +63,7 @@
                     </thead>
                     <tbody th:if="${courses.isEmpty()}">
                     <tr>
-                        <td colspan="5" th:text="#{table_empty}"></td>
+                        <td colspan="4" th:text="#{table_empty}"></td>
                     </tr>
                     </tbody>
                     <tbody>
@@ -84,6 +90,7 @@
                     </tbody>
                 </table>
             </div>
+
             <!-- The navigation elements below the table. -->
             <div class="text-center" th:unless="${courses.isEmpty()}">
                 <a id="coursesFirst" class="btn btn-outline-dark" th:style="${coursePage == 0 ? 'display:none' : ''}"
@@ -103,16 +110,22 @@
                     <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                 </a>
             </div>
-            <!-- Let Thymeleaf fetch the current and the last course page numbers. -->
-            <script>
-                var coursePage = [[${coursePage}]];
-                var lastCoursePage = [[${lastCoursePage}]];
-            </script>
         </div>
 
-        <!-- The experiment heading and table shown to administrators or participants. -->
-        <div sec:authorize="hasRole('PARTICIPANT')" th:fragment="experiment_table" id="experiment_table">
-            <h2 class="mb-5" th:text="#{experiment_heading}"></h2>
+        <!-- Let Thymeleaf fetch the current and the last course page numbers. -->
+        <script>
+            var coursePage = [[${coursePage}]];
+            var lastCoursePage = [[${lastCoursePage}]];
+        </script>
+    </div>
+
+    <!-- The experiment heading and table shown to administrators or participants. -->
+    <div sec:authorize="hasRole('PARTICIPANT')" th:fragment="experiment_table" id="experiment_table" class="card mt-5">
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{experiment_heading}"></h5>
+        </div>
+
+        <div class="card-body">
             <!-- The table containing the experiment information. -->
             <div class="table-container">
                 <table class="table table-hover">
@@ -126,7 +139,7 @@
                     </thead>
                     <tbody th:if="${experiments.isEmpty()}">
                     <tr>
-                        <td colspan="5" th:text="#{table_empty}"></td>
+                        <td colspan="4" th:text="#{table_empty}"></td>
                     </tr>
                     </tbody>
                     <tbody>
@@ -153,6 +166,7 @@
                     </tbody>
                 </table>
             </div>
+
             <!-- The navigation elements below the table. -->
             <div class="text-center" th:unless="${experiments.isEmpty()}">
                 <a id="experimentsFirst" class="btn btn-outline-dark"

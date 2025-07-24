@@ -13,8 +13,8 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
+<div class="container mt-5 mb-5">
+    <div class="card">
 
         <!-- The error message shown at the top of the page when an error occurs. -->
         <div class="row" th:style="${error != null ? 'display:block' : 'display:none'}">
@@ -22,59 +22,65 @@
         </div>
 
         <!-- The login page heading. -->
-        <h2 class="mb-5">Login</h2>
-
-        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
-        <div class="text-end" th:if="${applicationConfig.useMail()}">
-            <a class="link-secondary" th:text="#{forgot_password}" th:href="@{/reset}"></a>
+        <div class="card-header">
+            <h5 class="mb-0">Login</h5>
         </div>
 
-        <!-- The login form. -->
-        <form th:action="@{/users/login}" th:object="${userDTO}" th:name="userDTO" method="post">
-            <div class="row mx-5">
-                <!-- The input group for the username. -->
-                <div class="col-12 mb-3 form-group position-relative">
-                    <label class="form-label" for="username" th:text="#{username}"></label>
-                    <div class="input-group">
+        <div class="card-body">
+            <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+            <div class="text-end mb-4" th:if="${applicationConfig.useMail()}">
+                <a class="link-secondary" th:text="#{forgot_password}" th:href="@{/reset}"></a>
+            </div>
+
+            <!-- The login form. -->
+            <form th:action="@{/users/login}" th:object="${userDTO}" th:name="userDTO" method="post">
+                <div class="row">
+                    <!-- The input group for the username. -->
+                    <div class="col-12 mb-3 form-group position-relative">
+                        <label class="form-label" for="username" th:text="#{username}"></label>
+                        <div class="input-group">
                         <span class="input-group-text">
                             <i aria-hidden="true" class="fa fa-user" title="Enter username"></i>
                             <span class="sr-only" th:text="#{username}"></span>
                         </span>
-                        <input name="username" id="username" type="text" th:placeholder="#{username}"
-                               th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
-                               th:field="*{username}" th:class="${#fields.hasErrors('username')
+                            <input name="username" id="username" type="text" th:placeholder="#{username}"
+                                   th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
+                                   th:field="*{username}" th:class="${#fields.hasErrors('username')
                                ? 'form-control is-invalid' : 'form-control'}" required/>
+                        </div>
+                        <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
                     </div>
-                    <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
-                </div>
-                <!-- The input group for the password. -->
-                <div class="col-12 mb-5 form-group position-relative">
-                    <label class="form-label" for="password" th:text="#{password}"></label>
-                    <div class="input-group">
+
+                    <!-- The input group for the password. -->
+                    <div class="col-12 mb-4 form-group position-relative">
+                        <label class="form-label" for="password" th:text="#{password}"></label>
+                        <div class="input-group">
                         <span class="input-group-text">
                             <i aria-hidden="true" class="fa fa-key" title="Enter password"></i>
                             <span class="sr-only" th:text="#{password}"></span>
                         </span>
-                        <input name="password" id="password" type="password" th:placeholder="#{password}"
-                               th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
-                               th:field="*{password}" th:class="${#fields.hasErrors('password')
+                            <input name="password" id="password" type="password" th:placeholder="#{password}"
+                                   th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
+                                   th:field="*{password}" th:class="${#fields.hasErrors('password')
                                ? 'form-control is-invalid' : 'form-control'}" required/>
+                        </div>
+                        <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
                     </div>
-                    <div class="validation" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+
+                    <!-- The buttons to login through an identity provider and submit if SAML authentication is enabled. -->
+                    <div class="d-flex justify-content-between mb-3"
+                         th:if="${applicationConfig.useSamlAuthentication()}">
+                        <a class="btn btn-secondary" th:text="#{saml2_login}" th:href="@{/login/saml2}"></a>
+                        <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
+                    </div>
+                    <!-- The submit button if the mail server constant is set to false. -->
+                    <div class="text-center"
+                         th:unless="${applicationConfig.useSamlAuthentication()}">
+                        <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
+                    </div>
                 </div>
-                <!-- The buttons to login through an identity provider and submit if SAML authentication is enabled. -->
-                <div class="d-flex justify-content-between"
-                     th:if="${applicationConfig.useSamlAuthentication()}">
-                    <a class="btn btn-secondary" th:text="#{saml2_login}" th:href="@{/login/saml2}"></a>
-                    <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
-                </div>
-                <!-- The submit button if the mail server constant is set to false. -->
-                <div class="text-center"
-                     th:unless="${applicationConfig.useSamlAuthentication()}">
-                    <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 

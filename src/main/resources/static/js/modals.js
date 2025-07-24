@@ -4,7 +4,7 @@
  * @param element The modal to be opened.
  */
 function openModal(element) {
-    let content = document.getElementById("content");
+    let content = document.querySelector("body > .container");
     element.style.display = "block";
     content.style.filter = "blur(4px)";
 }
@@ -15,7 +15,7 @@ function openModal(element) {
  * @param element The modal to be closed.
  */
 function closeModal(element) {
-    let content = document.getElementById("content");
+    let content = document.querySelector("body > .container");
     element.style.display = "none";
     content.style.filter = "none";
 }

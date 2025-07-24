@@ -14,62 +14,62 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
-
+<div class="container mt-4 mb-4">
+    <div class="card">
         <!-- The edit experiment heading. -->
-        <h2 class="mb-5" th:text="#{edit_experiment}"></h2>
-        <div class="d-flex p-2 justify-content-center align-items-center container">
-            <div class="row vw-90">
-                <!-- The form for editing or creating an experiment. -->
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{edit_experiment}"></h5>
+        </div>
+        <div class="card-body p-5">
+
+            <!-- The form for editing or creating an experiment. -->
+            <div class="row">
                 <form th:action="@{/experiment/update}" th:object="${experimentDTO}" th:name="experimentDTO"
                       method="post">
                     <input type="hidden" th:field="*{id}">
                     <input type="hidden" th:field="*{course}">
                     <input type="hidden" th:field="*{active}">
                     <input type="hidden" th:field="*{courseExperiment}">
+
                     <!-- The input group for the experiment title. -->
-                    <div class="mb-3 form-group position-relative">
+                    <div class="mb-3 form-group">
                         <label class="form-label" for="title" th:text="#{title}"></label>
-                        <div class="input-group">
-                            <input name="title" id="title" type="text" th:placeholder="#{title}"
-                                   th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"
-                                   th:field="*{title}" th:class="${#fields.hasErrors('title')
-                                   ? 'form-control is-invalid' : 'form-control'}" required/>
-                        </div>
+                        <input name="title" id="title" type="text" th:placeholder="#{title}"
+                               th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"
+                               th:field="*{title}" th:class="${#fields.hasErrors('title')
+                               ? 'form-control is-invalid' : 'form-control'}" required>
                         <div class="validation" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
-                        <div class="form-text" th:text="#{title_max}"></div>
+                        <div class="form-text text-muted" th:text="#{title_max}"></div>
                     </div>
+
                     <!-- The input group for the experiment description. -->
-                    <div class="mb-3 form-group position-relative">
+                    <div class="mb-3 form-group">
                         <label class="form-label" for="description" th:text="#{description}"></label>
-                        <div class="input-group">
-                            <textarea name="description" id="description" type="text" rows="3"
-                                      th:placeholder="#{description_placeholder}"
-                                      th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_AREA}"
-                                      th:field="*{description}" th:class="${#fields.hasErrors('description')
-                                      ? 'form-control is-invalid' : 'form-control'}" required></textarea>
-                        </div>
+                        <textarea name="description" id="description" type="text" rows="3"
+                                  th:placeholder="#{description_placeholder}"
+                                  th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_AREA}"
+                                  th:field="*{description}" th:class="${#fields.hasErrors('description')
+                                  ? 'form-control is-invalid' : 'form-control'}" required></textarea>
                         <div class="validation" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">
                         </div>
-                        <div class="form-text" th:text="#{description_max}"></div>
+                        <div class="form-text text-muted" th:text="#{description_max}"></div>
                     </div>
+
                     <!-- The input group for the experiment postscript. -->
-                    <div class="mb-3 form-group position-relative">
+                    <div class="mb-3 form-group">
                         <label class="form-label" for="postscript" th:text="#{postscript}"></label>
-                        <div class="input-group">
-                            <textarea name="postscript" id="postscript" type="text" rows="3"
-                                      th:placeholder="#{postscript_placeholder}"
-                                      th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_AREA}"
-                                      th:field="*{postscript}" th:class="${#fields.hasErrors('postscript')
-                                      ? 'form-control is-invalid' : 'form-control'}"></textarea>
-                        </div>
+                        <textarea name="postscript" id="postscript" type="text" rows="3"
+                                  th:placeholder="#{postscript_placeholder}"
+                                  th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_AREA}"
+                                  th:field="*{postscript}" th:class="${#fields.hasErrors('postscript')
+                                  ? 'form-control is-invalid' : 'form-control'}"></textarea>
                         <div class="validation" th:if="${#fields.hasErrors('postscript')}" th:errors="*{postscript}">
                         </div>
                         <div class="form-text" th:text="#{postscript_max}"></div>
                     </div>
+
                     <!-- The input group for the experiment information. -->
-                    <div class="mb-3 form-group position-relative">
+                    <div class="mb-3 form-group">
                         <label class="form-label" for="info" th:text="#{info}"></label>
                         <textarea name="info" id="info" type="text" rows="10" th:placeholder="#{info_placeholder}"
                                   th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_AREA}"
@@ -79,8 +79,9 @@
                         </div>
                         <div class="form-text" th:text="#{markdown}"></div>
                     </div>
+
                     <!-- Dropdown menu listing all defined GUI-URLs defined in the properties file. -->
-                    <div class="mb-5 form-group position-relative">
+                    <div class="mb-4 form-group">
                         <label for="urlSelect">Scratch-GUI Address</label>
                         <select class="form-control" id="urlSelect" th:field="*{guiURL}">
                             <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
@@ -88,6 +89,7 @@
                                     th:value="${url}" th:text="${url}"></option>
                         </select>
                     </div>
+
                     <!-- The submit button. -->
                     <div class="text-center">
                         <input class="btn btn-primary" type="submit" th:value="#{save}"/>

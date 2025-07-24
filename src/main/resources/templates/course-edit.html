@@ -14,61 +14,66 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
+<div class="container mt-4 mb-4">
+    <div class="card">
         <!-- The edit course heading. -->
-        <h2 class="mb-5" th:text="#{edit_course}"></h2>
-        <div class="d-flex p-2 justify-content-center align-items-center container">
-            <div class="row vw-90">
-                <!-- The form for editing or creating a course. -->
-                <form th:action="@{/course/update}" th:object="${courseDTO}" th:name="courseDTO" method="post">
-                    <input type="hidden" th:field="*{id}">
-                    <input type="hidden" th:field="*{active}">
-                    <input type="hidden" th:field="*{lastChanged}">
-                    <!-- The input group for the course title. -->
-                    <div class="mb-3 form-group position-relative">
-                        <label class="form-label" for="title" th:text="#{title}"></label>
-                        <div class="input-group">
-                            <input name="title" id="title" type="text" th:placeholder="#{title}"
-                                   th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"
-                                   th:field="*{title}" th:class="${#fields.hasErrors('title')
-                                   ? 'form-control is-invalid' : 'form-control'}" required/>
-                        </div>
-                        <div class="validation" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
-                        <div class="form-text" th:text="#{title_max}"></div>
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{edit_course}"></h5>
+        </div>
+
+        <div class="card-body p-5">
+            <!-- The form for editing or creating a course. -->
+            <form th:action="@{/course/update}" th:object="${courseDTO}" th:name="courseDTO" method="post">
+                <input type="hidden" th:field="*{id}">
+                <input type="hidden" th:field="*{active}">
+                <input type="hidden" th:field="*{lastChanged}">
+
+                <!-- The input group for the course title. -->
+                <div class="mb-3">
+                    <label class="form-label" for="title" th:text="#{title}"></label>
+                    <div class="input-group">
+                        <input name="title" id="title" type="text" th:placeholder="#{title}"
+                               th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"
+                               th:field="*{title}" th:classappend="${#fields.hasErrors('title') ? 'is-invalid' : ''}"
+                               class="form-control" required/>
                     </div>
-                    <!-- The input group for the course description. -->
-                    <div class="mb-3 form-group position-relative">
-                        <label class="form-label" for="description" th:text="#{description}"></label>
-                        <div class="input-group">
-                            <textarea name="description" id="description" type="text" rows="3"
-                                      th:placeholder="#{course_description}"
-                                      th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_AREA}"
-                                      th:field="*{description}" th:class="${#fields.hasErrors('description')
-                                      ? 'form-control is-invalid' : 'form-control'}" required></textarea>
-                        </div>
-                        <div class="validation" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">
-                        </div>
-                        <div class="form-text" th:text="#{description_max}"></div>
+                    <div class="validation" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+                    <div class="form-text" th:text="#{title_max}"></div>
+                </div>
+
+                <!-- The input group for the course description. -->
+                <div class="mb-3">
+                    <label class="form-label" for="description" th:text="#{description}"></label>
+                    <div class="input-group">
+                        <textarea name="description" id="description" type="text" rows="3"
+                                  th:placeholder="#{course_description}"
+                                  th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_AREA}"
+                                  th:field="*{description}" th:classappend="${#fields.hasErrors('description')
+                                  ? 'is-invalid' : ''}" class="form-control" required></textarea>
                     </div>
-                    <!-- The input group for the course content. -->
-                    <div class="mb-3 form-group position-relative">
-                        <label class="form-label" for="course_content" th:text="#{course_content}"></label>
-                        <textarea name="course_content" id="course_content" type="text" rows="10"
-                                  th:placeholder="#{course_content_placeholder}"
-                                  th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_AREA}"
-                                  th:field="*{content}" th:class="${#fields.hasErrors('content')
-                                  ? 'form-control is-invalid' : 'form-control'}" autocomplete="off"></textarea>
-                        <div class="validation" th:if="${#fields.hasErrors('content')}" th:errors="*{content}">
-                        </div>
-                        <div class="form-text" th:text="#{markdown}"></div>
+                    <div class="validation" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">
                     </div>
-                    <!-- The submit button. -->
-                    <div class="text-center">
-                        <input class="btn btn-primary" type="submit" th:value="#{save}"/>
+                    <div class="form-text" th:text="#{description_max}"></div>
+                </div>
+
+                <!-- The input group for the course content. -->
+                <div class="mb-3 form-group position-relative">
+                    <label class="form-label" for="course_content" th:text="#{course_content}"></label>
+                    <textarea name="course_content" id="course_content" type="text" rows="10"
+                              th:placeholder="#{course_content_placeholder}"
+                              th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_AREA}"
+                              th:field="*{content}" th:class="${#fields.hasErrors('content') ? 'is-invalid' : ''}"
+                              autocomplete="off"></textarea>
+                    <div class="validation" th:if="${#fields.hasErrors('content')}" th:errors="*{content}">
                     </div>
-                </form>
-            </div>
+                    <div class="form-text" th:text="#{markdown}"></div>
+                </div>
+
+                <!-- The submit button. -->
+                <div class="text-center mt-4">
+                    <input class="btn btn-primary" type="submit" th:value="#{save}"/>
+                </div>
+            </form>
         </div>
     </div>
 </div>

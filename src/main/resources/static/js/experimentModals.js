@@ -3,6 +3,7 @@ import {addClickEventListenerCloseModal, addClickEventListenerOpenModal} from ".
 let deleteExperimentModal = document.getElementById("openDeleteExperiment");
 let stopExperimentModal = document.getElementById("openStopExperiment");
 let addModal = document.getElementById("openAddParticipant");
+let addParticipantsCsvModal = document.getElementById("openAddParticipantCsv");
 let deleteParticipantModal = document.getElementById("openDeleteParticipant");
 let deleteSb3Modal = document.getElementById("openDeleteSb3");
 
@@ -23,6 +24,8 @@ function addEventListeners() {
     addClickEventListenerCloseModal("abortStopExperiment", stopExperimentModal);
     addClickEventListenerOpenModal("addParticipant", addModal);
     addClickEventListenerCloseModal("abortAddParticipant", addModal);
+    addClickEventListenerOpenModal("addParticipantsCsv", addParticipantsCsvModal);
+    addClickEventListenerCloseModal("abortAddParticipantsCsv", addParticipantsCsvModal);
     addClickEventListenerOpenModal("deleteParticipant", deleteParticipantModal);
     addClickEventListenerCloseModal("abortDeleteParticipant", deleteParticipantModal);
     addClickEventListenerOpenModal("deleteSb3", deleteSb3Modal);
