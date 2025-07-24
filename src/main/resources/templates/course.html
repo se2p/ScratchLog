@@ -13,107 +13,151 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content" sec:authorize="hasRole('PARTICIPANT')">
-    <div class="inside">
-
-        <!-- The error message shown at the top of the page when entering an invalid password. -->
-        <div class="row" th:if="${param.invalid != null}">
-            <div class="col-12 alert alert-danger" th:text="#{invalid_password}"></div>
-        </div>
-
-        <!-- The error message shown at the top of the page when an error occurs. -->
-        <div class="row" th:if="${error != null}">
-            <div class="col-12 alert alert-danger" th:text="${error}"></div>
+<div class="container mt-4 mb-4" sec:authorize="hasRole('PARTICIPANT')">
+    <div class="card p-5 pb-2">
+        <!-- Background Image -->
+        <div class="bg-holder d-none d-md-block bg-card"
+             style="background-image:url(/img/corner-4.png)">
         </div>
 
         <!-- The course title along with edit and delete buttons. -->
-        <div class="d-flex justify-content-between flex-wrap mb-3">
+        <div class="d-flex justify-content-between flex-wrap mb-4" style="z-index: 1;">
             <!-- The course title. -->
             <h1 class="mb-3 h2" th:text="${courseDTO.title}"></h1>
-            <!-- The buttons for editing and deleting the course. -->
+
+            <!-- Actions Dropdown for Admins -->
             <div sec:authorize="hasRole('ADMIN')">
-                <a class="btn btn-secondary" th:href="@{/course/edit(id=${courseDTO.id})}">
-                    <i aria-hidden="true" class="fas fa-edit fa-inverse" th:title="#{edit}"></i>
-                    <span th:text="#{edit}"></span>
-                </a>
-                <a id="deleteCourse" class="btn btn-danger">
-                    <i aria-hidden="true" class="fas fa-trash-alt fa-inverse" th:title="#{delete}"></i>
-                    <span th:text="#{delete}"></span>
-                </a>
+                <a id="open" class="btn btn-primary" th:unless="${courseDTO.active}"
+                   th:text="#{start_course}"
+                   th:href="@{/course/status(id=${courseDTO.id}, stat='open')}"></a>
+                <input id="stopCourse" class="btn btn-danger" th:if="${courseDTO.active}" th:value="#{stop_course}"
+                       style="z-index: 1">
+                <div class="dropdown" style="float: right; left: 10px;">
+                    <a class="btn btn-special dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                       aria-expanded="false" th:text="#{actions}">
+                    </a>
+                    <ul class="dropdown-menu z-2">
+                        <li>
+                            <a class="dropdown-item" th:href="@{/course/edit(id=${courseDTO.id})}" th:text="#{edit}"></a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a id="deleteCourse" class="dropdown-item text-danger" style="cursor: pointer;" th:text="#{delete}"></a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 
         <!-- The course description. -->
-        <div class="row">
+        <div class="row z-0">
             <div class="col-12 mb-5" th:text="${courseDTO.description}"></div>
         </div>
 
-        <div class="controls d-flex flex-row gap-5 justify-content-between mb-5 flex-wrap"
-             sec:authorize="hasRole('ADMIN')">
-
-            <!-- The course status and the button to start or stop the course. -->
-            <div>
-                <div>
-                    <h2 class="h5">
-                        <i aria-hidden="true" th:class="${courseDTO.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
-                           title="Course status"></i>
-                        <span th:text="#{status} + ':'"></span>
-                        <span th:if="${courseDTO.active}" th:text="#{opened}"></span>
-                        <span th:unless="${courseDTO.active}" th:text="#{closed}"></span>
-                    </h2>
+        <!-- Dashboard Link and Course Controls. -->
+        <div class="row mb-5" sec:authorize="hasRole('ADMIN')">
+            <div class="col-12 d-flex justify-content-between align-items-center flex-wrap">
+                <!-- Course Status -->
+                <div class="d-flex align-items-center gap-3" style="z-index: 1;">
+                    <div class="p-3 bg-light border rounded" style="min-width: 150px;">
+                        <h6 class="mb-1">
+                            <i th:class="${courseDTO.active ? 'fas fa-check-circle text-success' : 'fas fa-times-circle text-danger'}"></i>
+                            <span th:text="#{status}"></span>
+                        </h6>
+                        <p class="mb-0">
+                            <span th:if="${courseDTO.active}" th:text="#{opened}" class="text-success fw-bold"></span>
+                            <span th:unless="${courseDTO.active}" th:text="#{closed}" class="text-danger fw-bold"></span>
+                        </p>
+                    </div>
                 </div>
-                <a id="open" class="btn btn-primary" type="submit" th:text="#{start_course}"
-                   th:unless="${courseDTO.active}" th:href="@{/course/status(id=${courseDTO.id}, stat='open')}"></a>
-                <input th:if="${courseDTO.active}" id="stopCourse" class="btn btn-secondary" type="submit"
-                       th:value="#{stop_course}">
-            </div>
 
-            <!-- The timestamp of the last change operation to the course. -->
-            <div class="text-muted">
-                <span th:text="#{last_changed}"></span>
-                <span th:text="${courseDTO.lastChanged}"></span>
+                <!-- Last Changed Timestamp -->
+                <div class="p-3 bg-light border rounded" style="min-width: 150px;">
+                    <h6 class="mb-1">
+                        <i class="fas fa-clock text-muted"></i>
+                        <span th:text="#{last_changed}"></span>
+                    </h6>
+                    <p class="mb-0 text-muted" th:text="${courseDTO.lastChanged}"></p>
+                </div>
             </div>
         </div>
 
-        <!-- The table of participants in the course and the buttons for adding and removing participants. -->
-        <div class="mb-3" th:fragment="course_participant_table" id="course_participant_table"
-             sec:authorize="hasRole('ADMIN')">
-            <h2 class="h3" th:text="#{heading_participants}"></h2>
-            <!-- The table containing the participant information. -->
-            <div class="table-container">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col" th:text="#{username}"></th>
-                        <th class="text-center" scope="col" th:text="#{added}"></th>
-                    </tr>
-                    </thead>
-                    <tbody th:if="${participants.isEmpty()}">
-                    <tr>
-                        <td colspan="3" th:text="#{table_empty}"></td>
-                    </tr>
-                    </tbody>
-                    <tbody th:unless="${participants.isEmpty()}">
-                    <tr th:each="participant : ${participants}">
-                        <th scope="row">
-                            <!--suppress ThymeleafVariablesResolveInspection -->
-                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
-                               th:text="${participant.user.id}"></a>
-                        </th>
-                        <td>
-                            <!--suppress ThymeleafVariablesResolveInspection -->
-                            <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
-                               th:text="${participant.user.username}"></a>
-                        </td>
-                        <td class="text-center">
-                            <!--suppress ThymeleafVariablesResolveInspection -->
-                            <span th:text="${participant.added.toLocalDate()}"></span>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+
+        <!-- The error message shown when entering an invalid password. -->
+        <div class="row" th:if="${param.invalid != null}" style="z-index: 1;">
+            <div class="col-12 alert alert-danger" th:text="#{invalid_password}"></div>
+        </div>
+
+        <!-- The error message shown when an error occurs. -->
+        <div class="row" th:if="${error != null}" style="z-index: 1;">
+            <div class="col-12 alert alert-danger" th:text="${error}"></div>
+        </div>
+
+    </div>
+
+    <!-- The table of participants in the course and the buttons for adding and removing participants. -->
+    <div class="card mt-5" th:fragment="course_participant_table" id="course_participant_table"
+         sec:authorize="hasRole('ADMIN')">
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{heading_participants}"></h5>
+            <div class="dropdown" th:if="${courseDTO.isActive()}">
+                <a class="btn btn-special dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                   aria-expanded="false" th:text="#{actions}">
+                </a>
+
+                <ul class="dropdown-menu" style="z-index: 2;">
+                    <li>
+                        <a class="dropdown-item" id="addParticipant" th:text="#{add_existing}" style="cursor: pointer"></a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" id="addParticipantsCsv" th:text="#{add_csv_participants}" style="cursor: pointer"></a>
+                    </li>
+                    <li th:unless="${participants.isEmpty()}">
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li th:unless="${participants.isEmpty()}">
+                        <a class="dropdown-item text-danger" id="deleteParticipant" th:text="#{delete_participant}" style="cursor: pointer"></a>
+                    </li>
+                </ul>
             </div>
+        </div>
+
+        <!-- The table containing the participant information. -->
+        <div class="card-body">
+            <table class="table table-hover participants-table">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col" th:text="#{username}"></th>
+                    <th class="text-center" scope="col" th:text="#{added}"></th>
+                </tr>
+                </thead>
+                <tbody th:if="${participants.isEmpty()}">
+                <tr>
+                    <td colspan="3" th:text="#{table_empty}"></td>
+                </tr>
+                </tbody>
+                <tbody th:unless="${participants.isEmpty()}">
+                <tr th:each="participant : ${participants}">
+                    <th scope="row">
+                        <!--suppress ThymeleafVariablesResolveInspection -->
+                        <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                           th:text="${participant.user.id}"></a>
+                    </th>
+                    <td>
+                        <!--suppress ThymeleafVariablesResolveInspection -->
+                        <a class="no_decoration" th:href="@{/users/profile(name=${participant.user.username})}"
+                           th:text="${participant.user.username}"></a>
+                    </td>
+                    <td class="text-center">
+                        <!--suppress ThymeleafVariablesResolveInspection -->
+                        <span th:text="${participant.added.toLocalDate()}"></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
             <!-- The navigation elements below the table. -->
             <div class="text-center">
                 <a id="participantsFirst" class="btn btn-outline-dark"
@@ -135,91 +179,68 @@
                     <i aria-hidden="true" class="fas fa-angle-double-right"></i>
                 </a>
             </div>
-            <!-- The buttons for participant management. -->
-            <div class="d-inline-block gap-2" th:if="${courseDTO.active}" style="width: fit-content;">
-                <div class="row row-cols-2 mb-2">
-                    <div class="col pe-0">
-                        <input id="addParticipant" class="btn btn-secondary w-100" type="submit"
-                               th:value="#{add_existing}">
-                    </div>
-                    <div class="col">
-                        <input id="deleteParticipant" type="submit" class="btn btn-danger"
-                               th:value="#{delete_participant}" th:unless="${participants.isEmpty()}"/>
-                    </div>
-                </div>
-               <form method="post" th:action="@{/course/participant/add-csv}" enctype="multipart/form-data"
-                     class="row row-cols-2">
-                   <input type="hidden" th:name="id" th:value="${courseDTO.id}">
-                   <div class="col pe-0">
-                       <input type="submit" th:value="#{add_csv_participants}" class="btn btn-secondary w-100">
-                   </div>
-                   <div class="col d-flex align-items-center">
-                       <input type="file" th:name="file" accept="text/csv">
-                   </div>
-                </form>
-            </div>
+
             <!-- Let Thymeleaf fetch the current and the last participant page numbers. -->
             <script>
                 var participantPage = [[${participantPage}]];
                 var lastParticipantPage = [[${lastParticipantPage}]];
             </script>
+        </div>
+    </div>
 
-            <div class="mb-5 mt-2" sec:authorize="hasRole('ADMIN')">
-                <span class="text-muted mb-3" th:text="#{csv_participants}"></span>
-            </div>
+    <!-- The experiment table containing experiments that are part of this course. -->
+    <div class="card mt-5" th:fragment="course_experiment_table" id="course_experiment_table">
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{experiment_heading}"></h5>
         </div>
 
-        <!-- The experiment table containing experiments that are part of this course. -->
-        <div class="mb-5" th:fragment="course_experiment_table" id="course_experiment_table">
-            <h2 class="h3" th:text="#{experiment_heading}"></h2>
-            <!-- The table containing the experiment information. -->
-            <div class="table-container">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th scope="col">#</th>
-                        <th scope="col" th:text="#{title}"></th>
-                        <th scope="col" th:text="#{description}"></th>
-                        <th class="text-center" scope="col" th:text="#{status}"></th>
-                    </tr>
-                    </thead>
-                    <tbody th:if="${experiments.isEmpty()}">
-                    <tr>
-                        <td colspan="5" th:text="#{table_empty}"></td>
-                    </tr>
-                    </tbody>
-                    <tbody>
-                    <!--suppress ThymeleafVariablesResolveInspection -->
-                    <tr th:unless="${experiments.isEmpty()}" th:each="experimentProjection : ${experiments}"
-                        th:with="experiment = ${experimentProjection.getExperiment()}">
-                        <th scope="row">
-                            <!--suppress ThymeleafVariablesResolveInspection -->
-                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
-                               th:text="${experiment.id}"></a>
-                        </th>
-                        <td>
-                            <!--suppress ThymeleafVariablesResolveInspection -->
-                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
-                               th:text="${experiment.title}"></a>
-                        </td>
-                        <td>
-                            <!--suppress ThymeleafVariablesResolveInspection -->
-                            <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
-                               th:text="${experiment.description}"></a>
-                        </td>
-                        <td class="text-center">
-                            <!--suppress ThymeleafVariablesResolveInspection -->
-                            <i aria-hidden="true" th:class="${experiment.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
-                               title="Experiment active status"></i>
-                            <!--suppress ThymeleafVariablesResolveInspection -->
-                            <span class="sr-only" th:if="${experiment.active}" th:text="#{opened}"></span>
-                            <!--suppress ThymeleafVariablesResolveInspection -->
-                            <span class="sr-only" th:unless="${experiment.active}" th:text="#{closed}"></span>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
+        <!-- The table containing the experiment information. -->
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col" th:text="#{title}"></th>
+                    <th scope="col" th:text="#{description}"></th>
+                    <th class="text-center" scope="col" th:text="#{status}"></th>
+                </tr>
+                </thead>
+                <tbody th:if="${experiments.isEmpty()}">
+                <tr>
+                    <td colspan="4" th:text="#{table_empty}"></td>
+                </tr>
+                </tbody>
+                <tbody th:unless="${experiments.isEmpty()}">
+                <!--suppress ThymeleafVariablesResolveInspection -->
+                <tr th:each="experimentProjection : ${experiments}"
+                    th:with="experiment = ${experimentProjection.getExperiment()}">
+                    <th scope="row">
+                        <!--suppress ThymeleafVariablesResolveInspection -->
+                        <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                           th:text="${experiment.id}"></a>
+                    </th>
+                    <td>
+                        <!--suppress ThymeleafVariablesResolveInspection -->
+                        <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                           th:text="${experiment.title}"></a>
+                    </td>
+                    <td>
+                        <!--suppress ThymeleafVariablesResolveInspection -->
+                        <a class="no_decoration" th:href="@{/experiment(id=${experiment.id})}"
+                           th:text="${experiment.description}"></a>
+                    </td>
+                    <td class="text-center">
+                        <!--suppress ThymeleafVariablesResolveInspection -->
+                        <i aria-hidden="true" th:class="${experiment.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
+                           title="Experiment active status"></i>
+                        <!--suppress ThymeleafVariablesResolveInspection -->
+                        <span class="sr-only" th:if="${experiment.active}" th:text="#{opened}"></span>
+                        <!--suppress ThymeleafVariablesResolveInspection -->
+                        <span class="sr-only" th:unless="${experiment.active}" th:text="#{closed}"></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
             <!-- The navigation elements below the table. -->
             <div class="text-center" th:unless="${experiments.isEmpty()}">
                 <a id="experimentsFirst" class="btn btn-outline-dark"
@@ -242,7 +263,7 @@
                 </a>
             </div>
             <!-- The buttons for experiment management. -->
-            <div class="d-flex gap-3 flex-wrap" th:if="${courseDTO.active}" sec:authorize="hasRole('ADMIN')">
+            <div class="d-flex gap-3 flex-wrap mt-4" th:if="${courseDTO.active}" sec:authorize="hasRole('ADMIN')">
                 <div class="mb-3">
                     <a class="btn btn-secondary" th:href="@{/experiment/create(course=${courseDTO.id})}"
                        th:text="#{add_experiment}"></a>
@@ -257,17 +278,21 @@
                 var experimentPage = [[${experimentPage}]];
                 var lastExperimentPage = [[${lastExperimentPage}]];
             </script>
-
         </div>
+    </div>
 
-        <!-- The course content information. -->
-        <div class="row mb-5">
+    <!-- The course content information. -->
+    <div class="card mt-5">
+        <div class="card-header">
+            <h5 class="mb-0">Course Content</h5>
+        </div>
+        <div class="card-body">
             <div class="col-12" th:utext="${courseDTO.content}"></div>
         </div>
     </div>
 </div>
 
-<!-- The popup dialog to delete the course. -->
+
 <div id="openDeleteCourse" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_course}"></h2>
@@ -332,6 +357,25 @@
             <div class="d-flex justify-content-between">
                 <a id="abortAddParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
                 <input class="btn btn-primary" type="submit" th:value="#{add}"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- The popup dialog to add existing users as participants through CSV. -->
+<div id="openAddParticipantCsv" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{add_csv_participants}"></h2>
+        <span th:text="#{csv_participants}" class="mb-3"></span>
+
+        <form method="post" th:action="@{/course/participant/add-csv}" enctype="multipart/form-data">
+            <input type="hidden" th:name="id" th:value="${courseDTO.id}">
+            <div class="input-group">
+                <input type="file" th:name="file" accept="text/csv">
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+                <a id="abortAddParticipantsCsv" class="btn btn-secondary" th:text="#{abort}"></a>
+                <input type="submit" th:value="#{upload}" class="btn btn-primary">
             </div>
         </form>
     </div>

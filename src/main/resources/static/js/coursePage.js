@@ -135,6 +135,7 @@ function addModalOnclickFunctions() {
     let stopCourse = document.getElementById("openStopCourse");
     let deleteCourseModal = document.getElementById("openDeleteCourse");
     let addParticipantModal = document.getElementById("openAddParticipant");
+    let addParticipantsCsvModal = document.getElementById("openAddParticipantCsv");
     let deleteParticipantModal = document.getElementById("openDeleteParticipant");
     let deleteExperimentModal = document.getElementById("openDeleteExperiment");
 
@@ -144,6 +145,8 @@ function addModalOnclickFunctions() {
     addClickEventListenerCloseModal("abortDeleteCourse", deleteCourseModal);
     addClickEventListenerOpenModal("addParticipant", addParticipantModal);
     addClickEventListenerCloseModal("abortAddParticipant", addParticipantModal);
+    addClickEventListenerOpenModal("addParticipantsCsv", addParticipantsCsvModal);
+    addClickEventListenerCloseModal("abortAddParticipantsCsv", addParticipantsCsvModal);
     addClickEventListenerOpenModal("deleteParticipant", deleteParticipantModal);
     addClickEventListenerCloseModal("abortDeleteParticipant", deleteParticipantModal);
     addClickEventListenerOpenModal("deleteExperiment", deleteExperimentModal);

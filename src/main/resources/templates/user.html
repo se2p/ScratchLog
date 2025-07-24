@@ -13,91 +13,99 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
+<div class="container mt-4 mb-4">
+    <div class="card">
 
         <!-- The add user page heading. -->
-        <h2 class="mb-5" th:text="#{add_user}"></h2>
-
-        <!-- The information shown on the add user page if the mail server constant is set to true. -->
-        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
-        <div class="row" th:if="${applicationConfig.useMail()}">
-            <div class="col-12 mb-5" th:text="#{user_info}"></div>
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{add_user}"></h5>
         </div>
 
-        <!-- The information shown on the add user page if the mail server constant is set to false. -->
-        <div class="row" th:unless="${applicationConfig.useMail()}">
-            <div class="col-12 mb-5" th:text="#{user_info_no_mail}"></div>
-        </div>
+        <div class="card-body p-5">
+            <!-- The information shown on the add user page if the mail server constant is set to true. -->
+            <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+            <div class="row" th:if="${applicationConfig.useMail()}">
+                <div class="col-12 mb-5" th:text="#{user_info}"></div>
+            </div>
 
-        <!-- The form for adding new users. -->
-        <form th:action="@{/users/add}" th:object="${userDTO}" th:name="userDTO" method="post">
-            <!-- The input group for the username. -->
-            <div class="mb-3 form-group position-relative">
-                <label class="form-label" for="username" th:text="#{username}"></label>
-                <div class="input-group">
+            <!-- The information shown on the add user page if the mail server constant is set to false. -->
+            <div class="row" th:unless="${applicationConfig.useMail()}">
+                <div class="col-12 mb-5" th:text="#{user_info_no_mail}"></div>
+            </div>
+
+            <!-- The form for adding new users. -->
+            <form th:action="@{/users/add}" th:object="${userDTO}" th:name="userDTO" method="post">
+                <!-- The input group for the username. -->
+                <div class="mb-3 form-group position-relative">
+                    <label class="form-label" for="username" th:text="#{username}"></label>
+                    <div class="input-group">
                     <span aria-hidden="true" class="input-group-text" title="Username">
                         <i class="fa fa-user"></i>
                         <span class="sr-only" th:text="#{username}"></span>
                     </span>
-                    <input name="username" id="username" type="text" th:placeholder="#{username}"
-                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
-                           th:field="*{username}" th:class="${#fields.hasErrors('username')
+                        <input name="username" id="username" type="text" th:placeholder="#{username}"
+                               th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
+                               th:field="*{username}" th:class="${#fields.hasErrors('username')
                                    ? 'form-control is-invalid' : 'form-control'}" required/>
+                    </div>
+                    <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                    <div class="form-text" th:text="#{username_max}"></div>
                 </div>
-                <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
-                <div class="form-text" th:text="#{username_max}"></div>
-            </div>
-            <!-- The input group for the email. -->
-            <div class="mb-3 form-group position-relative">
-                <label class="form-label" for="email" th:text="#{email}"></label>
-                <div class="input-group">
+
+                <!-- The input group for the email. -->
+                <div class="mb-3 form-group position-relative">
+                    <label class="form-label" for="email" th:text="#{email}"></label>
+                    <div class="input-group">
                     <span class="input-group-text">
                         <i aria-hidden="true" class="fa fa-envelope" title="Email address"></i>
                         <span class="sr-only" th:text="#{email}"></span>
                     </span>
-                    <input name="email" id="email" type="text" th:placeholder="#{email}"
-                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"
-                           th:field="*{email}" th:class="${#fields.hasErrors('email')
+                        <input name="email" id="email" type="text" th:placeholder="#{email}"
+                               th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"
+                               th:field="*{email}" th:class="${#fields.hasErrors('email')
                                    ? 'form-control is-invalid' : 'form-control'}" required/>
+                    </div>
+                    <div class="validation" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
                 </div>
-                <div class="validation" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
-            </div>
-            <!-- The selection menu for the language. -->
-            <div class="mb-3 form-group position-relative">
-                <label class="form-label" for="language" th:text="#{language}"></label>
-                <div class="input-group">
+
+                <!-- The selection menu for the language. -->
+                <div class="mb-3 form-group position-relative">
+                    <label class="form-label" for="language" th:text="#{language}"></label>
+                    <div class="input-group">
                     <span class="input-group-text">
                         <i aria-hidden="true" class="fa fa-flag" title="Preferred language"></i>
                         <span class="sr-only" th:text="#{language}"></span>
                     </span>
-                    <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
-                        <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="lang : ${T(de.uni_passau.fim.se2.scratchlog.util.enums.Language).values()}"
-                                th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
-                    </select>
+                        <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <option th:each="lang : ${T(de.uni_passau.fim.se2.scratchlog.util.enums.Language).values()}"
+                                    th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <!-- The selection menu for the role. -->
-            <div class="mb-3 form-group position-relative">
-                <label class="form-label" for="role" th:text="#{role}"></label>
-                <div class="input-group">
+
+                <!-- The selection menu for the role. -->
+                <div class="mb-3 form-group position-relative">
+                    <label class="form-label" for="role" th:text="#{role}"></label>
+                    <div class="input-group">
                     <span class="input-group-text">
                         <i aria-hidden="true" class="fas fa-id-card" title="Role"></i>
                         <span class="sr-only" th:text="#{role}"></span>
                     </span>
-                    <select id="role" class="form-select" th:aria-label="#{role}" th:field="*{role}">
-                        <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="userRole : ${T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).values()}"
-                                th:value="${userRole}" th:text="#{${userRole.toString().toLowerCase()}}"></option>
-                    </select>
+                        <select id="role" class="form-select" th:aria-label="#{role}" th:field="*{role}">
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <option th:each="userRole : ${T(de.uni_passau.fim.se2.scratchlog.util.enums.Role).values()}"
+                                    th:value="${userRole}" th:text="#{${userRole.toString().toLowerCase()}}"></option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <!-- The submit button. -->
-            <div class="text-center">
-                <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
-            </div>
-        </form>
+
+                <!-- The submit button. -->
+                <div class="text-center">
+                    <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

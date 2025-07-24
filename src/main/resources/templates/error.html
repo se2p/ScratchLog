@@ -13,10 +13,21 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
-        <h2 th:text="#{error}"></h2>
-        <div th:text="#{error_notice}"></div>
+<div class="container mt-4 mb-4">
+    <div class="card p-5">
+        <div class="bg-holder d-none d-md-block bg-card"
+             style="background-image:url(/img/corner-4.png);">
+        </div>
+
+        <!-- Error Title -->
+        <div class="d-flex justify-content-between flex-wrap mb-1" style="z-index: 1;">
+            <h2 th:text="#{error}" class="mb-3 h2"></h2>
+        </div>
+
+        <!-- Error Notice -->
+        <div class="row" style="z-index: 0;">
+            <div class="col-12 mb-2" th:text="#{error_notice}"></div>
+        </div>
     </div>
 </div>
 

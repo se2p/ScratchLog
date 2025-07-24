@@ -9,84 +9,96 @@
 <div th:fragment="header">
 
     <!-- The navigation bar containing navigation elements. -->
-    <nav id="header" class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="col-4">
-            <ul class="navbar-nav flex-row">
-                <!-- The application name displayed in the header. -->
-                <li class="navbar-brand" id="brand">
-                    <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
-                    <a class="navbar-brand"
-                       th:text="${applicationConfig.applicationName}"
-                       th:href="@{/}"></a>
-                </li>
-                <!-- The home icon. -->
-                <li class="nav-item active my-auto ms-2">
-                    <a class="nav-link" th:aria-label="#{home_label}" th:href="@{/}">
-                        <i aria-hidden="true" class="fas fa-home fa-lg"></i>
-                    </a>
-                </li>
-                <!-- The dropdown menu to add new users, experiments or courses. -->
-                <li class="nav-item my-auto dropdown ms-2" sec:authorize="hasRole('ADMIN')">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" id="addMenu"
-                       data-bs-toggle="dropdown" aria-expanded="false" th:aria-label="#{add_label}">
-                        <i aria-hidden="true" class="fa fa-plus fa-lg"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="addMenu">
-                        <li>
-                            <a class="dropdown-item" th:href="@{/experiment/create}" th:text="#{new_experiment}"></a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/course/create}" th:text="#{new_course}"></a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/users/add}" th:text="#{new_user}"></a>
-                        </li>
+    <nav id="header" class="navbar navbar-expand-lg navbar-white bg-white border-bottom">
+        <div class="container">
+            <div class="col-4">
+                <ul class="navbar-nav flex-row">
+                    <!-- The application name displayed in the header. -->
+                    <li class="navbar-brand" id="brand">
                         <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
-                        <li th:unless="${applicationConfig.useMail()}">
-                            <a class="dropdown-item" th:href="@{/users/bulk}" th:text="#{new_users}"></a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/users/csv}" th:text="#{csv_users}"></a>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-        <div class="mx-auto col-4">
-            <!-- The search bar. -->
-            <form th:action="@{/search/result}" method="get">
-                <div class="input-group" sec:authorize="hasRole('ADMIN')">
-                    <input class="form-control form-text mt-0" id="search" th:name="query" th:placeholder="#{search}"
-                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
-                    <button class="input-group-text btn btn-outline-primary" type="submit"
-                            th:aria-label="#{search_label}" th:href="@{/search}">
-                        <i aria-hidden="true" class="fa fa-search"></i>
-                    </button>
-                </div>
-                <div id="searchResults"></div>
-            </form>
-        </div>
-        <div class="col-4">
-            <ul class="navbar-nav float-end flex-row">
-                <!-- The login icon. -->
-                <li class="nav-item active" sec:authorize="isAnonymous()">
-                    <a id="login" class="btn btn-link" th:aria-label="#{login_label}" th:href="@{/login}">
-                        <i aria-hidden="true" class="fas fa-sign-in-alt fa-lg"></i>
-                    </a>
-                </li>
-                <!-- The profile icon. -->
-                <li class="nav-item active" sec:authorize="hasRole('PARTICIPANT')">
-                    <a class="btn btn-link" th:aria-label="#{user_label}" th:href="@{/users/profile}">
-                        <i aria-hidden="true" class="fas fa-user fa-lg"></i>
-                    </a>
-                </li>
-                <!-- The logout icon. -->
-                <li class="nav-item active" sec:authorize="isAuthenticated()">
-                    <a id="logout" class="btn btn-link" th:aria-label="#{logout_label}" th:href="@{/users/logout}">
-                        <i aria-hidden="true" class="fas fa-sign-out-alt fa-lg"></i>
-                    </a>
-                </li>
-            </ul>
+                        <a class="navbar-brand"
+                           th:text="${applicationConfig.applicationName}"
+                           th:href="@{/}"></a>
+                    </li>
+
+                    <!-- The home icon. -->
+                    <li class="nav-item active my-auto ms-2">
+                        <a class="nav-link link-secondary" th:aria-label="#{home_label}" th:href="@{/}">
+                            <i aria-hidden="true" class="fas fa-home fa-lg"></i>
+                        </a>
+                    </li>
+
+                    <!-- The dropdown menu to add new users, experiments or courses. -->
+                    <li class="nav-item my-auto dropdown ms-2" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link link-secondary dropdown-toggle" href="#" role="button" id="addMenu"
+                           data-bs-toggle="dropdown" aria-expanded="false" th:aria-label="#{add_label}">
+                            <i aria-hidden="true" class="fa fa-plus fa-lg"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-white" aria-labelledby="addMenu">
+                            <li>
+                                <a class="dropdown-item" th:href="@{/experiment/create}" th:text="#{new_experiment}"></a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" th:href="@{/course/create}" th:text="#{new_course}"></a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" th:href="@{/users/add}" th:text="#{new_user}"></a>
+                            </li>
+                            <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+                            <li th:unless="${applicationConfig.useMail()}">
+                                <a class="dropdown-item" th:href="@{/users/bulk}" th:text="#{new_users}"></a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" th:href="@{/users/csv}" th:text="#{csv_users}"></a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="mx-auto col-3 col-sm-4">
+                <!-- The search bar. -->
+                <form th:action="@{/search/result}" method="get">
+                    <div class="input-group" sec:authorize="hasRole('ADMIN')">
+                        <input class="form-control form-text mt-0" id="search" th:name="query" th:placeholder="#{search}"
+                               th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
+                        <button class="input-group-text btn btn-outline-primary" type="submit"
+                                th:aria-label="#{search_label}" th:href="@{/search}">
+                            <i aria-hidden="true" class="fa fa-search"></i>
+                        </button>
+                    </div>
+                    <div id="searchResults"></div>
+                </form>
+            </div>
+
+            <div class="col-3">
+                <ul class="navbar-nav float-end flex-row">
+                    <!-- The login icon. -->
+                    <li class="nav-item active" sec:authorize="isAnonymous()">
+                        <a id="login" class="btn btn-link" th:aria-label="#{login_label}" th:href="@{/login}" style="color: #0d6efd">
+                            <i aria-hidden="true" class="fas fa-sign-in-alt fa-lg"></i>
+                        </a>
+                    </li>
+
+                    <!-- The profile dropdown -->
+                    <li class="nav-item active" sec:authorize="isAuthenticated()">
+                        <div class="flex-shrink-0 profile-dropdown dropdown">
+                            <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser2" data-bs-toggle="dropdown" aria-expanded="true" style="color: #0d6efd!important;">
+                                <i aria-hidden="true" class="fa fa-user profile-photo"></i>
+                            </a>
+                            <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser2" data-popper-placement="bottom-end"
+                                style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(-112px, 34px);">
+                                <li sec:authorize="hasRole('PARTICIPANT')">
+                                    <a class="dropdown-item" th:aria-label="#{user_label}" th:href="@{/users/profile}">Profile</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"  th:aria-label="#{logout_label}" th:href="@{/users/logout}">Sign out</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
@@ -94,7 +106,7 @@
     <!-- Script to fetch the search suggestions. -->
     <script type="text/javascript" th:src="@{/js/searchSuggestions.js}"></script>
     <!-- Bootstrap js for the dropdown menu -->
-    <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
     <!-- Let Thymeleaf fetch the context path constant. -->
     <script th:inline="javascript">
         const contextPath = [[${applicationConfig.contextPath}]];

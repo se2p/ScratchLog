@@ -13,34 +13,39 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
-        <!-- The error message shown at the top of the page when an error occurs. -->
-        <div class="row" th:if="${error != null}">
-            <div class="col-12 alert alert-danger" th:text="${error}"></div>
-        </div>
+<div class="container mt-4 mb-4">
+    <div class="card">
 
         <!-- The CSV users page heading. -->
-        <h2 class="mb-5" th:text="#{csv_create}"></h2>
-
-        <!-- The information shown on the page if the mail server constant is set to true. -->
-        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
-        <div class="row" th:if="${applicationConfig.useMail()}">
-            <div class="col-12 mb-5" th:text="#{csv_info}"></div>
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{csv_create}"></h5>
         </div>
 
-        <!-- The information shown on the page if the mail server constant is set to false. -->
-        <div class="row" th:unless="${applicationConfig.useMail()}">
-            <div class="col-12 mb-5" th:text="#{csv_info_no_mail}"></div>
-        </div>
+        <div class="card-body p-5">
+            <!-- The error message shown at the top of the page when an error occurs. -->
+            <div class="row" th:if="${error != null}">
+                <div class="col-12 alert alert-danger" th:text="${error}"></div>
+            </div>
 
-        <!-- The form for uploading the CSV file. -->
-        <h2 th:text="#{csv_heading}" class="h5"></h2>
-        <form method="post" th:action="@{/users/csv}" enctype="multipart/form-data"
-              class="align-items-start d-flex flex-column gap-3">
-            <input type="file" name="file" accept=".csv"/>
-            <input class="btn btn-primary" type="submit" th:value="#{upload}"/>
-        </form>
+            <!-- The information shown on the page if the mail server constant is set to true. -->
+            <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+            <div class="row" th:if="${applicationConfig.useMail()}">
+                <div class="col-12 mb-5" th:text="#{csv_info}"></div>
+            </div>
+
+            <!-- The information shown on the page if the mail server constant is set to false. -->
+            <div class="row" th:unless="${applicationConfig.useMail()}">
+                <div class="col-12 mb-5" th:text="#{csv_info_no_mail}"></div>
+            </div>
+
+            <!-- The form for uploading the CSV file. -->
+            <h2 th:text="#{csv_heading}" class="h5"></h2>
+            <form method="post" th:action="@{/users/csv}" enctype="multipart/form-data"
+                  class="align-items-start d-flex flex-column gap-3">
+                <input type="file" name="file" accept=".csv"/>
+                <input class="btn btn-primary" type="submit" th:value="#{upload}"/>
+            </form>
+        </div>
     </div>
 </div>
 

@@ -22,335 +22,338 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
+<div class="container mt-5 mb-5">
+    <div class="card ">
 
         <!-- The result page heading. -->
-        <h2 class="mb-5" th:text="#{results}"></h2>
-
-        <!-- The uploaded files section to download files the participant uploaded during the experiment. -->
-        <div class="row mb-3">
-            <h4 th:text="#{files}"></h4>
-            <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${files.isEmpty()}">
-                <li class="list-group-item" th:text="#{table_empty}"></li>
-            </ul>
-            <ul class="list-group list-group-horizontal flex-wrap mx-3" th:unless="${files.isEmpty()}">
-                <li class="list-group-item" th:each="file : ${files}">
-                    <a class="no_decoration" th:href="@{/result/file(id=${file.id})}" th:text="${file.name}"></a>
-                </li>
-            </ul>
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{results}"></h5>
         </div>
 
-        <!-- The project files heading with the corresponding download all button. -->
-        <div class="row">
-            <div class="col-7">
-                <h4 th:text="#{zips}"></h4>
+        <div class="card-body">
+            <!-- The uploaded files section to download files the participant uploaded during the experiment. -->
+            <div class="row mb-3">
+                <h4 th:text="#{files}"></h4>
+                <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${files.isEmpty()}">
+                    <li class="list-group-item" th:text="#{table_empty}"></li>
+                </ul>
+                <ul class="list-group list-group-horizontal flex-wrap mx-3" th:unless="${files.isEmpty()}">
+                    <li class="list-group-item" th:each="file : ${files}">
+                        <a class="no_decoration" th:href="@{/result/file(id=${file.id})}" th:text="${file.name}"></a>
+                    </li>
+                </ul>
             </div>
-            <div class="col-5 text-end" th:if="${zips.size() > 1}">
-                <a class="btn btn-primary" th:href="@{/result/zips(user=${user}, experiment=${experiment})}"
-                   th:aria-label="#{zip_label}">
-                    <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
-                    <span th:text="#{all_files}"></span>
-                </a>
-            </div>
-        </div>
 
-        <!-- The sb3 project files section to download files saved for the participant during the experiment. -->
-        <div class="row mb-5">
-            <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${zips.isEmpty()}">
-                <li class="list-group-item" th:text="#{table_empty}"></li>
-            </ul>
-            <ul class="list-group list-group-horizontal flex-wrap mx-3" th:unless="${zips.isEmpty()}">
-                <li class="list-group-item" th:each="zip : ${zips}">
-                    <a class="no_decoration" th:href="@{/result/zip(id=${zip})}" th:text="${zip}"></a>
-                </li>
-            </ul>
-            <div class="text-muted mt-3" th:text="#{download_info}"></div>
-        </div>
-
-        <!-- The block and click events tables. -->
-        <div class="row mb-5">
-            <div class="col-6">
-                <h4 class="mb-3" th:text="#{block_events}"></h4>
-                <div class="table-container">
-                    <table class="table">
-                        <thead class="table-primary">
-                        <tr>
-                            <th scope="col" th:text="#{event}"></th>
-                            <th class="text-center" scope="col" th:text="#{event_count}"></th>
-                        </tr>
-                        </thead>
-                        <tbody th:if="${blockEvents.isEmpty()}">
-                        <tr>
-                            <td colspan="2" th:text="#{table_empty}"></td>
-                        </tr>
-                        </tbody>
-                        <tbody th:unless="${blockEvents.isEmpty()}">
-                        <tr th:each="blockEvent : ${blockEvents}">
-                            <td th:text="${blockEvent.event}"></td>
-                            <td class="text-center" th:text="${blockEvent.count}"></td>
-                        </tr>
-                        </tbody>
-                    </table>
+            <!-- The project files heading with the corresponding download all button. -->
+            <div class="row">
+                <div class="col-7">
+                    <h4 th:text="#{zips}"></h4>
+                </div>
+                <div class="col-5 text-end" th:if="${zips.size() > 1}">
+                    <a class="btn btn-primary" th:href="@{/result/zips(user=${user}, experiment=${experiment})}"
+                       th:aria-label="#{zip_label}">
+                        <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                        <span th:text="#{all_files}"></span>
+                    </a>
                 </div>
             </div>
-            <div class="col-6">
-                <h4 class="mb-3" th:text="#{click_events}"></h4>
-                <div class="table-container">
-                    <table class="table">
-                        <thead class="table-primary">
-                        <tr>
-                            <th scope="col" th:text="#{event}"></th>
-                            <th class="text-center" scope="col" th:text="#{event_count}"></th>
-                        </tr>
-                        </thead>
-                        <tbody th:if="${clickEvents.isEmpty()}">
-                        <tr>
-                            <td colspan="2" th:text="#{table_empty}"></td>
-                        </tr>
-                        </tbody>
-                        <tbody th:unless="${clickEvents.isEmpty()}">
-                        <tr th:each="clickEvent : ${clickEvents}">
-                            <td th:text="${clickEvent.event}"></td>
-                            <td class="text-center" th:text="${clickEvent.count}"></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
-        <!-- The resource events table and the bug patterns chart. -->
-        <div class="row mb-5">
-            <div class="col-6">
-                <h4 class="mb-3" th:text="#{resource_events}"></h4>
-                <div class="table-container">
-                    <table class="table">
-                        <thead class="table-primary">
-                        <tr>
-                            <th scope="col" th:text="#{event}"></th>
-                            <th class="text-center" scope="col" th:text="#{event_count}"></th>
-                        </tr>
-                        </thead>
-                        <tbody th:if="${resourceEvents.isEmpty()}">
-                        <tr>
-                            <td colspan="2" th:text="#{table_empty}"></td>
-                        </tr>
-                        </tbody>
-                        <tbody th:unless="${resourceEvents.isEmpty()}">
-                        <tr th:each="resourceEvent : ${resourceEvents}">
-                            <td th:text="${resourceEvent.event}"></td>
-                            <td class="text-center" th:text="${resourceEvent.count}"></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <!-- The sb3 project files section to download files saved for the participant during the experiment. -->
+            <div class="row mb-5">
+                <ul class="list-group list-group-horizontal text-muted mx-3" th:if="${zips.isEmpty()}">
+                    <li class="list-group-item" th:text="#{table_empty}"></li>
+                </ul>
+                <ul class="list-group list-group-horizontal flex-wrap mx-3" th:unless="${zips.isEmpty()}">
+                    <li class="list-group-item" th:each="zip : ${zips}">
+                        <a class="no_decoration" th:href="@{/result/zip(id=${zip})}" th:text="${zip}"></a>
+                    </li>
+                </ul>
+                <div class="text-muted mt-3" th:text="#{download_info}"></div>
             </div>
-            <div class="col-6">
-                <div class="panel-body">
-                    <div th:if="${bugs.isEmpty()}" class="text-muted text-center" th:text="#{no_data}"></div>
-                    <div th:unless="${bugs.isEmpty()}" class="d-flex justify-content-center">
-                        <canvas id="bugsChart" role="img"></canvas>
+
+            <!-- The block and click events tables. -->
+            <div class="row mb-5">
+                <div class="col-6">
+                    <h4 class="mb-3" th:text="#{block_events}"></h4>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead class="table-primary">
+                            <tr>
+                                <th scope="col" th:text="#{event}"></th>
+                                <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                            </tr>
+                            </thead>
+                            <tbody th:if="${blockEvents.isEmpty()}">
+                            <tr>
+                                <td colspan="2" th:text="#{table_empty}"></td>
+                            </tr>
+                            </tbody>
+                            <tbody th:unless="${blockEvents.isEmpty()}">
+                            <tr th:each="blockEvent : ${blockEvents}">
+                                <td th:text="${blockEvent.event}"></td>
+                                <td class="text-center" th:text="${blockEvent.count}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <h4 class="mb-3" th:text="#{click_events}"></h4>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead class="table-primary">
+                            <tr>
+                                <th scope="col" th:text="#{event}"></th>
+                                <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                            </tr>
+                            </thead>
+                            <tbody th:if="${clickEvents.isEmpty()}">
+                            <tr>
+                                <td colspan="2" th:text="#{table_empty}"></td>
+                            </tr>
+                            </tbody>
+                            <tbody th:unless="${clickEvents.isEmpty()}">
+                            <tr th:each="clickEvent : ${clickEvents}">
+                                <td th:text="${clickEvent.event}"></td>
+                                <td class="text-center" th:text="${clickEvent.count}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- The smells and perfumes charts. -->
-        <div class="row mb-5">
-            <div class="col-6">
-                <div class="panel-body">
-                    <div th:if="${smells.isEmpty()}" class="text-muted text-center" th:text="#{no_data}"></div>
-                    <div th:unless="${smells.isEmpty()}" class="d-flex justify-content-center">
-                        <canvas id="smellsChart" role="img"></canvas>
+            <!-- The resource events table and the bug patterns chart. -->
+            <div class="row mb-5">
+                <div class="col-6">
+                    <h4 class="mb-3" th:text="#{resource_events}"></h4>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead class="table-primary">
+                            <tr>
+                                <th scope="col" th:text="#{event}"></th>
+                                <th class="text-center" scope="col" th:text="#{event_count}"></th>
+                            </tr>
+                            </thead>
+                            <tbody th:if="${resourceEvents.isEmpty()}">
+                            <tr>
+                                <td colspan="2" th:text="#{table_empty}"></td>
+                            </tr>
+                            </tbody>
+                            <tbody th:unless="${resourceEvents.isEmpty()}">
+                            <tr th:each="resourceEvent : ${resourceEvents}">
+                                <td th:text="${resourceEvent.event}"></td>
+                                <td class="text-center" th:text="${resourceEvent.count}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="panel-body">
+                        <div th:if="${bugs.isEmpty()}" class="text-muted text-center" th:text="#{no_data}"></div>
+                        <div th:unless="${bugs.isEmpty()}" class="d-flex justify-content-center">
+                            <canvas id="bugsChart" role="img"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-6">
-                <div class="panel-body">
-                    <div th:if="${perfumes.isEmpty()}" class="text-muted text-center" th:text="#{no_data}"></div>
-                    <div th:unless="${perfumes.isEmpty()}" class="d-flex justify-content-center">
-                        <canvas id="perfumesChart" role="img"></canvas>
+
+            <!-- The smells and perfumes charts. -->
+            <div class="row mb-5">
+                <div class="col-6">
+                    <div class="panel-body">
+                        <div th:if="${smells.isEmpty()}" class="text-muted text-center" th:text="#{no_data}"></div>
+                        <div th:unless="${smells.isEmpty()}" class="d-flex justify-content-center">
+                            <canvas id="smellsChart" role="img"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="panel-body">
+                        <div th:if="${perfumes.isEmpty()}" class="text-muted text-center" th:text="#{no_data}"></div>
+                        <div th:unless="${perfumes.isEmpty()}" class="d-flex justify-content-center">
+                            <canvas id="perfumesChart" role="img"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- The download sb3 files heading and the corresponding button. -->
-        <div class="row mb-3">
-            <div class="col-7">
-                <h4 th:text="#{download_files}"></h4>
+            <!-- The download sb3 files heading and the corresponding button. -->
+            <div class="row mb-3">
+                <div class="col-7">
+                    <h4 th:text="#{download_files}"></h4>
+                </div>
+                <div class="col-5 text-end" th:if="${codeCount > 0}">
+                    <a class="btn btn-primary" th:href="@{/result/sb3s(user=${user}, experiment=${experiment})}"
+                       th:aria-label="#{sb3_label}">
+                        <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                        <span th:text="#{all_sb3}"></span>
+                    </a>
+                </div>
             </div>
-            <div class="col-5 text-end" th:if="${codeCount > 0}">
-                <a class="btn btn-primary" th:href="@{/result/sb3s(user=${user}, experiment=${experiment})}"
-                   th:aria-label="#{sb3_label}">
-                    <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
-                    <span th:text="#{all_sb3}"></span>
-                </a>
+
+            <div class="mb-5" th:unless="${codeCount > 0}">
+                <span class="text-muted mb-3" th:text="#{table_empty}"></span>
             </div>
-        </div>
 
-        <div class="mb-5" th:unless="${codeCount > 0}">
-            <span class="text-muted mb-3" th:text="#{table_empty}"></span>
-        </div>
-
-        <!-- The download sb3 files section. -->
-        <div class="mb-5" th:if="${codeCount > 0}">
+            <!-- The download sb3 files section. -->
+            <div class="mb-5" th:if="${codeCount > 0}">
             <span class="text-muted" th:if="${codeCount > 0}">
                 <span th:text="#{codes}"></span>
                 <span th:text="${codeCount}"></span>
             </span>
-            <!-- The accordion for downloading sb3 files in a certain interval. -->
-            <div class="accordion mt-3" id="accordionFiles">
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="rangeHeading">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#range" aria-expanded="false" aria-controls="range"
-                                th:text="#{files_range}">
-                        </button>
-                    </h2>
-                    <!-- The content for downloading all sb3 files in a certain interval. -->
-                    <div id="range" class="accordion-collapse collapse" aria-labelledby="rangeHeading"
-                         data-bs-parent="#accordionFiles">
-                        <div class="accordion-body">
-                            <p th:text="#{files_range_info}"></p>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" value="" id="rangeLastFileCheck">
-                                <label class="form-check-label" for="rangeLastFileCheck" th:text="#{last_file}"></label>
-                            </div>
-                            <div id="slider"></div>
-                            <div class="d-flex justify-content-between mt-3">
-                                <div>
-                                    <span th:text="#{from}"></span>
-                                    <span id="from"></span>
+                <!-- The accordion for downloading sb3 files in a certain interval. -->
+                <div class="accordion mt-3" id="accordionFiles">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="rangeHeading">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#range" aria-expanded="false" aria-controls="range"
+                                    th:text="#{files_range}">
+                            </button>
+                        </h2>
+                        <!-- The content for downloading all sb3 files in a certain interval. -->
+                        <div id="range" class="accordion-collapse collapse" aria-labelledby="rangeHeading"
+                             data-bs-parent="#accordionFiles">
+                            <div class="accordion-body">
+                                <p th:text="#{files_range_info}"></p>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" value="" id="rangeLastFileCheck">
+                                    <label class="form-check-label" for="rangeLastFileCheck" th:text="#{last_file}"></label>
                                 </div>
-                                <div>
-                                    <span th:text="#{to}"></span>
-                                    <span id="to"></span>
+                                <div id="slider"></div>
+                                <div class="d-flex justify-content-between mt-3">
+                                    <div>
+                                        <span th:text="#{from}"></span>
+                                        <span id="from"></span>
+                                    </div>
+                                    <div>
+                                        <span th:text="#{to}"></span>
+                                        <span id="to"></span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="text-center">
-                                <a class="btn btn-primary" id="downloadRange">
-                                    <i aria-hidden="true" class="fas fa-download fa-inverse"
-                                       title="Download sb3 file"></i>
-                                    <span class="sr-only" th:text="#{download}"></span>
-                                    <span>Sb3</span>
-                                </a>
+                                <div class="text-center">
+                                    <a class="btn btn-primary" id="downloadRange">
+                                        <i aria-hidden="true" class="fas fa-download fa-inverse"
+                                           title="Download sb3 file"></i>
+                                        <span class="sr-only" th:text="#{download}"></span>
+                                        <span>Sb3</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="stepHeading">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#steps" aria-expanded="false" aria-controls="steps"
-                                th:text="#{files_steps}">
-                        </button>
-                    </h2>
-                    <!-- The content for downloading sb3 files at certain time intervals. -->
-                    <div id="steps" class="accordion-collapse collapse" aria-labelledby="stepHeading"
-                         data-bs-parent="#accordionFiles">
-                        <div class="accordion-body">
-                            <p th:text="#{files_steps_info}"></p>
-                            <ul class="list-group list-group-horizontal justify-content-center"
-                                th:if="${codeCount > 1}">
-                                <li class="list-group-item">
-                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="stepHeading">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#steps" aria-expanded="false" aria-controls="steps"
+                                    th:text="#{files_steps}">
+                            </button>
+                        </h2>
+                        <!-- The content for downloading sb3 files at certain time intervals. -->
+                        <div id="steps" class="accordion-collapse collapse" aria-labelledby="stepHeading"
+                             data-bs-parent="#accordionFiles">
+                            <div class="accordion-body">
+                                <p th:text="#{files_steps_info}"></p>
+                                <ul class="list-group list-group-horizontal justify-content-center"
+                                    th:if="${codeCount > 1}">
+                                    <li class="list-group-item">
+                                        <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=1)}">1</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=2)}">2</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=3)}">3</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=5)}">5</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=10)}">10</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=15)}">15</a>
-                                </li>
-                                <li class="list-group-item">
-                                    <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
+                                    </li>
+                                    <li class="list-group-item">
+                                        <a class="no_decoration" th:href="@{/result/sb3s(user=${user},
                                     experiment=${experiment}, step=30)}">30</a>
-                                </li>
-                            </ul>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- The participant code heading with the buttons to download all xml or json codes. -->
-        <div class="row">
-            <div class="col-7">
-                <h4 th:text="#{code}"></h4>
-            </div>
-            <div class="col-5 text-end" th:if="${codeCount > 0}">
-                <div class="mb-3">
-                    <a class="btn btn-primary" th:href="@{/result/xmls(user=${user}, experiment=${experiment})}"
-                       th:aria-label="#{xml_label}">
-                        <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
-                        <span th:text="#{all_xml}"></span>
-                    </a>
+            <!-- The participant code heading with the buttons to download all xml or json codes. -->
+            <div class="row">
+                <div class="col-7">
+                    <h4 th:text="#{code}"></h4>
                 </div>
-                <div class="mb-3">
-                    <a class="btn btn-primary" th:href="@{/result/jsons(user=${user}, experiment=${experiment})}"
-                       th:aria-label="#{json_label}">
-                        <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
-                        <span th:text="#{all_json}"></span>
-                    </a>
+                <div class="col-5 text-end" th:if="${codeCount > 0}">
+                    <div class="mb-3">
+                        <a class="btn btn-primary" th:href="@{/result/xmls(user=${user}, experiment=${experiment})}"
+                           th:aria-label="#{xml_label}">
+                            <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                            <span th:text="#{all_xml}"></span>
+                        </a>
+                    </div>
+                    <div class="mb-3">
+                        <a class="btn btn-primary" th:href="@{/result/jsons(user=${user}, experiment=${experiment})}"
+                           th:aria-label="#{json_label}">
+                            <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                            <span th:text="#{all_json}"></span>
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- The blockly area rendering the participant code. -->
-        <div class="row my-5 justify-content-center" th:if="${codeCount > 0}">
-            <div id="blocklyArea">
-                <div id="blocklyDiv" style="position: relative"></div>
-                <xml id="toolbox" style="display: none"></xml>
+            <!-- The blockly area rendering the participant code. -->
+            <div class="row my-5 justify-content-center" th:if="${codeCount > 0}">
+                <div id="blocklyArea">
+                    <div id="blocklyDiv" style="position: relative"></div>
+                    <xml id="toolbox" style="display: none"></xml>
+                </div>
             </div>
-        </div>
 
-        <div class="row" th:unless="${codeCount > 0}">
-            <ul class="list-group list-group-horizontal text-muted mx-3">
-                <li class="list-group-item" th:text="#{table_empty}"></li>
-            </ul>
-        </div>
+            <div class="row" th:unless="${codeCount > 0}">
+                <ul class="list-group list-group-horizontal text-muted mx-3">
+                    <li class="list-group-item" th:text="#{table_empty}"></li>
+                </ul>
+            </div>
 
-        <!-- The navigation elements to go back and forth between code snippets and the buttons to download the
-        currently displayed code as xml, json or in a sb3 file. -->
-        <div class="text-center" th:if="${codeCount > 0}">
+            <!-- The navigation elements to go back and forth between code snippets and the buttons to download the
+            currently displayed code as xml, json or in a sb3 file. -->
+            <div class="text-center" th:if="${codeCount > 0}">
             <span class="btn btn-outline-dark" id="first">
                 <i aria-hidden="true" class="fas fa-angle-double-left" title="Show the first participant code"></i>
                 <span class="sr-only" th:text="#{first}"></span>
             </span>
-            <span class="btn btn-outline-dark" id="prev">
+                <span class="btn btn-outline-dark" id="prev">
                 <i aria-hidden="true" class="fas fa-angle-left" title="Show the previous participant code"></i>
                 <span class="sr-only" th:text="#{previous}"></span>
             </span>
-            <span class="text-muted">
+                <span class="text-muted">
                 <span th:text="#{elements}"></span>
                 <span th:text="${codeCount}"></span>
             </span>
-            <span class="btn btn-outline-dark" id="next">
+                <span class="btn btn-outline-dark" id="next">
                 <i aria-hidden="true" class="fas fa-angle-right" title="Show the next participant code"></i>
                 <span class="sr-only" th:text="#{next}"></span>
             </span>
-            <span class="btn btn-outline-dark" id="last">
+                <span class="btn btn-outline-dark" id="last">
                 <i aria-hidden="true" class="fas fa-angle-double-right" title="Show the last participant code"></i>
                 <span class="sr-only" th:text="#{last}"></span>
             </span>
-            <br class="mb-3">
-            <span class="text-muted">
+                <br class="mb-3">
+                <span class="text-muted">
                 <span th:text="#{current}"></span>
                 <span id="current">1</span>
                 <span th:text="#{time}"></span>
@@ -358,23 +361,25 @@
                 <span th:text="#{sprite}"></span>
                 <span id="sprite"></span>
             </span>
-            <br class="mb-3">
-            <span class="btn btn-primary" id="xml">
+                <br class="mb-3">
+                <span class="btn btn-primary" id="xml">
                 <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download current xml file"></i>
                 <span class="sr-only" th:text="#{download}"></span>
                 <span>XML</span>
             </span>
-            <span class="btn btn-primary" id="json">
+                <span class="btn btn-primary" id="json">
                 <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download current json file"></i>
                 <span class="sr-only" th:text="#{download}"></span>
                 <span>JSON</span>
             </span>
-            <a class="btn btn-primary" id="sb3">
-                <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download sb3 file"></i>
-                <span class="sr-only" th:text="#{download}"></span>
-                <span>Sb3</span>
-            </a>
+                <a class="btn btn-primary" id="sb3">
+                    <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download sb3 file"></i>
+                    <span class="sr-only" th:text="#{download}"></span>
+                    <span>Sb3</span>
+                </a>
+            </div>
         </div>
+
     </div>
 </div>
 

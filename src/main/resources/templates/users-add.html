@@ -13,86 +13,95 @@
 <header th:insert="~{header :: header}"></header>
 
 <!-- Page content -->
-<div class="row" id="content">
-    <div class="inside">
-        <!-- The error message shown at the top of the page when some users couldn't be added. -->
-        <div class="row" th:if="${error != null}">
-            <div class="col-12 alert alert-warning">
-                <div th:text="#{names_exists}"></div>
-                <div th:text="${error}"></div>
-            </div>
-        </div>
-
+<div class="container mt-4 mb-4">
+    <div class="card">
         <!-- The 'add users in bulk' page heading. -->
-        <h2 class="mb-5" th:text="#{add_users_bulk}"></h2>
-
-        <!-- The information shown on the 'add users in bulk' page -->
-        <div class="row">
-            <div class="col-12 mb-5" th:text="#{add_users_bulk_info}"></div>
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{add_users_bulk}"></h5>
         </div>
 
-        <!-- The form for adding new users in bulk. -->
-        <!--/*@thymesVar id="userBulkDTO" type="de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO"*/-->
-        <form th:action="@{/users/bulk}" th:object="${userBulkDTO}" th:name="userBulkDTO" method="post">
-            <!-- The input group for the range. -->
-            <div class="mb-3 form-group position-relative">
-                <label class="form-label" for="amount" th:text="#{amount}"></label>
-                <div class="input-group">
-                    <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
-                    <input name="amount" id="amount" class="w-100" type="range" th:field="*{amount}" min="1"
-                           th:max="${applicationConfig.maxUserBulkImportCount}"/>
-                </div>
-                <div class="form-text">
-                    <span th:text="#{value}"></span>
-                    <span id="value"></span>
+        <div class="card-body p-5">
+            <!-- The error message shown when some users couldn't be added. -->
+            <div class="row" th:if="${error != null}">
+                <div class="col-12 alert alert-warning">
+                    <div th:text="#{names_exists}"></div>
+                    <div th:text="${error}"></div>
                 </div>
             </div>
-            <!-- The input group for the username pattern. -->
-            <div class="mb-3 form-group position-relative">
-                <label class="form-label" for="username" th:text="#{username}"></label>
-                <div class="input-group">
+
+
+            <!-- The information shown on the 'add users in bulk' page -->
+            <div class="row">
+                <div class="col-12 mb-4" th:text="#{add_users_bulk_info}"></div>
+            </div>
+
+            <!-- The form for adding new users in bulk. -->
+            <!--/*@thymesVar id="userBulkDTO" type="de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO"*/-->
+            <form th:action="@{/users/bulk}" th:object="${userBulkDTO}" th:name="userBulkDTO" method="post">
+                <!-- The input group for the range. -->
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="amount" th:text="#{amount}"></label>
+                    <div class="input-group">
+                        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+                        <input name="amount" id="amount" class="form-range" type="range" th:field="*{amount}" min="1"
+                               th:max="${applicationConfig.maxUserBulkImportCount}"/>
+                    </div>
+                    <div class="form-text">
+                        <span th:text="#{value}"></span>
+                        <span id="value"></span>
+                    </div>
+                </div>
+
+                <!-- The input group for the username pattern. -->
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="username" th:text="#{username}"></label>
+                    <div class="input-group">
                     <span aria-hidden="true" class="input-group-text" title="Username">
                         <i class="fa fa-user"></i>
                         <span class="sr-only" th:text="#{username}"></span>
                     </span>
-                    <input name="username" id="username" type="text" th:placeholder="#{username}"
-                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
-                           th:field="*{username}" th:class="${#fields.hasErrors('username')
+                        <input name="username" id="username" type="text" th:placeholder="#{username}"
+                               th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
+                               th:field="*{username}" th:class="${#fields.hasErrors('username')
                                    ? 'form-control is-invalid' : 'form-control'}" required/>
+                    </div>
+                    <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                    <div class="form-text" th:text="#{username_max}"></div>
                 </div>
-                <div class="validation" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
-                <div class="form-text" th:text="#{username_max}"></div>
-            </div>
-            <!-- The checkbox controlling the numbers added to the username. -->
-            <div class="mb-3 form-group position-relative">
-                <div class="form-check mb-3">
-                    <input name="startAtOne" id="startAtOne" class="form-check-input" type="checkbox" value=""
-                           th:field="*{startAtOne}">
-                    <label class="form-check-label" for="startAtOne" th:text="#{start_number}">
-                    </label>
+
+                <!-- The checkbox controlling the numbers added to the username. -->
+                <div class="mb-3 form-group">
+                    <div class="form-check mb-3">
+                        <input name="startAtOne" id="startAtOne" class="form-check-input" type="checkbox" value=""
+                               th:field="*{startAtOne}">
+                        <label class="form-check-label" for="startAtOne" th:text="#{start_number}">
+                        </label>
+                    </div>
+                    <div class="form-text" th:text="#{start_number_info}"></div>
                 </div>
-                <div class="form-text" th:text="#{start_number_info}"></div>
-            </div>
-            <!-- The selection menu for the language. -->
-            <div class="mb-3 form-group position-relative">
-                <label class="form-label" for="language" th:text="#{language}"></label>
-                <div class="input-group">
+
+                <!-- The selection menu for the language. -->
+                <div class="mb-3 form-group">
+                    <label class="form-label" for="language" th:text="#{language}"></label>
+                    <div class="input-group">
                     <span class="input-group-text">
                         <i aria-hidden="true" class="fa fa-flag" title="Preferred language"></i>
                         <span class="sr-only" th:text="#{language}"></span>
                     </span>
-                    <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
-                        <!--suppress ThymeleafVariablesResolveInspection -->
-                        <option th:each="lang : ${T(de.uni_passau.fim.se2.scratchlog.util.enums.Language).values()}"
-                                th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
-                    </select>
+                        <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
+                            <!--suppress ThymeleafVariablesResolveInspection -->
+                            <option th:each="lang : ${T(de.uni_passau.fim.se2.scratchlog.util.enums.Language).values()}"
+                                    th:value="${lang}" th:text="#{${lang.toString().toLowerCase()}}"></option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <!-- The submit button. -->
-            <div class="text-center">
-                <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
-            </div>
-        </form>
+
+                <!-- The submit button. -->
+                <div class="text-center mt-4">
+                    <input class="btn btn-primary" type="submit" th:value="#{submit}"/>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
