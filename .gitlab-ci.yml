@@ -26,14 +26,14 @@ default:
   cache:
     paths:
       - .m2/repository/
+      - target/
     when: always
   artifacts:
     # Expire all artifacts already after 36 hours. (Default is around 30 days/4 weeks)
     expire_in: 36 hours
 
 variables:
-  # Arguments passed to maven before CLI arguments, only used from Maven 4 onward
-  MAVEN_ARGS: '--no-transfer-progress -Dmaven.repo.local=.m2/repository -Dmaven.compiler.useIncrementalCompilation=false'
+  MAVEN_ARGS: "--no-transfer-progress -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Dmaven.compiler.useIncrementalCompilation=false"
   GIT_STRATEGY: fetch
   # Disable all SAST jobs by default, since we manually enable/configure those
   SAST_DISABLED: 'true'
@@ -100,7 +100,7 @@ spotbugs-sast:
     # Needs to be set explicitly even if it's set via $MAVEN_ARGS/$MAVEN_CLI_OPTS above, to prevent a fatal spotbugs
     # error: 'lstat /root/.m2/repository: no such file or directory'. There exists an upstream issue for a similar error
     # https://gitlab.com/gitlab-org/gitlab/-/issues/334854 but the upstream issue is for maven multi-module projects.
-    MAVEN_REPO_PATH: '.m2/repository'
+    MAVEN_REPO_PATH: "$CI_PROJECT_DIR/.m2/repository"
   artifacts:
     reports:
       sast: gl-sast-report.json
