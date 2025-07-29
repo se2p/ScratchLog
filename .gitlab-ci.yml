@@ -92,8 +92,7 @@ spotbugs-sast:
   stage: test
   needs: ["Compile"]
   variables:
-    # We target Java 11
-    SAST_JAVA_VERSION: 11
+    SAST_JAVA_VERSION: 17
     # We already have a compiled version of the project, no need to recompile it
     COMPILE: 'false'
     # GitLab Spotbugs uses MAVEN_CLI_OPTS for additional CLI flags
