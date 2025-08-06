@@ -37,7 +37,7 @@
                         <li><a class="dropdown-item" th:unless="${participants.isEmpty()}"
                                th:href="@{/experiment/csv(id=${experimentDTO.id})}" th:text="#{heading_csv}"></a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a id="deleteExperiment" class="dropdown-item text-danger" th:text="#{delete}"
+                        <li><a id="openDeleteExperimentModal" class="dropdown-item text-danger" th:text="#{delete}"
                                style="cursor: pointer;"></a></li>
                     </ul>
                 </div>
@@ -111,17 +111,16 @@
                      tabindex="0">
                     <!-- The button to upload an initial sb3 template or delete an existing one. -->
                     <form method="post" th:action="@{/experiment/upload}" enctype="multipart/form-data"
-                          th:if="${project == null}" class="align-items-start d-flex flex-column">
+                          class="align-items-start d-flex flex-column">
                         <div class="p-5">
                             <label for="scratchFile" class="form-label">SB3 File</label>
                             <input type="hidden" name="id" th:value="${experimentDTO.id}" />
                             <input type="file" id="scratchFile" class="form-control" name="file" />
                         </div>
 
-
                         <div class="card-footer" style="width: 100%">
-                            <div id="deleteSb3" class="btn btn-sm btn-special" style="float: left;" type="submit"
-                                 th:text="#{delete_sb3}" th:unless="${project == null}"></div>
+                            <div id="openDeleteSb3Modal" class="btn btn-sm btn-danger" style="float: left;"
+                                 type="submit" th:text="#{delete_sb3}" th:unless="${project == null}"></div>
                             <input class="btn btn-sm btn-primary" type="submit" style="float: right;"
                                    th:value="#{upload}" />
                         </div>
@@ -233,8 +232,8 @@
                         <a id="open" class="btn btn-sm btn-special" type="submit" th:text="#{open}"
                            th:unless="${experimentDTO.active}"
                            th:href="@{/experiment/status(id=${experimentDTO.id}, stat='open')}"></a>
-                        <input th:if="${experimentDTO.active}" id="close" class="btn btn-sm btn-special"
-                               type="submit" th:value="#{close}">
+                        <input th:if="${experimentDTO.active}" id="openStopExperimentModal"
+                               class="btn btn-sm btn-special" type="submit" th:value="#{close}">
                     </div>
                 </div>
 
@@ -270,7 +269,7 @@
                     </li>
                     <li th:if="${experimentDTO.active}">
                         <a class="dropdown-item"
-                           id="addParticipant" th:text="#{add_existing}" style="cursor: pointer;"></a>
+                           id="openAddParticipantModal" th:text="#{add_existing}" style="cursor: pointer;"></a>
                     </li>
                     <li th:unless="${experimentDTO.courseExperiment}">
                         <a class="dropdown-item" th:href="@{/participant/add(id=${experimentDTO.id})}"
@@ -278,13 +277,14 @@
                     </li>
                     <li th:if="${experimentDTO.active}">
                         <a class="dropdown-item"
-                           id="addParticipantsCsv" th:text="#{add_csv_participants}" style="cursor: pointer;"></a>
+                           id="openAddParticipantCsvModal" th:text="#{add_csv_participants}"
+                           style="cursor: pointer;"></a>
                     </li>
                     <li th:unless="${participants.isEmpty()}">
                         <hr class="dropdown-divider">
                     </li>
                     <li th:unless="${participants.isEmpty()}">
-                        <a id="deleteParticipant" class="dropdown-item text-danger"
+                        <a id="openDeleteParticipantModal" class="dropdown-item text-danger"
                            th:text="#{delete_participant}" style="cursor: pointer;"></a>
                     </li>
                 </ul>
@@ -403,7 +403,7 @@
 </div>
 
 <!-- The popup dialog to delete the experiment. -->
-<div id="openDeleteExperiment" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="deleteExperimentModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_experiment}"></h2>
         <div class="mb-3" th:text="#{delete_experiment_warn}"></div>
@@ -432,7 +432,7 @@
 </div>
 
 <!-- The popup dialog to stop the experiment. -->
-<div id="openStopExperiment" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="stopExperimentModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{close_experiment}"></h2>
         <div class="mb-3" th:text="#{close_experiment_warn}"></div>
@@ -445,7 +445,7 @@
 </div>
 
 <!-- The popup dialog to add an existing participant to the experiment. -->
-<div id="openAddParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="addParticipantModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{add_participant}"></h2>
         <div class="mb-3" th:text="#{add_participant_info}"></div>
@@ -467,7 +467,7 @@
 </div>
 
 <!-- The popup dialog to add existing users as participants through CSV. -->
-<div id="openAddParticipantCsv" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="addParticipantCsvModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{add_csv_participants}"></h2>
         <span th:text="#{csv_participants}" class="mb-3"></span>
@@ -486,7 +486,7 @@
 </div>
 
 <!-- The popup dialog to delete an experiment participant. -->
-<div id="openDeleteParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="deleteParticipantModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_participant}"></h2>
         <div class="mb-3" th:text="#{delete_participant_info}"></div>
@@ -508,7 +508,7 @@
 </div>
 
 <!-- The popup dialog to delete the current sb3 file. -->
-<div id="openDeleteSb3" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="deleteSb3Modal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_sb3}"></h2>
         <div class="mb-3" th:text="#{delete_sb3_warn}"></div>
