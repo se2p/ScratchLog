@@ -283,7 +283,7 @@ public class ResultControllerTest {
         when(fileService.findFile(ID)).thenReturn(fileDTO);
         Object responseEntity = resultController.downloadFile(ID);
         assertAll(
-                () -> assertEquals(responseEntity.getClass(), ResponseEntity.class),
+                () -> assertEquals(ResponseEntity.class, responseEntity.getClass()),
                 () -> assertEquals(HttpStatus.OK, ((ResponseEntity<?>) responseEntity).getStatusCode()),
                 () -> assertEquals(fileDTO.getContent(), ((ResponseEntity<?>) responseEntity).getBody())
         );
@@ -489,7 +489,7 @@ public class ResultControllerTest {
         when(fileService.findZip(ID)).thenReturn(sb3ZipDTO);
         Object responseEntity = resultController.downloadZip(ID);
         assertAll(
-                () -> assertEquals(responseEntity.getClass(), ResponseEntity.class),
+                () -> assertEquals(ResponseEntity.class, responseEntity.getClass()),
                 () -> assertEquals(HttpStatus.OK, ((ResponseEntity<?>) responseEntity).getStatusCode()),
                 () -> assertEquals(sb3ZipDTO.getContent(), ((ResponseEntity<?>) responseEntity).getBody())
         );
@@ -634,9 +634,9 @@ public class ResultControllerTest {
         List<BlockEventProjection> projections = resultController.getCodes(ID, ID, PAGE);
         assertAll(
                 () -> assertEquals(2, projections.size()),
-                () -> assertEquals(0, projections.get(0).getId()),
-                () -> assertEquals("xml0", projections.get(0).getXml()),
-                () -> assertEquals("code0", projections.get(0).getCode()),
+                () -> assertEquals(0, projections.getFirst().getId()),
+                () -> assertEquals("xml0", projections.getFirst().getXml()),
+                () -> assertEquals("code0", projections.getFirst().getCode()),
                 () -> assertEquals(1, projections.get(1).getId()),
                 () -> assertEquals("xml1", projections.get(1).getXml()),
                 () -> assertEquals("code1", projections.get(1).getCode())

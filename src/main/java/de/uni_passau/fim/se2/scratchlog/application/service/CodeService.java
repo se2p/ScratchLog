@@ -215,7 +215,7 @@ public class CodeService {
 
             if (steps > 0) {
                 LocalDateTime lastDateTime = finalProject.isPresent() ? finalProject.get().getDate()
-                        : jsons.get(jsons.size() - 1).getDate();
+                        : jsons.getLast().getDate();
                 return filterProjectionsByStep(jsons, steps, lastDateTime);
             } else if (startPosition > 0) {
                 if (endPosition > jsons.size()) {
@@ -361,7 +361,7 @@ public class CodeService {
     private List<BlockEventJSONProjection> filterProjectionsByStep(final List<BlockEventJSONProjection> projections,
                                                                    final int step, final LocalDateTime lastDateTime) {
         List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
-        filteredProjections.add(projections.get(0));
+        filteredProjections.add(projections.getFirst());
 
         if (projections.size() > 1) {
             filteredProjections.addAll(addProjections(projections, step, lastDateTime));
@@ -384,7 +384,7 @@ public class CodeService {
     private List<BlockEventJSONProjection> addProjections(final List<BlockEventJSONProjection> projections,
                                                           final int steps, final LocalDateTime lastDateTime) {
         List<BlockEventJSONProjection> filteredProjections = new ArrayList<>();
-        LocalDateTime currentTime = projections.get(0).getDate().plusMinutes(1);
+        LocalDateTime currentTime = projections.getFirst().getDate().plusMinutes(1);
         LocalDateTime maxTime = currentTime.plusMinutes((long) Constants.MAX_ALLOWED_BREAK_FACTOR * steps);
 
         for (int i = 1; i < projections.size(); i++) {
@@ -407,8 +407,7 @@ public class CodeService {
             }
         }
 
-        addLastProjection(filteredProjections, projections.get(projections.size() - 1), lastDateTime, currentTime,
-                maxTime, steps);
+        addLastProjection(filteredProjections, projections.getLast(), lastDateTime, currentTime, maxTime, steps);
         return filteredProjections;
     }
 

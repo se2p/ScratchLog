@@ -380,7 +380,7 @@ public class DashboardService {
      */
     private List<Integer> sampleEventCountPerMinute(final List<EventProjection> projections) {
         List<Integer> counts = new ArrayList<>();
-        LocalDateTime startTime = projections.get(0).getDate();
+        LocalDateTime startTime = projections.getFirst().getDate();
         int count = 0;
         int i = 1;
 

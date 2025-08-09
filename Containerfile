@@ -1,4 +1,4 @@
-FROM docker.io/library/maven:3-eclipse-temurin-17 as builder
+FROM docker.io/library/maven:3-eclipse-temurin-21 as builder
 
 COPY pom.xml /build/pom.xml
 COPY src /build/src
@@ -11,7 +11,7 @@ RUN : \
 
 ################################################################################
 
-FROM docker.io/library/eclipse-temurin:17-jre
+FROM docker.io/library/eclipse-temurin:21-jre
 
 WORKDIR /app
 

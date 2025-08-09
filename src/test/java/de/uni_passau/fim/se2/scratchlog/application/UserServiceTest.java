@@ -195,7 +195,7 @@ public class UserServiceTest {
         List<UserDTO> saved = userService.saveUsers(List.of(userDTO, userDTO));
         assertAll(
                 () -> assertEquals(2, saved.size()),
-                () -> assertEquals(user1.getId(), saved.get(0).getId()),
+                () -> assertEquals(user1.getId(), saved.getFirst().getId()),
                 () -> assertEquals(user2.getId(), saved.get(1).getId())
         );
         verify(userRepository, times(2)).save(any());

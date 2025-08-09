@@ -186,7 +186,7 @@ public class ParticipantServiceTest {
         List<ParticipantDTO> participantDTOS = participantService.getParticipants(ID);
         assertAll(
                 () -> assertEquals(participantList.size(), participantDTOS.size()),
-                () -> assertEquals(participantDTOS.get(0).getUser(), participantList.get(0).getUser().getId())
+                () -> assertEquals(participantDTOS.getFirst().getUser(), participantList.getFirst().getUser().getId())
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperiment(experiment1);

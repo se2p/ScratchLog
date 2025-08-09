@@ -604,10 +604,10 @@ public class EventServiceTest {
         List<EventCountDTO> eventCountDTOS = eventService.getBlockEventCounts(ID, ID);
         assertAll(
                 () -> assertEquals(8, eventCountDTOS.size()),
-                () -> assertEquals(1, eventCountDTOS.get(0).getUser()),
-                () -> assertEquals(1, eventCountDTOS.get(0).getExperiment()),
-                () -> assertEquals(0, eventCountDTOS.get(0).getCount()),
-                () -> assertEquals("CREATE0", eventCountDTOS.get(0).getEvent()),
+                () -> assertEquals(1, eventCountDTOS.getFirst().getUser()),
+                () -> assertEquals(1, eventCountDTOS.getFirst().getExperiment()),
+                () -> assertEquals(0, eventCountDTOS.getFirst().getCount()),
+                () -> assertEquals("CREATE0", eventCountDTOS.getFirst().getEvent()),
                 () -> assertEquals(7, eventCountDTOS.get(7).getCount()),
                 () -> assertEquals("CREATE7", eventCountDTOS.get(7).getEvent())
         );
@@ -620,10 +620,10 @@ public class EventServiceTest {
         List<EventCountDTO> eventCountDTOS = eventService.getClickEventCounts(ID, ID);
         assertAll(
                 () -> assertEquals(2, eventCountDTOS.size()),
-                () -> assertEquals(1, eventCountDTOS.get(0).getUser()),
-                () -> assertEquals(1, eventCountDTOS.get(0).getExperiment()),
-                () -> assertEquals(0, eventCountDTOS.get(0).getCount()),
-                () -> assertEquals("GREENFLAG0", eventCountDTOS.get(0).getEvent()),
+                () -> assertEquals(1, eventCountDTOS.getFirst().getUser()),
+                () -> assertEquals(1, eventCountDTOS.getFirst().getExperiment()),
+                () -> assertEquals(0, eventCountDTOS.getFirst().getCount()),
+                () -> assertEquals("GREENFLAG0", eventCountDTOS.getFirst().getEvent()),
                 () -> assertEquals(1, eventCountDTOS.get(1).getCount()),
                 () -> assertEquals("GREENFLAG1", eventCountDTOS.get(1).getEvent())
         );
@@ -636,10 +636,10 @@ public class EventServiceTest {
         List<EventCountDTO> eventCountDTOS = eventService.getResourceEventCounts(ID, ID);
         assertAll(
                 () -> assertEquals(3, eventCountDTOS.size()),
-                () -> assertEquals(1, eventCountDTOS.get(0).getUser()),
-                () -> assertEquals(1, eventCountDTOS.get(0).getExperiment()),
-                () -> assertEquals(0, eventCountDTOS.get(0).getCount()),
-                () -> assertEquals("RENAME0", eventCountDTOS.get(0).getEvent()),
+                () -> assertEquals(1, eventCountDTOS.getFirst().getUser()),
+                () -> assertEquals(1, eventCountDTOS.getFirst().getExperiment()),
+                () -> assertEquals(0, eventCountDTOS.getFirst().getCount()),
+                () -> assertEquals("RENAME0", eventCountDTOS.getFirst().getEvent()),
                 () -> assertEquals(2, eventCountDTOS.get(2).getCount()),
                 () -> assertEquals("RENAME2", eventCountDTOS.get(2).getEvent())
         );
