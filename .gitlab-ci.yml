@@ -22,7 +22,7 @@ stages:
   - visualize
 
 default:
-  image: maven:3-openjdk-17
+  image: docker.io/library/maven:3-eclipse-temurin-21
   cache:
     paths:
       - .m2/repository/
@@ -92,7 +92,7 @@ spotbugs-sast:
   stage: test
   needs: ["Compile"]
   variables:
-    SAST_JAVA_VERSION: 17
+    SAST_JAVA_VERSION: 21
     # We already have a compiled version of the project, no need to recompile it
     COMPILE: 'false'
     # GitLab Spotbugs uses MAVEN_CLI_OPTS for additional CLI flags
