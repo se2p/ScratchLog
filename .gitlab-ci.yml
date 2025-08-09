@@ -92,11 +92,10 @@ spotbugs-sast:
   stage: test
   needs: ["Compile"]
   variables:
+    SAST_ANALYZER_IMAGE_TAG: '6'
     SAST_JAVA_VERSION: 21
-    # We already have a compiled version of the project, no need to recompile it
-    COMPILE: 'false'
-    # GitLab Spotbugs uses MAVEN_CLI_OPTS for additional CLI flags
-    MAVEN_CLI_OPTS: '$MAVEN_ARGS'
+    COMPILE: 'true'
+    MAVEN_CLI_OPTS: '$MAVEN_ARGS -DskipTests'
     # Needs to be set explicitly even if it's set via $MAVEN_ARGS/$MAVEN_CLI_OPTS above, to prevent a fatal spotbugs
     # error: 'lstat /root/.m2/repository: no such file or directory'. There exists an upstream issue for a similar error
     # https://gitlab.com/gitlab-org/gitlab/-/issues/334854 but the upstream issue is for maven multi-module projects.
