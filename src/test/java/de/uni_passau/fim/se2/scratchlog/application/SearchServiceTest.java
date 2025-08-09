@@ -546,9 +546,9 @@ public class SearchServiceTest {
         String[] secondExperiment = experimentInfo.get(1);
         assertAll(
                 () -> assertEquals(2, experimentInfo.size()),
-                () -> assertEquals(experiments.get(0).getId().toString(), firstExperiment[0]),
-                () -> assertEquals(experiments.get(0).getTitle(), firstExperiment[1]),
-                () -> assertEquals(experiments.get(0).getDescription(), firstExperiment[2]),
+                () -> assertEquals(experiments.getFirst().getId().toString(), firstExperiment[0]),
+                () -> assertEquals(experiments.getFirst().getTitle(), firstExperiment[1]),
+                () -> assertEquals(experiments.getFirst().getDescription(), firstExperiment[2]),
                 () -> assertEquals(experiments.get(1).getId().toString(), secondExperiment[0]),
                 () -> assertEquals(experiments.get(1).getTitle(), secondExperiment[1]),
                 () -> assertEquals(experiments.get(1).getDescription(), secondExperiment[2])
@@ -562,9 +562,9 @@ public class SearchServiceTest {
         List<String[]> courseInfo = searchService.getNextCourses(QUERY, PAGE);
         assertAll(
                 () -> assertEquals(1, courseInfo.size()),
-                () -> assertEquals(courses.get(0).getId().toString(), courseInfo.get(0)[0]),
-                () -> assertEquals(courses.get(0).getTitle(), courseInfo.get(0)[1]),
-                () -> assertEquals(courses.get(0).getDescription(), courseInfo.get(0)[2])
+                () -> assertEquals(courses.getFirst().getId().toString(), courseInfo.getFirst()[0]),
+                () -> assertEquals(courses.getFirst().getTitle(), courseInfo.getFirst()[1]),
+                () -> assertEquals(courses.getFirst().getDescription(), courseInfo.getFirst()[2])
         );
         verify(courseRepository).findCourseResults(QUERY, LIMIT, PAGE * LIMIT);
     }

@@ -245,8 +245,8 @@ public class CodeServiceTest {
         assertAll(
                 () -> assertEquals(2, projections.size()),
                 () -> assertEquals(jsonProjections, projections),
-                () -> assertEquals(0, projections.get(0).getId()),
-                () -> assertEquals("json0", projections.get(0).getCode()),
+                () -> assertEquals(0, projections.getFirst().getId()),
+                () -> assertEquals("json0", projections.getFirst().getCode()),
                 () -> assertEquals(1, projections.get(1).getId()),
                 () -> assertEquals("json1", projections.get(1).getCode())
         );
@@ -303,7 +303,7 @@ public class CodeServiceTest {
                 Optional.of(sb3ZipDTO));
         assertAll(
                 () -> assertEquals(5, filteredProjections.size()),
-                () -> assertEquals(1, filteredProjections.get(0).getId()),
+                () -> assertEquals(1, filteredProjections.getFirst().getId()),
                 () -> assertEquals(2, filteredProjections.get(1).getId()),
                 () -> assertEquals(3, filteredProjections.get(2).getId()),
                 () -> assertEquals(3, filteredProjections.get(3).getId()),
@@ -324,7 +324,7 @@ public class CodeServiceTest {
                 Optional.empty());
         assertAll(
                 () -> assertEquals(2, filteredProjections.size()),
-                () -> assertEquals(0, filteredProjections.get(0).getId()),
+                () -> assertEquals(0, filteredProjections.getFirst().getId()),
                 () -> assertEquals(1, filteredProjections.get(1).getId())
         );
         verify(userRepository).getReferenceById(ID);
@@ -342,7 +342,7 @@ public class CodeServiceTest {
                 Optional.empty());
         assertAll(
                 () -> assertEquals(1, filteredProjections.size()),
-                () -> assertEquals(0, filteredProjections.get(0).getId())
+                () -> assertEquals(0, filteredProjections.getFirst().getId())
         );
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
@@ -359,7 +359,7 @@ public class CodeServiceTest {
                 Optional.empty());
         assertAll(
                 () -> assertEquals(2, filteredProjections.size()),
-                () -> assertEquals(1, filteredProjections.get(0).getId()),
+                () -> assertEquals(1, filteredProjections.getFirst().getId()),
                 () -> assertEquals(2, filteredProjections.get(1).getId())
         );
         verify(userRepository).getReferenceById(ID);
@@ -415,8 +415,8 @@ public class CodeServiceTest {
         assertAll(
                 () -> assertEquals(2, projections.size()),
                 () -> assertEquals(xmlProjections, projections),
-                () -> assertEquals(0, projections.get(0).getId()),
-                () -> assertEquals("xml0", projections.get(0).getXml()),
+                () -> assertEquals(0, projections.getFirst().getId()),
+                () -> assertEquals("xml0", projections.getFirst().getXml()),
                 () -> assertEquals(1, projections.get(1).getId()),
                 () -> assertEquals("xml1", projections.get(1).getXml())
         );

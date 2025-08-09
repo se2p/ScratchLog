@@ -129,8 +129,8 @@ public class EventCountRepositoryTest {
                 experiment1.getId());
         assertAll(
                 () -> assertEquals(2, eventCounts.size()),
-                () -> assertEquals(blockEvent1.getEvent().toString(), eventCounts.get(0).getEvent()),
-                () -> assertEquals(1, eventCounts.get(0).getCount()),
+                () -> assertEquals(blockEvent1.getEvent().toString(), eventCounts.getFirst().getEvent()),
+                () -> assertEquals(1, eventCounts.getFirst().getCount()),
                 () -> assertEquals(blockEvent2.getEvent().toString(), eventCounts.get(1).getEvent()),
                 () -> assertEquals(2, eventCounts.get(1).getCount())
         );
@@ -166,8 +166,8 @@ public class EventCountRepositoryTest {
                 experiment1.getId());
         assertAll(
                 () -> assertEquals(2, eventCounts.size()),
-                () -> assertEquals(clickEvent1.getEvent().toString(), eventCounts.get(0).getEvent()),
-                () -> assertEquals(1, eventCounts.get(0).getCount()),
+                () -> assertEquals(clickEvent1.getEvent().toString(), eventCounts.getFirst().getEvent()),
+                () -> assertEquals(1, eventCounts.getFirst().getCount()),
                 () -> assertEquals(clickEvent2.getEvent().toString(), eventCounts.get(1).getEvent()),
                 () -> assertEquals(2, eventCounts.get(1).getCount())
         );
@@ -196,8 +196,8 @@ public class EventCountRepositoryTest {
                 experiment1.getId());
         assertAll(
                 () -> assertEquals(2, eventCounts.size()),
-                () -> assertEquals(resourceEvent1.getEvent().toString(), eventCounts.get(0).getEvent()),
-                () -> assertEquals(2, eventCounts.get(0).getCount()),
+                () -> assertEquals(resourceEvent1.getEvent().toString(), eventCounts.getFirst().getEvent()),
+                () -> assertEquals(2, eventCounts.getFirst().getCount()),
                 () -> assertEquals(resourceEvent2.getEvent().toString(), eventCounts.get(1).getEvent()),
                 () -> assertEquals(1, eventCounts.get(1).getCount())
         );

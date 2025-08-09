@@ -251,7 +251,7 @@ public class CourseControllerTest {
         when(bindingResult.hasErrors()).thenReturn(true);
         assertAll(
                 () -> assertEquals(COURSE_EDIT, courseController.updateCourse(courseDTO, bindingResult)),
-                () -> assertEquals(courseDTO.getLastChanged(), CHANGED)
+                () -> assertEquals(CHANGED, courseDTO.getLastChanged())
         );
         verify(bindingResult).addError(any());
         verify(courseService).existsCourse(ID, TITLE);
@@ -266,7 +266,7 @@ public class CourseControllerTest {
         when(bindingResult.hasErrors()).thenReturn(true);
         assertAll(
                 () -> assertEquals(COURSE_EDIT, courseController.updateCourse(courseDTO, bindingResult)),
-                () -> assertEquals(courseDTO.getLastChanged(), CHANGED)
+                () -> assertEquals(CHANGED, courseDTO.getLastChanged())
         );
         verify(bindingResult, times(2)).addError(any());
         verify(courseService).existsCourse(ID, title);
@@ -279,7 +279,7 @@ public class CourseControllerTest {
         when(bindingResult.hasErrors()).thenReturn(true);
         assertAll(
                 () -> assertEquals(COURSE_EDIT, courseController.updateCourse(courseDTO, bindingResult)),
-                () -> assertEquals(courseDTO.getLastChanged(), CHANGED)
+                () -> assertEquals(CHANGED, courseDTO.getLastChanged())
         );
         verify(bindingResult).addError(any());
         verify(courseService).existsCourse(ID, TITLE);
@@ -462,8 +462,8 @@ public class CourseControllerTest {
     @Test
     public void testAddParticipantsExists() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
-        when(courseService.existsCourseParticipant(ID, USERNAMES.get(0))).thenReturn(true);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.getFirst())).thenReturn(userDTO);
+        when(courseService.existsCourseParticipant(ID, USERNAMES.getFirst())).thenReturn(true);
         // Mocking the second user throws an UnnecessaryStubbingException for this test.
         when(model.getAttribute(ERROR)).thenReturn(USERNAME);
         assertEquals(COURSE, courseController.addParticipants(USERNAMES, "on", ID, model));
@@ -479,7 +479,7 @@ public class CourseControllerTest {
     public void testAddParticipantsAdmin() {
         userDTO.setRole(Role.ADMIN);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getUserByUsernameOrEmail(USERNAMES.get(0))).thenReturn(userDTO);
+        when(userService.getUserByUsernameOrEmail(USERNAMES.getFirst())).thenReturn(userDTO);
         // Mocking the second user throws an UnnecessaryStubbingException for this test.
         when(model.getAttribute(ERROR)).thenReturn(USERNAME);
         assertEquals(COURSE, courseController.addParticipants(USERNAMES, "on", ID, model));
@@ -658,30 +658,25 @@ public class CourseControllerTest {
         List<CourseExperimentProjection> experiments = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             int id = i + 1;
-            CourseExperimentProjection projection = new CourseExperimentProjection() {
+            CourseExperimentProjection projection = () -> new ExperimentTableProjection() {
                 @Override
-                public ExperimentTableProjection getExperiment() {
-                    return new ExperimentTableProjection() {
-                        @Override
-                        public Integer getId() {
-                            return id;
-                        }
+                public Integer getId() {
+                    return id;
+                }
 
-                        @Override
-                        public String getTitle() {
-                            return "Experiment " + id;
-                        }
+                @Override
+                public String getTitle() {
+                    return "Experiment " + id;
+                }
 
-                        @Override
-                        public String getDescription() {
-                            return "Some description";
-                        }
+                @Override
+                public String getDescription() {
+                    return "Some description";
+                }
 
-                        @Override
-                        public boolean isActive() {
-                            return false;
-                        }
-                    };
+                @Override
+                public boolean isActive() {
+                    return false;
                 }
             };
             experiments.add(projection);

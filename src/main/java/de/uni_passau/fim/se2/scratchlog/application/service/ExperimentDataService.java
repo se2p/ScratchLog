@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import de.uni_passau.fim.se2.litterbox.analytics.Issue;
 import de.uni_passau.fim.se2.litterbox.analytics.ProgramBugAnalyzer;
 import de.uni_passau.fim.se2.litterbox.analytics.ProgramMetricAnalyzer;
@@ -298,7 +297,7 @@ public class ExperimentDataService {
             bugs.add(results.get(BUGS).size());
             smells.add(results.get(SMELLS).size());
             perfumes.add(results.get(PERFUMES).size());
-        } catch (ParsingException | JsonProcessingException e) {
+        } catch (ParsingException e) {
             throw new RuntimeException("Failed to parse JSON code when trying to compute bug counts!", e);
         }
     }
@@ -346,7 +345,7 @@ public class ExperimentDataService {
             results.get(SMELLS).forEach(issue -> addIssueData(issues, issue, username, json, time));
             results.get(PERFUMES).forEach(issue -> addIssueData(issues, issue, username, json, time));
             addMetricData(program, metrics, username, json, time);
-        } catch (ParsingException | JsonProcessingException e) {
+        } catch (ParsingException e) {
             throw new RuntimeException("Failed to parse JSON code for analysis!", e);
         }
     }
@@ -356,10 +355,9 @@ public class ExperimentDataService {
      *
      * @param json The string be parsed.
      * @return The parsed program.
-     * @throws JsonProcessingException if the JSON code could not be parsed correctly.
      * @throws ParsingException if LitterBox failed to parse the JSON.
      */
-    private Program getProgram(final String json) throws JsonProcessingException, ParsingException {
+    private Program getProgram(final String json) throws ParsingException {
         Program program = scratch3Parser.parseString("json", json);
         program.accept(new ParentVisitor());
         return program;

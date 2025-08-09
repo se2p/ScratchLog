@@ -71,7 +71,6 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import static de.uni_passau.fim.se2.scratchlog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -695,7 +694,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddParticipantsStartOneUsernameExists() {
         List<String> existingNames = List.of("admin0");
         userBulkDTO.setStartAtOne(true);
-        when(userService.existsUser(existingNames.get(0))).thenReturn(true);
+        when(userService.existsUser(existingNames.getFirst())).thenReturn(true);
         assertEquals(USERS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).findLastId();
@@ -768,7 +767,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipants() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("users.csv").getInputStream());
-        ResponseEntity entity = (ResponseEntity) userController.addCSVParticipants(file, model);
+        ResponseEntity<?> entity = (ResponseEntity<?>) userController.addCSVParticipants(file, model);
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
@@ -780,7 +779,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipantsNoEmail() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("usersSimple.csv").getInputStream());
-        ResponseEntity entity = (ResponseEntity) userController.addCSVParticipants(file, model);
+        ResponseEntity<?> entity = (ResponseEntity<?>) userController.addCSVParticipants(file, model);
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, never()).existsEmail(anyString());
@@ -792,7 +791,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddCSVParticipantsPasswords() throws IOException {
         MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
                 new ClassPathResource("usersPassword.csv").getInputStream());
-        ResponseEntity entity = (ResponseEntity) userController.addCSVParticipants(file, model);
+        ResponseEntity<?> entity = (ResponseEntity<?>) userController.addCSVParticipants(file, model);
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, never()).existsEmail(anyString());

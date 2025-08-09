@@ -120,7 +120,7 @@ public class ExperimentDataServiceTest {
         List<String[]> events = experimentDataService.getEventData(ID);
         assertAll(
                 () -> assertEquals(8, events.size()),
-                () -> assertEquals(Arrays.toString(EVENT_DATA_HEADER), Arrays.toString(events.get(0)))
+                () -> assertEquals(Arrays.toString(EVENT_DATA_HEADER), Arrays.toString(events.getFirst()))
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(blockEventRepository).findAllByExperiment(experiment);
@@ -240,7 +240,7 @@ public class ExperimentDataServiceTest {
         List<String[]> results = experimentDataService.getLitterBoxAnalysisResults(ID);
         assertAll(
                 () -> assertFalse(results.isEmpty()),
-                () -> assertEquals(Arrays.toString(ISSUE_HEADER), Arrays.toString(results.get(0)))
+                () -> assertEquals(Arrays.toString(ISSUE_HEADER), Arrays.toString(results.getFirst()))
         );
         verify(experimentRepository).findById(ID);
         verify(participantRepository).findAllByExperiment(experiment);

@@ -485,7 +485,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     public void testAddParticipantsUsernameExists() throws Exception {
         List<String> existingNames = List.of("admin5");
         when(userService.findValidNumberForUsername(userBulkDTO.getUsername())).thenReturn(1);
-        when(userService.existsUser(existingNames.get(0))).thenReturn(true);
+        when(userService.existsUser(existingNames.getFirst())).thenReturn(true);
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))

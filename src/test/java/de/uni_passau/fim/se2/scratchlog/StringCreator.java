@@ -25,9 +25,7 @@ package de.uni_passau.fim.se2.scratchlog;
 public final class StringCreator {
 
     public static String createLongString(int length) {
-        StringBuilder longString = new StringBuilder();
-        longString.append("a".repeat(Math.max(0, length)));
-        return longString.toString();
+        return "a".repeat(Math.max(0, length));
     }
 
 }

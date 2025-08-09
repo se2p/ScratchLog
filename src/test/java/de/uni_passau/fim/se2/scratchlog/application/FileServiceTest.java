@@ -478,10 +478,10 @@ public class FileServiceTest {
         List<Sb3ZipDTO> sb3ZipDTOs = fileService.getZipFiles(ID, ID);
         assertAll(
                 () -> assertEquals(3, sb3ZipDTOs.size()),
-                () -> assertEquals(ID, sb3ZipDTOs.get(0).getUser()),
-                () -> assertEquals(ID, sb3ZipDTOs.get(0).getExperiment()),
-                () -> assertEquals(4, sb3ZipDTOs.get(0).getContent().length),
-                () -> assertEquals("file0", sb3ZipDTOs.get(0).getName()),
+                () -> assertEquals(ID, sb3ZipDTOs.getFirst().getUser()),
+                () -> assertEquals(ID, sb3ZipDTOs.getFirst().getExperiment()),
+                () -> assertEquals(4, sb3ZipDTOs.getFirst().getContent().length),
+                () -> assertEquals("file0", sb3ZipDTOs.getFirst().getName()),
                 () -> assertEquals("file1", sb3ZipDTOs.get(1).getName()),
                 () -> assertEquals("file2", sb3ZipDTOs.get(2).getName())
         );

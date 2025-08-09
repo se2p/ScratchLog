@@ -204,7 +204,7 @@ public class CourseRepositoryTest {
         Page<CourseTableProjection> page = courseRepository.findCoursesByParticipant(user2.getId(), pageRequest);
         assertAll(
                 () -> assertEquals(1, page.getNumberOfElements()),
-                () -> assertTrue(page.stream().findFirst().get().getTitle().equals(course1.getTitle()))
+                () -> assertEquals(course1.getTitle(), page.stream().findFirst().get().getTitle())
         );
     }
 

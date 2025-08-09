@@ -159,8 +159,8 @@ public class DashboardServiceTest {
         List<String[]> userInfo = dashboardService.getParticipants(ID);
         assertAll(
                 () -> assertEquals(2, userInfo.size()),
-                () -> assertEquals(String.valueOf(user1.getId()), userInfo.get(0)[0]),
-                () -> assertEquals(user1.getUsername(), userInfo.get(0)[1]),
+                () -> assertEquals(String.valueOf(user1.getId()), userInfo.getFirst()[0]),
+                () -> assertEquals(user1.getUsername(), userInfo.getFirst()[1]),
                 () -> assertEquals(String.valueOf(user2.getId()), userInfo.get(1)[0]),
                 () -> assertEquals(user2.getUsername(), userInfo.get(1)[1])
         );
@@ -198,9 +198,9 @@ public class DashboardServiceTest {
         List<Integer[]> counts = dashboardService.getBlockEventCountData(userIds, ID, BLOCK_EVENT);
         assertAll(
                 () -> assertEquals(2, counts.size()),
-                () -> assertEquals(2, counts.get(0).length),
-                () -> assertEquals(1, counts.get(0)[0]),
-                () -> assertEquals(2, counts.get(0)[1])
+                () -> assertEquals(2, counts.getFirst().length),
+                () -> assertEquals(1, counts.getFirst()[0]),
+                () -> assertEquals(2, counts.getFirst()[1])
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(userRepository, times(2)).getReferenceById(ID);
@@ -215,7 +215,7 @@ public class DashboardServiceTest {
         List<Integer[]> counts = dashboardService.getBlockEventCountData(userIds, ID, BLOCK_EVENT);
         assertAll(
                 () -> assertEquals(2, counts.size()),
-                () -> assertEquals(0, counts.get(0).length),
+                () -> assertEquals(0, counts.getFirst().length),
                 () -> assertEquals(0, counts.get(1).length)
         );
         verify(experimentRepository).getReferenceById(ID);
@@ -247,10 +247,10 @@ public class DashboardServiceTest {
         List<Integer[]> counts = dashboardService.getClickEventCountData(userIds, ID, CLICK_EVENT);
         assertAll(
                 () -> assertEquals(2, counts.size()),
-                () -> assertEquals(3, counts.get(0).length),
-                () -> assertEquals(1, counts.get(0)[0]),
-                () -> assertEquals(0, counts.get(0)[1]),
-                () -> assertEquals(2, counts.get(0)[2])
+                () -> assertEquals(3, counts.getFirst().length),
+                () -> assertEquals(1, counts.getFirst()[0]),
+                () -> assertEquals(0, counts.getFirst()[1]),
+                () -> assertEquals(2, counts.getFirst()[2])
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(userRepository, times(2)).getReferenceById(ID);
@@ -281,10 +281,10 @@ public class DashboardServiceTest {
         List<Integer[]> counts = dashboardService.getResourceEventCountData(userIds, ID, RESOURCE_EVENT);
         assertAll(
                 () -> assertEquals(2, counts.size()),
-                () -> assertEquals(3, counts.get(0).length),
-                () -> assertEquals(1, counts.get(0)[0]),
-                () -> assertEquals(0, counts.get(0)[1]),
-                () -> assertEquals(2, counts.get(0)[2])
+                () -> assertEquals(3, counts.getFirst().length),
+                () -> assertEquals(1, counts.getFirst()[0]),
+                () -> assertEquals(0, counts.getFirst()[1]),
+                () -> assertEquals(2, counts.getFirst()[2])
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(userRepository, times(2)).getReferenceById(ID);
@@ -315,13 +315,13 @@ public class DashboardServiceTest {
         List<Integer[]> counts = dashboardService.getEventCountData(userIds, ID);
         assertAll(
                 () -> assertEquals(2, counts.size()),
-                () -> assertEquals(6, counts.get(0).length),
-                () -> assertEquals(5, counts.get(0)[0]),
-                () -> assertEquals(0, counts.get(0)[1]),
-                () -> assertEquals(0, counts.get(0)[2]),
-                () -> assertEquals(3, counts.get(0)[3]),
-                () -> assertEquals(0, counts.get(0)[4]),
-                () -> assertEquals(0, counts.get(0)[5])
+                () -> assertEquals(6, counts.getFirst().length),
+                () -> assertEquals(5, counts.getFirst()[0]),
+                () -> assertEquals(0, counts.getFirst()[1]),
+                () -> assertEquals(0, counts.getFirst()[2]),
+                () -> assertEquals(3, counts.getFirst()[3]),
+                () -> assertEquals(0, counts.getFirst()[4]),
+                () -> assertEquals(0, counts.getFirst()[5])
         );
         verify(eventCountRepository, times(6)).findBlockEventCountByUserAndExperiment(anyInt(), anyInt(), anyString());
         verify(eventCountRepository, times(6)).findClickEventCountByUserAndExperiment(anyInt(), anyInt(), anyString());

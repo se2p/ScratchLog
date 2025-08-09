@@ -425,30 +425,25 @@ public class PageServiceTest {
         List<CourseExperimentProjection> experiments = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             int id = i + 1;
-            CourseExperimentProjection projection = new CourseExperimentProjection() {
+            CourseExperimentProjection projection = () -> new ExperimentTableProjection() {
                 @Override
-                public ExperimentTableProjection getExperiment() {
-                    return new ExperimentTableProjection() {
-                        @Override
-                        public Integer getId() {
-                            return id;
-                        }
+                public Integer getId() {
+                    return id;
+                }
 
-                        @Override
-                        public String getTitle() {
-                            return "Experiment " + id;
-                        }
+                @Override
+                public String getTitle() {
+                    return "Experiment " + id;
+                }
 
-                        @Override
-                        public String getDescription() {
-                            return "Some description";
-                        }
+                @Override
+                public String getDescription() {
+                    return "Some description";
+                }
 
-                        @Override
-                        public boolean isActive() {
-                            return false;
-                        }
-                    };
+                @Override
+                public boolean isActive() {
+                    return false;
                 }
             };
             experiments.add(projection);
