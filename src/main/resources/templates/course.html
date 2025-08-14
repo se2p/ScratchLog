@@ -30,7 +30,8 @@
                 <a id="open" class="btn btn-primary" th:unless="${courseDTO.active}"
                    th:text="#{start_course}"
                    th:href="@{/course/status(id=${courseDTO.id}, stat='open')}"></a>
-                <input id="stopCourse" class="btn btn-danger" th:if="${courseDTO.active}" th:value="#{stop_course}"
+                <input id="openStopCourseModal" class="btn btn-danger" th:if="${courseDTO.active}"
+                       th:value="#{stop_course}"
                        style="z-index: 1">
                 <div class="dropdown" style="float: right; left: 10px;">
                     <a class="btn btn-special dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
@@ -44,7 +45,8 @@
                             <hr class="dropdown-divider">
                         </li>
                         <li>
-                            <a id="deleteCourse" class="dropdown-item text-danger" style="cursor: pointer;" th:text="#{delete}"></a>
+                            <a id="openDeleteCourseModal" class="dropdown-item text-danger" style="cursor: pointer;"
+                               th:text="#{delete}"></a>
                         </li>
                     </ul>
                 </div>
@@ -109,16 +111,19 @@
 
                 <ul class="dropdown-menu" style="z-index: 2;">
                     <li>
-                        <a class="dropdown-item" id="addParticipant" th:text="#{add_existing}" style="cursor: pointer"></a>
+                        <a class="dropdown-item" id="openAddParticipantModal" th:text="#{add_existing}"
+                           style="cursor: pointer"></a>
                     </li>
                     <li>
-                        <a class="dropdown-item" id="addParticipantsCsv" th:text="#{add_csv_participants}" style="cursor: pointer"></a>
+                        <a class="dropdown-item" id="openAddParticipantsCsvModal" th:text="#{add_csv_participants}"
+                           style="cursor: pointer"></a>
                     </li>
                     <li th:unless="${participants.isEmpty()}">
                         <hr class="dropdown-divider">
                     </li>
                     <li th:unless="${participants.isEmpty()}">
-                        <a class="dropdown-item text-danger" id="deleteParticipant" th:text="#{delete_participant}" style="cursor: pointer"></a>
+                        <a class="dropdown-item text-danger" id="openDeleteParticipantModal"
+                           th:text="#{delete_participant}" style="cursor: pointer"></a>
                     </li>
                 </ul>
             </div>
@@ -269,8 +274,8 @@
                        th:text="#{add_experiment}"></a>
                 </div>
                 <div class="mb-3">
-                    <input id="deleteExperiment" type="submit" class="btn btn-danger" th:value="#{delete_experiment}"
-                           th:unless="${experiments.isEmpty()}"/>
+                    <input id="openDeleteExperimentModal" type="submit" class="btn btn-danger"
+                           th:value="#{delete_experiment}" th:unless="${experiments.isEmpty()}"/>
                 </div>
             </div>
             <!-- Let Thymeleaf fetch the current and the last experiment page numbers. -->
@@ -293,7 +298,7 @@
 </div>
 
 
-<div id="openDeleteCourse" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="deleteCourseModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_course}"></h2>
         <div class="mb-3" th:text="#{delete_course_warn}"></div>
@@ -322,7 +327,7 @@
 </div>
 
 <!-- The popup dialog to stop the course. -->
-<div id="openStopCourse" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="stopCourseModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{close_course}"></h2>
         <div class="mb-3" th:text="#{close_course_warn}"></div>
@@ -335,7 +340,7 @@
 </div>
 
 <!-- The popup dialog to add an existing participant to the course. -->
-<div id="openAddParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="addParticipantModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{add_participant}"></h2>
         <div class="mb-3" th:text="#{add_course_participant_info}"></div>
@@ -363,7 +368,7 @@
 </div>
 
 <!-- The popup dialog to add existing users as participants through CSV. -->
-<div id="openAddParticipantCsv" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="addParticipantsCsvModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{add_csv_participants}"></h2>
         <span th:text="#{csv_participants}" class="mb-3"></span>
@@ -382,7 +387,7 @@
 </div>
 
 <!-- The popup dialog to delete a course participant. -->
-<div id="openDeleteParticipant" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="deleteParticipantModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_participant}"></h2>
         <div class="mb-3" th:text="#{delete_course_participant_info}"></div>
@@ -407,7 +412,7 @@
 </div>
 
 <!-- The popup dialog to remove an experiment. -->
-<div id="openDeleteExperiment" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="deleteExperimentModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{remove_experiment}"></h2>
         <div class="mb-3" th:text="#{remove_experiment_info}"></div>

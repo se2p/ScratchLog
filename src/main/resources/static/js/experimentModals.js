@@ -1,11 +1,11 @@
 import {addClickEventListenerCloseModal, addClickEventListenerOpenModal} from "./eventListeners.js";
 
-let deleteExperimentModal = document.getElementById("openDeleteExperiment");
-let stopExperimentModal = document.getElementById("openStopExperiment");
-let addModal = document.getElementById("openAddParticipant");
-let addParticipantsCsvModal = document.getElementById("openAddParticipantCsv");
-let deleteParticipantModal = document.getElementById("openDeleteParticipant");
-let deleteSb3Modal = document.getElementById("openDeleteSb3");
+let deleteExperimentModal = document.getElementById("deleteExperimentModal");
+let stopExperimentModal = document.getElementById("stopExperimentModal");
+let addModal = document.getElementById("addParticipantModal");
+let addParticipantsCsvModal = document.getElementById("addParticipantCsvModal");
+let deleteParticipantModal = document.getElementById("deleteParticipantModal");
+let deleteSb3Modal = document.getElementById("deleteSb3Modal");
 
 /**
  * Readies all necessary event listeners for buttons on the experiment page.
@@ -18,16 +18,16 @@ $(document).ready(function () {
  * Adds the required event listeners to open and close all modals on the experiment page.
  */
 function addEventListeners() {
-    addClickEventListenerOpenModal("deleteExperiment", deleteExperimentModal);
+    addClickEventListenerOpenModal("openDeleteExperimentModal", deleteExperimentModal);
     addClickEventListenerCloseModal("abortDeleteExperiment", deleteExperimentModal);
-    addClickEventListenerOpenModal("stopExperiment", stopExperimentModal);
+    addClickEventListenerOpenModal("openStopExperimentModal", stopExperimentModal);
     addClickEventListenerCloseModal("abortStopExperiment", stopExperimentModal);
-    addClickEventListenerOpenModal("addParticipant", addModal);
+    addClickEventListenerOpenModal("openAddParticipantModal", addModal);
     addClickEventListenerCloseModal("abortAddParticipant", addModal);
-    addClickEventListenerOpenModal("addParticipantsCsv", addParticipantsCsvModal);
+    addClickEventListenerOpenModal("openAddParticipantCsvModal", addParticipantsCsvModal);
     addClickEventListenerCloseModal("abortAddParticipantsCsv", addParticipantsCsvModal);
-    addClickEventListenerOpenModal("deleteParticipant", deleteParticipantModal);
+    addClickEventListenerOpenModal("openDeleteParticipantModal", deleteParticipantModal);
     addClickEventListenerCloseModal("abortDeleteParticipant", deleteParticipantModal);
-    addClickEventListenerOpenModal("deleteSb3", deleteSb3Modal);
+    addClickEventListenerOpenModal("openDeleteSb3Modal", deleteSb3Modal);
     addClickEventListenerCloseModal("abortSb3Delete", deleteSb3Modal);
 }

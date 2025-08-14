@@ -132,24 +132,24 @@ function updateCourseExperimentTable(data) {
  * Adds the event listeners for opening and closing all modals on the course page.
  */
 function addModalOnclickFunctions() {
-    let stopCourse = document.getElementById("openStopCourse");
-    let deleteCourseModal = document.getElementById("openDeleteCourse");
-    let addParticipantModal = document.getElementById("openAddParticipant");
-    let addParticipantsCsvModal = document.getElementById("openAddParticipantCsv");
-    let deleteParticipantModal = document.getElementById("openDeleteParticipant");
-    let deleteExperimentModal = document.getElementById("openDeleteExperiment");
+    let stopCourse = document.getElementById("stopCourseModal");
+    let deleteCourseModal = document.getElementById("deleteCourseModal");
+    let addParticipantModal = document.getElementById("addParticipantModal");
+    let addParticipantsCsvModal = document.getElementById("addParticipantsCsvModal");
+    let deleteParticipantModal = document.getElementById("deleteParticipantModal");
+    let deleteExperimentModal = document.getElementById("deleteExperimentModal");
 
-    addClickEventListenerOpenModal("stopCourse", stopCourse);
+    addClickEventListenerOpenModal("openStopCourseModal", stopCourse);
     addClickEventListenerCloseModal("abortStopCourse", stopCourse);
-    addClickEventListenerOpenModal("deleteCourse", deleteCourseModal);
+    addClickEventListenerOpenModal("openDeleteCourseModal", deleteCourseModal);
     addClickEventListenerCloseModal("abortDeleteCourse", deleteCourseModal);
-    addClickEventListenerOpenModal("addParticipant", addParticipantModal);
+    addClickEventListenerOpenModal("openAddParticipantModal", addParticipantModal);
     addClickEventListenerCloseModal("abortAddParticipant", addParticipantModal);
-    addClickEventListenerOpenModal("addParticipantsCsv", addParticipantsCsvModal);
+    addClickEventListenerOpenModal("openAddParticipantsCsvModal", addParticipantsCsvModal);
     addClickEventListenerCloseModal("abortAddParticipantsCsv", addParticipantsCsvModal);
-    addClickEventListenerOpenModal("deleteParticipant", deleteParticipantModal);
+    addClickEventListenerOpenModal("openDeleteParticipantModal", deleteParticipantModal);
     addClickEventListenerCloseModal("abortDeleteParticipant", deleteParticipantModal);
-    addClickEventListenerOpenModal("deleteExperiment", deleteExperimentModal);
+    addClickEventListenerOpenModal("openDeleteExperimentModal", deleteExperimentModal);
     addClickEventListenerCloseModal("abortDeleteExperiment", deleteExperimentModal);
 }
 

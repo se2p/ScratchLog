@@ -30,7 +30,7 @@
             <div style="z-index: 1">
                 <a class="btn btn-primary me-2" th:text="#{edit}" th:href="@{/users/edit(name=${userDTO.username})}"
                    sec:authorize="hasRole('PARTICIPANT')"></a>
-                <input id="delete" class="btn btn-danger" type="submit" th:value="#{delete}"
+                <input id="openDeleteUserModal" class="btn btn-danger" type="submit" th:value="#{delete}"
                        sec:authorize="hasRole('ADMIN')">
             </div>
         </div>
@@ -132,7 +132,7 @@
 </div>
 
 <!-- The popup dialog to delete the user. -->
-<div id="openDelete" class="modal" sec:authorize="hasRole('ADMIN')">
+<div id="deleteUserModal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_user}"></h2>
         <div class="mb-3" th:text="#{delete_user_warn}"></div>
@@ -162,20 +162,21 @@
 
 <!-- Script to open and close the delete modal. -->
 <script>
-    let deleteModal = document.getElementById("openDelete");
-    let deleteButton = document.getElementById("delete");
+    let deleteUserModal = document.getElementById("deleteUserModal");
+    let deleteUserModalOpenButton = document.getElementById("openDeleteUserModal");
+
     let abort = document.getElementById("abort");
-    if (deleteButton) {
-        deleteButton.onclick = function () {
+    if (deleteUserModalOpenButton) {
+        deleteUserModalOpenButton.onclick = function () {
             let content = document.getElementById("content");
-            deleteModal.style.display = "block";
+            deleteUserModal.style.display = "block";
             content.style.filter = "blur(4px)";
         }
     }
     if (abort) {
         abort.onclick = function () {
             let content = document.getElementById("content");
-            deleteModal.style.display = "none";
+            deleteUserModal.style.display = "none";
             content.style.filter = "none";
         }
     }
