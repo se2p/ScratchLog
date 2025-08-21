@@ -19,6 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.persistence;
 
+import de.uni_passau.fim.se2.scratchlog.AbstractScratchLogTest;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Course;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseExperiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
@@ -26,58 +27,47 @@ import de.uni_passau.fim.se2.scratchlog.persistence.repository.CourseExperimentR
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@DataJpaTest
-@ActiveProfiles("test")
-public class CourseExperimentRepositoryTest {
-
-    @Autowired
-    private TestEntityManager entityManager;
-
-    @Autowired
-    private CourseExperimentRepository repository;
+class CourseExperimentRepositoryTest extends AbstractScratchLogTest {
 
     private static final LocalDateTime DATE = LocalDateTime.now();
-    private Course course1 = new Course(null, "Course 1", "Description 1", "", false, DATE);
-    private Course course2 = new Course(null, "Course 2", "Description 2", "", false, DATE);
-    private Course course3 = new Course(null, "Course 3", "Description 3", "", false, DATE);
-    private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
-            "Some postscript", false, false, "url");
-    private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
-            "Some postscript", true, false, "url");
-    private Experiment experiment3 = new Experiment(null, "Experiment 3", "Description for experiment 3", "Some info",
-            "Some postscript", false, false, "url");
-    private CourseExperiment courseExperiment1 = new CourseExperiment(course1, experiment1, DATE);
-    private CourseExperiment courseExperiment2 = new CourseExperiment(course1, experiment2, DATE);
-    private CourseExperiment courseExperiment3 = new CourseExperiment(course2, experiment3, DATE);
+
+    @Autowired
+    private CourseExperimentRepository courseExperimentRepository;
+
+    private Course course1;
+    private Course course2;
+    private Course course3;
 
     @BeforeEach
-    public void setUp() {
-        course1 = entityManager.persist(course1);
-        course2 = entityManager.persist(course2);
-        course3 = entityManager.persist(course3);
-        experiment1 = entityManager.persist(experiment1);
-        experiment2 = entityManager.persist(experiment2);
-        experiment3 = entityManager.persist(experiment3);
-        courseExperiment1 = entityManager.persist(courseExperiment1);
-        courseExperiment2 = entityManager.persist(courseExperiment2);
-        courseExperiment3 = entityManager.persist(courseExperiment3);
+    void setUp() {
+        course1 = entityUtilService.generateCourse("Course 1");
+        course2 = entityUtilService.generateCourse("Course 2");
+        course3 = entityUtilService.generateCourse("Course 3");
+
+        final Experiment experiment1 = entityUtilService.generateExperiment("Experiment 1");
+        final Experiment experiment2 = entityUtilService.generateExperiment("Experiment 2");
+        final Experiment experiment3 = entityUtilService.generateExperiment("Experiment 3");
+
+        final CourseExperiment courseExperiment1 = new CourseExperiment(course1, experiment1, DATE);
+        final CourseExperiment courseExperiment2 = new CourseExperiment(course1, experiment2, DATE);
+        final CourseExperiment courseExperiment3 = new CourseExperiment(course2, experiment3, DATE);
+
+        courseExperimentRepository.saveAll(List.of(courseExperiment1, courseExperiment2, courseExperiment3));
     }
 
     @Test
-    public void testGetCourseExperimentRowCount() {
+    void testGetCourseExperimentRowCount() {
         assertAll(
-                () -> assertEquals(2, repository.getCourseExperimentRowCount(course1.getId())),
-                () -> assertEquals(1, repository.getCourseExperimentRowCount(course2.getId())),
-                () -> assertEquals(0, repository.getCourseExperimentRowCount(course3.getId()))
+                () -> assertEquals(2, courseExperimentRepository.getCourseExperimentRowCount(course1.getId())),
+                () -> assertEquals(1, courseExperimentRepository.getCourseExperimentRowCount(course2.getId())),
+                () -> assertEquals(0, courseExperimentRepository.getCourseExperimentRowCount(course3.getId()))
         );
     }
 

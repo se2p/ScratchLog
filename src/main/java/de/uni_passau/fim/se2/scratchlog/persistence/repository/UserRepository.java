@@ -152,8 +152,17 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      * @param limit The maximum number of results to return.
      * @return A list of {@link UserProjection}s.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE (u.username LIKE CONCAT('%', :query, '%') "
-            + "OR u.email LIKE CONCAT('%', :query, '%')) LIMIT :limit")
+    @Query("""
+            SELECT u
+            FROM User u
+            WHERE (
+                u.username LIKE CONCAT('%', :query, '%')
+                OR u.email LIKE CONCAT('%', :query, '%')
+            )
+            ORDER BY u.username ASC, u.email ASC
+            LIMIT :limit
+            """
+    )
     List<UserProjection> findUserSuggestions(@Param("query") String query, @Param("limit") int limit);
 
     /**

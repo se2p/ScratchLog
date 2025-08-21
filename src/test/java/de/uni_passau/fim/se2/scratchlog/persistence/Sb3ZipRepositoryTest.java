@@ -19,20 +19,15 @@
 
 package de.uni_passau.fim.se2.scratchlog.persistence;
 
+import de.uni_passau.fim.se2.scratchlog.AbstractScratchLogTest;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Sb3Zip;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.Sb3ZipRepository;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -40,47 +35,38 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DataJpaTest
-@ActiveProfiles("test")
-public class Sb3ZipRepositoryTest {
-
-    @Autowired
-    private TestEntityManager testEntityManager;
+class Sb3ZipRepositoryTest extends AbstractScratchLogTest {
 
     @Autowired
     private Sb3ZipRepository sb3ZipRepository;
 
-    private final LocalDateTime date = LocalDateTime.now();
-    private static final String GUI_URL = "scratch";
-    private User user1 = new User("participant1", "part1@part.de", Role.PARTICIPANT, Language.GERMAN, "password", "secret1");
-    private User user2 = new User("participant2", "part2@part.de", Role.PARTICIPANT, Language.GERMAN, "password", "secret2");
-    private Experiment experiment1 = new Experiment(null, "experiment1", "description", "info", "postscript", true,
-            false, GUI_URL);
-    private Experiment experiment2 = new Experiment(null, "experiment2", "description", "info", "postscript", true,
-            false, GUI_URL);
-    private Sb3Zip sb3Zip1 = new Sb3Zip(user1, experiment1, date, "zip1", new byte[]{1, 2, 3});
-    private Sb3Zip sb3Zip2 = new Sb3Zip(user1, experiment1, date, "zip2", new byte[]{1, 2, 3});
-    private Sb3Zip sb3Zip3 = new Sb3Zip(user1, experiment1, date, "zip3", new byte[]{1, 2, 3});
-    private Sb3Zip sb3Zip4 = new Sb3Zip(user2, experiment1, date, "zip4", new byte[]{1, 2, 3});
-    private Sb3Zip sb3Zip5 = new Sb3Zip(user1, experiment2, date, "zip5", new byte[]{1, 2, 3});
+    private User user1;
+    private User user2;
+    private Experiment experiment1;
+    private Experiment experiment2;
+    private Sb3Zip sb3Zip1;
+    private Sb3Zip sb3Zip2;
+    private Sb3Zip sb3Zip3;
+    private Sb3Zip sb3Zip4;
+    private Sb3Zip sb3Zip5;
 
     @BeforeEach
-    public void setup() {
-        user1.setLastLogin(LocalDateTime.now());
-        user2.setLastLogin(LocalDateTime.now());
-        user1 = testEntityManager.persist(user1);
-        user2 = testEntityManager.persist(user2);
-        experiment1 = testEntityManager.persist(experiment1);
-        experiment2 = testEntityManager.persist(experiment2);
-        sb3Zip1 = testEntityManager.persist(sb3Zip1);
-        sb3Zip2 = testEntityManager.persist(sb3Zip2);
-        sb3Zip3 = testEntityManager.persist(sb3Zip3);
-        sb3Zip4 = testEntityManager.persist(sb3Zip4);
-        sb3Zip5 = testEntityManager.persist(sb3Zip5);
+    void setup() {
+        user1 = entityUtilService.generateUser("participant1");
+        user2 = entityUtilService.generateUser("participant2");
+
+        experiment1 = entityUtilService.generateExperiment("experiment1");
+        experiment2 = entityUtilService.generateExperiment("experiment2");
+
+        sb3Zip1 = entityUtilService.generateSb3Zip(user1, experiment1);
+        sb3Zip2 = entityUtilService.generateSb3Zip(user1, experiment1);
+        sb3Zip3 = entityUtilService.generateSb3Zip(user1, experiment1);
+        sb3Zip4 = entityUtilService.generateSb3Zip(user2, experiment1);
+        sb3Zip5 = entityUtilService.generateSb3Zip(user1, experiment2);
     }
 
     @Test
-    public void testFindAllIdsByUserAndExperiment() {
+    void testFindAllIdsByUserAndExperiment() {
         List<Integer> zipIds = sb3ZipRepository.findAllIdsByUserAndExperiment(user1, experiment1);
         assertAll(
                 () -> assertEquals(3, zipIds.size()),
@@ -93,7 +79,7 @@ public class Sb3ZipRepositoryTest {
     }
 
     @Test
-    public void testFindAllIdsByUserAndExperimentNoEntries() {
+    void testFindAllIdsByUserAndExperimentNoEntries() {
         List<Integer> zipIds = sb3ZipRepository.findAllIdsByUserAndExperiment(user2, experiment2);
         assertTrue(zipIds.isEmpty());
     }
