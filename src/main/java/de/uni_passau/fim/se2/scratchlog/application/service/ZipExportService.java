@@ -40,6 +40,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -295,11 +296,21 @@ public class ZipExportService {
         writeCSVData(zos, jsons, finalProject, includeFinalProject);
 
         for (int i = 0; i < jsons.size(); i++) {
-            createSb3File(jsons.get(i), zos, i, projection, fileDTOS);
+            BlockEventJSONProjection json = jsons.get(i);
+            String filename = "project_" + json.getId() + "_" + i + ".sb3";
+            createSb3File(json, zos, filename, projection, fileDTOS);
         }
 
-        if (finalProject.isPresent() && includeFinalProject) {
-            writeFinalProjectData(zos, finalProject.get());
+        // Add the final project if it should be included. If it should be included but is not present, readd the last
+        // project under the name `final_project.sb3` (if there even are projects for the participants).
+        Optional<BlockEventJSONProjection> lastJSON
+            = jsons.stream().max(Comparator.comparing(BlockEventJSONProjection::getDate));
+        if (includeFinalProject) {
+            if (finalProject.isPresent()) {
+                writeFinalProjectData(zos, finalProject.get());
+            } else if (lastJSON.isPresent()) {
+                createSb3File(lastJSON.get(), zos, "final_project.sb3", projection, fileDTOS);
+            }
         }
     }
 
@@ -342,12 +353,12 @@ public class ZipExportService {
      *
      * @param json The json code to be used.
      * @param zos The {@link ZipOutputStream} in which the zip file should be written.
-     * @param counter The file counter.
+     * @param filename The name of the file to create. Should typically end in `.sb3`.
      * @param projection The initial experiment project data.
      * @param fileDTOS The saved files.
      * @throws IOException if the data could not be written correctly.
      */
-    private void createSb3File(final BlockEventJSONProjection json, final ZipOutputStream zos, final int counter,
+    private void createSb3File(final BlockEventJSONProjection json, final ZipOutputStream zos, final String filename,
                                final ExperimentProjection projection, final List<FileDTO> fileDTOS) throws IOException {
         ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
 
@@ -367,7 +378,7 @@ public class ZipExportService {
             innerZos.flush();
         }
 
-        ZipEntry createdZip = new ZipEntry("project_" + json.getId() + "_" + counter + ".sb3");
+        ZipEntry createdZip = new ZipEntry(filename);
         zos.putNextEntry(createdZip);
         zos.write(innerZip.toByteArray());
         zos.closeEntry();

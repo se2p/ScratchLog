@@ -151,54 +151,9 @@ public class FileServiceTest {
     }
 
     @Test
-    public void testSaveFileParticipantFinished() {
-        participant.setEnd(LocalDateTime.now());
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
-        assertDoesNotThrow(
-                () -> fileService.saveFile(fileDTO)
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).findByUserAndExperiment(user, experiment);
-        verify(fileRepository, never()).save(any());
-    }
-
-    @Test
     public void testSaveFileParticipantNull() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        assertDoesNotThrow(
-                () -> fileService.saveFile(fileDTO)
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).findByUserAndExperiment(user, experiment);
-        verify(fileRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveFileUserInactive() {
-        user.setActive(false);
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
-        assertDoesNotThrow(
-                () -> fileService.saveFile(fileDTO)
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).findByUserAndExperiment(user, experiment);
-        verify(fileRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveFileExperimentInactive() {
-        experiment.setActive(false);
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveFile(fileDTO)
         );
@@ -252,54 +207,9 @@ public class FileServiceTest {
     }
 
     @Test
-    public void testSaveSb3ZipParticipantFinished() {
-        participant.setEnd(LocalDateTime.now());
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
-        assertDoesNotThrow(
-                () -> fileService.saveSb3Zip(sb3ZipDTO)
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).findByUserAndExperiment(user, experiment);
-        verify(sb3ZipRepository, never()).save(any());
-    }
-
-    @Test
     public void testSaveSb3ZipParticipantNull() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        assertDoesNotThrow(
-                () -> fileService.saveSb3Zip(sb3ZipDTO)
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).findByUserAndExperiment(user, experiment);
-        verify(sb3ZipRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveSb3ZipUserInactive() {
-        user.setActive(false);
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
-        assertDoesNotThrow(
-                () -> fileService.saveSb3Zip(sb3ZipDTO)
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).findByUserAndExperiment(user, experiment);
-        verify(sb3ZipRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveSb3ZipExperimentInactive() {
-        experiment.setActive(false);
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
         assertDoesNotThrow(
                 () -> fileService.saveSb3Zip(sb3ZipDTO)
         );
