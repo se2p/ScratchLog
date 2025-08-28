@@ -113,8 +113,11 @@ public class FileService {
 
         try {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
-
-            if (isInvalidParticipant(participant, user, experiment, "file")) {
+            if (participant.isEmpty()) {
+                LOGGER.error(
+                    "No participant entry could be found for user {} and experiment {} when trying to save a file!",
+                    user.getId(), experiment.getId()
+                );
                 return;
             }
 
@@ -145,8 +148,11 @@ public class FileService {
 
         try {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
-
-            if (isInvalidParticipant(participant, user, experiment, "sb3 zip file")) {
+            if (participant.isEmpty()) {
+                LOGGER.error(
+                    "No participant entry could be found for user {} and experiment {} when trying to save a SB3 file!",
+                    user.getId(), experiment.getId()
+                );
                 return;
             }
 
@@ -352,41 +358,6 @@ public class FileService {
             );
             throw new NotFoundException("Cannot download zip files as no user with id " + userId
                     + " or no experiment with id " + experimentId + " could be found in the database!", e);
-        }
-    }
-
-    /**
-     * Checks, whether the given participant data is valid. This is the case if no corresponding participant exists, the
-     * participant has already finished the experiment, or the user or experiment itself is inactive.
-     *
-     * @param participant The {@link Participant} to check.
-     * @param user The {@link User} participating in the experiment.
-     * @param experiment The {@link Experiment} in question.
-     * @param fileType The type of file that is to be saved.
-     * @return {@code true} if the participant data is invalid, or {@code false} otherwise.
-     */
-    private boolean isInvalidParticipant(final Optional<Participant> participant, final User user,
-                                         final Experiment experiment, final String fileType) {
-        if (participant.isEmpty()) {
-            LOGGER.error(
-                "No participant entry could be found for user {} and experiment {} when trying to save a {}!",
-                user.getId(), experiment.getId(), fileType
-            );
-            return true;
-        } else if (participant.get().getEnd() != null) {
-            LOGGER.error(
-                "Tried to save a {} for participant {} during experiment {} who has already finished!",
-                fileType, user.getId(), experiment.getId()
-            );
-            return true;
-        } else if (!user.isActive() || !experiment.isActive()) {
-            LOGGER.error(
-                "Tried to save a {} for participant {} during experiment {} with user or experiment inactive!",
-                fileType, user.getId(), experiment.getId()
-            );
-            return true;
-        } else {
-            return false;
         }
     }
 
