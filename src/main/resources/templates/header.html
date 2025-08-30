@@ -89,10 +89,12 @@
                             <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser2" data-popper-placement="bottom-end"
                                 style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(-112px, 34px);">
                                 <li sec:authorize="hasRole('PARTICIPANT')">
-                                    <a class="dropdown-item" th:aria-label="#{user_label}" th:href="@{/users/profile}">Profile</a>
+                                    <a class="dropdown-item" th:aria-label="#{user_label}" th:href="@{/users/profile}"
+                                       th:text="#{profile}"></a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item"  th:aria-label="#{logout_label}" th:href="@{/users/logout}">Sign out</a>
+                                    <a class="dropdown-item"  th:aria-label="#{logout_label}" th:href="@{/users/logout}"
+                                       th:text="#{logout_label}"></a>
                                 </li>
                             </ul>
                         </div>
