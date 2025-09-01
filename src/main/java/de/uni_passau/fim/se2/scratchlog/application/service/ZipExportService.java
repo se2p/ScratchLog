@@ -89,11 +89,13 @@ public class ZipExportService {
         ExperimentProjection projection = experimentService.getSb3File(experimentId, true);
         List<FileDTO> fileDTOS = fileService.getFileDTOs(userId, experimentId);
         byte[] code = codeService.findJsonById(jsonId).getBytes(StandardCharsets.UTF_8);
+
+        // Keep track of already added file names to avoid adding duplicate entries.
         Set<String> fileNames = new HashSet<>();
 
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
             if (projection.getProject() != null) {
-                writeInitialProjectData(zos, projection.getProject());
+                writeInitialProjectData(zos, projection.getProject(), fileNames);
             }
 
             for (FileDTO fileDTO : fileDTOS) {
@@ -363,10 +365,11 @@ public class ZipExportService {
         ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
 
         try (ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip))) {
+            // Keep track of already added file names to avoid adding duplicate entries.
             Set<String> fileNames = new HashSet<>();
 
             if (projection.getProject() != null) {
-                writeInitialProjectData(innerZos, projection.getProject());
+                writeInitialProjectData(innerZos, projection.getProject(), fileNames);
             }
 
             for (FileDTO fileDTO : fileDTOS) {
@@ -390,20 +393,23 @@ public class ZipExportService {
      *
      * @param zos The {@link ZipOutputStream} returning the generated file to the user.
      * @param project The initial sb3 project.
+     * @param fileNames A set of the already seen file names to avoid adding duplicate files.
      * @throws IOException if the file content could not be written correctly.
      */
-    private void writeInitialProjectData(final ZipOutputStream zos, final byte[] project) throws IOException {
+    private void writeInitialProjectData(final ZipOutputStream zos, final byte[] project,
+                                         final Set<String> fileNames) throws IOException {
         try (InputStream file = new ByteArrayInputStream(project); ZipInputStream zin = new ZipInputStream(file)) {
             ZipEntry ze;
 
             while ((ze = zin.getNextEntry()) != null) {
-                if (!ze.getName().equals("project.json")) {
+                if (!ze.getName().equals("project.json") && !fileNames.contains(ze.getName())) {
                     zos.putNextEntry(ze);
                     int current;
                     while ((current = zin.read()) >= 0) {
                         zos.write(current);
                     }
                     zos.closeEntry();
+                    fileNames.add(ze.getName());
                 }
             }
         }
