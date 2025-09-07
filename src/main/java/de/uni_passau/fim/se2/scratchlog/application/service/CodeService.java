@@ -311,8 +311,7 @@ public class CodeService {
 
     /**
      * Checks, whether the latest JSON code should be retrieved for the given user and experiment. This is not the case
-     * if no corresponding participant could be found, no JSON code could be retrieved or the user or experiment are
-     * inactive.
+     * if no corresponding participant could be found or no JSON code could be retrieved.
      *
      * @param participant The {@link Participant} to check.
      * @param projection The {@link BlockEventJSONProjection} to check.
@@ -332,12 +331,6 @@ public class CodeService {
         } else if (projection == null) {
             LOGGER.info(
                 "No json code saved for user with id {} for experiment with id {}.", user.getId(), experiment.getId()
-            );
-            return false;
-        } else if (!user.isActive() || !experiment.isActive()) {
-            LOGGER.error(
-                "Tried to load json code for user with id {} and experiment with id {} "
-                    + "with inactive user or experiment!", user.getId(), experiment.getId()
             );
             return false;
         } else {

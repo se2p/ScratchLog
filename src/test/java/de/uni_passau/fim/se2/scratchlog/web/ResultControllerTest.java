@@ -41,6 +41,7 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.EventCountDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServletResponse;
@@ -125,6 +126,8 @@ public class ResultControllerTest {
         LocalDateTime.now().plusMinutes(15));
     private final ParticipantDTO participantDTO1 = new ParticipantDTO(ID, ID);
     private final ParticipantDTO participantDTO2 = new ParticipantDTO(2, ID);
+    private final UserDTO userDTO1 = new UserDTO("user1", null, null, null, null, null);
+    private final UserDTO userDTO2 = new UserDTO("user2", null, null, null, null, null);
     private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
     private final List<EventCountDTO> clickEvents = getEventCounts(3, "GREENFLAG");
@@ -157,6 +160,22 @@ public class ResultControllerTest {
             return null;
         }
     };
+    private final ServletOutputStream noOpServletOutputStream = new ServletOutputStream() {
+        @Override
+        public boolean isReady() {
+            return false;
+        }
+
+        @Override
+        public void setWriteListener(WriteListener writeListener) {
+
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+
+        }
+    };
 
     @BeforeEach
     public void setUp() {
@@ -164,7 +183,7 @@ public class ResultControllerTest {
         zip.setContent(new byte[]{1, 2, 3, 4});
 
         ZipExportService zipExportService = new ZipExportService(
-            codeService, experimentService, fileService, participantService
+            codeService, experimentService, fileService, participantService, userService
         );
         resultController = new ResultController(
             userService, eventService, experimentDataService, codeService, fileService, zipExportService
@@ -323,22 +342,7 @@ public class ResultControllerTest {
                 return b;
             }
         };
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(experimentService.getSb3File(ID, true)).thenReturn(projection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.findJsonById(ID)).thenReturn(JSON);
@@ -365,22 +369,7 @@ public class ResultControllerTest {
         zip.setContent(b);
         fileDTOS.add(fileDTO);
         fileDTOS.add(zip);
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.findJsonById(ID)).thenReturn(JSON);
@@ -409,22 +398,7 @@ public class ResultControllerTest {
         fileDTOS.add(new FileDTO(ID, ID, "secret", "file", "type", new byte[]{1, 2, 3}, LocalDateTime.now()));
         fileDTOS.add(zip);
         fileDTOS.add(new FileDTO(ID, ID, "secret", "file.zip", "wav", zip.getContent(), LocalDateTime.now()));
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.findJsonById(ID)).thenReturn(JSON);
@@ -444,22 +418,7 @@ public class ResultControllerTest {
     public void testGenerateZipFileProjectNull() throws IOException {
         fileDTOS.add(fileDTO);
         fileDTOS.add(zip);
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.findJsonById(ID)).thenReturn(JSON);
@@ -473,15 +432,6 @@ public class ResultControllerTest {
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
-    }
-
-    @Test
-    public void testGenerateZipFilesIO() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
-        assertThrows(RuntimeException.class,
-                () -> resultController.generateZipFile(ID, ID, ID, httpServletResponse)
-        );
-        verify(httpServletResponse).getOutputStream();
     }
 
     @Test
@@ -506,22 +456,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadAllZips() throws IOException {
         when(fileService.getZipFiles(ID, ID)).thenReturn(sb3ZipDTOs);
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         assertDoesNotThrow(
                 () -> resultController.downloadAllZips(ID, ID, httpServletResponse)
         );
@@ -533,35 +468,9 @@ public class ResultControllerTest {
     }
 
     @Test
-    public void testDownloadAllZipsIO() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
-        assertThrows(RuntimeException.class,
-                () -> resultController.downloadAllZips(ID, ID, httpServletResponse)
-        );
-        verify(fileService, never()).getZipFiles(anyInt(), anyInt());
-        verify(httpServletResponse).getOutputStream();
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
-    }
-
-    @Test
     public void testDownloadAllXmlFiles() throws IOException {
         when(codeService.getXMLForUser(ID, ID)).thenReturn(xmlProjections);
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         assertDoesNotThrow(
                 () -> resultController.downloadAllXmlFiles(ID, ID, httpServletResponse)
         );
@@ -573,54 +482,13 @@ public class ResultControllerTest {
     }
 
     @Test
-    public void testDownloadAllXmlFilesIO() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
-        assertThrows(RuntimeException.class,
-                () -> resultController.downloadAllXmlFiles(ID, ID, httpServletResponse)
-        );
-        verify(codeService, never()).getXMLForUser(anyInt(), anyInt());
-        verify(httpServletResponse).getOutputStream();
-        verify(httpServletResponse).setContentType("application/zip");
-        verify(httpServletResponse).setHeader(anyString(), anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
-    }
-
-    @Test
-    public void testDownloadAllJsonFiles() throws IOException {
+    public void testDownloadAllJsonFilesForUser() throws IOException {
         when(codeService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         assertDoesNotThrow(
-                () -> resultController.downloadAllJsonFiles(ID, ID, httpServletResponse)
+                () -> resultController.downloadAllJsonFilesForUser(ID, ID, httpServletResponse)
         );
         verify(codeService).getJsonForUser(ID, ID);
-        verify(httpServletResponse).getOutputStream();
-        verify(httpServletResponse).setContentType("application/zip");
-        verify(httpServletResponse).setHeader(anyString(), anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
-    }
-
-    @Test
-    public void testDownloadAllJsonFilesIO() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
-        assertThrows(RuntimeException.class,
-                () -> resultController.downloadAllJsonFiles(ID, ID, httpServletResponse)
-        );
-        verify(codeService, never()).getJsonForUser(anyInt(), anyInt());
         verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setHeader(anyString(), anyString());
@@ -677,22 +545,7 @@ public class ResultControllerTest {
                 return b;
             }
         };
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(experimentService.getSb3File(ID, true)).thenReturn(projection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
@@ -714,22 +567,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesProjectionNull() throws IOException {
         Optional<Sb3ZipDTO> project = Optional.of(sb3ZipDTO);
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
@@ -751,22 +589,7 @@ public class ResultControllerTest {
     @Test
     public void testDownloadSb3FilesFinalProjectEmpty() throws IOException {
         Optional<Sb3ZipDTO> noSavedProject = Optional.empty();
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject)).thenReturn(jsonProjections);
@@ -812,22 +635,7 @@ public class ResultControllerTest {
                 return b;
             }
         };
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(experimentService.getSb3File(ID, true)).thenReturn(projection);
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
@@ -883,19 +691,6 @@ public class ResultControllerTest {
         verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
         verify(httpServletResponse, never()).getOutputStream();
-    }
-
-    @Test
-    public void testDownloadSb3FilesIOException() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
-        assertThrows(RuntimeException.class,
-                () -> resultController.downloadSb3Files(ID, ID, null, null, null, null,
-                        httpServletResponse)
-        );
-        verify(httpServletResponse).getOutputStream();
-        verify(httpServletResponse).setContentType("application/zip");
-        verify(httpServletResponse).setHeader(anyString(), anyString());
-        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
     }
 
     @Test
@@ -978,22 +773,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadExperimentSb3Files() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
@@ -1016,22 +796,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadExperimentSb3FilesSteps() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
@@ -1054,22 +819,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadExperimentSb3FilesNoEntries() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenReturn(new ServletOutputStream() {
-            @Override
-            public boolean isReady() {
-                return false;
-            }
-
-            @Override
-            public void setWriteListener(WriteListener writeListener) {
-
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-
-            }
-        });
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID, true)).thenReturn(experimentProjection);
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
@@ -1091,17 +841,52 @@ public class ResultControllerTest {
     }
 
     @Test
-    public void testDownloadExperimentSb3FilesIOException() throws IOException {
-        when(httpServletResponse.getOutputStream()).thenThrow(IOException.class);
-        assertThrows(RuntimeException.class,
-                () -> resultController.downloadExperimentSb3Files(ID, 0, httpServletResponse)
+    public void testDownloadLastExperimentSb3Files() throws IOException {
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        assertDoesNotThrow(
+            () -> resultController.downloadLastExperimentSb3Files(ID, httpServletResponse)
         );
-        verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
-        verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
-        verify(fileService, never()).findFinalProject(anyInt(), anyInt());
-        verify(httpServletResponse).getOutputStream();
         verify(httpServletResponse).setContentType("application/zip");
-        verify(httpServletResponse).setHeader(anyString(), anyString());
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testDownloadLastExperimentSb3FilesNoEntries() throws IOException {
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(codeService.findFirstJSON(anyInt(), anyInt())).thenReturn(null);
+        assertDoesNotThrow(
+            () -> resultController.downloadLastExperimentSb3Files(ID, httpServletResponse)
+        );
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testDownloadAllJSONFiles() throws IOException {
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(userService.getUserById(participants.getFirst().getUser())).thenReturn(userDTO1);
+        when(userService.getUserById(participants.get(1).getUser())).thenReturn(userDTO2);
+        assertDoesNotThrow(
+            () -> resultController.downloadAllJsonFiles(ID, httpServletResponse)
+        );
+        verify(httpServletResponse).setContentType("application/zip");
+        verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
+    }
+
+    @Test
+    public void testDownloadAllJSONFilesNoEntries() throws IOException {
+        when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(codeService.getJsonForUser(anyInt(), anyInt())).thenThrow(NotFoundException.class);
+        when(userService.getUserById(participants.getFirst().getUser())).thenReturn(userDTO1);
+        when(userService.getUserById(participants.get(1).getUser())).thenReturn(userDTO2);
+        assertDoesNotThrow(
+            () -> resultController.downloadAllJsonFiles(ID, httpServletResponse)
+        );
+        verify(httpServletResponse).setContentType("application/zip");
         verify(httpServletResponse).setStatus(HttpServletResponse.SC_OK);
     }
 

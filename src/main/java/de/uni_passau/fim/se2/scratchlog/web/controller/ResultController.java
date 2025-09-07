@@ -228,14 +228,9 @@ public class ResultController {
     public void generateZipFile(@RequestParam(EXPERIMENT) final int experimentId,
                                 @RequestParam(USER) final int userId,
                                 @RequestParam("json") final int jsonId,
-                                final HttpServletResponse httpServletResponse) {
+                                final HttpServletResponse httpServletResponse) throws IOException {
         prepareZipFileResponse(httpServletResponse, userId, experimentId, "sb3");
-
-        try {
-            zipExportService.exportSb3ForEvent(httpServletResponse.getOutputStream(), experimentId, userId, jsonId);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not generate zip file due to IOException!", e);
-        }
+        zipExportService.exportSb3ForEvent(httpServletResponse.getOutputStream(), experimentId, userId, jsonId);
     }
 
     /**
@@ -271,14 +266,9 @@ public class ResultController {
     @Secured(Constants.ROLE_ADMIN)
     public void downloadAllZips(@RequestParam(EXPERIMENT) final int experimentId,
                                 @RequestParam(USER) final int userId,
-                                final HttpServletResponse httpServletResponse) {
+                                final HttpServletResponse httpServletResponse) throws IOException {
         prepareZipFileResponse(httpServletResponse, userId, experimentId, "projects");
-
-        try {
-            zipExportService.exportSb3sForExperimentUser(httpServletResponse.getOutputStream(), experimentId, userId);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not download zip files due to IOException!", e);
-        }
+        zipExportService.exportSb3sForExperimentUser(httpServletResponse.getOutputStream(), experimentId, userId);
     }
 
     /**
@@ -295,14 +285,9 @@ public class ResultController {
     @Secured(Constants.ROLE_ADMIN)
     public void downloadAllXmlFiles(@RequestParam(EXPERIMENT) final int experimentId,
                                     @RequestParam(USER) final int userId,
-                                    final HttpServletResponse httpServletResponse) {
+                                    final HttpServletResponse httpServletResponse) throws IOException {
         prepareZipFileResponse(httpServletResponse, userId, experimentId, "xml");
-
-        try {
-            zipExportService.exportXmlsForExperimentUser(httpServletResponse.getOutputStream(), experimentId, userId);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not download xml files due to IOException!", e);
-        }
+        zipExportService.exportXmlsForExperimentUser(httpServletResponse.getOutputStream(), experimentId, userId);
     }
 
     /**
@@ -317,16 +302,11 @@ public class ResultController {
      */
     @GetMapping("/jsons")
     @Secured(Constants.ROLE_ADMIN)
-    public void downloadAllJsonFiles(@RequestParam(EXPERIMENT) final int experimentId,
-                                     @RequestParam(USER) final int userId,
-                                     final HttpServletResponse httpServletResponse) {
+    public void downloadAllJsonFilesForUser(@RequestParam(EXPERIMENT) final int experimentId,
+                                            @RequestParam(USER) final int userId,
+                                            final HttpServletResponse httpServletResponse) throws IOException {
         prepareZipFileResponse(httpServletResponse, userId, experimentId, "json");
-
-        try {
-            zipExportService.exportJsonsForExperimentUser(httpServletResponse.getOutputStream(), experimentId, userId);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not download json files due to IOException!", e);
-        }
+        zipExportService.exportJsonsForExperimentUser(httpServletResponse.getOutputStream(), experimentId, userId);
     }
 
     /**
@@ -382,7 +362,7 @@ public class ResultController {
         @RequestParam(value = "end", required = false) Integer end,
         @RequestParam(value = "include", required = false) Boolean includeFinalProject,
         final HttpServletResponse httpServletResponse
-    ) {
+    ) throws IOException {
         checkDownloadParameters(step, start, end, includeFinalProject);
 
         // the checkDownloadParameters above expects certain parameters to be null/non-null. Therefore, we cannot use
@@ -401,14 +381,8 @@ public class ResultController {
         }
 
         prepareZipFileResponse(httpServletResponse, userId, experimentId, "zip");
-
-        try {
-            zipExportService.exportSb3sForExperimentUser(
-                httpServletResponse.getOutputStream(), experimentId, userId, step, start, end, includeFinalProject
-            );
-        } catch (IOException e) {
-            throw new RuntimeException("Could not generate zip file due to IOException!", e);
-        }
+        zipExportService.exportSb3sForExperimentUser(
+            httpServletResponse.getOutputStream(), experimentId, userId, step, start, end, includeFinalProject);
     }
 
     /**
@@ -432,14 +406,45 @@ public class ResultController {
         @RequestParam(EXPERIMENT) final int experimentId,
         @RequestParam(value = "step", required = false, defaultValue = "0") final int step,
         final HttpServletResponse httpServletResponse
-    ) {
+    ) throws IOException {
         prepareZipFileResponse(httpServletResponse, 0, experimentId, "zip");
+        zipExportService.exportSb3sForExperiment(httpServletResponse.getOutputStream(), experimentId, step);
+    }
 
-        try {
-            zipExportService.exportSb3sForExperiment(httpServletResponse.getOutputStream(), experimentId, step);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not download sb3 files for experiment due to IOException!", e);
-        }
+    /**
+     * Generates a ZIP file consisting of a Sb3 file of the last project for every participant in an experiment, if any
+     * code was saved for them during the experiment. Every project includes the corresponding JSON file as well as all
+     * uploaded files by the user or the initial project.
+     *
+     * @param experimentId The experiment id for which to download the last projects.
+     * @param httpServletResponse The servlet response returning the files for download.
+     */
+    @GetMapping("/sb3s/last")
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadLastExperimentSb3Files(
+        @RequestParam(EXPERIMENT) final int experimentId, final HttpServletResponse httpServletResponse
+    ) throws IOException {
+        String filename = "experiment" + experimentId + "_last_sb3s.zip";
+        prepareZipFileResponse(httpServletResponse, filename);
+        zipExportService.exportLastSb3sForExperiment(httpServletResponse.getOutputStream(), experimentId);
+    }
+
+    /**
+     * Downloads all project files (all `project.json` files and `events.csv`) for every participant in the given
+     * experiment for which there are saved codes in the database. The download is a zip file consisting of a zip file
+     * for every participant that includes the relevant files for that participant.
+     *
+     * @param experimentId The experiment id to download the project files form.
+     * @param httpServletResponse The servlet response returning the file for download.
+     */
+    @GetMapping("/jsons/all")
+    @Secured(Constants.ROLE_ADMIN)
+    public void downloadAllJsonFiles(
+        @RequestParam(EXPERIMENT) final int experimentId, final HttpServletResponse httpServletResponse
+    ) throws IOException {
+        String filename = "experiment" + experimentId + "_all_jsons.zip";
+        prepareZipFileResponse(httpServletResponse, filename);
+        zipExportService.exportJsonsForExperiment(httpServletResponse.getOutputStream(), experimentId);
     }
 
     /**
@@ -492,7 +497,20 @@ public class ResultController {
     }
 
     /**
-     * Sets the content type, header and status of the servlet response accordingly.
+     * Sets the content type, header, status, and filename of the servlet response accordingly.
+     *
+     * @param httpServletResponse The servlet response to prepare for a ZIP response.
+     * @param filename The filename that the response should be.
+     */
+    private void prepareZipFileResponse(final HttpServletResponse httpServletResponse, final String filename) {
+        httpServletResponse.setContentType("application/zip");
+        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + filename);
+        httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+    }
+
+    /**
+     * Same as {@link #prepareZipFileResponse(HttpServletResponse, String)}, but with a standardized format for the
+     * filename consisting of the user id, experiment id, and filetype (either 'sb3' or 'zip').
      *
      * @param httpServletResponse The servlet response.
      * @param userId The user id to use to name the zip file.
@@ -502,10 +520,8 @@ public class ResultController {
     private void prepareZipFileResponse(final HttpServletResponse httpServletResponse, final int userId,
                                         final int experimentId, final String filetype) {
         String fileEnding = filetype.equals("sb3") ? ".sb3" : ".zip";
-        httpServletResponse.setContentType("application/zip");
-        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=" + filetype + "_user" + userId
-                + "_experiment" + experimentId + fileEnding);
-        httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+        String filename = filetype + "_user" + userId + "_experiment" + experimentId + fileEnding;
+        prepareZipFileResponse(httpServletResponse, filename);
     }
 
 }
