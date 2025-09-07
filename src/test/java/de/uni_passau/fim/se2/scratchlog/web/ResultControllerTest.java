@@ -34,7 +34,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProject
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.FileProjection;
-import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.web.controller.ResultController;
 import de.uni_passau.fim.se2.scratchlog.web.dto.CodesDataDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.EventCountDTO;
@@ -844,6 +843,8 @@ public class ResultControllerTest {
     public void testDownloadLastExperimentSb3Files() throws IOException {
         when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(experimentService.getSb3File(anyInt(), anyBoolean()))
+            .thenAnswer(answer -> experimentWithId(answer.getArgument(0)));
         assertDoesNotThrow(
             () -> resultController.downloadLastExperimentSb3Files(ID, httpServletResponse)
         );
@@ -856,6 +857,8 @@ public class ResultControllerTest {
         when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(codeService.findFirstJSON(anyInt(), anyInt())).thenReturn(null);
+        when(experimentService.getSb3File(anyInt(), anyBoolean()))
+            .thenAnswer(answer -> experimentWithId(answer.getArgument(0)));
         assertDoesNotThrow(
             () -> resultController.downloadLastExperimentSb3Files(ID, httpServletResponse)
         );
@@ -975,78 +978,6 @@ public class ResultControllerTest {
         return projections;
     }
 
-    private List<BlockEventJSONProjection> getJsonProjectionsWithCustomTimeDifference() {
-        List<BlockEventJSONProjection> projections = new ArrayList<>();
-
-        projections.add(new BlockEventJSONProjection() {
-            @Override
-            public Integer getId() {
-                return 1;
-            }
-
-            @Override
-            public String getCode() {
-                return "json" + 1;
-            }
-
-            @Override
-            public LocalDateTime getDate() {
-                return LocalDateTime.now();
-            }
-
-            @Override
-            public String getEvent() {
-                return "event";
-            }
-        });
-
-        projections.add(new BlockEventJSONProjection() {
-            @Override
-            public Integer getId() {
-                return 2;
-            }
-
-            @Override
-            public String getCode() {
-                return "json" + 2;
-            }
-
-            @Override
-            public LocalDateTime getDate() {
-                return LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 1);
-            }
-
-            @Override
-            public String getEvent() {
-                return "event";
-            }
-        });
-
-        projections.add(new BlockEventJSONProjection() {
-            @Override
-            public Integer getId() {
-                return 3;
-            }
-
-            @Override
-            public String getCode() {
-                return "json" + 3;
-            }
-
-            @Override
-            public LocalDateTime getDate() {
-                return LocalDateTime.now().plusMinutes(Constants.MAX_ALLOWED_BREAK_FACTOR + 3);
-            }
-
-            @Override
-            public String getEvent() {
-                return "event";
-            }
-        });
-
-        return projections;
-    }
-
     private List<BlockEventProjection> getBlockEventProjections(int number) {
         List<BlockEventProjection> projections = new ArrayList<>();
         for (int i = 0; i < number; i++) {
@@ -1079,5 +1010,24 @@ public class ResultControllerTest {
             });
         }
         return projections;
+    }
+
+    private ExperimentProjection experimentWithId(final int id) {
+        return new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return id;
+            }
+
+            @Override
+            public boolean isActive() {
+                return true;
+            }
+
+            @Override
+            public byte[] getProject() {
+                return new byte[0];
+            }
+        };
     }
 }
