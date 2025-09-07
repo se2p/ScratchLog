@@ -152,16 +152,20 @@
                 <div class="tab-pane fade p-5" id="nav-downloadsb3" role="tabpanel"
                      aria-labelledby="nav-downloadsb3-tab" tabindex="0" th:if="${experimentDTO.active}">
                     <!-- The download sb3 files heading and the corresponding button. -->
-                    <div class="row mb-3" sec:authorize="hasRole('ADMIN')">
-                        <div class="col-7">
-                        </div>
-                        <div class="col-5 text-end">
-                            <a class="btn btn-primary" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id})}"
-                               th:aria-label="#{sb3_label}">
-                                <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
-                                <span th:text="#{all_sb3}"></span>
-                            </a>
-                        </div>
+                    <div class="d-flex gap-2 justify-content-end" sec:authorize="hasRole('ADMIN')">
+                        <a class="btn btn-primary" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id})}"
+                           th:aria-label="#{sb3_label}">
+                            <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                            <span th:text="#{all_sb3}"></span>
+                        </a>
+                        <a class="btn btn-primary" th:href="@{/result/sb3s/last(experiment=${experimentDTO.id})}">
+                            <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                            <span th:text="#{last_sb3}"></span>
+                        </a>
+                        <a class="btn btn-primary" th:href="@{result/jsons/all(experiment=${experimentDTO.id})}">
+                            <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
+                            <span th:text="#{download_json}"></span>
+                        </a>
                     </div>
 
                     <!-- The download sb3 files section. -->

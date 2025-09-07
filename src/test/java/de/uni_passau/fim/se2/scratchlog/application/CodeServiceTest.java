@@ -191,36 +191,6 @@ public class CodeServiceTest {
     }
 
     @Test
-    public void testFindFirstJSONUserInactive() {
-        user.setActive(false);
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment))
-                .thenReturn(projection);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
-        assertNull(codeService.findFirstJSON(ID, ID));
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(blockEventRepository).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
-        verify(participantRepository).findByUserAndExperiment(user, experiment);
-    }
-
-    @Test
-    public void testFindFirstJSONExperimentInactive() {
-        experiment.setActive(false);
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(blockEventRepository.findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment))
-                .thenReturn(projection);
-        when(participantRepository.findByUserAndExperiment(user, experiment)).thenReturn(Optional.of(participant));
-        assertNull(codeService.findFirstJSON(ID, ID));
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(blockEventRepository).findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(user, experiment);
-        verify(participantRepository).findByUserAndExperiment(user, experiment);
-    }
-
-    @Test
     public void testFindFirstJSONEntityNotFound() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);

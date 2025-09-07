@@ -42,6 +42,7 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.EventCountDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -56,6 +57,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -511,7 +513,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDownloadAllJsonFiles() throws Exception {
+    public void testDownloadAllJsonFilesForUser() throws Exception {
         when(codeService.getJsonForUser(ID, ID)).thenReturn(jsonProjections);
         mvc.perform(get("/result/jsons")
                 .param(EXPERIMENT_PARAM, ID_STRING)
@@ -523,7 +525,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDownloadAllJsonFilesNotFound() throws Exception {
+    public void testDownloadAllJsonFilesForUserNotFound() throws Exception {
         when(codeService.getJsonForUser(ID, ID)).thenThrow(NotFoundException.class);
         mvc.perform(get("/result/jsons")
                 .param(EXPERIMENT_PARAM, ID_STRING)
@@ -535,7 +537,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testDownloadAllJsonFilesInvalidId() throws Exception {
+    public void testDownloadAllJsonFilesForUserInvalidId() throws Exception {
         mvc.perform(get("/result/jsons")
                 .param(EXPERIMENT_PARAM, "id")
                 .param(USER_PARAM, ID_STRING)
@@ -854,6 +856,88 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
         verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
+    }
+
+    @Test
+    public void testDownloadLastExperimentSb3Files() throws Exception {
+        URL zipUrl = getClass().getClassLoader().getResource("Taylor-b.zip");
+        URL sb3 = getClass().getClassLoader().getResource("Scratch-Projekt.sb3");
+        File sb3File = new File(sb3.getFile());
+        File zipFile = new File(zipUrl.getFile());
+        byte[] sb3Bytes = new byte[(int) sb3File.length()];
+        byte[] zipBytes = new byte[(int) zipFile.length()];
+        FileInputStream sb3InputStream = new FileInputStream(sb3File);
+        FileInputStream zipInputStream = new FileInputStream(zipFile);
+        sb3InputStream.read(sb3Bytes);
+        sb3InputStream.close();
+        zipInputStream.read(zipBytes);
+        zipInputStream.close();
+        zip.setContent(zipBytes);
+        List<FileDTO> fileDTOS = new ArrayList<>();
+        fileDTOS.add(fileDTO);
+        fileDTOS.add(zip);
+        ExperimentProjection projection = new ExperimentProjection() {
+            @Override
+            public Integer getId() {
+                return ID;
+            }
+
+            @Override
+            public boolean isActive() {
+                return true;
+            }
+
+            @Override
+            public byte[] getProject() {
+                return sb3Bytes;
+            }
+        };
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(experimentService.getSb3File(ID, true)).thenReturn(projection);
+        when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
+        mvc.perform(get("/result/sb3s/last")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Disposition",
+                is("attachment;filename=experiment1_last_sb3s.zip")));
+    }
+
+    @Test
+    public void testDownloadLastExperimentSb3FilesNoParticipants() throws Exception {
+        when(participantService.getParticipants(ID)).thenReturn(new ArrayList<>());
+        mvc.perform(get("/result/sb3s/last")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testDownloadAllJsonFiles() throws Exception {
+        when(participantService.getParticipants(ID)).thenReturn(participants);
+        when(userService.getUserById(participants.getFirst().getUser())).
+            thenReturn(new UserDTO("user1", null, null, null, null, null));
+        when(userService.getUserById(participants.get(1).getUser())).
+            thenReturn(new UserDTO("user2", null, null, null, null, null));
+        mvc.perform(get("/result/jsons/all")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Content-Disposition",
+                is("attachment;filename=experiment1_all_jsons.zip")));
+    }
+
+    @Test
+    public void testDownloadAllJsonFilesNoParticipants() throws Exception {
+        when(participantService.getParticipants(ID)).thenReturn(new ArrayList<>());
+        mvc.perform(get("/result/jsons/all")
+                .param(EXPERIMENT_PARAM, ID_STRING)
+                .contentType(MediaType.ALL)
+                .accept(MediaType.ALL))
+            .andExpect(status().isBadRequest());
     }
 
     private List<EventCountDTO> getEventCounts(int number, String event) {
