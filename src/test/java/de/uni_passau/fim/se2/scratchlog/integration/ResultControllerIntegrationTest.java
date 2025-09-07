@@ -852,7 +852,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isBadRequest());
-        verify(experimentService).getSb3File(ID, true);
+        verify(experimentService, never()).getSb3File(ID, true);
         verify(fileService, never()).getFileDTOs(anyInt(), anyInt());
         verify(codeService, never()).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(fileService, never()).findFinalProject(anyInt(), anyInt());
