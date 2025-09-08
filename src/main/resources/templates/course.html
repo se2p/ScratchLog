@@ -289,7 +289,7 @@
     <!-- The course content information. -->
     <div class="card mt-5">
         <div class="card-header">
-            <h5 class="mb-0">Course Content</h5>
+            <h5 class="mb-0" th:text="#{course_content}"></h5>
         </div>
         <div class="card-body">
             <div class="col-12" th:utext="${courseDTO.content}"></div>
