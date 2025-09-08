@@ -89,13 +89,10 @@
                     <button class="nav-link active" id="nav-sb3-tab" data-bs-toggle="tab" data-bs-target="#nav-sb3"
                             type="button" role="tab" aria-controls="nav-sb3" aria-selected="true"
                             th:text="#{heading_sb3}"></button>
-                    <button class="nav-link" id="nav-dto-tab" data-bs-toggle="tab" data-bs-target="#nav-dto"
-                            type="button" role="tab" aria-controls="nav-dto" aria-selected="false"
-                            th:if="${experimentDTO.active}" th:text="#{add_csv_participants}"></button>
                     <button class="nav-link" id="nav-downloadsb3-tab" data-bs-toggle="tab"
                             data-bs-target="#nav-downloadsb3" type="button" role="tab" aria-controls="nav-downloadsb3"
                             aria-selected="false" th:unless="${participants.isEmpty()
-                    or not experimentDTO.isActive()}" th:text="#{download_files}"></button>
+                            or not experimentDTO.isActive()}" th:text="#{download_files}"></button>
                     <button class="nav-link" id="nav-litterbox-tab" data-bs-toggle="tab" data-bs-target="#nav-litterbox"
                             type="button" role="tab" aria-controls="nav-status" aria-selected="false"
                             th:text="#{litterbox_csv}" th:unless="${participants.isEmpty()}"></button>
@@ -121,28 +118,6 @@
                         <div class="card-footer" style="width: 100%">
                             <div id="openDeleteSb3Modal" class="btn btn-sm btn-danger" style="float: left;"
                                  type="submit" th:text="#{delete_sb3}" th:unless="${project == null}"></div>
-                            <input class="btn btn-sm btn-primary" type="submit" style="float: right;"
-                                   th:value="#{upload}" />
-                        </div>
-                    </form>
-                </div>
-                <div class="tab-pane fade" id="nav-dto" role="tabpanel" aria-labelledby="nav-dto-tab" tabindex="0"
-                     th:if="${experimentDTO.active}">
-
-                    <!-- The button to add existing participants from a CSV file. -->
-                    <form method="post" th:action="@{/experiment/csv}" enctype="multipart/form-data"
-                          class="align-items-start d-flex flex-column">
-                        <div class="p-5">
-                            <label for="scratchFile" class="form-label">CSV File</label>
-                            <input type="hidden" name="id" th:value="${experimentDTO.id}" />
-                            <input type="file" class="form-control" name="file" accept=".csv" />
-                            <div class="text-muted mt-2" style="font-size: 14px!important;"
-                                 sec:authorize="hasRole('ADMIN')" th:if="${experimentDTO.active}">
-                                <span th:text="#{csv_participants}"></span>
-                            </div>
-                        </div>
-
-                        <div class="card-footer" style="width: 100%">
                             <input class="btn btn-sm btn-primary" type="submit" style="float: right;"
                                    th:value="#{upload}" />
                         </div>
@@ -256,7 +231,7 @@
     <!-- Card containing table of participants and actions menu for participant management. -->
     <div class="card mt-5" sec:authorize="hasRole('ADMIN')">
         <div class="card-header">
-            <h5 style="margin-bottom: 0; line-height: 38px;" th:text="#{heading_participants}"></h5>
+            <h5 class="mb-0" th:text="#{heading_participants}"></h5>
             <div class="dropdown">
                 <a class="btn btn-special dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                    aria-expanded="false" th:text="#{actions}">
