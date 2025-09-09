@@ -28,6 +28,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -113,6 +114,7 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * @param id The experiment id.
      * @param change The new status.
      */
+    @Transactional
     @Modifying
     @Query("UPDATE Experiment e SET e.active = :change WHERE e.id = :id")
     void updateStatusById(@Param("id") int id, @Param("change") boolean change);

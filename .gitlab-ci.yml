@@ -70,6 +70,20 @@ Compile:
 Unit-Tests:
   stage: test
   needs: ["Compile"]
+  variables:
+    FF_NETWORK_PER_BUILD: "true"
+    CI_DEBUG_SERVICES: "true"
+    SPRING_DATASOURCE_URL: "jdbc:mariadb://mariadb:3306/scratchlog"
+    SPRING_DATASOURCE_USERNAME: scratchlog
+    SPRING_DATASOURCE_PASSWORD: scratchlog
+  services:
+    - name: docker.io/library/mariadb:11
+      alias: mariadb
+      variables:
+        MARIADB_USER: scratchlog
+        MARIADB_PASSWORD: scratchlog
+        MARIADB_DATABASE: scratchlog
+        MARIADB_ROOT_PASSWORD: scratchlog
   script:
     - "mvn $MAVEN_ARGS test"
   after_script:

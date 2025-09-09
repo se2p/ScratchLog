@@ -19,26 +19,23 @@
 
 package de.uni_passau.fim.se2.scratchlog.persistence;
 
+import de.uni_passau.fim.se2.scratchlog.AbstractScratchLogTest;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Course;
-import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseExperiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
-import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentTableProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.CourseRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,87 +44,84 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DataJpaTest
-@ActiveProfiles("test")
-public class ExperimentRepositoryTest {
-
-    @Autowired
-    private TestEntityManager entityManager;
+class ExperimentRepositoryTest extends AbstractScratchLogTest {
 
     @Autowired
     private ExperimentRepository repository;
 
+    @Autowired
+    private CourseRepository courseRepository;
+
     private static final String SHORT_QUERY = "Exp";
     private static final String TITLE_QUERY = "Experiment";
     private static final String NO_RESULTS = "description";
-    private static final String GUI_URL = "scratch";
     private static final int LIMIT = 5;
     private static final int SMALL_LIMIT = 2;
-    private static final LocalDateTime DATE = LocalDateTime.now();
+
     private PageRequest pageRequest;
+
     private User user = new User("user", "email", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
-    private Course course1 = new Course(null, "Course 1", "Description for my course", "No info", true,
-            DATE);
-    private Course course2 = new Course(null, "Course 2", "Description for my course", "No info", true,
-            DATE);
-    private Experiment experiment1 = new Experiment(null, "Experiment 1", "Description for experiment 1", "Some info",
-            "Some postscript", false, false, GUI_URL);
-    private Experiment experiment2 = new Experiment(null, "Experiment 2", "Description for experiment 2", "Some info",
-            "Some postscript", true, false, GUI_URL);
-    private Experiment experiment3 = new Experiment(null, "Experiment 3", "Description for experiment 3", "Some info",
-            "Some postscript", false, false, GUI_URL);
-    private Experiment experiment4 = new Experiment(null, "Experiment 4", "Description for experiment 1", "Some info",
-            "Some postscript", false, false, GUI_URL);
-    private Experiment experiment5 = new Experiment(null, "Exp 5", "Description for experiment 2", "Some info",
-            "Some postscript", false, false, GUI_URL);
-    private Experiment experiment6 = new Experiment(null, "Exp 6", "Description for experiment 3", "Some info",
-            "Some postscript", false, false, GUI_URL);
-    private Participant participant1 = new Participant(user, experiment1, null, null);
-    private Participant participant2 = new Participant(user, experiment2, null, null);
-    private Participant participant3 = new Participant(user, experiment3, null, null);
-    private Participant participant4 = new Participant(user, experiment4, null, null);
-    private CourseExperiment courseExperiment1 = new CourseExperiment(course1, experiment1, DATE);
-    private CourseExperiment courseExperiment2 = new CourseExperiment(course2, experiment3, DATE);
-    private CourseExperiment courseExperiment3 = new CourseExperiment(course1, experiment2, DATE);
+
+    private Course course1;
+    private Course course2;
+
+    private Experiment experiment1;
+    private Experiment experiment2;
+    private Experiment experiment3;
+    private Experiment experiment4;
+    private Experiment experiment5;
+    private Experiment experiment6;
+    @Autowired
+    private ExperimentRepository experimentRepository;
 
     @BeforeEach
-    public void setup() {
-        user.setLastLogin(LocalDateTime.now());
+    void setup() {
         pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
-        user = entityManager.persist(user);
-        course1 = entityManager.persist(course1);
-        course2 = entityManager.persist(course2);
-        experiment1 = entityManager.persist(experiment1);
-        experiment2 = entityManager.persist(experiment2);
-        experiment3 = entityManager.persist(experiment3);
-        experiment4 = entityManager.persist(experiment4);
-        experiment5 = entityManager.persist(experiment5);
-        experiment6 = entityManager.persist(experiment6);
-        participant1 = entityManager.persist(participant1);
-        participant2 = entityManager.persist(participant2);
-        participant3 = entityManager.persist(participant3);
-        participant4 = entityManager.persist(participant4);
-        courseExperiment1 = entityManager.persist(courseExperiment1);
-        courseExperiment2 = entityManager.persist(courseExperiment2);
-        courseExperiment3 = entityManager.persist(courseExperiment3);
+
+        user = entityUtilService.generateUser("user");
+
+        course1 = entityUtilService.generateCourse("Course 1");
+        course1.setActive(true);
+        course1 = courseRepository.save(course1);
+        course2 = entityUtilService.generateCourse("Course 2");
+        course2.setActive(true);
+        course2 = courseRepository.save(course2);
+
+        experiment1 = entityUtilService.addExperimentToCourse(course1, "Experiment 1").getExperiment();
+        experiment2 = entityUtilService.addExperimentToCourse(course1, "Experiment 2").getExperiment();
+        experiment3 = entityUtilService.addExperimentToCourse(course2, "Experiment 3").getExperiment();
+        experiment4 = entityUtilService.generateExperiment("Experiment 4");
+        experiment5 = entityUtilService.generateExperiment("Exp 5");
+        experiment6 = entityUtilService.generateExperiment("Exp 6");
+
+        entityUtilService.addUsersToExperiment(experiment1, user);
+        entityUtilService.addUsersToExperiment(experiment2, user);
+        entityUtilService.addUsersToExperiment(experiment3, user);
+        entityUtilService.addUsersToExperiment(experiment4, user);
+    }
+
+    @AfterEach
+    void tearDown() {
+        courseRepository.deleteAll();
+        experimentRepository.deleteAll();
     }
 
     @Test
-    public void testUpdateStatusById() {
+    void testUpdateStatusById() {
         repository.updateStatusById(experiment1.getId(), true);
-        entityManager.refresh(experiment1);
-        assertTrue(experiment1.isActive());
+        final Experiment experiment = repository.findById(experiment1.getId()).orElseThrow();
+        assertTrue(experiment.isActive());
     }
 
     @Test
-    public void testUpdateStatusByIdFalse() {
+    void testUpdateStatusByIdFalse() {
         repository.updateStatusById(experiment2.getId(), false);
-        entityManager.refresh(experiment2);
-        assertFalse(experiment2.isActive());
+        final Experiment experiment = repository.findById(experiment2.getId()).orElseThrow();
+        assertFalse(experiment.isActive());
     }
 
     @Test
-    public void testFindExperimentSuggestions() {
+    void testFindExperimentSuggestions() {
         List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(SHORT_QUERY, LIMIT);
         assertAll(
                 () -> assertEquals(5, experiments.size()),
@@ -145,7 +139,7 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindExperimentSuggestionsLessThan5() {
+    void testFindExperimentSuggestionsLessThan5() {
         List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(TITLE_QUERY, LIMIT);
         assertAll(
                 () -> assertEquals(4, experiments.size()),
@@ -163,13 +157,13 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindExperimentSuggestionsNoResults() {
+    void testFindExperimentSuggestionsNoResults() {
         List<ExperimentTableProjection> experiments = repository.findExperimentSuggestions(NO_RESULTS, LIMIT);
         assertTrue(experiments.isEmpty());
     }
 
     @Test
-    public void testFindCourseExperimentSuggestions() {
+    void testFindCourseExperimentSuggestions() {
         List<ExperimentTableProjection> experiments = repository.findCourseExperimentSuggestions(TITLE_QUERY,
                 course1.getId(), LIMIT);
         assertAll(
@@ -182,7 +176,7 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindCourseExperimentSuggestionsLimit() {
+    void testFindCourseExperimentSuggestionsLimit() {
         List<ExperimentTableProjection> experiments = repository.findCourseExperimentSuggestions(SHORT_QUERY,
                 course2.getId(), SMALL_LIMIT);
         assertAll(
@@ -195,14 +189,14 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindCourseExperimentSuggestionsNoResults() {
+    void testFindCourseExperimentSuggestionsNoResults() {
         List<ExperimentTableProjection> experiments = repository.findCourseExperimentSuggestions(NO_RESULTS,
                 course1.getId(), LIMIT);
         assertTrue(experiments.isEmpty());
     }
 
     @Test
-    public void testFindCourseExperimentDeleteSuggestions() {
+    void testFindCourseExperimentDeleteSuggestions() {
         List<ExperimentTableProjection> experiments = repository.findCourseExperimentDeleteSuggestions(TITLE_QUERY,
                 course1.getId(), LIMIT);
         assertAll(
@@ -215,14 +209,14 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindCourseExperimentDeleteSuggestionsNoResults() {
+    void testFindCourseExperimentDeleteSuggestionsNoResults() {
         List<ExperimentTableProjection> experiments = repository.findCourseExperimentDeleteSuggestions(NO_RESULTS,
                 course1.getId(), LIMIT);
         assertTrue(experiments.isEmpty());
     }
 
     @Test
-    public void testFindExperimentResults() {
+    void testFindExperimentResults() {
         List<ExperimentTableProjection> experiments = repository.findExperimentResults(SHORT_QUERY, LIMIT, 0);
         assertAll(
                 () -> assertEquals(5, experiments.size()),
@@ -240,7 +234,7 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindExperimentResultsOffset() {
+    void testFindExperimentResultsOffset() {
         List<ExperimentTableProjection> experiments = repository.findExperimentResults(SHORT_QUERY, LIMIT, 2);
         assertAll(
                 () -> assertEquals(4, experiments.size()),
@@ -260,7 +254,7 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindExperimentResultsAll() {
+    void testFindExperimentResultsAll() {
         List<ExperimentTableProjection> experiments = repository.findExperimentResults(SHORT_QUERY,
                 Constants.PAGE_SIZE, 0);
         assertAll(
@@ -281,27 +275,27 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindExperimentResultsNoResults() {
+    void testFindExperimentResultsNoResults() {
         assertTrue(repository.findExperimentSuggestions(NO_RESULTS, LIMIT).isEmpty());
     }
 
     @Test
-    public void testGetExperimentResultCount() {
+    void testGetExperimentResultCount() {
         assertEquals(6, repository.getExperimentResultsCount(SHORT_QUERY));
     }
 
     @Test
-    public void testGetExperimentResultCount4() {
+    void testGetExperimentResultCount4() {
         assertEquals(4, repository.getExperimentResultsCount(TITLE_QUERY));
     }
 
     @Test
-    public void testGetExperimentResultCountZero() {
+    void testGetExperimentResultCountZero() {
         assertEquals(0, repository.getExperimentResultsCount(NO_RESULTS));
     }
 
     @Test
-    public void testFindExperimentsByParticipant() {
+    void testFindExperimentsByParticipant() {
         Page<ExperimentTableProjection> projections = repository.findExperimentsByParticipant(user.getId(),
                 pageRequest);
         assertAll(
@@ -314,7 +308,7 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindExperimentsByParticipantPageSizeTooSmall() {
+    void testFindExperimentsByParticipantPageSizeTooSmall() {
         pageRequest = PageRequest.of(0, 3);
         Page<ExperimentTableProjection> projections = repository.findExperimentsByParticipant(user.getId(),
                 pageRequest);
@@ -328,18 +322,18 @@ public class ExperimentRepositoryTest {
     }
 
     @Test
-    public void testFindExperimentsByParticipantNoUser() {
+    void testFindExperimentsByParticipantNoUser() {
         Page<ExperimentTableProjection> projections = repository.findExperimentsByParticipant(5, pageRequest);
         assertEquals(0, projections.getNumberOfElements());
     }
 
     @Test
-    public void testGetParticipantPageCount() {
+    void testGetParticipantPageCount() {
         assertEquals(4, repository.getParticipantPageCount(user.getId()));
     }
 
     @Test
-    public void testGetParticipantPageCountZero() {
+    void testGetParticipantPageCountZero() {
         assertEquals(0, repository.getParticipantPageCount(5));
     }
 }

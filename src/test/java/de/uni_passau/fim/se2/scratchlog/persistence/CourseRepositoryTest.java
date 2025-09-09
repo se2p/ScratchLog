@@ -19,35 +19,25 @@
 
 package de.uni_passau.fim.se2.scratchlog.persistence;
 
+import de.uni_passau.fim.se2.scratchlog.AbstractScratchLogTest;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Course;
-import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseParticipant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseTableProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.CourseRepository;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DataJpaTest
-@ActiveProfiles("test")
-public class CourseRepositoryTest {
-
-    @Autowired
-    private TestEntityManager entityManager;
+class CourseRepositoryTest extends AbstractScratchLogTest {
 
     @Autowired
     private CourseRepository courseRepository;
@@ -57,40 +47,43 @@ public class CourseRepositoryTest {
     private static final String NO_RESULTS = "blubb";
     private static final int LIMIT = 3;
     private static final int SEARCH_LIMIT = 5;
-    private static final LocalDateTime DATE = LocalDateTime.now();
+
     private PageRequest pageRequest;
-    private User user1 = new User("user1", "email1", Role.PARTICIPANT, Language.ENGLISH, "password", "secret1");
-    private User user2 = new User("user2", "email2", Role.PARTICIPANT, Language.ENGLISH, "password", "secret2");
-    private Course course1 = new Course(null, "Course 1", "Description 1", "", false, DATE);
-    private Course course2 = new Course(null, "Course 2", "Description 2", "", false, DATE);
-    private Course course3 = new Course(null, "Course 3", "Description 3", "", false, DATE);
-    private Course course4 = new Course(null, "Course 4", "Description 4", "", false, DATE);
-    private CourseParticipant participant1 = new CourseParticipant(user1, course1, DATE);
-    private CourseParticipant participant2 = new CourseParticipant(user1, course2, DATE);
-    private CourseParticipant participant3 = new CourseParticipant(user1, course3, DATE);
-    private CourseParticipant participant4 = new CourseParticipant(user1, course4, DATE);
-    private CourseParticipant participant5 = new CourseParticipant(user2, course1, DATE);
+
+    private User user1;
+    private User user2;
+
+    private Course course1;
+    private Course course2;
+    private Course course3;
+    private Course course4;
 
     @BeforeEach
-    public void setUp() {
-        user1.setLastLogin(LocalDateTime.now());
-        user2.setLastLogin(LocalDateTime.now());
+    void setUp() {
         pageRequest = PageRequest.of(0, LIMIT);
-        user1 = entityManager.persist(user1);
-        user2 = entityManager.persist(user2);
-        course1 = entityManager.persist(course1);
-        course2 = entityManager.persist(course2);
-        course3 = entityManager.persist(course3);
-        course4 = entityManager.persist(course4);
-        participant1 = entityManager.persist(participant1);
-        participant2 = entityManager.persist(participant2);
-        participant3 = entityManager.persist(participant3);
-        participant4 = entityManager.persist(participant4);
-        participant5 = entityManager.persist(participant5);
+
+        final List<User> users = entityUtilService.generateUsers("user", 2);
+        user1 = users.getFirst();
+        user2 = users.getLast();
+
+        course1 = entityUtilService.generateCourse("Course 1");
+        course2 = entityUtilService.generateCourse("Course 2");
+        course3 = entityUtilService.generateCourse("Course 3");
+        course4 = entityUtilService.generateCourse("Course 4");
+
+        entityUtilService.addUsersToCourse(course1, List.of(user1, user2));
+        entityUtilService.addUsersToCourse(course2, List.of(user1));
+        entityUtilService.addUsersToCourse(course3, List.of(user1));
+        entityUtilService.addUsersToCourse(course4, List.of(user1));
+    }
+
+    @AfterEach
+    void tearDown() {
+        courseRepository.deleteAll();
     }
 
     @Test
-    public void testFindCourseSuggestions() {
+    void testFindCourseSuggestions() {
         List<CourseTableProjection> projections = courseRepository.findCourseSuggestions(SHORT_QUERY, SEARCH_LIMIT);
         assertAll(
                 () -> assertEquals(4, projections.size()),
@@ -106,7 +99,7 @@ public class CourseRepositoryTest {
     }
 
     @Test
-    public void testFindCourseSuggestionsTitleQuery() {
+    void testFindCourseSuggestionsTitleQuery() {
         List<CourseTableProjection> projections = courseRepository.findCourseSuggestions(TITLE_QUERY, SEARCH_LIMIT);
         assertAll(
                 () -> assertEquals(1, projections.size()),
@@ -116,12 +109,12 @@ public class CourseRepositoryTest {
     }
 
     @Test
-    public void testFindCourseSuggestionsNoSuggestions() {
+    void testFindCourseSuggestionsNoSuggestions() {
         assertTrue(courseRepository.findCourseSuggestions(NO_RESULTS, SEARCH_LIMIT).isEmpty());
     }
 
     @Test
-    public void testFindCourseResults() {
+    void testFindCourseResults() {
         List<CourseTableProjection> projections = courseRepository.findCourseResults(SHORT_QUERY, LIMIT, 0);
         assertAll(
                 () -> assertEquals(3, projections.size()),
@@ -135,7 +128,7 @@ public class CourseRepositoryTest {
     }
 
     @Test
-    public void testFindCourseResultsAll() {
+    void testFindCourseResultsAll() {
         List<CourseTableProjection> projections = courseRepository.findCourseResults(SHORT_QUERY, SEARCH_LIMIT, 0);
         assertAll(
                 () -> assertEquals(4, projections.size()),
@@ -151,7 +144,7 @@ public class CourseRepositoryTest {
     }
 
     @Test
-    public void testFindCourseResultsOffset() {
+    void testFindCourseResultsOffset() {
         List<CourseTableProjection> projections = courseRepository.findCourseResults(SHORT_QUERY, LIMIT, 2);
         assertAll(
                 () -> assertEquals(2, projections.size()),
@@ -163,12 +156,12 @@ public class CourseRepositoryTest {
     }
 
     @Test
-    public void testFindCourseResultsNone() {
+    void testFindCourseResultsNone() {
         assertTrue(courseRepository.findCourseResults(SHORT_QUERY, LIMIT, 5).isEmpty());
     }
 
     @Test
-    public void testGetCourseResultsCount() {
+    void testGetCourseResultsCount() {
         assertAll(
                 () -> assertEquals(4, courseRepository.getCourseResultsCount(SHORT_QUERY)),
                 () -> assertEquals(1, courseRepository.getCourseResultsCount(TITLE_QUERY)),
@@ -177,7 +170,7 @@ public class CourseRepositoryTest {
     }
 
     @Test
-    public void testFindCoursesByParticipant() {
+    void testFindCoursesByParticipant() {
         Page<CourseTableProjection> page = courseRepository.findCoursesByParticipant(user1.getId(), pageRequest);
         assertAll(
                 () -> assertEquals(LIMIT, page.getNumberOfElements()),
@@ -190,7 +183,7 @@ public class CourseRepositoryTest {
     }
 
     @Test
-    public void testFindCoursesByParticipantOffset() {
+    void testFindCoursesByParticipantOffset() {
         pageRequest = PageRequest.of(1, LIMIT);
         Page<CourseTableProjection> page = courseRepository.findCoursesByParticipant(user1.getId(), pageRequest);
         assertAll(
@@ -200,7 +193,7 @@ public class CourseRepositoryTest {
     }
 
     @Test
-    public void testFindCoursesByParticipantTooFewEntries() {
+    void testFindCoursesByParticipantTooFewEntries() {
         Page<CourseTableProjection> page = courseRepository.findCoursesByParticipant(user2.getId(), pageRequest);
         assertAll(
                 () -> assertEquals(1, page.getNumberOfElements()),
@@ -209,7 +202,7 @@ public class CourseRepositoryTest {
     }
 
     @Test
-    public void testGetParticipantPageCount() {
+    void testGetParticipantPageCount() {
         assertAll(
                 () -> assertEquals(4, courseRepository.getParticipantPageCount(user1.getId())),
                 () -> assertEquals(1, courseRepository.getParticipantPageCount(user2.getId()))

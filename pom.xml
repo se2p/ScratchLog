@@ -42,7 +42,6 @@
         <mockito-inline.version>5.2.0</mockito-inline.version>
         <mockito.version>5.18.0</mockito.version>
         <mycila.version>4.2</mycila.version>
-        <mysql.version>9.3.0</mysql.version>
         <opencsv.version>5.11.2</opencsv.version>
         <passay.version>1.6.6</passay.version>
         <powermock.version>2.0.9</powermock.version>
@@ -207,9 +206,9 @@
 
         <!-- MySQL connector -->
         <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>${mysql.version}</version>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>3.5.3</version>
         </dependency>
 
         <!-- Annotations for entities -->
@@ -304,11 +303,16 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- H2 database for in-memory testing -->
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>${h2.version}</version>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.21.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mariadb</artifactId>
+            <version>1.21.3</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
