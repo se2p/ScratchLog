@@ -217,12 +217,13 @@ public class SearchService {
      * @return A list of usernames and emails, or an empty list, if no entries could be found.
      */
     public List<String[]> getUserSuggestions(final String query, final int id) {
-        Experiment experiment = experimentRepository.findById(id);
+        Optional<Experiment> experimentOpt = experimentRepository.findById(id);
 
-        if (experiment == null) {
+        if (experimentOpt.isEmpty()) {
             return new ArrayList<>();
         }
 
+        Experiment experiment = experimentOpt.get();
         if (experiment.isCourseExperiment()) {
             return addUserInfoSimple(findExperimentParticipantSuggestions(experiment, query));
         } else {

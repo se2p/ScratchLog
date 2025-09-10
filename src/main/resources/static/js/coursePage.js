@@ -4,6 +4,7 @@ import {
     addClickEventListenerCloseModal,
     addClickEventListenerOpenModal
 } from "./eventListeners.js";
+import {getSearchSuggestions} from "./getSearchSuggestions.js";
 
 /**
  * Readies all necessary event listeners for buttons on the course page.
@@ -167,4 +168,29 @@ function addEventListeners() {
     addClickEventListener("experimentsPrev", loadPreviousCourseExperimentPage);
     addClickEventListener("experimentsFirst", loadFirstCourseExperimentPage);
     addClickEventListener("experimentsLast", loadLastCourseExperimentPage);
+}
+
+function addKeyupFunctions() {
+    document.getElementById("participantInput").addEventListener("keyup", function () {
+        getSearchSuggestions(
+            "/search/course/participant",
+            { query: $("#participantInput").val(), id: $('#addParticipantId').val() },
+            "addParticipantsSelect",
+        );
+    });
+    document.getElementById("deleteParticipantInput").addEventListener("keyup", function () {
+        getSearchSuggestions(
+            "/search/course/delete/participant",
+            { query: $('#deleteParticipantInput').val(), id: $('#deleteParticipantId').val() },
+            "deleteParticipantsSelect"
+        )
+    });
+    document.getElementById("deleteExperimentsInput").addEventListener("keyup", function () {
+        getSearchSuggestions(
+            "/search/course/delete/experiment",
+            { query: $("#deleteExperimentsInput").val(), id: $("#deleteExperimentsCourseId").val() },
+            "deleteExperimentsSelect",
+            ([_path, _id, title]) => new Option(sanitize(title), sanitize(title))
+        )
+    });
 }

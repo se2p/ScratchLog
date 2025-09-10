@@ -309,7 +309,7 @@ public class SearchServiceTest {
 
     @Test
     public void testGetUserSuggestions() {
-        when(experimentRepository.findById(ID)).thenReturn(experiment1);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment1));
         when(userRepository.findParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS)).thenReturn(users);
         List<String[]> userInfo = searchService.getUserSuggestions(QUERY, ID);
         String[] firstUser = userInfo.get(0);
@@ -331,7 +331,7 @@ public class SearchServiceTest {
 
     @Test
     public void testGetUserSuggestionsCourse() {
-        when(experimentRepository.findById(ID)).thenReturn(experiment2);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment2));
         when(courseExperimentRepository.findByExperiment(experiment2)).thenReturn(Optional.of(courseExperiment));
         when(userRepository.findParticipantSuggestions(QUERY, ID, ID,
                 Constants.MAX_SUGGESTION_RESULTS)).thenReturn(users);
@@ -356,7 +356,7 @@ public class SearchServiceTest {
 
     @Test
     public void testGetUserSuggestionsCourseExperimentEmpty() {
-        when(experimentRepository.findById(ID)).thenReturn(experiment2);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment2));
         when(courseExperimentRepository.findByExperiment(experiment2)).thenReturn(Optional.empty());
         assertEquals(0, searchService.getUserSuggestions(QUERY, ID).size());
         verify(experimentRepository).findById(ID);
@@ -367,7 +367,7 @@ public class SearchServiceTest {
 
     @Test
     public void testGetUserSuggestionsNone() {
-        when(experimentRepository.findById(ID)).thenReturn(experiment1);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment1));
         List<String[]> userInfo = searchService.getUserSuggestions(QUERY, ID);
         assertEquals(0, userInfo.size());
         verify(userRepository).findParticipantSuggestions(QUERY, ID, Constants.MAX_SUGGESTION_RESULTS);

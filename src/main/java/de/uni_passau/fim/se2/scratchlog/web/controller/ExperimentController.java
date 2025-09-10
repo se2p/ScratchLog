@@ -424,22 +424,26 @@ public class ExperimentController {
     }
 
     /**
-     * Searches for a user whose name or email address match the given search string. If a user could be found, they are
-     * added as a participant to the given experiment. If no experiment with the corresponding id could be found or the
-     * id is invalid, the user is redirected to the error page instead.
+     * Searches for users whose name or email address match the given search string. If all user could be found, they
+     * are added as participants to the given experiment. If no experiment with the corresponding id could be found or
+     * the id is invalid, the user is redirected to the error page instead.
      *
      * @param experimentId The id of the experiment.
-     * @param search The username or email address to search for.
+     * @param participants The usernames or email addresses to search for and add to the experiment.
      * @param model The model used to store the error messages.
      * @return The experiment page on success, or the error page otherwise.
      */
-    @RequestMapping("/search")
+    @PostMapping("/add")
     @Secured(Constants.ROLE_ADMIN)
-    public String searchForUser(@RequestParam("participant") final String search,
-                                @RequestParam(ID) final int experimentId,
-                                final Model model) {
+    public String addParticipants(final @RequestParam List<String> participants,
+                                  final @RequestParam(ID) int experimentId,
+                                  final Model model) {
+        if (participants.isEmpty()) {
+            return Constants.ERROR;
+        }
+
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
+            LocaleContextHolder.getLocale());
         ExperimentDTO experimentDTO;
 
         try {
@@ -448,35 +452,56 @@ public class ExperimentController {
             return Constants.ERROR;
         }
 
-        if (!isValidSearch(search, experimentDTO, resourceBundle, model)) {
-            return EXPERIMENT;
+        // Validate that all participants are valid, and if not, redirect to the experiment page.
+        for (String participant : participants) {
+            if (!isValidSearch(participant, experimentDTO, resourceBundle, model)) {
+                return EXPERIMENT;
+            }
+
+            UserDTO userDTO = userService.getUserByUsernameOrEmail(participant);
+            validateUser(userDTO, experimentDTO, resourceBundle, model);
+            if (model.getAttribute(ERROR) != null) {
+                addModelInfo(0, experimentDTO, model);
+                return EXPERIMENT;
+            }
         }
 
-        UserDTO userDTO = userService.getUserByUsernameOrEmail(search);
-        validateUser(userDTO, experimentDTO, resourceBundle, model);
+        List<Integer> userIds = new ArrayList<>();
+        for (String participant : participants) {
 
-        if (model.getAttribute(ERROR) != null) {
-            addModelInfo(0, experimentDTO, model);
-            return EXPERIMENT;
+            UserDTO userDTO = userService.getUserByUsernameOrEmail(participant);
+            try {
+                String secret = userDTO.getSecret() == null ? Secrets.generateRandomBytes(Constants.SECRET_LENGTH)
+                    : userDTO.getSecret();
+                userDTO.setSecret(secret);
+                UserDTO saved = userService.updateUser(userDTO);
+                userIds.add(saved.getId());
+            } catch (NotFoundException e) {
+                return Constants.ERROR;
+            }
         }
 
         try {
-            String secret = userDTO.getSecret() == null ? Secrets.generateRandomBytes(Constants.SECRET_LENGTH)
-                    : userDTO.getSecret();
-            userDTO.setSecret(secret);
-            UserDTO saved = userService.updateUser(userDTO);
-            participantService.saveParticipant(saved.getId(), experimentId);
+            participantService.addParticipants(userIds, experimentId);
         } catch (NotFoundException e) {
             return Constants.ERROR;
         }
 
-        if (!applicationProperties.useMail()) {
-            return REDIRECT_SECRET + userDTO.getId() + EXPERIMENT_PARAM + experimentId;
-        } else if (sendEmail(userDTO, experimentId)) {
-            return REDIRECT_EXPERIMENT + experimentId;
-        } else {
-            return Constants.ERROR;
+        // Send participation emails to the added participants, if mailing is configured.
+        if (applicationProperties.useMail()) {
+            for (String participant : participants) {
+                UserDTO userDTO = userService.getUserByUsernameOrEmail(participant);
+
+                // Send the email and show the error page if something went wrong.
+                if (!sendEmail(userDTO, experimentId)) {
+                    return Constants.ERROR;
+                }
+            }
+        } else if (userIds.size() == 1) {
+            return REDIRECT_SECRET + userIds.get(0) + EXPERIMENT_PARAM + experimentId;
         }
+
+        return REDIRECT_EXPERIMENT + experimentId;
     }
 
     /**
@@ -814,7 +839,7 @@ public class ExperimentController {
     private boolean isErrorSavingCourseExperiment(final int courseId, final int experimentId) {
         try {
             courseService.saveCourseExperiment(courseId, experimentId);
-            participantService.saveParticipants(experimentId, courseId);
+            participantService.addAllCourseParticipantsToExperiment(experimentId, courseId);
             return false;
         } catch (Exception e) {
             LOGGER.error("Could not save course experiment!", e);

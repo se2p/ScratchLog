@@ -138,12 +138,8 @@ public class ExperimentService {
      * @throws NotFoundException if no corresponding experiment could be found.
      */
     public ExperimentDTO getExperiment(final int id) {
-        Experiment experiment = experimentRepository.findById(id);
-
-        if (experiment == null) {
-            LOGGER.error("Could not find experiment with id {} in the database", id);
-            throw new NotFoundException("Could not find experiment with id " + id + " in the database!");
-        }
+        Experiment experiment = experimentRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Could not find experiment with id " + id + " in the database!"));
 
         return createExperimentDTO(experiment);
     }
@@ -169,13 +165,10 @@ public class ExperimentService {
      */
     @Transactional
     public ExperimentDTO changeExperimentStatus(final boolean status, final int id) {
-        if (!experimentRepository.existsById(id)) {
-            LOGGER.error("Could not update the status for non-existent experiment with id {}!", id);
-            throw new NotFoundException("Could not update the status for non-existent experiment with id " + id + "!");
-        }
-
+        Experiment experiment = experimentRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException(
+                "Could not update the status for non-existent experiment with id " + id + "!"));
         experimentRepository.updateStatusById(id, status);
-        Experiment experiment = experimentRepository.findById(id);
         return createExperimentDTO(experiment);
     }
 

@@ -304,8 +304,11 @@ public class CourseController {
                                   @RequestParam(required = false, name = "add") final String add,
                                   @RequestParam("id") final int courseId,
                                   final Model model) {
-        CourseDTO courseDTO = getActiveCourseDTO(courseId);
+        if (participants.isEmpty()) {
+            return Constants.ERROR;
+        }
 
+        CourseDTO courseDTO = getActiveCourseDTO(courseId);
         if (courseDTO == null) {
             LOGGER.error("Cannot add a new participant with an invalid course id parameter!");
             return Constants.ERROR;
@@ -388,8 +391,11 @@ public class CourseController {
     @Secured(Constants.ROLE_ADMIN)
     public String deleteParticipants(@RequestParam("participants") final List<String> participants,
                                     @RequestParam("id") final int courseId, final Model model) {
-        CourseDTO courseDTO = getActiveCourseDTO(courseId);
+        if (participants.isEmpty()) {
+            return Constants.ERROR;
+        }
 
+        CourseDTO courseDTO = getActiveCourseDTO(courseId);
         if (courseDTO == null) {
             LOGGER.error("Cannot delete a participant with an invalid course id parameter!");
             return Constants.ERROR;
@@ -411,34 +417,35 @@ public class CourseController {
     }
 
     /**
-     * Deletes the experiment course entry for the experiment with the given title and the course with the given id. If
-     * the title input does not meet the requirements, no corresponding experiment could be found, or the experiment not
-     * part of the course, the course page is returned to display a corresponding error message. If no course with the
+     * Deletes the link between the given experiments and the given course from the database. If one of the experiment
+     * titles does not meet the requirements, no corresponding experiment could be found, or one experiment is not part
+     * of the given course, the course page is returned to display a corresponding error message. If no course with the
      * given id could be found, or something went wrong when trying to persist the change, the user is redirected to the
      * error page instead.
      *
-     * @param title The title of the experiment to be removed.
-     * @param courseId The id of the course.
+     * @param experimentTitles The titles of the experiments to delete as course experiments.
+     * @param courseId The id of the course to delete the experiments from.
      * @param model The {@link Model} to store information on errors.
-     * @return The updated course page on success, the course page displaying an error message, or the error page.
+     * @return The updated page on success, the course page displaying an error message, or the error page.
      */
     @GetMapping("/experiment/delete")
     @Secured(Constants.ROLE_ADMIN)
-    public String deleteExperiment(@RequestParam("title") final String title, @RequestParam("id") final int courseId,
-                                   final Model model) {
+    public String removeExperimentsFromCourse(@RequestParam("experimentTitles") final List<String> experimentTitles,
+                                              @RequestParam(ID) final int courseId, final Model model) {
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
-
         if (courseDTO == null) {
             LOGGER.error("Cannot remove an experiment with an invalid course id parameter!");
             return Constants.ERROR;
         }
 
-        if (checkReturnCoursePage(courseId, title, false, false, model)) {
-            addModelInfo(model, courseDTO, true);
-            return "course";
+        for (String experimentTitle : experimentTitles) {
+            if (checkReturnCoursePage(courseId, experimentTitle, false, false, model)) {
+                addModelInfo(model, courseDTO, true);
+                return "course";
+            }
         }
 
-        courseService.deleteCourseExperiment(courseId, title);
+        courseService.removeExperimentsFromCourse(courseId, experimentTitles);
         return "redirect:/course?id=" + courseId;
     }
 

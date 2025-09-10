@@ -60,7 +60,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.uni_passau.fim.se2.scratchlog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -122,6 +121,8 @@ public class CourseControllerTest {
     private static final int ID = 1;
     private static final int LAST_PAGE = 5;
     private static final String TITLE = "Title";
+    private static final String TITLE2 = "Title 2";
+    private static final List<String> TITLES = List.of(TITLE, TITLE2);
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
     private static final String USERNAME = "participant";
@@ -552,36 +553,44 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testDeleteExperiment() {
+    public void testRemoveExperimentsFromCourseSingleExperiment() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
         when(courseService.existsCourseExperiment(ID, TITLE)).thenReturn(true);
-        assertEquals(REDIRECT_COURSE + ID, courseController.deleteExperiment(TITLE, ID, model));
+        assertEquals(REDIRECT_COURSE + ID, courseController.removeExperimentsFromCourse(List.of(TITLE), ID, model));
         verify(courseService).getCourse(ID);
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService).existsCourseExperiment(ID, TITLE);
-        verify(courseService).deleteCourseExperiment(ID, TITLE);
+        verify(courseService).removeExperimentsFromCourse(ID, List.of(TITLE));
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testDeleteExperimentNoEntry() {
+    public void testRemoveExperimentsFromCourse() {
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        when(experimentService.existsExperiment(TITLE)).thenReturn(true);
+        when(experimentService.existsExperiment(TITLE2)).thenReturn(true);
+        when(courseService.existsCourseExperiment(ID, TITLE)).thenReturn(true);
+        when(courseService.existsCourseExperiment(ID, TITLE2)).thenReturn(true);
+        assertEquals(REDIRECT_COURSE + ID, courseController.removeExperimentsFromCourse(TITLES, ID, model));
+        verify(courseService).removeExperimentsFromCourse(ID, TITLES);
+        verify(model, never()).addAttribute(anyString(), any());
+    }
+
+    @Test
+    public void testRemoveExperimentsFromCourseNoEntry() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
         when(model.getAttribute(ERROR)).thenReturn(TITLE);
-        assertEquals(COURSE, courseController.deleteExperiment(TITLE, ID, model));
-        verify(courseService).getCourse(ID);
-        verify(experimentService).existsExperiment(TITLE);
-        verify(courseService).existsCourseExperiment(ID, TITLE);
+        assertEquals(COURSE, courseController.removeExperimentsFromCourse(List.of(TITLE), ID, model));
         verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
-        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testDeleteExperimentNotExistent() {
+    public void testRemoveExperimentsFromCourseNotExistent() {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(model.getAttribute(ERROR)).thenReturn(TITLE);
-        assertEquals(COURSE, courseController.deleteExperiment(TITLE, ID, model));
+        assertEquals(COURSE, courseController.removeExperimentsFromCourse(List.of(TITLE), ID, model));
         verify(courseService).getCourse(ID);
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
@@ -590,13 +599,10 @@ public class CourseControllerTest {
     }
 
     @Test
-    public void testDeleteExperimentCourseInactive() {
+    public void testRemoveExperimentsFromCourseCourseInactive() {
         courseDTO.setActive(false);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        assertEquals(Constants.ERROR, courseController.deleteExperiment(TITLE, ID, model));
-        verify(courseService).getCourse(ID);
-        verify(experimentService, never()).existsExperiment(anyString());
-        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
+        assertEquals(Constants.ERROR, courseController.removeExperimentsFromCourse(List.of(TITLE), ID, model));
         verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
         verify(model, never()).addAttribute(anyString(), any());
     }

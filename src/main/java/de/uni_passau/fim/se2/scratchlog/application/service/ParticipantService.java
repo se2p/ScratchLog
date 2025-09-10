@@ -187,7 +187,7 @@ public class ParticipantService {
      * @throws StoreException if adding a course participant to the experiment violated the foreign key constraints.
      */
     @Transactional
-    public void saveParticipants(final int experimentId, final int courseId) {
+    public void addAllCourseParticipantsToExperiment(final int experimentId, final int courseId) {
         Course course = courseRepository.getReferenceById(courseId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
@@ -251,6 +251,38 @@ public class ParticipantService {
         User user = userRepository.getReferenceById(userId);
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
         createParticipant(experiment, user);
+    }
+
+    /**
+     * Adds the given users as participants to the given experiment in the database.
+     *
+     * @param userIds The user ids of the users to participate in the experiment.
+     * @param experimentId The id of the experiment the users participate in.
+     * @throws IllegalArgumentException if the experiment id or one of the user ids is invalid.
+     * @throws NotFoundException if no corresponding user or experiment entries could be found.
+     * @throws StoreException if adding of one hte users as a participant violates the foreign key constraints.
+     */
+    @Transactional
+    public void addParticipants(final List<Integer> userIds, final int experimentId) {
+        Experiment experiment = experimentRepository.findById(experimentId)
+            .orElseThrow(() -> new EntityNotFoundException("Experiment with id " + experimentId + " not found."));
+
+        List<User> users = userRepository.findAllById(userIds);
+
+        // Fail if some users are missing.
+        if (users.size() != userIds.size()) {
+            List<Integer> foundIds = users.stream().map(User::getId).toList();
+            List<Integer> missingIds = userIds.stream().filter(id -> !foundIds.contains(id)).toList();
+            throw new EntityNotFoundException("Users not found with ids: " + missingIds);
+        }
+
+        List<Participant> participants = users.stream()
+            .map(user -> new Participant(user, experiment, null, null))
+            .toList();
+
+        participantRepository.saveAll(participants);
+
+        LOGGER.info("Added {} participants to experiment {}.", participants.size(), experimentId);
     }
 
     /**
@@ -358,6 +390,20 @@ public class ParticipantService {
     public void deleteParticipant(final int userId, final int experimentId) {
         ParticipantId participantId = new ParticipantId(userId, experimentId);
         participantRepository.deleteById(participantId);
+    }
+
+    /**
+     * Deletes the given participants from the given experiment, if those participants exist in the database.
+     *
+     * @param userIds The user ids of the participants to delete from the experiment.
+     * @param experimentId The id of the experiment to remove the participants from.
+     * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
+     */
+    @Transactional
+    public void removeParticipantsFromCourse(final List<Integer> userIds, final int experimentId) {
+        participantRepository.deleteAllById(
+            userIds.stream().map((userId) -> new ParticipantId(userId, experimentId)).toList()
+        );
     }
 
     /**

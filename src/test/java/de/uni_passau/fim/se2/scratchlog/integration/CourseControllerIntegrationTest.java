@@ -63,6 +63,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -107,7 +108,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     private static final String ID_STRING = "1";
     private static final String CURRENT = "3";
     private static final String ID_PARAM = "id";
-    private static final String TITLE_PARAM = "title";
+    private static final String TITLE_PARAM = "experimentTitles";
     private static final String PARTICIPANT_PARAM = "participants";
     private static final String PAGE_PARAM = "page";
     private static final String STATUS_PARAM = "stat";
@@ -115,6 +116,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     private static final int ID = 1;
     private static final int LAST_PAGE = 5;
     private static final String TITLE = "Title";
+    private static final String TITLE2 = "Title 2";
     private static final String DESCRIPTION = "Description";
     private static final String CONTENT = "content";
     private static final String USERNAME = "participant";
@@ -553,18 +555,18 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     public void testDeleteExperiment() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
+        when(experimentService.existsExperiment(TITLE2)).thenReturn(true);
         when(courseService.existsCourseExperiment(ID, TITLE)).thenReturn(true);
+        when(courseService.existsCourseExperiment(ID, TITLE2)).thenReturn(true);
         mvc.perform(get("/course/experiment/delete")
                         .param(ID_PARAM, ID_STRING)
                         .param(TITLE_PARAM, TITLE)
+                        .param(TITLE_PARAM, TITLE2)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_COURSE + ID));
-        verify(courseService).getCourse(ID);
-        verify(experimentService).existsExperiment(TITLE);
-        verify(courseService).existsCourseExperiment(ID, TITLE);
-        verify(courseService).deleteCourseExperiment(ID, TITLE);
+        verify(courseService).removeExperimentsFromCourse(ID, List.of(TITLE, TITLE2));
     }
 
     @Test
@@ -579,9 +581,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(view().name(COURSE))
                 .andExpect(model().attribute(ERROR, notNullValue()));
         verify(courseService).getCourse(ID);
-        verify(experimentService, never()).existsExperiment(anyString());
-        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
-        verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).removeExperimentsFromCourse(anyInt(), anyList());
     }
 
     @Test
@@ -595,9 +595,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(courseService).getCourse(ID);
-        verify(experimentService, never()).existsExperiment(anyString());
-        verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
-        verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
+        verify(courseService, never()).removeExperimentsFromCourse(anyInt(), anyList());
     }
 
     @Test

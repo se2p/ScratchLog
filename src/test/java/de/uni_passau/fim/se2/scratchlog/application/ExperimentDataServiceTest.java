@@ -58,6 +58,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -233,7 +234,7 @@ public class ExperimentDataServiceTest {
             }
         };
         List<BlockEventJSONProjection> blockEventJSONProjections = List.of(projection);
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment));
         when(participantRepository.findAllByExperiment(experiment)).thenReturn(participants);
         when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
                 experiment)).thenReturn(blockEventJSONProjections);
@@ -272,7 +273,7 @@ public class ExperimentDataServiceTest {
             }
         };
         List<BlockEventJSONProjection> blockEventJSONProjections = List.of(projection);
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment));
         when(participantRepository.findAllByExperiment(experiment)).thenReturn(participants);
         when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
                 experiment)).thenReturn(blockEventJSONProjections);
@@ -286,13 +287,12 @@ public class ExperimentDataServiceTest {
 
     @Test
     public void testGetLitterBoxAnalysisResultsExperimentNotFound() {
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
-        when(participantRepository.findAllByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.empty());
         assertThrows(NotFoundException.class,
                 () -> experimentDataService.getLitterBoxAnalysisResults(ID)
         );
         verify(experimentRepository).findById(ID);
-        verify(participantRepository).findAllByExperiment(experiment);
+        verify(participantRepository, never()).findAllByExperiment(experiment);
         verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
     }
 

@@ -61,6 +61,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -100,6 +101,8 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
     private static final String GUI_URL = "scratch";
     private static final String ERROR = "redirect:/error";
     private static final String PARTICIPANT = "participant";
+    private static final String PARTICIPANT2 = "participant2";
+    private static final String PARTICIPANT_PARAM = "participants";
     private static final String REDIRECT_EXPERIMENT = "redirect:/experiment?id=";
     private static final String REDIRECT_GUI = "redirect:" + GUI_URL + "?uid=";
     private static final String REDIRECT_FINISH = "redirect:/finish?user=";
@@ -127,6 +130,8 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
             "secret");
     private final UserDTO userDTO = new UserDTO(PARTICIPANT, EMAIL, Role.PARTICIPANT, Language.ENGLISH, "password",
             "secret");
+    private final UserDTO userDTO2 = new UserDTO(PARTICIPANT2, EMAIL, Role.PARTICIPANT, Language.ENGLISH, "password",
+        "secret");
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, "title", "description", INFO, POSTSCRIPT, true,
             false, GUI_URL);
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
@@ -134,6 +139,7 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
     @BeforeEach
     public void setup() {
         userDTO.setId(ID);
+        userDTO2.setId(ID + 1);
         userDTO.setUsername(PARTICIPANT);
         userDTO.setEmail(EMAIL);
         userDTO.setRole(Role.PARTICIPANT);
@@ -334,71 +340,65 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
     }
 
     @Test
-    public void testDeleteParticipant() throws Exception {
+    public void testRemoveParticipantsFromExperiment() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(userDTO2);
         when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
+        when(userService.existsParticipant(userDTO2.getId(), ID)).thenReturn(true);
         when(userService.updateUser(userDTO)).thenReturn(userDTO);
+        when(userService.updateUser(userDTO)).thenReturn(userDTO2);
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
-                .param(PARTICIPANT, PARTICIPANT)
+                .param(PARTICIPANT_PARAM, PARTICIPANT)
+                .param(PARTICIPANT_PARAM, PARTICIPANT2)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsParticipant(userDTO.getId(), ID);
-        verify(participantService).simultaneousParticipation(ID);
         verify(userService).updateUser(userDTO);
-        verify(participantService).deleteParticipant(userDTO.getId(), ID);
+        verify(userService).updateUser(userDTO2);
+        verify(participantService).removeParticipantsFromCourse(List.of(userDTO.getId(), userDTO2.getId()), ID);
     }
 
     @Test
-    public void testDeleteParticipantSimultaneousParticipation() throws Exception {
+    public void testRemoveParticipantsFromExperimentSimultaneousParticipation() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
-        when(participantService.simultaneousParticipation(ID)).thenReturn(true);
+        when(participantService.simultaneousParticipation(userDTO.getId())).thenReturn(true);
         when(userService.updateUser(userDTO)).thenReturn(userDTO);
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
-                .param(PARTICIPANT, PARTICIPANT)
+                .param(PARTICIPANT_PARAM, PARTICIPANT)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsParticipant(userDTO.getId(), ID);
         verify(participantService).simultaneousParticipation(ID);
         verify(userService, never()).updateUser(any());
-        verify(participantService).deleteParticipant(userDTO.getId(), ID);
+        verify(participantService).removeParticipantsFromCourse(List.of(userDTO.getId()), ID);
     }
 
     @Test
-    public void testDeleteParticipantUserNotFound() throws Exception {
+    public void testRemoveParticipantsFromExperimentUserNotFound() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(userService.existsParticipant(userDTO.getId(), ID)).thenReturn(true);
         when(userService.updateUser(userDTO)).thenThrow(NotFoundException.class);
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
-                .param(PARTICIPANT, PARTICIPANT)
+                .param(PARTICIPANT_PARAM, PARTICIPANT)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsParticipant(userDTO.getId(), ID);
-        verify(participantService).simultaneousParticipation(ID);
         verify(userService).updateUser(userDTO);
-        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(participantService, never()).removeParticipantsFromCourse(anyList(), anyInt());
     }
 
     @Test
-    public void testDeleteParticipantNotParticipantEntry() throws Exception {
+    public void testRemoveParticipantsFromExperimentNotParticipantEntry() throws Exception {
         List<Participant> list = new ArrayList<>();
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
@@ -406,7 +406,7 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(new PageImpl<>(list));
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
-                .param(PARTICIPANT, PARTICIPANT)
+                .param(PARTICIPANT_PARAM, PARTICIPANT)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(model().attribute("page", 1))
@@ -415,52 +415,36 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(experimentService).getExperiment(ID);
-        verify(userService).existsParticipant(userDTO.getId(), ID);
-        verify(pageService).getLastParticipantPage(ID);
         verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(participantService, never()).simultaneousParticipation(anyInt());
-        verify(userService, never()).updateUser(any());
-        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(participantService, never()).removeParticipantsFromCourse(anyList(), anyInt());
     }
 
     @Test
-    public void testDeleteParticipantExperimentNotFound() throws Exception {
+    public void testRemoveParticipantsFromExperimentExperimentNotFound() throws Exception {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(userDTO2);
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
-                .param(PARTICIPANT, PARTICIPANT)
+                .param(PARTICIPANT_PARAM, PARTICIPANT)
+                .param(PARTICIPANT_PARAM, PARTICIPANT2)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(experimentService).getExperiment(ID);
-        verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(pageService, never()).getLastParticipantPage(anyInt());
-        verify(participantService, never()).simultaneousParticipation(anyInt());
-        verify(userService, never()).updateUser(any());
-        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(participantService, never()).removeParticipantsFromCourse(anyList(), anyInt());
     }
 
     @Test
-    public void testDeleteParticipantExperimentIdInvalid() throws Exception {
+    public void testRemoveParticipantsFromExperimentExperimentIdInvalid() throws Exception {
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, BLANK)
-                .param(PARTICIPANT, PARTICIPANT)
+                .param(PARTICIPANT_PARAM, PARTICIPANT)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is4xxClientError())
                 .andExpect(view().name(Constants.ERROR));
-        verify(userService, never()).getUserByUsernameOrEmail(anyString());
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(pageService, never()).getLastParticipantPage(anyInt());
-        verify(participantService, never()).simultaneousParticipation(anyInt());
-        verify(userService, never()).updateUser(any());
-        verify(participantService, never()).deleteParticipant(anyInt(), anyInt());
+        verify(participantService, never()).removeParticipantsFromCourse(anyList(), anyInt());
     }
 
     @Test

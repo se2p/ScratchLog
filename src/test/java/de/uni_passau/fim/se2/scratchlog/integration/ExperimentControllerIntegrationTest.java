@@ -48,7 +48,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
@@ -77,10 +76,12 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -145,7 +146,10 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     private static final String ID_PARAM = "id";
     private static final String STATUS_PARAM = "stat";
     private static final String PAGE_PARAM = "page";
+    private static final String PARTICIPANTS_PARAM = "participants";
     private static final String PARTICIPANTS = "participants";
+    private static final String PARTICIPANT1 = "participant1";
+    private static final String PARTICIPANT2 = "participant2";
     private static final String PARTICIPANT = "participant";
     private static final String PAGE = "page";
     private static final String LAST_PAGE_ATTRIBUTE = "lastPage";
@@ -169,6 +173,10 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
             PASSWORD, "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANT, "participant@part.de", Role.PARTICIPANT,
             Language.ENGLISH, "user", null);
+    private final UserDTO participant1 = new UserDTO(PARTICIPANT1, "participant@part.de", Role.PARTICIPANT,
+        Language.ENGLISH, "user", null);
+    private final UserDTO participant2 = new UserDTO(PARTICIPANT2, "participant@part.de", Role.PARTICIPANT,
+        Language.ENGLISH, "user", null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
@@ -182,6 +190,8 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
         userDTO.setActive(true);
         userDTO.setSecret("secret1");
         participant.setId(ID + 1);
+        participant1.setId(ID + 2);
+        participant2.setId(ID + 3);
         participant.setSecret(null);
         experimentDTO.setId(ID);
         experimentDTO.setTitle(TITLE);
@@ -490,7 +500,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
         verify(experimentService).existsExperiment(TITLE, ID);
         verify(experimentService).saveExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
-        verify(participantService).saveParticipants(ID, ID);
+        verify(participantService).addAllCourseParticipantsToExperiment(ID, ID);
         verify(experimentService, never()).deleteExperiment(anyInt());
     }
 
@@ -511,7 +521,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
         verify(experimentService).existsExperiment(TITLE, ID);
         verify(experimentService).saveExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
-        verify(participantService, never()).saveParticipants(anyInt(), anyInt());
+        verify(participantService, never()).addAllCourseParticipantsToExperiment(anyInt(), anyInt());
         verify(experimentService).deleteExperiment(anyInt());
     }
 
@@ -792,80 +802,76 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     }
 
     @Test
-    public void testSearchForUser() throws Exception {
+    public void testAddParticipants() throws Exception {
         setMailServer(true);
         experimentDTO.setActive(true);
-        participant.setSecret("secret");
+        participant1.setSecret("secret");
+        participant2.setSecret("secret");
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
-        when(userService.updateUser(participant)).thenReturn(participant);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(participant2);
+        when(userService.updateUser(participant1)).thenReturn(participant1);
+        when(userService.updateUser(participant2)).thenReturn(participant2);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        mvc.perform(get("/experiment/search")
-                .param(PARTICIPANT, PARTICIPANT)
+        mvc.perform(post("/experiment/add")
+                .param(PARTICIPANTS_PARAM, PARTICIPANT1)
+                .param(PARTICIPANTS_PARAM, PARTICIPANT2)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
-        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(participantService).addParticipants(List.of(participant1.getId(), participant2.getId()), ID);
+        verify(mailService, times(2)).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
-    public void testSearchForUserSecretNull() throws Exception {
+    public void testAddParticipantsSecretNull() throws Exception {
         setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        mvc.perform(get("/experiment/search")
-                .param(PARTICIPANT, PARTICIPANT)
+        mvc.perform(post("/experiment/add")
+                .param(PARTICIPANTS_PARAM, PARTICIPANT)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
+        verify(participantService).addParticipants(List.of(participant.getId()), ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
-    public void testSearchForUserNoMailServer() throws Exception {
+    public void testAddParticipantsNoMailServer() throws Exception {
         setMailServer(false);
         experimentDTO.setActive(true);
         participant.setSecret("secret");
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
         when(userService.updateUser(participant)).thenReturn(participant);
-        mvc.perform(get("/experiment/search")
-                        .param(PARTICIPANT, PARTICIPANT)
+        mvc.perform(post("/experiment/add")
+                        .param(PARTICIPANTS_PARAM, PARTICIPANT)
                         .param(ID_PARAM, ID_STRING)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SECRET + participant.getId() + EXPERIMENT_PARAM + ID));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
+        verify(participantService).addParticipants(List.of(participant.getId()), ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
-    public void testSearchForUserExperimentInactive() throws Exception {
+    public void testAddParticipantsExperimentInactive() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        mvc.perform(get("/experiment/search")
-                .param(PARTICIPANT, PARTICIPANT)
+        mvc.perform(post("/experiment/add")
+                .param(PARTICIPANTS_PARAM, PARTICIPANT)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
@@ -877,23 +883,20 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(userService, never()).updateUser(participant);
-        verify(participantService, never()).saveParticipant(participant.getId(), ID);
+        verify(participantService, never()).addParticipants(List.of(participant.getId()), ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
-    public void testSearchForUserParticipantExists() throws Exception {
+    public void testAddParticipantsParticipantExists() throws Exception {
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(participant);
         when(userService.existsParticipant(participant.getId(), ID)).thenReturn(true);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        mvc.perform(get("/experiment/search")
-                        .param(PARTICIPANT, PARTICIPANT)
+        mvc.perform(post("/experiment/add")
+                        .param(PARTICIPANTS_PARAM, PARTICIPANT)
                         .param(ID_PARAM, ID_STRING)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
@@ -905,22 +908,18 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(userService).existsParticipant(participant.getId(), ID);
-        verify(userService, never()).updateUser(any());
-        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
-    public void testSearchForUserParticipantNull() throws Exception {
+    public void testAddParticipantsParticipantNull() throws Exception {
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        mvc.perform(get("/experiment/search")
-                        .param(PARTICIPANT, PARTICIPANT)
+        mvc.perform(post("/experiment/add")
+                        .param(PARTICIPANTS_PARAM, PARTICIPANT)
                         .param(ID_PARAM, ID_STRING)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
@@ -932,21 +931,19 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
-        verify(experimentService).getExperiment(ID);
         verify(userService).getUserByUsernameOrEmail(PARTICIPANT);
         verify(userService, never()).existsParticipant(anyInt(), anyInt());
-        verify(userService, never()).updateUser(any());
-        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
-    public void testSearchForUserInvalidQuery() throws Exception {
+    public void testAddParticipantsInvalidQuery() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
         when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
-        mvc.perform(get("/experiment/search")
-                .param(PARTICIPANT, BLANK)
+        mvc.perform(post("/experiment/add")
+                .param(PARTICIPANTS_PARAM, BLANK)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
@@ -958,27 +955,22 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
-        verify(experimentService).getExperiment(ID);
-        verify(userService, never()).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(userService, never()).updateUser(participant);
-        verify(participantService, never()).saveParticipant(participant.getId(), ID);
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
     @Test
-    public void testSearchForUserExperimentNotFound() throws Exception {
+    public void testAddParticipantsExperimentNotFound() throws Exception {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
-        mvc.perform(get("/experiment/search")
-                .param(PARTICIPANT, PARTICIPANT)
+        mvc.perform(post("/experiment/add")
+                .param(PARTICIPANTS_PARAM, PARTICIPANT)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(ERROR));
         verify(experimentService).getExperiment(ID);
-        verify(userService, never()).getUserByUsernameOrEmail(PARTICIPANT);
-        verify(userService, never()).updateUser(participant);
-        verify(participantService, never()).saveParticipant(participant.getId(), ID);
+        verify(participantService, never()).addParticipants(List.of(participant.getId()), ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
     }
 
