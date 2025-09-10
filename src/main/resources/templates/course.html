@@ -418,12 +418,14 @@
         <div class="mb-3" th:text="#{remove_experiment_info}"></div>
         <form th:action="@{/course/experiment/delete}">
             <div class="mb-3 form-group position-relative">
-                <input id="deleteExperimentId" type="hidden" th:name="id" th:value="${courseDTO.id}">
+                <input id="deleteExperimentsCourseId" type="hidden" th:name="id" th:value="${courseDTO.id}">
                 <div class="input-group">
-                    <input class="form-control" type="text" th:name="title" id="deleteExperimentInput"
+                    <input class="form-control" type="text" th:name="title" id="deleteExperimentsInput"
                            th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
                 </div>
-                <div id="deleteExperimentResults"></div>
+            </div>
+            <div class="list-group">
+                <select multiple id="deleteExperimentsSelect" th:name="experimentTitles" class="d-none mb-3"></select>
             </div>
             <div class="d-flex justify-content-between">
                 <a id="abortDeleteExperiment" class="btn btn-secondary" th:text="#{abort}"></a>
@@ -433,11 +435,9 @@
     </div>
 </div>
 
-<!-- Script to update the experiment and course tables on user interactions with the respective buttons. -->
+<!-- Script to update the experiment and course tables on user interactions with the respective button and also provide
+participant/experiment suggestions within the modals. -->
 <script type="module" th:src="@{/js/coursePage.js}"></script>
-
-<!-- Script to fetch the course experiment and participant suggestions. -->
-<script type="text/javascript" th:src="@{/js/courseSuggestions.js}"></script>
 
 <!-- Let Thymeleaf fetch the ID of the current course. -->
 <script>

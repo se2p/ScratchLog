@@ -74,7 +74,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import static de.uni_passau.fim.se2.scratchlog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -162,6 +161,9 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     private static final String EMAIL = "participant@part.de";
     private static final String LONG_PASSWORD = StringCreator.createLongString(55);
     private static final String PARTICIPANTS = "participants";
+    private static final String PARTICIPANT1 = "participant1";
+    private static final String PARTICIPANT2 = "participant2";
+    private static final List<String> PARTICIPANT_LIST = List.of(PARTICIPANT1, PARTICIPANT2);
     private static final int PAGE = 3;
     private static final int LAST = 4;
     private static final String FILETYPE_SB3 = "application/octet-stream";
@@ -179,6 +181,10 @@ public class ExperimentControllerTest extends AbstractControllerTest {
             "secret1");
     private final UserDTO participant = new UserDTO(PARTICIPANTS, EMAIL, Role.PARTICIPANT, Language.ENGLISH, "user",
             null);
+    private final UserDTO participant1 = new UserDTO(PARTICIPANT1, "participant1@part.de", Role.PARTICIPANT,
+            Language.ENGLISH, "user", null);
+    private final UserDTO participant2 = new UserDTO(PARTICIPANT2, "participant1@part.de", Role.PARTICIPANT,
+        Language.ENGLISH, "user", null);
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final List<UserDTO> userDTOS = new ArrayList<>();
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
@@ -188,6 +194,8 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     public void setup() {
         userDTO.setId(ID);
         participant.setId(ID + 1);
+        participant1.setId(ID + 2);
+        participant2.setId(ID + 3);
         participant.setSecret(null);
         userDTO.setActive(true);
         userDTO.setSecret("secret1");
@@ -406,7 +414,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService).saveExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
-        verify(participantService).saveParticipants(ID, ID);
+        verify(participantService).addAllCourseParticipantsToExperiment(ID, ID);
         verify(experimentService, never()).deleteExperiment(anyInt());
     }
 
@@ -416,7 +424,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         experimentDTO.setCourseExperiment(true);
         when(courseService.existsActiveCourse(ID)).thenReturn(true);
         when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
-        doThrow(NotFoundException.class).when(participantService).saveParticipants(ID, ID);
+        doThrow(NotFoundException.class).when(participantService).addAllCourseParticipantsToExperiment(ID, ID);
         assertEquals(Constants.ERROR, experimentController.editExperiment(experimentDTO,
                 bindingResult));
         verify(bindingResult, never()).addError(any());
@@ -424,7 +432,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService).saveExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
-        verify(participantService).saveParticipants(ID, ID);
+        verify(participantService).addAllCourseParticipantsToExperiment(ID, ID);
         verify(experimentService).deleteExperiment(ID);
     }
 
@@ -723,89 +731,96 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSearchForUser() {
+    public void testAddParticipants() {
         setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
-        when(userService.updateUser(participant)).thenReturn(participant);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(participant2);
+        when(userService.updateUser(participant1)).thenReturn(participant1);
+        when(userService.updateUser(participant2)).thenReturn(participant2);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
+        verify(participantService).addParticipants(List.of(participant1.getId(), participant2.getId()), ID);
+        verify(mailService, times(2)).sendEmail(anyString(), anyString(), any(), anyString());
+        verify(model, never()).addAttribute(any(), any());
+    }
+
+    @Test
+    public void testAddParticipantsSingleParticipant() {
+        setMailServer(true);
+        experimentDTO.setActive(true);
+        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.updateUser(participant1)).thenReturn(participant1);
+        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
+        assertEquals(REDIRECT_EXPERIMENT + ID,
+            experimentController.addParticipants(List.of(PARTICIPANT1), ID, model));
+        verify(participantService).addParticipants(List.of(participant1.getId()), ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
         verify(model, never()).addAttribute(any(), any());
     }
 
     @Test
-    public void testSearchForUserCourseExperiment() {
+    public void testAddParticipantsCourseExperiment() {
         setMailServer(true);
         experimentDTO.setActive(true);
         experimentDTO.setCourseExperiment(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
-        when(courseService.existsCourseParticipant(ID, participant.getId())).thenReturn(true);
-        when(userService.updateUser(participant)).thenReturn(participant);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(participant2);
+        when(userService.updateUser(participant1)).thenReturn(participant1);
+        when(userService.updateUser(participant2)).thenReturn(participant2);
+        when(courseService.existsCourseParticipant(ID, participant1.getId())).thenReturn(true);
+        when(courseService.existsCourseParticipant(ID, participant2.getId())).thenReturn(true);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(courseService).existsCourseParticipant(ID, participant.getId());
-        verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
-        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
+        verify(userService).updateUser(participant1);
+        verify(userService).updateUser(participant2);
+        verify(participantService).addParticipants(List.of(participant1.getId(), participant2.getId()), ID);
+        verify(mailService, times(2)).sendEmail(anyString(), anyString(), any(), anyString());
         verify(model, never()).addAttribute(any(), any());
     }
 
     @Test
-    public void testSearchForUserNoMailServer() {
+    public void testAddParticipantsNoMailServer() {
         setMailServer(false);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
-        when(userService.updateUser(participant)).thenReturn(participant);
-        assertEquals(REDIRECT_SECRET + participant.getId() + EXPERIMENT_PARAM + ID,
-                experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(participant2);
+        when(userService.updateUser(participant1)).thenReturn(participant1);
+        when(userService.updateUser(participant2)).thenReturn(participant2);
+        assertEquals(REDIRECT_EXPERIMENT + ID,
+            experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
+        verify(participantService).addParticipants(List.of(participant1.getId(), participant2.getId()), ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
         verify(model, never()).addAttribute(any(), any());
     }
 
     @Test
-    public void testSearchForUserSecretNull() {
-        setMailServer(true);
+    public void testAddParticipantsSingleParticipantNoMailServer() {
+        setMailServer(false);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
-        when(userService.updateUser(participant)).thenReturn(participant);
-        when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true);
-        assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.searchForUser(PARTICIPANTS, ID,
-                model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
-        verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.updateUser(participant1)).thenReturn(participant1);
+        assertEquals(REDIRECT_SECRET + participant1.getId() + EXPERIMENT_PARAM + ID,
+                experimentController.addParticipants(List.of(PARTICIPANT1), ID, model));
+        verify(participantService).addParticipants(List.of(participant1.getId()), ID);
+        verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
         verify(model, never()).addAttribute(any(), any());
     }
 
     @Test
-    public void testSearchForUserEmailNotSent() {
+    public void testAddParticipantsEmailNotSent() {
         setMailServer(true);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
-        when(userService.updateUser(participant)).thenReturn(participant);
-        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.updateUser(participant1)).thenReturn(participant1);
+        assertEquals(ERROR, experimentController.addParticipants(List.of(PARTICIPANT1), ID, model));
+        verify(participantService).addParticipants(List.of(participant1.getId()), ID);
         verify(mailService).sendEmail(anyString(), anyString(), any(), anyString());
         verify(model, never()).addAttribute(any(), any());
     }
@@ -813,141 +828,130 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     @Test
     public void testSearchForUserEmailNull() {
         setMailServer(true);
-        participant.setEmail(null);
+        participant1.setEmail(null);
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
-        when(userService.updateUser(participant)).thenReturn(participant);
-        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.updateUser(participant1)).thenReturn(participant1);
+        assertEquals(ERROR, experimentController.addParticipants(List.of(PARTICIPANT1), ID, model));
+        verify(participantService).addParticipants(List.of(participant1.getId()), ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
         verify(model, never()).addAttribute(any(), any());
     }
 
     @Test
-    public void testSearchForUserSaveParticipantNotFound() {
+    public void testAddParticipantsSaveParticipantNotFound() {
         experimentDTO.setActive(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
-        when(userService.updateUser(participant)).thenReturn(participant);
-        doThrow(NotFoundException.class).when(participantService).saveParticipant(participant.getId(), ID);
-        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(userService).updateUser(participant);
-        verify(participantService).saveParticipant(participant.getId(), ID);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(participant2);
+        when(userService.updateUser(participant1)).thenReturn(participant1);
+        when(userService.updateUser(participant2)).thenReturn(participant2);
+        doThrow(NotFoundException.class).when(participantService).
+                addParticipants(List.of(participant1.getId(), participant2.getId()), ID);
+        assertEquals(ERROR, experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
+        verify(participantService).addParticipants(List.of(participant1.getId(), participant2.getId()), ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
         verify(model, never()).addAttribute(any(), any());
     }
 
     @Test
-    public void testSearchForUserNoCourseParticipant() {
+    public void testAddParticipantsNoCourseParticipant() {
         experimentDTO.setActive(true);
         experimentDTO.setCourseExperiment(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(participant2);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(courseService).existsCourseParticipant(ID, participant.getId());
-        verify(userService, never()).updateUser(participant);
-        verify(participantService, never()).saveParticipant(participant.getId(), ID);
+        assertEquals(EXPERIMENT, experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
+        verify(userService, never()).updateUser(participant1);
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, atLeastOnce()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testSearchForUserExperimentInactive() {
+    public void testAddParticipantsExperimentInactive() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(participant2);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(userService, never()).updateUser(participant);
-        verify(participantService, never()).saveParticipant(participant.getId(), ID);
+        assertEquals(EXPERIMENT, experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
+        verify(userService, never()).updateUser(participant1);
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, atLeastOnce()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testSearchForUserSecretNotNull() {
-        participant.setSecret("secret");
+    public void testAddParticipantsSecretNotNull() {
+        participant1.setSecret("secret");
+        participant2.setSecret("secret");
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(participant2);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(userService, never()).updateUser(participant);
-        verify(participantService, never()).saveParticipant(participant.getId(), ID);
+        assertEquals(EXPERIMENT, experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
+        verify(userService, never()).updateUser(participant1);
+        verify(userService, never()).updateUser(participant2);
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, atLeastOnce()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testSearchForUserParticipantExists() {
+    public void testAddParticipantsParticipantsExist() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(userService.getUserByUsernameOrEmail(PARTICIPANTS)).thenReturn(participant);
-        when(userService.existsParticipant(participant.getId(), ID)).thenReturn(true);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT1)).thenReturn(participant1);
+        when(userService.getUserByUsernameOrEmail(PARTICIPANT2)).thenReturn(participant2);
+        when(userService.existsParticipant(participant1.getId(), ID)).thenReturn(true);
+        when(userService.existsParticipant(participant2.getId(), ID)).thenReturn(true);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
-        verify(userService, never()).updateUser(participant);
-        verify(participantService, never()).saveParticipant(participant.getId(), ID);
+        assertEquals(EXPERIMENT, experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
+        verify(userService, never()).updateUser(participant1);
+        verify(userService, never()).updateUser(participant2);
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, atLeastOnce()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testSearchForUserAdmin() {
+    public void testAddParticipantsAdmin() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(USERNAME)).thenReturn(userDTO);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(USERNAME, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(USERNAME);
+        assertEquals(EXPERIMENT, experimentController.addParticipants(List.of(USERNAME), ID, model));
         verify(userService, never()).updateUser(any());
-        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, atLeastOnce()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testSearchForUserNull() {
+    public void testAddParticipantsNull() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(model.getAttribute("error")).thenReturn("error");
-        assertEquals(EXPERIMENT, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService).getUserByUsernameOrEmail(PARTICIPANTS);
+        assertEquals(EXPERIMENT, experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
         verify(userService, never()).updateUser(any());
-        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, atLeastOnce()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testSearchForUserQueryInvalid() {
+    public void testAddParticipantsQueryInvalid() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        assertEquals(EXPERIMENT, experimentController.searchForUser(BLANK, ID, model));
-        verify(experimentService).getExperiment(ID);
-        verify(userService, never()).getUserByUsernameOrEmail(anyString());
+        assertEquals(EXPERIMENT, experimentController.addParticipants(List.of(BLANK), ID, model));
         verify(userService, never()).updateUser(any());
-        verify(participantService, never()).saveParticipant(anyInt(), anyInt());
+        verify(participantService, never()).addParticipants(anyList(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, atLeastOnce()).addAttribute(anyString(), any());
     }
 
     @Test
-    public void testSearchForUserExperimentNotFound() {
+    public void testAddParticipantsExperimentNotFound() {
         when(experimentService.getExperiment(ID)).thenThrow(NotFoundException.class);
-        assertEquals(ERROR, experimentController.searchForUser(PARTICIPANTS, ID, model));
-        verify(experimentService).getExperiment(ID);
+        assertEquals(ERROR, experimentController.addParticipants(PARTICIPANT_LIST, ID, model));
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(userService, never()).updateUser(any());
         verify(participantService, never()).saveParticipant(anyInt(), anyInt());

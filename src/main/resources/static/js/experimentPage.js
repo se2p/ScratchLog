@@ -1,4 +1,5 @@
 import {addClickEventListenerCloseModal, addClickEventListenerOpenModal} from "./eventListeners.js";
+import {getSearchSuggestions} from "./getSearchSuggestions.js";
 
 let deleteExperimentModal = document.getElementById("deleteExperimentModal");
 let stopExperimentModal = document.getElementById("stopExperimentModal");
@@ -8,10 +9,27 @@ let deleteParticipantModal = document.getElementById("deleteParticipantModal");
 let deleteSb3Modal = document.getElementById("deleteSb3Modal");
 
 /**
- * Readies all necessary event listeners for buttons on the experiment page.
+ * Readies all necessary event listeners for buttons on the experiment page and enables suggestion/multi-select
+ * functionality within the modals.
  */
 $(document).ready(function () {
     addEventListeners();
+
+    $("#addParticipantsInput").keyup(function() {
+        getSearchSuggestions(
+            "/search/user",
+            { query: $("#addParticipantsInput").val(), id: $("#experimentId").val() },
+            "addParticipantsSelect",
+        )
+    });
+
+    $("#deleteParticipantsInput").keyup(function() {
+        getSearchSuggestions(
+            "/search/delete",
+            { query: $("#deleteParticipantsInput").val(), id: $("#deleteParticipantsExperimentId").val() },
+            "deleteParticipantsSelect"
+        )
+    });
 });
 
 /**

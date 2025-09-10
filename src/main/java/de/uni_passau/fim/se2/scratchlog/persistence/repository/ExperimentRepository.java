@@ -74,9 +74,9 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * Returns the experiment identified by the given id, if one exists.
      *
      * @param id The id to search for.
-     * @return The experiment data or {@code null}, if no entry could be found.
+     * @return The experiment data as an optional.
      */
-    Experiment findById(int id);
+    Optional<Experiment> findById(int id);
 
     /**
      * Returns the experiment projection identified by the given id, if one exists.

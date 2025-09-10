@@ -232,7 +232,7 @@ public class ExperimentServiceTest {
 
     @Test
     public void testGetExperiment() {
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment));
         ExperimentDTO found = experimentService.getExperiment(ID);
         assertAll(
                 () -> assertEquals(experiment.getId(), found.getId()),
@@ -263,8 +263,7 @@ public class ExperimentServiceTest {
     @Test
     public void testChangeExperimentStatus() {
         experiment.setActive(true);
-        when(experimentRepository.existsById(ID)).thenReturn(true);
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment));
         ExperimentDTO changedStatus = experimentService.changeExperimentStatus(true, ID);
         assertAll(
                 () -> assertEquals(experiment.getId(), changedStatus.getId()),
@@ -275,15 +274,13 @@ public class ExperimentServiceTest {
                 () -> assertTrue(changedStatus.isCourseExperiment()),
                 () -> assertEquals(experiment.getGuiURL(), changedStatus.getGuiURL())
         );
-        verify(experimentRepository).existsById(ID);
         verify(experimentRepository).updateStatusById(ID, true);
         verify(experimentRepository).findById(ID);
     }
 
     @Test
     public void testChangeExperimentStatusFalse() {
-        when(experimentRepository.existsById(ID)).thenReturn(true);
-        when(experimentRepository.findById(ID)).thenReturn(experiment);
+        when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment));
         ExperimentDTO changedStatus = experimentService.changeExperimentStatus(false, ID);
         assertAll(
                 () -> assertEquals(experiment.getId(), changedStatus.getId()),
@@ -294,7 +291,6 @@ public class ExperimentServiceTest {
                 () -> assertTrue(changedStatus.isCourseExperiment()),
                 () -> assertEquals(experiment.getGuiURL(), changedStatus.getGuiURL())
         );
-        verify(experimentRepository).existsById(ID);
         verify(experimentRepository).updateStatusById(ID, false);
         verify(experimentRepository).findById(ID);
     }
@@ -302,9 +298,7 @@ public class ExperimentServiceTest {
     @Test
     public void testChangeExperimentStatusNotFound() {
         assertThrows(NotFoundException.class, () -> experimentService.changeExperimentStatus(true, ID));
-        verify(experimentRepository).existsById(ID);
         verify(experimentRepository, never()).updateStatusById(ID, true);
-        verify(experimentRepository, never()).findById(ID);
     }
 
     @Test

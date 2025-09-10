@@ -193,12 +193,12 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testSaveParticipants() {
+    public void testAddAllCourseParticipantsToExperiment() {
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment2);
         when(courseExperimentRepository.existsByCourseAndExperiment(course, experiment2)).thenReturn(true);
         when(courseParticipantRepository.findAllByCourse(course)).thenReturn(courseParticipants);
-        assertDoesNotThrow(() -> participantService.saveParticipants(ID, ID));
+        assertDoesNotThrow(() -> participantService.addAllCourseParticipantsToExperiment(ID, ID));
         verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment2);
@@ -208,13 +208,13 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testSaveParticipantsConstraintViolation() {
+    public void testAddAllCourseParticipantsToExperimentConstraintViolation() {
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment2);
         when(courseExperimentRepository.existsByCourseAndExperiment(course, experiment2)).thenReturn(true);
         when(courseParticipantRepository.findAllByCourse(course)).thenReturn(courseParticipants);
         when(participantRepository.save(any())).thenThrow(ConstraintViolationException.class);
-        assertThrows(StoreException.class, () -> participantService.saveParticipants(ID, ID));
+        assertThrows(StoreException.class, () -> participantService.addAllCourseParticipantsToExperiment(ID, ID));
         verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment2);
@@ -224,12 +224,12 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testSaveParticipantsEntityNotFound() {
+    public void testAddAllCourseParticipantsToExperimentEntityNotFound() {
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment2);
         when(courseExperimentRepository.existsByCourseAndExperiment(course,
                 experiment2)).thenThrow(EntityNotFoundException.class);
-        assertThrows(NotFoundException.class, () -> participantService.saveParticipants(ID, ID));
+        assertThrows(NotFoundException.class, () -> participantService.addAllCourseParticipantsToExperiment(ID, ID));
         verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment2);
@@ -239,10 +239,10 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testSaveParticipantsExperimentNotCourseExperiment() {
+    public void testAddAllCourseExperimentNotCourseParticipantsToExperimentExperiment() {
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment2);
-        assertThrows(IllegalStateException.class, () -> participantService.saveParticipants(ID, ID));
+        assertThrows(IllegalStateException.class, () -> participantService.addAllCourseParticipantsToExperiment(ID, ID));
         verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(courseParticipantRepository, never()).findAllByCourse(any());
@@ -251,11 +251,11 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testSaveParticipantsExperimentInactive() {
+    public void testAddAllCourseParticipantsToExperimentExperimentInactive() {
         experiment1.setActive(false);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
-        assertThrows(IllegalStateException.class, () -> participantService.saveParticipants(ID, ID));
+        assertThrows(IllegalStateException.class, () -> participantService.addAllCourseParticipantsToExperiment(ID, ID));
         verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(courseParticipantRepository, never()).findAllByCourse(any());
@@ -264,11 +264,11 @@ public class ParticipantServiceTest {
     }
 
     @Test
-    public void testSaveParticipantsCourseInactive() {
+    public void testAddAllCourseCourseParticipantsToExperimentInactive() {
         course.setActive(false);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
-        assertThrows(IllegalStateException.class, () -> participantService.saveParticipants(ID, ID));
+        assertThrows(IllegalStateException.class, () -> participantService.addAllCourseParticipantsToExperiment(ID, ID));
         verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(courseParticipantRepository, never()).findAllByCourse(any());

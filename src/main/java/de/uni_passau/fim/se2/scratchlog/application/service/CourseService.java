@@ -476,6 +476,34 @@ public class CourseService {
     }
 
     /**
+     * Deletes the course experiments entries for the course with the given ids and the given experiments. Does not
+     * delete the actual experiments.
+     *
+     * @param courseId The id of the course from which to delete course experiment entries.
+     * @param experimentTitles The titles of the experiments in the course to delete the course experiment entry for.
+     * @throws IllegalArgumentException if the given course id or one of the experiment titles is invalid.
+     * @throws EntityNotFoundException if no corresponding course or experiment could be found.
+     */
+    @Transactional
+    public void removeExperimentsFromCourse(final int courseId, final List<String> experimentTitles) {
+        Course course = courseRepository.findById(courseId)
+            .orElseThrow(() -> new EntityNotFoundException("Course with id " + courseId + " not found."));
+
+        List<CourseExperimentId> idsToDelete = experimentTitles.stream()
+            .map(title -> experimentRepository.findByTitle(title)
+                .orElseThrow(() -> new EntityNotFoundException("Experiment with title '" + title + "' not found.")))
+            .map(exp -> new CourseExperimentId(courseId, exp.getId()))
+            .toList();
+
+        course.setLastChanged(LocalDateTime.now());
+        courseRepository.save(course);
+
+        courseExperimentRepository.deleteAllById(idsToDelete);
+
+        LOGGER.info("Removed {} experiments from course {}.", idsToDelete.size(), courseId);
+    }
+
+    /**
      * Adds the course participant with the given id as a participant to all experiments offered as part of that course.
      *
      * @param courseId The id of the course.

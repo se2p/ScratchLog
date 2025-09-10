@@ -187,21 +187,17 @@ public class ExperimentDataService {
      * @throws NotFoundException if no corresponding experiment could be found.
      */
     public List<String[]> getLitterBoxAnalysisResults(final int id) {
-        Experiment experiment = experimentRepository.findById(id);
+        Experiment experiment = experimentRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Could not find experiment with id " + id + " in the database!"));
 
-        try {
-            List<Participant> participants = participantRepository.findAllByExperiment(experiment);
-            List<String[]> issues = new ArrayList<>();
-            List<String[]> metrics = new ArrayList<>();
-            issues.add(new String[]{"user", "issue id", "finder name", "translated finder name", "issue type",
-                    "severity", "actor name", "location", "hint", "costumes", "current costumes", "json", "timestamp"});
-            participants.forEach(participant -> analyzeCodesForUser(participant, issues, metrics));
-            issues.addAll(metrics);
-            return issues;
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
-            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
-        }
+        List<Participant> participants = participantRepository.findAllByExperiment(experiment);
+        List<String[]> issues = new ArrayList<>();
+        List<String[]> metrics = new ArrayList<>();
+        issues.add(new String[]{"user", "issue id", "finder name", "translated finder name", "issue type",
+                "severity", "actor name", "location", "hint", "costumes", "current costumes", "json", "timestamp"});
+        participants.forEach(participant -> analyzeCodesForUser(participant, issues, metrics));
+        issues.addAll(metrics);
+        return issues;
     }
 
     /**

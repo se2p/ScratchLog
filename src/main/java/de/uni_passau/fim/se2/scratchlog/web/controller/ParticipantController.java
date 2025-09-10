@@ -57,7 +57,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -267,30 +269,27 @@ public class ParticipantController {
     }
 
     /**
-     * Deletes the participant for the experiment with the given id whose username or email match the given input
-     * string. If no experiment with the corresponding id can be found, or the request parameters do not meet the
-     * requirements, the user is redirected to the error page instead. If no corresponding user can be found, or the
-     * user is not a participant in the given experiment, the experiment page is returned to display an error message.
+     * Removes the given participants from the experiment with the given id, but does not delete their user accounts. If
+     * no experiment with the corresponding id can be found, or the request parameters do not meet the requirements, the
+     * user is redirected to the error page instead. If no corresponding users can be found, or they are not a
+     * participant in the given experiment, the experiment page is returned to display an error message.
      *
-     * @param participant The username or email to search for.
-     * @param experimentId The experiment id.
+     * @param participants The usernames or emails of the participants to remove.
+     * @param experimentId The id of the experiment to remove the participants from.
      * @param model The model used for the id.
      * @return A redirection to the experiment page on success, or the error or experiment page otherwise.
      */
     @GetMapping("/delete")
     @Secured(Constants.ROLE_ADMIN)
-    public String deleteParticipant(@RequestParam("participant") final String participant,
-                                    @RequestParam(ID) final int experimentId, final Model model) {
-        if (participant == null || participant.trim().isBlank()
-                || participant.length() > Constants.LARGE_FIELD) {
-            LOGGER.error("Cannot delete participant with invalid id or input string!");
+    public String removeParticipantsFromExperiment(@RequestParam("participants") final List<String> participants,
+                                                   @RequestParam(ID) final int experimentId, final Model model) {
+        if (participants.isEmpty()) {
             return Constants.ERROR;
         }
 
         ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
+            LocaleContextHolder.getLocale());
         ExperimentDTO experimentDTO;
-        UserDTO userDTO = userService.getUserByUsernameOrEmail(participant);
 
         try {
             experimentDTO = experimentService.getExperiment(experimentId);
@@ -298,35 +297,49 @@ public class ParticipantController {
             return Constants.ERROR;
         }
 
-        if (userDTO == null) {
-            model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
-            addModelInfo(experimentDTO, model);
-            return "experiment";
-        } else if (!userDTO.getRole().equals(Role.PARTICIPANT)) {
-            model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
-        } else if (!userService.existsParticipant(userDTO.getId(), experimentId)) {
-            model.addAttribute(ERROR, resourceBundle.getString("no_participant_entry"));
-        } else if (!experimentDTO.isActive()) {
-            model.addAttribute(ERROR, resourceBundle.getString("experiment_closed"));
-        }
+        List<UserDTO> userDTOS = new ArrayList<>();
 
-        if (model.getAttribute(ERROR) != null) {
-            addModelInfo(experimentDTO, model);
-            return "experiment";
-        }
-
-        try {
-            if (!participantService.simultaneousParticipation(userDTO.getId())) {
-                userDTO.setSecret(null);
-                userDTO.setActive(false);
-                userService.updateUser(userDTO);
+        // Validate all participant inputs
+        for (String participant : participants) {
+            if (participant == null || participant.trim().isBlank()
+                || participant.length() > Constants.LARGE_FIELD) {
+                LOGGER.error("Cannot delete participant with invalid id or input string!");
+                return Constants.ERROR;
             }
 
-            participantService.deleteParticipant(userDTO.getId(), experimentId);
-        } catch (NotFoundException e) {
-            return Constants.ERROR;
+            UserDTO userDTO = userService.getUserByUsernameOrEmail(participant);
+
+            if (userDTO == null) {
+                model.addAttribute(ERROR, resourceBundle.getString("user_not_found"));
+            } else if (!userDTO.getRole().equals(Role.PARTICIPANT)) {
+                model.addAttribute(ERROR, resourceBundle.getString("user_not_participant"));
+            } else if (!userService.existsParticipant(userDTO.getId(), experimentId)) {
+                model.addAttribute(ERROR, resourceBundle.getString("no_participant_entry"));
+            } else if (!experimentDTO.isActive()) {
+                model.addAttribute(ERROR, resourceBundle.getString("experiment_closed"));
+            }
+
+            if (model.getAttribute(ERROR) != null) {
+                addModelInfo(experimentDTO, model);
+                return "experiment";
+            }
+
+            userDTOS.add(userDTO);
         }
 
+        for (UserDTO userDTO : userDTOS) {
+            try {
+                if (!participantService.simultaneousParticipation(userDTO.getId())) {
+                    userDTO.setSecret(null);
+                    userDTO.setActive(false);
+                    userService.updateUser(userDTO);
+                }
+            } catch (NotFoundException e) {
+                return Constants.ERROR;
+            }
+        }
+
+        participantService.removeParticipantsFromCourse(userDTOS.stream().map(UserDTO::getId).toList(), experimentId);
         return REDIRECT_EXPERIMENT + experimentId;
     }
 

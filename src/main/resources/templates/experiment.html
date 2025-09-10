@@ -428,14 +428,15 @@
     <div class="modal-content">
         <h2 th:text="#{add_participant}"></h2>
         <div class="mb-3" th:text="#{add_participant_info}"></div>
-        <form th:action="@{/experiment/search}">
+        <form th:method="POST" th:action="@{/experiment/add}">
             <div class="mb-3 form-group position-relative">
                 <input id="experimentId" type="hidden" th:name="id" th:value="${experimentDTO.id}">
-                <div class="input-group">
-                    <input class="form-control" type="text" th:name="participant" id="participantInput"
-                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
-                </div>
-                <div id="results"></div>
+                <input type="text" id="addParticipantsInput" class="form-control"
+                       th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}">
+            </div>
+            <div class="list-group">
+                <select multiple id="addParticipantsSelect" th:name="participants" class="d-none mb-3">
+                </select>
             </div>
             <div class="d-flex justify-content-between">
                 <a id="abortAddParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
@@ -471,12 +472,13 @@
         <div class="mb-3" th:text="#{delete_participant_info}"></div>
         <form th:action="@{/participant/delete}">
             <div class="mb-3 form-group position-relative">
-                <input id="deleteId" type="hidden" th:name="id" th:value="${experimentDTO.id}">
-                <div class="input-group">
-                    <input class="form-control" type="text" th:name="participant" id="deleteParticipantInput"
-                           th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
-                </div>
-                <div id="deleteResults"></div>
+                <input id="deleteParticipantsExperimentId" type="hidden" th:name="id" th:value="${experimentDTO.id}">
+                <input class="form-control" type="text" id="deleteParticipantsInput"
+                       th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).LARGE_FIELD}"/>
+            </div>
+            <div class="list-group">
+                <select multiple id="deleteParticipantsSelect" th:name="participants" class="d-none mb-3">
+                </select>
             </div>
             <div class="d-flex justify-content-between">
                 <a id="abortDeleteParticipant" class="btn btn-secondary" th:text="#{abort}"></a>
@@ -498,11 +500,8 @@
     </div>
 </div>
 
-<!-- Script to open and close the delete and add modals. -->
-<script type="module" th:src="@{/js/experimentModals.js}"></script>
-
-<!-- Script to fetch the participant suggestions. -->
-<script type="text/javascript" th:src="@{/js/participantSuggestions.js}"></script>
+<!-- Script to open and close the delete and add modals and provide their search/suggestion functionality. -->
+<script type="module" th:src="@{/js/experimentPage.js}"></script>
 
 <!-- Footer -->
 <div th:insert="~{footer :: footer}"></div>
