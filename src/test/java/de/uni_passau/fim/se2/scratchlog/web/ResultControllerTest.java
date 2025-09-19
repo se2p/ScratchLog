@@ -29,18 +29,19 @@ import de.uni_passau.fim.se2.scratchlog.application.service.FileService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ZipExportService;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.FileProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.web.controller.ResultController;
 import de.uni_passau.fim.se2.scratchlog.web.dto.CodesDataDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.EventCountDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
-import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.WriteListener;
 import jakarta.servlet.http.HttpServletResponse;
@@ -107,6 +108,9 @@ public class ResultControllerTest {
     private ParticipantService participantService;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private Model model;
 
     @Mock
@@ -125,8 +129,7 @@ public class ResultControllerTest {
         LocalDateTime.now().plusMinutes(15));
     private final ParticipantDTO participantDTO1 = new ParticipantDTO(ID, ID);
     private final ParticipantDTO participantDTO2 = new ParticipantDTO(2, ID);
-    private final UserDTO userDTO1 = new UserDTO("user1", null, null, null, null, null);
-    private final UserDTO userDTO2 = new UserDTO("user2", null, null, null, null, null);
+    private final User user1 = new User("user1", null, null, null, null, null);
     private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
     private final List<EventCountDTO> blockEvents = getEventCounts(5, "CREATE");
     private final List<EventCountDTO> clickEvents = getEventCounts(3, "GREENFLAG");
@@ -182,7 +185,7 @@ public class ResultControllerTest {
         zip.setContent(new byte[]{1, 2, 3, 4});
 
         ZipExportService zipExportService = new ZipExportService(
-            codeService, experimentService, fileService, participantService, userService
+            codeService, experimentService, fileService, participantService, userRepository
         );
         resultController = new ResultController(
             userService, eventService, experimentDataService, codeService, fileService, zipExportService
@@ -549,6 +552,7 @@ public class ResultControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user1));
         assertDoesNotThrow(
                 () -> resultController.downloadSb3Files(ID, ID, null, null, null, null,
                         httpServletResponse)
@@ -571,6 +575,7 @@ public class ResultControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user1));
         assertDoesNotThrow(
                 () -> resultController.downloadSb3Files(ID, ID, null, null, null, null,
                         httpServletResponse)
@@ -593,6 +598,7 @@ public class ResultControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(noSavedProject);
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user1));
         assertDoesNotThrow(
                 () -> resultController.downloadSb3Files(ID, ID, null, null, null, null,
                         httpServletResponse)
@@ -639,6 +645,7 @@ public class ResultControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
         when(codeService.getFilteredJsons(ID, ID, ID, 0, 0, project)).thenReturn(jsonProjections);
+        when(userRepository.findById(ID)).thenReturn(Optional.of(user1));
         assertDoesNotThrow(
                 () -> resultController.downloadSb3Files(ID, ID, ID, null, null, null,
                         httpServletResponse)
@@ -870,8 +877,6 @@ public class ResultControllerTest {
     public void testDownloadAllJSONFiles() throws IOException {
         when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(participantService.getParticipants(ID)).thenReturn(participants);
-        when(userService.getUserById(participants.getFirst().getUser())).thenReturn(userDTO1);
-        when(userService.getUserById(participants.get(1).getUser())).thenReturn(userDTO2);
         assertDoesNotThrow(
             () -> resultController.downloadAllJsonFiles(ID, httpServletResponse)
         );
@@ -884,8 +889,6 @@ public class ResultControllerTest {
         when(httpServletResponse.getOutputStream()).thenReturn(noOpServletOutputStream);
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(codeService.getJsonForUser(anyInt(), anyInt())).thenThrow(NotFoundException.class);
-        when(userService.getUserById(participants.getFirst().getUser())).thenReturn(userDTO1);
-        when(userService.getUserById(participants.get(1).getUser())).thenReturn(userDTO2);
         assertDoesNotThrow(
             () -> resultController.downloadAllJsonFiles(ID, httpServletResponse)
         );

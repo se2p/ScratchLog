@@ -40,17 +40,18 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
 
     /**
      * Returns all xml data with the corresponding id of the block event saved for the given user in the given
-     * experiment, if any exist.
+     * experiment, if any exist. The returned list is sorted ascendingly by date.
      *
      * @param user The user to search for.
      * @param experiment The experiment to search for.
      * @return The xml data and corresponding ids or an empty list, if no entry could be found.
      */
-    List<BlockEventXMLProjection> findAllByXmlIsNotNullAndUserAndExperiment(User user, Experiment experiment);
+    List<BlockEventXMLProjection> findAllByXmlIsNotNullAndUserAndExperimentOrderByDateAsc(User user,
+                                                                                          Experiment experiment);
 
     /**
      * Returns all json data with the corresponding id of the block event saved for the given user in the given
-     * experiment, if any exist.
+     * experiment, if any exist. The returned list is sorted ascendingly by date.
      *
      * @param user The user to search for.
      * @param experiment The experiment to search for.

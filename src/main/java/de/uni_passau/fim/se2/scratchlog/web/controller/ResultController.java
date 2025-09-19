@@ -407,7 +407,8 @@ public class ResultController {
         @RequestParam(value = "step", required = false, defaultValue = "0") final int step,
         final HttpServletResponse httpServletResponse
     ) throws IOException {
-        prepareZipFileResponse(httpServletResponse, 0, experimentId, "zip");
+        String filename = "experiment" + experimentId + "_all_sb3s" + (step != 0 ? "_step" + step : "") + ".zip";
+        prepareZipFileResponse(httpServletResponse, filename);
         zipExportService.exportSb3sForExperiment(httpServletResponse.getOutputStream(), experimentId, step);
     }
 

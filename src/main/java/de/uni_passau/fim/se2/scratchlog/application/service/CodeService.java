@@ -155,7 +155,7 @@ public class CodeService {
 
     /**
      * Retrieves all JSON data and corresponding block event ids saved for the user with the given ID during the
-     * experiment with the given ID.
+     * experiment with the given ID. The returned list is sorted ascendingly by date.
      *
      * @param userId The user ID.
      * @param experimentId The experiment ID.
@@ -237,7 +237,7 @@ public class CodeService {
 
     /**
      * Retrieves all xml data and corresponding block event ids saved for the user with the given ID during the
-     * experiment with the given ID.
+     * experiment with the given ID. The returned list is sorted ascendingly by date.
      *
      * @param userId The user ID.
      * @param experimentId The experiment ID.
@@ -250,8 +250,8 @@ public class CodeService {
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         try {
-            List<BlockEventXMLProjection> xml = blockEventRepository.findAllByXmlIsNotNullAndUserAndExperiment(user,
-                    experiment);
+            List<BlockEventXMLProjection> xml
+                = blockEventRepository.findAllByXmlIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
 
             if (xml.isEmpty()) {
                 LOGGER.error(
