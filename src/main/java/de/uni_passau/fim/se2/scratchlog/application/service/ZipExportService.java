@@ -22,13 +22,14 @@ package de.uni_passau.fim.se2.scratchlog.application.service;
 import com.opencsv.CSVWriter;
 import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
-import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -63,19 +64,19 @@ public class ZipExportService {
 
     private final ParticipantService participantService;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     public ZipExportService(
         final CodeService codeService,
         final ExperimentService experimentService,
         final FileService fileService,
         final ParticipantService participantService,
-        final UserService userService) {
+        final UserRepository userRepository) {
         this.codeService = codeService;
         this.experimentService = experimentService;
         this.fileService = fileService;
         this.participantService = participantService;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -182,21 +183,19 @@ public class ZipExportService {
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
             for (ParticipantDTO participantDTO : participants) {
                 int userId = participantDTO.getUser();
-                UserDTO user = userService.getUserById(userId);
 
                 try {
                     // Write all JSON files of the current participant to an inner stream.
                     ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
                     exportJsonsForExperimentUser(innerZip, experimentId, userId);
 
-                    ZipEntry entry = new ZipEntry("jsons_" + user.getUsername() + ".zip");
+                    ZipEntry entry = new ZipEntry("jsons_" + usernameForId(userId) + ".zip");
                     entry.setSize(innerZip.size());
                     zos.putNextEntry(entry);
                     zos.write(innerZip.toByteArray());
                     zos.closeEntry();
                 } catch (NotFoundException e) {
-                    log.error("Could not find corresponding user for id {} while writing JSON project files"
-                        + ", or the user does not have any saved codes.", userId);
+                    log.error("Cannot export JSON codes for user with id {} with no saved codes.", userId);
                 }
             }
 
@@ -254,7 +253,8 @@ public class ZipExportService {
         );
 
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
-            writeUserSb3Files(zos, experiment, fileDTOS, finalProject, jsons, includeFinalProject);
+            String username = usernameForId(userId);
+            writeUserSb3Files(zos, experiment, fileDTOS, finalProject, jsons, includeFinalProject, username);
             zos.finish();
         }
     }
@@ -272,9 +272,11 @@ public class ZipExportService {
     ) throws IOException {
         List<BlockEventXMLProjection> userXmls = codeService.getXMLForUser(userId, experimentId);
 
+        String username = usernameForId(userId);
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
-            for (BlockEventXMLProjection xml : userXmls) {
-                ZipEntry entry = new ZipEntry("xml" + xml.getId() + ".xml");
+            for (int i = 0; i < userXmls.size(); i++) {
+                BlockEventXMLProjection xml = userXmls.get(i);
+                ZipEntry entry = new ZipEntry("xml_" + username + "_" + i + ".xml");
                 entry.setSize(xml.getXml().length());
                 zos.putNextEntry(entry);
                 zos.write(xml.getXml().getBytes(StandardCharsets.UTF_8));
@@ -296,15 +298,16 @@ public class ZipExportService {
      *                           the given user and experiment could be found.
      */
     public void exportJsonsForExperimentUser(
-        final OutputStream outputStream, final int experimentId, final int userId
-    ) throws IOException {
+        final OutputStream outputStream, final int experimentId, final int userId) throws IOException {
         List<BlockEventJSONProjection> evenJsons = codeService.getJsonForUser(userId, experimentId);
 
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
             writeCSVData(zos, evenJsons, Optional.empty(), false);
 
-            for (BlockEventJSONProjection json : evenJsons) {
-                ZipEntry entry = new ZipEntry("json" + json.getId() + ".json");
+            String username = usernameForId(userId);
+            for (int i = 0; i < evenJsons.size(); ++i) {
+                BlockEventJSONProjection json = evenJsons.get(i);
+                ZipEntry entry = new ZipEntry("json_" + username + "_" + i + ".json");
                 entry.setSize(json.getCode().length());
                 zos.putNextEntry(entry);
                 zos.write(json.getCode().getBytes(StandardCharsets.UTF_8));
@@ -334,14 +337,16 @@ public class ZipExportService {
         );
 
         if (!jsons.isEmpty()) {
+            String username = usernameForId(userId);
+
             ByteArrayOutputStream innerZip = new ByteArrayOutputStream();
             ZipOutputStream innerZos = new ZipOutputStream(new BufferedOutputStream(innerZip));
-            writeUserSb3Files(innerZos, experiment, fileDTOS, finalProject, jsons, true);
+            writeUserSb3Files(innerZos, experiment, fileDTOS, finalProject, jsons, true, username);
             // innerZos is the zip file for a single user, which has all the needed data written to it after
             // writeUserSb3Files, so close the ZOS here to avoid malformed zip data.
             innerZos.flush();
             innerZos.close();
-            ZipEntry createdZip = new ZipEntry("user_" + userId + ".zip");
+            ZipEntry createdZip = new ZipEntry("sb3s_" + username + ".zip");
             zos.putNextEntry(createdZip);
             zos.write(innerZip.toByteArray());
             zos.closeEntry();
@@ -363,7 +368,6 @@ public class ZipExportService {
     private void writeLastUserSb3Entry(final ZipOutputStream zos, final ExperimentProjection experiment,
                                        final int userId) throws IOException {
         List<FileDTO> fileDTOs = fileService.getFileDTOs(userId, experiment.getId());
-        UserDTO user = userService.getUserById(userId);
 
         String json = codeService.findFirstJSON(userId, experiment.getId());
         if (json == null) {
@@ -371,7 +375,7 @@ public class ZipExportService {
         }
 
         try {
-            String filename = user.getUsername() + ".sb3";
+            String filename = "last_sb3_" + usernameForId(userId) + ".sb3";
             createSb3File(json, zos, filename, experiment, fileDTOs);
         } catch (NotFoundException e) {
             log.error("Could not find corresponding user for id {} while writing last Sb3 entry.", userId);
@@ -389,17 +393,19 @@ public class ZipExportService {
      * @param finalProject The final project state saved for the user.
      * @param jsons The JSON codes used to generate sb3 files.
      * @param includeFinalProject Whether the final project should be included or not.
+     * @param username The username of the user for naming the project files.
      * @throws IOException if the file content could not be written correctly.
      */
     private void writeUserSb3Files(final ZipOutputStream zos, final ExperimentProjection experiment,
                                    final List<FileDTO> fileDTOS, final Optional<Sb3ZipDTO> finalProject,
-                                   final List<BlockEventJSONProjection> jsons, final boolean includeFinalProject)
+                                   final List<BlockEventJSONProjection> jsons, final boolean includeFinalProject,
+                                   final String username)
         throws IOException {
         writeCSVData(zos, jsons, finalProject, includeFinalProject);
 
         for (int i = 0; i < jsons.size(); i++) {
             BlockEventJSONProjection json = jsons.get(i);
-            String filename = "project_" + json.getId() + "_" + i + ".sb3";
+            String filename = "project_" + username + "_" + i + ".sb3";
             createSb3File(json.getCode(), zos, filename, experiment, fileDTOS);
         }
 
@@ -583,6 +589,18 @@ public class ZipExportService {
         zos.putNextEntry(entry);
         zos.write(code);
         zos.closeEntry();
+    }
+
+    /**
+     * Returns the username of the user with the given id, or a fallback name if the given id could not be found.
+     *
+     * @param userId The id of the user to retrieve the username for.
+     * @return The username of the given user, or 'unknown_user_ID' in case the user cannot be found in the database.
+     */
+    private String usernameForId(final int userId) {
+        return userRepository.findById(userId)
+            .map(User::getUsername)
+            .orElse("unknown_user_" + userId);
     }
 
 }

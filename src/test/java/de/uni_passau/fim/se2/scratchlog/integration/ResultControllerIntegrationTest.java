@@ -33,6 +33,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProject
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.FileProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.web.AbstractControllerTest;
@@ -57,7 +58,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -112,6 +112,9 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
     @SpyBean
     private ZipExportService zipExportService;
 
+    @MockitoBean
+    private UserRepository userRepository;
+
     private static final String RESULT = "result";
     private static final String ERROR = "redirect:/error";
     private static final String ID_STRING = "1";
@@ -132,6 +135,8 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         LocalDateTime.now());
     private final ParticipantDTO participantDTO1 = new ParticipantDTO(ID, ID);
     private final ParticipantDTO participantDTO2 = new ParticipantDTO(2, ID);
+    private final UserDTO userDTOWithUsername1 = new UserDTO("user1", null, null, null, null, null);
+    private final UserDTO userDTOWithUsername2 = new UserDTO("user2", null, null, null, null, null);
     private final Sb3ZipDTO sb3ZipDTO = new Sb3ZipDTO(ID, ID, "secret", "file", new byte[]{1, 2, 3},
         LocalDateTime.now());
     private final CodesDataDTO codesDataDTO = new CodesDataDTO(ID, ID, 9);
@@ -611,6 +616,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(fileDTOS);
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, project)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
+        when(userService.getUserById(ID)).thenReturn(userDTOWithUsername1);
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -632,6 +638,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
         when(codeService.getFilteredJsons(ID, ID, 0, 0, 0, noSavedProject)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(noSavedProject);
+        when(userService.getUserById(ID)).thenReturn(userDTOWithUsername1);
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -653,6 +660,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
         when(codeService.getFilteredJsons(ID, ID, ID, 0, 0, project)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
+        when(userService.getUserById(ID)).thenReturn(userDTOWithUsername1);
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -675,6 +683,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         when(fileService.getFileDTOs(ID, ID)).thenReturn(new ArrayList<>());
         when(codeService.getFilteredJsons(ID, ID, 0, ID, 2, project)).thenReturn(jsonProjections);
         when(fileService.findFinalProject(ID, ID)).thenReturn(project);
+        when(userService.getUserById(ID)).thenReturn(userDTOWithUsername1);
         mvc.perform(get("/result/sb3s")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -778,13 +787,15 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(
                 jsonProjections);
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
+        when(userService.getUserById(participants.getFirst().getUser())).thenReturn(userDTOWithUsername1);
+        when(userService.getUserById(participants.get(1).getUser())).thenReturn(userDTOWithUsername2);
         mvc.perform(get("/result/sb3s/all")
                         .param(EXPERIMENT_PARAM, ID_STRING)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition",
-                        is("attachment;filename=zip_user0_experiment1.zip")));
+                        is("attachment;filename=experiment1_all_sb3s.zip")));
         verify(experimentService).getSb3File(ID, true);
         verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
         verify(codeService, times(2)).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
@@ -830,6 +841,8 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
         when(codeService.getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any())).thenReturn(jsonProjections);
         when(fileService.findFinalProject(anyInt(), anyInt())).thenReturn(Optional.of(sb3ZipDTO));
+        when(userService.getUserById(participants.getFirst().getUser())).thenReturn(userDTOWithUsername1);
+        when(userService.getUserById(participants.get(1).getUser())).thenReturn(userDTOWithUsername2);
         mvc.perform(get("/result/sb3s/all")
                         .param(EXPERIMENT_PARAM, ID_STRING)
                         .param(STEP_PARAM, ID_STRING)
@@ -837,7 +850,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition",
-                        is("attachment;filename=zip_user0_experiment1.zip")));
+                        is("attachment;filename=experiment1_all_sb3s_step1.zip")));
         verify(experimentService).getSb3File(ID, true);
         verify(fileService, times(2)).getFileDTOs(anyInt(), anyInt());
         verify(codeService, times(2)).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
@@ -895,6 +908,8 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
         when(participantService.getParticipants(ID)).thenReturn(participants);
         when(experimentService.getSb3File(ID, true)).thenReturn(projection);
         when(fileService.getFileDTOs(anyInt(), anyInt())).thenReturn(fileDTOS);
+        when(userService.getUserById(participants.getFirst().getUser())).thenReturn(userDTOWithUsername1);
+        when(userService.getUserById(participants.get(1).getUser())).thenReturn(userDTOWithUsername2);
         mvc.perform(get("/result/sb3s/last")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)

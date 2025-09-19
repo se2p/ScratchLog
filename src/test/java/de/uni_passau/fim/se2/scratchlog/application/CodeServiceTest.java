@@ -379,7 +379,7 @@ public class CodeServiceTest {
     public void testGetXMLForUser() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(blockEventRepository.findAllByXmlIsNotNullAndUserAndExperiment(user,
+        when(blockEventRepository.findAllByXmlIsNotNullAndUserAndExperimentOrderByDateAsc(user,
                 experiment)).thenReturn(xmlProjections);
         List<BlockEventXMLProjection> projections = codeService.getXMLForUser(ID, ID);
         assertAll(
@@ -392,21 +392,21 @@ public class CodeServiceTest {
         );
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
-        verify(blockEventRepository).findAllByXmlIsNotNullAndUserAndExperiment(user, experiment);
+        verify(blockEventRepository).findAllByXmlIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
     }
 
     @Test
     public void testGetXMLForUserEntityNotFound() {
         when(userRepository.getReferenceById(ID)).thenReturn(user);
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(blockEventRepository.findAllByXmlIsNotNullAndUserAndExperiment(user,
+        when(blockEventRepository.findAllByXmlIsNotNullAndUserAndExperimentOrderByDateAsc(user,
                 experiment)).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
                 () -> codeService.getXMLForUser(ID, ID)
         );
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
-        verify(blockEventRepository).findAllByXmlIsNotNullAndUserAndExperiment(user, experiment);
+        verify(blockEventRepository).findAllByXmlIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
     }
 
     @Test
@@ -418,7 +418,7 @@ public class CodeServiceTest {
         );
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
-        verify(blockEventRepository).findAllByXmlIsNotNullAndUserAndExperiment(user, experiment);
+        verify(blockEventRepository).findAllByXmlIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
     }
 
     @Test
