@@ -204,7 +204,7 @@
             <version>${codec.version}</version>
         </dependency>
 
-        <!-- MySQL connector -->
+        <!-- MariaDB connector -->
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
