@@ -11,7 +11,7 @@ RUN : \
 
 ################################################################################
 
-FROM docker.io/library/eclipse-temurin:21-jre
+FROM docker.io/library/eclipse-temurin:25-jre
 
 WORKDIR /app
 
