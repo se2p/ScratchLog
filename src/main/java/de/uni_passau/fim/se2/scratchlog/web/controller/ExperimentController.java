@@ -35,7 +35,6 @@ import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.MarkdownHandler;
 import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import de.uni_passau.fim.se2.scratchlog.util.Secrets;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
 import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
@@ -68,7 +67,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -713,7 +711,7 @@ public class ExperimentController {
 
         Map<String, Object> templateModel = getTemplateModel(experimentId, userDTO.getSecret());
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
-                getLocaleFromLanguage(userDTO.getLanguage()));
+            (userDTO.getLanguage() != null ? userDTO.getLanguage().toLocale() : Constants.DEFAULT_LANGUAGE.toLocale()));
 
         if (!mailService.get().sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
@@ -846,19 +844,6 @@ public class ExperimentController {
             experimentService.deleteExperiment(experimentId);
             return true;
         }
-    }
-
-    /**
-     * Returns the proper {@link Locale} based on the user's preferred language settings.
-     *
-     * @param language The user's preferred language.
-     * @return The corresponding locale, or English as a default value.
-     */
-    private Locale getLocaleFromLanguage(final Language language) {
-        if (language == Language.GERMAN) {
-            return Locale.GERMAN;
-        }
-        return Locale.ENGLISH;
     }
 
     /**

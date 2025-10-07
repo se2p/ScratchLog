@@ -19,19 +19,37 @@
 
 package de.uni_passau.fim.se2.scratchlog.util.enums;
 
+import de.uni_passau.fim.se2.scratchlog.util.Constants;
+
+import java.util.Locale;
+
 /**
- * All available languages to choose from.
+ * Enumeration of all supported application languages in ScratchLog.
  */
 public enum Language {
 
-    /**
-     * The preferred language is English.
-     */
-    ENGLISH,
+    GERMAN(Locale.GERMAN),
+    ENGLISH(Locale.ENGLISH);
 
-    /**
-     * The preferred language is German.
-     */
-    GERMAN
+    private final Locale locale;
 
+    Language(Locale locale) {
+        this.locale = locale;
+    }
+
+    public Locale toLocale() {
+        return locale;
+    }
+
+    public static Language fromString(String value) {
+        if (value == null) {
+            return Constants.DEFAULT_LANGUAGE;
+        }
+
+        return switch (value.toLowerCase()) {
+            case "de" -> GERMAN;
+            case "en" -> ENGLISH;
+            default -> Constants.DEFAULT_LANGUAGE;
+        };
+    }
 }

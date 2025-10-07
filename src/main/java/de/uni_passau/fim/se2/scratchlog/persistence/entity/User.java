@@ -19,6 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.persistence.entity;
 
+import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import jakarta.persistence.Column;
@@ -81,7 +82,7 @@ public class User {
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "language")
-    private Language language;
+    private Language language = Constants.DEFAULT_LANGUAGE;
 
     /**
      * The user's hashed password.
