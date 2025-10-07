@@ -19,6 +19,8 @@
 
 package de.uni_passau.fim.se2.scratchlog.util;
 
+import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
+
 import java.time.LocalDateTime;
 
 /**
@@ -134,5 +136,10 @@ public final class Constants {
      * valid dates for a MySQL datetime (where the maximum is 9999-12-31).
      */
     public static final LocalDateTime MAX_DATETIME = LocalDateTime.of(9999, 12, 31, 23, 59);
+
+    /**
+     * The default/fallback language to use for internationalization.
+     */
+    public static final Language DEFAULT_LANGUAGE = Language.GERMAN;
 
 }

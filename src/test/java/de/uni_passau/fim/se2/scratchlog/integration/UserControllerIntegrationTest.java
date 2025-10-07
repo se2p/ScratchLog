@@ -25,6 +25,7 @@ import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.application.service.TokenService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.spring.authentication.CustomAuthenticationProvider;
+import de.uni_passau.fim.se2.scratchlog.spring.configuration.LanguageConfiguration;
 import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
@@ -80,7 +81,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(UserController.class)
-@Import(SecurityTestConfig.class)
+@Import({SecurityTestConfig.class, LanguageConfiguration.class})
 @ActiveProfiles("test")
 public class UserControllerIntegrationTest extends AbstractControllerTest {
 

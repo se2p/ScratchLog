@@ -31,7 +31,6 @@ import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.MarkdownHandler;
 import de.uni_passau.fim.se2.scratchlog.util.Secrets;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
@@ -60,7 +59,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -256,7 +254,7 @@ public class ParticipantController {
         templateModel.put("baseUrl", applicationProperties.getApplicationUrl());
         templateModel.put("secret", experimentUrl);
         ResourceBundle userLanguage = ResourceBundle.getBundle("i18n/messages",
-                getLocaleFromLanguage(userDTO.getLanguage()));
+            userDTO.getLanguage() != null ? userDTO.getLanguage().toLocale() : Constants.DEFAULT_LANGUAGE.toLocale());
 
         if (!applicationProperties.useMail() || mailService.isEmpty()) {
             return "redirect:/secret?user=" + saved.getId() + EXPERIMENT_PARAM + experimentId;
@@ -575,19 +573,6 @@ public class ParticipantController {
         if (emailValidation == null && userService.existsEmail(email)) {
             FieldErrorHandler.addFieldError(bindingResult, "userDTO", "email", "email_exists", resourceBundle);
         }
-    }
-
-    /**
-     * Returns the proper {@link Locale} based on the user's preferred language settings.
-     *
-     * @param language The user's preferred language.
-     * @return The corresponding locale, or English as a default value.
-     */
-    private Locale getLocaleFromLanguage(final Language language) {
-        if (language == Language.GERMAN) {
-            return Locale.GERMAN;
-        }
-        return Locale.ENGLISH;
     }
 
     /**

@@ -22,7 +22,7 @@ package de.uni_passau.fim.se2.scratchlog.application.service;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.spring.configuration.SAML2Properties;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
+import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,7 +127,7 @@ public class SAML2Service {
         user.setEmail(substituteAttributes(properties.getEmailPattern(), principal));
         user.setActive(true);
         user.setRole(Role.PARTICIPANT);
-        user.setLanguage(Language.ENGLISH);
+        user.setLanguage(Constants.DEFAULT_LANGUAGE);
         user.setLastLogin(LocalDateTime.now());
         return userRepository.save(user);
     }

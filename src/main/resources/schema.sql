@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS `user` (
     `id` int NOT NULL AUTO_INCREMENT,
     `username` varchar(255) NOT NULL,
     `role` varchar(255) NOT NULL DEFAULT 'PARTICIPANT',
-    `language` varchar(255) NOT NULL DEFAULT 'ENGLISH',
+    `language` varchar(255) NOT NULL,
     `password` varchar(255) NULL DEFAULT NULL,
     `secret` varchar(255) NULL DEFAULT NULL,
     `attempts` int NOT NULL DEFAULT '0',

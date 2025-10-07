@@ -24,7 +24,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.CustomPasswordGenerator;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -92,7 +91,7 @@ public class UserInitialization {
             user.setEmail("admin@admin.de");
             user.setUsername("admin");
             user.setRole(Role.ADMIN);
-            user.setLanguage(Language.ENGLISH);
+            user.setLanguage(Constants.DEFAULT_LANGUAGE);
 
             // Store the random password in the database, even though it will reset at the next startup, so that
             // existing login logic can stay mostly unchanged.

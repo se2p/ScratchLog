@@ -30,7 +30,6 @@ import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.CustomPasswordGenerator;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.enums.TokenType;
 import de.uni_passau.fim.se2.scratchlog.util.validation.EmailValidator;
@@ -76,7 +75,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -250,7 +248,7 @@ public class UserController {
         clearSecurityContext(httpServletRequest);
         updateSecurityContext(authenticated, httpServletRequest);
         localeResolver.setLocale(httpServletRequest, httpServletResponse,
-                getLocaleFromLanguage(authenticated.getLanguage()));
+            authenticated.getLanguage().toLocale());
         return "redirect:/experiment?id=" + experimentId;
     }
 
@@ -309,8 +307,13 @@ public class UserController {
             if (userService.loginUser(userDTO)) {
                 clearSecurityContext(httpServletRequest);
                 updateSecurityContext(findUser, httpServletRequest);
-                localeResolver.setLocale(httpServletRequest, httpServletResponse,
-                        getLocaleFromLanguage(findUser.getLanguage()));
+                localeResolver.setLocale(
+                    httpServletRequest,
+                    httpServletResponse,
+                    findUser.getLanguage() != null
+                        ? findUser.getLanguage().toLocale()
+                        : Constants.DEFAULT_LANGUAGE.toLocale());
+
                 return INDEX;
             } else {
                 model.addAttribute(ERROR, resourceBundle.getString("authentication_error"));
@@ -783,7 +786,7 @@ public class UserController {
             clearSecurityContext(httpServletRequest);
             updateSecurityContext(updated, httpServletRequest);
             localeResolver.setLocale(httpServletRequest, httpServletResponse,
-                    getLocaleFromLanguage(updated.getLanguage()));
+                updated.getLanguage().toLocale());
         }
 
         if (sent) {
@@ -1177,7 +1180,7 @@ public class UserController {
         userDTO.setRole(Role.PARTICIPANT);
 
         if (userDTO.getLanguage() == null) {
-            userDTO.setLanguage(Language.ENGLISH);
+            userDTO.setLanguage(Constants.DEFAULT_LANGUAGE); // TODO: Move defaulting + validation logic to service layer
         }
         if (UsernameValidator.validate(userDTO.getUsername()) != null) {
             invalid.add(userDTO.getUsername());
@@ -1269,19 +1272,6 @@ public class UserController {
         sc.setAuthentication(auth);
         HttpSession session = httpServletRequest.getSession(true);
         session.setAttribute(SPRING_SECURITY_CONTEXT_KEY, sc);
-    }
-
-    /**
-     * Returns the proper {@link Locale} based on the user's preferred language settings.
-     *
-     * @param language The user's preferred language.
-     * @return The corresponding locale, or English as a default value.
-     */
-    private Locale getLocaleFromLanguage(final Language language) {
-        if (language == Language.GERMAN) {
-            return Locale.GERMAN;
-        }
-        return Locale.ENGLISH;
     }
 
 }
