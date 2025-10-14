@@ -1180,7 +1180,8 @@ public class UserController {
         userDTO.setRole(Role.PARTICIPANT);
 
         if (userDTO.getLanguage() == null) {
-            userDTO.setLanguage(Constants.DEFAULT_LANGUAGE); // TODO: Move defaulting + validation logic to service layer
+            // TODO: Move defaulting + validation logic to service layer
+            userDTO.setLanguage(Constants.DEFAULT_LANGUAGE);
         }
         if (UsernameValidator.validate(userDTO.getUsername()) != null) {
             invalid.add(userDTO.getUsername());

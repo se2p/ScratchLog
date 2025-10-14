@@ -115,11 +115,6 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User getUserEntityByUsername(final String username) {
-        return userRepository.findUserByUsername(username)
-            .orElse(null);
-    }
-
     /**
      * Finds all users that already exist in the database.
      *

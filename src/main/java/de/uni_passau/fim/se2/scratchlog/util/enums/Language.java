@@ -33,7 +33,7 @@ public enum Language {
 
     private final Locale locale;
 
-    Language(Locale locale) {
+    Language(final Locale locale) {
         this.locale = locale;
     }
 
@@ -41,7 +41,7 @@ public enum Language {
         return locale;
     }
 
-    public static Language fromString(String value) {
+    public static Language fromString(final String value) {
         if (value == null) {
             return Constants.DEFAULT_LANGUAGE;
         }

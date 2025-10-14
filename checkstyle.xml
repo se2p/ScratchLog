@@ -53,7 +53,9 @@
 
     <!-- Checks that property files contain the same keys.         -->
     <!-- See https://checkstyle.org/config_misc.html#Translation -->
-    <module name="Translation"/>
+    <module name="Translation">
+        <property name="requiredTranslations" value="de, en" />
+    </module>
 
     <!-- Checks for Size Violations.                    -->
     <!-- See https://checkstyle.org/config_sizes.html -->
@@ -80,14 +82,6 @@
         <property name="id" value="RegexpMultilineEmptyRowAfterClassDef"/>
         <property name="format" value="^([^\r\n ]+ )*(class|interface|@interface|enum) [^{]*\{[\r]?\n[^\r\n}]"/>
         <property name="message" value="Leave empty row after class/interface/@interface/enum definition!"/>
-        <property name="severity" value="error"/>
-        <property name="fileExtensions" value="groovy,java"/>
-    </module>
-
-    <module name="RegexpMultiline">
-        <property name="id" value="RegexpMultilineEmptyRowBeforeClassEnd"/>
-        <property name="format" value="[^\r\n{][\r]?\n\}[\r]?\n"/>
-        <property name="message" value="Leave empty row before end of class/interface/@interface/enum!"/>
         <property name="severity" value="error"/>
         <property name="fileExtensions" value="groovy,java"/>
     </module>

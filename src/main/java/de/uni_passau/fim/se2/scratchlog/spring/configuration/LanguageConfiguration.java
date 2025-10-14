@@ -36,11 +36,6 @@ import java.util.Locale;
 
 /**
  * Locale configuration for ScratchLog.
- * Resolves the locale in the following order:
- * 1. URL parameter "?lang="
- * 2. Authenticated user's preferred language
- * 3. Accept-Language header
- * 4. Default language (fallback)
  */
 @Configuration
 public class LanguageConfiguration {
@@ -48,6 +43,8 @@ public class LanguageConfiguration {
     /**
      * Provides the message source for Thymeleaf and other Spring components.
      * Ensures UTF-8 encoding, fallback to default locale, and disables system locale fallback.
+     *
+     * @return The message source for Thymeleaf and other Spring components.
      */
     @Bean
     public MessageSource messageSource() {
@@ -59,9 +56,21 @@ public class LanguageConfiguration {
         return messageSource;
     }
 
+    /**
+     * A custom locale resolver.
+     *
+     * <p>Resolves the locale in the following order:
+     * <ol>
+     *      <li>URL parameter "?lang="</li>
+     *      <li>Authenticated user's preferred language</li>
+     *      <li>Accept-Language header</li>
+     *      <li>Default language (fallback)</li>
+     * </ol>
+     *
+     * @return The locale resolver for ScratchLog.
+     */
     @Bean
     public LocaleResolver localeResolver() {
-
         AcceptHeaderLocaleResolver acceptHeaderLocaleResolver = new AcceptHeaderLocaleResolver();
         acceptHeaderLocaleResolver.setSupportedLocales(
             Arrays.stream(Language.values()).map(Language::toLocale).toList());
@@ -71,7 +80,7 @@ public class LanguageConfiguration {
 
             @Override
             @NonNull
-            public Locale resolveLocale(@NonNull HttpServletRequest request) {
+            public Locale resolveLocale(@NonNull final HttpServletRequest request) {
 
                 // 1. URL parameter
                 String langParam = request.getParameter("lang");
@@ -90,7 +99,11 @@ public class LanguageConfiguration {
             }
 
             @Override
-            public void setLocale(@NonNull HttpServletRequest request, HttpServletResponse response, Locale locale) {
+            public void setLocale(
+                @NonNull final HttpServletRequest request,
+                final HttpServletResponse response,
+                final Locale locale
+            ) {
                 if (locale != null) {
                     request.getSession(true).setAttribute("USER_LOCALE", locale);
                 }
