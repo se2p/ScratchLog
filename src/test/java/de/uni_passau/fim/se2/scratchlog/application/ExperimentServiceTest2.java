@@ -64,7 +64,7 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
 
     @Test
     public void testHasProjectFileNoProject() {
-        assertTrue(service.hasProjectFile(experiment.getId()));
+        assertFalse(service.hasProjectFile(experiment.getId()));
     }
 
     @Test
