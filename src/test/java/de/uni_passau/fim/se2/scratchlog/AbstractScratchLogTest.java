@@ -1,5 +1,6 @@
 package de.uni_passau.fim.se2.scratchlog;
 
+import de.uni_passau.fim.se2.scratchlog.util.DtoUtil;
 import de.uni_passau.fim.se2.scratchlog.util.EntityUtilService;
 import de.uni_passau.fim.se2.scratchlog.util.EventUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,5 +34,7 @@ public abstract class AbstractScratchLogTest {
 
     @Autowired
     protected EventUtilService eventUtilService;
+
+    protected DtoUtil dtoUtil = new DtoUtil();
 
 }

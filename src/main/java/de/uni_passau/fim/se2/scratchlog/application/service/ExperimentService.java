@@ -167,8 +167,9 @@ public class ExperimentService {
         Experiment experiment = experimentRepository.findById(id)
             .orElseThrow(() -> new NotFoundException(
                 "Could not update the status for non-existent experiment with id " + id + "!"));
-        experimentRepository.updateStatusById(id, status);
-        return createExperimentDTO(experiment);
+        experiment.setActive(status);
+        Experiment saved = experimentRepository.save(experiment);
+        return createExperimentDTO(saved);
     }
 
     /**
