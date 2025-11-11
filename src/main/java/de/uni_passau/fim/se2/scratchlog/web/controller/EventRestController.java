@@ -23,7 +23,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CodeService;
 import de.uni_passau.fim.se2.scratchlog.application.service.EventService;
@@ -127,7 +126,7 @@ public class EventRestController {
     @PostMapping("/block")
     public void storeBlockEvent(@RequestBody final BlockEventDTO blockEventDTO) {
         if (blockEventDTO == null || isInvalidRequest(blockEventDTO)) {
-            return;
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
         eventService.saveBlockEvent(blockEventDTO);
@@ -306,8 +305,7 @@ public class EventRestController {
      * @return {@code true} if the event should not be persisted or {@code false} otherwise.
      */
     private boolean isInvalidRequest(final BlockEventDTO blockEvent) {
-        validateScratchJson(blockEvent.getCode());
-        return hasInvalidParticipant(blockEvent);
+        return !isValidJSON(blockEvent.getCode()) || hasInvalidParticipant(blockEvent);
     }
 
     /**
@@ -323,22 +321,21 @@ public class EventRestController {
     }
 
     /**
-     * Checks that the Scratch project JSON is indeed JSON.
+     * Checks whether Scratch project JSON is indeed JSON.
      *
      * @param code Some Scratch project json.
+     * @return {@code true} if and only if {@code code} is non-null and a valid JSON object.
      */
-    private void validateScratchJson(final String code) throws IncompleteDataException {
+    private boolean isValidJSON(final String code) {
         if (code == null) {
-            return;
+            return false;
         }
 
         try {
             final JsonNode node = objectMapper.readTree(code);
-            if (!node.isObject()) {
-                throw new IncompleteDataException("Invalid Scratch project json!");
-            }
+            return node.isObject();
         } catch (JsonProcessingException e) {
-            throw new IncompleteDataException("Invalid Scratch project JSON!");
+            return false;
         }
     }
 

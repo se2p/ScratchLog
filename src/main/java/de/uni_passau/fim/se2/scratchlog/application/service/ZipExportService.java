@@ -20,7 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
 import com.opencsv.CSVWriter;
-import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
@@ -119,13 +118,14 @@ public class ZipExportService {
      * @param experimentId Some experiment.
      * @param step User projects will be sampled from every {@code step} minutes.
      * @throws IOException Thrown in case writing to the output stream fails.
+     * @throws IllegalArgumentException If the given experiment has no participants.
      */
     public void exportSb3sForExperiment(
         final OutputStream outputStream, final int experimentId, final int step
     ) throws IOException {
         List<ParticipantDTO> participants = participantService.getParticipants(experimentId);
         if (participants.isEmpty()) {
-            throw new IncompleteDataException("Cannot download sb3 files for experiment with no participants!");
+            throw new IllegalArgumentException("Cannot download sb3 files for experiment with no participants!");
         }
 
         ExperimentProjection experiment = experimentService.getSb3File(experimentId, true);
@@ -145,13 +145,14 @@ public class ZipExportService {
      * @param outputStream The data sink.
      * @param experimentId Some experiment.
      * @throws IOException Thrown in case writing to the output stream fails.
+     * @throws IllegalArgumentException If the given experiment has no participants.
      */
     public void exportLastSb3sForExperiment(
         final OutputStream outputStream, final int experimentId
     ) throws IOException {
         List<ParticipantDTO> participants = participantService.getParticipants(experimentId);
         if (participants.isEmpty()) {
-            throw new IncompleteDataException("Cannot download sb3 files for experiment with no participants!");
+            throw new IllegalArgumentException("Cannot download sb3 files for experiment with no participants!");
         }
 
         ExperimentProjection experiment = experimentService.getSb3File(experimentId, true);
@@ -171,13 +172,14 @@ public class ZipExportService {
      * @param outputStream The data sink.
      * @param experimentId Some experiment.
      * @throws IOException Thrown in case writing to the output stream fails.
+     * @throws IllegalArgumentException If the given experiment ahs no participants.
      */
     public void exportJsonsForExperiment(
         final OutputStream outputStream, final int experimentId
     ) throws IOException {
         List<ParticipantDTO> participants = participantService.getParticipants(experimentId);
         if (participants.isEmpty()) {
-            throw new IncompleteDataException("Cannot download JSON files for experiment with no participants!");
+            throw new IllegalArgumentException("Cannot download JSON files for experiment with no participants!");
         }
 
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {

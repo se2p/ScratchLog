@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
-import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
@@ -106,16 +105,16 @@ public class ExperimentService {
      *
      * @param experimentDTO The dto containing the experiment information to set.
      * @return The newly created experiment, if the information was persisted.
-     * @throws IncompleteDataException if the experiment title, description or GUI URL are null or blank.
+     * @throws IllegalArgumentException if the experiment title, description or GUI URL are null or blank.
      */
     @Transactional
     public ExperimentDTO saveExperiment(final ExperimentDTO experimentDTO) {
         if (experimentDTO.getTitle() == null || experimentDTO.getTitle().trim().isBlank()) {
-            throw new IncompleteDataException("Cannot save experiment with empty title!");
+            throw new IllegalArgumentException("Cannot save experiment with empty title!");
         } else if (experimentDTO.getDescription() == null || experimentDTO.getDescription().trim().isBlank()) {
-            throw new IncompleteDataException("Cannot save experiment with empty description!");
+            throw new IllegalArgumentException("Cannot save experiment with empty description!");
         } else if (experimentDTO.getGuiURL() == null || experimentDTO.getGuiURL().trim().isBlank()) {
-            throw new IncompleteDataException("Cannot save experiment with empty GUI-URL!");
+            throw new IllegalArgumentException("Cannot save experiment with empty GUI-URL!");
         }
 
         Experiment experiment = createExperiment(experimentDTO);

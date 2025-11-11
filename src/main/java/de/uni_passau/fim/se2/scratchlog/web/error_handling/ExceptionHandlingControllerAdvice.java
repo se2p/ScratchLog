@@ -30,15 +30,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.ModelAndView;
 
 /**
- * Handles common cases of invalid request parameters.
+ * Global controller advice that handles common exceptions thrown in controllers.
  */
 @ControllerAdvice(annotations = {Controller.class})
-public class InvalidParamBindingControllerAdvice {
+public class ExceptionHandlingControllerAdvice {
 
-    /**
-     * The logger.
-     */
-    private static final Logger log = LoggerFactory.getLogger(InvalidParamBindingControllerAdvice.class);
+    private static final Logger log = LoggerFactory.getLogger(ExceptionHandlingControllerAdvice.class);
 
     /**
      * Handles cases where the type of the parameter could not be converted automatically.
@@ -60,6 +57,17 @@ public class InvalidParamBindingControllerAdvice {
     @ExceptionHandler(InvalidIdException.class)
     public ModelAndView handleInvalidParameterTypeException(final InvalidIdException exception) {
         log.error("Received invalid ID!", exception);
+        return redirectToErrorPage();
+    }
+
+    /**
+     * Global exception handler that handles {@link IllegalArgumentException}s by redirecting to the error page with a
+     * "bad request" response.
+     *
+     * @return A redirect to the error page with a HTTP 400 status code.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ModelAndView handleIllegalArgumentException() {
         return redirectToErrorPage();
     }
 

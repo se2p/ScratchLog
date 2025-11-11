@@ -196,7 +196,7 @@ public class EventRestControllerIntegrationTest extends AbstractControllerTest {
                         .content(blockEventObject.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService, never()).saveBlockEvent(any());
     }

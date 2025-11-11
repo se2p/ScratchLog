@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.application;
 
-import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
@@ -179,7 +178,7 @@ public class ExperimentServiceTest {
     @Test
     public void testSaveExperimentTitleNull() {
         experimentDTO.setTitle(null);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> experimentService.saveExperiment(experimentDTO)
         );
         verify(experimentRepository, never()).save(any());
@@ -188,7 +187,7 @@ public class ExperimentServiceTest {
     @Test
     public void testSaveExperimentTitleBlank() {
         experimentDTO.setTitle(BLANK);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> experimentService.saveExperiment(experimentDTO)
         );
         verify(experimentRepository, never()).save(any());
@@ -197,7 +196,7 @@ public class ExperimentServiceTest {
     @Test
     public void testSaveExperimentDescriptionNull() {
         experimentDTO.setDescription(null);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> experimentService.saveExperiment(experimentDTO)
         );
         verify(experimentRepository, never()).save(any());
@@ -206,7 +205,7 @@ public class ExperimentServiceTest {
     @Test
     public void testSaveExperimentDescriptionBlank() {
         experimentDTO.setDescription(BLANK);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> experimentService.saveExperiment(experimentDTO)
         );
         verify(experimentRepository, never()).save(any());
@@ -215,7 +214,7 @@ public class ExperimentServiceTest {
     @Test
     public void testSaveExperimentGuiURLNull() {
         experimentDTO.setGuiURL(null);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> experimentService.saveExperiment(experimentDTO)
         );
         verify(experimentRepository, never()).save(any());
@@ -224,7 +223,7 @@ public class ExperimentServiceTest {
     @Test
     public void testSaveExperimentGuiURLBlank() {
         experimentDTO.setGuiURL(BLANK);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> experimentService.saveExperiment(experimentDTO)
         );
         verify(experimentRepository, never()).save(any());

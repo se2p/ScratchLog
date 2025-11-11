@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.application;
 
-import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CourseService;
@@ -343,7 +342,7 @@ public class CourseServiceTest {
     @Test
     public void testSaveCourseInvalidTitle() {
         courseDTO.setTitle(BLANK);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourse(courseDTO)
         );
         verify(courseRepository, never()).save(any());
@@ -352,7 +351,7 @@ public class CourseServiceTest {
     @Test
     public void testSaveCourseTitleNull() {
         courseDTO.setTitle(null);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourse(courseDTO)
         );
         verify(courseRepository, never()).save(any());
@@ -361,7 +360,7 @@ public class CourseServiceTest {
     @Test
     public void testSaveCourseInvalidDescription() {
         courseDTO.setDescription(BLANK);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourse(courseDTO)
         );
         verify(courseRepository, never()).save(any());
@@ -370,7 +369,7 @@ public class CourseServiceTest {
     @Test
     public void testSaveCourseDescriptionNull() {
         courseDTO.setDescription(null);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourse(courseDTO)
         );
         verify(courseRepository, never()).save(any());
@@ -379,7 +378,7 @@ public class CourseServiceTest {
     @Test
     public void testSaveCourseLastChangedNull() {
         courseDTO.setLastChanged(null);
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> courseService.saveCourse(courseDTO)
         );
         verify(courseRepository, never()).save(any());
