@@ -7,6 +7,7 @@
 - Apache Maven
 - A MySQL database
 - for data acquisition: instrumented Scratch GUI and Scratch VM
+  - https://github.com/se2p/nuzzlebug
 
 To access the database, you only need to change the connection details in the `application.properties` file.
 
