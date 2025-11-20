@@ -119,3 +119,8 @@ To run the jar, execute
 ```bash
 java -jar scratchLog-0.0.1-SNAPSHOT.jar
 ```
+
+
+## Publications
+
+Laura Caspari, Luisa Greifenstein, Ute Heuer, and Gordon Fraser. 2023. ScratchLog: Live Learning Analytics for Scratch. In Proceedings of the 2023 Conference on Innovation and Technology in Computer Science Education V. 1 (ITiCSE 2023). Association for Computing Machinery, New York, NY, USA, 403–409. https://doi.org/10.1145/3587102.3588836

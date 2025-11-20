@@ -1,0 +1,56 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: "ScratchLog: Live Learning Analytics for Scratch"
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Laura
+    family-names: Caspari
+    orcid: 'https://orcid.org/0009-0002-6670-3211'
+    affiliation: Univerity of Passau
+  - given-names: Luisa
+    family-names: Greifenstein
+    affiliation: University of Passau
+    orcid: 'https://orcid.org/0000-0002-9707-7762'
+  - given-names: ute
+    family-names: Heuer
+    affiliation: University of Passau
+    orcid: 'https://orcid.org/0009-0005-1400-4509'
+  - given-names: Gordon
+    family-names: Fraser
+    affiliation: University of Passau
+    orcid: 'https://orcid.org/0000-0002-4364-6595'
+identifiers:
+  - type: doi
+    value: 10.1145/3587102.3588836
+repository-code: 'https://github.com/se2p/ScratchLog'
+abstract: >-
+  Scratch is a hugely popular block-based programming
+  environment that is often used in educational settings,
+  and has therefore recently also become a focus for
+  research on programming education. Scratch provides
+  dedicated teacher accounts that make it easy and
+  convenient to handle lessons with school classes. However,
+  once learners join a Scratch classroom, it is challenging
+  to keep track of what they are doing: Both teachers and
+  researchers may be interested in learning analytics to
+  help them monitor students or evaluate teaching material.
+  Researchers may also be interested in understanding how
+  programs are created and how learners use Scratch. Neither
+  use case is supported by Scratch itself currently. In this
+  paper, we introduce ScratchLog, a tool that collects data
+  from learners using Scratch. ScratchLog provides custom
+  user management and makes it easy to set up courses and
+  assignments. Starting from a task description and a
+  starter project, learners transparently use Scratch while
+  ScratchLog collects usage data, such as the history of
+  code edits, or statistics about how the Scratch user
+  interface was used. This data can be viewed on the
+  ScratchLog web interface, or exported for further
+  analysis, for example to inspect the functionality of
+  programs using automated tests.
+license: GPL-3.0
