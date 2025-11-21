@@ -155,8 +155,8 @@ public class EventRestControllerTest {
     @Test
     public void testStoreBlockEventInvalidParticipant() {
         when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true)).thenReturn(true);
-        assertDoesNotThrow(
-                () -> eventRestController.storeBlockEvent(blockEvent)
+        assertThrows(ResponseStatusException.class,
+            () -> eventRestController.storeBlockEvent(blockEvent)
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService, never()).saveBlockEvent(any());

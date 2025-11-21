@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.web;
 
-import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CodeService;
 import de.uni_passau.fim.se2.scratchlog.application.service.EventService;
@@ -662,7 +661,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartStopStartBiggerEnd() throws IOException {
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> resultController.downloadSb3Files(ID, ID, null, 2, ID, true,
                         httpServletResponse)
         );
@@ -675,7 +674,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartStopStartInvalidStart() throws IOException {
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> resultController.downloadSb3Files(ID, ID, null, -1, 3, true,
                         httpServletResponse)
         );
@@ -688,7 +687,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartStopStartInvalidEnd() throws IOException {
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> resultController.downloadSb3Files(ID, ID, null, ID, 0, true,
                         httpServletResponse)
         );
@@ -701,7 +700,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStepInvalid() throws IOException {
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> resultController.downloadSb3Files(ID, ID, 0, null, null, null,
                         httpServletResponse)
         );
@@ -714,7 +713,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartAndStepNotNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> resultController.downloadSb3Files(ID, ID, ID, ID, 3, false,
                         httpServletResponse)
         );
@@ -727,7 +726,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesIncludeNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> resultController.downloadSb3Files(ID, ID, null, ID, 3, null,
                         httpServletResponse)
         );
@@ -740,7 +739,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesEndNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> resultController.downloadSb3Files(ID, ID, null, ID, null, false,
                         httpServletResponse)
         );
@@ -753,7 +752,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> resultController.downloadSb3Files(ID, ID, null, null, 3, false,
                         httpServletResponse)
         );
@@ -766,7 +765,7 @@ public class ResultControllerTest {
 
     @Test
     public void testDownloadSb3FilesStartAndEndNull() throws IOException {
-        assertThrows(IncompleteDataException.class,
+        assertThrows(IllegalArgumentException.class,
                 () -> resultController.downloadSb3Files(ID, ID, null, null, null, false,
                         httpServletResponse)
         );

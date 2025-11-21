@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
-import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Course;
@@ -277,17 +276,17 @@ public class CourseService {
      *
      * @param courseDTO The dto containing the course information to set.
      * @return The id of the newly created course, if the information was persisted.
-     * @throws IncompleteDataException if the {@link CourseDTO} contains invalid attribute values.
+     * @throws IllegalArgumentException if the {@link CourseDTO} contains invalid attribute values.
      * @throws StoreException if the course information could not be persisted.
      */
     @Transactional
     public int saveCourse(final CourseDTO courseDTO) {
         if (courseDTO.getTitle() == null || courseDTO.getTitle().trim().isBlank()) {
-            throw new IncompleteDataException("Cannot save a course with an empty title!");
+            throw new IllegalArgumentException("Cannot save a course with an empty title!");
         } else if (courseDTO.getDescription() == null || courseDTO.getDescription().trim().isBlank()) {
-            throw new IncompleteDataException("Cannot save a course with an empty description!");
+            throw new IllegalArgumentException("Cannot save a course with an empty description!");
         } else if (courseDTO.getLastChanged() == null) {
-            throw new IncompleteDataException("Cannot save a course with last changed null!");
+            throw new IllegalArgumentException("Cannot save a course with last changed null!");
         }
 
         Course course = createCourse(courseDTO);

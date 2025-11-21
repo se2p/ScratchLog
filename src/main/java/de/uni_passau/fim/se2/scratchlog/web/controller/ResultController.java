@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.web.controller;
 
-import de.uni_passau.fim.se2.scratchlog.application.exception.IncompleteDataException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CodeService;
 import de.uni_passau.fim.se2.scratchlog.application.service.EventService;
@@ -220,8 +219,7 @@ public class ResultController {
      * @param userId The id of the user.
      * @param jsonId The block event id to search for.
      * @param httpServletResponse The servlet response.
-     * @throws IncompleteDataException if the passed user, experiment or json ids are invalid.
-     * @throws RuntimeException if an {@link IOException} occurs during the sb3 file creation.
+     * @throws IOException In case writing to the output stream fails.
      */
     @GetMapping("/generate")
     @Secured(Constants.ROLE_ADMIN)
@@ -259,8 +257,7 @@ public class ResultController {
      * @param experimentId The experiment id to search for.
      * @param userId The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
-     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
-     * @throws RuntimeException if an {@link IOException} occurs.
+     * @throws IOException In case writing to the output stream
      */
     @GetMapping("/zips")
     @Secured(Constants.ROLE_ADMIN)
@@ -278,8 +275,7 @@ public class ResultController {
      * @param experimentId The experiment id to search for.
      * @param userId The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
-     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
-     * @throws RuntimeException if an {@link IOException} occurs.
+     * @throws IOException In case writing to the output stream fails.
      */
     @GetMapping("/xmls")
     @Secured(Constants.ROLE_ADMIN)
@@ -297,8 +293,7 @@ public class ResultController {
      * @param experimentId The experiment id to search for.
      * @param userId The user id to search for.
      * @param httpServletResponse The servlet response returning the files.
-     * @throws IncompleteDataException if the passed user or experiment ids are invalid.
-     * @throws RuntimeException if an {@link IOException} occurs.
+     * @throws IOException In case writing to the output stream fails.
      */
     @GetMapping("/jsons")
     @Secured(Constants.ROLE_ADMIN)
@@ -317,7 +312,6 @@ public class ResultController {
      * @param userId The user id to search for.
      * @param page The current page number.
      * @return The list of block event projections.
-     * @throws IncompleteDataException if the passed user or experiment id or the page are invalid.
      */
     @GetMapping("/codes")
     @Secured(Constants.ROLE_ADMIN)
@@ -348,8 +342,8 @@ public class ResultController {
      * @param end The end of the interval in which all json files should be downloaded.
      * @param includeFinalProject Whether the final project should be included.
      * @param httpServletResponse The servlet response returning the files.
-     * @throws IncompleteDataException if any of the passed parameters are invalid.
-     * @throws RuntimeException if an {@link IOException} occurs.
+     * @throws IOException In case writing to the output stream fails.
+     * @throws IllegalArgumentException if any of the passed parameters are invalid.
      */
     @GetMapping("/sb3s")
     @Secured(Constants.ROLE_ADMIN)
@@ -397,8 +391,8 @@ public class ResultController {
      * @param experimentId The experiment id to search for.
      * @param step The step interval in minutes.
      * @param httpServletResponse The servlet response returning the files.
-     * @throws IncompleteDataException if any of the passed parameters are invalid.
-     * @throws RuntimeException if an {@link IOException} occurs.
+     * @throws IOException In case writing to the output stream fails.
+     * @throws IllegalArgumentException If the experiment has no participants.
      */
     @GetMapping("/sb3s/all")
     @Secured(Constants.ROLE_ADMIN)
@@ -458,41 +452,41 @@ public class ResultController {
      * @param start The start of the interval in which all json files should be downloaded.
      * @param end The end of the interval in which all json files should be downloaded.
      * @param include Whether the final project should be included.
-     * @throws IncompleteDataException if the required parameters are not specified.
+     * @throws IllegalArgumentException if the required parameters are null or invalid.
      */
     private void checkDownloadParameters(
         final Integer step, final Integer start, final Integer end, final Boolean include
     ) {
         if (step == null && start == null && end == null && Boolean.FALSE.equals(include)) {
-            throw new IncompleteDataException(
+            throw new IllegalArgumentException(
                 "Either step or start and end must be specified when not including final project!"
             );
         }
 
         if (step != null && step <= 0) {
-            throw new IncompleteDataException("step must be >= 0");
+            throw new IllegalArgumentException("step must be >= 0");
         }
         if (start != null && start < 0) {
-            throw new IncompleteDataException("start must be >= 0");
+            throw new IllegalArgumentException("start must be >= 0");
         }
         if (end != null && end < 0) {
-            throw new IncompleteDataException("end must be >= 0");
+            throw new IllegalArgumentException("end must be >= 0");
         }
 
         if (start != null && step != null) {
-            throw new IncompleteDataException("Cannot generate zip file if both step and start, end and include "
+            throw new IllegalArgumentException("Cannot generate zip file if both step and start, end and include "
                     + "parameters are specified!");
         }
 
         if (start != null || end != null) {
             if (start == null || end == null || include == null) {
-                throw new IncompleteDataException("Cannot generate zip file in a set interval if not all of the needed "
-                    + "parameters start, end and include are specified!");
+                throw new IllegalArgumentException("Cannot generate zip file in a set interval if not all of the needed"
+                    + " parameters start, end and include are specified!");
             }
         }
 
         if (start != null && end != null && start > end) {
-            throw new IncompleteDataException("Cannot generate zip file for start position " + start
+            throw new IllegalArgumentException("Cannot generate zip file for start position " + start
                 + " bigger than end position " + end + "!");
         }
     }
