@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.6</version>
+        <version>3.5.8</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -22,16 +22,16 @@
 
         <!-- Library versions -->
         <bouncycastle.version>1.82</bouncycastle.version>
-        <checkstyle.version>12.0.1</checkstyle.version>
-        <codec.version>1.19.0</codec.version>
-        <commonmark.version>0.26.0</commonmark.version>
+        <checkstyle.version>12.1.2</checkstyle.version>
+        <codec.version>1.20.0</codec.version>
+        <commonmark.version>0.27.0</commonmark.version>
         <databind.version>2.19.0</databind.version>
         <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/scratch/litterbox/embeddedkittens/-/packages/ for available versions -->
         <embeddedkittens.version>1.1.0-20241110.172915-1</embeddedkittens.version>
         <flyway.version>11.10.0</flyway.version>
         <glassfish-jaxb.version>4.0.6</glassfish-jaxb.version>
         <h2.version>2.3.232</h2.version>
-        <jacoco.version>0.8.13</jacoco.version>
+        <jacoco.version>0.8.14</jacoco.version>
         <jakarta.validation.version>3.1.1</jakarta.validation.version>
         <jaxb.version>4.0.4</jaxb.version>
         <json.version>20250517</json.version>
@@ -50,7 +50,7 @@
         <!-- might have to deploy new versions on https://www.webjars.org/ first when updating -->
         <webjars.locator.version>0.52</webjars.locator.version>
         <webjars.bootstrap.version>5.3.8</webjars.bootstrap.version>
-        <webjars.chartjs.version>4.5.0</webjars.chartjs.version>
+        <webjars.chartjs.version>4.5.1</webjars.chartjs.version>
         <webjars.fontawesome.version>5.15.4</webjars.fontawesome.version>
         <webjars.jquery.version>3.7.1</webjars.jquery.version>
         <webjars.nouislider.version>15.8.1</webjars.nouislider.version>
@@ -322,7 +322,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
