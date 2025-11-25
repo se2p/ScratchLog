@@ -4,9 +4,9 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 
 import java.util.UUID;
 
-public class DtoUtil {
+public final class DtoUtil {
 
-    public ExperimentDTO generateExperimentDTO(String title) {
+    public static ExperimentDTO generateExperimentDTO(String title) {
         return new ExperimentDTO(
             null,
             namePrefix() + title,
@@ -19,7 +19,7 @@ public class DtoUtil {
         );
     }
 
-    private String namePrefix() {
+    private static String namePrefix() {
         return UUID.randomUUID() + "_";
     }
 }

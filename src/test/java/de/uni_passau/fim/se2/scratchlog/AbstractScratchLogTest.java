@@ -35,6 +35,4 @@ public abstract class AbstractScratchLogTest {
     @Autowired
     protected EventUtilService eventUtilService;
 
-    protected DtoUtil dtoUtil = new DtoUtil();
-
 }
