@@ -28,22 +28,23 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
     @Autowired
     private ExperimentRepository experimentRepository;
 
-    private Experiment experiment;
+    private Experiment experiment1;
 
-    private ExperimentDTO experimentDTO;
+    // experiment1 and experiment2Dto refer to different experiments.
+    private ExperimentDTO experiment2Dto;
 
     private int invalidId;
 
     @BeforeEach
     public void setup() {
-        experiment = entityUtilService.generateExperiment("Experiment");
-        experimentDTO = DtoUtil.generateExperimentDTO("ExperimentDTO");
-        invalidId = experiment.getId() + 50;
+        experiment1 = entityUtilService.generateExperiment("Experiment 1");
+        experiment2Dto = DtoUtil.generateExperimentDTO("Experiment 2 DTO");
+        invalidId = experiment1.getId() + 50;
     }
 
     @Test
     public void testExistsExperiment() {
-        assertTrue(service.existsExperiment(experiment.getTitle()));
+        assertTrue(service.existsExperiment(experiment1.getTitle()));
     }
 
     @Test
@@ -53,13 +54,13 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
 
     @Test
     public void testHasProjectFileNoProject() {
-        assertFalse(service.hasProjectFile(experiment.getId()));
+        assertFalse(service.hasProjectFile(experiment1.getId()));
     }
 
     @Test
     public void testHasProjectFileAfterUpload() {
-        service.uploadSb3Project(experiment.getId(), new byte[]{});
-        assertTrue(service.hasProjectFile(experiment.getId()));
+        service.uploadSb3Project(experiment1.getId(), new byte[]{});
+        assertTrue(service.hasProjectFile(experiment1.getId()));
     }
 
     @Test
@@ -70,70 +71,70 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
     // Tests that saving an experiments saves it to the repository and returns a DTO with the inserted data.
     @Test
     public void saveExperimentIdNull() {
-        ExperimentDTO saved = service.saveExperiment(experimentDTO);
-        assertTrue(service.existsExperiment(experimentDTO.getTitle()));
+        ExperimentDTO saved = service.saveExperiment(experiment2Dto);
+        assertTrue(service.existsExperiment(experiment2Dto.getTitle()));
         assertAll(
-            () -> assertEquals(experimentDTO.getTitle(), saved.getTitle()),
-            () -> assertEquals(experimentDTO.getDescription(), saved.getDescription()),
-            () -> assertEquals(experimentDTO.getInfo(), saved.getInfo()),
-            () -> assertEquals(experimentDTO.isActive(), saved.isActive()),
-            () -> assertEquals(experimentDTO.isCourseExperiment(), saved.isCourseExperiment()),
-            () -> assertEquals(experimentDTO.getGuiURL(), saved.getGuiURL())
+            () -> assertEquals(experiment2Dto.getTitle(), saved.getTitle()),
+            () -> assertEquals(experiment2Dto.getDescription(), saved.getDescription()),
+            () -> assertEquals(experiment2Dto.getInfo(), saved.getInfo()),
+            () -> assertEquals(experiment2Dto.isActive(), saved.isActive()),
+            () -> assertEquals(experiment2Dto.isCourseExperiment(), saved.isCourseExperiment()),
+            () -> assertEquals(experiment2Dto.getGuiURL(), saved.getGuiURL())
         );
     }
 
     @Test
     public void testSaveExperimentTitleNull() {
-        experimentDTO.setTitle(null);
+        experiment2Dto.setTitle(null);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experimentDTO)
+            () -> service.saveExperiment(experiment2Dto)
         );
     }
 
     @Test
     public void testSaveExperimentTitleBlank() {
-        experimentDTO.setTitle(BLANK);
+        experiment2Dto.setTitle(BLANK);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experimentDTO)
+            () -> service.saveExperiment(experiment2Dto)
         );
     }
 
     @Test
     public void testSaveExperimentDescriptionNull() {
-        experimentDTO.setDescription(null);
+        experiment2Dto.setDescription(null);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experimentDTO)
+            () -> service.saveExperiment(experiment2Dto)
         );
     }
 
     @Test
     public void testSaveExperimentDescriptionBlank() {
-        experimentDTO.setDescription(BLANK);
+        experiment2Dto.setDescription(BLANK);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experimentDTO)
+            () -> service.saveExperiment(experiment2Dto)
         );
     }
 
     @Test
     public void testSaveExperimentGuiURLNull() {
-        experimentDTO.setGuiURL(null);
+        experiment2Dto.setGuiURL(null);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experimentDTO)
+            () -> service.saveExperiment(experiment2Dto)
         );
     }
 
     @Test
     public void testSaveExperimentGuiURLBlank() {
-        experimentDTO.setGuiURL(BLANK);
+        experiment2Dto.setGuiURL(BLANK);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experimentDTO)
+            () -> service.saveExperiment(experiment2Dto)
         );
     }
 
     @Test
     public void testGetExperiment() {
-        ExperimentDTO found = service.getExperiment(experiment.getId());
-        assertTrue(experimentEqualsExperimentDTO(experiment, found));
+        ExperimentDTO found = service.getExperiment(experiment1.getId());
+        assertTrue(experimentEqualsExperimentDTO(experiment1, found));
     }
 
     @Test
@@ -144,24 +145,24 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
 
     @Test
     public void testDeleteExperiment() {
-        service.deleteExperiment(experiment.getId());
-        assertFalse(service.existsExperiment(experiment.getTitle()));
+        service.deleteExperiment(experiment1.getId());
+        assertFalse(service.existsExperiment(experiment1.getTitle()));
     }
 
     @Test
     public void testChangeExperimentStatus() {
-        ExperimentDTO changedStatus = service.changeExperimentStatus(true, experiment.getId());
-        experiment = experimentRepository.findById(experiment.getId()).get(); // Refetch experiment from DB
+        ExperimentDTO changedStatus = service.changeExperimentStatus(true, experiment1.getId());
+        experiment1 = experimentRepository.findById(experiment1.getId()).get(); // Refetch experiment from DB
         assertTrue(changedStatus.isActive());
-        assertTrue(experimentEqualsExperimentDTO(experiment, changedStatus));
+        assertTrue(experimentEqualsExperimentDTO(experiment1, changedStatus));
     }
 
     @Test
     public void testChangeExperimentStatusFalse() {
-        ExperimentDTO changedStatus = service.changeExperimentStatus(false, experiment.getId());
-        experiment = experimentRepository.findById(experiment.getId()).get(); // Refetch experiment from DB
+        ExperimentDTO changedStatus = service.changeExperimentStatus(false, experiment1.getId());
+        experiment1 = experimentRepository.findById(experiment1.getId()).get(); // Refetch experiment from DB
         assertFalse(changedStatus.isActive());
-        assertTrue(experimentEqualsExperimentDTO(experiment, changedStatus));
+        assertTrue(experimentEqualsExperimentDTO(experiment1, changedStatus));
     }
 
     private boolean experimentEqualsExperimentDTO(Experiment experiment, ExperimentDTO experimentDTO) {
