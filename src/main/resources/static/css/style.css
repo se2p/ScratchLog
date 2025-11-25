@@ -261,11 +261,6 @@ code {
     border: 5px;
 }
 
-/* Used for <span>-attributes that convey the meaning of Font Awesome icons for screen readers. */
-.sr-only {
-    visibility: hidden;
-}
-
 /* responsive style overwrites */
 
 .profile-info .col-3,
