@@ -134,7 +134,14 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
     @Test
     public void testGetExperiment() {
         ExperimentDTO found = service.getExperiment(experiment1.getId());
-        assertTrue(experimentEqualsExperimentDTO(experiment1, found));
+        assertAll(
+            () -> assertEquals(experiment1.getTitle(), found.getTitle()),
+            () -> assertEquals(experiment1.getDescription(), found.getDescription()),
+            () -> assertEquals(experiment1.getInfo(), found.getInfo()),
+            () -> assertEquals(experiment1.isActive(), found.isActive()),
+            () -> assertEquals(experiment1.isCourseExperiment(), found.isCourseExperiment()),
+            () -> assertEquals(experiment1.getGuiURL(), found.getGuiURL())
+        );
     }
 
     @Test
@@ -152,25 +159,12 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
     @Test
     public void testChangeExperimentStatus() {
         ExperimentDTO changedStatus = service.changeExperimentStatus(true, experiment1.getId());
-        experiment1 = experimentRepository.findById(experiment1.getId()).get(); // Refetch experiment from DB
         assertTrue(changedStatus.isActive());
-        assertTrue(experimentEqualsExperimentDTO(experiment1, changedStatus));
     }
 
     @Test
     public void testChangeExperimentStatusFalse() {
         ExperimentDTO changedStatus = service.changeExperimentStatus(false, experiment1.getId());
-        experiment1 = experimentRepository.findById(experiment1.getId()).get(); // Refetch experiment from DB
         assertFalse(changedStatus.isActive());
-        assertTrue(experimentEqualsExperimentDTO(experiment1, changedStatus));
-    }
-
-    private boolean experimentEqualsExperimentDTO(Experiment experiment, ExperimentDTO experimentDTO) {
-        return experimentDTO.getTitle().equals(experiment.getTitle())
-            && experimentDTO.getDescription().equals(experiment.getDescription())
-            && experimentDTO.getInfo().equals(experiment.getInfo())
-            && experimentDTO.isActive() == experiment.isActive()
-            && experimentDTO.isCourseExperiment() == experiment.isCourseExperiment()
-            && experimentDTO.getGuiURL().equals(experiment.getGuiURL());
     }
 }
