@@ -78,6 +78,7 @@ public class ExperimentService {
      * @param id The id to compare to.
      * @return {@code true} if such an experiment exists, or {@code false} if not.
      * @throws IllegalArgumentException if the passed title is null or blank or the id is invalid.
+     * @deprecated This method should not exist since its purpose is confusing.
      */
     public boolean existsExperiment(final String title, final int id) {
         Optional<Experiment> experiment = experimentRepository.findByTitle(title);

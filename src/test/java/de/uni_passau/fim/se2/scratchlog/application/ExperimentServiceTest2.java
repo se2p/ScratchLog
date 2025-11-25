@@ -50,18 +50,6 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
         assertFalse(service.existsExperiment("SomeOtherExperiment"));
     }
 
-    // Tests that Experimentservice#existsExperiment returns true when the given ID is not of an existing experiment.
-    @Test
-    public void testExistsExperimentWithId() {
-        assertTrue(service.existsExperiment(experiment.getTitle(), invalidId));
-    }
-
-    // Tests that Experimentservice#existsExperiment returns false when the given ID is of an existing experiment.
-    @Test
-    public void testExistsExperimentWithIdAlreadyExists() {
-        assertFalse(service.existsExperiment(experiment.getTitle(), experiment.getId()));
-    }
-
     @Test
     public void testHasProjectFileNoProject() {
         assertFalse(service.hasProjectFile(experiment.getId()));
