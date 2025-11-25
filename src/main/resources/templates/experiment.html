@@ -224,7 +224,7 @@
                            th:href="@{/experiment/analysis(id=${experimentDTO.id})}">
                             <i aria-hidden="true" class="fas fa-download fa-inverse" title="Download CSV file"></i>
                             <span th:text="#{code_analysis}"></span>
-                            <span class="sr-only" th:text="#{download}"></span>
+                            <span class="visually-hidden" th:text="#{download}"></span>
                         </a>
                     </div>
                 </div>
@@ -307,20 +307,20 @@
                                 <td class="text-center">
                                     <i aria-hidden="true" th:class="${participant.start != null ? 'fa fa-check text-success'
                                 : 'fa fa-times text-danger'}" title="Experiment started status"></i>
-                                    <span class="sr-only" th:if="${participant.start == null}">
+                                    <span class="visually-hidden" th:if="${participant.start == null}">
                                             <span th:text="#{not_started}"></span>
                                         </span>
-                                    <span class="sr-only" th:unless="${participant.start == null}">
+                                    <span class="visually-hidden" th:unless="${participant.start == null}">
                                             <span th:text="#{started}"></span>
                                         </span>
                                 </td>
                                 <td class="text-center">
                                     <i aria-hidden="true" th:class="${participant.end != null ? 'fa fa-check text-success'
                                 : 'fa fa-times text-danger'}" title="Experiment finished status"></i>
-                                    <span class="sr-only" th:if="${participant.end == null}">
+                                    <span class="visually-hidden" th:if="${participant.end == null}">
                                             <span th:text="#{not_finished}"></span>
                                         </span>
-                                    <span class="sr-only" th:unless="${participant.end == null}">
+                                    <span class="visually-hidden" th:unless="${participant.end == null}">
                                             <span th:text="#{finished}"></span>
                                         </span>
                                 </td>
@@ -328,7 +328,7 @@
                                         <span th:if="${participant.start == null}">
                                             <i aria-hidden="true" class="fa fa-times text-danger"
                                                title="No statistics"></i>
-                                            <span class="sr-only" th:text="#{table_empty}"></span>
+                                            <span class="visually-hidden" th:text="#{table_empty}"></span>
                                         </span>
                                     <span th:unless="${participant.start == null}">
                                             <!--suppress ThymeleafVariablesResolveInspection -->
@@ -393,7 +393,7 @@
                 <div class="input-group">
                         <span class="input-group-text">
                             <i aria-hidden="true" class="fa fa-key" title="Enter password"></i>
-                            <span class="sr-only" th:text="#{password}"></span>
+                            <span class="visually-hidden" th:text="#{password}"></span>
                         </span>
                     <input th:name="password" id="password" type="password" th:placeholder="#{password}"
                            th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"

@@ -58,7 +58,7 @@
                     <div class="input-group">
                     <span aria-hidden="true" class="input-group-text" title="Username">
                         <i class="fa fa-user"></i>
-                        <span class="sr-only" th:text="#{username}"></span>
+                        <span class="visually-hidden" th:text="#{username}"></span>
                     </span>
                         <input name="username" id="username" type="text" th:placeholder="#{username}"
                                th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
@@ -86,7 +86,7 @@
                     <div class="input-group">
                     <span class="input-group-text">
                         <i aria-hidden="true" class="fa fa-flag" title="Preferred language"></i>
-                        <span class="sr-only" th:text="#{language}"></span>
+                        <span class="visually-hidden" th:text="#{language}"></span>
                     </span>
                         <select id="language" class="form-select" th:aria-label="#{language}" th:field="*{language}">
                             <!--suppress ThymeleafVariablesResolveInspection -->

@@ -85,8 +85,8 @@
                         <td class="text-center">
                             <i aria-hidden="true" th:class="${course.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
                                title="Experiment active status"></i>
-                            <span class="sr-only" th:if="${course.active}" th:text="#{opened}"></span>
-                            <span class="sr-only" th:unless="${course.active}" th:text="#{closed}"></span>
+                            <span class="visually-hidden" th:if="${course.active}" th:text="#{opened}"></span>
+                            <span class="visually-hidden" th:unless="${course.active}" th:text="#{closed}"></span>
                         </td>
                     </tr>
                     </tbody>
@@ -163,8 +163,8 @@
                         <td class="text-center">
                             <i aria-hidden="true" th:class="${experiment.active ? 'fas fa-eye' : 'fas fa-eye-slash'}"
                                title="Experiment active status"></i>
-                            <span class="sr-only" th:if="${experiment.active}" th:text="#{opened}"></span>
-                            <span class="sr-only" th:unless="${experiment.active}" th:text="#{closed}"></span>
+                            <span class="visually-hidden" th:if="${experiment.active}" th:text="#{opened}"></span>
+                            <span class="visually-hidden" th:unless="${experiment.active}" th:text="#{closed}"></span>
                         </td>
                     </tr>
                     </tbody>
