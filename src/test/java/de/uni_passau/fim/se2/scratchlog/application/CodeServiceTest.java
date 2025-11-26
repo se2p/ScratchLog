@@ -421,49 +421,6 @@ public class CodeServiceTest {
         verify(blockEventRepository).findAllByXmlIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
     }
 
-    @Test
-    public void testGetCodesForUser() {
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
-                any(PageRequest.class))).thenReturn(blockEventProjections);
-        Page<BlockEventProjection> page = codeService.getCodesForUser(ID, ID, pageRequest);
-        assertAll(
-                () -> assertEquals(blockEventProjections.getTotalElements(), page.getTotalElements()),
-                () -> assertEquals(blockEventProjections.stream().findFirst(), page.stream().findFirst()),
-                () -> assertEquals(blockEventProjections.getSize(), page.getSize())
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(blockEventRepository).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesForUserEntityNotFound() {
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
-                any(PageRequest.class))).thenThrow(EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> codeService.getCodesForUser(ID, ID, pageRequest)
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(experimentRepository).getReferenceById(ID);
-        verify(blockEventRepository).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesForUserInvalidPageSize() {
-        PageRequest invalid = PageRequest.of(0, Constants.PAGE_SIZE + 2);
-        assertThrows(IllegalArgumentException.class,
-                () -> codeService.getCodesForUser(ID, ID, invalid)
-        );
-        verify(userRepository, never()).getReferenceById(anyInt());
-        verify(experimentRepository, never()).getReferenceById(anyInt());
-        verify(blockEventRepository, never()).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
-                any(PageRequest.class));
-    }
-
     private List<BlockEventJSONProjection> getJsonProjections(int number) {
         List<BlockEventJSONProjection> projections = new ArrayList<>();
         for (int i = 0; i < number; i++) {

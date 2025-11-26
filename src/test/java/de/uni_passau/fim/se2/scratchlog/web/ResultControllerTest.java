@@ -25,6 +25,7 @@ import de.uni_passau.fim.se2.scratchlog.application.service.EventService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.application.service.FileService;
+import de.uni_passau.fim.se2.scratchlog.application.service.PageService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ZipExportService;
@@ -66,7 +67,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static de.uni_passau.fim.se2.scratchlog.util.CommonAssertions.assertInvalidIdException;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -105,6 +105,9 @@ public class ResultControllerTest {
 
     @Mock
     private ParticipantService participantService;
+
+    @Mock
+    private PageService pageService;
 
     @Mock
     private UserRepository userRepository;
@@ -187,7 +190,7 @@ public class ResultControllerTest {
             codeService, experimentService, fileService, participantService, userRepository
         );
         resultController = new ResultController(
-            userService, eventService, experimentDataService, codeService, fileService, zipExportService
+            userService, eventService, experimentDataService, codeService, fileService, zipExportService, pageService
         );
     }
 
@@ -498,8 +501,7 @@ public class ResultControllerTest {
 
     @Test
     public void testGetCodes() {
-        when(codeService.getCodesForUser(anyInt(), anyInt(),
-                any(PageRequest.class))).thenReturn(blockEventProjections);
+        when(pageService.getPaginatedCodesForUser(anyInt(), anyInt(), anyInt())).thenReturn(blockEventProjections);
         List<BlockEventProjection> projections = resultController.getCodes(ID, ID, PAGE);
         assertAll(
                 () -> assertEquals(2, projections.size()),
@@ -510,13 +512,7 @@ public class ResultControllerTest {
                 () -> assertEquals("xml1", projections.get(1).getXml()),
                 () -> assertEquals("code1", projections.get(1).getCode())
         );
-        verify(codeService).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesInvalidPage() {
-        assertInvalidIdException(() -> resultController.getCodes(ID, ID, -1));
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(pageService).getPaginatedCodesForUser(anyInt(), anyInt(), anyInt());
     }
 
     @Test

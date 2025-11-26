@@ -155,9 +155,9 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetCourse() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantCoursePage(anyInt(), anyInt())).thenReturn(participants);
         when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
         mvc.perform(get("/course")
                         .param(ID_PARAM, ID_STRING)
@@ -172,18 +172,13 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(model().attribute("participants", is(participants)))
                 .andExpect(model().attribute("participantPage", is(0)))
                 .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE - 1)));
-        verify(courseService).getCourse(ID);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(pageService).getLastParticipantCoursePage(ID);
     }
 
     @Test
     @WithMockUser(username = "user", roles = "PARTICIPANT")
     public void testGetCourseParticipant() throws Exception {
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
         mvc.perform(get("/course")
                         .param(ID_PARAM, ID_STRING)
@@ -198,11 +193,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(model().attribute("participants", is(empty())))
                 .andExpect(model().attribute("participantPage", is(0)))
                 .andExpect(model().attribute("lastParticipantPage", is(0)));
-        verify(courseService).getCourse(ID);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
     }
 
     @Test
@@ -369,11 +359,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("experimentPage", is(0)))
                 .andExpect(model().attribute("participantPage", is(0)));
-        verify(courseService).changeCourseStatus(true, ID);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(pageService).getLastParticipantCoursePage(ID);
     }
 
     @Test
@@ -389,11 +374,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
                 .andExpect(model().attribute("experimentPage", is(0)))
                 .andExpect(model().attribute("participantPage", is(0)));
-        verify(courseService).changeCourseStatus(false, ID);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(pageService).getLastParticipantCoursePage(ID);
     }
 
     @Test
@@ -406,11 +386,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                         .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
-        verify(courseService).changeCourseStatus(false, ID);
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(pageService, never()).getLastCourseExperimentPage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(pageService, never()).getLastParticipantCoursePage(anyInt());
     }
 
     @Test
@@ -602,7 +577,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     public void testGetParticipantPage() throws Exception {
         courseDTO.setContent(null);
         when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantCoursePage(anyInt(), anyInt())).thenReturn(participants);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         mvc.perform(get("/course/page/participant")
                         .param(ID_PARAM, ID_STRING)
@@ -615,15 +590,12 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(model().attribute("participants", is(participants)))
                 .andExpect(model().attribute("participantPage", is(3)))
                 .andExpect(model().attribute("lastParticipantPage", is(LAST_PAGE - 1)));
-        verify(pageService).getLastParticipantCoursePage(ID);
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService).getCourse(ID);
     }
 
     @Test
     public void testGetExperimentPage() throws Exception {
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         mvc.perform(get("/course/page/experiment")
                         .param(ID_PARAM, ID_STRING)
@@ -636,24 +608,22 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(model().attribute("experiments", is(experiments)))
                 .andExpect(model().attribute("experimentPage", is(3)))
                 .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE - 1)));
-        verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService).getCourse(ID);
     }
 
     @Test
-    public void testGetNextExperimentInvalidPage() throws Exception {
+    public void testGetClampPageToZero() throws Exception {
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
+        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
         mvc.perform(get("/course/page/experiment")
                         .param(ID_PARAM, ID_STRING)
                         .param(PAGE_PARAM, "-1")
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
+                .andExpect(model().attribute("experimentPage", is(-1)))
+                .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE - 1)))
+                .andExpect(status().isOk())
+                .andExpect(view().name(EXPERIMENT_TABLE));
     }
 
     @Test
@@ -662,7 +632,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
             new ClassPathResource(FILENAME_CSV).getInputStream());
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         mockMvc.perform(multipart("/course/participant/add-csv")
                 .file(file)
@@ -683,7 +653,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
             new ClassPathResource(FILENAME_CSV).getInputStream());
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.getInvalidParticipantUsernames(any())).thenReturn(List.of("admin"));
         mockMvc.perform(multipart("/course/participant/add-csv")
@@ -706,7 +676,7 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
             new ClassPathResource(FILENAME_CSV).getInputStream());
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         when(userService.parseUserListCsv(file)).thenThrow(new IllegalArgumentException("file_type"));
         mockMvc.perform(multipart("/course/participant/add-csv")

@@ -35,7 +35,6 @@ import de.uni_passau.fim.se2.scratchlog.web.controller.CourseController;
 import de.uni_passau.fim.se2.scratchlog.web.dto.CourseDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.InvalidIdException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -166,9 +165,9 @@ public class CourseControllerTest {
         assertEquals(COURSE, courseController.getCourse(ID, model, httpServletRequest));
         verify(courseService).getCourse(ID);
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService).getCourseExperimentPage(anyInt(), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService).getLastParticipantCoursePage(ID);
         verify(model, times(8)).addAttribute(anyString(), any());
     }
@@ -180,9 +179,9 @@ public class CourseControllerTest {
         assertEquals(COURSE, courseController.getCourse(ID, model, httpServletRequest));
         verify(courseService).getCourse(ID);
         verify(httpServletRequest).isUserInRole(Constants.ROLE_ADMIN);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService).getCourseExperimentPage(anyInt(), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService, never()).getLastParticipantCoursePage(anyInt());
         verify(model, times(8)).addAttribute(anyString(), any());
     }
@@ -193,9 +192,9 @@ public class CourseControllerTest {
         assertEquals(Constants.ERROR, courseController.getCourse(ID, model, httpServletRequest));
         verify(courseService).getCourse(ID);
         verify(httpServletRequest, never()).isUserInRole(anyString());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService, never()).getCourseExperimentPage(anyInt(), anyInt());
         verify(pageService, never()).getLastCourseExperimentPage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService, never()).getLastParticipantCoursePage(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
@@ -367,9 +366,9 @@ public class CourseControllerTest {
         when(courseService.changeCourseStatus(true, ID)).thenReturn(courseDTO);
         assertEquals(COURSE, courseController.changeCourseStatus("open", ID, model));
         verify(courseService).changeCourseStatus(true, ID);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService).getCourseExperimentPage(anyInt(), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService).getLastParticipantCoursePage(ID);
         verify(model, times(8)).addAttribute(anyString(), any());
     }
@@ -379,9 +378,9 @@ public class CourseControllerTest {
         when(courseService.changeCourseStatus(false, ID)).thenReturn(courseDTO);
         assertEquals(COURSE, courseController.changeCourseStatus("close", ID, model));
         verify(courseService).changeCourseStatus(false, ID);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService).getCourseExperimentPage(anyInt(), anyInt());
         verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService).getLastParticipantCoursePage(ID);
         verify(model, times(8)).addAttribute(anyString(), any());
     }
@@ -390,9 +389,9 @@ public class CourseControllerTest {
     public void testChangeCourseStatusInvalidStatus() {
         assertEquals(Constants.ERROR, courseController.changeCourseStatus("bla", ID, model));
         verify(courseService, never()).changeCourseStatus(anyBoolean(), anyInt());
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService, never()).getCourseExperimentPage(anyInt(), anyInt());
         verify(pageService, never()).getLastCourseExperimentPage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService, never()).getLastParticipantCoursePage(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
@@ -402,9 +401,9 @@ public class CourseControllerTest {
         when(courseService.changeCourseStatus(true, ID)).thenThrow(NotFoundException.class);
         assertEquals(Constants.ERROR, courseController.changeCourseStatus("open", ID, model));
         verify(courseService).changeCourseStatus(true, ID);
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService, never()).getCourseExperimentPage(anyInt(), anyInt());
         verify(pageService, never()).getLastCourseExperimentPage(anyInt());
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService, never()).getLastParticipantCoursePage(anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
@@ -610,7 +609,7 @@ public class CourseControllerTest {
     @Test
     public void testGetParticipantPage() {
         when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getParticipantCoursePage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantCoursePage(anyInt(), anyInt())).thenReturn(participants);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         ModelAndView mv = courseController.getParticipantPage(ID, CURRENT);
         assertAll(
@@ -620,24 +619,32 @@ public class CourseControllerTest {
                 () -> assertEquals(3, mv.getModel().get("participantPage"))
         );
         verify(pageService).getLastParticipantCoursePage(ID);
-        verify(pageService).getParticipantCoursePage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantCoursePage(anyInt(), anyInt());
         verify(courseService).getCourse(ID);
     }
 
     @Test
     public void testGetParticipantPageInvalidPageNumber() {
         when(pageService.getLastParticipantCoursePage(ID)).thenReturn(LAST_PAGE);
-        assertThrows(InvalidIdException.class, () -> courseController.getParticipantPage(ID, LAST));
+        when(pageService.getParticipantCoursePage(anyInt(), anyInt())).thenReturn(participants);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getParticipantPage(ID, -1);
+        assertAll(
+            () -> assertEquals(PARTICIPANT_TABLE, mv.getViewName()),
+            () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
+            () -> assertEquals(LAST_PAGE - 1, mv.getModel().get("lastParticipantPage")),
+            () -> assertEquals(-1, mv.getModel().get("participantPage"))
+        );
         verify(pageService).getLastParticipantCoursePage(ID);
-        verify(pageService, never()).getParticipantCoursePage(anyInt(), any(PageRequest.class));
-        verify(courseService, never()).getCourse(anyInt());
+        verify(pageService).getParticipantCoursePage(anyInt(), anyInt());
+        verify(courseService).getCourse(ID);
     }
 
     @Test
     public void testGetExperimentPage() {
         courseDTO.setContent(null);
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getCourseExperimentPage(any(PageRequest.class), anyInt())).thenReturn(experiments);
+        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
         when(courseService.getCourse(ID)).thenReturn(courseDTO);
         ModelAndView mv = courseController.getExperimentPage(ID, CURRENT);
         assertAll(
@@ -647,17 +654,25 @@ public class CourseControllerTest {
                 () -> assertEquals(3, mv.getModel().get("experimentPage"))
         );
         verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService).getCourseExperimentPage(any(PageRequest.class), anyInt());
+        verify(pageService).getCourseExperimentPage(anyInt(), anyInt());
         verify(courseService).getCourse(ID);
     }
 
     @Test
-    public void testGetExperimentPageInvalidPage() {
+    public void testGetExperimentPageNegative() {
         when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        assertThrows(InvalidIdException.class, () -> courseController.getExperimentPage(ID, -1));
+        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
+        when(courseService.getCourse(ID)).thenReturn(courseDTO);
+        ModelAndView mv = courseController.getExperimentPage(ID, -1);
+        assertAll(
+            () -> assertEquals(EXPERIMENT_TABLE, mv.getViewName()),
+            () -> assertEquals(courseDTO, mv.getModel().get(COURSE_DTO)),
+            () -> assertEquals(LAST_PAGE - 1, mv.getModel().get("lastExperimentPage")),
+            () -> assertEquals(-1, mv.getModel().get("experimentPage"))
+        );
         verify(pageService).getLastCourseExperimentPage(ID);
-        verify(pageService, never()).getCourseExperimentPage(any(PageRequest.class), anyInt());
-        verify(courseService, never()).getCourse(anyInt());
+        verify(pageService).getCourseExperimentPage(anyInt(), anyInt());
+        verify(courseService).getCourse(ID);
     }
 
     private List<CourseExperimentProjection> getCourseExperiments(int number) {

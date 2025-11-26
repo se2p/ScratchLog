@@ -25,6 +25,7 @@ import de.uni_passau.fim.se2.scratchlog.application.service.EventService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.application.service.FileService;
+import de.uni_passau.fim.se2.scratchlog.application.service.PageService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ZipExportService;
@@ -108,6 +109,9 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
 
     @MockitoBean
     private ParticipantService participantService;
+
+    @MockitoBean
+    private PageService pageService;
 
     @SpyBean
     private ZipExportService zipExportService;
@@ -554,7 +558,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
 
     @Test
     public void testGetCodes() throws Exception {
-        when(codeService.getCodesForUser(anyInt(), anyInt(), any(PageRequest.class))).thenReturn(blockEventProjections);
+        when(pageService.getPaginatedCodesForUser(anyInt(), anyInt(), anyInt())).thenReturn(blockEventProjections);
         mvc.perform(get("/result/codes")
                 .param(EXPERIMENT_PARAM, ID_STRING)
                 .param(USER_PARAM, ID_STRING)
@@ -562,19 +566,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
-        verify(codeService).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCodesInvalidPage() throws Exception {
-        mvc.perform(get("/result/codes")
-                .param(EXPERIMENT_PARAM, ID_STRING)
-                .param(USER_PARAM, ID_STRING)
-                .param(PAGE_PARAM, "-3")
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isBadRequest());
-        verify(codeService, never()).getCodesForUser(anyInt(), anyInt(), any(PageRequest.class));
+        verify(pageService).getPaginatedCodesForUser(anyInt(), anyInt(), anyInt());
     }
 
     @Test

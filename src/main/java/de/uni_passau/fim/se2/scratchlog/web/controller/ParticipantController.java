@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -535,8 +534,7 @@ public class ParticipantController {
 
         int last = pageService.getLastParticipantPage(experimentDTO.getId()) + 1;
 
-        Page<Participant> participants = pageService.getParticipantPage(experimentDTO.getId(),
-                PageRequest.of(0, Constants.PAGE_SIZE));
+        Page<Participant> participants = pageService.getParticipantPage(experimentDTO.getId(), 0);
         model.addAttribute("page", 1);
         model.addAttribute("lastPage", last);
         model.addAttribute("experimentDTO", experimentDTO);
