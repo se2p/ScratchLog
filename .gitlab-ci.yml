@@ -26,7 +26,6 @@ default:
   cache:
     paths:
       - .m2/repository/
-      - target/
     when: always
   artifacts:
     # Expire all artifacts already after 36 hours. (Default is around 30 days/4 weeks)
