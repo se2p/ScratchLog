@@ -24,6 +24,7 @@ import de.uni_passau.fim.se2.scratchlog.application.service.CodeService;
 import de.uni_passau.fim.se2.scratchlog.application.service.EventService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataService;
 import de.uni_passau.fim.se2.scratchlog.application.service.FileService;
+import de.uni_passau.fim.se2.scratchlog.application.service.PageService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ZipExportService;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
@@ -34,12 +35,10 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.CodesDataDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.EventCountDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -95,6 +94,8 @@ public class ResultController {
 
     private final ZipExportService zipExportService;
 
+    private final PageService pageService;
+
     /**
      * String corresponding to the result page.
      */
@@ -122,14 +123,15 @@ public class ResultController {
         final ExperimentDataService experimentDataService,
         final CodeService codeService,
         final FileService fileService,
-        final ZipExportService zipExportService
-    ) {
+        final ZipExportService zipExportService,
+        final PageService pageService) {
         this.userService = userService;
         this.eventService = eventService;
         this.experimentDataService = experimentDataService;
         this.codeService = codeService;
         this.fileService = fileService;
         this.zipExportService = zipExportService;
+        this.pageService = pageService;
     }
 
     /**
@@ -319,10 +321,8 @@ public class ResultController {
     public List<BlockEventProjection> getCodes(@RequestParam(EXPERIMENT) final int experimentId,
                                                @RequestParam(USER) final int userId,
                                                @RequestParam("page") final int page) {
-        IdValidator.validatePageNumberElseThrow(page);
-
-        return codeService
-            .getCodesForUser(userId, experimentId, PageRequest.of(page, Constants.PAGE_SIZE))
+        return pageService
+            .getPaginatedCodesForUser(userId, experimentId, page)
             .getContent();
     }
 

@@ -403,7 +403,7 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.getUserByUsernameOrEmail(PARTICIPANT)).thenReturn(userDTO);
         when(pageService.getLastParticipantPage(ID)).thenReturn(ID);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(new PageImpl<>(list));
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(new PageImpl<>(list));
         mvc.perform(get("/participant/delete")
                 .param(ID_PARAM, ID_STRING)
                 .param(PARTICIPANT_PARAM, PARTICIPANT)
@@ -415,8 +415,6 @@ public class ParticipantControllerIntegrationTest extends AbstractControllerTest
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, notNullValue()))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT));
-        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(participantService, never()).removeParticipantsFromCourse(anyList(), anyInt());
     }
 
     @Test

@@ -40,7 +40,6 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.InvalidIdException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -225,13 +224,13 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     public void testGetExperiment() {
         when(httpServletRequest.isUserInRole(ADMIN)).thenReturn(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         String returnString = experimentController.getExperiment(ID, model, httpServletRequest);
         assertEquals(EXPERIMENT, returnString);
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperiment(ID);
         verify(pageService).getLastParticipantPage(ID);
-        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), anyInt());
         verify(experimentService).hasProjectFile(ID);
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute(PARTICIPANTS, participants);
@@ -241,14 +240,14 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     public void testGetExperimentProjectFile() {
         when(httpServletRequest.isUserInRole(ADMIN)).thenReturn(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         when(experimentService.hasProjectFile(ID)).thenReturn(true);
         String returnString = experimentController.getExperiment(ID, model, httpServletRequest);
         assertEquals(EXPERIMENT, returnString);
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperiment(ID);
         verify(pageService).getLastParticipantPage(ID);
-        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), anyInt());
         verify(experimentService).hasProjectFile(ID);
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute(PARTICIPANTS, participants);
@@ -280,7 +279,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
-        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getParticipantPage(anyInt(), anyInt());
         verify(experimentService).hasProjectFile(ID);
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute("participant", participantDTO);
@@ -303,7 +302,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(httpServletRequest).isUserInRole(ADMIN);
         verify(experimentService).getExperiment(ID);
         verify(participantService).getParticipant(ID, ID);
-        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getParticipantPage(anyInt(), anyInt());
         verify(experimentService).hasProjectFile(ID);
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute("participant", participantDTO);
@@ -630,7 +629,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(experimentService.changeExperimentStatus(true, ID)).thenReturn(experimentDTO);
         when(userService.reactivateUserAccounts(experimentDTO.getId())).thenReturn(userDTOS);
         when(mailService.sendEmail(anyString(), anyString(), any(), anyString())).thenReturn(true).thenReturn(false);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("open", ID, model));
         verify(experimentService).getExperiment(ID);
         verify(courseService, never()).isActiveCourse(anyInt());
@@ -638,7 +637,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, times(2)).sendEmail(anyString(), anyString(), any(), anyString());
         verify(pageService).getLastParticipantPage(ID);
-        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), anyInt());
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute(PARTICIPANTS, participants);
     }
@@ -659,19 +658,19 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(userService).reactivateUserAccounts(ID);
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
         verify(pageService, never()).getLastParticipantPage(anyInt());
-        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getParticipantPage(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testChangeExperimentStatusClose() {
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("close", ID, model));
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
         verify(pageService).getLastParticipantPage(ID);
-        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), anyInt());
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute(PARTICIPANTS, participants);
     }
@@ -680,12 +679,12 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     public void testChangeExperimentStatusCloseInfoNull() {
         experimentDTO.setInfo(null);
         when(experimentService.changeExperimentStatus(false, ID)).thenReturn(experimentDTO);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("close", ID, model));
         verify(experimentService).changeExperimentStatus(false, ID);
         verify(participantService).deactivateParticipantAccounts(ID);
         verify(pageService).getLastParticipantPage(ID);
-        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), anyInt());
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute(PARTICIPANTS, participants);
     }
@@ -694,7 +693,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     public void testChangeExperimentStatusOpenInactiveCourse() {
         experimentDTO.setCourseExperiment(true);
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.changeExperimentStatus("open", ID, model));
         verify(experimentService).getExperiment(ID);
         verify(courseService).isActiveCourse(ID);
@@ -702,7 +701,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(userService, never()).reactivateUserAccounts(anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
         verify(pageService).getLastParticipantPage(ID);
-        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), anyInt());
         verify(model).addAttribute(EXPERIMENT_DTO, experimentDTO);
         verify(model).addAttribute(PARTICIPANTS, participants);
     }
@@ -963,23 +962,12 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     public void testGetPage() {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.getPage(ID, PAGE, model));
         verify(experimentService).getExperiment(ID);
         verify(pageService).getLastParticipantPage(ID);
-        verify(pageService).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService).getParticipantPage(anyInt(), anyInt());
         verify(model, times(5)).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetNextPageCurrentPageIsLastPage() {
-        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        assertEquals(ERROR, experimentController.getPage(ID, LAST, model));
-        verify(experimentService).getExperiment(ID);
-        verify(pageService).getLastParticipantPage(ID);
-        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
@@ -988,16 +976,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(ERROR, experimentController.getPage(ID, PAGE, model));
         verify(experimentService).getExperiment(ID);
         verify(pageService, never()).getLastParticipantPage(ID);
-        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testGetNextPageInvalidCurrent() {
-        assertThrows(InvalidIdException.class, () -> experimentController.getPage(ID, -1, model));
-        verify(experimentService, never()).getExperiment(ID);
-        verify(pageService, never()).getLastParticipantPage(ID);
-        verify(pageService, never()).getParticipantPage(anyInt(), any(PageRequest.class));
+        verify(pageService, never()).getParticipantPage(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -1029,7 +1008,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.existsUser(anyString())).thenReturn(true);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
     }
 
@@ -1041,7 +1020,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(userService.existsUser(anyString())).thenReturn(true);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
     }
 
@@ -1054,7 +1033,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(userService.existsUser(anyString())).thenReturn(true);
         when(userService.isAdmin(PARTICIPANTS)).thenReturn(true);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
     }
 
@@ -1064,7 +1043,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
                 new ClassPathResource(FILENAME_CSV).getInputStream());
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
     }
 
@@ -1074,7 +1053,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
                 new ClassPathResource(FILENAME_CSV).getInputStream());
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         when(pageService.getLastParticipantPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getParticipantPage(anyInt(), any(PageRequest.class))).thenReturn(participants);
+        when(pageService.getParticipantPage(anyInt(), anyInt())).thenReturn(participants);
         assertEquals(EXPERIMENT, experimentController.addParticipantsFromCSV(file, ID, model));
     }
 

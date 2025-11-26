@@ -50,17 +50,6 @@ public class ExceptionHandlingControllerAdvice {
     }
 
     /**
-     * Handles cases where an invalid ID was received.
-     * @param exception The original error.
-     * @return A redirect to the error page.
-     */
-    @ExceptionHandler(InvalidIdException.class)
-    public ModelAndView handleInvalidParameterTypeException(final InvalidIdException exception) {
-        log.error("Received invalid ID!", exception);
-        return redirectToErrorPage();
-    }
-
-    /**
      * Global exception handler that handles {@link IllegalArgumentException}s by redirecting to the error page with a
      * "bad request" response.
      *

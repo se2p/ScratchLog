@@ -29,7 +29,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseExperimentP
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.MarkdownHandler;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
 import de.uni_passau.fim.se2.scratchlog.web.dto.CourseDTO;
@@ -41,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -461,10 +459,7 @@ public class CourseController {
     public ModelAndView getParticipantPage(@RequestParam("id") final int courseId,
                                            @RequestParam("page") final int page) {
         int lastPage = pageService.getLastParticipantCoursePage(courseId);
-        IdValidator.validatePageNumberElseThrow(page, lastPage);
-
-        Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId, PageRequest.of(page,
-                Constants.PAGE_SIZE));
+        Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId, page);
         return getParticipantModelView(participants, page, lastPage, courseId);
     }
 
@@ -480,10 +475,7 @@ public class CourseController {
     public ModelAndView getExperimentPage(@RequestParam("id") final int courseId,
                                           @RequestParam("page") final int page) {
         int lastPage = pageService.getLastCourseExperimentPage(courseId);
-        IdValidator.validatePageNumberElseThrow(page, lastPage);
-
-        Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(page,
-                Constants.PAGE_SIZE), courseId);
+        Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(courseId, page);
         return getExperimentModelView(experiments, page, lastPage, courseId);
     }
 
@@ -640,8 +632,7 @@ public class CourseController {
             courseDTO.setContent(MarkdownHandler.toHtml(courseDTO.getContent()));
         }
 
-        Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(PageRequest.of(0,
-                Constants.PAGE_SIZE), courseDTO.getId());
+        Page<CourseExperimentProjection> experiments = pageService.getCourseExperimentPage(courseDTO.getId(), 0);
         int lastExperimentPage = pageService.getLastCourseExperimentPage(courseDTO.getId());
         model.addAttribute("courseDTO", courseDTO);
         model.addAttribute("experiments", experiments);
@@ -664,8 +655,7 @@ public class CourseController {
         model.addAttribute("participantPage", 0);
 
         if (addParticipants) {
-            Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId,
-                    PageRequest.of(0, Constants.PAGE_SIZE));
+            Page<CourseParticipant> participants = pageService.getParticipantCoursePage(courseId, 0);
             model.addAttribute("participants", participants);
             model.addAttribute("lastParticipantPage", pageService.getLastParticipantCoursePage(courseId) - 1);
         } else {

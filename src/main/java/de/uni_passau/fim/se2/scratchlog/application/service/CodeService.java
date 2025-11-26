@@ -25,7 +25,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
-import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
@@ -37,10 +36,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -269,43 +264,6 @@ public class CodeService {
             );
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " when trying to download the xml files!", e);
-        }
-    }
-
-    /**
-     * Retrieves a page of {@link BlockEventProjection}s for the user with the given ID during the experiment with the
-     * given ID.
-     *
-     * @param userId The user ID.
-     * @param experimentId The experiment ID.
-     * @param pageable The pageable containing the page size and page number.
-     * @return The page of block event projections.
-     * @throws IllegalArgumentException if the user or experiment ids are invalid or the page size is invalid.
-     * @throws NotFoundException if no corresponding user or experiment could be found.
-     */
-    public Page<BlockEventProjection> getCodesForUser(final int userId, final int experimentId,
-                                                      final Pageable pageable) {
-        int pageSize = pageable.getPageSize();
-        int currentPage = pageable.getPageNumber();
-
-        if (pageSize != Constants.PAGE_SIZE) {
-            throw new IllegalArgumentException("Cannot return block event projection page with invalid page size of "
-                    + pageSize + "!");
-        }
-
-        User user = userRepository.getReferenceById(userId);
-        Experiment experiment = experimentRepository.getReferenceById(experimentId);
-
-        try {
-            return blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(user, experiment,
-                    PageRequest.of(currentPage, pageSize, Sort.by("date").ascending()));
-        } catch (EntityNotFoundException e) {
-            LOGGER.error(
-                "Could not find block event projections for user with id {} or experiment with id {}!",
-                userId, experimentId, e
-            );
-            throw new NotFoundException("Could not find block event projections for user with id " + userId
-                    + " or experiment with id " + experimentId + "!", e);
         }
     }
 

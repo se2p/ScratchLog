@@ -25,15 +25,19 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseParticipant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExperimentData;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
+import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseTableProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentTableProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.CourseExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.CourseParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.CourseRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentDataRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -53,83 +57,59 @@ import java.util.Optional;
 @Service
 public class PageService {
 
-    /**
-     * The log instance associated with this class for logging purposes.
-     */
     private static final Logger LOGGER = LoggerFactory.getLogger(PageService.class);
 
-    /**
-     * The experiment repository to use for database queries related to experiment data.
-     */
     private final ExperimentRepository experimentRepository;
 
-    /**
-     * The experiment data repository to use for database queries related to participant numbers.
-     */
     private final ExperimentDataRepository experimentDataRepository;
 
-    /**
-     * The participant repository to use for database queries participation data.
-     */
     private final ParticipantRepository participantRepository;
 
-    /**
-     * The course repository to use for database queries related to course data.
-     */
     private final CourseRepository courseRepository;
 
-    /**
-     * The course participant repository to use for database queries related to course participation.
-     */
     private final CourseParticipantRepository courseParticipantRepository;
 
-    /**
-     * The course experiment repository to use for database queries related to experiment being offered in a course.
-     */
     private final CourseExperimentRepository courseExperimentRepository;
 
-    /**
-     * Constructs a page service with the given dependencies.
-     *
-     * @param experimentRepository The {@link ExperimentRepository} to use.
-     * @param experimentDataRepository The {@link ExperimentDataRepository} to use.
-     * @param participantRepository The {@link ParticipantRepository} to use.
-     * @param courseRepository The {@link CourseRepository} to use.
-     * @param courseParticipantRepository The {@link CourseParticipantRepository} to use.
-     * @param courseExperimentRepository The {@link CourseExperimentRepository} to use.
-     */
+    private final UserRepository userRepository;
+
+    private final BlockEventRepository blockEventRepository;
+
     @Autowired
     public PageService(final ExperimentRepository experimentRepository,
                        final ExperimentDataRepository experimentDataRepository,
                        final ParticipantRepository participantRepository,
                        final CourseRepository courseRepository,
                        final CourseParticipantRepository courseParticipantRepository,
-                       final CourseExperimentRepository courseExperimentRepository) {
+                       final CourseExperimentRepository courseExperimentRepository,
+                       final UserRepository userRepository,
+                       final BlockEventRepository blockEventRepository) {
         this.experimentRepository = experimentRepository;
         this.experimentDataRepository = experimentDataRepository;
         this.participantRepository = participantRepository;
         this.courseRepository = courseRepository;
         this.courseParticipantRepository = courseParticipantRepository;
         this.courseExperimentRepository = courseExperimentRepository;
+        this.userRepository = userRepository;
+        this.blockEventRepository = blockEventRepository;
     }
 
     /**
-     * Returns a page of experiments corresponding to the parameters passed in the given pageable.
+     * Returns an experiment {@link Page} of the given page number.
+     * If {@code page} is < 0, returns the first page. If it's greater than the last page number, returns the last page.
      *
-     * @param pageable The pageable containing the page size and page number.
+     * @param page The page number to retrieve.
      * @return The experiment page.
      */
-    public Page<ExperimentTableProjection> getExperimentPage(final Pageable pageable) {
-        checkPageable(pageable);
-        int pageSize = pageable.getPageSize();
-        int currentPage = pageable.getPageNumber();
-        Page<ExperimentTableProjection> experiments = experimentRepository.findAllProjectedBy(
-                PageRequest.of(currentPage, pageSize, Sort.by("id").descending()));
+    public Page<ExperimentTableProjection> getExperimentPage(final int page) {
+        Pageable pageable = pageNumberToClampedPageRequest(page, getLastExperimentPage())
+            .withSort(Sort.by("id").descending());
+        Page<ExperimentTableProjection> experiments = experimentRepository.findAllProjectedBy(pageable);
 
         if (experiments.isEmpty()) {
             LOGGER.info(
                 "Could not find any experiments for the page with page size {}, current page: {} and offset {}!",
-                pageSize, currentPage, pageable.getOffset()
+                pageable.getPageSize(), pageable.getPageNumber(), pageable.getOffset()
             );
         }
 
@@ -137,16 +117,16 @@ public class PageService {
     }
 
     /**
-     * Returns a page of courses corresponding to the parameters passed in the given pageable.
+     * Returns a courses {@link Page} of the given page number.
+     * If {@code page} is < 0, returns the first page. If it's greater than the last page number, returns the last page.
      *
-     * @param pageable The {@link Pageable} containing the page size and page number.
+     * @param page The page number to retrieve.
      * @return The course page.
      */
-    public Page<CourseTableProjection> getCoursePage(final Pageable pageable) {
-        checkPageable(pageable);
-
-        Page<CourseTableProjection> courses = courseRepository.findAllProjectedBy(
-                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("id").descending()));
+    public Page<CourseTableProjection> getCoursePage(final int page) {
+        Pageable pageable = pageNumberToClampedPageRequest(page, getLastCoursePage())
+            .withSort(Sort.by("id").descending());
+        Page<CourseTableProjection> courses = courseRepository.findAllProjectedBy(pageable);
 
         if (courses.isEmpty()) {
             LOGGER.info(
@@ -159,17 +139,17 @@ public class PageService {
     }
 
     /**
-     * Returns a page of {@link CourseExperimentProjection}s containing information about the experiments that are part
-     * of this course.
+     * Returns the {@link Page} of {@link CourseExperimentProjection}s with the given page number.
+     * If {@code page} is < 0, returns the first page. If it's greater than the last page number, returns the last page.
      *
-     * @param pageable The {@link Pageable} containing the page size and page number.
+     * @param page The page number to retrieve.
      * @param courseId The id of the course.
      * @return The course experiment page.
-     * @throws IllegalArgumentException if the passed id is invalid.
      */
-    public Page<CourseExperimentProjection> getCourseExperimentPage(final Pageable pageable, final int courseId) {
-        checkPageable(pageable);
+    public Page<CourseExperimentProjection> getCourseExperimentPage(final int courseId, final int page) {
         Course course = courseRepository.getReferenceById(courseId);
+
+        Pageable pageable = pageNumberToClampedPageRequest(page, getLastCourseExperimentPage(courseId));
         Page<CourseExperimentProjection> experiments = courseExperimentRepository.findAllProjectedByCourse(pageable,
                 course);
 
@@ -184,50 +164,48 @@ public class PageService {
     }
 
     /**
-     * Returns a page of {@link ExperimentTableProjection}s in which the user with the given id is participating
-     * corresponding to the parameters passed in the given pageable.
+     * Returns the {@link Page} of {@link ExperimentTableProjection}s with the given pager number.
+     * If {@code page} is < 0, returns the first page. If it's greater than the last page number, returns the last page.
      *
-     * @param pageable The pageable containing the page size and page number.
+     * @param page the page number to retrieve.
      * @param userId The user id to search for.
      * @return The page of {@link ExperimentTableProjection}s.
-     * @throws IllegalArgumentException if the passed id is invalid.
      */
-    public Page<ExperimentTableProjection> getExperimentParticipantPage(final Pageable pageable, final int userId) {
-        checkPageable(pageable);
+    public Page<ExperimentTableProjection> getExperimentParticipantPage(final int userId, final int page) {
+        Pageable pageable = pageNumberToClampedPageRequest(page, getLastExperimentPageForUser(userId));
         return experimentRepository.findExperimentsByParticipant(userId, pageable);
     }
 
     /**
-     * Returns a page of {@link CourseTableProjection}s in which the user with the given id is participating
-     * corresponding to the parameters passed in the given pageable.
+     * Returns the {@link Page} of {@link CourseTableProjection}s with the given page number.
+     * If {@code page} is < 0, returns the first page. If it's greater than the last page number, returns the last page.
      *
-     * @param pageable The {@link Pageable} containing the page size and page number.
+     * @param page The page number to retrieve.
      * @param userId The user id to search for.
      * @return The page of {@link CourseTableProjection}s.
      * @throws IllegalArgumentException if the passed id is invalid.
      */
-    public Page<CourseTableProjection> getCourseParticipantPage(final Pageable pageable, final int userId) {
-        checkPageable(pageable);
+    public Page<CourseTableProjection> getCourseParticipantPage(final int userId, final int page) {
+        Pageable pageable = pageNumberToClampedPageRequest(page, getLastCoursePageForUser(userId));
         return courseRepository.findCoursesByParticipant(userId, pageable);
     }
 
     /**
-     * Retrieves a page of participants for the experiment with the given id.
+     * Retrieves a {@link Page} of participants for the experiment with the given id.
+     * If {@code page} is < 0, returns the first page. If it's greater than the last page number, returns the last page.
      *
      * @param id The experiment id.
-     * @param pageable The pageable containing the page size and page number.
+     * @param page The page number to retrieve.
      * @return The participant page.
-     * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding experiment entry could be found.
      */
-    public Page<Participant> getParticipantPage(final int id, final Pageable pageable) {
-        checkPageable(pageable);
-
+    public Page<Participant> getParticipantPage(final int id, final int page) {
         Experiment experiment = experimentRepository.getReferenceById(id);
 
         try {
-            return participantRepository.findAllByExperiment(experiment,
-                    PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("user").descending()));
+            Pageable pageable = pageNumberToClampedPageRequest(page, getLastParticipantPage(id))
+                .withSort(Sort.by("user").descending());
+            return participantRepository.findAllByExperiment(experiment, pageable);
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find experiment with id {} in the database!", id, e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
@@ -235,24 +213,53 @@ public class PageService {
     }
 
     /**
-     * Retrieves a page of {@link CourseParticipant}s for the course with the given id.
+     * Retrieves a {@link Page} of {@link CourseParticipant}s for the course with the given id.
+     * If {@code page} is < 0, returns the first page. If it's greater than the last page number, returns the last page.
      *
      * @param id The course id.
-     * @param pageable The pageable containing the page size and page number.
+     * @param page The page number to retrieve.
      * @return The course participant page.
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding course entry could be found.
      */
-    public Page<CourseParticipant> getParticipantCoursePage(final int id, final Pageable pageable) {
-        checkPageable(pageable);
+    public Page<CourseParticipant> getParticipantCoursePage(final int id, final int page) {
         Course course = courseRepository.getReferenceById(id);
 
         try {
-            return courseParticipantRepository.findAllByCourse(course, PageRequest.of(pageable.getPageNumber(),
-                    pageable.getPageSize(), Sort.by("added").descending()));
+            Pageable pageable = pageNumberToClampedPageRequest(page, getLastParticipantCoursePage(id))
+                .withSort(Sort.by("added").descending());
+            return courseParticipantRepository.findAllByCourse(course, pageable);
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find course with id {} in the database!", id, e);
             throw new NotFoundException("Could not find course with id " + id + " in the database!", e);
+        }
+    }
+
+    /**
+     * Retrieves a {@link Page} of {@link BlockEventProjection}s for the user with the given ID during the experiment
+     * with the given ID.
+     *
+     * @param userId The user ID.
+     * @param experimentId The experiment ID.
+     * @param page The page number to retrieve.
+     * @return The page of block event projections.
+     * @throws NotFoundException if no corresponding user or experiment could be found.
+     */
+    public Page<BlockEventProjection> getPaginatedCodesForUser(final int userId, final int experimentId,
+                                                               final int page) {
+        User user = userRepository.getReferenceById(userId);
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
+
+        try {
+            return blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(user, experiment,
+                PageRequest.of(page, Constants.PAGE_SIZE, Sort.by("date").ascending()));
+        } catch (EntityNotFoundException e) {
+            LOGGER.error(
+                "Could not find block event projections for user with id {} or experiment with id {}!",
+                userId, experimentId, e
+            );
+            throw new NotFoundException("Could not find block event projections for user with id " + userId
+                + " or experiment with id " + experimentId + "!", e);
         }
     }
 
@@ -261,9 +268,8 @@ public class PageService {
      *
      * @return The last page value.
      */
-    public int computeLastExperimentPage() {
-        int rows = countExperimentRows();
-        return computeLastPage(rows) + 1;
+    public int getLastExperimentPage() {
+        return computeLastPage((int) experimentRepository.count()) + 1;
     }
 
     /**
@@ -271,9 +277,8 @@ public class PageService {
      *
      * @return The last page value.
      */
-    public int computeLastCoursePage() {
-        int rows = countCourseRows();
-        return computeLastPage(rows) + 1;
+    public int getLastCoursePage() {
+        return computeLastPage((int) courseRepository.count()) + 1;
     }
 
     /**
@@ -281,7 +286,6 @@ public class PageService {
      *
      * @param courseId The id of the course.
      * @return The last page value.
-     * @throws IllegalArgumentException if the passed id is invalid.
      */
     public int getLastCourseExperimentPage(final int courseId) {
         int rows = courseExperimentRepository.getCourseExperimentRowCount(courseId);
@@ -293,9 +297,8 @@ public class PageService {
      *
      * @param userId The user id of the participant.
      * @return The last page value.
-     * @throws IllegalArgumentException if the passed id is invalid.
      */
-    public int getLastExperimentPage(final int userId) {
+    public int getLastExperimentPageForUser(final int userId) {
         int rows = experimentRepository.getParticipantPageCount(userId);
         return computeLastPage(rows) + 1;
     }
@@ -305,9 +308,8 @@ public class PageService {
      *
      * @param userId The user id of the participant.
      * @return The last page value.
-     * @throws IllegalArgumentException if the passed id is invalid.
      */
-    public int getLastCoursePage(final int userId) {
+    public int getLastCoursePageForUser(final int userId) {
         int rows = courseRepository.getParticipantPageCount(userId);
         return computeLastPage(rows) + 1;
     }
@@ -334,7 +336,6 @@ public class PageService {
      *
      * @param id The id of the course.
      * @return The last page value.
-     * @throws IllegalArgumentException if the passed id is invalid.
      */
     public int getLastParticipantCoursePage(final int id) {
         int rows = courseParticipantRepository.getCourseParticipantRowCount(id);
@@ -342,57 +343,14 @@ public class PageService {
     }
 
     /**
-     * Verifies, that the given pageable is not null and that its page size is set to the number defined in the
-     * {@link Constants} class.
+     * Clamps the given page number between 0 and {@code lastPageNumber} and returns it as a {@link PageRequest}.
      *
-     * @param pageable The {@link Pageable} to check
-     * @throws IllegalArgumentException if the passed {@link Pageable} is invalid.
+     * @param pageNumber The page number to clamp.
+     * @param lastPageNumber The last possible page number which will be used as the maximum for clamping.
+     * @return A page request with the clamped page number and a page size of {@code Constants.PAGE_SIZE}.
      */
-    private void checkPageable(final Pageable pageable) {
-        if (pageable == null) {
-            throw new IllegalArgumentException("Cannot return a page with pageable null!");
-        } else if (pageable.getPageSize() != Constants.PAGE_SIZE) {
-            throw new IllegalArgumentException("Cannot return a page with invalid page size of "
-                    + pageable.getPageSize() + "!");
-        }
-    }
-
-    /**
-     * Returns the number of rows currently present in the experiment table. If the number of rows is too big to be
-     * represented by an int value, the maximum integer is returned instead.
-     *
-     * @return The row count value.
-     */
-    private int countExperimentRows() {
-        long rows = experimentRepository.count();
-        return checkRowCount(rows);
-    }
-
-    /**
-     * Returns the number of rows currently present in the course table. If the number of rows is too big to be
-     * represented by an int value, the maximum integer is returned instead.
-     *
-     * @return The row count value.
-     */
-    private int countCourseRows() {
-        long rows = courseRepository.count();
-        return checkRowCount(rows);
-    }
-
-    /**
-     * Checks, whether the given number of rows is too big to be represented by an integer. If this is the case, the
-     * maximum integer value is returned instead.
-     *
-     * @param rows The number to be checked.
-     * @return The number cast to an integer.
-     */
-    private int checkRowCount(final long rows) {
-        if (rows > (long) Integer.MAX_VALUE) {
-            LOGGER.error("Can't return the correct row count as number of rows is too big to be cast to an int!");
-            return Integer.MAX_VALUE;
-        }
-
-        return (int) rows;
+    private PageRequest pageNumberToClampedPageRequest(final int pageNumber, final int lastPageNumber) {
+        return PageRequest.of(Math.clamp(pageNumber, 0, lastPageNumber), Constants.PAGE_SIZE);
     }
 
     /**

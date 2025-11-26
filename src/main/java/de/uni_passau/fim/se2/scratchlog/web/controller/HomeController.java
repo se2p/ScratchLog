@@ -28,18 +28,15 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseTableProjec
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentTableProjection;
 import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.InvalidIdException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.util.Pair;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,6 +44,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.ResourceBundle;
@@ -57,34 +55,16 @@ import java.util.ResourceBundle;
 @Controller
 public class HomeController {
 
-    /**
-     * The log instance associated with this class for logging purposes.
-     */
     private static final Logger LOGGER = LoggerFactory.getLogger(HomeController.class);
 
-    /**
-     * The global application config.
-     */
     private final ApplicationProperties applicationProperties;
 
-    /**
-     * The experiment service to use for retrieving experiment information.
-     */
     private final ExperimentService experimentService;
 
-    /**
-     * The page service to use for retrieving pageable tables.
-     */
     private final PageService pageService;
 
-    /**
-     * The user service to use for retrieving user information.
-     */
     private final UserService userService;
 
-    /**
-     * The participant service to use for participant management.
-     */
     private final ParticipantService participantService;
 
     /**
@@ -134,7 +114,7 @@ public class HomeController {
 
             try {
                 UserDTO userDTO = userService.getUser(authentication.getName());
-                getIndexPageInfo(userDTO.getId(), httpServletRequest.isUserInRole(Constants.ROLE_ADMIN), model);
+                getInitialIndexPageInfo(userDTO.getId(), httpServletRequest.isUserInRole(Constants.ROLE_ADMIN), model);
             } catch (NotFoundException e) {
                 return Constants.ERROR;
             }
@@ -156,17 +136,22 @@ public class HomeController {
     @Secured(Constants.ROLE_PARTICIPANT)
     public ModelAndView getCoursePage(@RequestParam(PAGE) final int page,
                                       final HttpServletRequest httpServletRequest) {
-        validatePageNumber(page);
-        Pair<Integer, Integer> lastPageInformation = getLastPageCourses(httpServletRequest);
-
-        if (lastPageInformation == null) {
-            throw new InvalidIdException("page", page);
+        UserDTO userDTO = fetchUserInformation();
+        if (userDTO == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cannot get page for unauthenticated user.");
         }
-        IdValidator.validatePageNumberElseThrow(page, lastPageInformation.getFirst());
 
-        Page<CourseTableProjection> projections = getCoursePage(httpServletRequest, page,
-                lastPageInformation.getSecond());
-        return getCourseModelView(projections, page, lastPageInformation.getFirst() - 1);
+        int lastPage;
+        Page<CourseTableProjection> projections;
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+            lastPage = pageService.getLastCoursePage();
+            projections = pageService.getCoursePage(page);
+        } else {
+            lastPage = pageService.getLastCoursePageForUser(userDTO.getId());
+            projections = pageService.getCourseParticipantPage(userDTO.getId(), page);
+        }
+
+        return getCourseModelView(projections, page, lastPage - 1);
     }
 
     /**
@@ -182,17 +167,22 @@ public class HomeController {
     @Secured(Constants.ROLE_PARTICIPANT)
     public ModelAndView getExperimentPage(@RequestParam(PAGE) final int page,
                                           final HttpServletRequest httpServletRequest) {
-        validatePageNumber(page);
-        Pair<Integer, Integer> lastPageInformation = getLastPageExperiments(httpServletRequest);
-
-        if (lastPageInformation == null) {
-            throw new InvalidIdException("page", page);
+        UserDTO userDTO = fetchUserInformation();
+        if (userDTO == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cannot get page for unauthenticated user.");
         }
-        IdValidator.validatePageNumberElseThrow(page, lastPageInformation.getFirst());
 
-        Page<ExperimentTableProjection> projections = getExperimentPage(httpServletRequest, page,
-                lastPageInformation.getSecond());
-        return getExperimentModelView(projections, page, lastPageInformation.getFirst() - 1);
+        int lastPage;
+        Page<ExperimentTableProjection> projections;
+        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
+            lastPage = pageService.getLastExperimentPage();
+            projections = pageService.getExperimentPage(page);
+        } else {
+            lastPage = pageService.getLastExperimentPageForUser(userDTO.getId());
+            projections = pageService.getExperimentParticipantPage(userDTO.getId(), page);
+        }
+
+        return getExperimentModelView(projections, page, lastPage - 1);
     }
 
     /**
@@ -254,25 +244,24 @@ public class HomeController {
 
 
     /**
-     * Retrieves the experiment and course pages to be displayed for the given user. If the user is administrator,
-     * information about all courses and experiments is retrieved. If the user is a participant, only information about
-     * courses and experiments the user is participating in is retrieved.
+     * Retrieves the experiment and course pages to be displayed for the given user on initial page load. If the user is
+     * administrator, information about all courses and experiments is retrieved. If the user is a participant, only
+     * information about courses and experiments the user is participating in is retrieved.
      *
      * @param userId The id of the user.
      * @param isAdmin Whether the user is an administrator or not.
      * @param model The model used to store the information.
      */
-    private void getIndexPageInfo(final int userId, final boolean isAdmin, final Model model) {
+    private void getInitialIndexPageInfo(final int userId, final boolean isAdmin, final Model model) {
         Page<ExperimentTableProjection> experimentPage;
         Page<CourseTableProjection> coursePage;
 
         if (isAdmin) {
-            experimentPage = pageService.getExperimentPage(PageRequest.of(0, Constants.PAGE_SIZE));
-            coursePage = pageService.getCoursePage(PageRequest.of(0, Constants.PAGE_SIZE));
+            experimentPage = pageService.getExperimentPage(0);
+            coursePage = pageService.getCoursePage(0);
         } else {
-            experimentPage = pageService.getExperimentParticipantPage(PageRequest.of(0, Constants.PAGE_SIZE),
-                    userId);
-            coursePage = pageService.getCourseParticipantPage(PageRequest.of(0, Constants.PAGE_SIZE), userId);
+            experimentPage = pageService.getExperimentParticipantPage(userId, 0);
+            coursePage = pageService.getCourseParticipantPage(userId, 0);
         }
 
         int lastExperimentPage = experimentPage.getTotalPages();
@@ -302,84 +291,6 @@ public class HomeController {
         model.addAttribute("coursePage", currentCoursePage);
         model.addAttribute("lastExperimentPage", lastExperimentPage);
         model.addAttribute("lastCoursePage", lastCoursePage);
-    }
-
-    /**
-     * Checks that the page number is valid.
-     *
-     * @param page The current page number represented as a string.
-     */
-    private void validatePageNumber(final int page) {
-        if (page <= -1) {
-            throw new InvalidIdException("page", page);
-        }
-    }
-
-    /**
-     * Retrieves the number of the last experiment page from the database along with the id of the current user, if the
-     * user is not an admin. If no corresponding user data could be found {@code null} is returned instead.
-     *
-     * @param httpServletRequest The {@link HttpServletRequest} containing information on the user's role.
-     * @return A {@link Pair} containing the last page number and potentially the user id.
-     */
-    private Pair<Integer, Integer> getLastPageExperiments(final HttpServletRequest httpServletRequest) {
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            return Pair.of(pageService.computeLastExperimentPage(), 0);
-        } else {
-            UserDTO userDTO = fetchUserInformation();
-            return userDTO == null ? null : Pair.of(pageService.getLastExperimentPage(userDTO.getId()),
-                    userDTO.getId());
-        }
-    }
-
-    /**
-     * Retrieves the number of the last course page from the database along with the id of the current user, if the
-     * user is not an admin. If no corresponding user data could be found {@code null} is returned instead.
-     *
-     * @param httpServletRequest The {@link HttpServletRequest} containing information on the user's role.
-     * @return A {@link Pair} containing the last page number and potentially the user id.
-     */
-    private Pair<Integer, Integer> getLastPageCourses(final HttpServletRequest httpServletRequest) {
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            return Pair.of(pageService.computeLastCoursePage(), 0);
-        } else {
-            UserDTO userDTO = fetchUserInformation();
-            return userDTO == null ? null : Pair.of(pageService.getLastCoursePage(userDTO.getId()), userDTO.getId());
-        }
-    }
-
-    /**
-     * Retrieves the requested experiment page from the database depending on the current user's role.
-     *
-     * @param httpServletRequest The {@link HttpServletRequest} containing information on the user's role.
-     * @param page The number of the page to be retrieved.
-     * @param userId The user id to be used if the current user is not an admin.
-     * @return The {@link Page} containing the experiment information.
-     */
-    private Page<ExperimentTableProjection> getExperimentPage(final HttpServletRequest httpServletRequest,
-                                                              final int page, final int userId) {
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            return pageService.getExperimentPage(PageRequest.of(page, Constants.PAGE_SIZE));
-        } else {
-            return pageService.getExperimentParticipantPage(PageRequest.of(page, Constants.PAGE_SIZE), userId);
-        }
-    }
-
-    /**
-     * Retrieves the requested course page from the database depending on the current user's role.
-     *
-     * @param httpServletRequest The {@link HttpServletRequest} containing information on the user's role.
-     * @param page The number of the page to be retrieved.
-     * @param userId The user id to be used if the current user is not an admin.
-     * @return The {@link Page} containing the course information.
-     */
-    private Page<CourseTableProjection> getCoursePage(final HttpServletRequest httpServletRequest, final int page,
-                                                      final int userId) {
-        if (httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
-            return pageService.getCoursePage(PageRequest.of(page, Constants.PAGE_SIZE));
-        } else {
-            return pageService.getCourseParticipantPage(PageRequest.of(page, Constants.PAGE_SIZE), userId);
-        }
     }
 
     /**

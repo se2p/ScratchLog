@@ -33,7 +33,6 @@ import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.MarkdownHandler;
-import de.uni_passau.fim.se2.scratchlog.web.error_handling.IdValidator;
 import de.uni_passau.fim.se2.scratchlog.util.Secrets;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
@@ -49,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -515,11 +513,10 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public String getPage(@RequestParam(ID) final int experimentId, @RequestParam(PAGE) final int page,
                           final Model model) {
-        IdValidator.validatePageNumberElseThrow(page);
-
         try {
             ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            return addModelInfo(page, experimentDTO, model) ? EXPERIMENT : Constants.ERROR;
+            addModelInfo(page, experimentDTO, model);
+            return EXPERIMENT;
         } catch (NotFoundException e) {
             return Constants.ERROR;
         }
@@ -747,22 +744,15 @@ public class ExperimentController {
      * @param page The number of the current participant page to be retrieved.
      * @param experimentDTO The current experiment dto.
      * @param model The {@link Model} used to save the information.
-     * @return {@code true}, if the current page number is lower than the last page number, or {@code false} otherwise.
      */
-    private boolean addModelInfo(final int page, final ExperimentDTO experimentDTO, final Model model) {
+    private void addModelInfo(final int page, final ExperimentDTO experimentDTO, final Model model) {
         int last = pageService.getLastParticipantPage(experimentDTO.getId());
+        Page<Participant> participants = pageService.getParticipantPage(experimentDTO.getId(), page);
 
-        if (page > last) {
-            return false;
-        }
-
-        Page<Participant> participants = pageService.getParticipantPage(experimentDTO.getId(),
-                PageRequest.of(page, Constants.PAGE_SIZE));
         model.addAttribute(PAGE, page);
         model.addAttribute("lastPage", last);
         model.addAttribute("participants", participants);
         addExperimentInfo(experimentDTO, model);
-        return true;
     }
 
     /**

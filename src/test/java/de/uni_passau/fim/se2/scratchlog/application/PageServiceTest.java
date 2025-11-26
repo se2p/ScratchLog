@@ -27,16 +27,21 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExperimentData;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
+import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseTableProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentTableProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.CourseExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.CourseParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.CourseRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentDataRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
+import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,23 +91,34 @@ public class PageServiceTest {
     @Mock
     private CourseExperimentRepository courseExperimentRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private BlockEventRepository blockEventRepository;
+
     private static final int ID = 1;
     private final ExperimentData experimentData = new ExperimentData(ID, 5, 3, 2);
     private final Course course = new Course(ID, "My course", "Description", "no", false, LocalDateTime.now());
-    private final PageRequest pageRequest = PageRequest.of(0, Constants.PAGE_SIZE);
+    private final int pageNumber = 0;
+    private final PageRequest pageRequest = PageRequest.of(pageNumber, Constants.PAGE_SIZE);
     private Page<ExperimentTableProjection> experimentPage;
     private Page<CourseTableProjection> coursePage;
     private Page<CourseExperimentProjection> courseExperimentPage;
     private Page<CourseParticipant> courseParticipantPage;
     private final List<Participant> participantList = getParticipants(5);
     private final Page<Participant> participants = new PageImpl<>(participantList);
+    private final User user = new User("participant", "email", Role.PARTICIPANT, Language.GERMAN, "password", "secret");
+    private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
+        false, "scratch");
+    private final Page<BlockEventProjection> blockEventProjections = new PageImpl<>(getBlockEventProjections(5));
 
     @Test
     public void testGetExperimentPage() {
         List<ExperimentTableProjection> experiments = getExperimentProjections(5);
         experimentPage = new PageImpl<>(experiments);
         when(experimentRepository.findAllProjectedBy(any(PageRequest.class))).thenReturn(experimentPage);
-        Page<ExperimentTableProjection> getPage = pageService.getExperimentPage(pageRequest);
+        Page<ExperimentTableProjection> getPage = pageService.getExperimentPage(pageNumber);
         assertAll(
                 () -> assertEquals(experimentPage.getTotalElements(), getPage.getTotalElements()),
                 () -> assertEquals(experimentPage.stream().findFirst(), getPage.stream().findFirst()),
@@ -115,34 +131,18 @@ public class PageServiceTest {
     public void testGetExperimentPageEmpty() {
         experimentPage = new PageImpl<>(new ArrayList<>());
         when(experimentRepository.findAllProjectedBy(any(PageRequest.class))).thenReturn(experimentPage);
-        Page<ExperimentTableProjection> getPage = pageService.getExperimentPage(pageRequest);
+        Page<ExperimentTableProjection> getPage = pageService.getExperimentPage(pageNumber);
         assertTrue(getPage.isEmpty());
         verify(experimentRepository).findAllProjectedBy(any(PageRequest.class));
     }
 
-    @Test
-    public void testGetExperimentPageWrongPageSize() {
-        PageRequest wrongPageSize = PageRequest.of(0, 20);
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getExperimentPage(wrongPageSize)
-        );
-        verify(experimentRepository, never()).findAllProjectedBy(any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentPagePageableNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getExperimentPage(null)
-        );
-        verify(experimentRepository, never()).findAllProjectedBy(any(PageRequest.class));
-    }
 
     @Test
     public void testGetCoursePage() {
         List<CourseTableProjection> courses = getCourseProjections(3);
         coursePage = new PageImpl<>(courses);
         when(courseRepository.findAllProjectedBy(any(PageRequest.class))).thenReturn(coursePage);
-        Page<CourseTableProjection> getPage = pageService.getCoursePage(pageRequest);
+        Page<CourseTableProjection> getPage = pageService.getCoursePage(pageNumber);
         assertAll(
                 () -> assertEquals(coursePage.getTotalElements(), getPage.getTotalElements()),
                 () -> assertEquals(coursePage.stream().findFirst(), getPage.stream().findFirst()),
@@ -151,28 +151,13 @@ public class PageServiceTest {
         verify(courseRepository).findAllProjectedBy(any(PageRequest.class));
     }
 
-    @Test
-    public void testGetCoursePageEmpty() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getCoursePage(null)
-        );
-        verify(courseRepository, never()).findAllProjectedBy(any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetCoursePageInvalidPageable() {
-        coursePage = new PageImpl<>(new ArrayList<>());
-        when(courseRepository.findAllProjectedBy(any(PageRequest.class))).thenReturn(coursePage);
-        assertTrue(pageService.getCoursePage(pageRequest).isEmpty());
-        verify(courseRepository).findAllProjectedBy(any(PageRequest.class));
-    }
 
     @Test
     public void testGetCourseExperimentPage() {
         courseExperimentPage = new PageImpl<>(getCourseExperiments(2));
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(courseExperimentRepository.findAllProjectedByCourse(pageRequest, course)).thenReturn(courseExperimentPage);
-        Page<CourseExperimentProjection> getPage = pageService.getCourseExperimentPage(pageRequest, ID);
+        Page<CourseExperimentProjection> getPage = pageService.getCourseExperimentPage(ID, pageNumber);
         assertAll(
                 () -> assertEquals(courseExperimentPage.getTotalElements(), getPage.getTotalElements()),
                 () -> assertEquals(courseExperimentPage.stream().findFirst(), getPage.stream().findFirst()),
@@ -187,7 +172,7 @@ public class PageServiceTest {
         courseExperimentPage = new PageImpl<>(new ArrayList<>());
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(courseExperimentRepository.findAllProjectedByCourse(pageRequest, course)).thenReturn(courseExperimentPage);
-        assertTrue(pageService.getCourseExperimentPage(pageRequest, ID).isEmpty());
+        assertTrue(pageService.getCourseExperimentPage(ID, pageNumber).isEmpty());
         verify(courseRepository).getReferenceById(ID);
         verify(courseExperimentRepository).findAllProjectedByCourse(pageRequest, course);
     }
@@ -198,7 +183,7 @@ public class PageServiceTest {
         experimentPage = new PageImpl<>(experiments);
         when(experimentRepository.findExperimentsByParticipant(anyInt(),
                 any(PageRequest.class))).thenReturn(experimentPage);
-        Page<ExperimentTableProjection> getPage = pageService.getExperimentParticipantPage(pageRequest, ID);
+        Page<ExperimentTableProjection> getPage = pageService.getExperimentParticipantPage(pageNumber, ID);
         assertAll(
                 () -> assertEquals(experimentPage.getTotalElements(), getPage.getTotalElements()),
                 () -> assertEquals(experimentPage.stream().findFirst(), getPage.stream().findFirst()),
@@ -208,28 +193,11 @@ public class PageServiceTest {
     }
 
     @Test
-    public void testGetExperimentParticipantPageWrongPageSize() {
-        PageRequest wrongPageSize = PageRequest.of(0, 11);
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getExperimentParticipantPage(wrongPageSize, ID)
-        );
-        verify(experimentRepository, never()).findExperimentsByParticipant(anyInt(), any(PageRequest.class));
-    }
-
-    @Test
-    public void testGetExperimentParticipantPagePageableNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getExperimentParticipantPage(null, ID)
-        );
-        verify(experimentRepository, never()).findExperimentsByParticipant(anyInt(), any(PageRequest.class));
-    }
-
-    @Test
     public void testGetCourseParticipantPage() {
         List<CourseTableProjection> courses = getCourseProjections(1);
         coursePage = new PageImpl<>(courses);
         when(courseRepository.findCoursesByParticipant(ID, pageRequest)).thenReturn(coursePage);
-        Page<CourseTableProjection> getPage = pageService.getCourseParticipantPage(pageRequest, ID);
+        Page<CourseTableProjection> getPage = pageService.getCourseParticipantPage(ID, pageNumber);
         assertAll(
                 () -> assertEquals(coursePage.getTotalElements(), getPage.getTotalElements()),
                 () -> assertEquals(coursePage.stream().findFirst(), getPage.stream().findFirst()),
@@ -239,18 +207,9 @@ public class PageServiceTest {
     }
 
     @Test
-    public void testGetCourseParticipantPageInvalidPageable() {
-        PageRequest wrongPageSize = PageRequest.of(0, 5);
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getCourseParticipantPage(wrongPageSize, ID)
-        );
-        verify(courseRepository, never()).findCoursesByParticipant(anyInt(), any(PageRequest.class));
-    }
-
-    @Test
     public void testGetParticipantPage() {
         when(participantRepository.findAllByExperiment(any(), any(PageRequest.class))).thenReturn(participants);
-        assertEquals(participants, pageService.getParticipantPage(ID, pageRequest));
+        assertEquals(participants, pageService.getParticipantPage(ID, pageNumber));
         verify(participantRepository).findAllByExperiment(any(), any(PageRequest.class));
         verify(experimentRepository).getReferenceById(ID);
     }
@@ -260,20 +219,10 @@ public class PageServiceTest {
         when(participantRepository.findAllByExperiment(any(), any(PageRequest.class)))
                 .thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
-                () -> pageService.getParticipantPage(ID, pageRequest)
+                () -> pageService.getParticipantPage(ID, pageNumber)
         );
         verify(participantRepository).findAllByExperiment(any(), any(PageRequest.class));
         verify(experimentRepository).getReferenceById(ID);
-    }
-
-    @Test
-    public void testGetParticipantPageInvalidPageSize() {
-        PageRequest invalidRequest = PageRequest.of(0, Constants.PAGE_SIZE + 1);
-        assertThrows(IllegalArgumentException.class,
-                () -> pageService.getParticipantPage(ID, invalidRequest)
-        );
-        verify(participantRepository, never()).findAllByExperiment(any(), any(PageRequest.class));
-        verify(experimentRepository, never()).getReferenceById(ID);
     }
 
     @Test
@@ -283,7 +232,7 @@ public class PageServiceTest {
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(courseParticipantRepository.findAllByCourse(any(),
                 any(PageRequest.class))).thenReturn(courseParticipantPage);
-        assertEquals(courseParticipantPage, pageService.getParticipantCoursePage(ID, pageRequest));
+        assertEquals(courseParticipantPage, pageService.getParticipantCoursePage(ID, pageNumber));
         verify(courseRepository).getReferenceById(ID);
         verify(courseParticipantRepository).findAllByCourse(any(), any(PageRequest.class));
     }
@@ -293,44 +242,37 @@ public class PageServiceTest {
         when(courseParticipantRepository.findAllByCourse(any(),
                 any(PageRequest.class))).thenThrow(EntityNotFoundException.class);
         assertThrows(NotFoundException.class,
-                () -> pageService.getParticipantCoursePage(ID, pageRequest)
+                () -> pageService.getParticipantCoursePage(ID, pageNumber)
         );
         verify(courseRepository).getReferenceById(ID);
         verify(courseParticipantRepository).findAllByCourse(any(), any(PageRequest.class));
     }
 
     @Test
-    public void testComputeLastExperimentPage() {
+    public void testGetLastExperimentPage() {
         when(experimentRepository.count()).thenReturn((long) Constants.PAGE_SIZE);
-        assertEquals(1, pageService.computeLastExperimentPage());
+        assertEquals(1, pageService.getLastExperimentPage());
         verify(experimentRepository).count();
     }
 
     @Test
-    public void testComputeLastExperimentPage5() {
+    public void testGetLastExperimentPage5() {
         when(experimentRepository.count()).thenReturn((long) 50);
-        assertEquals(5, pageService.computeLastExperimentPage());
+        assertEquals(5, pageService.getLastExperimentPage());
         verify(experimentRepository).count();
     }
 
     @Test
-    public void testComputeLastExperimentPage6() {
+    public void testGetLastExperimentPage6() {
         when(experimentRepository.count()).thenReturn((long) 51);
-        assertEquals(6, pageService.computeLastExperimentPage());
+        assertEquals(6, pageService.getLastExperimentPage());
         verify(experimentRepository).count();
     }
 
     @Test
-    public void testComputeLastExperimentPageTooManyRows() {
-        when(experimentRepository.count()).thenReturn(Long.MAX_VALUE);
-        assertEquals(214748365, pageService.computeLastExperimentPage());
-        verify(experimentRepository).count();
-    }
-
-    @Test
-    public void testComputeLastCoursePage() {
+    public void testGetLastCoursePage() {
         when(courseRepository.count()).thenReturn((long) Constants.PAGE_SIZE);
-        assertEquals(1, pageService.computeLastCoursePage());
+        assertEquals(1, pageService.getLastCoursePage());
         verify(courseRepository).count();
     }
 
@@ -342,16 +284,16 @@ public class PageServiceTest {
     }
 
     @Test
-    public void testGetLastExperimentPage() {
+    public void testGetLastExperimentPageForUser() {
         when(experimentRepository.getParticipantPageCount(ID)).thenReturn(Constants.PAGE_SIZE);
-        assertEquals(1, pageService.getLastExperimentPage(ID));
+        assertEquals(1, pageService.getLastExperimentPageForUser(ID));
         verify(experimentRepository).getParticipantPageCount(ID);
     }
 
     @Test
-    public void testGetLastCoursePage() {
+    public void testGetLastCoursePageForUser() {
         when(courseRepository.getParticipantPageCount(ID)).thenReturn(Constants.PAGE_SIZE);
-        assertEquals(1, pageService.getLastCoursePage(ID));
+        assertEquals(1, pageService.getLastCoursePageForUser(ID));
         verify(courseRepository).getParticipantPageCount(ID);
     }
 
@@ -389,6 +331,37 @@ public class PageServiceTest {
         when(courseParticipantRepository.getCourseParticipantRowCount(ID)).thenReturn(Constants.PAGE_SIZE + 1);
         assertEquals(2, pageService.getLastParticipantCoursePage(ID));
         verify(courseParticipantRepository).getCourseParticipantRowCount(ID);
+    }
+
+    @Test
+    public void testGetCodesForUser() {
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
+        when(blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
+            any(PageRequest.class))).thenReturn(blockEventProjections);
+        Page<BlockEventProjection> page = pageService.getPaginatedCodesForUser(ID, ID, pageNumber);
+        assertAll(
+            () -> assertEquals(blockEventProjections.getTotalElements(), page.getTotalElements()),
+            () -> assertEquals(blockEventProjections.stream().findFirst(), page.stream().findFirst()),
+            () -> assertEquals(blockEventProjections.getSize(), page.getSize())
+        );
+        verify(userRepository).getReferenceById(ID);
+        verify(experimentRepository).getReferenceById(ID);
+        verify(blockEventRepository).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(), any(PageRequest.class));
+    }
+
+    @Test
+    public void testGetCodesForUserEntityNotFound() {
+        when(userRepository.getReferenceById(ID)).thenReturn(user);
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
+        when(blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(any(), any(),
+            any(PageRequest.class))).thenThrow(EntityNotFoundException.class);
+        assertThrows(NotFoundException.class,
+            () -> pageService.getPaginatedCodesForUser(ID, ID, pageNumber)
+        );
+        verify(userRepository).getReferenceById(ID);
+        verify(experimentRepository).getReferenceById(ID);
+        verify(blockEventRepository).findAllByUserAndExperimentAndXmlIsNotNull(any(), any(), any(PageRequest.class));
     }
 
     private List<ExperimentTableProjection> getExperimentProjections(int number) {
@@ -506,4 +479,37 @@ public class PageServiceTest {
         return participants;
     }
 
+    private List<BlockEventProjection> getBlockEventProjections(int number) {
+        List<BlockEventProjection> projections = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            final int id = i;
+            projections.add(new BlockEventProjection() {
+                @Override
+                public Integer getId() {
+                    return id;
+                }
+
+                @Override
+                public String getXml() {
+                    return "xml" + id;
+                }
+
+                @Override
+                public String getCode() {
+                    return "code" + id;
+                }
+
+                @Override
+                public LocalDateTime getDate() {
+                    return null;
+                }
+
+                @Override
+                public String getSprite() {
+                    return "sprite";
+                }
+            });
+        }
+        return projections;
+    }
 }
