@@ -109,7 +109,7 @@ public class ExperimentService {
      * @throws IllegalArgumentException if the experiment title, description or GUI URL are null or blank.
      */
     @Transactional
-    public ExperimentDTO saveExperiment(final ExperimentDTO experimentDTO) {
+    public ExperimentDTO updateExperiment(final ExperimentDTO experimentDTO) {
         if (experimentDTO.getTitle() == null || experimentDTO.getTitle().trim().isBlank()) {
             throw new IllegalArgumentException("Cannot save experiment with empty title!");
         } else if (experimentDTO.getDescription() == null || experimentDTO.getDescription().trim().isBlank()) {
@@ -169,8 +169,7 @@ public class ExperimentService {
             .orElseThrow(() -> new NotFoundException(
                 "Could not update the status for non-existent experiment with id " + id + "!"));
         experiment.setActive(status);
-        Experiment saved = experimentRepository.save(experiment);
-        return createExperimentDTO(saved);
+        return createExperimentDTO(experiment);
     }
 
     /**

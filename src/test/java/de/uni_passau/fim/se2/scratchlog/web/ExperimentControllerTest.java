@@ -392,12 +392,12 @@ public class ExperimentControllerTest extends AbstractControllerTest {
 
     @Test
     public void testEditExperiment() {
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(REDIRECT_EXPERIMENT + ID, returnString);
         verify(bindingResult, never()).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService).saveExperiment(experimentDTO);
+        verify(experimentService).updateExperiment(experimentDTO);
     }
 
     @Test
@@ -405,13 +405,13 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         experimentDTO.setCourse(ID);
         experimentDTO.setCourseExperiment(true);
         when(courseService.existsActiveCourse(ID)).thenReturn(true);
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.editExperiment(experimentDTO,
                 bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(courseService).existsActiveCourse(ID);
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService).saveExperiment(experimentDTO);
+        verify(experimentService).updateExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
         verify(participantService).addAllCourseParticipantsToExperiment(ID, ID);
         verify(experimentService, never()).deleteExperiment(anyInt());
@@ -422,14 +422,14 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         experimentDTO.setCourse(ID);
         experimentDTO.setCourseExperiment(true);
         when(courseService.existsActiveCourse(ID)).thenReturn(true);
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         doThrow(NotFoundException.class).when(participantService).addAllCourseParticipantsToExperiment(ID, ID);
         assertEquals(Constants.ERROR, experimentController.editExperiment(experimentDTO,
                 bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(courseService).existsActiveCourse(ID);
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService).saveExperiment(experimentDTO);
+        verify(experimentService).updateExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
         verify(participantService).addAllCourseParticipantsToExperiment(ID, ID);
         verify(experimentService).deleteExperiment(ID);
@@ -443,19 +443,19 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService, never()).saveExperiment(any());
+        verify(experimentService, never()).updateExperiment(any());
     }
 
     @Test
     public void testEditExperimentCreate() {
         experimentDTO.setId(null);
         experimentDTO.setPostscript(BLANK);
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(REDIRECT_EXPERIMENT + experimentDTO.getId(), returnString);
         verify(bindingResult, never()).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle());
-        verify(experimentService).saveExperiment(experimentDTO);
+        verify(experimentService).updateExperiment(experimentDTO);
     }
 
     @Test
@@ -467,7 +467,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle());
-        verify(experimentService, never()).saveExperiment(any());
+        verify(experimentService, never()).updateExperiment(any());
     }
 
     @Test
@@ -479,7 +479,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService, never()).saveExperiment(any());
+        verify(experimentService, never()).updateExperiment(any());
     }
 
     @Test
@@ -491,7 +491,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult, times(2)).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService, never()).saveExperiment(any());
+        verify(experimentService, never()).updateExperiment(any());
     }
 
     @Test
@@ -503,7 +503,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult, times(2)).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService, never()).saveExperiment(any());
+        verify(experimentService, never()).updateExperiment(any());
     }
 
     @Test
@@ -514,7 +514,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService, never()).saveExperiment(any());
+        verify(experimentService, never()).updateExperiment(any());
     }
 
     @Test
@@ -524,7 +524,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(EXPERIMENT_EDIT, experimentController.editExperiment(experimentDTO, bindingResult));
         verify(bindingResult).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService, never()).saveExperiment(any());
+        verify(experimentService, never()).updateExperiment(any());
     }
 
     @Test
@@ -534,7 +534,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(EXPERIMENT_EDIT, experimentController.editExperiment(experimentDTO, bindingResult));
         verify(bindingResult).addError(any());
         verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
-        verify(experimentService, never()).saveExperiment(any());
+        verify(experimentService, never()).updateExperiment(any());
     }
 
     @Test
@@ -544,7 +544,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(bindingResult, never()).addError(any());
         verify(courseService).existsActiveCourse(ID);
         verify(experimentService, never()).existsExperiment(anyString(), anyInt());
-        verify(experimentService, never()).saveExperiment(any());
+        verify(experimentService, never()).updateExperiment(any());
     }
 
     @Test

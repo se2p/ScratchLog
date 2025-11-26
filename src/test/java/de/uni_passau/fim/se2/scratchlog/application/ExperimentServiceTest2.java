@@ -48,7 +48,7 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
     }
 
     @Test
-    public void testSaveExperimentDoesNotExist() {
+    public void testUpdateExperimentDoesNotExist() {
         assertFalse(service.existsExperiment("SomeOtherExperiment"));
     }
 
@@ -70,8 +70,8 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
 
     // Tests that saving an experiments saves it to the repository and returns a DTO with the inserted data.
     @Test
-    public void saveExperimentIdNull() {
-        ExperimentDTO saved = service.saveExperiment(experiment2Dto);
+    public void updateExperimentIdNull() {
+        ExperimentDTO saved = service.updateExperiment(experiment2Dto);
         assertTrue(service.existsExperiment(experiment2Dto.getTitle()));
         assertAll(
             () -> assertEquals(experiment2Dto.getTitle(), saved.getTitle()),
@@ -84,50 +84,50 @@ public class ExperimentServiceTest2 extends AbstractScratchLogTest {
     }
 
     @Test
-    public void testSaveExperimentTitleNull() {
+    public void testUpdateExperimentTitleNull() {
         experiment2Dto.setTitle(null);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experiment2Dto)
+            () -> service.updateExperiment(experiment2Dto)
         );
     }
 
     @Test
-    public void testSaveExperimentTitleBlank() {
+    public void testUpdateExperimentTitleBlank() {
         experiment2Dto.setTitle(BLANK);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experiment2Dto)
+            () -> service.updateExperiment(experiment2Dto)
         );
     }
 
     @Test
-    public void testSaveExperimentDescriptionNull() {
+    public void testUpdateExperimentDescriptionNull() {
         experiment2Dto.setDescription(null);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experiment2Dto)
+            () -> service.updateExperiment(experiment2Dto)
         );
     }
 
     @Test
-    public void testSaveExperimentDescriptionBlank() {
+    public void testUpdateExperimentDescriptionBlank() {
         experiment2Dto.setDescription(BLANK);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experiment2Dto)
+            () -> service.updateExperiment(experiment2Dto)
         );
     }
 
     @Test
-    public void testSaveExperimentGuiURLNull() {
+    public void testUpdateExperimentGuiURLNull() {
         experiment2Dto.setGuiURL(null);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experiment2Dto)
+            () -> service.updateExperiment(experiment2Dto)
         );
     }
 
     @Test
-    public void testSaveExperimentGuiURLBlank() {
+    public void testUpdateExperimentGuiURLBlank() {
         experiment2Dto.setGuiURL(BLANK);
         assertThrows(IncompleteDataException.class,
-            () -> service.saveExperiment(experiment2Dto)
+            () -> service.updateExperiment(experiment2Dto)
         );
     }
 
