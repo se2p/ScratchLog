@@ -6,7 +6,7 @@ import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
-import de.uni_passau.fim.se2.scratchlog.util.DtoUtil;
+import de.uni_passau.fim.se2.scratchlog.testing_utils.DtoUtil;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

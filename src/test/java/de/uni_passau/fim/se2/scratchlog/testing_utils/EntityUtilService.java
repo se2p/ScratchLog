@@ -1,4 +1,4 @@
-package de.uni_passau.fim.se2.scratchlog.util;
+package de.uni_passau.fim.se2.scratchlog.testing_utils;
 
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Course;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseExperiment;

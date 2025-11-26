@@ -17,7 +17,7 @@
  * along with ScratchLog. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.uni_passau.fim.se2.scratchlog;
+package de.uni_passau.fim.se2.scratchlog.testing_utils;
 
 /**
  * Utility class for creating long strings.

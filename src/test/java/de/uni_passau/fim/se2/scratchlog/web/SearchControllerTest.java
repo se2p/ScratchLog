@@ -19,7 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.web;
 
-import de.uni_passau.fim.se2.scratchlog.StringCreator;
+import de.uni_passau.fim.se2.scratchlog.testing_utils.StringCreator;
 import de.uni_passau.fim.se2.scratchlog.application.service.SearchService;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseTableProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentTableProjection;

@@ -19,7 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.integration;
 
-import de.uni_passau.fim.se2.scratchlog.StringCreator;
+import de.uni_passau.fim.se2.scratchlog.testing_utils.StringCreator;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CourseService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataService;

@@ -1,8 +1,7 @@
 package de.uni_passau.fim.se2.scratchlog;
 
-import de.uni_passau.fim.se2.scratchlog.util.DtoUtil;
-import de.uni_passau.fim.se2.scratchlog.util.EntityUtilService;
-import de.uni_passau.fim.se2.scratchlog.util.EventUtilService;
+import de.uni_passau.fim.se2.scratchlog.testing_utils.EntityUtilService;
+import de.uni_passau.fim.se2.scratchlog.testing_utils.EventUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
