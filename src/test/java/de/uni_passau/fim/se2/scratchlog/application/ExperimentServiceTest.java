@@ -5,7 +5,6 @@ import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
-import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.testing_utils.DtoUtil;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,9 +26,6 @@ public class ExperimentServiceTest extends AbstractScratchLogTest {
 
     @Autowired
     private ExperimentService service;
-
-    @Autowired
-    private ExperimentRepository experimentRepository;
 
     private Experiment experiment1;
 
