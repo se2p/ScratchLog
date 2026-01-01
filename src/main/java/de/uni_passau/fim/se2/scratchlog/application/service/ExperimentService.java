@@ -78,6 +78,7 @@ public class ExperimentService {
      * @param id The id to compare to.
      * @return {@code true} if such an experiment exists, or {@code false} if not.
      * @throws IllegalArgumentException if the passed title is null or blank or the id is invalid.
+     * @deprecated This method should not exist since its purpose is confusing.
      */
     public boolean existsExperiment(final String title, final int id) {
         Optional<Experiment> experiment = experimentRepository.findByTitle(title);
@@ -108,7 +109,7 @@ public class ExperimentService {
      * @throws IllegalArgumentException if the experiment title, description or GUI URL are null or blank.
      */
     @Transactional
-    public ExperimentDTO saveExperiment(final ExperimentDTO experimentDTO) {
+    public ExperimentDTO updateExperiment(final ExperimentDTO experimentDTO) {
         if (experimentDTO.getTitle() == null || experimentDTO.getTitle().trim().isBlank()) {
             throw new IllegalArgumentException("Cannot save experiment with empty title!");
         } else if (experimentDTO.getDescription() == null || experimentDTO.getDescription().trim().isBlank()) {
@@ -167,7 +168,7 @@ public class ExperimentService {
         Experiment experiment = experimentRepository.findById(id)
             .orElseThrow(() -> new NotFoundException(
                 "Could not update the status for non-existent experiment with id " + id + "!"));
-        experimentRepository.updateStatusById(id, status);
+        experiment.setActive(status);
         return createExperimentDTO(experiment);
     }
 

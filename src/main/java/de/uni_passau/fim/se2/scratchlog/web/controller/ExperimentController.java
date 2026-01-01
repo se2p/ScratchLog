@@ -312,13 +312,13 @@ public class ExperimentController {
 
         if (experimentDTO.getCourse() != null) {
             experimentDTO.setActive(true);
-            saved = experimentService.saveExperiment(experimentDTO);
+            saved = experimentService.updateExperiment(experimentDTO);
 
             if (isErrorSavingCourseExperiment(experimentDTO.getCourse(), saved.getId())) {
                 return Constants.ERROR;
             }
         } else {
-            saved = experimentService.saveExperiment(experimentDTO);
+            saved = experimentService.updateExperiment(experimentDTO);
         }
 
         return REDIRECT_EXPERIMENT + saved.getId();

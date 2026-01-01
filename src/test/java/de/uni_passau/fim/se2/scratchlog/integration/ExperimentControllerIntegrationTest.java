@@ -19,7 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.integration;
 
-import de.uni_passau.fim.se2.scratchlog.StringCreator;
+import de.uni_passau.fim.se2.scratchlog.testing_utils.StringCreator;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CourseService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataService;
@@ -457,7 +457,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
 
     @Test
     public void testEditExperiment() throws Exception {
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
                 .contentType(MediaType.ALL)
@@ -465,14 +465,14 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
         verify(experimentService).existsExperiment(TITLE, ID);
-        verify(experimentService).saveExperiment(experimentDTO);
+        verify(experimentService).updateExperiment(experimentDTO);
     }
 
     @Test
     public void testEditExperimentCourse() throws Exception {
         experimentDTO.setCourseExperiment(true);
         experimentDTO.setCourse(ID);
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         when(courseService.existsActiveCourse(ID)).thenReturn(true);
         mvc.perform(post("/experiment/update")
                         .flashAttr(EXPERIMENT_DTO, experimentDTO)
@@ -482,7 +482,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
         verify(courseService).existsActiveCourse(ID);
         verify(experimentService).existsExperiment(TITLE, ID);
-        verify(experimentService).saveExperiment(experimentDTO);
+        verify(experimentService).updateExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
         verify(participantService).addAllCourseParticipantsToExperiment(ID, ID);
         verify(experimentService, never()).deleteExperiment(anyInt());
@@ -492,7 +492,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     public void testEditExperimentCourseError() throws Exception {
         experimentDTO.setCourseExperiment(true);
         experimentDTO.setCourse(ID);
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         when(courseService.existsActiveCourse(ID)).thenReturn(true);
         doThrow(ConstraintViolationException.class).when(courseService).saveCourseExperiment(ID, ID);
         mvc.perform(post("/experiment/update")
@@ -503,7 +503,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(view().name(Constants.ERROR));
         verify(courseService).existsActiveCourse(ID);
         verify(experimentService).existsExperiment(TITLE, ID);
-        verify(experimentService).saveExperiment(experimentDTO);
+        verify(experimentService).updateExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
         verify(participantService, never()).addAllCourseParticipantsToExperiment(anyInt(), anyInt());
         verify(experimentService).deleteExperiment(anyInt());
@@ -511,7 +511,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
 
     @Test
     public void testEditExperimentExists() throws Exception {
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         when(experimentService.existsExperiment(TITLE, ID)).thenReturn(true);
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
@@ -520,13 +520,13 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT_EDIT));
         verify(experimentService).existsExperiment(TITLE, ID);
-        verify(experimentService, never()).saveExperiment(experimentDTO);
+        verify(experimentService, never()).updateExperiment(experimentDTO);
     }
 
     @Test
     public void testEditExperimentCreate() throws Exception {
         experimentDTO.setId(null);
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
                 .contentType(MediaType.ALL)
@@ -534,13 +534,13 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + null));
         verify(experimentService).existsExperiment(TITLE);
-        verify(experimentService).saveExperiment(experimentDTO);
+        verify(experimentService).updateExperiment(experimentDTO);
     }
 
     @Test
     public void testEditExperimentCreateExists() throws Exception {
         experimentDTO.setId(null);
-        when(experimentService.saveExperiment(experimentDTO)).thenReturn(experimentDTO);
+        when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
         when(experimentService.existsExperiment(TITLE)).thenReturn(true);
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
@@ -549,7 +549,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT_EDIT));
         verify(experimentService).existsExperiment(TITLE);
-        verify(experimentService, never()).saveExperiment(experimentDTO);
+        verify(experimentService, never()).updateExperiment(experimentDTO);
     }
 
     @Test
@@ -564,7 +564,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(view().name(EXPERIMENT_EDIT));
         verify(experimentService, never()).existsExperiment(anyString(), anyInt());
         verify(experimentService, never()).existsExperiment(anyString());
-        verify(experimentService, never()).saveExperiment(experimentDTO);
+        verify(experimentService, never()).updateExperiment(experimentDTO);
     }
 
     @Test
