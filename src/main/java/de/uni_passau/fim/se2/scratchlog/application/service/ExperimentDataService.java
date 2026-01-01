@@ -22,13 +22,15 @@ package de.uni_passau.fim.se2.scratchlog.application.service;
 import de.uni_passau.fim.se2.litterbox.analytics.Issue;
 import de.uni_passau.fim.se2.litterbox.analytics.ProgramBugAnalyzer;
 import de.uni_passau.fim.se2.litterbox.analytics.ProgramMetricAnalyzer;
-import de.uni_passau.fim.se2.litterbox.analytics.metric.MetricResult;
+import de.uni_passau.fim.se2.litterbox.analytics.metrics.MetricResult;
 import de.uni_passau.fim.se2.litterbox.ast.ParsingException;
 import de.uni_passau.fim.se2.litterbox.ast.model.Program;
 import de.uni_passau.fim.se2.litterbox.ast.model.metadata.resources.ImageMetadata;
 import de.uni_passau.fim.se2.litterbox.ast.parser.Scratch3Parser;
 import de.uni_passau.fim.se2.litterbox.ast.util.AstNodeUtil;
 import de.uni_passau.fim.se2.litterbox.ast.visitor.ParentVisitor;
+import de.uni_passau.fim.se2.litterbox.utils.IssueTranslator;
+import de.uni_passau.fim.se2.litterbox.utils.IssueTranslatorFactory;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.BlockEvent;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ClickEvent;
@@ -52,6 +54,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -110,6 +113,8 @@ public class ExperimentDataService {
      * String used to search for code perfumes in JSON code using LitterBox.
      */
     private static final String PERFUMES = "perfumes";
+
+    private final IssueTranslator translator = IssueTranslatorFactory.getIssueTranslator(Locale.ENGLISH);
 
     /**
      * Constructs an event service with the given dependencies.
@@ -391,9 +396,10 @@ public class ExperimentDataService {
         String issueLocation = issue.getCodeLocation() == null ? null : AstNodeUtil.getBlockId(issue.getCodeLocation());
         List<String> costumes = issue.getActor().getActorMetadata().getCostumes().getList().stream()
                 .map(ImageMetadata::getAssetId).toList();
+        String hint = issue.getHint().getHintText(translator);
         issues.add(new String[]{username, String.valueOf(issue.getId()), issue.getFinderName(),
-                issue.getTranslatedFinderName(), issue.getIssueType().name(), String.valueOf(
-                issue.getSeverity().getSeverityLevel()), issue.getActorName(), issueLocation, issue.getHint(),
+                issue.getTranslatedFinderName(translator), issue.getIssueType().name(), String.valueOf(
+                issue.getSeverity().getSeverityLevel()), issue.getActorName(), issueLocation, hint,
                 String.valueOf(costumes), String.valueOf(issue.getActor().getActorMetadata().getCurrentCostume()),
                 json, String.valueOf(time)});
     }
