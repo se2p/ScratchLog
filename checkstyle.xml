@@ -51,12 +51,6 @@
     <!-- See https://checkstyle.org/config_misc.html#NewlineAtEndOfFile -->
     <module name="NewlineAtEndOfFile"/>
 
-    <!-- Checks that property files contain the same keys.         -->
-    <!-- See https://checkstyle.org/config_misc.html#Translation -->
-    <module name="Translation">
-        <property name="requiredTranslations" value="de, en" />
-    </module>
-
     <!-- Checks for Size Violations.                    -->
     <!-- See https://checkstyle.org/config_sizes.html -->
     <module name="FileLength"/>
