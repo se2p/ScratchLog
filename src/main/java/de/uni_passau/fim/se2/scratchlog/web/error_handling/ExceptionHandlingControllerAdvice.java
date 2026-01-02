@@ -20,6 +20,7 @@
 package de.uni_passau.fim.se2.scratchlog.web.error_handling;
 
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,19 @@ public class ExceptionHandlingControllerAdvice {
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ModelAndView handleIllegalArgumentException() {
+        return redirectToErrorPage();
+    }
+
+    /**
+     * Global exception handle that handles {@link ConstraintViolationException}s by logging the exception and
+     * redirecting to the error page with a "bad request" response.
+     *
+     * @param exception The exception that occurred.
+     * @return A redirect to the error page with a HTTP 400 status code.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ModelAndView handleConstraintViolationException(final ConstraintViolationException exception) {
+        log.error("Constraint violation occurred!", exception);
         return redirectToErrorPage();
     }
 

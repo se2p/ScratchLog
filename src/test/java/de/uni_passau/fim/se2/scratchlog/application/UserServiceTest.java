@@ -20,7 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.application;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
@@ -213,16 +212,6 @@ public class UserServiceTest {
                 () -> assertEquals(user1.getSecret(), saved.getSecret()),
                 () -> assertEquals(user1.getRole(), saved.getRole()),
                 () -> assertEquals(user1.getLanguage(), saved.getLanguage())
-        );
-        verify(userRepository).save(any());
-    }
-
-    @Test
-    public void testSaveUserIdNull() {
-        user1.setId(null);
-        when(userRepository.save(any())).thenReturn(user1);
-        assertThrows(StoreException.class,
-                () -> userService.saveUser(userDTO)
         );
         verify(userRepository).save(any());
     }

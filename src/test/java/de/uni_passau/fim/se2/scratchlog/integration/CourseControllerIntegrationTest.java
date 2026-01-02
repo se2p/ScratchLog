@@ -435,7 +435,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
         verify(courseService).existsInactiveExperiment(ID);
-        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
     }
 
@@ -453,7 +452,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
     }
 
@@ -470,7 +468,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
     }
 

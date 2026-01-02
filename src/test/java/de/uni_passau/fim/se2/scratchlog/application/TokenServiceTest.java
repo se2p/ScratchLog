@@ -20,7 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.application;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.application.service.TokenService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Token;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
@@ -153,18 +152,6 @@ public class TokenServiceTest {
                 () -> assertEquals(TokenType.DEACTIVATED, tokenDTO.getType()),
                 () -> assertEquals(EMAIL, tokenDTO.getMetadata()),
                 () -> assertEquals(ID, tokenDTO.getUser())
-        );
-        verify(userRepository).getReferenceById(ID);
-        verify(tokenRepository).save(any());
-    }
-
-    @Test
-    public void testGenerateTokenStore() {
-        token.setValue(null);
-        when(userRepository.getReferenceById(ID)).thenReturn(user);
-        when(tokenRepository.save(any())).thenReturn(token);
-        assertThrows(StoreException.class,
-                () -> tokenService.generateToken(TokenType.CHANGE_EMAIL, EMAIL, ID)
         );
         verify(userRepository).getReferenceById(ID);
         verify(tokenRepository).save(any());

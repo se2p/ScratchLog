@@ -20,7 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.application;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CourseService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Course;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseExperiment;
@@ -49,7 +48,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -444,12 +442,12 @@ public class CourseServiceTest {
     }
 
     @Test
-    public void testSaveCourseParticipantsStore() {
+    public void testSaveCourseParticipantsConstraintViolation() {
         course.setActive(true);
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
         when(courseParticipantRepository.save(any())).thenThrow(ConstraintViolationException.class);
-        assertThrows(StoreException.class,
+        assertThrows(ConstraintViolationException.class,
                 () -> courseService.saveCourseParticipants(ID, users, false)
         );
         verify(courseRepository).getReferenceById(ID);
@@ -520,109 +518,6 @@ public class CourseServiceTest {
         verify(courseRepository).getReferenceById(ID);
         verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
         verify(courseParticipantRepository, never()).existsByCourseAndUser(any(), any());
-        verify(courseParticipantRepository, never()).save(any());
-        verify(courseRepository, never()).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveCourseParticipant() {
-        course.setActive(true);
-        when(courseRepository.getReferenceById(ID)).thenReturn(course);
-        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
-        assertAll(
-                () -> assertEquals(ID, courseService.saveCourseParticipant(ID, USERNAME)),
-                () -> assertTrue(user.isActive()),
-                () -> assertTrue(course.getLastChanged().isAfter(DATE))
-        );
-        verify(courseRepository).getReferenceById(ID);
-        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
-        verify(courseParticipantRepository).save(any());
-        verify(courseRepository).save(course);
-        verify(userRepository).save(user);
-    }
-
-    @Test
-    public void testSaveCourseParticipantConstraintViolation() {
-        course.setActive(true);
-        when(courseRepository.getReferenceById(ID)).thenReturn(course);
-        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
-        when(courseParticipantRepository.save(any())).thenThrow(ConstraintViolationException.class);
-        assertThrows(StoreException.class,
-                () -> courseService.saveCourseParticipant(ID, USERNAME)
-        );
-        verify(courseRepository).getReferenceById(ID);
-        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
-        verify(courseParticipantRepository).save(any());
-        verify(courseRepository, never()).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveCourseParticipantEntityNotFound() {
-        course.setActive(true);
-        when(courseRepository.getReferenceById(ID)).thenReturn(course);
-        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
-        when(courseParticipantRepository.save(any())).thenThrow(EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> courseService.saveCourseParticipant(ID, USERNAME)
-        );
-        verify(courseRepository).getReferenceById(ID);
-        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
-        verify(courseParticipantRepository).save(any());
-        verify(courseRepository, never()).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveCourseParticipantAdmin() {
-        course.setActive(true);
-        user.setRole(Role.ADMIN);
-        when(courseRepository.getReferenceById(ID)).thenReturn(course);
-        when(userRepository.findUserByUsernameOrEmail(USERNAME, USERNAME)).thenReturn(Optional.of(user));
-        assertThrows(IllegalStateException.class,
-                () -> courseService.saveCourseParticipant(ID, USERNAME)
-        );
-        verify(courseRepository).getReferenceById(ID);
-        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
-        verify(courseParticipantRepository, never()).save(any());
-        verify(courseRepository, never()).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveCourseParticipantNoUser() {
-        course.setActive(true);
-        when(courseRepository.getReferenceById(ID)).thenReturn(course);
-        assertThrows(NotFoundException.class,
-                () -> courseService.saveCourseParticipant(ID, USERNAME)
-        );
-        verify(courseRepository).getReferenceById(ID);
-        verify(userRepository).findUserByUsernameOrEmail(USERNAME, USERNAME);
-        verify(courseParticipantRepository, never()).save(any());
-        verify(courseRepository, never()).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveCourseParticipantInputBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> courseService.saveCourseParticipant(ID, BLANK)
-        );
-        verify(courseRepository, never()).getReferenceById(anyInt());
-        verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
-        verify(courseParticipantRepository, never()).save(any());
-        verify(courseRepository, never()).save(any());
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    public void testSaveCourseParticipantInputNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> courseService.saveCourseParticipant(ID, null)
-        );
-        verify(courseRepository, never()).getReferenceById(anyInt());
-        verify(userRepository, never()).findUserByUsernameOrEmail(anyString(), anyString());
         verify(courseParticipantRepository, never()).save(any());
         verify(courseRepository, never()).save(any());
         verify(userRepository, never()).save(any());
@@ -711,7 +606,7 @@ public class CourseServiceTest {
         when(courseRepository.getReferenceById(ID)).thenReturn(course);
         when(experimentRepository.getReferenceById(INVALID_ID)).thenReturn(experiment1);
         when(courseExperimentRepository.save(any())).thenThrow(ConstraintViolationException.class);
-        assertThrows(StoreException.class,
+        assertThrows(ConstraintViolationException.class,
                 () -> courseService.saveCourseExperiment(ID, INVALID_ID)
         );
         verify(courseRepository).getReferenceById(ID);
@@ -864,7 +759,7 @@ public class CourseServiceTest {
         when(courseExperimentRepository.findAllByCourse(course)).thenReturn(List.of(courseExperiment,
                 courseExperiment));
         when(participantRepository.save(any())).thenThrow(ConstraintViolationException.class);
-        assertThrows(StoreException.class,
+        assertThrows(ConstraintViolationException.class,
                 () -> courseService.addParticipantToCourseExperiments(ID, ID)
         );
         verify(courseRepository).getReferenceById(ID);
