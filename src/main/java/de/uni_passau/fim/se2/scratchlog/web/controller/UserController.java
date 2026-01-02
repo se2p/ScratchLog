@@ -413,7 +413,8 @@ public class UserController {
     }
 
     /**
-     * Returns the add participants page for adding a number of new participants.
+     * Returns the 'Add Users in Bulk' page for adding a number of new users, or the home page in case mailing is
+     * enabled.
      *
      * @param userBulkDTO The {@link UserBulkDTO} used to save the information.
      * @return The add participants page.
@@ -429,7 +430,7 @@ public class UserController {
     }
 
     /**
-     * Adds the given amount of participants to the database if the numbered username doesn't yet exist. For any
+     * Adds the given amount of users to the database if the numbered username doesn't yet exist. For any
      * username that already exists in the database, the corresponding username is saved to a list. If the given
      * username pattern is invalid or a pre-existing username has been found, the user returns to the add participants
      * page where corresponding information is displayed. If the any necessary information passed is invalid, the user
@@ -442,7 +443,7 @@ public class UserController {
      */
     @PostMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
-    public String addParticipants(final UserBulkDTO userBulkDTO, final BindingResult bindingResult, final Model model) {
+    public String addUsersInBulk(final UserBulkDTO userBulkDTO, final BindingResult bindingResult, final Model model) {
         if (userBulkDTO.getUsername() == null || userBulkDTO.getLanguage() == null) {
             LOGGER.error("Cannot add participants with username or language null!");
             return Constants.ERROR;

@@ -449,7 +449,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetAddParticipants() throws Exception {
+    public void testGetAddUsersInBulk() throws Exception {
         setMailServer(false);
         mvc.perform(get("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
@@ -459,7 +459,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetAddParticipantsMailServer() throws Exception {
+    public void testGetAddUsersInBulkMailServer() throws Exception {
         setMailServer(true);
         mvc.perform(get("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
@@ -469,7 +469,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipants() throws Exception {
+    public void testAddUsersInBulk() throws Exception {
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
@@ -483,7 +483,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsUsernameExists() throws Exception {
+    public void testAddUsersInBulkUsernameExists() throws Exception {
         List<String> existingNames = List.of("admin5");
         when(userService.findValidNumberForUsername(userBulkDTO.getUsername())).thenReturn(1);
         when(userService.existsUser(existingNames.getFirst())).thenReturn(true);
@@ -500,7 +500,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsInvalidUsername() throws Exception {
+    public void testAddUsersInBulkInvalidUsername() throws Exception {
         userBulkDTO.setUsername("ad");
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
@@ -515,7 +515,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsInvalidAmount() throws Exception {
+    public void testAddUsersInBulkInvalidAmount() throws Exception {
         userBulkDTO.setAmount(-1);
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)

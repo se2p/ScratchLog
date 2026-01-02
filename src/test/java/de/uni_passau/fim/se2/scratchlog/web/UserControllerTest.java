@@ -668,21 +668,21 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetAddParticipants() {
+    public void testGetAddUsersInBulk() {
         setMailServer(false);
         assertEquals(USERS_ADD, userController.getAddParticipants(userBulkDTO));
     }
 
     @Test
-    public void testGetAddParticipantsMailServer() {
+    public void testGetAddUsersInBulkMailServer() {
         setMailServer(true);
         assertEquals(REDIRECT, userController.getAddParticipants(userBulkDTO));
     }
 
     @Test
-    public void testAddParticipants() {
+    public void testAddUsersInBulk() {
         when(userService.findLastId()).thenReturn(AMOUNT);
-        assertEquals(REDIRECT_SUCCESS, userController.addParticipants(userBulkDTO, bindingResult, model));
+        assertEquals(REDIRECT_SUCCESS, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
         verify(userService).findLastId();
         verify(userService, times(AMOUNT)).existsUser(anyString());
@@ -691,11 +691,11 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsStartOneUsernameExists() {
+    public void testAddUsersInBulkStartOneUsernameExists() {
         List<String> existingNames = List.of("admin0");
         userBulkDTO.setStartAtOne(true);
         when(userService.existsUser(existingNames.getFirst())).thenReturn(true);
-        assertEquals(USERS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
+        assertEquals(USERS_ADD, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).findLastId();
         verify(userService, times(AMOUNT)).existsUser(anyString());
@@ -704,9 +704,9 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsInvalidUsername() {
+    public void testAddUsersInBulkInvalidUsername() {
         userBulkDTO.setUsername(BLANK);
-        assertEquals(USERS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
+        assertEquals(USERS_ADD, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult).addError(any());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
@@ -715,9 +715,9 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsAmountBiggerMax() {
+    public void testAddUsersInBulkAmountBiggerMax() {
         userBulkDTO.setAmount(applicationProperties.getMaxUserBulkImportCount() + 1);
-        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
+        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
@@ -726,9 +726,9 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsAmountTooSmall() {
+    public void testAddUsersInBulkAmountTooSmall() {
         userBulkDTO.setAmount(0);
-        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
+        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
@@ -737,9 +737,9 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsLanguageNull() {
+    public void testAddUsersInBulkLanguageNull() {
         userBulkDTO.setLanguage(null);
-        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
+        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
@@ -748,9 +748,9 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAddParticipantsUsernameNull() {
+    public void testAddUsersInBulkUsernameNull() {
         userBulkDTO.setUsername(null);
-        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
+        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
         verify(userService, never()).findLastId();
         verify(userService, never()).existsUser(anyString());
