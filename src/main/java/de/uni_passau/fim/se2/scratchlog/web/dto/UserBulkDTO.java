@@ -39,9 +39,9 @@ import java.util.Objects;
 public class UserBulkDTO {
 
     /**
-     * The number of participants to add.
+     * The number of users to add.
      */
-    private int amount;
+    private int amount = 1;
 
     /**
      * One of the available languages.
