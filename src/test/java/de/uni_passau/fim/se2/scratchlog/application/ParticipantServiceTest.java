@@ -20,7 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.application;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Course;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseParticipant;
@@ -214,7 +213,9 @@ public class ParticipantServiceTest {
         when(courseExperimentRepository.existsByCourseAndExperiment(course, experiment2)).thenReturn(true);
         when(courseParticipantRepository.findAllByCourse(course)).thenReturn(courseParticipants);
         when(participantRepository.save(any())).thenThrow(ConstraintViolationException.class);
-        assertThrows(StoreException.class, () -> participantService.addAllCourseParticipantsToExperiment(ID, ID));
+        assertThrows(ConstraintViolationException.class,
+            () -> participantService.addAllCourseParticipantsToExperiment(ID, ID)
+        );
         verify(courseRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(courseExperimentRepository).existsByCourseAndExperiment(course, experiment2);
@@ -380,7 +381,7 @@ public class ParticipantServiceTest {
     @Test
     public void testSaveParticipantForeignKeyViolation() {
         when(participantRepository.save(any())).thenThrow(ConstraintViolationException.class);
-        assertThrows(StoreException.class,
+        assertThrows(ConstraintViolationException.class,
                 () -> participantService.saveParticipant(ID, ID)
         );
         verify(userRepository).getReferenceById(ID);

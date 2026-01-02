@@ -454,7 +454,6 @@ public class CourseControllerTest {
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
         verify(courseService).existsInactiveExperiment(ID);
-        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, times(9)).addAttribute(anyString(), any());
     }
@@ -470,7 +469,6 @@ public class CourseControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, times(9)).addAttribute(anyString(), any());
     }
@@ -486,7 +484,6 @@ public class CourseControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, times(9)).addAttribute(anyString(), any());
     }
@@ -499,7 +496,6 @@ public class CourseControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, times(9)).addAttribute(anyString(), any());
     }
@@ -512,7 +508,6 @@ public class CourseControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).saveCourseParticipant(anyInt(), anyString());
         verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }

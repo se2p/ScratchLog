@@ -20,7 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Token;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.TokenRepository;
@@ -102,7 +101,6 @@ public class TokenService {
      * @return The newly created token, if the information was persisted.
      * @throws IllegalArgumentException if the passed token type is null or the user id is invalid.
      * @throws NotFoundException if no corresponding user could be found.
-     * @throws StoreException if the created token could not be persisted.
      */
     @Transactional
     public TokenDTO generateToken(final TokenType type, final String metadata, final int userId) {
@@ -120,10 +118,6 @@ public class TokenService {
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find user with id {}!", tokenDTO.getUser(), e);
             throw new NotFoundException("Could not find user with id " + tokenDTO.getUser() + "!", e);
-        }
-
-        if (token.getValue() == null) {
-            throw new StoreException("Failed to store token for user with id " + tokenDTO.getUser() + "!");
         }
 
         return createTokenDTO(token);

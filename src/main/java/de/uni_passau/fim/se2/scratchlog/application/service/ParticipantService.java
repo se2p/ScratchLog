@@ -20,7 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Course;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseParticipant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
@@ -184,7 +183,8 @@ public class ParticipantService {
      * @throws IllegalArgumentException if the passed course or experiment ids are invalid.
      * @throws IllegalStateException if the course or experiment are inactive or the experiment is not part of a course.
      * @throws NotFoundException if no corresponding course or experiment entries could be found.
-     * @throws StoreException if adding a course participant to the experiment violated the foreign key constraints.
+     * @throws ConstraintViolationException if adding a course participant to the experiment violated the foreign key
+     *                                      constraints.
      */
     @Transactional
     public void addAllCourseParticipantsToExperiment(final int experimentId, final int courseId) {
@@ -206,8 +206,6 @@ public class ParticipantService {
             LOGGER.error("Could not find the course or experiment data when trying to save course participants!", e);
             throw new NotFoundException("Could not find the course or experiment data when trying to save course "
                     + "participants!", e);
-        } catch (ConstraintViolationException e) {
-            throw new StoreException("The given participant data does not meet the foreign key constraints!", e);
         }
     }
 
@@ -244,7 +242,7 @@ public class ParticipantService {
      * @param experimentId The experiment id.
      * @throws IllegalArgumentException if the passed user or experiment ids are invalid.
      * @throws NotFoundException if no corresponding user or experiment entries could be found.
-     * @throws StoreException if adding the user as a participant violates the foreign key constraints.
+     * @throws ConstraintViolationException if adding the user as a participant violates the foreign key constraints.
      */
     @Transactional
     public void saveParticipant(final int userId, final int experimentId) {
@@ -260,7 +258,8 @@ public class ParticipantService {
      * @param experimentId The id of the experiment the users participate in.
      * @throws IllegalArgumentException if the experiment id or one of the user ids is invalid.
      * @throws NotFoundException if no corresponding user or experiment entries could be found.
-     * @throws StoreException if adding of one hte users as a participant violates the foreign key constraints.
+     * @throws ConstraintViolationException if adding of one the users as a participant violates the foreign key
+     *                                      constraints.
      */
     @Transactional
     public void addParticipants(final List<Integer> userIds, final int experimentId) {
@@ -562,7 +561,7 @@ public class ParticipantService {
      * @param experiment The experiment in which the user should participate.
      * @param user The user to add as participant.
      * @throws NotFoundException if the provided experiment or user could not be found.
-     * @throws StoreException if adding the user as a participant violates the foreign key constraints.
+     * @throws ConstraintViolationException if adding the user as a participant violates the foreign key constraints.
      */
     private void createParticipant(final Experiment experiment, final User user) {
         try {
@@ -571,8 +570,6 @@ public class ParticipantService {
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find the user or experiment when saving the participant data!", e);
             throw new NotFoundException("Could not find the user or experiment when saving the participant data!", e);
-        } catch (ConstraintViolationException e) {
-            throw new StoreException("The given participant data does not meet the foreign key constraints!", e);
         }
     }
 

@@ -20,7 +20,6 @@
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Course;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseExperiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseExperimentId;
@@ -43,7 +42,6 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.web.dto.CourseDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -277,7 +275,6 @@ public class CourseService {
      * @param courseDTO The dto containing the course information to set.
      * @return The id of the newly created course, if the information was persisted.
      * @throws IllegalArgumentException if the {@link CourseDTO} contains invalid attribute values.
-     * @throws StoreException if the course information could not be persisted.
      */
     @Transactional
     public int saveCourse(final CourseDTO courseDTO) {
@@ -330,7 +327,8 @@ public class CourseService {
      * @throws IllegalArgumentException if the passed course id is invalid or the user list empty.
      * @throws NotFoundException if one of the provided users or the course could not be found.
      * @throws IllegalStateException if one of the provided users is an administrator.
-     * @throws StoreException if saving a course participant violated the foreign key constraints.
+     * @throws jakarta.validation.ConstraintViolationException if saving a course participant violated the foreign key
+     *                                                         constraints.
      */
     @Transactional
     public void saveCourseParticipants(final int courseId, final List<UserDTO> participants,
@@ -343,28 +341,6 @@ public class CourseService {
                 addParticipantToCourseExperiments(courseId, userId);
             }
         }
-    }
-
-    /**
-     * Creates a new {@link CourseParticipant} entry for the course with the given id and the participant with the given
-     * username or email.
-     *
-     * @param courseId The id of the course.
-     * @param participant The username or email.
-     * @return The id of the user.
-     * @throws IllegalArgumentException if the passed course id or participant string are invalid.
-     * @throws NotFoundException if no corresponding user or course could be found.
-     * @throws IllegalStateException if the provided user is an administrator.
-     * @throws StoreException if saving the course participant violated the foreign key constraints.
-     */
-    @Transactional
-    public int saveCourseParticipant(final int courseId, final String participant) {
-        if (participant == null || participant.trim().isBlank()) {
-            throw new IllegalArgumentException("Cannot save course participant with participant null or blank!");
-        }
-
-        Course course = courseRepository.getReferenceById(courseId);
-        return addCourseParticipant(course, participant);
     }
 
     /**
@@ -431,7 +407,8 @@ public class CourseService {
      * @param experimentId The id of the experiment.
      * @throws IllegalArgumentException if the passed course id or participant string are invalid.
      * @throws EntityNotFoundException if no corresponding course or experiment entries could be found.
-     * @throws ConstraintViolationException if saving the course experiment violated the foreign key constraints.
+     * @throws jakarta.validation.ConstraintViolationException if saving the course experiment violated the foreign key
+     *                                                         constraints.
      */
     @Transactional
     public void saveCourseExperiment(final int courseId, final int experimentId) {
@@ -509,7 +486,8 @@ public class CourseService {
      * @param userId The id of the user.
      * @throws IllegalArgumentException if the passed course or user ids are invalid.
      * @throws EntityNotFoundException if no corresponding course or user entry could be found.
-     * @throws ConstraintViolationException if saving any experiment participation violated a foreign key constraint.
+     * @throws jakarta.validation.ConstraintViolationException if saving any experiment participation violated a foreign
+     *                                                         key constraint.
      */
     @Transactional
     public void addParticipantToCourseExperiments(final int courseId, final int userId) {
@@ -529,9 +507,6 @@ public class CourseService {
             LOGGER.error("Could not find the course or user when adding course participants to course experiments!", e);
             throw new NotFoundException("Could not find the course or user when adding course participants to course "
                     + "experiments!", e);
-        } catch (ConstraintViolationException e) {
-            throw new StoreException("The given experiment participant data does not meet the foreign key constraints!",
-                    e);
         }
     }
 
@@ -667,7 +642,8 @@ public class CourseService {
      * @param course The course.
      * @param experiment The experiment.
      * @throws EntityNotFoundException if the given course and experiment do not exist.
-     * @throws ConstraintViolationException if saving the {@link CourseExperiment} violated the foreign key constraint.
+     * @throws jakarta.validation.ConstraintViolationException if saving the {@link CourseExperiment} violated the
+     *                                                         foreign key constraint.
      */
     private void persistCourseExperiment(final Course course, final Experiment experiment) {
         try {
@@ -683,8 +659,6 @@ public class CourseService {
             LOGGER.error("Could not find the course or experiment when saving the course experiment data!", e);
             throw new NotFoundException("Could not find the course or experiment when saving the course experiment "
                     + "data!", e);
-        } catch (ConstraintViolationException e) {
-            throw new StoreException("The given course experiment data does not meet the foreign key constraints!", e);
         }
     }
 
@@ -715,7 +689,8 @@ public class CourseService {
      * @return The id of the user.
      * @throws NotFoundException if no corresponding user or course could be found.
      * @throws IllegalStateException if the user to be added is an administrator.
-     * @throws StoreException if saving the course participant violated the foreign key constraints.
+     * @throws jakarta.validation.ConstraintViolationException if saving the course participant violated the foreign key
+     *                                                         constraints.
      */
     private int addCourseParticipant(final Course course, final String participant) {
         Optional<User> optionalUser = userRepository.findUserByUsernameOrEmail(participant, participant);
@@ -743,8 +718,6 @@ public class CourseService {
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find the course when saving the course participant data!", e);
             throw new NotFoundException("Could not find the course when saving the course participant data!", e);
-        } catch (ConstraintViolationException e) {
-            throw new StoreException("The given course participant data does not meet the foreign key constraints!", e);
         }
     }
 

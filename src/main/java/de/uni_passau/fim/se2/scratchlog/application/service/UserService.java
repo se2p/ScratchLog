@@ -21,7 +21,6 @@ package de.uni_passau.fim.se2.scratchlog.application.service;
 
 import com.opencsv.bean.CsvToBeanBuilder;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
-import de.uni_passau.fim.se2.scratchlog.application.exception.StoreException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
@@ -221,7 +220,6 @@ public class UserService {
      * @param userDTO The dto containing the user information to set.
      * @return The newly created user, if the information was persisted.
      * @throws IllegalArgumentException if the username is null or blank.
-     * @throws StoreException if the user could not be persisted.
      */
     @Transactional
     public UserDTO saveUser(final UserDTO userDTO) {
@@ -230,11 +228,6 @@ public class UserService {
         }
 
         User user = userRepository.save(createUser(userDTO));
-
-        if (user.getId() == null) {
-            throw new StoreException("Failed to save user with username " + userDTO.getUsername());
-        }
-
         return createUserDTO(user);
     }
 
