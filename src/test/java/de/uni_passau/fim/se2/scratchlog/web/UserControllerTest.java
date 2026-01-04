@@ -683,7 +683,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAddUsersInBulk() {
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(Pair.of(List.of(userDTO), List.of()));
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of(userDTO));
         ResponseEntity response = (ResponseEntity) userController.addUsersInBulk(userBulkDTO, bindingResult, model);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(bindingResult, never()).addError(any());
@@ -694,7 +694,7 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddUsersInBulkStartOneUsernameExists() {
         List<String> existingNames = List.of("admin0");
         userBulkDTO.setStartAtOne(true);
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(Pair.of(List.of(), existingNames));
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of());
         ResponseEntity response = (ResponseEntity) userController.addUsersInBulk(userBulkDTO, bindingResult, model);
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }

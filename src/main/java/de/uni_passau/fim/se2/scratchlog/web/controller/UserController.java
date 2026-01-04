@@ -47,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -463,9 +462,8 @@ public class UserController {
             return USERS_ADD;
         }
 
-        Pair<List<UserDTO>, List<String>> result = userService.addUsersInBulk(userBulkDTO);
-        String csv = userService.generateUsernamePasswordCsv(result.getFirst());
-        List<String> invalidUsernames = result.getSecond();
+        List<UserDTO> addedUsers = userService.addUsersInBulk(userBulkDTO);
+        String csv = userService.generateUsernamePasswordCsv(addedUsers);
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")

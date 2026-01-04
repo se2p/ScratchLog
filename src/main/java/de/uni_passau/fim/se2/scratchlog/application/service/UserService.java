@@ -40,7 +40,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.util.Pair;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -239,26 +238,23 @@ public class UserService {
      * the user id is used as distinction in the usernames.
      *
      * @param userBulkDTO The {@link UserBulkDTO} containing the necessary information.
-     * @return two lists, the first of which contains the data of users which were added, and the second of which
-     *         contains the usernames that were tried to be added but were already taken (if starting at one).
+     * @return A list of all users that were added. Might not be the amount specified in {@code userBulkDTO} when
+     *         a name is duplicated when starting numbering from one.
      */
     @Transactional
-    public Pair<List<UserDTO>, List<String>> addUsersInBulk(final UserBulkDTO userBulkDTO) {
+    public List<UserDTO> addUsersInBulk(final UserBulkDTO userBulkDTO) {
         if (userBulkDTO == null) {
             throw new IllegalArgumentException("UserBulkDTO may be null.");
         }
 
         int number = userBulkDTO.isStartAtOne() ? findValidNumberForUsername(userBulkDTO.getUsername())
             :  findLastId() + 1;
-        List<String> invalidUsernames = new ArrayList<>();
         List<UserDTO> validUserDTOs = new ArrayList<>();
 
         for (int i = 0; i < userBulkDTO.getAmount(); i++) {
             String username = userBulkDTO.getUsername() + number;
 
-            if (existsUser(username)) {
-                invalidUsernames.add(username);
-            } else {
+            if (!existsUser(username)) {
                 UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, Role.PARTICIPANT,
                     userBulkDTO.getLanguage(), null, null);
                 completeUserInformation(userDTO);
@@ -269,7 +265,7 @@ public class UserService {
         }
 
         saveUsers(validUserDTOs);
-        return Pair.of(validUserDTOs, invalidUsernames);
+        return validUserDTOs;
     }
 
     /**

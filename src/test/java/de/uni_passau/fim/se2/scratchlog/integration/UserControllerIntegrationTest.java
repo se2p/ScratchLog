@@ -471,7 +471,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
 
     @Test
     public void testAddUsersInBulk() throws Exception {
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(Pair.of(List.of(userDTO), List.of()));
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of(userDTO));
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
@@ -481,7 +481,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     @Test
     public void testAddUsersInBulkUsernameExists() throws Exception {
         List<String> existingNames = List.of("admin5");
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(Pair.of(List.of(), existingNames));
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of());
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
