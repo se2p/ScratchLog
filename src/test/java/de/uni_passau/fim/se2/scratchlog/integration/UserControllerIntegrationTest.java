@@ -476,27 +476,18 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_SUCCESS))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
-        verify(userService).findValidNumberForUsername(userBulkDTO.getUsername());
-        verify(userService, never()).findLastId();
-        verify(userService, times(AMOUNT)).existsUser(anyString());
-        verify(userService, times(AMOUNT)).saveUser(any());
     }
 
     @Test
     public void testAddUsersInBulkUsernameExists() throws Exception {
         List<String> existingNames = List.of("admin5");
-        when(userService.findValidNumberForUsername(userBulkDTO.getUsername())).thenReturn(1);
-        when(userService.existsUser(existingNames.getFirst())).thenReturn(true);
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(existingNames);
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(view().name(USERS_ADD))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, is(existingNames)));
-        verify(userService).findValidNumberForUsername(userBulkDTO.getUsername());
-        verify(userService, never()).findLastId();
-        verify(userService, times(AMOUNT)).existsUser(anyString());
-        verify(userService, times(AMOUNT - existingNames.size())).saveUser(any());
     }
 
     @Test
@@ -549,7 +540,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, times(3)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 

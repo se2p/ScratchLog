@@ -29,10 +29,12 @@ import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentReposit
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import de.uni_passau.fim.se2.scratchlog.util.CustomPasswordGenerator;
 import de.uni_passau.fim.se2.scratchlog.util.InactivityConfiguration;
 import de.uni_passau.fim.se2.scratchlog.util.Secrets;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
+import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -229,6 +231,32 @@ public class UserService {
 
         User user = userRepository.save(createUser(userDTO));
         return createUserDTO(user);
+    }
+
+    @Transactional
+    public List<String> addUsersInBulk(final UserBulkDTO userBulkDTO) {
+        int number = userBulkDTO.isStartAtOne() ? findValidNumberForUsername(userBulkDTO.getUsername())
+            :  findLastId() + 1;
+        List<String> invalidUsernames = new ArrayList<>();
+        List<UserDTO> validUserDTOs = new ArrayList<>();
+
+        for (int i = 0; i < userBulkDTO.getAmount(); i++) {
+            String username = userBulkDTO.getUsername() + number;
+
+            if (existsUser(username)) {
+                invalidUsernames.add(username);
+            } else {
+                UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, Role.PARTICIPANT,
+                    userBulkDTO.getLanguage(), null, null);
+                completeUserInformation(userDTO);
+                validUserDTOs.add(userDTO);
+            }
+
+            number++;
+        }
+
+        saveUsers(validUserDTOs);
+        return invalidUsernames;
     }
 
     /**
@@ -575,6 +603,27 @@ public class UserService {
 
         return invalidUsernames;
     }
+
+    /**
+     * Completes the data of a {@link UserDTO} so that it can be persisted in the database. This sets the password to a
+     * random password if not set, marks the user as active and sets their last login to the current timestamp.
+     * The new data is written in-place.
+     *
+     * @param userDTO The user DTO to fill with additional information.
+     */
+    // TODO: make this private once CSV adding is also moved to service layer
+    public void completeUserInformation(final UserDTO userDTO) {
+        String password = userDTO.getPassword();
+        if (userDTO.getPassword() == null) {
+            password = CustomPasswordGenerator.generatePassword(Constants.PASSWORD_MIN);
+        }
+
+        userDTO.setPassword(encodePassword(password));
+        userDTO.setConfirmPassword(password);
+        userDTO.setActive(true);
+        userDTO.setLastLogin(LocalDateTime.now());
+    }
+
 
     /**
      * Returns the position of the first digit at the end of the string after which only more numbers occur, if any.

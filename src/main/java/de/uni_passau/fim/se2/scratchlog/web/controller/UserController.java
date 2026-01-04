@@ -463,25 +463,7 @@ public class UserController {
             return USERS_ADD;
         }
 
-        int number = userBulkDTO.isStartAtOne() ? userService.findValidNumberForUsername(userBulkDTO.getUsername())
-                : userService.findLastId() + 1;
-        List<String> invalidUsernames = new ArrayList<>();
-
-        for (int i = 0; i < userBulkDTO.getAmount(); i++) {
-            String username = userBulkDTO.getUsername() + number;
-
-            if (userService.existsUser(username)) {
-                invalidUsernames.add(username);
-            } else {
-                UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, Role.PARTICIPANT,
-                        userBulkDTO.getLanguage(), null, null);
-                userDTO.setActive(true);
-                userDTO.setLastLogin(LocalDateTime.now());
-                userService.saveUser(userDTO);
-            }
-
-            number++;
-        }
+        List<String> invalidUsernames = userService.addUsersInBulk(userBulkDTO);
 
         if (invalidUsernames.isEmpty()) {
             return "redirect:/?success=true";
@@ -527,7 +509,7 @@ public class UserController {
             List<UserDTO> users = new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
 
             if (isValidUserInfo(users, model, resourceBundle)) {
-                users.stream().parallel().forEach(this::completeUserInformation);
+                users.stream().parallel().forEach(userService::completeUserInformation);
                 userService.saveUsers(users);
 
                 final StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
@@ -1225,25 +1207,6 @@ public class UserController {
         }
 
         return true;
-    }
-
-    /**
-     * Sets all the required attributes for user information retrieved from a CSV file to subsequently be persisted.
-     * This includes the generation of a new password for the user, which is then appended to the given string builder
-     * to be returned later.
-     *
-     * @param userDTO The user to be added.
-     */
-    private void completeUserInformation(final UserDTO userDTO) {
-        String password = userDTO.getPassword();
-        if (userDTO.getPassword() == null) {
-            password = CustomPasswordGenerator.generatePassword(Constants.PASSWORD_MIN);
-        }
-
-        userDTO.setPassword(userService.encodePassword(password));
-        userDTO.setConfirmPassword(password);
-        userDTO.setActive(true);
-        userDTO.setLastLogin(LocalDateTime.now());
     }
 
     /**

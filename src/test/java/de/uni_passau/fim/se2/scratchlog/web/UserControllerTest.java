@@ -681,12 +681,8 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAddUsersInBulk() {
-        when(userService.findLastId()).thenReturn(AMOUNT);
         assertEquals(REDIRECT_SUCCESS, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
-        verify(userService).findLastId();
-        verify(userService, times(AMOUNT)).existsUser(anyString());
-        verify(userService, times(AMOUNT)).saveUser(any());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -694,12 +690,9 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddUsersInBulkStartOneUsernameExists() {
         List<String> existingNames = List.of("admin0");
         userBulkDTO.setStartAtOne(true);
-        when(userService.existsUser(existingNames.getFirst())).thenReturn(true);
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(existingNames);
         assertEquals(USERS_ADD, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, times(AMOUNT)).existsUser(anyString());
-        verify(userService, times(AMOUNT - existingNames.size())).saveUser(any());
         verify(model).addAttribute("error", existingNames);
     }
 
@@ -771,7 +764,6 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, times(3)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 
@@ -783,7 +775,6 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, never()).existsEmail(anyString());
-        verify(userService, times(2)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 
@@ -795,7 +786,6 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, never()).existsEmail(anyString());
-        verify(userService, times(2)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 
