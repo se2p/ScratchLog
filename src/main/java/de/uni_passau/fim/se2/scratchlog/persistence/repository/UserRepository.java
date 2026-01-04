@@ -267,16 +267,11 @@ public interface UserRepository extends JpaRepository<User, Integer> {
                                                                 @Param("limit") int limit);
 
     /**
-     * Returns an optional {@link UserProjection} containing information on the username starting with the given name
-     * value and ending with a digit, if existent. If more than one match is found, the one that occurs last in
-     * alphabetical order is returned.
+     * Returns a list of users whose usernames start with the given pattern.
+     * @param username The username pattern to search for.
      *
-     * @param name The username pattern to search for.
-     * @return The user projection containing information or an empty {@link Optional}.
+     * @return A list of users whose usernames start with the given pattern.
      */
-    @Query(nativeQuery = true, value = "SELECT u.* FROM `user` AS u WHERE u.username LIKE CONCAT(:name, '%') AND "
-            + "RIGHT(u.username, 1) IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9) ORDER BY LENGTH(u.username) DESC, u.username "
-            + "DESC LIMIT 1")
-    Optional<UserProjection> findLastUsername(@Param("name") String name);
+    List<UserProjection> findByUsernameStartsWith(@Param("username") String username);
 
 }

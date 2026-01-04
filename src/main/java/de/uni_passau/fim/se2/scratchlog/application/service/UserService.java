@@ -247,25 +247,23 @@ public class UserService {
             throw new IllegalArgumentException("UserBulkDTO may be null.");
         }
 
-        int number = userBulkDTO.isStartAtOne() ? findValidNumberForUsername(userBulkDTO.getUsername())
-            :  findLastId() + 1;
-        List<UserDTO> validUserDTOs = new ArrayList<>();
+        String username = userBulkDTO.getUsername();
+        int number = userBulkDTO.isStartAtOne() ? findValidNumberForUsername(username) : findLastId() + 1;
 
+        List<UserDTO> usersToAdd = new ArrayList<>();
         for (int i = 0; i < userBulkDTO.getAmount(); i++) {
-            String username = userBulkDTO.getUsername() + number;
-
-            if (!existsUser(username)) {
-                UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, Role.PARTICIPANT,
-                    userBulkDTO.getLanguage(), null, null);
-                completeUserInformation(userDTO);
-                validUserDTOs.add(userDTO);
-            }
+            // Should always be safe to add since we always take a new number (either a fresh id or the maximum suffix
+            // number plus 1).
+            UserDTO userDTO = new UserDTO(username + number, null, Role.PARTICIPANT,
+                userBulkDTO.getLanguage(), null, null);
+            completeUserInformation(userDTO);
+            usersToAdd.add(userDTO);
 
             number++;
         }
 
-        saveUsers(validUserDTOs);
-        return validUserDTOs;
+        saveUsers(usersToAdd);
+        return usersToAdd;
     }
 
     /**
@@ -527,29 +525,35 @@ public class UserService {
     }
 
     /**
-     * Searches for the user whose username starts with the given username string and ends with the highest number
-     * found. The number at the end of the username is then incremented and returned. If no corresponding user could be
-     * found, or the username does not end with a digit, 1 is returned instead.
+     * Determines a valid number for a new user with a username starting with the given {@code username}.
+     * This is the maximum number that occurs after the given username across all usernames in the database, plus 1.
+     * Also 1 in case the pattern is not currently used by any username.
      *
      * @param username The username pattern to search for.
-     * @return The number at the end of the retrieved username, or 1.
+     * @return A valid distinction number for a new user with the given username.
      * @throws IllegalArgumentException if the passed username is null or blank.
      */
-    public int findValidNumberForUsername(final String username) {
+    private int findValidNumberForUsername(final String username) {
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("Cannot search for matching username with username null or blank!");
         }
 
-        Optional<UserProjection> user = userRepository.findLastUsername(username);
+        List<UserProjection> matchingUsers = userRepository.findByUsernameStartsWith(username);
 
-        if (user.isEmpty()) {
-            LOGGER.debug("Couldn't find username starting with {}.", username);
-            return 1;
-        } else {
-            String name = user.get().getUsername();
-            int position = getFirstDigitPositionAtEnd(name);
-            return position == name.length() ? 1 : Integer.parseInt(name.substring(position)) + 1;
+        int maxNumber = 0;
+        int prefixLength = username.length();
+        for (UserProjection user : matchingUsers) {
+            String numberStr = user.getUsername().substring(prefixLength);
+
+            try {
+                int number = Integer.parseInt(numberStr);
+                maxNumber = Math.max(maxNumber, number);
+            } catch (NumberFormatException e) {
+                // Ignore, since the failed parsing means the username isn't exactly the searched for pattern.
+            }
         }
+
+        return maxNumber + 1;
     }
 
     /**
@@ -660,24 +664,6 @@ public class UserService {
         }
 
         return builder.toString();
-    }
-
-    /**
-     * Returns the position of the first digit at the end of the string after which only more numbers occur, if any.
-     *
-     * @param username The username to check.
-     * @return The position of the last digit, or the length of the string, if the last character is not a digit.
-     */
-    private int getFirstDigitPositionAtEnd(final String username) {
-        int pos;
-
-        for (pos = username.length() - 1; pos >= 0; pos--) {
-            if (!Character.isDigit(username.charAt(pos))) {
-                break;
-            }
-        }
-
-        return pos + 1;
     }
 
     /**
