@@ -642,8 +642,8 @@ public class UserService {
      */
     // TODO: make this private once CSV adding is also moved to service layer
     public String generateUsernamePasswordCsv(final List<UserDTO> userDTOs) {
-        if (userDTOs.isEmpty()) {
-            throw new IllegalArgumentException("Users list may not be empty.");
+        if (userDTOs == null) {
+            throw new IllegalArgumentException("Users list may not be null.");
         }
 
         StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
