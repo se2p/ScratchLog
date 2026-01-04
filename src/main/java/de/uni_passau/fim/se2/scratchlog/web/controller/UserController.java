@@ -467,10 +467,6 @@ public class UserController {
         String csv = userService.generateUsernamePasswordCsv(result.getFirst());
         List<String> invalidUsernames = result.getSecond();
 
-        if (!invalidUsernames.isEmpty()) {
-            model.addAttribute(ERROR, invalidUsernames);
-        }
-
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
             .body(csv);

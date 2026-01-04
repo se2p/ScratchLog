@@ -45,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.util.Pair;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -470,24 +471,21 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
 
     @Test
     public void testAddUsersInBulk() throws Exception {
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(Pair.of(List.of(userDTO), List.of()));
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT_SUCCESS))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
+                .andExpect(status().isOk());
     }
 
     @Test
     public void testAddUsersInBulkUsernameExists() throws Exception {
         List<String> existingNames = List.of("admin5");
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(existingNames);
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(Pair.of(List.of(), existingNames));
         mvc.perform(post("/users/bulk")
                         .flashAttr(USER_BULK_DTO, userBulkDTO)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(view().name(USERS_ADD))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, is(existingNames)));
+                .andExpect(status().isOk());
     }
 
     @Test

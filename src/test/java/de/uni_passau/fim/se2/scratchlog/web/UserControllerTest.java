@@ -50,6 +50,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.util.Pair;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
@@ -681,7 +683,9 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAddUsersInBulk() {
-        assertEquals(REDIRECT_SUCCESS, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(Pair.of(List.of(userDTO), List.of()));
+        ResponseEntity response = (ResponseEntity) userController.addUsersInBulk(userBulkDTO, bindingResult, model);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(bindingResult, never()).addError(any());
         verify(model, never()).addAttribute(anyString(), any());
     }
@@ -690,10 +694,9 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testAddUsersInBulkStartOneUsernameExists() {
         List<String> existingNames = List.of("admin0");
         userBulkDTO.setStartAtOne(true);
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(existingNames);
-        assertEquals(USERS_ADD, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(model).addAttribute("error", existingNames);
+        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(Pair.of(List.of(), existingNames));
+        ResponseEntity response = (ResponseEntity) userController.addUsersInBulk(userBulkDTO, bindingResult, model);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
