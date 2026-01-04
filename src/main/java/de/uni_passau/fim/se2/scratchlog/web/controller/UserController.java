@@ -28,7 +28,6 @@ import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.spring.authentication.CustomAuthenticationProvider;
 import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
-import de.uni_passau.fim.se2.scratchlog.util.CustomPasswordGenerator;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.enums.TokenType;
@@ -48,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -443,7 +443,7 @@ public class UserController {
      */
     @PostMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
-    public String addUsersInBulk(final UserBulkDTO userBulkDTO, final BindingResult bindingResult, final Model model) {
+    public Object addUsersInBulk(final UserBulkDTO userBulkDTO, final BindingResult bindingResult, final Model model) {
         if (userBulkDTO.getUsername() == null || userBulkDTO.getLanguage() == null) {
             LOGGER.error("Cannot add participants with username or language null!");
             return Constants.ERROR;
@@ -463,14 +463,17 @@ public class UserController {
             return USERS_ADD;
         }
 
-        List<String> invalidUsernames = userService.addUsersInBulk(userBulkDTO);
+        Pair<List<UserDTO>, List<String>> result = userService.addUsersInBulk(userBulkDTO);
+        String csv = userService.generateUsernamePasswordCsv(result.getFirst());
+        List<String> invalidUsernames = result.getSecond();
 
-        if (invalidUsernames.isEmpty()) {
-            return "redirect:/?success=true";
-        } else {
+        if (!invalidUsernames.isEmpty()) {
             model.addAttribute(ERROR, invalidUsernames);
-            return USERS_ADD;
         }
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
+            .body(csv);
     }
 
     /**
@@ -511,19 +514,11 @@ public class UserController {
             if (isValidUserInfo(users, model, resourceBundle)) {
                 users.stream().parallel().forEach(userService::completeUserInformation);
                 userService.saveUsers(users);
-
-                final StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
-                users.forEach(userDTO ->
-                    builder
-                        .append(userDTO.getUsername())
-                        .append(", ")
-                        .append(userDTO.getConfirmPassword())
-                        .append(System.lineSeparator())
-                );
+                String csv = userService.generateUsernamePasswordCsv(users);
 
                 return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
-                    .body(builder.toString());
+                    .body(csv);
             } else {
                 return "users-csv";
             }

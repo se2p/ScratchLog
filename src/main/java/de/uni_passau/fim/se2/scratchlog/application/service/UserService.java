@@ -40,6 +40,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -233,8 +234,20 @@ public class UserService {
         return createUserDTO(user);
     }
 
+    /**
+     * Adds multiple users in bulk to the database according to the data in {@code userBulkDTO}. If not starting at one,
+     * the user id is used as distinction in the usernames.
+     *
+     * @param userBulkDTO The {@link UserBulkDTO} containing the necessary information.
+     * @return two lists, the first of which contains the data of users which were added, and the second of which
+     *         contains the usernames that were tried to be added but were already taken (if starting at one).
+     */
     @Transactional
-    public List<String> addUsersInBulk(final UserBulkDTO userBulkDTO) {
+    public Pair<List<UserDTO>, List<String>> addUsersInBulk(final UserBulkDTO userBulkDTO) {
+        if (userBulkDTO == null) {
+            throw new IllegalArgumentException("UserBulkDTO may be null.");
+        }
+
         int number = userBulkDTO.isStartAtOne() ? findValidNumberForUsername(userBulkDTO.getUsername())
             :  findLastId() + 1;
         List<String> invalidUsernames = new ArrayList<>();
@@ -256,7 +269,7 @@ public class UserService {
         }
 
         saveUsers(validUserDTOs);
-        return invalidUsernames;
+        return Pair.of(validUserDTOs, invalidUsernames);
     }
 
     /**
@@ -624,6 +637,34 @@ public class UserService {
         userDTO.setLastLogin(LocalDateTime.now());
     }
 
+    /**
+     * Generates the contents of a CSV file consisting of two columns with the usernames and passwords of each user.
+     *
+     * @param userDTOs The list of users to generate the CSV for. May not be {@code null} and all have non-{@code}
+     *                 username and password.
+     * @return The generated CSV string.
+     */
+    // TODO: make this private once CSV adding is also moved to service layer
+    public String generateUsernamePasswordCsv(final List<UserDTO> userDTOs) {
+        if (userDTOs.isEmpty()) {
+            throw new IllegalArgumentException("Users list may not be empty.");
+        }
+
+        StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
+        for (UserDTO userDTO : userDTOs) {
+            if (userDTO.getUsername() == null || userDTO.getPassword() == null) {
+                throw new IllegalArgumentException("Username or password may not be null.");
+            }
+
+            builder
+                .append(userDTO.getUsername())
+                .append(", ")
+                .append(userDTO.getConfirmPassword())
+                .append(System.lineSeparator());
+        }
+
+        return builder.toString();
+    }
 
     /**
      * Returns the position of the first digit at the end of the string after which only more numbers occur, if any.
