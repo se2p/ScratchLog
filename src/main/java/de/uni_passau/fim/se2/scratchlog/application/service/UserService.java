@@ -235,11 +235,11 @@ public class UserService {
 
     /**
      * Adds multiple users in bulk to the database according to the data in {@code userBulkDTO}. If not starting at one,
-     * the user id is used as distinction in the usernames.
+     * the user id is used as distinction in the usernames. If starting at one, starts the numbering at one if possible,
+     * else starts numbering at the current maximum number plus one.
      *
      * @param userBulkDTO The {@link UserBulkDTO} containing the necessary information.
-     * @return A list of all users that were added. Might not be the amount specified in {@code userBulkDTO} when
-     *         a name is duplicated when starting numbering from one.
+     * @return A list of all users that were added.
      */
     @Transactional
     public List<UserDTO> addUsersInBulk(final UserBulkDTO userBulkDTO) {
