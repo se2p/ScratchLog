@@ -420,7 +420,7 @@ public class UserController {
      */
     @GetMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
-    public String getAddParticipants(final UserBulkDTO userBulkDTO) {
+    public String getAddUsersInBulk(final UserBulkDTO userBulkDTO) {
         if (applicationProperties.useMail()) {
             return INDEX;
         }
@@ -429,20 +429,18 @@ public class UserController {
     }
 
     /**
-     * Adds the given amount of users to the database if the numbered username doesn't yet exist. For any
-     * username that already exists in the database, the corresponding username is saved to a list. If the given
-     * username pattern is invalid or a pre-existing username has been found, the user returns to the add participants
-     * page where corresponding information is displayed. If the any necessary information passed is invalid, the user
-     * is redirected to the error page instead.
+     * Adds multiple users in bulk to the database according to the data in {@code userBulkDTO}. If not starting at one,
+     * the user id is used as distinction in the usernames. If starting at one, starts the numbering at one if possible,
+     * else starts numbering at the current maximum number plus one. Returns a CSV of all the added users with their
+     * randomly chosen passwords on success, or the error page for invalid inputs.
      *
      * @param userBulkDTO The {@link UserBulkDTO} containing the necessary information.
      * @param bindingResult The {@link BindingResult} to return information on an invalid username pattern.
-     * @param model The {@link Model} used to store information on existing usernames.
-     * @return The index page on success, or the add participants or error page otherwise.
+     * @return A CSV response of the added users, or the add participants or error page otherwise.
      */
     @PostMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
-    public Object addUsersInBulk(final UserBulkDTO userBulkDTO, final BindingResult bindingResult, final Model model) {
+    public Object addUsersInBulk(final UserBulkDTO userBulkDTO, final BindingResult bindingResult) {
         if (userBulkDTO.getUsername() == null || userBulkDTO.getLanguage() == null) {
             LOGGER.error("Cannot add participants with username or language null!");
             return Constants.ERROR;

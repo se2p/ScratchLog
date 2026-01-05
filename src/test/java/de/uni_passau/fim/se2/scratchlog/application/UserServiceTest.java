@@ -24,7 +24,6 @@ import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
-import de.uni_passau.fim.se2.scratchlog.persistence.projection.UserProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
@@ -679,27 +678,4 @@ public class UserServiceTest {
             userService.getInvalidParticipantUsernames(userDTOs));
    }
 
-    private UserProjection getProjection(Integer number) {
-        return new UserProjection() {
-            @Override
-            public Integer getId() {
-                return number;
-            }
-
-            @Override
-            public String getUsername() {
-                return number == null ? USERNAME : USERNAME + number;
-            }
-
-            @Override
-            public String getEmail() {
-                return EMAIL;
-            }
-
-            @Override
-            public Role getRole() {
-                return Role.ADMIN;
-            }
-        };
-    }
 }

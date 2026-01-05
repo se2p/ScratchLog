@@ -50,7 +50,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -71,7 +70,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -118,9 +116,6 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Mock
     private BindingResult bindingResult;
-
-    @Mock
-    private ResourceBundle resourceBundle;
 
     @Mock
     private HttpSession session;
@@ -673,20 +668,20 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testGetAddUsersInBulk() {
         setMailServer(false);
-        assertEquals(USERS_ADD, userController.getAddParticipants(userBulkDTO));
+        assertEquals(USERS_ADD, userController.getAddUsersInBulk(userBulkDTO));
     }
 
     @Test
     public void testGetAddUsersInBulkMailServer() {
         setMailServer(true);
-        assertEquals(REDIRECT, userController.getAddParticipants(userBulkDTO));
+        assertEquals(REDIRECT, userController.getAddUsersInBulk(userBulkDTO));
     }
 
     @Test
     public void testAddUsersInBulk() {
         when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of(userDTO));
         ResponseEntity<String> response
-            = (ResponseEntity<String>) userController.addUsersInBulk(userBulkDTO, bindingResult, model);
+            = (ResponseEntity<String>) userController.addUsersInBulk(userBulkDTO, bindingResult);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getHeaders().containsKey(HttpHeaders.CONTENT_DISPOSITION));
     }
@@ -694,32 +689,32 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testAddUsersInBulkInvalidUsername() {
         userBulkDTO.setUsername(BLANK);
-        assertEquals(USERS_ADD, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
+        assertEquals(USERS_ADD, userController.addUsersInBulk(userBulkDTO, bindingResult));
         verify(bindingResult).addError(any());
     }
 
     @Test
     public void testAddUsersInBulkAmountBiggerMax() {
         userBulkDTO.setAmount(applicationProperties.getMaxUserBulkImportCount() + 1);
-        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
+        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult));
     }
 
     @Test
     public void testAddUsersInBulkAmountTooSmall() {
         userBulkDTO.setAmount(0);
-        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
+        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult));
     }
 
     @Test
     public void testAddUsersInBulkLanguageNull() {
         userBulkDTO.setLanguage(null);
-        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
+        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult));
     }
 
     @Test
     public void testAddUsersInBulkUsernameNull() {
         userBulkDTO.setUsername(null);
-        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
+        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult));
     }
 
     @Test
