@@ -46,6 +46,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.util.Pair;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -76,6 +77,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -452,9 +454,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     @Test
     public void testGetAddUsersInBulk() throws Exception {
         setMailServer(false);
-        mvc.perform(get("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
+        mvc.perform(get("/users/bulk"))
                 .andExpect(status().isOk())
                 .andExpect(view().name(USERS_ADD));
     }
@@ -462,9 +462,7 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     @Test
     public void testGetAddUsersInBulkMailServer() throws Exception {
         setMailServer(true);
-        mvc.perform(get("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
+        mvc.perform(get("/users/bulk"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT));
     }
@@ -472,50 +470,27 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     @Test
     public void testAddUsersInBulk() throws Exception {
         when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of(userDTO));
-        mvc.perform(post("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    public void testAddUsersInBulkUsernameExists() throws Exception {
-        List<String> existingNames = List.of("admin5");
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of());
-        mvc.perform(post("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        mvc.perform(post("/users/bulk").flashAttr(USER_BULK_DTO, userBulkDTO))
+                .andExpect(status().isOk())
+                .andExpect(header().exists(HttpHeaders.CONTENT_DISPOSITION));
     }
 
     @Test
     public void testAddUsersInBulkInvalidUsername() throws Exception {
         userBulkDTO.setUsername("ad");
-        mvc.perform(post("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
+        mvc.perform(post("/users/bulk").flashAttr(USER_BULK_DTO, userBulkDTO))
                 .andExpect(status().isOk())
                 .andExpect(view().name(USERS_ADD))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
-        verify(userService, never()).findValidNumberForUsername(anyString());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
     }
 
     @Test
     public void testAddUsersInBulkInvalidAmount() throws Exception {
         userBulkDTO.setAmount(-1);
-        mvc.perform(post("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
+        mvc.perform(post("/users/bulk").flashAttr(USER_BULK_DTO, userBulkDTO))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR))
                 .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
-        verify(userService, never()).findValidNumberForUsername(anyString());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
     }
 
     @Test

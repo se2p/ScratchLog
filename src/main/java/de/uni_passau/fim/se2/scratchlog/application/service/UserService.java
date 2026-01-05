@@ -549,7 +549,7 @@ public class UserService {
                 int number = Integer.parseInt(numberStr);
                 maxNumber = Math.max(maxNumber, number);
             } catch (NumberFormatException e) {
-                // Ignore, since the failed parsing means the username isn't exactly the searched for pattern.
+                // Ignore, since failed parsing means the username isn't exactly the searched for pattern.
             }
         }
 
@@ -644,7 +644,6 @@ public class UserService {
      *                 username and password.
      * @return The generated CSV string.
      */
-    // TODO: make this private once CSV adding is also moved to service layer
     public String generateUsernamePasswordCsv(final List<UserDTO> userDTOs) {
         if (userDTOs == null) {
             throw new IllegalArgumentException("Users list may not be null.");
@@ -659,7 +658,7 @@ public class UserService {
             builder
                 .append(userDTO.getUsername())
                 .append(", ")
-                .append(userDTO.getConfirmPassword())
+                .append(userDTO.getPassword())
                 .append(System.lineSeparator());
         }
 

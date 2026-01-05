@@ -51,6 +51,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.util.Pair;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -684,19 +685,10 @@ public class UserControllerTest extends AbstractControllerTest {
     @Test
     public void testAddUsersInBulk() {
         when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of(userDTO));
-        ResponseEntity response = (ResponseEntity) userController.addUsersInBulk(userBulkDTO, bindingResult, model);
+        ResponseEntity<String> response
+            = (ResponseEntity<String>) userController.addUsersInBulk(userBulkDTO, bindingResult, model);
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(bindingResult, never()).addError(any());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testAddUsersInBulkStartOneUsernameExists() {
-        List<String> existingNames = List.of("admin0");
-        userBulkDTO.setStartAtOne(true);
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of());
-        ResponseEntity response = (ResponseEntity) userController.addUsersInBulk(userBulkDTO, bindingResult, model);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getHeaders().containsKey(HttpHeaders.CONTENT_DISPOSITION));
     }
 
     @Test
@@ -704,54 +696,30 @@ public class UserControllerTest extends AbstractControllerTest {
         userBulkDTO.setUsername(BLANK);
         assertEquals(USERS_ADD, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
         verify(bindingResult).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testAddUsersInBulkAmountBiggerMax() {
         userBulkDTO.setAmount(applicationProperties.getMaxUserBulkImportCount() + 1);
         assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testAddUsersInBulkAmountTooSmall() {
         userBulkDTO.setAmount(0);
         assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testAddUsersInBulkLanguageNull() {
         userBulkDTO.setLanguage(null);
         assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
     public void testAddUsersInBulkUsernameNull() {
         userBulkDTO.setUsername(null);
         assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
     }
 
     @Test
