@@ -620,7 +620,8 @@ public class UserService {
     /**
      * Completes the data of a {@link UserDTO} so that it can be persisted in the database. This sets the password to a
      * random password if not set, marks the user as active and sets their last login to the current timestamp.
-     * The new data is written in-place.
+     * The new data is written in-place. The encoded password will be stored in the password field, whereas the
+     * plaintext password will be stored in the confirmPassword field.
      *
      * @param userDTO The user DTO to fill with additional information.
      */
@@ -639,6 +640,7 @@ public class UserService {
 
     /**
      * Generates the contents of a CSV file consisting of two columns with the usernames and passwords of each user.
+     * Assumes the plaintext password is stored in the confirmPassword field.
      *
      * @param userDTOs The list of users to generate the CSV for. May not be {@code null} and all have non-{@code}
      *                 username and password.
@@ -651,14 +653,14 @@ public class UserService {
 
         StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
         for (UserDTO userDTO : userDTOs) {
-            if (userDTO.getUsername() == null || userDTO.getPassword() == null) {
+            if (userDTO.getUsername() == null || userDTO.getConfirmPassword() == null) {
                 throw new IllegalArgumentException("Username or password may not be null.");
             }
 
             builder
                 .append(userDTO.getUsername())
                 .append(", ")
-                .append(userDTO.getPassword())
+                .append(userDTO.getConfirmPassword())
                 .append(System.lineSeparator());
         }
 

@@ -28,8 +28,8 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
     public void setup() {
         userBulkDTO = new UserBulkDTO(5, Language.ENGLISH, uniquePrefix() + "userbulktest_", false);
         csvUserList = List.of(
-            UserDTO.builder().username("csvuser1").password("password1!").build(),
-            UserDTO.builder().username("csvuser2").password("password2!").build());
+            UserDTO.builder().username("csvuser1").confirmPassword("password1!").build(),
+            UserDTO.builder().username("csvuser2").confirmPassword("password2!").build());
     }
 
     @Test
@@ -104,7 +104,7 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
 
     @Test
     public void testGenerateUsernamePasswordCsvPasswordNull() {
-        csvUserList.getFirst().setPassword(null);
+        csvUserList.getFirst().setConfirmPassword(null);
         assertThrows(IllegalArgumentException.class, () -> userService.generateUsernamePasswordCsv(null));
     }
 
