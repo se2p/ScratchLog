@@ -244,7 +244,7 @@ public class UserService {
     @Transactional
     public List<UserDTO> addUsersInBulk(final UserBulkDTO userBulkDTO) {
         if (userBulkDTO == null) {
-            throw new IllegalArgumentException("UserBulkDTO may be null.");
+            throw new IllegalArgumentException("UserBulkDTO may not be null.");
         }
 
         String username = userBulkDTO.getUsername();
