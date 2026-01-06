@@ -27,7 +27,6 @@ import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.CourseParticipant;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentTableProjection;
-import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
@@ -40,12 +39,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -78,7 +75,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(CourseController.class)
-@Import(SecurityTestConfig.class)
 public class CourseControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired

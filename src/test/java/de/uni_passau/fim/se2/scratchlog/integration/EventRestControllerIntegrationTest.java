@@ -26,7 +26,6 @@ import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.application.service.FileService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
-import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.web.AbstractControllerTest;
 import de.uni_passau.fim.se2.scratchlog.web.controller.EventRestController;
 import org.json.JSONException;
@@ -35,8 +34,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -53,7 +51,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(EventRestController.class)
-@Import(SecurityTestConfig.class)
 public class EventRestControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired

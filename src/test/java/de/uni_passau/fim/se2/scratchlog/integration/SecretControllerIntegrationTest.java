@@ -22,7 +22,6 @@ package de.uni_passau.fim.se2.scratchlog.integration;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
-import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
@@ -33,8 +32,7 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -57,7 +55,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(SecretController.class)
-@Import(SecurityTestConfig.class)
 public class SecretControllerIntegrationTest extends AbstractControllerTest {
 
     @MockitoBean

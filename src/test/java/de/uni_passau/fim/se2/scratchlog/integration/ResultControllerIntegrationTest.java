@@ -35,7 +35,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProj
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.FileProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
-import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.web.AbstractControllerTest;
 import de.uni_passau.fim.se2.scratchlog.web.controller.ResultController;
@@ -47,14 +46,13 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.File;
@@ -83,7 +81,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(ResultController.class)
-@Import(SecurityTestConfig.class)
+@Import({ZipExportService.class})
 public class ResultControllerIntegrationTest extends AbstractControllerTest {
 
     @Autowired
@@ -113,7 +111,7 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
     @MockitoBean
     private PageService pageService;
 
-    @SpyBean
+    @MockitoSpyBean
     private ZipExportService zipExportService;
 
     @MockitoBean

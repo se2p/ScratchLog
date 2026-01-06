@@ -20,15 +20,13 @@
 package de.uni_passau.fim.se2.scratchlog.integration;
 
 import de.uni_passau.fim.se2.scratchlog.application.service.DashboardService;
-import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.web.AbstractControllerTest;
 import de.uni_passau.fim.se2.scratchlog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -45,7 +43,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(DashboardRestController.class)
-@Import(SecurityTestConfig.class)
 public class DashboardRestControllerIntegrationTest extends AbstractControllerTest {
 
     @MockitoBean

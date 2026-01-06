@@ -22,7 +22,6 @@ package de.uni_passau.fim.se2.scratchlog.integration;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.TokenService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
-import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.enums.TokenType;
@@ -33,13 +32,9 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDateTime;
 
@@ -58,10 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-@ExtendWith(SpringExtension.class)
 @WebMvcTest(TokenController.class)
-@Import(SecurityTestConfig.class)
-@ActiveProfiles("test")
 public class TokenControllerIntegrationTest extends AbstractControllerTest {
 
     @MockitoBean
