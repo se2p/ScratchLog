@@ -211,9 +211,8 @@ public class UserService {
      */
     @Transactional
     public List<UserDTO> saveUsers(final List<UserDTO> userDTOS) {
-        List<UserDTO> saved = new ArrayList<>();
-        userDTOS.forEach(userDTO -> saved.add(saveUser(userDTO)));
-        return saved;
+        List<User> users = userDTOS.stream().map(this::createUser).toList();
+        return userRepository.saveAll(users).stream().map(this::createUserDTO).toList();
     }
 
     /**
