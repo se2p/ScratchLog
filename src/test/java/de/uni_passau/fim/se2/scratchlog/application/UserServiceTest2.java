@@ -2,6 +2,7 @@ package de.uni_passau.fim.se2.scratchlog.application;
 
 import de.uni_passau.fim.se2.scratchlog.AbstractScratchLogTest;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
+import de.uni_passau.fim.se2.scratchlog.testing_utils.DtoUtil;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
@@ -13,8 +14,10 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UserServiceTest2 extends AbstractScratchLogTest {
 
@@ -24,12 +27,29 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
     private UserBulkDTO userBulkDTO;
     private List<UserDTO> csvUserList;
 
+    private UserDTO user1DTO;
+    private UserDTO user2DTO;
+
     @BeforeEach
     public void setup() {
+        user1DTO = DtoUtil.generateUserDTO("User1");
+        user2DTO = DtoUtil.generateUserDTO("User2");
+
         userBulkDTO = new UserBulkDTO(5, Language.ENGLISH, uniquePrefix() + "userbulktest_", false);
         csvUserList = List.of(
             UserDTO.builder().username("csvuser1").confirmPassword("password1!").build(),
             UserDTO.builder().username("csvuser2").confirmPassword("password2!").build());
+    }
+
+    @Test
+    public void testSaveUsers() {
+        List<UserDTO> saved = userService.saveUsers(List.of(user1DTO, user2DTO));
+        assertAll(
+                () -> assertTrue(userService.existsUser(user1DTO.getUsername())),
+                () -> assertTrue(userService.existsUser(user2DTO.getUsername())),
+                () -> assertThat(saved).extracting(UserDTO::getUsername)
+                        .containsExactlyInAnyOrder(user1DTO.getUsername(), user2DTO.getUsername())
+        );
     }
 
     @Test
