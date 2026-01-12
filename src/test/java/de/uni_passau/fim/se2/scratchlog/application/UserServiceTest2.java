@@ -81,7 +81,7 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
     }
 
     @Test
-    public void testAddUsersInBulkEndAtOneAlreadyPresent() {
+    public void testAddUsersInBulkStartAtOneAlreadyPresent() {
         userBulkDTO.setStartAtOne(true);
         userService.addUsersInBulk(userBulkDTO);
         List<UserDTO> users = userService.addUsersInBulk(userBulkDTO);
