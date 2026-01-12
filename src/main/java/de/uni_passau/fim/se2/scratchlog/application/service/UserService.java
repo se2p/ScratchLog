@@ -209,7 +209,6 @@ public class UserService {
      * @param userDTOS The list of users to be saved.
      * @return The list of persisted users.
      */
-    @Transactional
     public List<UserDTO> saveUsers(final List<UserDTO> userDTOS) {
         List<User> users = userDTOS.stream().map(this::createUser).toList();
         return userRepository.saveAll(users).stream().map(this::createUserDTO).toList();
