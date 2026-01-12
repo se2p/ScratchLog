@@ -650,7 +650,7 @@ public class UserService {
             throw new IllegalArgumentException("Users list may not be null.");
         }
 
-        StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
+        StringBuilder builder = new StringBuilder("username,password" + System.lineSeparator());
         for (UserDTO userDTO : userDTOs) {
             if (userDTO.getUsername() == null || userDTO.getConfirmPassword() == null) {
                 throw new IllegalArgumentException("Username or password may not be null.");
@@ -658,7 +658,7 @@ public class UserService {
 
             builder
                 .append(userDTO.getUsername())
-                .append(", ")
+                .append(",")
                 .append(userDTO.getConfirmPassword())
                 .append(System.lineSeparator());
         }

@@ -105,9 +105,9 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
     public void testGenerateUsernamePasswordCsv() {
         String csv = userService.generateUsernamePasswordCsv(csvUserList);
         assertEquals("""
-         username, password
-         csvuser1, password1!
-         csvuser2, password2!
+         username,password
+         csvuser1,password1!
+         csvuser2,password2!
          """, csv);
     }
 
