@@ -22,7 +22,7 @@
 
         <!-- Library versions -->
         <bouncycastle.version>1.83</bouncycastle.version>
-        <checkstyle.version>12.3.1</checkstyle.version>
+        <checkstyle.version>13.0.0</checkstyle.version>
         <codec.version>1.20.0</codec.version>
         <commonmark.version>0.27.0</commonmark.version>
         <databind.version>2.19.0</databind.version>
