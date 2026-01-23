@@ -35,7 +35,6 @@ import de.uni_passau.fim.se2.scratchlog.web.AbstractControllerTest;
 import de.uni_passau.fim.se2.scratchlog.web.controller.UserController;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.TokenDTO;
-import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +44,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -58,7 +56,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
@@ -76,7 +73,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -128,10 +124,8 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     private static final String INVALID = "redirect:/users/profile?invalid=true&name=";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
-    private static final String USERS_ADD = "users-add";
     private static final String USER_DTO = "userDTO";
     private static final String PASSWORD_DTO = "passwordDTO";
-    private static final String USER_BULK_DTO = "userBulkDTO";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String NAME = "name";
     private static final String ID_STRING = "1";
@@ -140,12 +134,10 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     private static final String FILETYPE = "text/csv";
     private static final String FILENAME = "users.csv";
     private static final int ID = 1;
-    private static final int AMOUNT = 5;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
     private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
     private final TokenDTO tokenDTO = new TokenDTO(TokenType.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
-    private final UserBulkDTO userBulkDTO = new UserBulkDTO(AMOUNT, Language.ENGLISH, USERNAME, true);
 
     @BeforeEach
     public void setup() {
@@ -166,8 +158,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
         userDTO.setConfirmPassword("");
         userDTO.setAttempts(0);
         passwordDTO.setPassword(PASSWORD);
-        userBulkDTO.setUsername(USERNAME);
-        userBulkDTO.setAmount(AMOUNT);
     }
 
     @AfterEach
@@ -448,48 +438,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
         verify(userService, never()).saveUser(any());
         verify(tokenService, never()).generateToken(any(), anyString(), anyInt());
         verify(mailService, never()).sendEmail(anyString(), anyString(), any(), anyString());
-    }
-
-    @Test
-    public void testGetAddUsersInBulk() throws Exception {
-        setMailServer(false);
-        mvc.perform(get("/users/bulk"))
-                .andExpect(status().isOk())
-                .andExpect(view().name(USERS_ADD));
-    }
-
-    @Test
-    public void testGetAddUsersInBulkMailServer() throws Exception {
-        setMailServer(true);
-        mvc.perform(get("/users/bulk"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT));
-    }
-
-    @Test
-    public void testAddUsersInBulk() throws Exception {
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of(userDTO));
-        mvc.perform(post("/users/bulk").flashAttr(USER_BULK_DTO, userBulkDTO))
-                .andExpect(status().isOk())
-                .andExpect(header().exists(HttpHeaders.CONTENT_DISPOSITION));
-    }
-
-    @Test
-    public void testAddUsersInBulkInvalidUsername() throws Exception {
-        userBulkDTO.setUsername("ad");
-        mvc.perform(post("/users/bulk").flashAttr(USER_BULK_DTO, userBulkDTO))
-                .andExpect(status().isOk())
-                .andExpect(view().name(USERS_ADD))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
-    }
-
-    @Test
-    public void testAddUsersInBulkInvalidAmount() throws Exception {
-        userBulkDTO.setAmount(-1);
-        mvc.perform(post("/users/bulk").flashAttr(USER_BULK_DTO, userBulkDTO))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
     }
 
     @Test

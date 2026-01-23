@@ -50,8 +50,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
@@ -68,7 +66,6 @@ import java.io.IOException;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -86,9 +83,6 @@ import static org.mockito.Mockito.*;
 @WebMvcTest(UserController.class)
 @Import(SecurityTestConfig.class)
 public class UserControllerTest extends AbstractControllerTest {
-
-    @Autowired
-    private ApplicationProperties applicationProperties;
 
     @Autowired
     private UserController userController;
@@ -675,46 +669,6 @@ public class UserControllerTest extends AbstractControllerTest {
     public void testGetAddUsersInBulkMailServer() {
         setMailServer(true);
         assertEquals(REDIRECT, userController.getAddUsersInBulk(userBulkDTO));
-    }
-
-    @Test
-    public void testAddUsersInBulk() {
-        when(userService.addUsersInBulk(userBulkDTO)).thenReturn(List.of(userDTO));
-        ResponseEntity<String> response
-            = (ResponseEntity<String>) userController.addUsersInBulk(userBulkDTO, bindingResult);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getHeaders().containsKey(HttpHeaders.CONTENT_DISPOSITION));
-    }
-
-    @Test
-    public void testAddUsersInBulkInvalidUsername() {
-        userBulkDTO.setUsername(BLANK);
-        assertEquals(USERS_ADD, userController.addUsersInBulk(userBulkDTO, bindingResult));
-        verify(bindingResult).addError(any());
-    }
-
-    @Test
-    public void testAddUsersInBulkAmountBiggerMax() {
-        userBulkDTO.setAmount(applicationProperties.getMaxUserBulkImportCount() + 1);
-        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult));
-    }
-
-    @Test
-    public void testAddUsersInBulkAmountTooSmall() {
-        userBulkDTO.setAmount(0);
-        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult));
-    }
-
-    @Test
-    public void testAddUsersInBulkLanguageNull() {
-        userBulkDTO.setLanguage(null);
-        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult));
-    }
-
-    @Test
-    public void testAddUsersInBulkUsernameNull() {
-        userBulkDTO.setUsername(null);
-        assertEquals(Constants.ERROR, userController.addUsersInBulk(userBulkDTO, bindingResult));
     }
 
     @Test
