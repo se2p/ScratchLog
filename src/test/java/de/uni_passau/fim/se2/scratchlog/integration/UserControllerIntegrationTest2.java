@@ -15,6 +15,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -27,6 +28,7 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
     private static final String ATTR_USER_BULK_DTO = "userBulkDTO";
     private static final String ATTR_ERROR = "error";
 
+    private static final String VIEW_REDIRECT = "redirect:/";
     private static final String VIEW_ADD_BULK = "users-add";
 
     @Autowired
@@ -37,6 +39,24 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
     @BeforeEach
     public void setup() {
         userBulkDTO = new UserBulkDTO(5, Language.ENGLISH, uniquePrefix() + "bulk_", false);
+    }
+
+    @Test
+    void testGetAddUsersInBulk() throws Exception {
+        setMailServer(false);
+
+        mvc.perform(get("/users/bulk"))
+            .andExpect(status().isOk())
+            .andExpect(view().name(VIEW_ADD_BULK));
+    }
+
+    @Test
+    void testGetAddUsersInBulkMailServer() throws Exception {
+        setMailServer(true);
+
+        mvc.perform(get("/users/bulk"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(view().name(VIEW_REDIRECT));
     }
 
     @Test

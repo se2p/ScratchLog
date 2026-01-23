@@ -23,7 +23,6 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.annotation.ApplicationScope;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -33,7 +32,6 @@ import java.util.stream.Collectors;
  * Utility class providing access to the values specified in the application.properties file needed by the application.
  */
 @Component
-@ApplicationScope
 public class ApplicationProperties {
 
     /**
