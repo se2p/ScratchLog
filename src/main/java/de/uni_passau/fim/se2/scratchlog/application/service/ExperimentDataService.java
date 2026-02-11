@@ -19,6 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
+import com.opencsv.CSVWriter;
 import de.uni_passau.fim.se2.litterbox.analytics.Issue;
 import de.uni_passau.fim.se2.litterbox.analytics.ProgramBugAnalyzer;
 import de.uni_passau.fim.se2.litterbox.analytics.ProgramMetricAnalyzer;
@@ -44,12 +45,13 @@ import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentReposit
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ResourceEventRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
-import jakarta.persistence.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,6 +59,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * A service providing methods for retrieving data saved during experiments to be made available for download.
@@ -65,14 +68,11 @@ import java.util.Set;
 public class ExperimentDataService {
 
     /**
-     * The log instance associated with this class for logging purposes.
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExperimentDataService.class);
-
-    /**
      * A parser for Scratch programs.
      */
     private final Scratch3Parser scratch3Parser = new Scratch3Parser();
+
+    private final EntityManager entityManager;
 
     /**
      * The block event repository to use for block event queries.
@@ -116,21 +116,14 @@ public class ExperimentDataService {
 
     private final IssueTranslator translator = IssueTranslatorFactory.getIssueTranslator(Locale.ENGLISH);
 
-    /**
-     * Constructs an event service with the given dependencies.
-     *
-     * @param blockEventRepository The {@link BlockEventRepository} to use.
-     * @param clickEventRepository The {@link ClickEventRepository} to use.
-     * @param resourceEventRepository The {@link ResourceEventRepository} to use.
-     * @param experimentRepository The {@link ExperimentRepository} to use.
-     * @param participantRepository The {@link ParticipantRepository} to use.
-     */
     @Autowired
-    public ExperimentDataService(final BlockEventRepository blockEventRepository,
+    public ExperimentDataService(final EntityManager entityManager,
+                                 final BlockEventRepository blockEventRepository,
                                  final ClickEventRepository clickEventRepository,
                                  final ResourceEventRepository resourceEventRepository,
                                  final ExperimentRepository experimentRepository,
                                  final ParticipantRepository participantRepository) {
+        this.entityManager = entityManager;
         this.blockEventRepository = blockEventRepository;
         this.clickEventRepository = clickEventRepository;
         this.resourceEventRepository = resourceEventRepository;
@@ -140,24 +133,41 @@ public class ExperimentDataService {
 
     /**
      * Retrieves all block, click and resource events that occurred during the experiment with the given id. The
-     * retrieved events are converted to a list of string arrays containing all information about the events in a fixed
+     * retrieved events are converted to string arrays containing all information about the events in a fixed
      * format.
      *
-     * @param id The experiment ID.
-     * @return A list of string arrays containing information about all events.
+     * @param experimentId The experiment ID.
+     * @param outputStream Into which the CSV is written.
      */
-    public List<String[]> getEventData(final int id) {
-        Experiment experiment = experimentRepository.getReferenceById(id);
+    @Transactional(readOnly = true)
+    public void getEventDataCsv(final int experimentId, final PrintWriter outputStream) throws IOException {
+        final Experiment experiment = experimentRepository.getReferenceById(experimentId);
+        final CSVWriter csvWriter = new CSVWriter(outputStream);
 
-        try {
-            List<BlockEvent> blockEvents = blockEventRepository.findAllByExperiment(experiment);
-            List<ClickEvent> clickEvents = clickEventRepository.findAllByExperiment(experiment);
-            List<ResourceEvent> resourceEvents = resourceEventRepository.findAllByExperiment(experiment);
-            return createEventList(blockEvents, clickEvents, resourceEvents);
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
-            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
+        final String[] header = {"id", "user", "username", "experiment", "date", "eventType", "event", "spritename",
+            "metadata", "xml", "json", "name", "md5", "filetype", "library", "table"};
+        csvWriter.writeNext(header);
+
+        try (Stream<BlockEvent> blockEvents = blockEventRepository.findAllByExperiment(experiment)) {
+            blockEvents
+                .peek(entityManager::detach)
+                .map(this::mapBlockEventToCsvRow)
+                .forEach(csvWriter::writeNext);
         }
+        try (Stream<ClickEvent> clickEvents = clickEventRepository.findAllByExperiment(experiment)) {
+            clickEvents
+                .peek(entityManager::detach)
+                .map(this::mapClickEventToCsvRow)
+                .forEach(csvWriter::writeNext);
+        }
+        try (Stream<ResourceEvent> resourceEvents = resourceEventRepository.findAllByExperiment(experiment)) {
+            resourceEvents
+                .peek(entityManager::detach)
+                .map(this::mapResourceEventToCsvRow)
+                .forEach(csvWriter::writeNext);
+        }
+
+        csvWriter.flush();
     }
 
     /**
@@ -206,78 +216,43 @@ public class ExperimentDataService {
     }
 
     /**
-     * Takes the given block, click and resource events and adds the contained information in a fixed format as string
-     * arrays to a list. An additional string entry is added to indicate from which table, i.e. block_event, click_event
-     * or resource_event, the specific string array originated.
-     *
-     * @param blockEvents The block events whose information should be extracted.
-     * @param clickEvents The click events whose information should be extracted.
-     * @param resourceEvents The resource events whose information should be extracted.
-     * @return A list of string arrays containing all the information of the given events.
-     */
-    private List<String[]> createEventList(final List<BlockEvent> blockEvents, final List<ClickEvent> clickEvents,
-                                           final List<ResourceEvent> resourceEvents) {
-        List<String[]> events = new ArrayList<>();
-        String[] header = {"id", "user", "username", "experiment", "date", "eventType", "event", "spritename",
-                "metadata", "xml", "json", "name", "md5", "filetype", "library", "table"};
-        events.add(header);
-        addBlockEventsToList(events, blockEvents);
-        addClickEventsToList(events, clickEvents);
-        addResourceEventsToList(events, resourceEvents);
-        return events;
-    }
-
-
-    /**
      * Adds the information contained in the given block events to the passed list.
      *
-     * @param events The list to which the information should be added.
-     * @param blockEvents The block events.
+     * @param blockEvent The block events.
      */
-    private void addBlockEventsToList(final List<String[]> events, final List<BlockEvent> blockEvents) {
-        for (BlockEvent blockEvent : blockEvents) {
-            String[] data = {blockEvent.getId().toString(), blockEvent.getUser().getId().toString(),
+    private String[] mapBlockEventToCsvRow(final BlockEvent blockEvent) {
+          return new String[] {blockEvent.getId().toString(), blockEvent.getUser().getId().toString(),
                     blockEvent.getUser().getUsername(), blockEvent.getExperiment().getId().toString(),
                     blockEvent.getDate().toString(), blockEvent.getEventType().toString(),
                     blockEvent.getEvent().toString(), blockEvent.getSprite(), blockEvent.getMetadata(),
                     blockEvent.getXml(), blockEvent.getCode(), null, null, null, null, "block_event"};
-            events.add(data);
-        }
     }
 
     /**
      * Adds the information contained in the given click events to the passed list.
      *
-     * @param events The list to which the information should be added.
-     * @param clickEvents The click events.
+     * @param clickEvent A click event.
      */
-    private void addClickEventsToList(final List<String[]> events, final List<ClickEvent> clickEvents) {
-        for (ClickEvent clickEvent : clickEvents) {
-            String[] data = {clickEvent.getId().toString(), clickEvent.getUser().getId().toString(),
+    private String[] mapClickEventToCsvRow(final ClickEvent clickEvent) {
+         return new String[] {clickEvent.getId().toString(), clickEvent.getUser().getId().toString(),
                     clickEvent.getUser().getUsername(), clickEvent.getExperiment().getId().toString(),
                     clickEvent.getDate().toString(), clickEvent.getEventType().toString(),
                     clickEvent.getEvent().toString(), null, clickEvent.getMetadata(), null, null, null, null, null,
                     null, "click_event"};
-            events.add(data);
-        }
     }
 
     /**
      * Adds the information contained in the given resource events to the passed list.
      *
-     * @param events The list to which the information should be added.
-     * @param resourceEvents The resource events.
+     * @param resourceEvent The resource events.
      */
-    private void addResourceEventsToList(final List<String[]> events, final List<ResourceEvent> resourceEvents) {
-        for (ResourceEvent resourceEvent : resourceEvents) {
-            String[] data = {resourceEvent.getId().toString(), resourceEvent.getUser().getId().toString(),
+    private String[] mapResourceEventToCsvRow(final ResourceEvent resourceEvent) {
+        return new String[] {resourceEvent.getId().toString(), resourceEvent.getUser().getId().toString(),
                     resourceEvent.getUser().getUsername(), resourceEvent.getExperiment().getId().toString(),
                     resourceEvent.getDate().toString(), resourceEvent.getEventType().toString(),
                     resourceEvent.getEvent().toString(), null, null, null, null, resourceEvent.getResourceName(),
                     resourceEvent.getHash(), resourceEvent.getResourceType(), resourceEvent.getLibraryResource() == null
                     ? null : resourceEvent.getLibraryResource().toString(), "resource_event"};
-            events.add(data);
-        }
     }
 
     /**

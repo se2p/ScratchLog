@@ -62,6 +62,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -534,19 +535,14 @@ public class ExperimentController {
     @Secured(Constants.ROLE_ADMIN)
     public void downloadCSVFile(
         @RequestParam(ID) final int experimentId, final HttpServletResponse httpServletResponse
-    ) {
-        try {
-            httpServletResponse.setContentType("text/csv");
-            httpServletResponse.setHeader("Content-Disposition", "attachment;filename=experiment_" + experimentId
-                    + ".csv");
-            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
-            CSVWriter csvWriter = new CSVWriter(httpServletResponse.getWriter());
-            List<String[]> events = experimentDataService.getEventData(experimentId);
-            csvWriter.writeAll(events);
-            csvWriter.flush();
-        } catch (IOException e) {
-            LOGGER.error("Could not download csv file due to IOException!", e);
-            throw new RuntimeException("Could not download csv file due to IOException!");
+    ) throws IOException {
+        httpServletResponse.setContentType("text/csv");
+        httpServletResponse.setHeader("Content-Disposition", "attachment;filename=experiment_" + experimentId
+                + ".csv");
+        httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+
+        try (PrintWriter pw = httpServletResponse.getWriter()) {
+            experimentDataService.getEventDataCsv(experimentId, pw);
         }
     }
 

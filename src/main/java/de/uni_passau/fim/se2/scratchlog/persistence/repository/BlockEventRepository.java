@@ -32,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A repository providing functionality for retrieving the block event data.
@@ -78,7 +79,7 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
      * @param experiment The experiment to search for.
      * @return A {@link List} of all block events.
      */
-    List<BlockEvent> findAllByExperiment(Experiment experiment);
+    Stream<BlockEvent> findAllByExperiment(Experiment experiment);
 
     /**
      * Returns all {@link EventProjection}s for the given user and experiment with the given event.

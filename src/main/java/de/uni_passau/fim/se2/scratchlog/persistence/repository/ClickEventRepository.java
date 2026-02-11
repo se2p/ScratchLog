@@ -27,6 +27,7 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A repository providing functionality for retrieving the click event data.
@@ -39,7 +40,7 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, Integer>
      * @param experiment The experiment to search for.
      * @return A {@link List} of all click events.
      */
-    List<ClickEvent> findAllByExperiment(Experiment experiment);
+    Stream<ClickEvent> findAllByExperiment(Experiment experiment);
 
     /**
      * Returns all {@link ClickEvent}s for the given user and experiment with the given event.
