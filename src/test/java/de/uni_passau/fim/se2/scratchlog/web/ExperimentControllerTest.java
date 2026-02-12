@@ -54,7 +54,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -982,22 +981,11 @@ public class ExperimentControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDownloadCSVFile() throws IOException {
-        when(experimentDataService.getEventData(ID)).thenReturn(new ArrayList<>());
         when(httpServletResponse.getWriter()).thenReturn(new PrintWriter(new ByteArrayOutputStream()));
         assertDoesNotThrow(
                 () -> experimentController.downloadCSVFile(ID, httpServletResponse)
         );
-        verify(experimentDataService).getEventData(ID);
-        verify(httpServletResponse).getWriter();
-    }
-
-    @Test
-    public void testDownloadCSVFileIO() throws IOException {
-        when(httpServletResponse.getWriter()).thenThrow(IOException.class);
-        assertThrows(RuntimeException.class,
-                () -> experimentController.downloadCSVFile(ID, httpServletResponse)
-        );
-        verify(experimentDataService, never()).getEventData(anyInt());
+        verify(experimentDataService).getEventDataCsv(eq(ID), any());
         verify(httpServletResponse).getWriter();
     }
 

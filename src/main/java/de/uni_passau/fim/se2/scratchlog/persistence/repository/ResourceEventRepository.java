@@ -27,6 +27,7 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A repository providing functionality for retrieving the resource event data.
@@ -39,7 +40,7 @@ public interface ResourceEventRepository extends JpaRepository<ResourceEvent, In
      * @param experiment The experiment to search for.
      * @return A {@link List} of all resource events.
      */
-    List<ResourceEvent> findAllByExperiment(Experiment experiment);
+    Stream<ResourceEvent> findAllByExperiment(Experiment experiment);
 
     /**
      * Returns all {@link ResourceEvent}s for the given user and experiment with the given event.

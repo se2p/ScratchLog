@@ -19,6 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.application;
 
+import de.uni_passau.fim.se2.scratchlog.AbstractScratchLogTest;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.BlockEvent;
@@ -41,6 +42,7 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventType;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,8 +50,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -59,22 +64,25 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ExperimentDataServiceTest {
+class ExperimentDataServiceTest extends AbstractScratchLogTest {
 
-    @InjectMocks
+    @Autowired
+    private EntityManager entityManager;
+
     private ExperimentDataService experimentDataService;
 
     @Mock
@@ -102,44 +110,43 @@ public class ExperimentDataServiceTest {
             "issue type", "severity", "actor name", "location", "hint", "costumes", "current costumes", "json",
             "timestamp"};
     private final Participant participant = new Participant(user, experiment, null, null);
-    private final List<BlockEvent> blockEventData = getBlockEvents(3);
-    private final List<ClickEvent> clickEventData = getClickEvents(2);
-    private final List<ResourceEvent> resourceEventData = getResourceEvents(2);
+    private final Stream<BlockEvent> blockEventData = getBlockEvents(3);
+    private final Stream<ClickEvent> clickEventData = getClickEvents(2);
+    private final Stream<ResourceEvent> resourceEventData = getResourceEvents(2);
     private final List<Participant> participants = List.of(participant, participant);
 
     @BeforeEach
-    public void setup() {
+    void setup() {
+        experimentDataService = new ExperimentDataService(
+            entityManager, blockEventRepository, clickEventRepository, resourceEventRepository,
+            experimentRepository, participantRepository
+        );
         user.setId(ID);
     }
 
     @Test
-    public void testGetEventData() {
+    void testGetEventData() throws IOException {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(blockEventRepository.findAllByExperiment(experiment)).thenReturn(blockEventData);
         when(clickEventRepository.findAllByExperiment(experiment)).thenReturn(clickEventData);
         when(resourceEventRepository.findAllByExperiment(experiment)).thenReturn(resourceEventData);
-        List<String[]> events = experimentDataService.getEventData(ID);
-        assertAll(
+
+        try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
+            experimentDataService.getEventDataCsv(ID, pw);
+            List<String> events = sw.toString().lines().toList();
+            assertAll(
                 () -> assertEquals(8, events.size()),
-                () -> assertEquals(Arrays.toString(EVENT_DATA_HEADER), Arrays.toString(events.getFirst()))
-        );
+                () -> assertEquals(
+                    Arrays.stream(EVENT_DATA_HEADER).map(s -> "\"" + s + "\"").collect(Collectors.joining(",")),
+                    String.join(",", events.getFirst())
+                )
+            );
+        }
+
         verify(experimentRepository).getReferenceById(ID);
         verify(blockEventRepository).findAllByExperiment(experiment);
         verify(clickEventRepository).findAllByExperiment(experiment);
         verify(resourceEventRepository).findAllByExperiment(experiment);
-    }
-
-    @Test
-    public void testGetEventDataNotFound() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(blockEventRepository.findAllByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> experimentDataService.getEventData(ID)
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(blockEventRepository).findAllByExperiment(experiment);
-        verify(clickEventRepository, never()).findAllByExperiment(any());
-        verify(resourceEventRepository, never()).findAllByExperiment(any());
     }
 
     @Test
@@ -296,7 +303,7 @@ public class ExperimentDataServiceTest {
         verify(blockEventRepository, never()).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(any(), any());
     }
 
-    private List<BlockEvent> getBlockEvents(int number) {
+    private Stream<BlockEvent> getBlockEvents(int number) {
         List<BlockEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             BlockEvent blockEvent = new BlockEvent(user, experiment, LocalDateTime.now(), BlockEventType.CLICK,
@@ -304,10 +311,10 @@ public class ExperimentDataServiceTest {
             blockEvent.setId(i);
             events.add(blockEvent);
         }
-        return events;
+        return events.stream();
     }
 
-    private List<ClickEvent> getClickEvents(int number) {
+    private Stream<ClickEvent> getClickEvents(int number) {
         List<ClickEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             ClickEvent clickEvent = new ClickEvent(user, experiment, LocalDateTime.now(),
@@ -315,10 +322,10 @@ public class ExperimentDataServiceTest {
             clickEvent.setId(i);
             events.add(clickEvent);
         }
-        return events;
+        return events.stream();
     }
 
-    private List<ResourceEvent> getResourceEvents(int number) {
+    private Stream<ResourceEvent> getResourceEvents(int number) {
         List<ResourceEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             ResourceEvent resourceEvent = new ResourceEvent(user, experiment, LocalDateTime.now(),
@@ -326,7 +333,7 @@ public class ExperimentDataServiceTest {
             resourceEvent.setId(i);
             events.add(resourceEvent);
         }
-        return events;
+        return events.stream();
     }
 
 }

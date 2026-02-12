@@ -52,7 +52,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -78,6 +77,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -1004,13 +1004,12 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
 
     @Test
     public void testDownloadCSVFile() throws Exception {
-        when(experimentDataService.getEventData(ID)).thenReturn(new ArrayList<>());
         mvc.perform(get("/experiment/csv")
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk());
-        verify(experimentDataService).getEventData(ID);
+        verify(experimentDataService).getEventDataCsv(eq(ID), any());
     }
 
     @Test
