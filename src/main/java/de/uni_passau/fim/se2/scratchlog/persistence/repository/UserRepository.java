@@ -267,11 +267,16 @@ public interface UserRepository extends JpaRepository<User, Integer> {
                                                                 @Param("limit") int limit);
 
     /**
-     * Returns a list of users whose usernames start with the given pattern.
-     * @param username The username pattern to search for.
-     *
-     * @return A list of users whose usernames start with the given pattern.
-     */
-    List<UserProjection> findByUsernameStartsWith(@Param("username") String username);
+    * Returns a list of users whose usernames start with the given prefix.
+    * @param prefix The username pattern to search for.
+    *
+    * @return A set of users whose usernames start with the given prefix.
+    */
+    @Query("""
+    SELECT u.username
+    FROM User u
+    WHERE u.username like CONCAT(:prefix, '%')
+    """)
+    Set<String> getUsernamesWithPrefix(@Param("prefix") String prefix);
 
 }

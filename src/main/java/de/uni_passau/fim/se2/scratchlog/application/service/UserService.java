@@ -24,7 +24,6 @@ import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
-import de.uni_passau.fim.se2.scratchlog.persistence.projection.UserProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
@@ -527,21 +526,21 @@ public class UserService {
      * This is the maximum number that occurs after the given username across all usernames in the database, plus 1.
      * Also 1 in case the pattern is not currently used by any username.
      *
-     * @param username The username pattern to search for.
+     * @param usernamePattern The username pattern to search for.
      * @return A valid distinction number for a new user with the given username.
      * @throws IllegalArgumentException if the passed username is null or blank.
      */
-    private int findValidNumberForUsername(final String username) {
-        if (username == null || username.isBlank()) {
+    private int findValidNumberForUsername(final String usernamePattern) {
+        if (usernamePattern == null || usernamePattern.isBlank()) {
             throw new IllegalArgumentException("Cannot search for matching username with username null or blank!");
         }
 
-        List<UserProjection> matchingUsers = userRepository.findByUsernameStartsWith(username);
+        Set<String> matchingUsernames = userRepository.getUsernamesWithPrefix(usernamePattern);
 
         int maxNumber = 0;
-        int prefixLength = username.length();
-        for (UserProjection user : matchingUsers) {
-            String numberStr = user.getUsername().substring(prefixLength);
+        int prefixLength = usernamePattern.length();
+        for (String username : matchingUsernames) {
+            String numberStr = username.substring(prefixLength);
 
             try {
                 int number = Integer.parseInt(numberStr);

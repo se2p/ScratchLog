@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -293,19 +294,19 @@ class UserRepositoryTest extends AbstractScratchLogTest {
     }
 
     @Test
-    void testFindByUsernameStartsWith() {
+    void testGetUsernamesWithPrefix() {
         String search = user(3).getUsername().split("_")[0] + "_" + USERNAME_SEARCH;
-        List<UserProjection> users = userRepository.findByUsernameStartsWith(search);
-        assertThat(users.stream().map(UserProjection::getUsername)).containsExactly(
+        Set<String> usernames = userRepository.getUsernamesWithPrefix(search);
+        assertThat(usernames).containsExactly(
             user(3).getUsername(), user(4).getUsername(), user(5).getUsername(), user(6).getUsername(),
             user(7).getUsername(), user(8).getUsername(), user(9).getUsername()
         );
     }
 
     @Test
-    void testFindByUsernameStartsWithEmpty() {
+    void testGetUsernamesWithPrefixEmpty() {
         String search = user(3).getUsername().split("_")[0] + "_" + USERNAME_SEARCH + "somethingelse";
-        List<UserProjection> users = userRepository.findByUsernameStartsWith(search);
-        assertThat(users).isEmpty();
+        Set<String> usernames = userRepository.getUsernamesWithPrefix(search);
+        assertThat(usernames).isEmpty();
     }
 }
