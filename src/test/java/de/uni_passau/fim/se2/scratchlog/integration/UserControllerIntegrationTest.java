@@ -35,7 +35,6 @@ import de.uni_passau.fim.se2.scratchlog.web.AbstractControllerTest;
 import de.uni_passau.fim.se2.scratchlog.web.controller.UserController;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.TokenDTO;
-import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,7 +56,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasProperty;
@@ -126,10 +124,8 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     private static final String INVALID = "redirect:/users/profile?invalid=true&name=";
     private static final String USER = "user";
     private static final String PASSWORD_PAGE = "password";
-    private static final String USERS_ADD = "users-add";
     private static final String USER_DTO = "userDTO";
     private static final String PASSWORD_DTO = "passwordDTO";
-    private static final String USER_BULK_DTO = "userBulkDTO";
     private static final String ERROR_ATTRIBUTE = "error";
     private static final String NAME = "name";
     private static final String ID_STRING = "1";
@@ -138,12 +134,10 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     private static final String FILETYPE = "text/csv";
     private static final String FILENAME = "users.csv";
     private static final int ID = 1;
-    private static final int AMOUNT = 5;
     private final UserDTO userDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
     private final UserDTO oldDTO = new UserDTO(USERNAME, EMAIL, Role.ADMIN, Language.ENGLISH, PASSWORD, SECRET);
     private final TokenDTO tokenDTO = new TokenDTO(TokenType.CHANGE_EMAIL, LocalDateTime.now(), NEW_EMAIL, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
-    private final UserBulkDTO userBulkDTO = new UserBulkDTO(AMOUNT, Language.ENGLISH, USERNAME, true);
 
     @BeforeEach
     public void setup() {
@@ -164,8 +158,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
         userDTO.setConfirmPassword("");
         userDTO.setAttempts(0);
         passwordDTO.setPassword(PASSWORD);
-        userBulkDTO.setUsername(USERNAME);
-        userBulkDTO.setAmount(AMOUNT);
     }
 
     @AfterEach
@@ -449,87 +441,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetAddParticipants() throws Exception {
-        setMailServer(false);
-        mvc.perform(get("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(view().name(USERS_ADD));
-    }
-
-    @Test
-    public void testGetAddParticipantsMailServer() throws Exception {
-        setMailServer(true);
-        mvc.perform(get("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT));
-    }
-
-    @Test
-    public void testAddParticipants() throws Exception {
-        mvc.perform(post("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT_SUCCESS))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
-        verify(userService).findValidNumberForUsername(userBulkDTO.getUsername());
-        verify(userService, never()).findLastId();
-        verify(userService, times(AMOUNT)).existsUser(anyString());
-        verify(userService, times(AMOUNT)).saveUser(any());
-    }
-
-    @Test
-    public void testAddParticipantsUsernameExists() throws Exception {
-        List<String> existingNames = List.of("admin5");
-        when(userService.findValidNumberForUsername(userBulkDTO.getUsername())).thenReturn(1);
-        when(userService.existsUser(existingNames.getFirst())).thenReturn(true);
-        mvc.perform(post("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(view().name(USERS_ADD))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, is(existingNames)));
-        verify(userService).findValidNumberForUsername(userBulkDTO.getUsername());
-        verify(userService, never()).findLastId();
-        verify(userService, times(AMOUNT)).existsUser(anyString());
-        verify(userService, times(AMOUNT - existingNames.size())).saveUser(any());
-    }
-
-    @Test
-    public void testAddParticipantsInvalidUsername() throws Exception {
-        userBulkDTO.setUsername("ad");
-        mvc.perform(post("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(view().name(USERS_ADD))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
-        verify(userService, never()).findValidNumberForUsername(anyString());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-    }
-
-    @Test
-    public void testAddParticipantsInvalidAmount() throws Exception {
-        userBulkDTO.setAmount(-1);
-        mvc.perform(post("/users/bulk")
-                        .flashAttr(USER_BULK_DTO, userBulkDTO)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(Constants.ERROR))
-                .andExpect(model().attribute(ERROR_ATTRIBUTE, nullValue()));
-        verify(userService, never()).findValidNumberForUsername(anyString());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-    }
-
-    @Test
     public void testGetCSVParticipants() throws Exception {
         mvc.perform(get("/users/csv"))
                 .andExpect(status().isOk())
@@ -549,7 +460,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
         verify(userService, never()).existsUser(anyString());
         verify(userService, never()).existsEmail(anyString());
         verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, times(3)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 

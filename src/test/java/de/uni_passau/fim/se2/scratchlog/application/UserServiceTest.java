@@ -24,7 +24,6 @@ import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
-import de.uni_passau.fim.se2.scratchlog.persistence.projection.UserProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
@@ -36,8 +35,6 @@ import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
@@ -186,18 +183,6 @@ public class UserServiceTest {
         verify(userRepository).getReferenceById(ID);
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).existsByUserAndExperiment(any(), any());
-    }
-
-    @Test
-    public void testSaveUsers() {
-        when(userRepository.save(any())).thenReturn(user1, user2);
-        List<UserDTO> saved = userService.saveUsers(List.of(userDTO, userDTO));
-        assertAll(
-                () -> assertEquals(2, saved.size()),
-                () -> assertEquals(user1.getId(), saved.getFirst().getId()),
-                () -> assertEquals(user2.getId(), saved.get(1).getId())
-        );
-        verify(userRepository, times(2)).save(any());
     }
 
     @Test
@@ -638,74 +623,6 @@ public class UserServiceTest {
         verify(userRepository).findFirstByOrderByIdDesc();
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = {9, 25, 100})
-    public void testFindLastUsernameNumber(int number) {
-        UserProjection projection = getProjection(number);
-        when(userRepository.findLastUsername(USERNAME)).thenReturn(Optional.of(projection));
-        assertEquals(number + 1, userService.findValidNumberForUsername(USERNAME));
-        verify(userRepository).findLastUsername(USERNAME);
-    }
-
-    @Test
-    public void testFindLastUsernameOnlyDigits() {
-        UserProjection projection = new UserProjection() {
-            @Override
-            public Integer getId() {
-                return 1;
-            }
-
-            @Override
-            public String getUsername() {
-                return "9999";
-            }
-
-            @Override
-            public String getEmail() {
-                return EMAIL;
-            }
-
-            @Override
-            public Role getRole() {
-                return Role.ADMIN;
-            }
-        };
-        when(userRepository.findLastUsername(USERNAME)).thenReturn(java.util.Optional.of(projection));
-        assertEquals(10000, userService.findValidNumberForUsername(USERNAME));
-        verify(userRepository).findLastUsername(USERNAME);
-    }
-
-    @Test
-    public void testFindLastUsernameNumberNoDigit() {
-        UserProjection projection = getProjection(null);
-        when(userRepository.findLastUsername(USERNAME)).thenReturn(java.util.Optional.of(projection));
-        assertEquals(1, userService.findValidNumberForUsername(USERNAME));
-        verify(userRepository).findLastUsername(USERNAME);
-    }
-
-    @Test
-    public void testFindLastUsernameEmpty() {
-        when(userRepository.findLastUsername(USERNAME)).thenReturn(Optional.empty());
-        assertEquals(1, userService.findValidNumberForUsername(USERNAME));
-        verify(userRepository).findLastUsername(USERNAME);
-    }
-
-    @Test
-    public void testFindLastUsernameBlank() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.findValidNumberForUsername(BLANK)
-        );
-        verify(userRepository, never()).findLastUsername(anyString());
-    }
-
-    @Test
-    public void testFindLastUsernameNull() {
-        assertThrows(IllegalArgumentException.class,
-                () -> userService.findValidNumberForUsername(null)
-        );
-        verify(userRepository, never()).findLastUsername(anyString());
-    }
-
     @Test
     public void testParseUserListCsv() throws IOException  {
         MultipartFile file = new MockMultipartFile("file", CSV_FILENAME, CSV_FILETYPE,
@@ -749,27 +666,4 @@ public class UserServiceTest {
             userService.getInvalidParticipantUsernames(userDTOs));
    }
 
-    private UserProjection getProjection(Integer number) {
-        return new UserProjection() {
-            @Override
-            public Integer getId() {
-                return number;
-            }
-
-            @Override
-            public String getUsername() {
-                return number == null ? USERNAME : USERNAME + number;
-            }
-
-            @Override
-            public String getEmail() {
-                return EMAIL;
-            }
-
-            @Override
-            public Role getRole() {
-                return Role.ADMIN;
-            }
-        };
-    }
 }

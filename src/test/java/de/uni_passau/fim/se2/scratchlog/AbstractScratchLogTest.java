@@ -2,10 +2,16 @@ package de.uni_passau.fim.se2.scratchlog;
 
 import de.uni_passau.fim.se2.scratchlog.testing_utils.EntityUtilService;
 import de.uni_passau.fim.se2.scratchlog.testing_utils.EventUtilService;
+import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
+import org.junit.jupiter.api.AfterEach;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import static org.mockito.Mockito.doReturn;
 
 /**
  * Base class for all integration tests in ScratchLog that need to use
@@ -34,4 +40,15 @@ public abstract class AbstractScratchLogTest {
     @Autowired
     protected EventUtilService eventUtilService;
 
+    @MockitoSpyBean
+    protected ApplicationProperties applicationProperties;
+
+    @AfterEach
+    void resetMocks() {
+        Mockito.reset(applicationProperties);
+    }
+
+    protected void setMailServer(final boolean useMail) {
+        doReturn(useMail).when(applicationProperties).useMail();
+    }
 }

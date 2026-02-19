@@ -28,7 +28,6 @@ import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.spring.authentication.CustomAuthenticationProvider;
 import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
-import de.uni_passau.fim.se2.scratchlog.util.CustomPasswordGenerator;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.enums.TokenType;
@@ -413,14 +412,15 @@ public class UserController {
     }
 
     /**
-     * Returns the add participants page for adding a number of new participants.
+     * Returns the 'Add Users in Bulk' page for adding a number of new users, or the home page in case mailing is
+     * enabled.
      *
      * @param userBulkDTO The {@link UserBulkDTO} used to save the information.
      * @return The add participants page.
      */
     @GetMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
-    public String getAddParticipants(final UserBulkDTO userBulkDTO) {
+    public String getAddUsersInBulk(final UserBulkDTO userBulkDTO) {
         if (applicationProperties.useMail()) {
             return INDEX;
         }
@@ -429,20 +429,18 @@ public class UserController {
     }
 
     /**
-     * Adds the given amount of participants to the database if the numbered username doesn't yet exist. For any
-     * username that already exists in the database, the corresponding username is saved to a list. If the given
-     * username pattern is invalid or a pre-existing username has been found, the user returns to the add participants
-     * page where corresponding information is displayed. If the any necessary information passed is invalid, the user
-     * is redirected to the error page instead.
+     * Adds multiple users in bulk to the database according to the data in {@code userBulkDTO}. If not starting at one,
+     * the user id is used as distinction in the usernames. If starting at one, starts the numbering at one if possible,
+     * else starts numbering at the current maximum number plus one. Returns a CSV of all the added users with their
+     * randomly chosen passwords on success, or the error page for invalid inputs.
      *
      * @param userBulkDTO The {@link UserBulkDTO} containing the necessary information.
      * @param bindingResult The {@link BindingResult} to return information on an invalid username pattern.
-     * @param model The {@link Model} used to store information on existing usernames.
-     * @return The index page on success, or the add participants or error page otherwise.
+     * @return A CSV response of the added users, or the add participants or error page otherwise.
      */
     @PostMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
-    public String addParticipants(final UserBulkDTO userBulkDTO, final BindingResult bindingResult, final Model model) {
+    public Object addUsersInBulk(final UserBulkDTO userBulkDTO, final BindingResult bindingResult) {
         if (userBulkDTO.getUsername() == null || userBulkDTO.getLanguage() == null) {
             LOGGER.error("Cannot add participants with username or language null!");
             return Constants.ERROR;
@@ -462,32 +460,12 @@ public class UserController {
             return USERS_ADD;
         }
 
-        int number = userBulkDTO.isStartAtOne() ? userService.findValidNumberForUsername(userBulkDTO.getUsername())
-                : userService.findLastId() + 1;
-        List<String> invalidUsernames = new ArrayList<>();
+        List<UserDTO> addedUsers = userService.addUsersInBulk(userBulkDTO);
+        String csv = userService.generateUsernamePasswordCsv(addedUsers);
 
-        for (int i = 0; i < userBulkDTO.getAmount(); i++) {
-            String username = userBulkDTO.getUsername() + number;
-
-            if (userService.existsUser(username)) {
-                invalidUsernames.add(username);
-            } else {
-                UserDTO userDTO = new UserDTO(userBulkDTO.getUsername() + number, null, Role.PARTICIPANT,
-                        userBulkDTO.getLanguage(), null, null);
-                userDTO.setActive(true);
-                userDTO.setLastLogin(LocalDateTime.now());
-                userService.saveUser(userDTO);
-            }
-
-            number++;
-        }
-
-        if (invalidUsernames.isEmpty()) {
-            return "redirect:/?success=true";
-        } else {
-            model.addAttribute(ERROR, invalidUsernames);
-            return USERS_ADD;
-        }
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
+            .body(csv);
     }
 
     /**
@@ -526,21 +504,13 @@ public class UserController {
             List<UserDTO> users = new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
 
             if (isValidUserInfo(users, model, resourceBundle)) {
-                users.stream().parallel().forEach(this::completeUserInformation);
+                users.stream().parallel().forEach(userService::completeUserInformation);
                 userService.saveUsers(users);
-
-                final StringBuilder builder = new StringBuilder("username, password" + System.lineSeparator());
-                users.forEach(userDTO ->
-                    builder
-                        .append(userDTO.getUsername())
-                        .append(", ")
-                        .append(userDTO.getConfirmPassword())
-                        .append(System.lineSeparator())
-                );
+                String csv = userService.generateUsernamePasswordCsv(users);
 
                 return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"users.csv\"")
-                    .body(builder.toString());
+                    .body(csv);
             } else {
                 return "users-csv";
             }
@@ -1224,25 +1194,6 @@ public class UserController {
         }
 
         return true;
-    }
-
-    /**
-     * Sets all the required attributes for user information retrieved from a CSV file to subsequently be persisted.
-     * This includes the generation of a new password for the user, which is then appended to the given string builder
-     * to be returned later.
-     *
-     * @param userDTO The user to be added.
-     */
-    private void completeUserInformation(final UserDTO userDTO) {
-        String password = userDTO.getPassword();
-        if (userDTO.getPassword() == null) {
-            password = CustomPasswordGenerator.generatePassword(Constants.PASSWORD_MIN);
-        }
-
-        userDTO.setPassword(userService.encodePassword(password));
-        userDTO.setConfirmPassword(password);
-        userDTO.setActive(true);
-        userDTO.setLastLogin(LocalDateTime.now());
     }
 
     /**

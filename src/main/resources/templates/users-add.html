@@ -39,27 +39,29 @@
             <!--/*@thymesVar id="userBulkDTO" type="de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO"*/-->
             <form th:action="@{/users/bulk}" th:object="${userBulkDTO}" th:name="userBulkDTO" method="post">
                 <!-- The input group for the range. -->
+                <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
                 <div class="mb-3 form-group">
-                    <label class="form-label" for="amount" th:text="#{amount}"></label>
+                    <label class="form-label" for="amount" th:text="#{add_users_bulk_amount}"></label>
                     <div class="input-group">
-                        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
-                        <input name="amount" id="amount" class="form-range" type="range" th:field="*{amount}" min="1"
+                        <span aria-hidden="true" class="input-group-text" title="Amount">
+                                <i class="fa fa-hashtag"></i>
+                                <span class="visually-hidden" th:text="#{username}"></span>
+                        </span>
+                        <input name="amount" id="amount" type="number" class="form-control" th:field="*{amount}" min="1"
                                th:max="${applicationConfig.maxUserBulkImportCount}"/>
                     </div>
-                    <div class="form-text">
-                        <span th:text="#{value}"></span>
-                        <span id="value"></span>
-                    </div>
+                    <div class="form-text"
+                         th:text="#{add_users_bulk_amount_info(${applicationConfig.maxUserBulkImportCount})}"></div>
                 </div>
 
                 <!-- The input group for the username pattern. -->
                 <div class="mb-3 form-group">
                     <label class="form-label" for="username" th:text="#{username}"></label>
                     <div class="input-group">
-                    <span aria-hidden="true" class="input-group-text" title="Username">
-                        <i class="fa fa-user"></i>
-                        <span class="visually-hidden" th:text="#{username}"></span>
-                    </span>
+                        <span aria-hidden="true" class="input-group-text" title="Username">
+                            <i class="fa fa-user"></i>
+                            <span class="visually-hidden" th:text="#{username}"></span>
+                        </span>
                         <input name="username" id="username" type="text" th:placeholder="#{username}"
                                th:maxlength="${T(de.uni_passau.fim.se2.scratchlog.util.Constants).SMALL_FIELD}"
                                th:field="*{username}" th:class="${#fields.hasErrors('username')
@@ -104,16 +106,6 @@
         </div>
     </div>
 </div>
-
-<script>
-    let amount = document.getElementById("amount");
-    let value = document.getElementById("value");
-    value.innerHTML = amount.value;
-
-    amount.oninput = function() {
-        value.innerHTML = this.value;
-    }
-</script>
 
 <!-- Footer -->
 <div th:insert="~{footer :: footer}"></div>

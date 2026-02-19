@@ -28,17 +28,14 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.UserProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
-import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -297,50 +294,19 @@ class UserRepositoryTest extends AbstractScratchLogTest {
     }
 
     @Test
-    void testFindLastUsername() {
-        final String usernamePrefix = getUserPrefix(user(3));
-        final String participantPrefix = getUserPrefix(user(16));
-
-        Optional<UserProjection> user = userRepository.findLastUsername(usernamePrefix);
-        Optional<UserProjection> participant = userRepository.findLastUsername(participantPrefix);
-
-        assertAll(
-                () -> assertTrue(user.isPresent()),
-                () -> assertTrue(participant.isPresent()),
-                () -> assertThat(user.orElseThrow().getUsername()).endsWith("user_7"),
-                () -> assertThat(participant.orElseThrow().getUsername()).endsWith("part_8")
+    void testGetUsernamesWithPrefix() {
+        String search = user(3).getUsername().split("_")[0] + "_" + USERNAME_SEARCH;
+        Set<String> usernames = userRepository.getUsernamesWithPrefix(search);
+        assertThat(usernames).containsExactly(
+            user(3).getUsername(), user(4).getUsername(), user(5).getUsername(), user(6).getUsername(),
+            user(7).getUsername(), user(8).getUsername(), user(9).getUsername()
         );
     }
 
     @Test
-    void testFindLastUsernameDeleteUser() {
-        userRepository.delete(user(9));
-
-        final String usernamePrefix = getUserPrefix(user(9));
-        Optional<UserProjection> user = userRepository.findLastUsername(usernamePrefix);
-        assertAll(
-                () -> assertTrue(user.isPresent()),
-                () -> assertThat(user.orElseThrow().getUsername()).endsWith("user_6")
-        );
+    void testGetUsernamesWithPrefixEmpty() {
+        String search = user(3).getUsername().split("_")[0] + "_" + USERNAME_SEARCH + "somethingelse";
+        Set<String> usernames = userRepository.getUsernamesWithPrefix(search);
+        assertThat(usernames).isEmpty();
     }
-
-    @Test
-    void testFindLastUsernameAddUser() {
-        String username = "user18";
-        User user = new User(username, "part6@test.de", Role.PARTICIPANT, Language.ENGLISH, "user", null);
-        user.setLastLogin(LocalDateTime.now());
-        userRepository.save(user);
-
-        Optional<UserProjection> findUser = userRepository.findLastUsername(USERNAME_SEARCH);
-        assertAll(
-                () -> assertTrue(findUser.isPresent()),
-                () -> assertEquals(username, findUser.get().getUsername())
-        );
-    }
-
-    private String getUserPrefix(final User user) {
-        // UUID_name_NUMBER -> remove NUMBER at the end
-        return Arrays.stream(user.getUsername().split("_")).limit(2).collect(Collectors.joining("_"));
-    }
-
 }

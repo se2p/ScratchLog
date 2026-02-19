@@ -24,15 +24,16 @@ import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
-import de.uni_passau.fim.se2.scratchlog.persistence.projection.UserProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import de.uni_passau.fim.se2.scratchlog.util.CustomPasswordGenerator;
 import de.uni_passau.fim.se2.scratchlog.util.InactivityConfiguration;
 import de.uni_passau.fim.se2.scratchlog.util.Secrets;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
+import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -207,11 +208,9 @@ public class UserService {
      * @param userDTOS The list of users to be saved.
      * @return The list of persisted users.
      */
-    @Transactional
     public List<UserDTO> saveUsers(final List<UserDTO> userDTOS) {
-        List<UserDTO> saved = new ArrayList<>();
-        userDTOS.forEach(userDTO -> saved.add(saveUser(userDTO)));
-        return saved;
+        List<User> users = userDTOS.stream().map(this::createUser).toList();
+        return userRepository.saveAll(users).stream().map(this::createUserDTO).toList();
     }
 
     /**
@@ -229,6 +228,39 @@ public class UserService {
 
         User user = userRepository.save(createUser(userDTO));
         return createUserDTO(user);
+    }
+
+    /**
+     * Adds multiple users in bulk to the database according to the data in {@code userBulkDTO}. If not starting at one,
+     * the user id is used as distinction in the usernames. If starting at one, starts the numbering at one if possible,
+     * else starts numbering at the current maximum number plus one.
+     *
+     * @param userBulkDTO The {@link UserBulkDTO} containing the necessary information.
+     * @return A list of all users that were added.
+     */
+    @Transactional
+    public List<UserDTO> addUsersInBulk(final UserBulkDTO userBulkDTO) {
+        if (userBulkDTO == null) {
+            throw new IllegalArgumentException("UserBulkDTO may not be null.");
+        }
+
+        String username = userBulkDTO.getUsername();
+        int number = userBulkDTO.isStartAtOne() ? findValidNumberForUsername(username) : findLastId() + 1;
+
+        List<UserDTO> usersToAdd = new ArrayList<>();
+        for (int i = 0; i < userBulkDTO.getAmount(); i++) {
+            // Should always be safe to add since we always take a new number (either a fresh id or the maximum suffix
+            // number plus 1).
+            UserDTO userDTO = new UserDTO(username + number, null, Role.PARTICIPANT,
+                userBulkDTO.getLanguage(), null, null);
+            completeUserInformation(userDTO);
+            usersToAdd.add(userDTO);
+
+            number++;
+        }
+
+        saveUsers(usersToAdd);
+        return usersToAdd;
     }
 
     /**
@@ -490,29 +522,35 @@ public class UserService {
     }
 
     /**
-     * Searches for the user whose username starts with the given username string and ends with the highest number
-     * found. The number at the end of the username is then incremented and returned. If no corresponding user could be
-     * found, or the username does not end with a digit, 1 is returned instead.
+     * Determines a valid number for a new user with a username starting with the given {@code username}.
+     * This is the maximum number that occurs after the given username across all usernames in the database, plus 1.
+     * Also 1 in case the pattern is not currently used by any username.
      *
-     * @param username The username pattern to search for.
-     * @return The number at the end of the retrieved username, or 1.
+     * @param usernamePattern The username pattern to search for.
+     * @return A valid distinction number for a new user with the given username.
      * @throws IllegalArgumentException if the passed username is null or blank.
      */
-    public int findValidNumberForUsername(final String username) {
-        if (username == null || username.isBlank()) {
+    private int findValidNumberForUsername(final String usernamePattern) {
+        if (usernamePattern == null || usernamePattern.isBlank()) {
             throw new IllegalArgumentException("Cannot search for matching username with username null or blank!");
         }
 
-        Optional<UserProjection> user = userRepository.findLastUsername(username);
+        Set<String> matchingUsernames = userRepository.getUsernamesWithPrefix(usernamePattern);
 
-        if (user.isEmpty()) {
-            LOGGER.debug("Couldn't find username starting with {}.", username);
-            return 1;
-        } else {
-            String name = user.get().getUsername();
-            int position = getFirstDigitPositionAtEnd(name);
-            return position == name.length() ? 1 : Integer.parseInt(name.substring(position)) + 1;
+        int maxNumber = 0;
+        int prefixLength = usernamePattern.length();
+        for (String username : matchingUsernames) {
+            String numberStr = username.substring(prefixLength);
+
+            try {
+                int number = Integer.parseInt(numberStr);
+                maxNumber = Math.max(maxNumber, number);
+            } catch (NumberFormatException e) {
+                // Ignore, since failed parsing means the username isn't exactly the searched for pattern.
+            }
         }
+
+        return maxNumber + 1;
     }
 
     /**
@@ -577,21 +615,53 @@ public class UserService {
     }
 
     /**
-     * Returns the position of the first digit at the end of the string after which only more numbers occur, if any.
+     * Completes the data of a {@link UserDTO} so that it can be persisted in the database. This sets the password to a
+     * random password if not set, marks the user as active and sets their last login to the current timestamp.
+     * The new data is written in-place. The encoded password will be stored in the password field, whereas the
+     * plaintext password will be stored in the confirmPassword field.
      *
-     * @param username The username to check.
-     * @return The position of the last digit, or the length of the string, if the last character is not a digit.
+     * @param userDTO The user DTO to fill with additional information.
      */
-    private int getFirstDigitPositionAtEnd(final String username) {
-        int pos;
-
-        for (pos = username.length() - 1; pos >= 0; pos--) {
-            if (!Character.isDigit(username.charAt(pos))) {
-                break;
-            }
+    // TODO: make this private once CSV adding is also moved to service layer
+    public void completeUserInformation(final UserDTO userDTO) {
+        String password = userDTO.getPassword();
+        if (userDTO.getPassword() == null) {
+            password = CustomPasswordGenerator.generatePassword(Constants.PASSWORD_MIN);
         }
 
-        return pos + 1;
+        userDTO.setPassword(encodePassword(password));
+        userDTO.setConfirmPassword(password);
+        userDTO.setActive(true);
+        userDTO.setLastLogin(LocalDateTime.now());
+    }
+
+    /**
+     * Generates the contents of a CSV file consisting of two columns with the usernames and passwords of each user.
+     * Assumes the plaintext password is stored in the confirmPassword field.
+     *
+     * @param userDTOs The list of users to generate the CSV for. May not be {@code null} and all have non-{@code}
+     *                 username and password.
+     * @return The generated CSV string.
+     */
+    public String generateUsernamePasswordCsv(final List<UserDTO> userDTOs) {
+        if (userDTOs == null) {
+            throw new IllegalArgumentException("Users list may not be null.");
+        }
+
+        StringBuilder builder = new StringBuilder("username,password" + System.lineSeparator());
+        for (UserDTO userDTO : userDTOs) {
+            if (userDTO.getUsername() == null || userDTO.getConfirmPassword() == null) {
+                throw new IllegalArgumentException("Username or password may not be null.");
+            }
+
+            builder
+                .append(userDTO.getUsername())
+                .append(",")
+                .append(userDTO.getConfirmPassword())
+                .append(System.lineSeparator());
+        }
+
+        return builder.toString();
     }
 
     /**

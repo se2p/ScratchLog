@@ -66,9 +66,7 @@ import java.io.IOException;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -85,9 +83,6 @@ import static org.mockito.Mockito.*;
 @WebMvcTest(UserController.class)
 @Import(SecurityTestConfig.class)
 public class UserControllerTest extends AbstractControllerTest {
-
-    @Autowired
-    private ApplicationProperties applicationProperties;
 
     @Autowired
     private UserController userController;
@@ -115,9 +110,6 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Mock
     private BindingResult bindingResult;
-
-    @Mock
-    private ResourceBundle resourceBundle;
 
     @Mock
     private HttpSession session;
@@ -668,94 +660,15 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetAddParticipants() {
+    public void testGetAddUsersInBulk() {
         setMailServer(false);
-        assertEquals(USERS_ADD, userController.getAddParticipants(userBulkDTO));
+        assertEquals(USERS_ADD, userController.getAddUsersInBulk(userBulkDTO));
     }
 
     @Test
-    public void testGetAddParticipantsMailServer() {
+    public void testGetAddUsersInBulkMailServer() {
         setMailServer(true);
-        assertEquals(REDIRECT, userController.getAddParticipants(userBulkDTO));
-    }
-
-    @Test
-    public void testAddParticipants() {
-        when(userService.findLastId()).thenReturn(AMOUNT);
-        assertEquals(REDIRECT_SUCCESS, userController.addParticipants(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService).findLastId();
-        verify(userService, times(AMOUNT)).existsUser(anyString());
-        verify(userService, times(AMOUNT)).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testAddParticipantsStartOneUsernameExists() {
-        List<String> existingNames = List.of("admin0");
-        userBulkDTO.setStartAtOne(true);
-        when(userService.existsUser(existingNames.getFirst())).thenReturn(true);
-        assertEquals(USERS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, times(AMOUNT)).existsUser(anyString());
-        verify(userService, times(AMOUNT - existingNames.size())).saveUser(any());
-        verify(model).addAttribute("error", existingNames);
-    }
-
-    @Test
-    public void testAddParticipantsInvalidUsername() {
-        userBulkDTO.setUsername(BLANK);
-        assertEquals(USERS_ADD, userController.addParticipants(userBulkDTO, bindingResult, model));
-        verify(bindingResult).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testAddParticipantsAmountBiggerMax() {
-        userBulkDTO.setAmount(applicationProperties.getMaxUserBulkImportCount() + 1);
-        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testAddParticipantsAmountTooSmall() {
-        userBulkDTO.setAmount(0);
-        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testAddParticipantsLanguageNull() {
-        userBulkDTO.setLanguage(null);
-        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
-    public void testAddParticipantsUsernameNull() {
-        userBulkDTO.setUsername(null);
-        assertEquals(Constants.ERROR, userController.addParticipants(userBulkDTO, bindingResult, model));
-        verify(bindingResult, never()).addError(any());
-        verify(userService, never()).findLastId();
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).saveUser(any());
-        verify(model, never()).addAttribute(anyString(), any());
+        assertEquals(REDIRECT, userController.getAddUsersInBulk(userBulkDTO));
     }
 
     @Test
@@ -771,7 +684,6 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, times(3)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 
@@ -783,7 +695,6 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, never()).existsEmail(anyString());
-        verify(userService, times(2)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 
@@ -795,7 +706,6 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
         verify(model, never()).addAttribute(anyString(), any());
         verify(userService, never()).existsEmail(anyString());
-        verify(userService, times(2)).encodePassword(anyString());
         verify(userService).saveUsers(any());
     }
 
