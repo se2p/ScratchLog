@@ -273,9 +273,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     * @return A set of users whose usernames start with the given prefix.
     */
     @Query("""
-    SELECT u.username
-    FROM User u
-    WHERE u.username like CONCAT(:prefix, '%')
+        SELECT u.username
+        FROM User u
+        WHERE u.username like CONCAT(:prefix, '%')
     """)
     Set<String> getUsernamesWithPrefix(@Param("prefix") String prefix);
 
