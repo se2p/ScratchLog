@@ -36,6 +36,8 @@ import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
 import de.uni_passau.fim.se2.scratchlog.util.validation.PasswordValidator;
 import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
 import de.uni_passau.fim.se2.scratchlog.util.validation.UsernameValidator;
+import de.uni_passau.fim.se2.scratchlog.util.validation.annotation.ValidFile;
+import de.uni_passau.fim.se2.scratchlog.web.dto.CsvFileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.TokenDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
@@ -43,6 +45,7 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,11 +60,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.LocaleResolver;
 
@@ -469,13 +474,14 @@ public class UserController {
     }
 
     /**
-     * Returns the CSV participants page to create new users from a CSV file.
+     * Returns the CSV participants page to create new users from a CSV file and prepares the model for a file upload.
      *
      * @return The CSV participants page.
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
-    public String getCSVParticipants() {
+    public String getCSVParticipants(Model model) {
+        model.addAttribute("fileDTO", new CsvFileDTO());
         return "users-csv";
     }
 
@@ -485,20 +491,22 @@ public class UserController {
      * users could not be added or the file could not be parsed correctly, the CSV participants page is returned where
      * a corresponding error message is displayed.
      *
-     * @param file The file containing the user information.
+     * @param fileDTO The file containing the user information.
      * @param model The {@link Model} used to store information on errors.
      * @return The CSV file containing information on the created users on success, or the CSV participants page
      * otherwise.
      */
     @PostMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
-    public Object addCSVParticipants(@RequestParam("file") final MultipartFile file, final Model model) {
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
-
-        if (isInvalidFile(file, model, resourceBundle)) {
+    public Object addCSVParticipants(@Valid @ModelAttribute("fileDTO") CsvFileDTO fileDTO,
+                                     final BindingResult bindingResult, Model model) {
+        if (bindingResult.hasErrors()) {
             return "users-csv";
         }
+
+        MultipartFile file = fileDTO.getFile();
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
+                LocaleContextHolder.getLocale());
 
         try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             List<UserDTO> users = new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
@@ -1067,27 +1075,6 @@ public class UserController {
         templateModel.put("baseUrl", applicationProperties.getApplicationUrl());
         templateModel.put("token", tokenUrl);
         return mailService.get().sendEmail(email, resourceBundle.getString(subject), templateModel, template);
-    }
-
-    /**
-     * Checks, whether the given file is a valid CSV file. If the file is empty or is not a CSV file, a corresponding
-     * error message is added to the given model to be displayed to the user.
-     *
-     * @param file The file to be checked.
-     * @param model The {@link Model} used to store error messages.
-     * @param resourceBundle The {@link ResourceBundle} used to display error messages in the desired language.
-     * @return {@code true} if the file is invalid or {@code false} otherwise.
-     */
-    private boolean isInvalidFile(final MultipartFile file, final Model model, final ResourceBundle resourceBundle) {
-        String fileValidation = FiletypeValidator.validate(file, "text/csv", ".csv");
-
-        if (fileValidation != null) {
-            LOGGER.error("Could not add new users from CSV file due to invalid filetype or empty file!");
-            model.addAttribute(ERROR, resourceBundle.getString(fileValidation));
-            return true;
-        }
-
-        return false;
     }
 
     /**
