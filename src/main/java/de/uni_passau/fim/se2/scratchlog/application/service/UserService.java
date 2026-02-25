@@ -617,12 +617,12 @@ public class UserService {
     /**
      * Completes the data of a {@link UserDTO} so that it can be persisted in the database. This sets the password to a
      * random password if not set, marks the user as active and sets their last login to the current timestamp.
+     * If the language is unset, it is set to the default. If the role is unset, it is set to participant.
      * The new data is written in-place. The encoded password will be stored in the password field, whereas the
      * plaintext password will be stored in the confirmPassword field.
      *
      * @param userDTO The user DTO to fill with additional information.
      */
-    // TODO: make this private once CSV adding is also moved to service layer
     public void completeUserInformation(final UserDTO userDTO) {
         String password = userDTO.getPassword();
         if (userDTO.getPassword() == null) {
@@ -633,6 +633,13 @@ public class UserService {
         userDTO.setConfirmPassword(password);
         userDTO.setActive(true);
         userDTO.setLastLogin(LocalDateTime.now());
+
+        if (userDTO.getLanguage() == null) {
+            userDTO.setLanguage(Constants.DEFAULT_LANGUAGE);
+        }
+        if (userDTO.getRole() == null) {
+            userDTO.setRole(Role.PARTICIPANT);
+        }
     }
 
     /**
