@@ -24,15 +24,13 @@ import de.uni_passau.fim.se2.scratchlog.application.service.SearchService;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.CourseTableProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentTableProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.UserProjection;
-import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.web.AbstractControllerTest;
 import de.uni_passau.fim.se2.scratchlog.web.controller.SearchController;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -53,7 +51,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(SearchController.class)
-@Import(SecurityTestConfig.class)
 public class SearchControllerIntegrationTest extends AbstractControllerTest {
 
     @MockitoBean

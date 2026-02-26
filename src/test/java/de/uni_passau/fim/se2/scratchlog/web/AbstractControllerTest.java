@@ -19,15 +19,18 @@
 
 package de.uni_passau.fim.se2.scratchlog.web;
 
+import de.uni_passau.fim.se2.scratchlog.spring.configuration.LanguageConfiguration;
+import de.uni_passau.fim.se2.scratchlog.spring.configuration.SecurityTestConfig;
 import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -37,12 +40,13 @@ import static org.mockito.Mockito.doReturn;
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles({"test"})
+@Import({ApplicationProperties.class, LanguageConfiguration.class, SecurityTestConfig.class})
 public abstract class AbstractControllerTest {
 
     @Autowired
     protected MockMvc mvc;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ApplicationProperties applicationProperties;
 
     @AfterEach
