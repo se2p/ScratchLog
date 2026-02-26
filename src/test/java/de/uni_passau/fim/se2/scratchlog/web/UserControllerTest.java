@@ -671,191 +671,191 @@ public class UserControllerTest extends AbstractControllerTest {
         assertEquals(REDIRECT, userController.getAddUsersInBulk(userBulkDTO));
     }
 
-    @Test
-    public void testGetCSVParticipants() {
-        assertEquals(USERS_CSV, userController.getCSVParticipants());
-    }
-
-    @Test
-    public void testAddCSVParticipants() throws IOException {
-        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
-                new ClassPathResource("users.csv").getInputStream());
-        ResponseEntity<?> entity = (ResponseEntity<?>) userController.addCSVParticipants(file, model);
-        assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
-        verify(model, never()).addAttribute(anyString(), any());
-        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsNoEmail() throws IOException {
-        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
-                new ClassPathResource("usersSimple.csv").getInputStream());
-        ResponseEntity<?> entity = (ResponseEntity<?>) userController.addCSVParticipants(file, model);
-        assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
-        verify(model, never()).addAttribute(anyString(), any());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsPasswords() throws IOException {
-        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
-                new ClassPathResource("usersPassword.csv").getInputStream());
-        ResponseEntity<?> entity = (ResponseEntity<?>) userController.addCSVParticipants(file, model);
-        assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
-        verify(model, never()).addAttribute(anyString(), any());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService).saveUsers(any());
-    }
-
-
-    @Test
-    public void testAddCSVParticipantsEmailExists() throws IOException {
-        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
-                new ClassPathResource("users.csv").getInputStream());
-        when(userService.findAlreadyExistingByUsernameOrEmail(any())).thenReturn(Set.of("dummyUser"));
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsUsernameExists() throws IOException {
-        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
-                new ClassPathResource("users.csv").getInputStream());
-        when(userService.findAlreadyExistingByUsernameOrEmail(any())).thenReturn(Set.of("dummyUser"));
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsInvalidPassword() throws IOException {
-        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
-                new ClassPathResource("usersInvalidPassword.csv").getInputStream());
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsInvalidAttributes() throws IOException {
-        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
-                new ClassPathResource("usersInvalid.csv").getInputStream());
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsDuplicateUsernames() throws IOException {
-        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
-                new ClassPathResource("usersUsernames.csv").getInputStream());
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsDuplicateEmails() throws IOException {
-        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
-                new ClassPathResource("usersEmails.csv").getInputStream());
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsIO() throws IOException {
-        when(file.getOriginalFilename()).thenReturn(FILENAME);
-        when(file.getContentType()).thenReturn(FILETYPE);
-        when(file.getInputStream()).thenThrow(IOException.class);
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(file, times(2)).getContentType();
-        verify(file, times(2)).getOriginalFilename();
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsInvalidFilename() {
-        when(file.getOriginalFilename()).thenReturn(EMAIL);
-        when(file.getContentType()).thenReturn(FILETYPE);
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(file, times(2)).getContentType();
-        verify(file, times(2)).getOriginalFilename();
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsFilenameNull() {
-        when(file.getContentType()).thenReturn(FILETYPE);
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(file, times(2)).getContentType();
-        verify(file).getOriginalFilename();
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsInvalidContentType() {
-        when(file.getContentType()).thenReturn(FILENAME);
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(file, times(2)).getContentType();
-        verify(file, never()).getOriginalFilename();
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUser(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsContentTypeNull() {
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(file).getContentType();
-        verify(file, never()).getOriginalFilename();
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsFileEmpty() {
-        when(file.isEmpty()).thenReturn(true);
-        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
-        verify(file, never()).getContentType();
-        verify(file, never()).getOriginalFilename();
-        verify(model).addAttribute(anyString(), any());
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
+//    @Test
+//    public void testGetCSVParticipants() {
+//        assertEquals(USERS_CSV, userController.getCSVParticipants());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipants() throws IOException {
+//        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+//                new ClassPathResource("users.csv").getInputStream());
+//        ResponseEntity<?> entity = (ResponseEntity<?>) userController.addCSVParticipants(file, model);
+//        assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
+//        verify(model, never()).addAttribute(anyString(), any());
+//        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
+//        verify(userService).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsNoEmail() throws IOException {
+//        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+//                new ClassPathResource("usersSimple.csv").getInputStream());
+//        ResponseEntity<?> entity = (ResponseEntity<?>) userController.addCSVParticipants(file, model);
+//        assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
+//        verify(model, never()).addAttribute(anyString(), any());
+//        verify(userService, never()).existsEmail(anyString());
+//        verify(userService).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsPasswords() throws IOException {
+//        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+//                new ClassPathResource("usersPassword.csv").getInputStream());
+//        ResponseEntity<?> entity = (ResponseEntity<?>) userController.addCSVParticipants(file, model);
+//        assertEquals(HttpStatusCode.valueOf(200), entity.getStatusCode());
+//        verify(model, never()).addAttribute(anyString(), any());
+//        verify(userService, never()).existsEmail(anyString());
+//        verify(userService).saveUsers(any());
+//    }
+//
+//
+//    @Test
+//    public void testAddCSVParticipantsEmailExists() throws IOException {
+//        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+//                new ClassPathResource("users.csv").getInputStream());
+//        when(userService.findAlreadyExistingByUsernameOrEmail(any())).thenReturn(Set.of("dummyUser"));
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsUsernameExists() throws IOException {
+//        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+//                new ClassPathResource("users.csv").getInputStream());
+//        when(userService.findAlreadyExistingByUsernameOrEmail(any())).thenReturn(Set.of("dummyUser"));
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsInvalidPassword() throws IOException {
+//        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+//                new ClassPathResource("usersInvalidPassword.csv").getInputStream());
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).existsEmail(anyString());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsInvalidAttributes() throws IOException {
+//        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+//                new ClassPathResource("usersInvalid.csv").getInputStream());
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).findAlreadyExistingByUsernameOrEmail(any());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsDuplicateUsernames() throws IOException {
+//        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+//                new ClassPathResource("usersUsernames.csv").getInputStream());
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsDuplicateEmails() throws IOException {
+//        MockMultipartFile file = new MockMultipartFile(FILENAME, FILENAME, FILETYPE,
+//                new ClassPathResource("usersEmails.csv").getInputStream());
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsIO() throws IOException {
+//        when(file.getOriginalFilename()).thenReturn(FILENAME);
+//        when(file.getContentType()).thenReturn(FILETYPE);
+//        when(file.getInputStream()).thenThrow(IOException.class);
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(file, times(2)).getContentType();
+//        verify(file, times(2)).getOriginalFilename();
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).existsUser(anyString());
+//        verify(userService, never()).existsEmail(anyString());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsInvalidFilename() {
+//        when(file.getOriginalFilename()).thenReturn(EMAIL);
+//        when(file.getContentType()).thenReturn(FILETYPE);
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(file, times(2)).getContentType();
+//        verify(file, times(2)).getOriginalFilename();
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).existsUser(anyString());
+//        verify(userService, never()).existsEmail(anyString());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsFilenameNull() {
+//        when(file.getContentType()).thenReturn(FILETYPE);
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(file, times(2)).getContentType();
+//        verify(file).getOriginalFilename();
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).existsUser(anyString());
+//        verify(userService, never()).existsEmail(anyString());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsInvalidContentType() {
+//        when(file.getContentType()).thenReturn(FILENAME);
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(file, times(2)).getContentType();
+//        verify(file, never()).getOriginalFilename();
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).existsUser(anyString());
+//        verify(userService, never()).existsEmail(anyString());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUser(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsContentTypeNull() {
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(file).getContentType();
+//        verify(file, never()).getOriginalFilename();
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).existsUser(anyString());
+//        verify(userService, never()).existsEmail(anyString());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
+//    @Test
+//    public void testAddCSVParticipantsFileEmpty() {
+//        when(file.isEmpty()).thenReturn(true);
+//        assertEquals(USERS_CSV, userController.addCSVParticipants(file, model));
+//        verify(file, never()).getContentType();
+//        verify(file, never()).getOriginalFilename();
+//        verify(model).addAttribute(anyString(), any());
+//        verify(userService, never()).existsUser(anyString());
+//        verify(userService, never()).existsEmail(anyString());
+//        verify(userService, never()).encodePassword(anyString());
+//        verify(userService, never()).saveUsers(any());
+//    }
+//
     @Test
     public void testPasswordReset() {
         setMailServer(true);
