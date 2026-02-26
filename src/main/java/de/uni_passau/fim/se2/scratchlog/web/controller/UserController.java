@@ -24,7 +24,6 @@ import de.uni_passau.fim.se2.scratchlog.application.service.MailService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.application.service.TokenService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
-import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.spring.authentication.CustomAuthenticationProvider;
 import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
@@ -472,13 +471,13 @@ public class UserController {
     }
 
     /**
-     * Returns the CSV participants page to create new users from a CSV file and prepares the model for a file upload.
+     * Returns the page for creating new users from a CSV file and prepares the model for a file upload.
      *
-     * @return The CSV participants page.
+     * @return The 'add users via CSV' page.
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
-    public String getCSVParticipants(Model model) {
+    public String getAddUsersViaCSV(Model model) {
         model.addAttribute("fileDTO", new CsvFileDTO());
         return "users-csv";
     }
@@ -486,18 +485,18 @@ public class UserController {
     /**
      * Creates new users in the database with the information provided by the given CSV file. Another CSV file
      * containing information about the passwords generated for each user is returned. If the passed file is invalid,
-     * users could not be added or the file could not be parsed correctly, the CSV participants page is returned where
-     * a corresponding error message is displayed.
+     * users could not be added or the file could not be parsed correctly, the 'add users via CSV' page is returned,
+     * where a corresponding error message is displayed.
      *
      * @param fileDTO The file containing the user information.
-     * @param model The {@link Model} used to store information on errors.
-     * @return The CSV file containing information on the created users on success, or the CSV participants page
-     * otherwise.
+     * @param bindingResult The {@link BindingResult} used to store information on errors.
+     * @return The CSV file containing information on the created users on success, or the 'add users via CSV' page
+     *         otherwise.
      */
     @PostMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
-    public Object addCSVParticipants(@Valid @ModelAttribute("fileDTO") CsvFileDTO fileDTO,
-                                     final BindingResult bindingResult, Model model) {
+    public Object addUsersViaCSV(@Valid @ModelAttribute("fileDTO") CsvFileDTO fileDTO,
+                                 final BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return "users-csv";
         }
