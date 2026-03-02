@@ -473,11 +473,12 @@ public class UserController {
     /**
      * Returns the page for creating new users from a CSV file and prepares the model for a file upload.
      *
+     * @param model The model which will be used for storing the uploaded file.
      * @return The 'add users via CSV' page.
      */
     @GetMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
-    public String getAddUsersViaCSV(Model model) {
+    public String getAddUsersViaCSV(final Model model) {
         model.addAttribute("fileDTO", new CsvFileDTO());
         return "users-csv";
     }
@@ -1087,7 +1088,7 @@ public class UserController {
 
         if (users.size() > applicationProperties.getMaxUserBulkImportCount()) {
             bindingResult.rejectValue(FIELD_CSV_ADD_FILE, "max_users",
-                new Object[]{ applicationProperties.getMaxUserBulkImportCount() }, null);
+                new Object[]{applicationProperties.getMaxUserBulkImportCount()}, null);
             return false;
         }
 
@@ -1095,19 +1096,19 @@ public class UserController {
 
         if (!invalidAttributes.isEmpty()) {
             bindingResult.rejectValue(FIELD_CSV_ADD_FILE, "invalid_attributes",
-                new Object[]{ invalidAttributes }, null);
+                new Object[]{invalidAttributes}, null);
             return false;
         }
         if (!invalidPasswords.isEmpty()) {
             bindingResult.rejectValue(FIELD_CSV_ADD_FILE, "invalid_passwords",
-                new Object[]{ invalidPasswords }, null);
+                new Object[]{invalidPasswords}, null);
             return false;
         }
 
         Set<String> existingAttributes = userService.findAlreadyExistingByUsernameOrEmail(users);
         if (!existingAttributes.isEmpty()) {
             bindingResult.rejectValue(FIELD_CSV_ADD_FILE, "existing_attributes",
-                new Object[]{ existingAttributes }, null);
+                new Object[]{existingAttributes}, null);
             return false;
         }
 

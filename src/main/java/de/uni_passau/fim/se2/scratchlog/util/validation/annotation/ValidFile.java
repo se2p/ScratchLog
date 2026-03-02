@@ -12,6 +12,8 @@ import java.lang.annotation.Target;
 
 /**
  * A Jakarta Validation annotation for files.
+ *
+ * @see FileValidator
  */
 @Target({ ElementType.PARAMETER, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
@@ -19,18 +21,39 @@ import java.lang.annotation.Target;
 @Documented
 public @interface ValidFile {
 
-    // Required annotation parameters for Jakarta Validation.
+    /**
+     * The error message in case validation fails and the validator specifies no other error message.
+     * Defaults to the `file_empty` resource bundle message.
+     *
+     * @return The error message in case validation fails.
+     */
     String message() default "{file_empty}";
+
+    /**
+     * The validation groups parameter required by Jakarta Validation.
+     *
+     * @return The validation groups.
+     */
     Class<?>[] groups() default {};
+
+    /**
+     * The payload parameter required by Jakarta Validation.
+     *
+     * @return The payload metadata.
+     */
     Class<? extends Payload>[] payload() default {};
 
     /**
      * The content types that should be allowed for this file.
+     *
+     * @return The allowed content types.
      */
     String[] contentTypes() default {};
 
     /**
      * The file endings that should be allowed for this file.
+     *
+     * @return The allowed file endings.
      */
     String[] fileEndings() default {};
 

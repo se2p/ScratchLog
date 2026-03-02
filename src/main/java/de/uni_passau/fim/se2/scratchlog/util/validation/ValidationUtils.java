@@ -18,7 +18,7 @@ public final class ValidationUtils {
      * @param messageKey The resource bundle key that contains the error message.
      * @return {@code false}, always.
      */
-    public static boolean reject(ConstraintValidatorContext context, String messageKey) {
+    public static boolean reject(final ConstraintValidatorContext context, final String messageKey) {
         context.disableDefaultConstraintViolation();
         context.buildConstraintViolationWithTemplate("{" + messageKey + "}").addConstraintViolation();
         return false;
@@ -34,8 +34,8 @@ public final class ValidationUtils {
      *                          and values represent the corresponding text to insert.
      * @return {@code false}, always.
      */
-    public static boolean reject(ConstraintValidatorContext context, String messageKey,
-                           Map<String, String> messageParameters) {
+    public static boolean reject(final ConstraintValidatorContext context, final String messageKey,
+                           final Map<String, String> messageParameters) {
         HibernateConstraintValidatorContext hibernateContext
             = context.unwrap(HibernateConstraintValidatorContext.class);
         for (Map.Entry<String, String> entry : messageParameters.entrySet()) {
