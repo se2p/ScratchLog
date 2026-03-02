@@ -38,7 +38,8 @@ public class FileValidator implements ConstraintValidator<ValidFile, MultipartFi
         }
 
         String filename = file.getOriginalFilename();
-        if (filename == null || Arrays.stream(allowedFileEndings).noneMatch(filename::endsWith)) {
+        if (filename == null
+            || Arrays.stream(allowedFileEndings).noneMatch(ending -> filename.endsWith("." + ending))) {
             return ValidationUtils.reject(
                 context, "error_file_ending", Map.of("expected", Arrays.toString(allowedFileEndings)));
         }
