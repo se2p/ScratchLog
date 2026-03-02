@@ -1,21 +1,20 @@
 package de.uni_passau.fim.se2.scratchlog.integration;
 
 import de.uni_passau.fim.se2.scratchlog.AbstractScratchLogControllerTest;
+import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.multipart.MultipartFile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
@@ -24,13 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.io.IOException;
-import java.io.InvalidObjectException;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,6 +51,9 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
     private UserRepository userRepository;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private UserBulkDTO userBulkDTO;
@@ -61,6 +61,12 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
     @BeforeEach
     public void setup() {
         userBulkDTO = new UserBulkDTO(5, Language.ENGLISH, uniquePrefix() + "bulk_", false);
+    }
+
+    // TODO: find a way around this
+    @AfterEach
+    public void cleanup() {
+        userRepository.deleteAll();
     }
 
     @Test
@@ -138,7 +144,7 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
         assertThat(lines).hasSize(userBulkDTO.getAmount() + 1);
         for (int i = 1; i < lines.length; ++i) {
             String[] parts =  lines[i].split(",");
-            assertEquals(userBulkDTO.getUsername() + 1, parts[0]);
+            assertEquals(userBulkDTO.getUsername() + i, parts[0]);
             assertFalse(parts[1].isBlank());
         }
     }
@@ -204,9 +210,7 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
             .andExpect(status().isOk());
         List<User> users = userRepository.findAll().stream()
             .filter(u -> u.getUsername().startsWith(USERS_CSV_USERNAME)).toList();
-        System.out.println(passwordEncoder.encode("Unicorns1!"));
-        System.out.println(users.getFirst().getPassword());
-        assertThat(users).allMatch(u -> u.getPassword().equals(passwordEncoder.encode("Unicorns1!")));
+        assertThat(users).allMatch(u -> passwordEncoder.matches("Unicorns1!", u.getPassword()));
     }
 
     @Test
@@ -226,12 +230,64 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
 
     @Test
     public void testAddUsersViaCSVInvalidAttributes() throws Exception {
+        assertAddUsersViaCSVError("usersInvalid.csv", "invalid_attributes");
+    }
+
+    @Test
+    public void testAddUsersViaCSVInvalidPassword() throws Exception {
+        assertAddUsersViaCSVError("usersInvalidPassword.csv", "invalid_passwords");
+    }
+
+    @Test
+    public void testAddUsersViaCSVEmailExists() throws Exception {
+        UserDTO user = new UserDTO();
+        user.setUsername(uniquePrefix() + USERS_CSV_USERNAME);
+        user.setEmail(USERS_CSV_USERNAME + "1@user.de");
+        userService.completeUserInformation(user);
+        userService.saveUser(user);
+        assertAddUsersViaCSVError(USERS_CSV_FILENAME, "existing_attributes");
+    }
+
+    @Test
+    public void testAddUsersViaCSVUsernameExists() throws Exception {
+        UserDTO user = new UserDTO();
+        user.setUsername(USERS_CSV_USERNAME + "1");
+        userService.completeUserInformation(user);
+        userService.saveUser(user);
+        assertAddUsersViaCSVError(USERS_CSV_FILENAME, "existing_attributes");
+    }
+
+    @Test
+    public void testAddUsersViaCSVDuplicateUsernames() throws Exception {
+        assertAddUsersViaCSVError("usersDuplicateUsernames.csv", "duplicate_usernames");
+    }
+
+    @Test
+    public void testAddUsersViaCSVDuplicateEmails() throws Exception {
+        assertAddUsersViaCSVError("usersDuplicateEmails.csv", "duplicate_emails");
+    }
+
+    @Test
+    public void testAddUsersViaCSVInvalidFilename() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(ATTR_FILE, "invaliddotcsv", USERS_CSV_FILETYPE,
+            new ClassPathResource(USERS_CSV_FILENAME).getInputStream());
+
         int usersBefore = userRepository.findAll().size();
-        mvc.perform(multipart("/users/csv").file(getCSVFile("usersInvalid.csv")))
+        mvc.perform(multipart("/users/csv").file(file))
+            .andExpect(status().isBadRequest())
+            .andExpect(view().name(VIEW_ADD_CSV))
+            .andExpect(model().attributeHasFieldErrorCode(ATTR_FILE_DTO, ATTR_FILE, "csv_file_name"));
+        int usersNow = userRepository.findAll().size();
+        assertEquals(usersBefore, usersNow);
+    }
+
+    private void assertAddUsersViaCSVError(String filename, String errorCode) throws Exception {
+        int usersBefore = userRepository.findAll().size();
+        mvc.perform(multipart("/users/csv").file(getCSVFile(filename)))
             .andExpect(status().isOk())
             .andExpect(view().name(VIEW_ADD_CSV))
-            .andExpect(model().attributeHasFieldErrorCode(ATTR_FILE_DTO, ATTR_FILE, "invalid_attributes"));
-
+            .andExpect(model().attributeHasFieldErrorCode(ATTR_FILE_DTO, ATTR_FILE, errorCode));
+        // Assert that no users were added to the DB.
         int usersNow = userRepository.findAll().size();
         assertEquals(usersBefore, usersNow);
     }

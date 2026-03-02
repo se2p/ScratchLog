@@ -495,7 +495,7 @@ public class UserController {
      */
     @PostMapping("/csv")
     @Secured(Constants.ROLE_ADMIN)
-    public Object addUsersViaCSV(@Valid @ModelAttribute("fileDTO") CsvFileDTO fileDTO,
+    public Object addUsersViaCSV(@Valid @ModelAttribute("fileDTO") final CsvFileDTO fileDTO,
                                  final BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             return "users-csv";
