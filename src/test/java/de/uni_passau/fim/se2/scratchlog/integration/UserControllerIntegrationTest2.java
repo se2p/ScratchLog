@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -63,10 +65,15 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
         userBulkDTO = new UserBulkDTO(5, Language.ENGLISH, uniquePrefix() + "bulk_", false);
     }
 
-    // TODO: find a way around this
+    /**
+     * Delete all users that start with the common username prefix of the test CSV files.
+     * This is necessary since otherwise a lot of tests would falsely fail due to adding duplicate users.
+     */
     @AfterEach
     public void cleanup() {
-        userRepository.deleteAll();
+        userRepository.findAll().stream()
+            .filter(u -> u.getUsername().startsWith(USERS_CSV_USERNAME))
+            .forEach(userRepository::delete);
     }
 
     @Test
@@ -230,12 +237,12 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
 
     @Test
     public void testAddUsersViaCSVInvalidAttributes() throws Exception {
-        assertAddUsersViaCSVError("usersInvalid.csv", "invalid_attributes");
+        assertAddUsersViaCSVError(getCSVFile("usersInvalid.csv"), "invalid_attributes");
     }
 
     @Test
     public void testAddUsersViaCSVInvalidPassword() throws Exception {
-        assertAddUsersViaCSVError("usersInvalidPassword.csv", "invalid_passwords");
+        assertAddUsersViaCSVError(getCSVFile("usersInvalidPassword.csv"), "invalid_passwords");
     }
 
     @Test
@@ -245,7 +252,7 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
         user.setEmail(USERS_CSV_USERNAME + "1@user.de");
         userService.completeUserInformation(user);
         userService.saveUser(user);
-        assertAddUsersViaCSVError(USERS_CSV_FILENAME, "existing_attributes");
+        assertAddUsersViaCSVError(getCSVFile(USERS_CSV_FILENAME), "existing_attributes");
     }
 
     @Test
@@ -254,40 +261,73 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
         user.setUsername(USERS_CSV_USERNAME + "1");
         userService.completeUserInformation(user);
         userService.saveUser(user);
-        assertAddUsersViaCSVError(USERS_CSV_FILENAME, "existing_attributes");
+        assertAddUsersViaCSVError(getCSVFile(USERS_CSV_FILENAME), "existing_attributes");
     }
 
     @Test
     public void testAddUsersViaCSVDuplicateUsernames() throws Exception {
-        assertAddUsersViaCSVError("usersDuplicateUsernames.csv", "duplicate_usernames");
+        assertAddUsersViaCSVError(getCSVFile("usersDuplicateUsernames.csv"), "duplicate_usernames");
     }
 
     @Test
     public void testAddUsersViaCSVDuplicateEmails() throws Exception {
-        assertAddUsersViaCSVError("usersDuplicateEmails.csv", "duplicate_emails");
+        assertAddUsersViaCSVError(getCSVFile("usersDuplicateEmails.csv"), "duplicate_emails");
+    }
+
+    @Test
+    public void testAddCSVParticipantsIOException() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(ATTR_FILE, USERS_CSV_FILENAME, USERS_CSV_FILETYPE,
+            new ClassPathResource(USERS_CSV_FILENAME).getInputStream());
+        MockMultipartFile mockFile = spy(file);
+        when(mockFile.getInputStream()).thenThrow(IOException.class);
+        assertAddUsersViaCSVError(mockFile, "csv_error");
     }
 
     @Test
     public void testAddUsersViaCSVInvalidFilename() throws Exception {
-        MockMultipartFile file = new MockMultipartFile(ATTR_FILE, "invaliddotcsv", USERS_CSV_FILETYPE,
-            new ClassPathResource(USERS_CSV_FILENAME).getInputStream());
-
-        int usersBefore = userRepository.findAll().size();
-        mvc.perform(multipart("/users/csv").file(file))
-            .andExpect(status().isBadRequest())
-            .andExpect(view().name(VIEW_ADD_CSV))
-            .andExpect(model().attributeHasFieldErrorCode(ATTR_FILE_DTO, ATTR_FILE, "csv_file_name"));
-        int usersNow = userRepository.findAll().size();
-        assertEquals(usersBefore, usersNow);
+        assertAddUsersViaCSVFileError(USERS_CSV_FILENAME, "invaliddotcsv", USERS_CSV_FILETYPE);
     }
 
-    private void assertAddUsersViaCSVError(String filename, String errorCode) throws Exception {
+    @Test
+    public void testAddUsersViaCSVFilenameNull() throws Exception {
+        assertAddUsersViaCSVFileError(USERS_CSV_FILENAME, null, USERS_CSV_FILETYPE);
+    }
+
+    @Test
+    public void testAddUsersViaCSVInvalidContentType() throws Exception {
+        assertAddUsersViaCSVFileError(USERS_CSV_FILENAME, USERS_CSV_FILENAME, "image/png");
+    }
+
+    @Test
+    public void testAddUsersViaCSVContentTypeNull() throws Exception {
+        assertAddUsersViaCSVFileError(USERS_CSV_FILENAME, USERS_CSV_FILENAME, null);
+    }
+
+    @Test
+    public void testAddUsersViaCSVFileEmpty() throws Exception {
+        assertAddUsersViaCSVFileError("empty.csv", "empty.csv", USERS_CSV_FILETYPE);
+    }
+
+    private void assertAddUsersViaCSVError(MockMultipartFile file, String errorCode) throws Exception {
         int usersBefore = userRepository.findAll().size();
-        mvc.perform(multipart("/users/csv").file(getCSVFile(filename)))
+        mvc.perform(multipart("/users/csv").file(file))
             .andExpect(status().isOk())
             .andExpect(view().name(VIEW_ADD_CSV))
             .andExpect(model().attributeHasFieldErrorCode(ATTR_FILE_DTO, ATTR_FILE, errorCode));
         // Assert that no users were added to the DB.
+        int usersNow = userRepository.findAll().size();
+        assertEquals(usersBefore, usersNow);
+    }
+
+    private void assertAddUsersViaCSVFileError(String realFilename, String uploadFilename, String contentType)
+        throws Exception {
+        MockMultipartFile file = new MockMultipartFile(ATTR_FILE, uploadFilename, contentType,
+            new ClassPathResource(realFilename).getInputStream());
+        int usersBefore = userRepository.findAll().size();
+        mvc.perform(multipart("/users/csv").file(file))
+            .andExpect(status().isOk())
+            .andExpect(view().name(VIEW_ADD_CSV))
+            .andExpect(model().attributeHasFieldErrorCode(ATTR_FILE_DTO, ATTR_FILE, "ValidFile"));
         int usersNow = userRepository.findAll().size();
         assertEquals(usersBefore, usersNow);
     }

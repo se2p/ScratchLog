@@ -441,62 +441,6 @@ public class UserControllerIntegrationTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetCSVParticipants() throws Exception {
-        mvc.perform(get("/users/csv"))
-                .andExpect(status().isOk())
-                .andExpect(view().name(USERS_ADD_CSV));
-    }
-
-    @Test
-    public void testAddCSVParticipants() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILETYPE,
-                new ClassPathResource("users.csv").getInputStream());
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/users/csv")
-                        .file(file)
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk());
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService, times(1)).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsInvalidAttributes() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILETYPE,
-                new ClassPathResource("usersInvalid.csv").getInputStream());
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/users/csv")
-                        .file(file)
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(USERS_ADD_CSV));
-        verify(userService, never()).findAlreadyExistingByUsernameOrEmail(any());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
-    public void testAddCSVParticipantsInvalidFile() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", FILENAME, FILENAME,
-                new ClassPathResource("usersInvalid.csv").getInputStream());
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/users/csv")
-                        .file(file)
-                        .contentType(MediaType.ALL)
-                        .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(USERS_ADD_CSV));
-        verify(userService, never()).existsUser(anyString());
-        verify(userService, never()).existsEmail(anyString());
-        verify(userService, never()).encodePassword(anyString());
-        verify(userService, never()).saveUsers(any());
-    }
-
-    @Test
     public void testPasswordReset() throws Exception {
         setMailServer(true);
         when(userService.getUser(userDTO.getUsername())).thenReturn(userDTO);
