@@ -75,12 +75,6 @@ public class ApplicationProperties {
     private final Set<String> springProfiles;
 
     /**
-     * The maximum number of users that can be imported in bulk.
-     */
-    @Getter
-    private final int maxUserBulkImportCount;
-
-    /**
      * Autowiring constructor.
      *
      * @param applicationName The application name.
@@ -90,7 +84,6 @@ public class ApplicationProperties {
      * @param scratchGuiBaseUrls The corresponding Scratch UI base URLs.
      * @param samlBaseUrl The base URL of the SAML authentication provider.
      * @param springProfiles The active Spring profiles.
-     * @param maxUserBulkImportCount The maximum number of users that can be imported in bulk.
      */
     @Autowired
     public ApplicationProperties(
@@ -100,8 +93,7 @@ public class ApplicationProperties {
             @Value("${app.gui}") final String[] scratchGuiUrls,
             @Value("${app.gui.base}") final String[] scratchGuiBaseUrls,
             @Value("${app.saml.base:null}") final String samlBaseUrl,
-            @Value("${spring.profiles.active}") final String[] springProfiles,
-            @Value("${scratchlog.users.max-count-bulk-import:1000}") final int maxUserBulkImportCount
+            @Value("${spring.profiles.active}") final String[] springProfiles
     ) {
         this.applicationName = applicationName;
         this.contextPath = contextPath;
@@ -110,7 +102,6 @@ public class ApplicationProperties {
         this.scratchGuiBaseUrls = scratchGuiBaseUrls;
         this.samlUrl = samlBaseUrl;
         this.springProfiles = Arrays.stream(springProfiles).collect(Collectors.toUnmodifiableSet());
-        this.maxUserBulkImportCount = maxUserBulkImportCount;
     }
 
     /**
@@ -150,7 +141,6 @@ public class ApplicationProperties {
                 + ", scratchGuiBaseUrls=" + Arrays.toString(scratchGuiBaseUrls)
                 + ", samlUrl='" + samlUrl + '\''
                 + ", springProfiles=" + springProfiles
-                + ", maxUserBulkImportCount" + maxUserBulkImportCount
                 + '}';
     }
 

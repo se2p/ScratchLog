@@ -1071,9 +1071,9 @@ public class UserController {
         List<String> invalidAttributes = new ArrayList<>();
         List<String> invalidPasswords = new ArrayList<>();
 
-        if (users.size() > applicationProperties.getMaxUserBulkImportCount()) {
+        if (users.size() > Constants.MAX_BULK_USER_ADD_AMOUNT) {
             bindingResult.rejectValue(FIELD_CSV_ADD_FILE, "max_users",
-                new Object[]{applicationProperties.getMaxUserBulkImportCount()}, null);
+                new Object[]{Constants.MAX_BULK_USER_ADD_AMOUNT}, null);
             return false;
         }
 

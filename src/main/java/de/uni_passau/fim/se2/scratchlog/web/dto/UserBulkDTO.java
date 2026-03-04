@@ -19,6 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.web.dto;
 
+import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.validation.annotation.Username;
 import jakarta.validation.constraints.Max;
@@ -46,8 +47,7 @@ public class UserBulkDTO {
      * The number of users to add.
      */
     @Min(1)
-    // TODO: use constant
-    @Max(1000)
+    @Max(Constants.MAX_BULK_USER_ADD_AMOUNT)
     private int amount = 1;
 
     /**
