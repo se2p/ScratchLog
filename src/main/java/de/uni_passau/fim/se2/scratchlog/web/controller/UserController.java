@@ -442,23 +442,8 @@ public class UserController {
      */
     @PostMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
-    public Object addUsersInBulk(final UserBulkDTO userBulkDTO, final BindingResult bindingResult) {
-        if (userBulkDTO.getUsername() == null || userBulkDTO.getLanguage() == null) {
-            LOGGER.error("Cannot add participants with username or language null!");
-            return Constants.ERROR;
-        } else if (
-            userBulkDTO.getAmount() < 1 || userBulkDTO.getAmount() > applicationProperties.getMaxUserBulkImportCount()
-        ) {
-            LOGGER.error("Cannot add an illegal number of {} participants!", userBulkDTO.getAmount());
-            return Constants.ERROR;
-        }
-
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
-        String usernameValidation = FieldErrorHandler.validateUsername(userBulkDTO.getUsername(), bindingResult,
-                resourceBundle);
-
-        if (usernameValidation != null) {
+    public Object addUsersInBulk(@Valid final UserBulkDTO userBulkDTO, final BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
             return USERS_ADD;
         }
 

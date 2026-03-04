@@ -20,6 +20,10 @@
 package de.uni_passau.fim.se2.scratchlog.web.dto;
 
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
+import de.uni_passau.fim.se2.scratchlog.util.validation.annotation.Username;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,16 +45,22 @@ public class UserBulkDTO {
     /**
      * The number of users to add.
      */
+    @Min(1)
+    // TODO: use constant
+    @Max(1000)
     private int amount = 1;
 
     /**
      * One of the available languages.
      */
+    @NotNull
     private Language language;
 
     /**
      * The username pattern.
      */
+    @NotNull
+    @Username
     private String username;
 
     /**

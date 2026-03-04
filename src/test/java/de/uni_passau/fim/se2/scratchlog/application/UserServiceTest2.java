@@ -106,7 +106,7 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
 
     @Test
     public void testAddUsersInBulkNull() {
-        assertThrows(IllegalArgumentException.class, () -> userService.addUsersInBulk(null));
+        assertThrows(ConstraintViolationException.class, () -> userService.addUsersInBulk(null));
     }
 
     @Test
@@ -173,6 +173,8 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
     }
 
     private String uniquePrefix() {
-        return UUID.randomUUID() + "_";
+        // Remove the hyphens since those are not allowed by the username validator.
+        return (UUID.randomUUID().toString().replaceAll("-", "")) + "_";
     }
+
 }

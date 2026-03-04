@@ -47,9 +47,11 @@
                                 <i class="fa fa-hashtag"></i>
                                 <span class="visually-hidden" th:text="#{username}"></span>
                         </span>
-                        <input name="amount" id="amount" type="number" class="form-control" th:field="*{amount}" min="1"
-                               th:max="${applicationConfig.maxUserBulkImportCount}"/>
+                        <input name="amount" id="amount" type="number" th:field="*{amount}" min="1"
+                               th:max="${applicationConfig.maxUserBulkImportCount}"
+                               class="form-control" th:classappend="${#fields.hasErrors('amount')} ? 'is-invalid'" />
                     </div>
+                    <div class="validation" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
                     <div class="form-text"
                          th:text="#{add_users_bulk_amount_info(${applicationConfig.maxUserBulkImportCount})}"></div>
                 </div>

@@ -36,6 +36,7 @@ import de.uni_passau.fim.se2.scratchlog.util.validation.annotation.ValidFile;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -242,11 +243,7 @@ public class UserService {
      * @return A list of all users that were added.
      */
     @Transactional
-    public List<UserDTO> addUsersInBulk(final UserBulkDTO userBulkDTO) {
-        if (userBulkDTO == null) {
-            throw new IllegalArgumentException("UserBulkDTO may not be null.");
-        }
-
+    public List<UserDTO> addUsersInBulk(@NotNull @Valid final UserBulkDTO userBulkDTO) {
         String username = userBulkDTO.getUsername();
         int number = userBulkDTO.isStartAtOne() ? findValidNumberForUsername(username) : findLastId() + 1;
 
