@@ -19,8 +19,8 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = {})
 @NotBlank
 @Size(min = Constants.USERNAME_MIN, max = Constants.SMALL_FIELD)
-@Pattern(regexp = "^([a-zA-Z0-9_]+)[a-zA-Z]([a-zA-Z0-9_]+)$")
-@Target({ ElementType.FIELD, ElementType.PARAMETER } )
+@Pattern(regexp = "^([a-zA-Z0-9_]+)[a-zA-Z]([a-zA-Z0-9_]+)$", message = "{error_username_pattern}")
+@Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface Username {
