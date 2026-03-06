@@ -13,23 +13,26 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * A Jakarta Validation constraint annotation for usernames. Requirements are given by the other validation annotations.
+ * A Jakarta Validation constraint annotation for passwords. Requirements are given by the other validation annotations.
  */
 @Constraint(validatedBy = {})
-@Size(min = Constants.USERNAME_MIN, max = Constants.SMALL_FIELD)
-@Pattern(regexp = "^([a-zA-Z0-9_]+)[a-zA-Z]([a-zA-Z0-9_]+)$", message = "{error_username_pattern}")
+@Size(min = Constants.PASSWORD_MIN, max = Constants.SMALL_FIELD)
+@Pattern(
+    regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])([!?+\\-*.:,;@#$%_äöüÄÖÜßẞ]*).*",
+    message = "{error_password_pattern}"
+)
 @Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface Username {
+public @interface Password {
 
     /**
      * The error message in case validation fails and the validator specifies no other error message.
-     * Defaults to the `error_username` resource bundle message.
+     * Defaults to the `error_password` resource bundle message.
      *
      * @return The error message in case validation fails.
      */
-    String message() default "{error_username}";
+    String message() default "{error_password}";
 
     /**
      * The validation groups parameter required by Jakarta Validation.

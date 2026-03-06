@@ -24,6 +24,9 @@ import com.opencsv.bean.CsvCustomBindByName;
 import de.uni_passau.fim.se2.scratchlog.util.CsvParserUtils;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
+import de.uni_passau.fim.se2.scratchlog.util.validation.annotation.Password;
+import de.uni_passau.fim.se2.scratchlog.util.validation.annotation.Username;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,12 +54,14 @@ public class UserDTO {
     /**
      * The user's unique username.
      */
+    @Username
     @CsvCustomBindByName(required = true, converter = CsvParserUtils.TrimValueConverter.class)
     private String username;
 
     /**
      * The user's email.
      */
+    @Email
     @CsvCustomBindByName(converter = CsvParserUtils.TrimValueConverter.class)
     private String email;
 
@@ -74,6 +79,7 @@ public class UserDTO {
     /**
      * The user's hashed password.
      */
+    @Password
     @CsvBindByName()
     private String password;
 
