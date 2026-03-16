@@ -10,6 +10,10 @@ import java.util.Map;
  */
 public final class ValidationUtils {
 
+    private ValidationUtils() {
+        // intentionally empty, utility class
+    }
+
     /**
      * Rejects a value in validation by building a constraint validation for the given {@code context}, as well as
      * attaching an error message.

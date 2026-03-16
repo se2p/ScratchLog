@@ -100,11 +100,13 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
             .andExpect(status().isOk());
         List<User> users = userRepository.findAll().stream()
             .filter(u -> u.getUsername().startsWith(userBulkDTO.getUsername())).toList();
-        assertThat(users).hasSize(userBulkDTO.getAmount());
-        assertThat(users).allMatch(user ->
-            user.getUsername().equals(userBulkDTO.getUsername() + user.getId())
-                && user.getLanguage().equals(userBulkDTO.getLanguage())
-                && !user.getPassword().isEmpty());
+        assertThat(users)
+            .hasSize(userBulkDTO.getAmount())
+            .allMatch(user ->
+                user.getUsername().equals(userBulkDTO.getUsername() + user.getId())
+                    && user.getLanguage().equals(userBulkDTO.getLanguage())
+                    && !user.getPassword().isEmpty()
+            );
     }
 
     @Test
@@ -114,8 +116,7 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
             .andExpect(status().isOk());
         List<User> users = userRepository.findAll().stream()
             .filter(u -> u.getUsername().startsWith(userBulkDTO.getUsername())).toList();
-        assertThat(users).hasSize(userBulkDTO.getAmount());
-        assertThat(users).allMatch(user -> {
+        assertThat(users).hasSize(userBulkDTO.getAmount()).allMatch(user -> {
             int suffix = Integer.parseInt(user.getUsername().split("_")[2]);
             return user.getUsername().startsWith(userBulkDTO.getUsername())
                 && suffix >= 1 && suffix <= userBulkDTO.getAmount();
@@ -131,8 +132,7 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
             .andExpect(status().isOk());
         List<User> users = userRepository.findAll().stream()
             .filter(u -> u.getUsername().startsWith(userBulkDTO.getUsername())).toList();
-        assertThat(users).hasSize(2 * amount);
-        assertThat(users).allMatch(user -> {
+        assertThat(users).hasSize(2 * amount).allMatch(user -> {
             int suffix = Integer.parseInt(user.getUsername().split("_")[2]);
             return user.getUsername().startsWith(userBulkDTO.getUsername())
                 && suffix >= 1 && suffix <= 2 * amount;
@@ -188,13 +188,16 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
         List<User> users = userRepository.findAll().stream()
             .filter(u -> u.getUsername().startsWith(USERS_CSV_USERNAME)).toList();
 
-        assertThat(users).hasSize(USERS_CSV_AMOUNT);
-        assertThat(users).anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "1")
-            && u.getEmail().equals(USERS_CSV_USERNAME + "1@user.de") && u.getLanguage() == Language.GERMAN);
-        assertThat(users).anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "2")
-            && u.getEmail().equals(USERS_CSV_USERNAME + "2@user.com") && u.getLanguage() == Language.ENGLISH);
-        assertThat(users).anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "3")
-            && u.getEmail().equals(USERS_CSV_USERNAME + "3@example.com") && u.getLanguage() == Language.ENGLISH);
+        assertThat(users)
+            .hasSize(USERS_CSV_AMOUNT)
+            .anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "1")
+                && u.getEmail().equals(USERS_CSV_USERNAME + "1@user.de") && u.getLanguage() == Language.GERMAN
+            ).anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "2")
+                && u.getEmail().equals(USERS_CSV_USERNAME + "2@user.com") && u.getLanguage() == Language.ENGLISH
+            )
+            .anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "3")
+                && u.getEmail().equals(USERS_CSV_USERNAME + "3@example.com") && u.getLanguage() == Language.ENGLISH
+            );
     }
 
     @Test
@@ -204,11 +207,14 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
         List<User> users = userRepository.findAll().stream()
             .filter(u -> u.getUsername().startsWith(USERS_CSV_USERNAME)).toList();
 
-        assertThat(users).hasSize(2);
-        assertThat(users).anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "1")
-            && u.getLanguage() == Language.GERMAN);
-        assertThat(users).anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "2")
-            && u.getLanguage() == Language.ENGLISH);
+        assertThat(users)
+            .hasSize(2)
+            .anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "1")
+                && u.getLanguage() == Language.GERMAN
+            )
+            .anyMatch(u -> u.getUsername().equals(USERS_CSV_USERNAME + "2")
+                && u.getLanguage() == Language.ENGLISH
+            );
     }
 
     @Test
@@ -217,7 +223,9 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
             .andExpect(status().isOk());
         List<User> users = userRepository.findAll().stream()
             .filter(u -> u.getUsername().startsWith(USERS_CSV_USERNAME)).toList();
-        assertThat(users).allMatch(u -> passwordEncoder.matches("Unicorns1!", u.getPassword()));
+        assertThat(users)
+            .isNotEmpty()
+            .allMatch(u -> passwordEncoder.matches("Unicorns1!", u.getPassword()));
     }
 
     @Test
