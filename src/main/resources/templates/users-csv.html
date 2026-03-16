@@ -40,10 +40,11 @@
 
             <!-- The form for uploading the CSV file. -->
             <h2 th:text="#{csv_heading}" class="h5"></h2>
-            <form method="post" th:action="@{/users/csv}" enctype="multipart/form-data"
+            <form method="post" th:action="@{/users/csv}" th:object="${fileDTO}" enctype="multipart/form-data"
                   class="align-items-start d-flex flex-column gap-3">
-                <input type="file" name="file" accept=".csv"/>
+                <input type="file" name="file" accept="text/csv" th:field="*{file}" />
                 <input class="btn btn-primary" type="submit" th:value="#{upload}"/>
+                <div class="alert alert-danger" th:if="${#fields.hasErrors('file')}" th:errors="*{file}"></div>
             </form>
         </div>
     </div>
