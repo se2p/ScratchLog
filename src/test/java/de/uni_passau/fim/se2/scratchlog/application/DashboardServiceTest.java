@@ -49,7 +49,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,10 +56,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -105,8 +102,11 @@ public class DashboardServiceTest {
     private final Participant participant1 = new Participant(user1, experiment, null, null);
     private final Participant participant2 = new Participant(user2, experiment, null, null);
     private final ExperimentData experimentData = new ExperimentData(ID, 15, 10, 7);
-    private final String[] stringExperimentData = new String[]{String.valueOf(experimentData.getParticipants()),
-            String.valueOf(experimentData.getStarted()), String.valueOf(experimentData.getFinished())};
+    private final DashboardService.ExperimentDataDto experimentDataDto = new DashboardService.ExperimentDataDto(
+        experimentData.getParticipants(),
+        experimentData.getStarted(),
+        experimentData.getFinished()
+    );
     private final List<Participant> participants = List.of(participant1, participant2);
     private final List<Integer> userIds = List.of(ID, ID);
     private final List<EventProjection> eventProjections1 = getBlockEventProjections(1);
@@ -140,7 +140,7 @@ public class DashboardServiceTest {
     @Test
     public void testGetExperimentData() {
         when(experimentDataRepository.findByExperiment(ID)).thenReturn(Optional.of(experimentData));
-        assertEquals(Arrays.toString(stringExperimentData), Arrays.toString(dashboardService.getExperimentData(ID)));
+        assertEquals(experimentDataDto, dashboardService.getExperimentData(ID));
         verify(experimentDataRepository).findByExperiment(ID);
     }
 
@@ -156,13 +156,13 @@ public class DashboardServiceTest {
     public void testGetParticipants() {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperiment(experiment)).thenReturn(participants);
-        List<String[]> userInfo = dashboardService.getParticipants(ID);
+        List<DashboardService.ParticipantIdName> userInfo = dashboardService.getParticipants(ID);
         assertAll(
                 () -> assertEquals(2, userInfo.size()),
-                () -> assertEquals(String.valueOf(user1.getId()), userInfo.getFirst()[0]),
-                () -> assertEquals(user1.getUsername(), userInfo.getFirst()[1]),
-                () -> assertEquals(String.valueOf(user2.getId()), userInfo.get(1)[0]),
-                () -> assertEquals(user2.getUsername(), userInfo.get(1)[1])
+                () -> assertEquals(user1.getId(), userInfo.getFirst().id()),
+                () -> assertEquals(user1.getUsername(), userInfo.getFirst().username()),
+                () -> assertEquals(user2.getId(), userInfo.get(1).id()),
+                () -> assertEquals(user2.getUsername(), userInfo.get(1).username())
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperiment(experiment);

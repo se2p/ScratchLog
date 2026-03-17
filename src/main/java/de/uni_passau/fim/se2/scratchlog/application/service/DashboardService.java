@@ -168,7 +168,7 @@ public class DashboardService {
      * @throws IllegalArgumentException if the passed id is invalid.
      * @throws NotFoundException if no corresponding experiment data could be found.
      */
-    public String[] getExperimentData(final int id) {
+    public ExperimentDataDto getExperimentData(final int id) {
         Optional<ExperimentData> experimentData = experimentDataRepository.findByExperiment(id);
 
         if (experimentData.isEmpty()) {
@@ -176,9 +176,14 @@ public class DashboardService {
             throw new NotFoundException("Could not find experiment data for experiment with id " + id + "!");
         }
 
-        return new String[]{String.valueOf(experimentData.get().getParticipants()),
-                String.valueOf(experimentData.get().getStarted()), String.valueOf(experimentData.get().getFinished())};
+        return new ExperimentDataDto(
+            experimentData.get().getParticipants(),
+            experimentData.get().getStarted(),
+            experimentData.get().getFinished()
+        );
     }
+
+    public record ExperimentDataDto(int participants, int started, int finished) {}
 
     /**
      * Retrieves the ids and usernames of all participants of the experiment with the given id.
@@ -189,7 +194,7 @@ public class DashboardService {
      * @throws IllegalStateException if the experiment has not participants.
      * @throws NotFoundException if no corresponding experiment could be found.
      */
-    public List<String[]> getParticipants(final int id) {
+    public List<ParticipantIdName> getParticipants(final int id) {
         Experiment experiment = experimentRepository.getReferenceById(id);
 
         try {
@@ -199,15 +204,19 @@ public class DashboardService {
                 throw new IllegalStateException("Could not find any participants for experiment with id " + id + "!");
             }
 
-            List<String[]> userInfo = new ArrayList<>();
-            participants.forEach(participant -> userInfo.add(new String[]{String.valueOf(participant.getUser().getId()),
-                    participant.getUser().getUsername()}));
-            return userInfo;
+            return participants
+                .stream()
+                .map(participant -> new ParticipantIdName(
+                    participant.getUser().getId(), participant.getUser().getUsername()
+                ))
+                .toList();
         } catch (EntityNotFoundException e) {
             LOGGER.error("Could not find experiment with id {} in the database!", id, e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }
+
+    public record ParticipantIdName(int id, String username) {}
 
     /**
      * Retrieves information about the number of times the given block event was executed per minute during the

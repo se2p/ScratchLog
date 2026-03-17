@@ -54,8 +54,8 @@ public class DashboardRestControllerIntegrationTest extends AbstractControllerTe
     private static final String EVENT_PARAM = "event";
     private static final String userIds = "1,5";
     private static final int ID = 5;
-    private static final String[] experimentData = new String[]{"11", "7", "5"};
-    private static final List<String[]> participantData = new ArrayList<>();
+    private static final DashboardService.ExperimentDataDto experimentData = new DashboardService.ExperimentDataDto(11, 7, 5);
+    private static final List<DashboardService.ParticipantIdName> participantData = new ArrayList<>();
     private static final List<Integer[]> eventData = new ArrayList<>();
 
     @Test
@@ -66,7 +66,10 @@ public class DashboardRestControllerIntegrationTest extends AbstractControllerTe
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
-                .andExpect(content().string("[\"11\",\"7\",\"5\"]"));
+                .andExpect(content().string(
+                    """
+                        {"participants":11,"started":7,"finished":5}"""
+                ));
         verify(dashboardService).getExperimentData(ID);
     }
 
