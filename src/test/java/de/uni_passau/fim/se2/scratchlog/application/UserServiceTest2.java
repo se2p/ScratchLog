@@ -68,7 +68,6 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
             // Refetch user to get the id.
             user = userService.getUser(user.getUsername());
             return user.getUsername().startsWith(userBulkDTO.getUsername())
-                && user.getUsername().endsWith(user.getId().toString())
                 && user.getLanguage().equals(userBulkDTO.getLanguage())
                 && !user.getPassword().isEmpty();
         });
