@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
-import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.EventCount;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExperimentData;
@@ -38,9 +37,6 @@ import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
-import jakarta.persistence.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -54,11 +50,6 @@ import java.util.Optional;
  */
 @Service
 public class DashboardService {
-
-    /**
-     * The log instance associated with this class for logging purposes.
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardService.class);
 
     /**
      * The experiment repository to use for database queries related to experiment data.
@@ -146,17 +137,10 @@ public class DashboardService {
      *
      * @param id The id of the experiment.
      * @return {@code true} if the experiment has participants, or {@code false} otherwise.
-     * @throws IllegalArgumentException if the passed id is invalid.
      */
     public boolean existsParticipants(final int id) {
         Experiment experiment = experimentRepository.getReferenceById(id);
-
-        try {
-            return participantRepository.existsByExperiment(experiment);
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
-            return false;
-        }
+        return participantRepository.existsByExperiment(experiment);
     }
 
     /**
@@ -166,20 +150,14 @@ public class DashboardService {
      * @param id The id of the experiment.
      * @return The corresponding experiment data.
      * @throws IllegalArgumentException if the passed id is invalid.
-     * @throws NotFoundException if no corresponding experiment data could be found.
      */
     public ExperimentDataDto getExperimentData(final int id) {
-        Optional<ExperimentData> experimentData = experimentDataRepository.findByExperiment(id);
-
-        if (experimentData.isEmpty()) {
-            LOGGER.error("Could not find experiment data for experiment with id {}!", id);
-            throw new NotFoundException("Could not find experiment data for experiment with id " + id + "!");
-        }
+        ExperimentData experimentData = experimentDataRepository.getReferenceById(id);
 
         return new ExperimentDataDto(
-            experimentData.get().getParticipants(),
-            experimentData.get().getStarted(),
-            experimentData.get().getFinished()
+            experimentData.getParticipants(),
+            experimentData.getStarted(),
+            experimentData.getFinished()
         );
     }
 
@@ -191,29 +169,17 @@ public class DashboardService {
      * @param id The experiment id.
      * @return A list of participant ids and usernames.
      * @throws IllegalArgumentException if the passed id is invalid.
-     * @throws IllegalStateException if the experiment has not participants.
-     * @throws NotFoundException if no corresponding experiment could be found.
      */
     public List<ParticipantIdName> getParticipants(final int id) {
         Experiment experiment = experimentRepository.getReferenceById(id);
 
-        try {
-            List<Participant> participants = participantRepository.findAllByExperiment(experiment);
-
-            if (participants.isEmpty()) {
-                throw new IllegalStateException("Could not find any participants for experiment with id " + id + "!");
-            }
-
-            return participants
-                .stream()
-                .map(participant -> new ParticipantIdName(
-                    participant.getUser().getId(), participant.getUser().getUsername()
-                ))
-                .toList();
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
-            throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
-        }
+        List<Participant> participants = participantRepository.findAllByExperiment(experiment);
+        return participants
+            .stream()
+            .map(participant -> new ParticipantIdName(
+                participant.getUser().getId(), participant.getUser().getUsername()
+            ))
+            .toList();
     }
 
     public record ParticipantIdName(int id, String username) {}
@@ -302,20 +268,12 @@ public class DashboardService {
      * @param experiment The experiment in which the events occurred.
      * @param event The concrete event of interest.
      * @return The number of executions per minute.
-     * @throws NotFoundException if the given user or experiment could not be found.
      */
     private Integer[] getBlockEventCounts(final int userId, final Experiment experiment,
                                           final BlockEventSpecific event) {
         User user = userRepository.getReferenceById(userId);
 
-        try {
-            return getSampledEventCounts(blockEventRepository.findAllByUserAndExperimentAndEvent(user, experiment,
-                    event));
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user or experiment when trying to retrieve block event data!", e);
-            throw new NotFoundException("Could not find user or experiment when trying to retrieve block event data!",
-                    e);
-        }
+        return getSampledEventCounts(blockEventRepository.findAllByUserAndExperimentAndEvent(user, experiment, event));
     }
 
     /**
@@ -326,20 +284,11 @@ public class DashboardService {
      * @param experiment The experiment in which the events occurred.
      * @param event The concrete event of interest.
      * @return The number of executions per minute.
-     * @throws NotFoundException if the given user or experiment could not be found.
      */
     private Integer[] getClickEventCounts(final int userId, final Experiment experiment,
                                           final ClickEventSpecific event) {
         User user = userRepository.getReferenceById(userId);
-
-        try {
-            return getSampledEventCounts(clickEventRepository.findAllByUserAndExperimentAndEvent(user, experiment,
-                    event));
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user or experiment when trying to retrieve click event data!", e);
-            throw new NotFoundException("Could not find user or experiment when trying to retrieve click event data!",
-                    e);
-        }
+        return getSampledEventCounts(clickEventRepository.findAllByUserAndExperimentAndEvent(user, experiment, event));
     }
 
     /**
@@ -350,20 +299,14 @@ public class DashboardService {
      * @param experiment The experiment in which the events occurred.
      * @param event The concrete event of interest.
      * @return The number of executions per minute.
-     * @throws NotFoundException if the given user or experiment could not be found.
      */
     private Integer[] getResourceEventCounts(final int userId, final Experiment experiment,
                                              final ResourceEventSpecific event) {
         User user = userRepository.getReferenceById(userId);
 
-        try {
-            return getSampledEventCounts(resourceEventRepository.findAllByUserAndExperimentAndEvent(user, experiment,
-                    event));
-        } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user or experiment when trying to retrieve resource event data!", e);
-            throw new NotFoundException("Could not find user or experiment when trying to retrieve resource event "
-                    + "data!", e);
-        }
+        return getSampledEventCounts(
+            resourceEventRepository.findAllByUserAndExperimentAndEvent(user, experiment, event)
+        );
     }
 
     /**
