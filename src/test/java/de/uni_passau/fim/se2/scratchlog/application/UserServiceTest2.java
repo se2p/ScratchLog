@@ -3,19 +3,27 @@ package de.uni_passau.fim.se2.scratchlog.application;
 import de.uni_passau.fim.se2.scratchlog.AbstractScratchLogTest;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.testing_utils.DtoUtil;
+import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
+import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -126,6 +134,42 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
     public void testGenerateUsernamePasswordCsvPasswordNull() {
         csvUserList.getFirst().setConfirmPassword(null);
         assertThrows(IllegalArgumentException.class, () -> userService.generateUsernamePasswordCsv(null));
+    }
+
+    @Test
+    public void testParseUserListCsv() throws IOException {
+        MultipartFile file = new MockMultipartFile("users.csv", "users.csv", "text/csv",
+            new ClassPathResource("users.csv").getInputStream());
+        List<UserDTO> userDTOs = List.of(
+            new UserDTO("newUser1", "newUser1@user.de", null, Language.GERMAN, null, null),
+            new UserDTO("newUser2", "newUser2@user.com", null, Language.ENGLISH, null, null),
+            new UserDTO("newUser3", "newUser3@example.com", null, Language.ENGLISH, null, null));
+        assertEquals(userDTOs, userService.parseUserListCsv(file));
+    }
+
+    @Test
+    public void testParseUserListCsvInvalidFile() throws IOException {
+        MultipartFile file = new MockMultipartFile("users.csv", "users.csv", "text/plain",
+            new ClassPathResource("users.csv").getInputStream());
+        assertThrows(ConstraintViolationException.class, () -> userService.parseUserListCsv(file));
+    }
+
+    @Test
+    public void testCompleteUserInformation() {
+        UserDTO userDTO = UserDTO.builder().username("test").build();
+        userService.completeUserInformation(userDTO);
+        assertAll(
+            () -> assertNotNull(userDTO.getPassword()),
+            () -> assertNotNull(userDTO.getConfirmPassword()),
+            () -> assertTrue(userDTO.isActive()),
+            () -> assertEquals(Constants.DEFAULT_LANGUAGE, userDTO.getLanguage()),
+            () -> assertEquals(Role.PARTICIPANT, userDTO.getRole())
+        );
+    }
+
+    @Test
+    public void testCompleteUserInformationNull() {
+        assertThrows(ConstraintViolationException.class, () -> userService.completeUserInformation(null));
     }
 
     private String uniquePrefix() {

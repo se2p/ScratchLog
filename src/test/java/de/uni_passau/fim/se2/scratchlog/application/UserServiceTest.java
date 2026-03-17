@@ -624,20 +624,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testParseUserListCsv() throws IOException  {
-        MultipartFile file = new MockMultipartFile("file", CSV_FILENAME, CSV_FILETYPE,
-            new ClassPathResource(CSV_FILENAME).getInputStream());
-        assertEquals(userDTOs, userService.parseUserListCsv(file));
-    }
-
-    @Test
-    public void testParseUserListCsvInvalidFile() throws IOException {
-        MultipartFile file = new MockMultipartFile("file", CSV_FILENAME, "text/plain",
-            new ClassPathResource(CSV_FILENAME).getInputStream());
-        assertThrows(IllegalArgumentException.class, () -> userService.parseUserListCsv(file));
-    }
-
-    @Test
     public void testGetInvalidParticipantUsernamesAllValid() {
         // Doing `when(userService.existsUser(anyString()).thenReturn(true)` throws an error here.
         for (UserDTO userDTO : userDTOs) {
