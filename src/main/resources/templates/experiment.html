@@ -91,8 +91,8 @@
                             th:text="#{heading_sb3}"></button>
                     <button class="nav-link" id="nav-downloadsb3-tab" data-bs-toggle="tab"
                             data-bs-target="#nav-downloadsb3" type="button" role="tab" aria-controls="nav-downloadsb3"
-                            aria-selected="false" th:unless="${participants.isEmpty()
-                            or not experimentDTO.isActive()}" th:text="#{download_files}"></button>
+                            aria-selected="false" th:unless="${participants.isEmpty()}"
+                            th:text="#{download_files}"></button>
                     <button class="nav-link" id="nav-litterbox-tab" data-bs-toggle="tab" data-bs-target="#nav-litterbox"
                             type="button" role="tab" aria-controls="nav-status" aria-selected="false"
                             th:text="#{litterbox_csv}" th:unless="${participants.isEmpty()}"></button>
@@ -125,9 +125,9 @@
                 </div>
 
                 <div class="tab-pane fade p-5" id="nav-downloadsb3" role="tabpanel"
-                     aria-labelledby="nav-downloadsb3-tab" tabindex="0" th:if="${experimentDTO.active}">
+                     aria-labelledby="nav-downloadsb3-tab" tabindex="0" sec:authorize="hasRole('ADMIN')">
                     <!-- The download sb3 files heading and the corresponding button. -->
-                    <div class="d-flex gap-2 justify-content-end" sec:authorize="hasRole('ADMIN')">
+                    <div class="d-flex gap-2 justify-content-end">
                         <a class="btn btn-primary" th:href="@{/result/sb3s/all(experiment=${experimentDTO.id})}"
                            th:aria-label="#{sb3_label}">
                             <i aria-hidden="true" class="fas fa-download fa-inverse"></i>
@@ -144,8 +144,7 @@
                     </div>
 
                     <!-- The download sb3 files section. -->
-                    <div sec:authorize="hasRole('ADMIN')" th:unless="${participants.isEmpty()
-                        or not experimentDTO.isActive()}">
+                    <div th:unless="${participants.isEmpty()}">
                         <!-- The accordion for downloading sb3 files in a certain interval. -->
                         <div class="accordion mt-3" id="accordionFiles">
                             <div class="accordion-item">
