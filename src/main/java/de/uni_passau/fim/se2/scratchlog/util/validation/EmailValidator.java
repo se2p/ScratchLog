@@ -25,7 +25,11 @@ import java.util.regex.Pattern;
 
 /**
  * Validator for email inputs.
+ *
+ * @deprecated
+ * Emails should be validated using the {@link jakarta.validation.constraints.Email} annotation instead.
  */
+@Deprecated
 public final class EmailValidator {
 
     /**

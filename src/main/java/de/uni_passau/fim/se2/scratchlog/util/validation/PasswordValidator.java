@@ -25,7 +25,12 @@ import java.util.regex.Pattern;
 
 /**
  * Validator for password inputs.
+ *
+ * @deprecated
+ * Passwords should be validated using the {@link de.uni_passau.fim.se2.scratchlog.util.validation.annotation.Password}
+ * annotation instead.
  */
+@Deprecated
 public final class PasswordValidator {
 
     /**

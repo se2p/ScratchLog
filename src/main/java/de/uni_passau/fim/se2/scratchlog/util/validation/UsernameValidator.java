@@ -25,7 +25,12 @@ import java.util.regex.Pattern;
 
 /**
  * Validator for username inputs.
+ *
+ * @deprecated
+ * Usernames should be validated using the {@link de.uni_passau.fim.se2.scratchlog.util.validation.annotation.Username}.
+ * annotation instead.
  */
+@Deprecated
 public final class UsernameValidator {
 
     /**
