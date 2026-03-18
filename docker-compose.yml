@@ -1,0 +1,41 @@
+---
+services:
+  scratchlog:
+    build:
+      context: .
+      dockerfile: Containerfile
+    restart: on-failure
+    environment:
+      spring.profiles.active: prod
+      spring.datasource.url: "jdbc:mariadb://database:3306/scratchlog"
+      spring.datasource.user: scratchlog
+      spring.datasource.password: scratchlog
+      # TODO: any other options from the properties that should be overriden?
+    networks:
+      - scratchlog
+    ports:
+      - "127.0.0.1:8090:8090/tcp"
+    depends_on:
+      database:
+        condition: service_started
+
+  database:
+    image: docker.io/library/mariadb:12
+    restart: on-failure
+    environment:
+      MYSQL_DATABASE: scratchlog
+      MYSQL_USER: scratchlog
+      MYSQL_PASSWORD: scratchlog
+      MYSQL_ROOT_PASSWORD: scratchlog
+    volumes:
+      - scratchlog-db:/var/lib/mysql
+    networks:
+      - scratchlog
+    ports:
+      - "127.0.0.1:3306:3306/tcp"
+
+volumes:
+  scratchlog-db:
+networks:
+  scratchlog:
+...

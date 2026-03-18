@@ -1,4 +1,4 @@
-FROM docker.io/library/maven:3-eclipse-temurin-21 as builder
+FROM docker.io/library/maven:3-eclipse-temurin-21 AS builder
 
 COPY pom.xml /build/pom.xml
 COPY src /build/src
@@ -17,6 +17,6 @@ WORKDIR /app
 
 COPY --from=builder /build/target/*.jar /app/scratchlog.jar
 
-EXPOSE 8080
+EXPOSE 8090
 
 ENTRYPOINT ["java", "-jar", "/app/scratchlog.jar"]
