@@ -21,7 +21,12 @@ package de.uni_passau.fim.se2.scratchlog.util.validation;
 
 /**
  * Validator for string inputs.
+ *
+ * @deprecated
+ * Strings should be validated using corresponding Jakarta validation annotations instead,
+ * e.g. {@link jakarta.validation.constraints.NotBlank}.
  */
+@Deprecated
 public final class StringValidator {
 
     /**

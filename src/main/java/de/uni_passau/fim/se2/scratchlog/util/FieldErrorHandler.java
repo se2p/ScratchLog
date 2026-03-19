@@ -29,7 +29,12 @@ import java.util.ResourceBundle;
 
 /**
  * Utility class for creating {@link org.springframework.validation.FieldError}s and verifying form inputs.
+ *
+ * @deprecated
+ * {@link BindingResult#rejectValue} should be used instead of manually creating errors.
+ * Form inputs should be validated using validation annotations instead.
  */
+@Deprecated
 public final class FieldErrorHandler {
 
     /**

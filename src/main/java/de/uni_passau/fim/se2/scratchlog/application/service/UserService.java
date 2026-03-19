@@ -32,16 +32,19 @@ import de.uni_passau.fim.se2.scratchlog.util.CustomPasswordGenerator;
 import de.uni_passau.fim.se2.scratchlog.util.InactivityConfiguration;
 import de.uni_passau.fim.se2.scratchlog.util.Secrets;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
-import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
+import de.uni_passau.fim.se2.scratchlog.util.validation.annotation.ValidFile;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -61,6 +64,7 @@ import java.util.stream.Stream;
  * A service providing methods related to users.
  */
 @Service
+@Validated
 public class UserService {
 
     /**
@@ -239,11 +243,7 @@ public class UserService {
      * @return A list of all users that were added.
      */
     @Transactional
-    public List<UserDTO> addUsersInBulk(final UserBulkDTO userBulkDTO) {
-        if (userBulkDTO == null) {
-            throw new IllegalArgumentException("UserBulkDTO may not be null.");
-        }
-
+    public List<UserDTO> addUsersInBulk(@NotNull @Valid final UserBulkDTO userBulkDTO) {
         String username = userBulkDTO.getUsername();
         int number = userBulkDTO.isStartAtOne() ? findValidNumberForUsername(username) : findLastId() + 1;
 
@@ -579,17 +579,11 @@ public class UserService {
      *
      * @param file The CSV file to parse user information from.
      * @return A list of user DTO objects with the information provided in the CSV file.
-     * @throws IllegalArgumentException If the given CSV file is not valid according to
-     *         {@link FiletypeValidator#validate(MultipartFile, String, String)}. The error message is the validation
-     *         string of said method.
      * @throws IOException If the CSV file could not be read.
      */
-    public List<UserDTO> parseUserListCsv(final MultipartFile file) throws IOException {
-        String fileValidation = FiletypeValidator.validate(file, "text/csv", ".csv");
-        if (fileValidation != null) {
-            throw new IllegalArgumentException(fileValidation);
-        }
-
+    public List<UserDTO> parseUserListCsv(
+        @NotNull @ValidFile(contentTypes = "text/csv", fileEndings = {"csv"}) final MultipartFile file)
+        throws IOException {
         try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             return new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
         }
@@ -623,7 +617,7 @@ public class UserService {
      *
      * @param userDTO The user DTO to fill with additional information.
      */
-    public void completeUserInformation(final UserDTO userDTO) {
+    public void completeUserInformation(@NotNull final UserDTO userDTO) {
         String password = userDTO.getPassword();
         if (userDTO.getPassword() == null) {
             password = CustomPasswordGenerator.generatePassword(Constants.PASSWORD_MIN);

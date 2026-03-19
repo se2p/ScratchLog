@@ -30,10 +30,8 @@ import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.enums.TokenType;
-import de.uni_passau.fim.se2.scratchlog.util.validation.EmailValidator;
 import de.uni_passau.fim.se2.scratchlog.util.validation.PasswordValidator;
 import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
-import de.uni_passau.fim.se2.scratchlog.util.validation.UsernameValidator;
 import de.uni_passau.fim.se2.scratchlog.web.dto.CsvFileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.TokenDTO;
@@ -42,7 +40,9 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,6 +131,8 @@ public class UserController {
      */
     private final LocaleResolver localeResolver;
 
+    private final Validator validator;
+
     /**
      * String corresponding to the login page.
      */
@@ -192,7 +194,8 @@ public class UserController {
                           final UserService userService, final ParticipantService participantService,
                           final Optional<MailService> mailService, final TokenService tokenService,
                           final CustomAuthenticationProvider authenticationProvider,
-                          final LocaleResolver localeResolver) {
+                          final LocaleResolver localeResolver,
+                          final Validator validator) {
         this.applicationProperties = applicationProperties;
         this.userService = userService;
         this.participantService = participantService;
@@ -200,6 +203,7 @@ public class UserController {
         this.tokenService = tokenService;
         this.authenticationProvider = authenticationProvider;
         this.localeResolver = localeResolver;
+        this.validator = validator;
     }
 
     /**
@@ -442,23 +446,8 @@ public class UserController {
      */
     @PostMapping("/bulk")
     @Secured(Constants.ROLE_ADMIN)
-    public Object addUsersInBulk(final UserBulkDTO userBulkDTO, final BindingResult bindingResult) {
-        if (userBulkDTO.getUsername() == null || userBulkDTO.getLanguage() == null) {
-            LOGGER.error("Cannot add participants with username or language null!");
-            return Constants.ERROR;
-        } else if (
-            userBulkDTO.getAmount() < 1 || userBulkDTO.getAmount() > applicationProperties.getMaxUserBulkImportCount()
-        ) {
-            LOGGER.error("Cannot add an illegal number of {} participants!", userBulkDTO.getAmount());
-            return Constants.ERROR;
-        }
-
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
-        String usernameValidation = FieldErrorHandler.validateUsername(userBulkDTO.getUsername(), bindingResult,
-                resourceBundle);
-
-        if (usernameValidation != null) {
+    public Object addUsersInBulk(@Valid final UserBulkDTO userBulkDTO, final BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
             return USERS_ADD;
         }
 
@@ -1086,13 +1075,24 @@ public class UserController {
         List<String> invalidAttributes = new ArrayList<>();
         List<String> invalidPasswords = new ArrayList<>();
 
-        if (users.size() > applicationProperties.getMaxUserBulkImportCount()) {
+        if (users.size() > Constants.MAX_BULK_USER_ADD_AMOUNT) {
             bindingResult.rejectValue(FIELD_CSV_ADD_FILE, "max_users",
-                new Object[]{applicationProperties.getMaxUserBulkImportCount()}, null);
+                new Object[]{Constants.MAX_BULK_USER_ADD_AMOUNT}, null);
             return false;
         }
 
-        users.forEach(userDTO -> checkValidUserInfo(userDTO, invalidAttributes, invalidPasswords));
+        for (UserDTO userDTO : users) {
+            Set<ConstraintViolation<UserDTO>> violations = validator.validate(userDTO);
+            for (ConstraintViolation<UserDTO> violation : violations) {
+                // No nested attributes so we can just use the entire path.
+                String attribute = violation.getPropertyPath().toString();
+                if ("password".equals(attribute)) {
+                    invalidPasswords.add((String) violation.getInvalidValue());
+                } else {
+                    invalidAttributes.add((String) violation.getInvalidValue());
+                }
+            }
+        }
 
         if (!invalidAttributes.isEmpty()) {
             bindingResult.rejectValue(FIELD_CSV_ADD_FILE, "invalid_attributes",
@@ -1113,27 +1113,6 @@ public class UserController {
         }
 
         return containsDuplicateUsernamesOrEmails(users, bindingResult);
-    }
-
-    /**
-     * Checks, if the username, password and email address of the given user meet the requirements and cannot be found
-     * in the database.
-     *
-     * @param userDTO The DTO containing the information to check.
-     * @param invalid A list used to store all invalid usernames and emails.
-     * @param passwords A list used to store all usernames with invalid passwords.
-     */
-    private void checkValidUserInfo(final UserDTO userDTO, final List<String> invalid, final List<String> passwords) {
-        if (UsernameValidator.validate(userDTO.getUsername()) != null) {
-            invalid.add(userDTO.getUsername());
-        }
-        if (userDTO.getEmail() != null && EmailValidator.validate(userDTO.getEmail()) != null) {
-            invalid.add(userDTO.getEmail());
-        }
-        if (userDTO.getPassword() != null
-                && PasswordValidator.validate(userDTO.getPassword(), userDTO.getPassword()) != null) {
-            passwords.add(userDTO.getUsername());
-        }
     }
 
     /**

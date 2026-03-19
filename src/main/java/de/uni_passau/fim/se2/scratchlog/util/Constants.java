@@ -138,6 +138,11 @@ public final class Constants {
     public static final LocalDateTime MAX_DATETIME = LocalDateTime.of(9999, 12, 31, 23, 59);
 
     /**
+     * The maximum amount of users that can be added at once through the 'add users in bulk' page.
+     */
+    public static final int MAX_BULK_USER_ADD_AMOUNT = 1000;
+
+    /**
      * The default/fallback language to use for internationalization.
      */
     public static final Language DEFAULT_LANGUAGE = Language.GERMAN;

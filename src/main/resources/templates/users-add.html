@@ -37,9 +37,9 @@
 
             <!-- The form for adding new users in bulk. -->
             <!--/*@thymesVar id="userBulkDTO" type="de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO"*/-->
-            <form th:action="@{/users/bulk}" th:object="${userBulkDTO}" th:name="userBulkDTO" method="post">
+            <form th:action="@{/users/bulk}" th:object="${userBulkDTO}" th:name="userBulkDTO" method="post"
+                  th:with="Constants=${T(de.uni_passau.fim.se2.scratchlog.util.Constants)}">
                 <!-- The input group for the range. -->
-                <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
                 <div class="mb-3 form-group">
                     <label class="form-label" for="amount" th:text="#{add_users_bulk_amount}"></label>
                     <div class="input-group">
@@ -47,11 +47,13 @@
                                 <i class="fa fa-hashtag"></i>
                                 <span class="visually-hidden" th:text="#{username}"></span>
                         </span>
-                        <input name="amount" id="amount" type="number" class="form-control" th:field="*{amount}" min="1"
-                               th:max="${applicationConfig.maxUserBulkImportCount}"/>
+                        <input name="amount" id="amount" type="number" th:field="*{amount}" min="1"
+                               th:max="${Constants.MAX_BULK_USER_ADD_AMOUNT}"
+                               class="form-control" th:classappend="${#fields.hasErrors('amount')} ? 'is-invalid'" />
                     </div>
+                    <div class="validation" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
                     <div class="form-text"
-                         th:text="#{add_users_bulk_amount_info(${applicationConfig.maxUserBulkImportCount})}"></div>
+                         th:text="#{add_users_bulk_amount_info(${Constants.MAX_BULK_USER_ADD_AMOUNT})}"></div>
                 </div>
 
                 <!-- The input group for the username pattern. -->

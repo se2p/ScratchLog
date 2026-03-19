@@ -24,7 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Validator for uploaded files.
+ *
+ * @deprecated
+ * Files should be validated using the {@link de.uni_passau.fim.se2.scratchlog.util.validation.annotation.ValidFile}
+ * annotation instead.
  */
+@Deprecated
 public final class FiletypeValidator {
 
     /**

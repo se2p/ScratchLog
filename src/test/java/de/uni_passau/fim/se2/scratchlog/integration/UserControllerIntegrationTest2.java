@@ -4,7 +4,6 @@ import de.uni_passau.fim.se2.scratchlog.AbstractScratchLogControllerTest;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
-import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserBulkDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
@@ -17,7 +16,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.spy;
@@ -38,7 +36,6 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
     private static final String ATTR_USER_BULK_DTO = "userBulkDTO";
     private static final String ATTR_FILE_DTO = "fileDTO";
     private static final String ATTR_FILE = "file";
-    private static final String ATTR_ERROR = "error";
 
     private static final String VIEW_REDIRECT = "redirect:/";
     private static final String VIEW_ADD_BULK = "users-add";
@@ -162,16 +159,16 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
         mvc.perform(post("/users/bulk").flashAttr(ATTR_USER_BULK_DTO, userBulkDTO))
             .andExpect(status().isOk())
             .andExpect(view().name(VIEW_ADD_BULK))
-            .andExpect(model().attribute(ATTR_ERROR, nullValue()));
+            .andExpect(model().attributeHasFieldErrors(ATTR_USER_BULK_DTO, "username"));
     }
 
     @Test
     public void testAddUsersInBulkInvalidAmount() throws Exception {
         userBulkDTO.setAmount(-1);
         mvc.perform(post("/users/bulk").flashAttr(ATTR_USER_BULK_DTO, userBulkDTO))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(view().name(Constants.ERROR))
-            .andExpect(model().attribute(ATTR_ERROR, nullValue()));
+            .andExpect(status().isOk())
+            .andExpect(view().name(VIEW_ADD_BULK))
+            .andExpect(model().attributeHasFieldErrors(ATTR_USER_BULK_DTO, "amount"));
     }
 
     @Test
