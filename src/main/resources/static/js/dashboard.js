@@ -68,10 +68,10 @@ function fetchExperimentData() {
         url: contextPath + "/dashboard/data",
         data: {id: experimentId},
         success: function(data) {
-            totalStarted.innerText = data[0];
-            totalFinished.innerText = data[0];
-            started.innerText = data[1];
-            finished.innerText = data[2];
+            totalStarted.innerText = data.participants;
+            totalFinished.innerText = data.participants;
+            started.innerText = data.started;
+            finished.innerText = data.finished;
         },
         error: function() {
             redirectErrorPage();
@@ -107,7 +107,7 @@ function fetchParticipantData() {
  */
 function fetchBlockEventData() {
     let selectedIds = selectedParticipants.map(function(item) {
-        return item[0];
+        return item.id;
     });
     $.ajax({
         type: "get",
@@ -138,7 +138,7 @@ function fetchBlockEventData() {
  */
 function fetchClickEventData() {
     let selectedIds = selectedParticipants.map(function(item) {
-        return item[0];
+        return item.id;
     });
     $.ajax({
         type: "get",
@@ -169,7 +169,7 @@ function fetchClickEventData() {
  */
 function fetchResourceEventData() {
     let selectedIds = selectedParticipants.map(function(item) {
-        return item[0];
+        return item.id;
     });
     $.ajax({
         type: "get",
@@ -200,7 +200,7 @@ function fetchResourceEventData() {
  */
 function fetchRadarChartData() {
     let selectedIds = selectedParticipants.map(function(item) {
-        return item[0];
+        return item.id;
     });
 
     $.ajax({
@@ -360,7 +360,7 @@ function _addSelectedParticipants() {
     selectedParticipants.forEach(function (participant) {
         html += `
         <li class="list-group-item">
-            <span>${participant[1]}</span>
+            <span>${participant.username}</span>
             <i aria-hidden="true" class="fas fa-trash-alt"></i>
         </li>
         `
@@ -378,7 +378,7 @@ function _fillParticipantsDropdown() {
     participants.forEach(function (participant) {
         if (typeof selectedParticipants.find(_containsParticipant, participant) === "undefined") {
             html += `
-            <option class="text-dark">${participant[1]}</option>
+            <option class="text-dark">${participant.username}</option>
             `
         }
     });
@@ -424,7 +424,7 @@ function _addEventListeners() {
  * @private
  */
 function _addSelectedParticipant(participant) {
-    const index = participants.findIndex(item => item[1] === participant);
+    const index = participants.findIndex(item => item.username === participant);
     selectedParticipants.push(participants[index]);
     participants.splice(index, 1);
     _addSelectedParticipants();
@@ -446,7 +446,7 @@ function _addSelectedParticipant(participant) {
  */
 function _removeSelectedParticipant(participant) {
     if (selectedParticipants.length > 1) {
-        selectedParticipants = selectedParticipants.filter(item => item[1] !== participant);
+        selectedParticipants = selectedParticipants.filter(item => item.username !== participant);
         _addSelectedParticipants();
         _fillParticipantsDropdown();
         _addEventListeners();
@@ -577,5 +577,5 @@ function _drawChart(item, xValues, data, type, displayLegend) {
  * @private
  */
 function _containsParticipant(participant1) {
-    return participant1[0] === this[0] && participant1[1] === this[1];
+    return participant1.id === this.id && participant1.username === this.username;
 }

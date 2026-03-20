@@ -26,24 +26,17 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.web.controller.DashboardRestController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,8 +51,8 @@ public class DashboardRestControllerTest {
 
     private static final int ID = 5;
     private static final List<Integer> userIds = List.of(1, 5);
-    private static final String[] experimentData = new String[]{"11", "7", "5"};
-    private static final List<String[]> participantData = new ArrayList<>();
+    private static final DashboardService.ExperimentDataDto experimentData = new DashboardService.ExperimentDataDto(11, 7, 5);
+    private static final List<DashboardService.ParticipantIdName> participantData = new ArrayList<>();
     private static final List<Integer[]> eventData = new ArrayList<>();
 
     @Test

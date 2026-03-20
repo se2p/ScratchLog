@@ -20,10 +20,12 @@
 package de.uni_passau.fim.se2.scratchlog.web.error_handling;
 
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -72,6 +74,11 @@ public class ExceptionHandlingControllerAdvice {
     public ModelAndView handleConstraintViolationException(final ConstraintViolationException exception) {
         log.error("Constraint violation occurred!", exception);
         return redirectToErrorPage();
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Void> handleNotFoundException() {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     private ModelAndView redirectToErrorPage() {

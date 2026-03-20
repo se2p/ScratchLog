@@ -77,7 +77,7 @@ public class DashboardRestController {
      * @throws IllegalArgumentException if the passed id is invalid.
      */
     @GetMapping("")
-    public String[] getExperimentData(@RequestParam(ID) final int experimentId) {
+    public DashboardService.ExperimentDataDto getExperimentData(@RequestParam(ID) final int experimentId) {
         return dashboardService.getExperimentData(experimentId);
     }
 
@@ -89,7 +89,7 @@ public class DashboardRestController {
      * @throws IllegalArgumentException if the passed id is invalid.
      */
     @GetMapping("/participants")
-    public List<String[]> getParticipantData(@RequestParam(ID) final int experimentId) {
+    public List<DashboardService.ParticipantIdName> getParticipantData(@RequestParam(ID) final int experimentId) {
         return dashboardService.getParticipants(experimentId);
     }
 

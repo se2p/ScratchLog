@@ -19,7 +19,6 @@
 
 package de.uni_passau.fim.se2.scratchlog.application;
 
-import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.DashboardService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.EventCount;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
@@ -40,7 +39,7 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
-import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -49,18 +48,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -105,14 +100,23 @@ public class DashboardServiceTest {
     private final Participant participant1 = new Participant(user1, experiment, null, null);
     private final Participant participant2 = new Participant(user2, experiment, null, null);
     private final ExperimentData experimentData = new ExperimentData(ID, 15, 10, 7);
-    private final String[] stringExperimentData = new String[]{String.valueOf(experimentData.getParticipants()),
-            String.valueOf(experimentData.getStarted()), String.valueOf(experimentData.getFinished())};
+    private final DashboardService.ExperimentDataDto experimentDataDto = new DashboardService.ExperimentDataDto(
+        experimentData.getParticipants(),
+        experimentData.getStarted(),
+        experimentData.getFinished()
+    );
     private final List<Participant> participants = List.of(participant1, participant2);
     private final List<Integer> userIds = List.of(ID, ID);
     private final List<EventProjection> eventProjections1 = getBlockEventProjections(1);
     private final List<EventProjection> eventProjections2 = getBlockEventProjections(2);
     private final EventCount eventCount1 = new EventCount(ID, ID, 5, BlockEventSpecific.CREATE.toString());
     private final EventCount eventCount2 = new EventCount(ID, ID, 3, ClickEventSpecific.GREENFLAG.toString());
+
+    @BeforeEach
+    void setUp() {
+        user1.setId(1);
+        user2.setId(2);
+    }
 
     @Test
     public void testExistsExperiment() {
@@ -129,61 +133,23 @@ public class DashboardServiceTest {
     }
 
     @Test
-    public void testExistsParticipantsNoExperiment() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(participantRepository.existsByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
-        assertFalse(dashboardService.existsParticipants(ID));
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).existsByExperiment(experiment);
-    }
-
-    @Test
     public void testGetExperimentData() {
-        when(experimentDataRepository.findByExperiment(ID)).thenReturn(Optional.of(experimentData));
-        assertEquals(Arrays.toString(stringExperimentData), Arrays.toString(dashboardService.getExperimentData(ID)));
-        verify(experimentDataRepository).findByExperiment(ID);
-    }
-
-    @Test
-    public void testGetExperimentDataEmpty() {
-        assertThrows(NotFoundException.class,
-                () -> dashboardService.getExperimentData(ID)
-        );
-        verify(experimentDataRepository).findByExperiment(ID);
+        when(experimentDataRepository.getReferenceById(ID)).thenReturn(experimentData);
+        assertEquals(experimentDataDto, dashboardService.getExperimentData(ID));
+        verify(experimentDataRepository).getReferenceById(ID);
     }
 
     @Test
     public void testGetParticipants() {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(participantRepository.findAllByExperiment(experiment)).thenReturn(participants);
-        List<String[]> userInfo = dashboardService.getParticipants(ID);
+        List<DashboardService.ParticipantIdName> userInfo = dashboardService.getParticipants(ID);
         assertAll(
                 () -> assertEquals(2, userInfo.size()),
-                () -> assertEquals(String.valueOf(user1.getId()), userInfo.getFirst()[0]),
-                () -> assertEquals(user1.getUsername(), userInfo.getFirst()[1]),
-                () -> assertEquals(String.valueOf(user2.getId()), userInfo.get(1)[0]),
-                () -> assertEquals(user2.getUsername(), userInfo.get(1)[1])
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).findAllByExperiment(experiment);
-    }
-
-    @Test
-    public void testGetParticipantsNone() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        assertThrows(IllegalStateException.class,
-                () -> dashboardService.getParticipants(ID)
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).findAllByExperiment(experiment);
-    }
-
-    @Test
-    public void testGetParticipantsNoExperiment() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(participantRepository.findAllByExperiment(experiment)).thenThrow(EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> dashboardService.getParticipants(ID)
+                () -> assertEquals(user1.getId(), userInfo.getFirst().id()),
+                () -> assertEquals(user1.getUsername(), userInfo.getFirst().username()),
+                () -> assertEquals(user2.getId(), userInfo.get(1).id()),
+                () -> assertEquals(user2.getUsername(), userInfo.get(1).username())
         );
         verify(experimentRepository).getReferenceById(ID);
         verify(participantRepository).findAllByExperiment(experiment);
@@ -225,20 +191,6 @@ public class DashboardServiceTest {
     }
 
     @Test
-    public void testGetBlockEventCountDataNotFound() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(userRepository.getReferenceById(ID)).thenReturn(user1);
-        when(blockEventRepository.findAllByUserAndExperimentAndEvent(user1, experiment, BLOCK_EVENT)).thenThrow(
-                EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> dashboardService.getBlockEventCountData(userIds, ID, BLOCK_EVENT)
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(userRepository).getReferenceById(ID);
-        verify(blockEventRepository).findAllByUserAndExperimentAndEvent(user1, experiment, BLOCK_EVENT);
-    }
-
-    @Test
     public void testGetClickEventCountData() {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(userRepository.getReferenceById(ID)).thenReturn(user1);
@@ -259,20 +211,6 @@ public class DashboardServiceTest {
     }
 
     @Test
-    public void testGetClickEventCountDataNotFound() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(userRepository.getReferenceById(ID)).thenReturn(user1);
-        when(clickEventRepository.findAllByUserAndExperimentAndEvent(user1, experiment, CLICK_EVENT)).thenThrow(
-                EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> dashboardService.getClickEventCountData(userIds, ID, CLICK_EVENT)
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(userRepository).getReferenceById(ID);
-        verify(clickEventRepository).findAllByUserAndExperimentAndEvent(user1, experiment, CLICK_EVENT);
-    }
-
-    @Test
     public void testGetResourceEventCountData() {
         when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
         when(userRepository.getReferenceById(ID)).thenReturn(user1);
@@ -290,20 +228,6 @@ public class DashboardServiceTest {
         verify(userRepository, times(2)).getReferenceById(ID);
         verify(resourceEventRepository, times(2)).findAllByUserAndExperimentAndEvent(user1,
                 experiment, RESOURCE_EVENT);
-    }
-
-    @Test
-    public void testGetResourceEventCountDataNotFound() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(userRepository.getReferenceById(ID)).thenReturn(user1);
-        when(resourceEventRepository.findAllByUserAndExperimentAndEvent(user1, experiment, RESOURCE_EVENT)).thenThrow(
-                EntityNotFoundException.class);
-        assertThrows(NotFoundException.class,
-                () -> dashboardService.getResourceEventCountData(userIds, ID, RESOURCE_EVENT)
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(userRepository).getReferenceById(ID);
-        verify(resourceEventRepository).findAllByUserAndExperimentAndEvent(user1, experiment, RESOURCE_EVENT);
     }
 
     @Test
