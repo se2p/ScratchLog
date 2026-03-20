@@ -89,7 +89,7 @@ public class UserController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     /**
      * The field name of the CSV file input when adding users through CSV.
@@ -223,7 +223,7 @@ public class UserController {
                                    final HttpServletRequest httpServletRequest,
                                    final HttpServletResponse httpServletResponse) {
         if (secret == null || secret.trim().isBlank()) {
-            LOGGER.error("Cannot authenticate participant with id or secret null or blank!");
+            log.error("Cannot authenticate participant with id or secret null or blank!");
             return Constants.ERROR;
         }
 
@@ -235,7 +235,7 @@ public class UserController {
         }
 
         if (!userService.existsParticipant(authenticated.getId(), experimentId)) {
-            LOGGER.error(
+            log.error(
                 "No participation entry could be found for the user with username {} and experiment with id {}!",
                 authenticated.getUsername(),
                 experimentId
@@ -245,7 +245,7 @@ public class UserController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication == null || !authenticated.getUsername().equals(authentication.getName())) {
-                LOGGER.error("Cannot authenticate participant with different username!");
+                log.error("Cannot authenticate participant with different username!");
                 return Constants.ERROR;
             }
         }
@@ -293,14 +293,14 @@ public class UserController {
             UserDTO findUser = userService.getUser(userDTO.getUsername());
 
             if (!findUser.isActive()) {
-                LOGGER.debug("Tried to log in inactive user with username {}.", userDTO.getUsername());
+                log.debug("Tried to log in inactive user with username {}.", userDTO.getUsername());
                 model.addAttribute(ERROR, resourceBundle.getString("activate_first"));
                 return LOGIN;
             } else if (findUser.getAttempts() >= Constants.MAX_LOGIN_ATTEMPTS) {
                 findUser.setActive(false);
                 userService.updateUser(findUser);
                 tokenService.generateToken(TokenType.DEACTIVATED, "", findUser.getId());
-                LOGGER.info(
+                log.info(
                     "Deactivated account of user with username {}"
                     + "due to exceeding the maximum number of login attempts!",
                     userDTO.getUsername()
@@ -325,7 +325,7 @@ public class UserController {
                 return LOGIN;
             }
         } catch (NotFoundException e) {
-            LOGGER.error("Failed to log in user with username {}.", userDTO.getUsername(), e);
+            log.error("Failed to log in user with username {}.", userDTO.getUsername(), e);
             model.addAttribute(ERROR, resourceBundle.getString("authentication_error"));
             return LOGIN;
         }
@@ -344,12 +344,12 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
-            LOGGER.error("Can't logout an unauthenticated user!");
+            log.error("Can't logout an unauthenticated user!");
             return Constants.ERROR;
         }
 
         if (!userService.existsUser(authentication.getName())) {
-            LOGGER.error("Can't find user with username {} in the database!", authentication.getName());
+            log.error("Can't find user with username {} in the database!", authentication.getName());
             return Constants.ERROR;
         }
 
@@ -384,10 +384,10 @@ public class UserController {
     @Secured(Constants.ROLE_ADMIN)
     public String addUser(@ModelAttribute(USER_DTO) final UserDTO userDTO, final BindingResult bindingResult) {
         if (userDTO.getId() != null) {
-            LOGGER.error("Cannot add new user with id not null!");
+            log.error("Cannot add new user with id not null!");
             return Constants.ERROR;
         } else if (userDTO.getLanguage() == null || userDTO.getRole() == null || userDTO.getEmail() == null) {
-            LOGGER.error("Cannot add new user with language, role, or email null!");
+            log.error("Cannot add new user with language, role, or email null!");
             return Constants.ERROR;
         }
 
@@ -497,7 +497,7 @@ public class UserController {
         try {
             users = userService.parseUserListCsv(file);
         } catch (IOException e) {
-            LOGGER.error("Error parsing CSV file!", e);
+            log.error("Error parsing CSV file!", e);
             bindingResult.rejectValue(FIELD_CSV_ADD_FILE, "csv_error");
             return "users-csv";
         }
@@ -526,14 +526,14 @@ public class UserController {
     public String passwordReset(@ModelAttribute(USER_DTO) final UserDTO userDTO) {
         if (userDTO.getUsername() == null || userDTO.getEmail() == null || userDTO.getUsername().trim().isBlank()
                 || userDTO.getEmail().trim().isBlank()) {
-            LOGGER.error("Cannot reset password for user with username or email null or blank!");
+            log.error("Cannot reset password for user with username or email null or blank!");
             return Constants.ERROR;
         } else if (userDTO.getUsername().length() > Constants.SMALL_FIELD
                 || userDTO.getEmail().length() > Constants.LARGE_FIELD) {
-            LOGGER.error("Cannot reset password for user with input username or email too long!");
+            log.error("Cannot reset password for user with input username or email too long!");
             return Constants.ERROR;
         } else if (!applicationProperties.useMail()) {
-            LOGGER.warn("Cannot reset password without a mail server!");
+            log.warn("Cannot reset password without a mail server!");
             return Constants.ERROR;
         }
 
@@ -575,7 +575,7 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
-            LOGGER.error("Can't show the profile page for an unauthenticated user!");
+            log.error("Can't show the profile page for an unauthenticated user!");
             return Constants.ERROR;
         }
 
@@ -626,7 +626,7 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
-            LOGGER.error("Can't show the profile page for an unauthenticated user!");
+            log.error("Can't show the profile page for an unauthenticated user!");
             return Constants.ERROR;
         }
 
@@ -668,7 +668,7 @@ public class UserController {
                              final HttpServletRequest httpServletRequest,
                              final HttpServletResponse httpServletResponse) {
         if (userDTO.getEmail() == null) {
-            LOGGER.error("The new email should never be null, but only an empty string!");
+            log.error("The new email should never be null, but only an empty string!");
             return Constants.ERROR;
         }
 
@@ -684,13 +684,13 @@ public class UserController {
 
         if (!httpServletRequest.isUserInRole(Constants.ROLE_ADMIN)) {
             if (!findOldUser.equals(userDTO)) {
-                LOGGER.error(
+                log.error(
                     "Participant with id {} tried to edit the profile of user with id {}!",
                     userDTO.getId(), findOldUser.getId()
                 );
                 return Constants.ERROR;
             } else if (userDTO.getUsername() != null) {
-                LOGGER.error("Participant with id {} tried to change their username!", userDTO.getId());
+                log.error("Participant with id {} tried to change their username!", userDTO.getId());
                 return Constants.ERROR;
             }
         }
@@ -775,14 +775,14 @@ public class UserController {
     public String deleteUser(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
                              @RequestParam("id") final int userId, final HttpServletRequest httpServletRequest) {
         if (passwordDTO.getPassword() == null) {
-            LOGGER.error("Cannot delete user with id null or input password null!");
+            log.error("Cannot delete user with id null or input password null!");
             return Constants.ERROR;
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
-            LOGGER.error("User with authentication name null tried to delete user with id {}!", userId);
+            log.error("User with authentication name null tried to delete user with id {}!", userId);
             return Constants.ERROR;
         }
 
@@ -825,7 +825,7 @@ public class UserController {
             UserDTO userDTO = userService.getUserById(userId);
 
             if (userDTO.getRole().equals(Role.ADMIN) && userDTO.isActive()) {
-                LOGGER.error("Cannot deactivate an administrator profile!");
+                log.error("Cannot deactivate an administrator profile!");
                 return Constants.ERROR;
             }
 
@@ -884,7 +884,7 @@ public class UserController {
     public String passwordReset(@ModelAttribute(USER_DTO) final UserDTO userDTO, final BindingResult bindingResult,
                                 final HttpServletRequest httpServletRequest) {
         if (userDTO.getPassword() == null || userDTO.getNewPassword() == null || userDTO.getConfirmPassword() == null) {
-            LOGGER.error("The new passwords should never be null, but only empty strings!");
+            log.error("The new passwords should never be null, but only empty strings!");
             return Constants.ERROR;
         }
 
@@ -902,7 +902,7 @@ public class UserController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication.getName() == null) {
-                LOGGER.error(
+                log.error(
                     "Cannot reset the password for user {} with authentication with name null!", userDTO.getId()
                 );
                 return Constants.ERROR;
@@ -1052,7 +1052,7 @@ public class UserController {
     private boolean sendEmail(final String email, final String value, final String subject, final String template,
                               final ResourceBundle resourceBundle) {
         if (mailService.isEmpty()) {
-            LOGGER.debug("Cannot send emails when mailing is disabled!");
+            log.debug("Cannot send emails when mailing is disabled!");
             return false;
         }
         String tokenUrl = applicationProperties.getApplicationUrl() + "/token?value=" + value;

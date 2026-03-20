@@ -36,7 +36,7 @@ public class DeactivationHandler {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(DeactivationHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(DeactivationHandler.class);
 
     /**
      * The user service to use for user management.
@@ -77,7 +77,7 @@ public class DeactivationHandler {
      */
     @Scheduled(fixedRate = INTERVAL)
     public void deactivateInactiveEntities() {
-        LOGGER.info("Starting scheduled task to deactivate old participant accounts, experiments and courses.");
+        log.info("Starting scheduled task to deactivate old participant accounts, experiments and courses.");
         userService.deactivateOldParticipantAccounts();
         participantService.deactivateInactiveExperiments();
         courseService.deactivateInactiveCourses();

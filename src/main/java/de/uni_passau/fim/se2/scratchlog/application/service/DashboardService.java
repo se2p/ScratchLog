@@ -161,7 +161,8 @@ public class DashboardService {
         );
     }
 
-    public record ExperimentDataDto(int participants, int started, int finished) {}
+    public record ExperimentDataDto(int participants, int started, int finished) {
+    }
 
     /**
      * Retrieves the ids and usernames of all participants of the experiment with the given id.
@@ -182,7 +183,8 @@ public class DashboardService {
             .toList();
     }
 
-    public record ParticipantIdName(int id, String username) {}
+    public record ParticipantIdName(int id, String username) {
+    }
 
     /**
      * Retrieves information about the number of times the given block event was executed per minute during the

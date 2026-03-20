@@ -36,7 +36,7 @@ public class TokenCleaner {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenCleaner.class);
+    private static final Logger log = LoggerFactory.getLogger(TokenCleaner.class);
 
     /**
      * The token service to use for generating tokens.
@@ -62,7 +62,7 @@ public class TokenCleaner {
      */
     @Scheduled(fixedRate = CLEANER_INTERVAL)
     public void cleanOldTokens() {
-        LOGGER.info("Starting scheduled task to delete expired tokens.");
+        log.info("Starting scheduled task to delete expired tokens.");
         LocalDateTime time = LocalDateTime.now();
         tokenService.deleteExpiredAccounts(time);
         tokenService.reactivateUserAccounts(time);

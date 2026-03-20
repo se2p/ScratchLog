@@ -51,7 +51,7 @@ public class SecretController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(SecretController.class);
+    private static final Logger log = LoggerFactory.getLogger(SecretController.class);
 
     /**
      * The global application config.
@@ -110,7 +110,7 @@ public class SecretController {
                 UserDTO userDTO = userService.getUserById(userId);
 
                 if (userDTO.getSecret() == null) {
-                    LOGGER.error(
+                    log.error(
                         "Cannot display newly created secret for user {} as the user's secret is null!", userDTO.getId()
                     );
                     return Constants.ERROR;

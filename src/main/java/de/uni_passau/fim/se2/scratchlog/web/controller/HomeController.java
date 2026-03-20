@@ -55,7 +55,7 @@ import java.util.ResourceBundle;
 @Controller
 public class HomeController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HomeController.class);
+    private static final Logger log = LoggerFactory.getLogger(HomeController.class);
 
     private final ApplicationProperties applicationProperties;
 
@@ -108,7 +108,7 @@ public class HomeController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authentication == null || authentication.getName() == null) {
-                LOGGER.error("Can't show the experiment and course information for an unauthenticated user!");
+                log.error("Can't show the experiment and course information for an unauthenticated user!");
                 return Constants.ERROR;
             }
 
@@ -303,7 +303,7 @@ public class HomeController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getName() == null) {
-            LOGGER.error("Can't show the participant experiment page for an unauthenticated user!");
+            log.error("Can't show the participant experiment page for an unauthenticated user!");
             return null;
         }
 
@@ -324,7 +324,7 @@ public class HomeController {
      */
     private boolean isInvalidFinishParams(final int experimentId, final int userId, final String secret) {
         if (secret == null || secret.isBlank()) {
-            LOGGER.error("Cannot finish experiment with secret null or blank!");
+            log.error("Cannot finish experiment with secret null or blank!");
             return true;
         } else {
             return participantService.isInvalidParticipant(userId, experimentId, secret, false);

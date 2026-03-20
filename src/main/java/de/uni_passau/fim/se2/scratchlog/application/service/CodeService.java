@@ -52,7 +52,7 @@ public class CodeService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(CodeService.class);
+    private static final Logger log = LoggerFactory.getLogger(CodeService.class);
 
     /**
      * The block event repository to use for block event queries.
@@ -105,7 +105,7 @@ public class CodeService {
         Optional<BlockEvent> projection = blockEventRepository.findById(id);
 
         if (projection.isEmpty()) {
-            LOGGER.error("Could not find block event with id {}!", id);
+            log.error("Could not find block event with id {}!", id);
             throw new NotFoundException("Could not find block event with id " + id + "!");
         } else if (projection.get().getCode() == null) {
             throw new IllegalArgumentException("No json string could be found for the block event with id " + id + "!");
@@ -139,7 +139,7 @@ public class CodeService {
 
             return projection.getCode();
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not find user with id {} or experiment with id {} when trying to retrieve the last json file!",
                 userId, experimentId, e
             );
@@ -167,7 +167,7 @@ public class CodeService {
                     blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
 
             if (json.isEmpty()) {
-                LOGGER.error(
+                log.error(
                     "Could not find any json data for user with id {} for experiment with id {}!",
                     user, experimentId
                 );
@@ -177,7 +177,7 @@ public class CodeService {
 
             return json;
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not find user with id {} or experiment with id {} when trying to download the json files!",
                 userId, experimentId, e
             );
@@ -249,7 +249,7 @@ public class CodeService {
                 = blockEventRepository.findAllByXmlIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
 
             if (xml.isEmpty()) {
-                LOGGER.error(
+                log.error(
                     "Could not find any xml data for user with id {} for experiment with id {}!", user, experimentId
                 );
                 throw new NotFoundException("Could not find any xml data for user with id " + user + " for experiment "
@@ -258,7 +258,7 @@ public class CodeService {
 
             return xml;
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not find user with id {} or experiment with id {} when trying to download the xml files!",
                 userId, experimentId, e
             );
@@ -281,13 +281,13 @@ public class CodeService {
                                          final BlockEventJSONProjection projection,
                                          final User user, final Experiment experiment) {
         if (participant.isEmpty()) {
-            LOGGER.error(
+            log.error(
                 "No corresponding participant entry could be found for user with id {} and experiment with id {} "
                     + "when trying to load the last json code!", user.getId(), experiment.getId()
             );
             return false;
         } else if (projection == null) {
-            LOGGER.info(
+            log.info(
                 "No json code saved for user with id {} for experiment with id {}.", user.getId(), experiment.getId()
             );
             return false;

@@ -57,7 +57,7 @@ import java.util.Optional;
 @Service
 public class PageService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PageService.class);
+    private static final Logger log = LoggerFactory.getLogger(PageService.class);
 
     private final ExperimentRepository experimentRepository;
 
@@ -107,7 +107,7 @@ public class PageService {
         Page<ExperimentTableProjection> experiments = experimentRepository.findAllProjectedBy(pageable);
 
         if (experiments.isEmpty()) {
-            LOGGER.info(
+            log.info(
                 "Could not find any experiments for the page with page size {}, current page: {} and offset {}!",
                 pageable.getPageSize(), pageable.getPageNumber(), pageable.getOffset()
             );
@@ -129,7 +129,7 @@ public class PageService {
         Page<CourseTableProjection> courses = courseRepository.findAllProjectedBy(pageable);
 
         if (courses.isEmpty()) {
-            LOGGER.info(
+            log.info(
                 "Could not find any courses for the page with page size of {}, current page of {} and offset of {}!",
                 pageable.getPageSize(), pageable.getPageNumber(), pageable.getOffset()
             );
@@ -154,7 +154,7 @@ public class PageService {
                 course);
 
         if (experiments.isEmpty()) {
-            LOGGER.info(
+            log.info(
                 "Could not find any course experiments for the page with size {}, current page: {} and offset {}!",
                 pageable.getPageSize(), pageable.getPageNumber(), pageable.getOffset()
             );
@@ -207,7 +207,7 @@ public class PageService {
                 .withSort(Sort.by("user").descending());
             return participantRepository.findAllByExperiment(experiment, pageable);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id {} in the database!", id, e);
+            log.error("Could not find experiment with id {} in the database!", id, e);
             throw new NotFoundException("Could not find experiment with id " + id + " in the database!", e);
         }
     }
@@ -230,7 +230,7 @@ public class PageService {
                 .withSort(Sort.by("added").descending());
             return courseParticipantRepository.findAllByCourse(course, pageable);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find course with id {} in the database!", id, e);
+            log.error("Could not find course with id {} in the database!", id, e);
             throw new NotFoundException("Could not find course with id " + id + " in the database!", e);
         }
     }
@@ -254,7 +254,7 @@ public class PageService {
             return blockEventRepository.findAllByUserAndExperimentAndXmlIsNotNull(user, experiment,
                 PageRequest.of(page, Constants.PAGE_SIZE, Sort.by("date").ascending()));
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not find block event projections for user with id {} or experiment with id {}!",
                 userId, experimentId, e
             );

@@ -48,7 +48,7 @@ public class TokenService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenService.class);
+    private static final Logger log = LoggerFactory.getLogger(TokenService.class);
 
     /**
      * The user repository to use for database queries related to user data.
@@ -116,7 +116,7 @@ public class TokenService {
             token.setUser(user);
             token = tokenRepository.save(token);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find user with id {}!", tokenDTO.getUser(), e);
+            log.error("Could not find user with id {}!", tokenDTO.getUser(), e);
             throw new NotFoundException("Could not find user with id " + tokenDTO.getUser() + "!", e);
         }
 
@@ -139,7 +139,7 @@ public class TokenService {
         Optional<Token> token = tokenRepository.findByValue(value);
 
         if (token.isEmpty()) {
-            LOGGER.error("Could not find token with value {} in the database!", value);
+            log.error("Could not find token with value {} in the database!", value);
             throw new NotFoundException("Could not find token with value " + value + " in the database!");
         }
 
@@ -232,7 +232,7 @@ public class TokenService {
                 user.setActive(true);
                 userRepository.save(user);
             } catch (EntityNotFoundException e) {
-                LOGGER.error("Cannot reactivate user account for user with id {}!", user.getId(), e);
+                log.error("Cannot reactivate user account for user with id {}!", user.getId(), e);
                 throw new NotFoundException("Cannot reactivate user account for user with id " + user.getId() + "!", e);
             }
         }
@@ -258,7 +258,7 @@ public class TokenService {
 
             generateToken(TokenType.ADMIN_WITH_RANDOM_PASSWORD, "", userId);
         } else {
-            LOGGER.error("Could not find user with id {} in the database.", userId);
+            log.error("Could not find user with id {} in the database.", userId);
             throw new NotFoundException("Could not find user with id " + userId + " in the database.");
         }
     }
@@ -290,7 +290,7 @@ public class TokenService {
                 return !tokens.isEmpty();
             }
         } else {
-            LOGGER.error("Could not find user with id {} in the database.", userId);
+            log.error("Could not find user with id {} in the database.", userId);
             throw new NotFoundException("Could not find user with id " + userId + " in the database.");
         }
     }
@@ -314,7 +314,7 @@ public class TokenService {
             List<Token> tokens = tokenRepository.findAllByTypeAndUser(TokenType.ADMIN_WITH_RANDOM_PASSWORD, user);
             tokenRepository.deleteAllInBatch(tokens);
         } else {
-            LOGGER.error("Could not find user with id {} in the database.", userId);
+            log.error("Could not find user with id {} in the database.", userId);
             throw new NotFoundException("Could not find user with id " + userId + " in the database.");
         }
     }

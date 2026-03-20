@@ -42,7 +42,7 @@ public class ExperimentService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExperimentService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExperimentService.class);
 
     /**
      * The experiment repository to use for database queries related to experiment data.
@@ -192,7 +192,7 @@ public class ExperimentService {
             experiment.setProject(project);
             experimentRepository.save(experiment);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id {} when trying to upload an sb3 project!", id, e);
+            log.error("Could not find experiment with id {} when trying to upload an sb3 project!", id, e);
             throw new NotFoundException("Could not find experiment with id " + id + " when trying to upload an sb3 "
                     + "project!", e);
         }
@@ -212,7 +212,7 @@ public class ExperimentService {
             experiment.setProject(null);
             experimentRepository.save(experiment);
         } catch (EntityNotFoundException e) {
-            LOGGER.error("Could not find experiment with id {} when trying to delete an sb3 project!", id, e);
+            log.error("Could not find experiment with id {} when trying to delete an sb3 project!", id, e);
             throw new NotFoundException("Could not find experiment with id " + id + " when trying to delete an sb3 "
                     + "project!", e);
         }
@@ -232,11 +232,11 @@ public class ExperimentService {
         Optional<ExperimentProjection> projection = experimentRepository.findExperimentById(id);
 
         if (projection.isEmpty()) {
-            LOGGER.error("Could not find experiment with {} when trying to retrieve its sb3 file!", id);
+            log.error("Could not find experiment with {} when trying to retrieve its sb3 file!", id);
             throw new NotFoundException("Could not find experiment with " + id + " when trying to retrieve its sb3 "
                     + "file!");
         } else if (!projection.get().isActive() && !retrieveInactive) {
-            LOGGER.error("Tried to retrieve the sb3 file for inactive experiment {}!", id);
+            log.error("Tried to retrieve the sb3 file for inactive experiment {}!", id);
             throw new NotFoundException("Tried to retrieve the sb3 file for inactive experiment " + id + "!");
         }
 

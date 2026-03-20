@@ -65,7 +65,7 @@ public class ResultController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(ResultController.class);
+    private static final Logger log = LoggerFactory.getLogger(ResultController.class);
 
     /**
      * The user service to use for user management.
@@ -149,7 +149,7 @@ public class ResultController {
     public ModelAndView getResult(@RequestParam(EXPERIMENT) final int experimentId,
                                   @RequestParam(USER) final int userId, final Model model) {
         if (!userService.existsParticipant(userId, experimentId)) {
-            LOGGER.error(
+            log.error(
                 "Could not find participant entry for user with id {} for experiment with id {}", userId, experimentId
             );
             return new ModelAndView(Constants.ERROR);

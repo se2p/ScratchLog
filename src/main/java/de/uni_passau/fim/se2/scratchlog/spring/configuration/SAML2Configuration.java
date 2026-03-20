@@ -64,7 +64,7 @@ public class SAML2Configuration {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(SAML2Configuration.class);
+    private static final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
 
     /**
      * The SAML2 properties for communicating with the IdP and extracting the necessary user information from the SAML2
@@ -117,7 +117,7 @@ public class SAML2Configuration {
                     readPublicCert(config.getCertFile()));
             credentialsSink.add(credentials);
         } catch (IOException | CertificateException e) {
-            LOGGER.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -138,7 +138,7 @@ public class SAML2Configuration {
                     readPublicCert(config.getCertFile()));
             credentialsSink.add(credentials);
         } catch (IOException | CertificateException e) {
-            LOGGER.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -151,7 +151,7 @@ public class SAML2Configuration {
     private boolean filesNotExistent(final SAML2Properties config) {
         if (config.getCertFile() == null || config.getKeyFile() == null || config.getCertFile().isBlank()
                 || config.getKeyFile().isBlank()) {
-            LOGGER.debug("No Config for SAML2");
+            log.debug("No Config for SAML2");
             return true;
         }
 
@@ -159,7 +159,7 @@ public class SAML2Configuration {
         File certFile = new File(config.getCertFile());
 
         if (!keyFile.exists() || !certFile.exists()) {
-            LOGGER.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getIdpName());
+            log.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getIdpName());
             return true;
         }
 

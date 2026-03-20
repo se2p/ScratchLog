@@ -80,7 +80,7 @@ public class ExperimentController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExperimentController.class);
+    private static final Logger log = LoggerFactory.getLogger(ExperimentController.class);
 
     /**
      * The global application config.
@@ -217,7 +217,7 @@ public class ExperimentController {
                 UserDTO userDTO = userService.getUser(authentication.getName());
 
                 if (!userDTO.isActive()) {
-                    LOGGER.debug(
+                    log.debug(
                         "Cannot display experiment page for user with id {} since their account is inactive!",
                         userDTO.getId()
                     );
@@ -235,7 +235,7 @@ public class ExperimentController {
 
             return EXPERIMENT;
         } catch (NotFoundException e) {
-            LOGGER.error("Could not retrieve experiment page!", e);
+            log.error("Could not retrieve experiment page!", e);
             return Constants.ERROR;
         }
     }
@@ -337,13 +337,13 @@ public class ExperimentController {
     public String deleteExperiment(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
                                    @RequestParam(ID) final int experimentId) {
         if (passwordDTO.getPassword() == null) {
-            LOGGER.error("Cannot delete experiment with password null!");
+            log.error("Cannot delete experiment with password null!");
             return Constants.ERROR;
         }
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
-            LOGGER.error("An unauthenticated user tried to delete experiment with id {}!", experimentId);
+            log.error("An unauthenticated user tried to delete experiment with id {}!", experimentId);
             return Constants.ERROR;
         }
 
@@ -379,7 +379,7 @@ public class ExperimentController {
                                          @RequestParam(ID) final int experimentId,
                                          final Model model) {
         if (status == null) {
-            LOGGER.error("Cannot change the status of the experiment with invalid status parameters!");
+            log.error("Cannot change the status of the experiment with invalid status parameters!");
             return Constants.ERROR;
         }
 
@@ -409,7 +409,7 @@ public class ExperimentController {
                 experimentDTO = experimentService.changeExperimentStatus(false, experimentId);
                 participantService.deactivateParticipantAccounts(experimentId);
             } else {
-                LOGGER.debug("Cannot return the corresponding experiment page for requested status change {}!", status);
+                log.debug("Cannot return the corresponding experiment page for requested status change {}!", status);
                 return Constants.ERROR;
             }
 
@@ -562,7 +562,7 @@ public class ExperimentController {
     public String addParticipantsFromCSV(@RequestParam("file") final MultipartFile file,
                                          @RequestParam(ID) final int experimentId, final Model model) {
         if (file == null) {
-            LOGGER.error("Cannot add participants from CSV for experiment with file null!");
+            log.error("Cannot add participants from CSV for experiment with file null!");
             return Constants.ERROR;
         }
 
@@ -585,7 +585,7 @@ public class ExperimentController {
         } catch (IllegalArgumentException e) {
             model.addAttribute(ERROR, resourceBundle.getString(e.getMessage()));
         } catch (IOException e) {
-            LOGGER.error("Error parsing CSV file!", e);
+            log.error("Error parsing CSV file!", e);
             model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
         }
 
@@ -615,7 +615,7 @@ public class ExperimentController {
             csvWriter.writeAll(results);
             csvWriter.flush();
         } catch (IOException e) {
-            LOGGER.error("Could not download LitterBox analysis results due to IOException!", e);
+            log.error("Could not download LitterBox analysis results due to IOException!", e);
             throw new RuntimeException("Could not download LitterBox analysis results due to IOException!");
         }
     }
@@ -636,7 +636,7 @@ public class ExperimentController {
     public String uploadProjectFile(@RequestParam("file") final MultipartFile file,
                                     @RequestParam(ID) final int experimentId, final Model model) {
         if (file == null) {
-            LOGGER.error("Cannot upload file for experiment with file null!");
+            log.error("Cannot upload file for experiment with file null!");
             return Constants.ERROR;
         }
 
@@ -645,7 +645,7 @@ public class ExperimentController {
         String fileValidation = FiletypeValidator.validate(file, "application/octet-stream", Constants.SB3);
 
         if (fileValidation != null) {
-            LOGGER.error("Could not upload sb3 file due to invalid filetype or empty file!");
+            log.error("Could not upload sb3 file due to invalid filetype or empty file!");
             model.addAttribute(ERROR, resourceBundle.getString(fileValidation));
         }
 
@@ -661,7 +661,7 @@ public class ExperimentController {
         } catch (NotFoundException e) {
             return Constants.ERROR;
         } catch (IOException e) {
-            LOGGER.error("Could not upload file due to IOException", e);
+            log.error("Could not upload file due to IOException", e);
             return Constants.ERROR;
         }
     }
@@ -694,11 +694,11 @@ public class ExperimentController {
      */
     private boolean sendEmail(final UserDTO userDTO, final int experimentId) {
         if (mailService.isEmpty()) {
-            LOGGER.debug("Cannot send emails when mailing is disabled!");
+            log.debug("Cannot send emails when mailing is disabled!");
             return false;
         }
         if (userDTO.getEmail() == null) {
-            LOGGER.error("Cannot send invitation mail to user with email null!");
+            log.error("Cannot send invitation mail to user with email null!");
             return false;
         }
 
@@ -708,7 +708,7 @@ public class ExperimentController {
 
         if (!mailService.get().sendEmail(userDTO.getEmail(), userLanguage.getString("participant_email_subject"),
                 templateModel, "participant-email")) {
-            LOGGER.error("Could not send invitation mail to user with email {}.", userDTO.getEmail());
+            log.error("Could not send invitation mail to user with email {}.", userDTO.getEmail());
             return false;
         }
 
@@ -801,12 +801,12 @@ public class ExperimentController {
 
         if (experimentDTO.getId() == null) {
             if (experimentService.existsExperiment(experimentDTO.getTitle())) {
-                LOGGER.error("Experiment with same title exists!");
+                log.error("Experiment with same title exists!");
                 FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
             }
         } else {
             if (experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())) {
-                LOGGER.error("Experiment with same name but different id exists!");
+                log.error("Experiment with same name but different id exists!");
                 FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
             }
         }
@@ -826,7 +826,7 @@ public class ExperimentController {
             participantService.addAllCourseParticipantsToExperiment(experimentId, courseId);
             return false;
         } catch (Exception e) {
-            LOGGER.error("Could not save course experiment!", e);
+            log.error("Could not save course experiment!", e);
             experimentService.deleteExperiment(experimentId);
             return true;
         }

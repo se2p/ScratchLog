@@ -54,7 +54,7 @@ public class FileService {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileService.class);
+    private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
     /**
      * The file repository to use for database queries related to files.
@@ -114,7 +114,7 @@ public class FileService {
         try {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
             if (participant.isEmpty()) {
-                LOGGER.error(
+                log.error(
                     "No participant entry could be found for user {} and experiment {} when trying to save a file!",
                     user.getId(), experiment.getId()
                 );
@@ -124,12 +124,12 @@ public class FileService {
             File file = createFile(fileDTO, user, experiment);
             fileRepository.save(file);
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not find user with id {} or experiment with id {} when trying to save a file!",
                 fileDTO.getUser(), fileDTO.getExperiment(), e
             );
         } catch (ConstraintViolationException e) {
-            LOGGER.error(
+            log.error(
                 "Could not store file for user {} for experiment {} since the file violates file table constraints!",
                 fileDTO.getUser(), fileDTO.getExperiment(), e
             );
@@ -149,7 +149,7 @@ public class FileService {
         try {
             Optional<Participant> participant = participantRepository.findByUserAndExperiment(user, experiment);
             if (participant.isEmpty()) {
-                LOGGER.error(
+                log.error(
                     "No participant entry could be found for user {} and experiment {} when trying to save a SB3 file!",
                     user.getId(), experiment.getId()
                 );
@@ -159,12 +159,12 @@ public class FileService {
             Sb3Zip sb3Zip = createSb3Zip(sb3ZipDTO, user, experiment);
             sb3ZipRepository.save(sb3Zip);
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not find user with id {} or experiment with id {} when trying to save an sb3 zip file!",
                 sb3ZipDTO.getUser(), sb3ZipDTO.getExperiment(), e
             );
         } catch (ConstraintViolationException e) {
-            LOGGER.error(
+            log.error(
                 "Could not store the zip for user {} for experiment {} since the zip violates file table constraints!",
                 sb3ZipDTO.getUser(), sb3ZipDTO.getExperiment(), e
             );
@@ -188,7 +188,7 @@ public class FileService {
         try {
             return fileRepository.findFilesByUserAndExperiment(user, experiment);
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not retrieve the file names and ids since the user {} or experiment {} could not be found!",
                 userId, experimentId, e
             );
@@ -214,7 +214,7 @@ public class FileService {
             List<File> files = fileRepository.findAllByUserAndExperiment(user, experiment);
             return createFileDTOList(files);
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not retrieve the files since the user with id {} or experiment with id {} could not be found!",
                 userId, experimentId, e
             );
@@ -240,7 +240,7 @@ public class FileService {
         try {
             return sb3ZipRepository.findAllIdsByUserAndExperiment(user, experiment);
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not retrieve the zip file ids since the user {} or experiment {} could not be found!",
                 userId, experimentId, e
             );
@@ -261,7 +261,7 @@ public class FileService {
         Optional<File> file = fileRepository.findById(id);
 
         if (file.isEmpty()) {
-            LOGGER.error("Could not find file with id {}!", id);
+            log.error("Could not find file with id {}!", id);
             throw new NotFoundException("Could not find file with id " + id + "!");
         }
 
@@ -280,7 +280,7 @@ public class FileService {
         Optional<Sb3Zip> zip = sb3ZipRepository.findById(id);
 
         if (zip.isEmpty()) {
-            LOGGER.error("Could not find zip file with id {}!", id);
+            log.error("Could not find zip file with id {}!", id);
             throw new NotFoundException("Could not find zip file with id " + id + "!");
         }
 
@@ -306,7 +306,7 @@ public class FileService {
                     experiment);
 
             if (finalProject.isEmpty()) {
-                LOGGER.info(
+                log.info(
                     "Could not find final project file for user with id {} for experiment with id {}!",
                     userId, experimentId
                 );
@@ -315,7 +315,7 @@ public class FileService {
 
             return Optional.of(createSb3ZipDTO(finalProject.get()));
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Could not retrieve the final project file since the  user {} or experiment {} could not be found!",
                 userId, experimentId, e
             );
@@ -342,7 +342,7 @@ public class FileService {
             List<Sb3Zip> sb3Zips = sb3ZipRepository.findAllByUserAndExperiment(user, experiment);
 
             if (sb3Zips.isEmpty()) {
-                LOGGER.error(
+                log.error(
                     "Could not find any zip files for user with id {} for experiment with id {}!",
                     userId, experimentId
                 );
@@ -352,7 +352,7 @@ public class FileService {
 
             return createSb3ZipDTOList(sb3Zips);
         } catch (EntityNotFoundException e) {
-            LOGGER.error(
+            log.error(
                 "Cannot download zip files as no user with id {} or no experiment {} could be found in the database!",
                 userId, experimentId, e
             );

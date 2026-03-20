@@ -70,7 +70,7 @@ public class CourseController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(CourseController.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseController.class);
 
     /**
      * The course service to use for course management.
@@ -198,7 +198,7 @@ public class CourseController {
                 bindingResult, resourceBundle);
 
         if (existsCourseTitle(courseDTO.getId(), courseDTO.getTitle())) {
-            LOGGER.error("Cannot save the course as a course with the title {} already exists!", courseDTO.getTitle());
+            log.error("Cannot save the course as a course with the title {} already exists!", courseDTO.getTitle());
             FieldErrorHandler.addTitleExistsError(bindingResult, COURSE_DTO, resourceBundle);
         }
 
@@ -225,14 +225,14 @@ public class CourseController {
     public String deleteCourse(@ModelAttribute("passwordDTO") final PasswordDTO passwordDTO,
                                @RequestParam(ID) final int courseId) {
         if (passwordDTO.getPassword() == null) {
-            LOGGER.error("Cannot delete course with id null or input password null!");
+            log.error("Cannot delete course with id null or input password null!");
             return Constants.ERROR;
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication.getName() == null) {
-            LOGGER.error("An unauthenticated user tried to delete the course with id {}!", courseId);
+            log.error("An unauthenticated user tried to delete the course with id {}!", courseId);
             return Constants.ERROR;
         }
 
@@ -272,7 +272,7 @@ public class CourseController {
             } else if (status.equals("close")) {
                 courseDTO = courseService.changeCourseStatus(false, courseId);
             } else {
-                LOGGER.debug("Cannot return the corresponding course page for requested status change {}!", status);
+                log.debug("Cannot return the corresponding course page for requested status change {}!", status);
                 return Constants.ERROR;
             }
 
@@ -308,7 +308,7 @@ public class CourseController {
 
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
         if (courseDTO == null) {
-            LOGGER.error("Cannot add a new participant with an invalid course id parameter!");
+            log.error("Cannot add a new participant with an invalid course id parameter!");
             return Constants.ERROR;
         }
 
@@ -366,7 +366,7 @@ public class CourseController {
         } catch (IllegalArgumentException e) {
             model.addAttribute(ERROR, resourceBundle.getString(e.getMessage()));
         } catch (IOException e) {
-            LOGGER.error("Error parsing CSV file!", e);
+            log.error("Error parsing CSV file!", e);
             model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
         }
 
@@ -395,7 +395,7 @@ public class CourseController {
 
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
         if (courseDTO == null) {
-            LOGGER.error("Cannot delete a participant with an invalid course id parameter!");
+            log.error("Cannot delete a participant with an invalid course id parameter!");
             return Constants.ERROR;
         }
 
@@ -432,7 +432,7 @@ public class CourseController {
                                               @RequestParam(ID) final int courseId, final Model model) {
         CourseDTO courseDTO = getActiveCourseDTO(courseId);
         if (courseDTO == null) {
-            LOGGER.error("Cannot remove an experiment with an invalid course id parameter!");
+            log.error("Cannot remove an experiment with an invalid course id parameter!");
             return Constants.ERROR;
         }
 

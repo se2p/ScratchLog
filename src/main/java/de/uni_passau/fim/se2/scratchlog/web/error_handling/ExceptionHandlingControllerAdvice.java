@@ -76,6 +76,11 @@ public class ExceptionHandlingControllerAdvice {
         return redirectToErrorPage();
     }
 
+    /**
+     * Converts the exception into the {@code NOT_FOUND} HTTP code.
+     *
+     * @return A NOT_FOUND response.
+     */
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Void> handleNotFoundException() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

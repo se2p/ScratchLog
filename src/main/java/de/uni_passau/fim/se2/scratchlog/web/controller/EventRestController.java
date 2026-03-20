@@ -63,7 +63,7 @@ public class EventRestController {
     /**
      * The log instance associated with this class for logging purposes.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(EventRestController.class);
+    private static final Logger log = LoggerFactory.getLogger(EventRestController.class);
 
     /**
      * The event service to use to save the received event data.
@@ -249,7 +249,7 @@ public class EventRestController {
         } catch (NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
-            LOGGER.error("Could not retrieve sb3 file for experiment with id {} due to IOException!", experimentId, e);
+            log.error("Could not retrieve sb3 file for experiment with id {} due to IOException!", experimentId, e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
@@ -283,7 +283,7 @@ public class EventRestController {
         } catch (NotFoundException e) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } catch (IOException e) {
-            LOGGER.error("Could not retrieve the last saved json code for user with id {}"
+            log.error("Could not retrieve the last saved json code for user with id {}"
                     + " during experiment with id {} due to IOException!", data.user(), data.experiment(), e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
