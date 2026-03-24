@@ -65,6 +65,8 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
      * @param pageable The pageable to use.
      * @return A new course page.
      */
+    // todo: workaround hotfix, does not work without the query on our production DB
+    @Query("select c from Course c")
     Page<CourseTableProjection> findAllProjectedBy(Pageable pageable);
 
     /**

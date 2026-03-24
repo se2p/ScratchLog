@@ -92,6 +92,10 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
      * @param pageable The pageable to use.
      * @return A new experiment page.
      */
+    // todo: workaround hotfix, does not work without the query on our production DB
+    //  ConverterNotFoundException from Tuple to Long during internal generated
+    //  `select count(e.id) from experiment e` query
+    @Query("select e from Experiment e")
     Page<ExperimentTableProjection> findAllProjectedBy(Pageable pageable);
 
     /**

@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.3</version>
+        <version>4.0.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -25,7 +25,6 @@
         <checkstyle.version>13.3.0</checkstyle.version>
         <codec.version>1.21.0</codec.version>
         <commonmark.version>0.27.1</commonmark.version>
-        <databind.version>2.19.0</databind.version>
         <glassfish-jaxb.version>4.0.7</glassfish-jaxb.version>
         <h2.version>2.3.232</h2.version>
         <jacoco.version>0.8.14</jacoco.version>
