@@ -38,18 +38,12 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -68,7 +62,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -76,9 +69,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CourseController.class)
 public class CourseControllerIntegrationTest extends AbstractControllerTest {
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
 
     @MockitoBean
     private CourseService courseService;
@@ -119,8 +109,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
     private static final String USERNAME2 = "participant2";
     private static final List<String> USERNAMES = List.of(USERNAME, USERNAME2);
     private static final String PASSWORD = "password";
-    private static final String FILETYPE_CSV = "text/csv";
-    private static final String FILENAME_CSV = "participants.csv";
     private static final LocalDateTime CHANGED = LocalDateTime.now();
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
     private final CourseDTO courseDTO = new CourseDTO(ID, TITLE, DESCRIPTION, CONTENT, true, CHANGED);
@@ -431,7 +419,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
         verify(courseService).existsInactiveExperiment(ID);
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
     }
 
     @Test
@@ -448,7 +435,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
     }
 
     @Test
@@ -464,7 +450,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
     }
 
     @Test
@@ -617,87 +602,6 @@ public class CourseControllerIntegrationTest extends AbstractControllerTest {
                 .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE - 1)))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT_TABLE));
-    }
-
-    @Test
-    public void testAddCSVParticipants() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", FILENAME_CSV, FILETYPE_CSV,
-            new ClassPathResource(FILENAME_CSV).getInputStream());
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        mockMvc.perform(multipart("/course/participant/add-csv")
-                .file(file)
-                .param(ID_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-            .andExpect(status().isOk())
-            .andExpect(view().name(COURSE))
-            .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-            .andExpect(model().attribute("experiments", is(experiments)))
-            .andExpect(model().attribute("experimentPage", is(0)))
-            .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE - 1)));
-    }
-
-    @Test
-    public void testAddCSVParticipantsAdmin() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", FILENAME_CSV, FILETYPE_CSV,
-            new ClassPathResource(FILENAME_CSV).getInputStream());
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.getInvalidParticipantUsernames(any())).thenReturn(List.of("admin"));
-        mockMvc.perform(multipart("/course/participant/add-csv")
-                .file(file)
-                .param(ID_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-            .andExpect(status().isOk())
-            .andExpect(view().name(COURSE))
-            .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-            .andExpect(model().attribute("experiments", is(experiments)))
-            .andExpect(model().attribute("experimentPage", is(0)))
-            .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE - 1)))
-            .andExpect(model().attribute(ERROR, notNullValue()));
-    }
-
-    @Test
-    public void testAddCSVParticipantsInvalidFile() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", FILENAME_CSV, "text/plain",
-            new ClassPathResource(FILENAME_CSV).getInputStream());
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        when(pageService.getLastCourseExperimentPage(ID)).thenReturn(LAST_PAGE);
-        when(pageService.getCourseExperimentPage(anyInt(), anyInt())).thenReturn(experiments);
-        when(courseService.getCourse(ID)).thenReturn(courseDTO);
-        when(userService.parseUserListCsv(file)).thenThrow(new IllegalArgumentException("file_type"));
-        mockMvc.perform(multipart("/course/participant/add-csv")
-                .file(file)
-                .param(ID_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-            .andExpect(status().isOk())
-            .andExpect(view().name(COURSE))
-            .andExpect(model().attribute(COURSE_DTO, is(courseDTO)))
-            .andExpect(model().attribute("experiments", is(experiments)))
-            .andExpect(model().attribute("experimentPage", is(0)))
-            .andExpect(model().attribute("lastExperimentPage", is(LAST_PAGE - 1)))
-            .andExpect(model().attribute(ERROR, notNullValue()));
-    }
-
-    @Test
-    public void testAddCSVParticipantsInvalidId() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", FILENAME_CSV, FILETYPE_CSV,
-            new ClassPathResource(FILENAME_CSV).getInputStream());
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/course/participant/add-csv")
-                .file(file)
-                .param(ID_PARAM, ID_PARAM)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-            .andExpect(status().is4xxClientError())
-            .andExpect(view().name(Constants.ERROR));
     }
 
     private List<CourseExperimentProjection> getCourseExperiments(int number) {

@@ -623,33 +623,4 @@ public class UserServiceTest {
         verify(userRepository).findFirstByOrderByIdDesc();
     }
 
-    @Test
-    public void testGetInvalidParticipantUsernamesAllValid() {
-        // Doing `when(userService.existsUser(anyString()).thenReturn(true)` throws an error here.
-        for (UserDTO userDTO : userDTOs) {
-            when(userService.existsUser(userDTO.getUsername())).thenReturn(true);
-        }
-        assertEquals(List.of(), userService.getInvalidParticipantUsernames(userDTOs));
-    }
-
-    @Test
-    public void testGetInvalidParticipantUsernamesAdmin() {
-        when(userService.isAdmin(userDTO1.getUsername())).thenReturn(true);
-        // Doing `when(userService.existsUser(anyString()).thenReturn(true)` throws an error here.
-        for (UserDTO userDTO : userDTOs) {
-            when(userService.existsUser(userDTO.getUsername())).thenReturn(true);
-        }
-        assertEquals(List.of(userDTO1.getUsername()), userService.getInvalidParticipantUsernames(userDTOs));
-    }
-
-    @Test
-    public void testGetInvalidParticipantUsernamesUsersDontExist() {
-        // Doing `when(userService.existsUser(anyString()).thenReturn(false)` throws an error here.
-        for (UserDTO userDTO : userDTOs) {
-            when(userService.existsUser(userDTO.getUsername())).thenReturn(false);
-        }
-        assertEquals(userDTOs.stream().map(UserDTO::getUsername).toList(),
-            userService.getInvalidParticipantUsernames(userDTOs));
-   }
-
 }

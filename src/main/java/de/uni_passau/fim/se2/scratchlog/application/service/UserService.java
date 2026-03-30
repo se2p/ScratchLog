@@ -596,16 +596,11 @@ public class UserService {
      * @param users The list of users to filter for invalid usernames.
      * @return The list of invalid usernames according to the above criteria.
      */
-    public List<String> getInvalidParticipantUsernames(final List<UserDTO> users) {
-        List<String> invalidUsernames = new ArrayList<>();
-
-        users.forEach(userDTO -> {
-            if (!existsUser(userDTO.getUsername()) || isAdmin(userDTO.getUsername())) {
-                invalidUsernames.add(userDTO.getUsername());
-            }
-        });
-
-        return invalidUsernames;
+    public List<String> getInvalidParticipantUsernames(@NotNull final List<UserDTO> users) {
+        return users.stream()
+            .map(UserDTO::getUsername)
+            .filter(username -> !existsUser(username) || isAdmin(username))
+            .toList();
     }
 
     /**

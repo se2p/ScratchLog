@@ -154,6 +154,28 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
     }
 
     @Test
+    public void testGetInvalidParticipantUsernamesAllValid() {
+        userService.saveUsers(List.of(user1DTO, user2DTO));
+        List<String> invalid = userService.getInvalidParticipantUsernames(List.of(user1DTO, user2DTO));
+        assertThat(invalid).isEmpty();
+    }
+
+    @Test
+    public void testGetInvalidParticipantUsernamesAdmin() {
+        user1DTO.setRole(Role.ADMIN);
+        userService.saveUsers(List.of(user1DTO, user2DTO));
+        List<String> invalid = userService.getInvalidParticipantUsernames(List.of(user1DTO, user2DTO));
+        assertThat(invalid).containsExactlyInAnyOrder(user1DTO.getUsername());
+    }
+
+    @Test
+    public void testGetInvalidParticipantUsernamesUsersDontExist() {
+        userService.saveUsers(List.of(user1DTO));
+        List<String> invalid = userService.getInvalidParticipantUsernames(List.of(user1DTO, user2DTO));
+        assertThat(invalid).containsExactlyInAnyOrder(user2DTO.getUsername());
+    }
+
+    @Test
     public void testCompleteUserInformation() {
         UserDTO userDTO = UserDTO.builder().username("test").build();
         userService.completeUserInformation(userDTO);

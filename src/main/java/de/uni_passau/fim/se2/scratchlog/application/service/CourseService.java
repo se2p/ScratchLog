@@ -324,11 +324,7 @@ public class CourseService {
      * @param courseId The id of the course.
      * @param participants The list of users to be added as participants.
      * @param addToExperiments Whether to add the users to all experiments associated with the course.
-     * @throws IllegalArgumentException if the passed course id is invalid or the user list empty.
-     * @throws NotFoundException if one of the provided users or the course could not be found.
-     * @throws IllegalStateException if one of the provided users is an administrator.
-     * @throws jakarta.validation.ConstraintViolationException if saving a course participant violated the foreign key
-     *                                                         constraints.
+     * @throws IllegalArgumentException if one of the users does not have the participant role.
      */
     @Transactional
     public void saveCourseParticipants(final int courseId, final List<UserDTO> participants,
@@ -480,37 +476,6 @@ public class CourseService {
     }
 
     /**
-     * Adds the course participant with the given id as a participant to all experiments offered as part of that course.
-     *
-     * @param courseId The id of the course.
-     * @param userId The id of the user.
-     * @throws IllegalArgumentException if the passed course or user ids are invalid.
-     * @throws EntityNotFoundException if no corresponding course or user entry could be found.
-     * @throws jakarta.validation.ConstraintViolationException if saving any experiment participation violated a foreign
-     *                                                         key constraint.
-     */
-    @Transactional
-    public void addParticipantToCourseExperiments(final int courseId, final int userId) {
-        Course course = courseRepository.getReferenceById(courseId);
-        User user = userRepository.getReferenceById(userId);
-
-        try {
-            List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
-            courseExperiments.forEach(courseExperiment -> addExperimentParticipant(user,
-                    courseExperiment.getExperiment()));
-
-            if (!courseExperiments.isEmpty() && user.getSecret() == null) {
-                user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
-                userRepository.save(user);
-            }
-        } catch (EntityNotFoundException e) {
-            log.error("Could not find the course or user when adding course participants to course experiments!", e);
-            throw new NotFoundException("Could not find the course or user when adding course participants to course "
-                    + "experiments!", e);
-        }
-    }
-
-    /**
      * Returns a {@link CourseDTO} containing the information about the course with the specified id.
      *
      * @param id The id to search for.
@@ -604,22 +569,24 @@ public class CourseService {
     }
 
     /**
-     * Adds the given user as a participant to the given experiment.
+     * Adds the course participant with the given id as a participant to all experiments offered as part of that course.
      *
-     * @param user The {@link User} to be added as a participant.
-     * @param experiment The {@link Experiment} in which the user should participate.
-     * @throws IllegalStateException if the user is already participating in the experiment.
+     * @param courseId The id of the course.
+     * @param userId The id of the user.
      */
-    private void addExperimentParticipant(final User user, final Experiment experiment) {
-        if (participantRepository.existsByUserAndExperiment(user, experiment)) {
-            throw new IllegalStateException("A participant entry for the user with id " + user.getId()
-                    + " and experiment with id " + experiment.getId() + " already exists!");
-        } else if (!experiment.isActive()) {
-            throw new IllegalStateException("Cannot add a participant to an inactive experiment!");
+    private void addParticipantToCourseExperiments(final int courseId, final int userId) {
+        Course course = courseRepository.getReferenceById(courseId);
+        User user = userRepository.getReferenceById(userId);
+
+        List<CourseExperiment> courseExperiments = courseExperimentRepository.findAllByCourse(course);
+        for (CourseExperiment courseExperiment : courseExperiments) {
+            participantRepository.save(new Participant(user, courseExperiment.getExperiment(), null, null));
         }
 
-        Participant participant = new Participant(user, experiment, null, null);
-        participantRepository.save(participant);
+        if (!courseExperiments.isEmpty() && user.getSecret() == null) {
+            user.setSecret(Secrets.generateRandomBytes(Constants.SECRET_LENGTH));
+            userRepository.save(user);
+        }
     }
 
     /**
@@ -687,38 +654,23 @@ public class CourseService {
      * @param course The course to which the participant should be added.
      * @param participant The username or email of the participant.
      * @return The id of the user.
-     * @throws NotFoundException if no corresponding user or course could be found.
-     * @throws IllegalStateException if the user to be added is an administrator.
-     * @throws jakarta.validation.ConstraintViolationException if saving the course participant violated the foreign key
-     *                                                         constraints.
+     * @throws IllegalArgumentException if the user to be added is an administrator.
      */
     private int addCourseParticipant(final Course course, final String participant) {
-        Optional<User> optionalUser = userRepository.findUserByUsernameOrEmail(participant, participant);
+        User user = userRepository.findUserByUsernameOrEmail(participant, participant)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "Could not find the user with username/email " + participant));
 
-        try {
-            if (!course.isActive()) {
-                throw new IllegalStateException("Cannot add participant to an inactive course!");
-            } else if (optionalUser.isEmpty()) {
-                log.error(
-                    "Could not find the user with username or email {} when trying to add a course participant!",
-                    participant
-                );
-                throw new NotFoundException("Could not find the user with username or email " + participant
-                        + " when trying to add a course participant!");
-            } else if (!optionalUser.get().getRole().equals(Role.PARTICIPANT)) {
-                throw new IllegalStateException("Tried to add administrator with username or email " + participant
-                        + " as a course participant!");
-            }
-
-            if (!courseParticipantRepository.existsByCourseAndUser(course, optionalUser.get())) {
-                persistCourseParticipant(course, optionalUser.get());
-            }
-
-            return optionalUser.get().getId();
-        } catch (EntityNotFoundException e) {
-            log.error("Could not find the course when saving the course participant data!", e);
-            throw new NotFoundException("Could not find the course when saving the course participant data!", e);
+        if (Role.ADMIN.equals(user.getRole())) {
+            throw new IllegalArgumentException("Tried to add administrator with username or email " + participant
+                    + " as a course participant!");
         }
+
+        if (!courseParticipantRepository.existsByCourseAndUser(course, user)) {
+            persistCourseParticipant(course, user);
+        }
+
+        return user.getId();
     }
 
     /**

@@ -32,9 +32,11 @@ import de.uni_passau.fim.se2.scratchlog.util.MarkdownHandler;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
 import de.uni_passau.fim.se2.scratchlog.web.dto.CourseDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.CsvFileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -339,39 +341,44 @@ public class CourseController {
     /**
      * Add existing participants that are listed in the given CSV file to a course.
      *
-     * @param file The CSV file containing the usernames of the participants to add.
+     * @param fileDTO The CSV file containing the usernames of the participants to add.
+     * @param bindingResult The binding result for validation of the file DTO.
+     * @param addToExperiments Whether to add the participants to all experiments of this course.
      * @param courseId The id of the course to add the participants to.
-     * @param model The model used to display error messages.
+     * @param model The model containing the data required to render the page.
      * @return Redirection to the course page.
      */
     @PostMapping("/participant/add-csv")
     @Secured(Constants.ROLE_ADMIN)
-    public String addParticipantsFromCSV(@RequestParam("file") final MultipartFile file,
-                                         @RequestParam(ID) final int courseId, final Model model) {
-        if (file == null) {
-            return Constants.ERROR;
+    public String addParticipantsFromCSV(
+        @Valid @ModelAttribute("fileDTO") final CsvFileDTO fileDTO, final BindingResult bindingResult,
+        @RequestParam(required = false, name = "addToExperiments") final boolean addToExperiments,
+        @RequestParam(ID) final int courseId, final Model model) {
+        addModelInfo(model, courseService.getCourse(courseId), true);
+
+        if (bindingResult.hasErrors()) {
+            return "course";
         }
 
-        CourseDTO courseDto = courseService.getCourse(courseId);
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages", LocaleContextHolder.getLocale());
+        MultipartFile file = fileDTO.getFile();
+        List<UserDTO> users;
 
         try {
-            List<UserDTO> users = userService.parseUserListCsv(file);
-            List<String> invalidUsernames = userService.getInvalidParticipantUsernames(users);
-            if (invalidUsernames.isEmpty()) {
-                courseService.saveCourseParticipants(courseId, users, false);
-            } else {
-                model.addAttribute(ERROR, resourceBundle.getString("invalid_usernames") + " " + invalidUsernames);
-            }
-        } catch (IllegalArgumentException e) {
-            model.addAttribute(ERROR, resourceBundle.getString(e.getMessage()));
+            users = userService.parseUserListCsv(file);
         } catch (IOException e) {
             log.error("Error parsing CSV file!", e);
-            model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
+            bindingResult.rejectValue("file", "csv_error");
+            return "course";
         }
 
-        addModelInfo(model, courseDto, true);
-        return "course";
+        List<String> invalidUsernames = userService.getInvalidParticipantUsernames(users);
+        if (invalidUsernames.isEmpty()) {
+            courseService.saveCourseParticipants(courseId, users, addToExperiments);
+            return "redirect:/course?id=" + courseId;
+        } else {
+            bindingResult.rejectValue("file", "invalid_usernames", new Object[]{invalidUsernames}, null);
+            return "course";
+        }
     }
 
     /**
@@ -639,6 +646,9 @@ public class CourseController {
         model.addAttribute("experimentPage", 0);
         model.addAttribute("lastExperimentPage", lastExperimentPage - 1);
         model.addAttribute("passwordDTO", new PasswordDTO());
+        if (!model.containsAttribute("fileDTO")) {
+            model.addAttribute("fileDTO", new CsvFileDTO());
+        }
         addParticipantInfo(model, courseDTO.getId(), addParticipants);
     }
 
