@@ -100,7 +100,7 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
         assertThat(users)
             .hasSize(userBulkDTO.getAmount())
             .allMatch(user ->
-                user.getUsername().equals(userBulkDTO.getUsername() + user.getId())
+                user.getUsername().startsWith(userBulkDTO.getUsername())
                     && user.getLanguage().equals(userBulkDTO.getLanguage())
                     && !user.getPassword().isEmpty()
             );

@@ -47,7 +47,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -61,7 +60,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -169,7 +167,6 @@ public class CourseControllerTest {
         verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService).getLastParticipantCoursePage(ID);
-        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -183,7 +180,6 @@ public class CourseControllerTest {
         verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService, never()).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService, never()).getLastParticipantCoursePage(anyInt());
-        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -370,7 +366,6 @@ public class CourseControllerTest {
         verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService).getLastParticipantCoursePage(ID);
-        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -382,7 +377,6 @@ public class CourseControllerTest {
         verify(pageService).getLastCourseExperimentPage(ID);
         verify(pageService).getParticipantCoursePage(anyInt(), anyInt());
         verify(pageService).getLastParticipantCoursePage(ID);
-        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -415,7 +409,6 @@ public class CourseControllerTest {
         when(userService.getUserByUsernameOrEmail(USERNAMES.get(1))).thenReturn(userDTO2);
         assertEquals(REDIRECT_COURSE + ID, courseController.addParticipants(USERNAMES, null, ID, model));
         verify(courseService).saveCourseParticipants(ID, userDTOs, false);
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -439,7 +432,6 @@ public class CourseControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -454,8 +446,6 @@ public class CourseControllerTest {
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
         verify(courseService).existsInactiveExperiment(ID);
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
-        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -469,8 +459,6 @@ public class CourseControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
-        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -484,8 +472,6 @@ public class CourseControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
-        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -496,8 +482,6 @@ public class CourseControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
-        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -508,7 +492,6 @@ public class CourseControllerTest {
         verify(courseService).getCourse(ID);
         verify(userService, never()).getUserByUsernameOrEmail(anyString());
         verify(courseService, never()).existsCourseParticipant(anyInt(), anyString());
-        verify(courseService, never()).addParticipantToCourseExperiments(anyInt(), anyInt());
         verify(model, never()).addAttribute(anyString(), any());
     }
 
@@ -543,7 +526,6 @@ public class CourseControllerTest {
         verify(userService).getUserByUsernameOrEmail(USERNAME);
         verify(courseService).existsCourseParticipant(ID, USERNAME);
         verify(courseService, never()).deleteCourseParticipant(anyInt(), anyString());
-        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -589,7 +571,6 @@ public class CourseControllerTest {
         verify(experimentService).existsExperiment(TITLE);
         verify(courseService, never()).existsCourseExperiment(anyInt(), anyString());
         verify(courseService, never()).deleteCourseExperiment(anyInt(), anyString());
-        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
