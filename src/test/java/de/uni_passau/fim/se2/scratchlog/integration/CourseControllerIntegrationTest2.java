@@ -14,6 +14,7 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,6 +119,18 @@ public class CourseControllerIntegrationTest2 extends AbstractScratchLogControll
             .andExpect(status().isOk())
             .andExpect(view().name(VIEW_COURSE))
             .andExpect(model().attributeHasFieldErrorCode(ATTR_FILE_DTO, ATTR_FILE, "invalid_usernames"));
+    }
+
+    @Test
+    public void testAddParticipantsFromCSVInvalidCsv() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(ATTR_FILE, "invalid.csv", "text/csv",
+            new ClassPathResource("invalid.csv").getInputStream());
+        mvc.perform(multipart("/course/participant/add-csv")
+                .file(file)
+                .param(PARAM_ID, courseIdString))
+            .andExpect(status().isOk())
+            .andExpect(view().name(VIEW_COURSE))
+            .andExpect(model().attributeHasFieldErrorCode(ATTR_FILE_DTO, ATTR_FILE, "csv_format_error"));
     }
 
     @Test

@@ -280,6 +280,11 @@ public class UserControllerIntegrationTest2 extends AbstractScratchLogController
     }
 
     @Test
+    public void testAddUsersViaCSVInvalidFormat() throws Exception {
+        assertAddUsersViaCSVError(getCSVFile("invalid.csv"), "csv_format_error");
+    }
+
+    @Test
     public void testAddCSVParticipantsIOException() throws Exception {
         MockMultipartFile file = new MockMultipartFile(ATTR_FILE, USERS_CSV_FILENAME, USERS_CSV_FILETYPE,
             new ClassPathResource(USERS_CSV_FILENAME).getInputStream());
