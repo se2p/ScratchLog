@@ -19,6 +19,7 @@
 
 package de.uni_passau.fim.se2.scratchlog.web.controller;
 
+import com.opencsv.exceptions.CsvException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CourseService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentService;
@@ -365,6 +366,9 @@ public class CourseController {
 
         try {
             users = userService.parseUserListCsv(file);
+        } catch (CsvException e) {
+            bindingResult.rejectValue("file", "csv_format_error");
+            return "course";
         } catch (IOException e) {
             log.error("Error parsing CSV file!", e);
             bindingResult.rejectValue("file", "csv_error");

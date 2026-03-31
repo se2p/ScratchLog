@@ -20,6 +20,7 @@
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
 import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.exceptions.CsvException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
@@ -580,12 +581,20 @@ public class UserService {
      * @param file The CSV file to parse user information from.
      * @return A list of user DTO objects with the information provided in the CSV file.
      * @throws IOException If the CSV file could not be read.
+     * @throws CsvException If the CSV file could not be parsed, e.g. if it misses the required username column.
      */
     public List<UserDTO> parseUserListCsv(
         @NotNull @ValidFile(contentTypes = "text/csv", fileEndings = {"csv"}) final MultipartFile file)
-        throws IOException {
+        throws IOException, CsvException {
         try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             return new CsvToBeanBuilder<UserDTO>(reader).withType(UserDTO.class).build().parse();
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof CsvException cause) {
+                throw cause;
+            } else {
+                log.error("CSV parsing failed: {}", e.getMessage());
+                throw e;
+            }
         }
     }
 

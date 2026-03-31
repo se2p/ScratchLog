@@ -136,7 +136,7 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
     }
 
     @Test
-    public void testParseUserListCsv() throws IOException {
+    public void testParseUserListCsv() throws Exception {
         MultipartFile file = new MockMultipartFile("users.csv", "users.csv", "text/csv",
             new ClassPathResource("users.csv").getInputStream());
         List<UserDTO> userDTOs = List.of(

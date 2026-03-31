@@ -20,6 +20,7 @@
 package de.uni_passau.fim.se2.scratchlog.web.controller;
 
 import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvException;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.application.service.CourseService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataService;
@@ -587,6 +588,8 @@ public class ExperimentController {
         } catch (IOException e) {
             log.error("Error parsing CSV file!", e);
             model.addAttribute(ERROR, resourceBundle.getString("csv_error"));
+        } catch (CsvException e) {
+            model.addAttribute(ERROR, resourceBundle.getString("csv_format_error"));
         }
 
         addModelInfo(0, experimentDTO, model);
