@@ -55,7 +55,7 @@ public enum ClickEventSpecific {
     GENERATE_NEW_HINT,
 
     /**
-     * The user clicked on a block.
+     * The user clicked on a non-test block.
      */
     STACKCLICK,
 
@@ -97,6 +97,46 @@ public enum ClickEventSpecific {
     /**
      * The user closed the debugger.
      */
-    CLOSE_DEBUGGER
+    CLOSE_DEBUGGER,
+
+    /**
+     * The user clicked on the run button of an individual test.
+     */
+    BBT_RUN_INDIVIDUAL,
+
+    /**
+     * The user clicked on the button to run the entire test suite.
+     */
+    BBT_RUN_ALL,
+
+    /**
+     * The user clicked the trash icon to clear any test results from the BBT interface.
+     */
+    BBT_CLEAR_RESULTS,
+
+    /**
+     * The user clicked the icon to toggle the batch tests window.
+     */
+    BBT_TOGGLE_BATCH_WINDOW,
+
+    /**
+     * The user clicked the icon to execute the batch tests on a single project.
+     */
+    BBT_RUN_BATCH_ON_FILE,
+
+    /**
+     * The user clicked the icon to execute the batch tests on all projects.
+     */
+    BBT_RUN_BATCH_ON_SUITE,
+
+    /**
+     * The user uploaded Whisker tests.
+     */
+    BBT_UPLOAD_WHISKER_TESTS,
+
+    /**
+     * The user clicked on a block describing a test.
+     */
+    BBT_STACKCLICK,
 
 }
