@@ -1,0 +1,33 @@
+<settings
+    xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd"
+>
+  <servers>
+    <server>
+      <id>gitlab-maven</id>
+      <configuration>
+        <httpHeaders>
+          <property>
+            <name>Job-Token</name>
+            <value>${CI_JOB_TOKEN}</value>
+          </property>
+        </httpHeaders>
+      </configuration>
+    </server>
+  </servers>
+  <mirrors>
+    <mirror>
+      <id>gitlab-maven</id>
+      <name>GitLab proxy of central repo</name>
+      <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/virtual_registries/packages/maven/1</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+    <mirror>
+      <id>gitlab-maven</id>
+      <name>GitLab proxy of central repo</name>
+      <url>https://gitlab.infosun.fim.uni-passau.de/api/v4/virtual_registries/packages/maven/1</url>
+      <mirrorOf>shibboleth_repository</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>
