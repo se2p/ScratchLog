@@ -1,0 +1,56 @@
+[project]
+name = "embedding-connector"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Benedikt Fein", email = "fein@fim.uni-passau.de" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.136.0",
+    "pydantic>=2.13.2",
+    "uvicorn>=0.44.0",
+    "ggnn>=0.1.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.20.1",
+    "ruff>=0.15.11",
+]
+
+
+[tool.uv.extra-build-dependencies]
+torch-scatter = ["torch"]
+torch-sparse = ["torch"]
+
+[tool.uv.sources]
+ggnn = [
+    { index = "ggnn" }
+]
+
+[[tool.uv.index]]
+name = "pyg"
+url = "https://data.pyg.org/whl/torch-2.10.0+cpu.html"
+ignore-error-codes = [403]
+format = "flat"
+explicit = true
+
+[[tool.uv.index]]
+name = "ggnn"
+url = "https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/1040/packages/pypi/simple"
+explicit = true
+
+
+[tool.fastapi]
+entrypoint = "embedding_connector.main:app"
+
+
+[project.scripts]
+embedding-connector = "embedding_connector.main:main"
+
+
+[build-system]
+requires = ["uv_build>=0.11.6,<0.12.0"]
+build-backend = "uv_build"
