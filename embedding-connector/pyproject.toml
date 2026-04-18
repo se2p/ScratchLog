@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.13.2",
     "uvicorn>=0.44.0",
     "ggnn>=0.1.0",
+    "torch>=2.10.0,<2.11.0",
 ]
 
 [dependency-groups]
@@ -29,13 +30,6 @@ torch-sparse = ["torch"]
 ggnn = [
     { index = "ggnn" }
 ]
-
-[[tool.uv.index]]
-name = "pyg"
-url = "https://data.pyg.org/whl/torch-2.10.0+cpu.html"
-ignore-error-codes = [403]
-format = "flat"
-explicit = true
 
 [[tool.uv.index]]
 name = "ggnn"

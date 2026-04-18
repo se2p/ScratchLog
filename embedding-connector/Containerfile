@@ -21,7 +21,7 @@ COPY --from=builder /app/.venv /app/.venv
 
 EXPOSE 8080
 
-ENV MODEL_CONFIG_FILE=/model-config.yaml
+ENV MODEL_CONFIG_FILE=/ggnn-model-config.yaml
 
 ENTRYPOINT ["/app/.venv/bin/uvicorn", "embedding_connector.main:app"]
 CMD ["--host", "0.0.0.0", "--port", "8080"]
