@@ -44,6 +44,7 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ProjectFileDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3FileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -639,7 +640,7 @@ public class ExperimentController {
      * @param model The model used to return error messages.
      * @return The experiment page.
      */
-    @PostMapping("/project/upload")
+    @PostMapping("/starter-project/upload")
     @Secured(Constants.ROLE_ADMIN)
     public String uploadProjectFile(@Valid @ModelAttribute("fileDTO") final ProjectFileDTO fileDTO,
                                     final BindingResult bindingResult, @RequestParam(ID) final int experimentId,
@@ -667,10 +668,54 @@ public class ExperimentController {
      * @param experimentId The id of the experiment to delete the project file of.
      * @return The experiment page.
      */
-    @GetMapping("/project/delete")
+    @GetMapping("/starter-project/delete")
     @Secured(Constants.ROLE_ADMIN)
     public String deleteProjectFile(@RequestParam(ID) final int experimentId) {
         experimentService.deleteSb3Project(experimentId);
+        return REDIRECT_EXPERIMENT + experimentId;
+    }
+
+    /**
+     * Adds an example solution to the given experiment.
+     *
+     * @param exampleSolution The example solution SB3.
+     * @param experimentId The id of some experiment.
+     * @param model The model attribute container.
+     * @return A redirect to the experiment page.
+     */
+    @PostMapping("/example-solution/upload")
+    @Secured(Constants.ROLE_ADMIN)
+    public String uploadExampleSolution(
+        @Valid @ModelAttribute("exampleSolution") final Sb3FileDTO exampleSolution,
+        @RequestParam(ID) final int experimentId,
+        final Model model
+    ) {
+        final byte[] fileContents;
+        try {
+            fileContents = exampleSolution.getFile().getBytes();
+        } catch (IOException e) {
+            log.error("Could not read sb3 example solution.", e);
+            model.addAttribute(ERROR, "Could not read the SB3 file.");
+            return REDIRECT_EXPERIMENT + experimentId;
+        }
+
+        experimentService.addExampleSolution(
+            experimentId, exampleSolution.getFile().getOriginalFilename(), fileContents
+        );
+
+        return REDIRECT_EXPERIMENT + experimentId;
+    }
+
+    /**
+     * Deletes the example solution(s) for the given experiment.
+     *
+     * @param experimentId The id of some experiment.
+     * @return A redirect to the experiment page.
+     */
+    @GetMapping("/example-solution/delete")
+    @Secured(Constants.ROLE_ADMIN)
+    public String deleteExampleSolution(@RequestParam(ID) final int experimentId) {
+        experimentService.deleteExampleSolution(experimentId);
         return REDIRECT_EXPERIMENT + experimentId;
     }
 
@@ -773,6 +818,13 @@ public class ExperimentController {
         if (!model.containsAttribute("fileDTO")) {
             model.addAttribute("fileDTO", new ProjectFileDTO());
         }
+
+        if (!model.containsAttribute("exampleSolution")) {
+            model.addAttribute("exampleSolution", new Sb3FileDTO());
+        }
+
+        final String exampleSolutionName = experimentService.getExampleSolutionName(experimentDTO.getId());
+        model.addAttribute("exampleSolutionName", exampleSolutionName);
     }
 
     /**

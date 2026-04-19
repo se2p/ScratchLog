@@ -962,6 +962,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(pageService).getLastParticipantPage(ID);
         verify(pageService).getParticipantPage(anyInt(), anyInt());
+        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
