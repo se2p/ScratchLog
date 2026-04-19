@@ -1102,7 +1102,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     @Test
     public void testUploadProjectFile() throws Exception {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
+        mockMvc.perform(multipart("/experiment/starter-project/upload")
                 .file(sb3File)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
@@ -1116,13 +1116,12 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     public void testUploadProjectFileNotFound() throws Exception {
         doThrow(NotFoundException.class).when(experimentService).uploadSb3Project(ID, CONTENT);
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
+        mockMvc.perform(multipart("/experiment/starter-project/upload")
                 .file(sb3File)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError());
         verify(experimentService).uploadSb3Project(ID, sb3File.getBytes());
     }
 
@@ -1130,7 +1129,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     public void testUploadProjectFileWrongName() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
+        mockMvc.perform(multipart("/experiment/starter-project/upload")
                 .file(wrongFilename)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
@@ -1147,7 +1146,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     public void testUploadProjectFileWrongType() throws Exception {
         when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
+        mockMvc.perform(multipart("/experiment/starter-project/upload")
                 .file(wrongFiletype)
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
@@ -1163,7 +1162,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     @Test
     public void testUploadProjectFileInvalidId() throws Exception {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
+        mockMvc.perform(multipart("/experiment/starter-project/upload")
                 .file(sb3File)
                 .param(ID_PARAM, BLANK)
                 .contentType(MediaType.ALL)
@@ -1176,7 +1175,7 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
 
     @Test
     public void testDeleteProjectFile() throws Exception {
-        mvc.perform(get("/experiment/sb3")
+        mvc.perform(get("/experiment/starter-project/delete")
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
@@ -1188,12 +1187,11 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     @Test
     public void testDeleteProjectFileNotFound() throws Exception {
         doThrow(NotFoundException.class).when(experimentService).deleteSb3Project(ID);
-        mvc.perform(get("/experiment/sb3")
+        mvc.perform(get("/experiment/starter-project/delete")
                 .param(ID_PARAM, ID_STRING)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
+                .andExpect(status().is4xxClientError());
         verify(experimentService).deleteSb3Project(ID);
     }
 

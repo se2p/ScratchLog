@@ -20,11 +20,13 @@
 package de.uni_passau.fim.se2.scratchlog.application.service;
 
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExampleSolution;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExampleSolutionRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
-import jakarta.persistence.EntityNotFoundException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,14 +51,15 @@ public class ExperimentService {
      */
     private final ExperimentRepository experimentRepository;
 
-    /**
-     * Constructs an experiment service with the given dependencies.
-     *
-     * @param experimentRepository The experiment repository to use.
-     */
+    private final ExampleSolutionRepository exampleSolutionRepository;
+
     @Autowired
-    public ExperimentService(final ExperimentRepository experimentRepository) {
+    public ExperimentService(
+        final ExperimentRepository experimentRepository,
+        final ExampleSolutionRepository exampleSolutionRepository
+    ) {
         this.experimentRepository = experimentRepository;
+        this.exampleSolutionRepository = exampleSolutionRepository;
     }
 
     /**
@@ -169,7 +172,6 @@ public class ExperimentService {
      * @param id The experiment ID.
      * @param project The sb3 project to upload.
      * @throws IllegalArgumentException if the passed project is null or the id is invalid.
-     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
     public void uploadSb3Project(final int id, final byte[] project) {
@@ -177,15 +179,53 @@ public class ExperimentService {
             throw new IllegalArgumentException("Cannot upload sb3 project null!");
         }
 
-        try {
-            Experiment experiment = experimentRepository.getReferenceById(id);
-            experiment.setProject(project);
-            experimentRepository.save(experiment);
-        } catch (EntityNotFoundException e) {
-            log.error("Could not find experiment with id {} when trying to upload an sb3 project!", id, e);
-            throw new NotFoundException("Could not find experiment with id " + id + " when trying to upload an sb3 "
-                    + "project!", e);
+        Experiment experiment = experimentRepository.getReferenceById(id);
+        experiment.setProject(project);
+        experimentRepository.save(experiment);
+    }
+
+    /**
+     * Adds an example solution to an experiment.
+     *
+     * @param experimentId The id of an experiment.
+     * @param filename The filename of the example solution file.
+     * @param exampleSolutionSb3 The SB3 file content.
+     */
+    public void addExampleSolution(final int experimentId, final String filename, final byte[] exampleSolutionSb3) {
+        if (exampleSolutionSb3 == null) {
+            throw new IllegalArgumentException("Cannot upload sb3 project null!");
         }
+
+        // workaround: At the moment the UI only supports one example solution,
+        // so we have to ensure only one exists in the database.
+        // The database schema is already prepared to allow for multiple example
+        // solutions to allow for future extension.
+        deleteExampleSolution(experimentId);
+
+        final Experiment experiment = experimentRepository.getReferenceById(experimentId);
+
+        final ExampleSolution solution = new ExampleSolution();
+        solution.setExperiment(experiment);
+        solution.setFilename(filename);
+        solution.setSb3Project(exampleSolutionSb3);
+
+        exampleSolutionRepository.save(solution);
+    }
+
+    /**
+     * Finds the filename of the example solution.
+     *
+     * @param experimentId Some experiment id.
+     * @return The filename of the example solution, if one exists. {@code null} otherwise.
+     */
+    @Nullable
+    public String getExampleSolutionName(final int experimentId) {
+        return exampleSolutionRepository
+            .findExampleSolutionsByExperiment_Id(experimentId)
+            .stream()
+            .findFirst()
+            .map(ExampleSolution::getFilename)
+            .orElse(null);
     }
 
     /**
@@ -197,15 +237,18 @@ public class ExperimentService {
      */
     @Transactional
     public void deleteSb3Project(final int id) {
-        try {
-            Experiment experiment = experimentRepository.getReferenceById(id);
-            experiment.setProject(null);
-            experimentRepository.save(experiment);
-        } catch (EntityNotFoundException e) {
-            log.error("Could not find experiment with id {} when trying to delete an sb3 project!", id, e);
-            throw new NotFoundException("Could not find experiment with id " + id + " when trying to delete an sb3 "
-                    + "project!", e);
-        }
+        Experiment experiment = experimentRepository.getReferenceById(id);
+        experiment.setProject(null);
+        experimentRepository.save(experiment);
+    }
+
+    /**
+     * Deletes the example solution(s) of an experiment.
+     *
+     * @param id The id of an experiment.
+     */
+    public void deleteExampleSolution(final int id) {
+        exampleSolutionRepository.deleteExampleSolutionByExperiment_Id(id);
     }
 
     /**

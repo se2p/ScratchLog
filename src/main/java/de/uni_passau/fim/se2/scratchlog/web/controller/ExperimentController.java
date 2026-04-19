@@ -42,9 +42,11 @@ import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3FileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -636,7 +638,7 @@ public class ExperimentController {
      * @param model The model used to return error messages.
      * @return The experiment page on success, or if the file was invalid, or the error page otherwise.
      */
-    @PostMapping("/upload")
+    @PostMapping("/starter-project/upload")
     @Secured(Constants.ROLE_ADMIN)
     public String uploadProjectFile(@RequestParam("file") final MultipartFile file,
                                     @RequestParam(ID) final int experimentId, final Model model) {
@@ -663,8 +665,6 @@ public class ExperimentController {
         try {
             experimentService.uploadSb3Project(experimentId, file.getBytes());
             return REDIRECT_EXPERIMENT + experimentId;
-        } catch (NotFoundException e) {
-            return Constants.ERROR;
         } catch (IOException e) {
             log.error("Could not upload file due to IOException", e);
             return Constants.ERROR;
@@ -678,15 +678,55 @@ public class ExperimentController {
      * @param experimentId The experiment id to search for.
      * @return The experiment page on success, or the error page otherwise.
      */
-    @GetMapping("/sb3")
+    @GetMapping("/starter-project/delete")
     @Secured(Constants.ROLE_ADMIN)
     public String deleteProjectFile(@RequestParam(ID) final int experimentId) {
+        experimentService.deleteSb3Project(experimentId);
+        return REDIRECT_EXPERIMENT + experimentId;
+    }
+
+    /**
+     * Adds an example solution to the given experiment.
+     *
+     * @param exampleSolution The example solution SB3.
+     * @param experimentId The id of some experiment.
+     * @param model The model attribute container.
+     * @return A redirect to the experiment page.
+     */
+    @PostMapping("/example-solution/upload")
+    @Secured(Constants.ROLE_ADMIN)
+    public String uploadExampleSolution(
+        @Valid @ModelAttribute("exampleSolution") final Sb3FileDTO exampleSolution,
+        @RequestParam(ID) final int experimentId,
+        final Model model
+    ) {
+        final byte[] fileContents;
         try {
-            experimentService.deleteSb3Project(experimentId);
+            fileContents = exampleSolution.getFile().getBytes();
+        } catch (IOException e) {
+            log.error("Could not read sb3 example solution.", e);
+            model.addAttribute(ERROR, "Could not read the SB3 file.");
             return REDIRECT_EXPERIMENT + experimentId;
-        } catch (NotFoundException e) {
-            return Constants.ERROR;
         }
+
+        experimentService.addExampleSolution(
+            experimentId, exampleSolution.getFile().getOriginalFilename(), fileContents
+        );
+
+        return REDIRECT_EXPERIMENT + experimentId;
+    }
+
+    /**
+     * Deletes the example solution(s) for the given experiment.
+     *
+     * @param experimentId The id of some experiment.
+     * @return A redirect to the experiment page.
+     */
+    @GetMapping("/example-solution/delete")
+    @Secured(Constants.ROLE_ADMIN)
+    public String deleteExampleSolution(@RequestParam(ID) final int experimentId) {
+        experimentService.deleteExampleSolution(experimentId);
+        return REDIRECT_EXPERIMENT + experimentId;
     }
 
     /**
@@ -785,6 +825,13 @@ public class ExperimentController {
 
         model.addAttribute("experimentDTO", experimentDTO);
         model.addAttribute("passwordDTO", new PasswordDTO());
+
+        if (!model.containsAttribute("exampleSolution")) {
+            model.addAttribute("exampleSolution", new Sb3FileDTO());
+        }
+
+        final String exampleSolutionName = experimentService.getExampleSolutionName(experimentDTO.getId());
+        model.addAttribute("exampleSolutionName", exampleSolutionName);
     }
 
     /**

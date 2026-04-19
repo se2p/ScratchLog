@@ -7,6 +7,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.testing_utils.DtoUtil;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -175,7 +176,7 @@ public class ExperimentServiceTest extends AbstractScratchLogTest {
     // The 'correct path' of uploadSb3Project is already covered by testHasProjectFileAfterUpload above.
     @Test
     public void testUploadSb3ProjectNotFound() {
-        assertThrows(NotFoundException.class, () -> service.uploadSb3Project(invalidId, PROJECT_BYTES));
+        assertThrows(EntityNotFoundException.class, () -> service.uploadSb3Project(invalidId, PROJECT_BYTES));
     }
 
     @Test
@@ -192,7 +193,7 @@ public class ExperimentServiceTest extends AbstractScratchLogTest {
 
     @Test
     public void testDeleteSb3ProjectNotFound() {
-        assertThrows(NotFoundException.class, () -> service.deleteSb3Project(invalidId));
+        assertThrows(EntityNotFoundException.class, () -> service.deleteSb3Project(invalidId));
     }
 
     @Test

@@ -40,6 +40,7 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -960,7 +961,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(pageService).getLastParticipantPage(ID);
         verify(pageService).getParticipantPage(anyInt(), anyInt());
-        verify(model, times(5)).addAttribute(anyString(), any());
+        verify(model, times(7)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1101,21 +1102,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testUploadProjectFileNotFound() throws IOException {
-        when(file.getContentType()).thenReturn(FILETYPE_SB3);
-        when(file.getOriginalFilename()).thenReturn(FILENAME_SB3);
-        when(file.getBytes()).thenReturn(CONTENT);
-        doThrow(NotFoundException.class).when(experimentService).uploadSb3Project(ID, CONTENT);
-        assertEquals(ERROR, experimentController.uploadProjectFile(file, ID, model));
-        verify(experimentService).uploadSb3Project(ID, CONTENT);
-        verify(file).isEmpty();
-        verify(file, times(2)).getOriginalFilename();
-        verify(file, times(2)).getContentType();
-        verify(file).getBytes();
-        verify(model, never()).addAttribute(anyString(), any());
-    }
-
-    @Test
     public void testUploadProjectFileFilenameInvalid() throws IOException {
         when(file.getContentType()).thenReturn(FILETYPE_SB3);
         when(file.getOriginalFilename()).thenReturn("name");
@@ -1127,7 +1113,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file, times(2)).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1141,7 +1127,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1155,7 +1141,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file, never()).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1168,7 +1154,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file, never()).getOriginalFilename();
         verify(file).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1182,7 +1168,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file, never()).getOriginalFilename();
         verify(file, never()).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(6)).addAttribute(anyString(), any());
+        verify(model, times(8)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1199,13 +1185,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     @Test
     public void testDeleteProjectFile() {
         assertEquals(REDIRECT_EXPERIMENT + ID, experimentController.deleteProjectFile(ID));
-        verify(experimentService).deleteSb3Project(ID);
-    }
-
-    @Test
-    public void testDeleteProjectFileNotFound() {
-        doThrow(NotFoundException.class).when(experimentService).deleteSb3Project(ID);
-        assertEquals(ERROR, experimentController.deleteProjectFile(ID));
         verify(experimentService).deleteSb3Project(ID);
     }
 

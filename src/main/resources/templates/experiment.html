@@ -88,7 +88,10 @@
                 <div class="nav nav-tabs" id="nav-tab" role="tablist">
                     <button class="nav-link active" id="nav-sb3-tab" data-bs-toggle="tab" data-bs-target="#nav-sb3"
                             type="button" role="tab" aria-controls="nav-sb3" aria-selected="true"
-                            th:text="#{heading_sb3}"></button>
+                            th:text="#{heading_sb3_start}"></button>
+                    <button class="nav-link" id="nav-sb3-solution-tab" data-bs-toggle="tab" data-bs-target="#nav-sb3-solution"
+                            type="button" role="tab" aria-controls="nav-sb3-solution" aria-selected="true"
+                            th:text="#{heading_sb3_solution}"></button>
                     <button class="nav-link" id="nav-downloadsb3-tab" data-bs-toggle="tab"
                             data-bs-target="#nav-downloadsb3" type="button" role="tab" aria-controls="nav-downloadsb3"
                             aria-selected="false" th:unless="${participants.isEmpty()}"
@@ -107,17 +110,41 @@
                 <div class="tab-pane fade show active" id="nav-sb3" role="tabpanel" aria-labelledby="nav-sb3-tab"
                      tabindex="0">
                     <!-- The button to upload an initial sb3 template or delete an existing one. -->
-                    <form method="post" th:action="@{/experiment/upload}" enctype="multipart/form-data"
+                    <form method="post" th:action="@{/experiment/starter-project/upload}" enctype="multipart/form-data"
                           class="align-items-start d-flex flex-column">
                         <div class="p-5">
-                            <label for="scratchFile" class="form-label">SB3 File</label>
+                            <label for="scratchFile" class="form-label" th:text="#{heading_sb3_start}"></label>
                             <input type="hidden" name="id" th:value="${experimentDTO.id}" />
-                            <input type="file" id="scratchFile" class="form-control" name="file" />
+                            <input type="file" id="scratchFile" class="form-control" name="file" accept=".sb3"/>
                         </div>
 
                         <div class="card-footer" style="width: 100%">
                             <div id="openDeleteSb3Modal" class="btn btn-sm btn-danger" style="float: left;"
                                  type="submit" th:text="#{delete_sb3}" th:unless="${project == null}"></div>
+                            <input class="btn btn-sm btn-primary" type="submit" style="float: right;"
+                                   th:value="#{upload}" />
+                        </div>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="nav-sb3-solution" role="tabpanel" aria-labelledby="nav-sb3-tab-solution"
+                     tabindex="1">
+                    <!-- The button to upload an example solution as sb3 or delete an existing one. -->
+                    <form method="post"
+                          th:action="@{/experiment/example-solution/upload}"
+                          th:object="${exampleSolution}"
+                          enctype="multipart/form-data"
+                          class="align-items-start d-flex flex-column"
+                    >
+                        <div class="p-5">
+                            <label for="scratchExampleSolution" class="form-label" th:text="#{heading_sb3_solution}"></label>
+                            <input type="hidden" name="id" th:value="${experimentDTO.id}" />
+                            <input type="file" id="scratchExampleSolution" class="form-control" th:field="*{file}" accept=".sb3"/>
+                        </div>
+
+                        <div class="card-footer" style="width: 100%">
+                            <div id="openDeleteSb3ExampleSolutionModal" class="btn btn-sm btn-danger" style="float: left;"
+                                 type="submit" th:text="#{delete_sb3}" th:unless="${exampleSolutionName == null}"></div>
                             <input class="btn btn-sm btn-primary" type="submit" style="float: right;"
                                    th:value="#{upload}" />
                         </div>
@@ -487,14 +514,26 @@
     </div>
 </div>
 
-<!-- The popup dialog to delete the current sb3 file. -->
+<!-- The popup dialogue to delete the current sb3 file. -->
 <div id="deleteSb3Modal" class="modal" sec:authorize="hasRole('ADMIN')">
     <div class="modal-content">
         <h2 th:text="#{delete_sb3}"></h2>
         <div class="mb-3" th:text="#{delete_sb3_warn}"></div>
         <div class="d-flex justify-content-between">
             <input id="abortSb3Delete" class="btn btn-secondary" type="submit" th:value="#{abort}">
-            <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/sb3(id=${experimentDTO.id})}"></a>
+            <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/starter-project/delete(id=${experimentDTO.id})}"></a>
+        </div>
+    </div>
+</div>
+
+<!-- The popup dialogue to delete the current example solution file. -->
+<div id="deleteSb3ExampleSolutionModal" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{delete_sb3}"></h2>
+        <div class="mb-3" th:text="#{delete_sb3_warn}"></div>
+        <div class="d-flex justify-content-between">
+            <input id="abortSb3SolutionDelete" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/example-solution/delete(id=${experimentDTO.id})}"></a>
         </div>
     </div>
 </div>
