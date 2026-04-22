@@ -40,7 +40,7 @@
         <mockito.version>5.23.0</mockito.version>
         <mycila.version>4.2</mycila.version>
         <opencsv.version>5.12.0</opencsv.version>
-        <passay.version>1.6.6</passay.version>
+        <passay.version>2.0.0</passay.version>
 
         <!-- webjars versions -->
         <!-- might have to deploy new versions on https://www.webjars.org/ first when updating -->
