@@ -19,10 +19,9 @@
 
 package de.uni_passau.fim.se2.scratchlog.util;
 
-import org.passay.CharacterData;
-import org.passay.CharacterRule;
-import org.passay.EnglishCharacterData;
-import org.passay.PasswordGenerator;
+import org.passay.data.EnglishCharacterData;
+import org.passay.generate.PasswordGenerator;
+import org.passay.rule.CharacterRule;
 
 /**
  * Class for generating passwords.
@@ -36,20 +35,15 @@ public final class CustomPasswordGenerator {
      * @return The generated password.
      */
     public static String generatePassword(final int numCharacters) {
-        PasswordGenerator generator = new PasswordGenerator();
-        CharacterData lowerCaseChars = EnglishCharacterData.LowerCase;
-        CharacterRule lowerCaseRule = new CharacterRule(lowerCaseChars);
-        lowerCaseRule.setNumberOfCharacters(1);
+        CharacterRule lowerCaseRule = new CharacterRule(EnglishCharacterData.LowerCase, 1);
+        CharacterRule upperCaseRule = new CharacterRule(EnglishCharacterData.UpperCase, 1);
+        CharacterRule digitRule = new CharacterRule(EnglishCharacterData.Digit, 1);
 
-        CharacterData upperCaseChars = EnglishCharacterData.UpperCase;
-        CharacterRule upperCaseRule = new CharacterRule(upperCaseChars);
-        upperCaseRule.setNumberOfCharacters(1);
+        PasswordGenerator generator = new PasswordGenerator(
+            numCharacters, lowerCaseRule, upperCaseRule, digitRule
+        );
 
-        CharacterData digitChars = EnglishCharacterData.Digit;
-        CharacterRule digitRule = new CharacterRule(digitChars);
-        digitRule.setNumberOfCharacters(1);
-
-        return generator.generatePassword(numCharacters, lowerCaseRule, upperCaseRule, digitRule);
+        return generator.generate().toString();
     }
 
 }
