@@ -550,7 +550,7 @@ function _drawChart(item, xValues, data, type, displayLegend) {
         let nextDataset = {
             data: data[i],
             fill: false,
-            label: selectedParticipants[i][1]
+            label: selectedParticipants[i].username,
         }
         datasets.push(nextDataset);
     }
