@@ -29,6 +29,7 @@ import de.uni_passau.fim.se2.scratchlog.application.service.MailService;
 import de.uni_passau.fim.se2.scratchlog.application.service.PageService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExampleSolution;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
@@ -830,8 +831,8 @@ public class ExperimentController {
             model.addAttribute("exampleSolution", new Sb3FileDTO());
         }
 
-        final String exampleSolutionName = experimentService.getExampleSolutionName(experimentDTO.getId());
-        model.addAttribute("exampleSolutionName", exampleSolutionName);
+        final ExampleSolution exampleSolution = experimentService.getExampleSolution(experimentDTO.getId());
+        model.addAttribute("exampleSolutionName", exampleSolution != null ? exampleSolution.getFilename() : null);
     }
 
     /**

@@ -40,7 +40,7 @@ class ExperimentNewControllerIntegrationTest extends AbstractScratchLogControlle
             .andExpect(view().name("redirect:/experiment?id=" + experiment.getId()));
 
         assertEquals(1, exampleSolutionRepository.findExampleSolutionsByExperiment_Id(experiment.getId()).size());
-        assertEquals("example-solution.sb3", experimentService.getExampleSolutionName(experiment.getId()));
+        assertEquals("example-solution.sb3", experimentService.getExampleSolution(experiment.getId()).getFilename());
     }
 
     @Test
@@ -57,7 +57,7 @@ class ExperimentNewControllerIntegrationTest extends AbstractScratchLogControlle
         );
 
         assertEquals(1, exampleSolutionRepository.findExampleSolutionsByExperiment_Id(experiment.getId()).size());
-        assertEquals("example-solution-2.sb3", experimentService.getExampleSolutionName(experiment.getId()));
+        assertEquals("example-solution-2.sb3", experimentService.getExampleSolution(experiment.getId()).getFilename());
     }
 
     @Test

@@ -10,7 +10,7 @@ from fastapi import FastAPI, Depends, Request
 from typing import Final, Any
 from collections.abc import AsyncIterator
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from embedding_connector.ggnn_api import ApiModel
 
@@ -68,13 +68,13 @@ ProcessedGgnnProgram = dict[str, Any]
 
 
 class GgnnProgressVarianceProjectionRequest(BaseModel):
-    template_program: ProcessedGgnnProgram
-    solution_program: ProcessedGgnnProgram
-    student_programs: dict[int, ProcessedGgnnProgram]
+    template_program: ProcessedGgnnProgram = Field(..., alias="templateProgram")
+    solution_program: ProcessedGgnnProgram = Field(..., alias="solutionProgram")
+    student_programs: dict[int, ProcessedGgnnProgram] = Field(..., alias="studentPrograms")
 
 
 class ProgressVarianceProjection(BaseModel):
-    embeddings: dict[int, tuple[float, float]]
+    projections: dict[int, tuple[float, float]]
 
 
 @app.post("/ggnn/progress-variance-projection")
@@ -83,7 +83,7 @@ def get_progress_variance_projection(
     model: ApiModel = Depends(_get_ggnn_model),
 ) -> ProgressVarianceProjection:
     return ProgressVarianceProjection(
-        embeddings={
+        projections={
             project_id: (random.random(), random.random())
             for project_id, project in req.student_programs.items()
         }

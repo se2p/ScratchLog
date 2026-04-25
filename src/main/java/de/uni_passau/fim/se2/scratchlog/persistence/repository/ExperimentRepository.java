@@ -208,4 +208,10 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Integer>
             + " p.experiment_id = e.id WHERE p.user_id = :participant")
     int getParticipantPageCount(@Param("participant") int userId);
 
+    @Query("""
+            select e.project
+            from Experiment e
+            where e.id = :experimentId
+            """)
+    byte[] getExperimentStarterProject(int experimentId);
 }
