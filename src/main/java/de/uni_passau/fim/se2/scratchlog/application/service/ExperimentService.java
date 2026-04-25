@@ -221,12 +221,11 @@ public class ExperimentService {
      * @return The filename of the example solution, if one exists. {@code null} otherwise.
      */
     @Nullable
-    public String getExampleSolutionName(final int experimentId) {
+    public ExampleSolution getExampleSolution(final int experimentId) {
         return exampleSolutionRepository
             .findExampleSolutionsByExperiment_Id(experimentId)
             .stream()
             .findFirst()
-            .map(ExampleSolution::getFilename)
             .orElse(null);
     }
 

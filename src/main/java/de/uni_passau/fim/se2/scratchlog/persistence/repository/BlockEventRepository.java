@@ -32,6 +32,7 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -104,5 +105,22 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
      */
     BlockEventJSONProjection findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(User user,
                                                                                          Experiment experiment);
+
+    @Query("""
+            with latest_events as (
+                select be2.user.id as user_id, max(be2.id) as id, max(be2.date) as date
+                from BlockEvent be2
+                where be2.code is not null
+                    and be2.experiment.id = :experimentId
+                group by be2.user.id
+            )
+            select new de.uni_passau.fim.se2.scratchlog.persistence.repository.Project(be.user.id, be.code)
+            from BlockEvent be, latest_events e
+            where be.experiment.id = :experimentId
+                and be.id = e.id
+                and be.user.id = e.user_id
+                and be.date = e.date
+            """)
+    List<Project> findLastPerUserInExperiment(int experimentId);
 
 }
