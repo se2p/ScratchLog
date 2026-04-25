@@ -301,7 +301,7 @@ function _displayChart(xValues, chartData, canvasId, noDataId, counts, type, dis
  * @private
  */
 function _checkHideLegends() {
-    let width = document.getElementsByClassName("inside")[0].clientWidth;
+    let width = window.screen.width;
     if (blockEventChart) {
         blockEventChart.legend.options.display = width > 600;
         blockEventChart.update();
