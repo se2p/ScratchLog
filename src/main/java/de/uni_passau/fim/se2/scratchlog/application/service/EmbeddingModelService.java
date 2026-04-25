@@ -19,9 +19,7 @@ import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -85,32 +83,38 @@ public class EmbeddingModelService {
     }
 
     /**
-     * Demo.
+     * Computes the progress-variance-projection for the given experiment.
      *
-     * @throws IOException ignored
+     * <p>For all participants in the experiment and their latest code change.
+     *
+     * @param experimentId The experiment id.
+     * @return The progress-variance projection.
+     * @throws IOException In case the example/solution projects cannot be parsed.
      */
-    @EventListener(ApplicationReadyEvent.class)
-    public void testing() throws IOException {
-        final int experimentId = 60;
+    public ProgressVarianceProjection getProgressVarianceProjectionAllLatest(
+        final int experimentId
+    ) throws IOException {
         final Map<Integer, String> studentProjectsById = new HashMap<>();
         blockEventRepository
             .findLastPerUserInExperiment(experimentId)
             .forEach(project -> studentProjectsById.put(project.id(), project.projectJson()));
 
-        final var starterProject = getProjectJson(experimentRepository.getExperimentStarterProject(experimentId));
-        final ExampleSolution solution = experimentService.getExampleSolution(experimentId);
-        if (solution == null) {
-            // P-V-projection requires starter project and solution
-            return;
+        final byte[] starterProjectSb3 = experimentRepository.getExperimentStarterProject(experimentId);
+        final ExampleSolution solutionSb3 = experimentService.getExampleSolution(experimentId);
+        if (starterProjectSb3 == null || solutionSb3 == null) {
+            throw new IllegalArgumentException(
+                "Progress-Variance-Projection can only be constructed if start and solution projects are given."
+            );
         }
-        final var solutionProject = getProjectJson(solution.getSb3Project());
 
-        final var projection = getProgressVarianceProjection(
+        final var starterProject = getProjectJson(starterProjectSb3);
+        final var solutionProject = getProjectJson(solutionSb3.getSb3Project());
+
+        return getProgressVarianceProjection(
             starterProject,
             solutionProject,
             studentProjectsById
         );
-        log.info("{}", projection);
     }
 
     /**

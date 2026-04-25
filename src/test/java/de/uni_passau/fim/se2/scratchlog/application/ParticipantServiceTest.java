@@ -689,6 +689,20 @@ public class ParticipantServiceTest {
         verify(experimentRepository).save(experiment2);
     }
 
+    @Test
+    void testGetParticipantNames() {
+        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment1);
+        when(participantRepository.findAllByExperiment(experiment1)).thenReturn(List.of(participant1));
+        List<ParticipantService.ParticipantIdName> userInfo = participantService.getParticipantNames(ID);
+        assertAll(
+            () -> assertEquals(1, userInfo.size()),
+            () -> assertEquals(user.getId(), userInfo.getFirst().id()),
+            () -> assertEquals(user.getUsername(), userInfo.getFirst().username())
+        );
+        verify(experimentRepository).getReferenceById(ID);
+        verify(participantRepository).findAllByExperiment(experiment1);
+    }
+
     private List<Participant> getParticipants(int number) {
         List<Participant> participants = new ArrayList<>();
         for (int i = 0; i < number; i++) {
