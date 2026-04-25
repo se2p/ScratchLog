@@ -1,17 +1,18 @@
 import logging
 import os
+import random
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, Depends, Request
-from typing import Final
+from typing import Final, Any
 from collections.abc import AsyncIterator
 
 from pydantic import BaseModel
 
-from embedding_connector.ggnn import ApiModel
+from embedding_connector.ggnn_api import ApiModel
 
 log: Final[logging.Logger] = logging.getLogger("uvicorn")
 
@@ -61,6 +62,32 @@ def get_ggnn_embedding(
     log.info(req)
     # todo: query `model` and return actual embedding
     return GgnnEmbeddingResponse(embedding=list(range(128)))
+
+
+ProcessedGgnnProgram = dict[str, Any]
+
+
+class GgnnProgressVarianceProjectionRequest(BaseModel):
+    template_program: ProcessedGgnnProgram
+    solution_program: ProcessedGgnnProgram
+    student_programs: dict[int, ProcessedGgnnProgram]
+
+
+class ProgressVarianceProjection(BaseModel):
+    embeddings: dict[int, tuple[float, float]]
+
+
+@app.post("/ggnn/progress-variance-projection")
+def get_progress_variance_projection(
+    req: GgnnProgressVarianceProjectionRequest,
+    model: ApiModel = Depends(_get_ggnn_model),
+) -> ProgressVarianceProjection:
+    return ProgressVarianceProjection(
+        embeddings={
+            project_id: (random.random(), random.random())
+            for project_id, project in req.student_programs.items()
+        }
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

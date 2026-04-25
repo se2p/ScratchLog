@@ -147,4 +147,9 @@ public final class Constants {
      */
     public static final Language DEFAULT_LANGUAGE = Language.GERMAN;
 
+    /**
+     * The Spring profile name for the code embeddings feature.
+     */
+    public static final String PROFILE_CODE_EMBEDDINGS = "embeddings";
+
 }
