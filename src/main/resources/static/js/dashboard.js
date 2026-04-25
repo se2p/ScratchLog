@@ -95,6 +95,9 @@ function fetchParticipantData() {
             _fillParticipantsDropdown();
             _addEventListeners();
             fetchBlockEventData();
+            fetchClickEventData();
+            fetchResourceEventData();
+            fetchRadarChartData();
         },
         error: function() {
             redirectErrorPage();
@@ -116,7 +119,6 @@ function fetchBlockEventData() {
         success: function(data) {
             document.getElementById("blockEventChartDescription").innerText = " " + blockEvent;
             blockEventData = _prepareEventData(data, blockEventData);
-            fetchClickEventData();
             let maxLength = blockEventData.length > 0 ? blockEventData[0].length : 0;
 
             if (blockEventChart) {
@@ -147,7 +149,6 @@ function fetchClickEventData() {
         success: function(data) {
             document.getElementById("clickEventChartDescription").innerText = " " + clickEvent;
             clickEventData = _prepareEventData(data, clickEventData);
-            fetchResourceEventData();
             let maxLength = clickEventData.length > 0 ? clickEventData[0].length : 0;
 
             if (clickEventChart) {
@@ -178,7 +179,6 @@ function fetchResourceEventData() {
         success: function(data) {
             document.getElementById("resourceEventChartDescription").innerText = " " + resourceEvent;
             resourceEventData = _prepareEventData(data, resourceEventData);
-            fetchRadarChartData();
             let maxLength = resourceEventData.length > 0 ? resourceEventData[0].length : 0;
 
             if (resourceEventChart) {
@@ -338,8 +338,8 @@ function _checkHideLegends() {
  */
 function _updateSelectedParticipants() {
     if (selectedParticipants.length === 0) {
-        for (let i = 0; i < participants.length; i++) {
-            selectedParticipants.push(participants[i]);
+        for (const element of participants) {
+            selectedParticipants.push(element);
         }
     } else {
         selectedParticipants = selectedParticipants.filter(
@@ -358,6 +358,10 @@ function _updateSelectedParticipants() {
 function _addSelectedParticipants() {
     let html = `<ul class="list-group list-group-horizontal flex-wrap mx-3">`;
     selectedParticipants.forEach(function (participant) {
+        if (participant === undefined) {
+            return;
+        }
+
         html += `
         <li class="list-group-item">
             <span>${participant.username}</span>
@@ -374,9 +378,9 @@ function _addSelectedParticipants() {
  * @private
  */
 function _fillParticipantsDropdown() {
-    let html;
+    let html = "";
     participants.forEach(function (participant) {
-        if (typeof selectedParticipants.find(_containsParticipant, participant) === "undefined") {
+        if (!selectedParticipants.some(p => p.username === participant.username && p.id === participant.id)) {
             html += `
             <option class="text-dark">${participant.username}</option>
             `
@@ -424,15 +428,21 @@ function _addEventListeners() {
  * @private
  */
 function _addSelectedParticipant(participant) {
+    if (participant === undefined) {
+        return;
+    }
+
     const index = participants.findIndex(item => item.username === participant);
     selectedParticipants.push(participants[index]);
-    participants.splice(index, 1);
+    participants = participants.filter(p => p.username !== participant);
+
     _addSelectedParticipants();
     _fillParticipantsDropdown();
     _addEventListeners();
     _changeDropdownVisibility();
     fetchBlockEventData();
     fetchClickEventData();
+    fetchResourceEventData();
     fetchRadarChartData();
     _checkHideLegends();
 }
@@ -446,13 +456,23 @@ function _addSelectedParticipant(participant) {
  */
 function _removeSelectedParticipant(participant) {
     if (selectedParticipants.length > 1) {
-        selectedParticipants = selectedParticipants.filter(item => item.username !== participant);
+        const index = selectedParticipants.findIndex(item => item.username === participant);
+        if (index < 0) {
+            return;
+        }
+
+        selectedParticipants.splice(index, 1);
+        blockEventData.splice(index, 1);
+        clickEventData.splice(index, 1);
+        resourceEventData.splice(index, 1);
+
         _addSelectedParticipants();
         _fillParticipantsDropdown();
         _addEventListeners();
         _changeDropdownVisibility();
         fetchBlockEventData();
         fetchClickEventData();
+        fetchResourceEventData();
         fetchRadarChartData();
         _checkHideLegends();
     }
