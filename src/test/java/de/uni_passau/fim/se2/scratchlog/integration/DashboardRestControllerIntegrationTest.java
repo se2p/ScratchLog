@@ -20,6 +20,7 @@
 package de.uni_passau.fim.se2.scratchlog.integration;
 
 import de.uni_passau.fim.se2.scratchlog.application.service.DashboardService;
+import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
@@ -48,6 +49,9 @@ public class DashboardRestControllerIntegrationTest extends AbstractControllerTe
     @MockitoBean
     private DashboardService dashboardService;
 
+    @MockitoBean
+    private ParticipantService participantService;
+
     private static final String ID_STRING = "5";
     private static final String ID_PARAM = "id";
     private static final String USER_PARAM = "users";
@@ -55,7 +59,7 @@ public class DashboardRestControllerIntegrationTest extends AbstractControllerTe
     private static final String userIds = "1,5";
     private static final int ID = 5;
     private static final DashboardService.ExperimentDataDto experimentData = new DashboardService.ExperimentDataDto(11, 7, 5);
-    private static final List<DashboardService.ParticipantIdName> participantData = new ArrayList<>();
+    private static final List<ParticipantService.ParticipantIdName> participantData = new ArrayList<>();
     private static final List<Integer[]> eventData = new ArrayList<>();
 
     @Test
@@ -75,14 +79,14 @@ public class DashboardRestControllerIntegrationTest extends AbstractControllerTe
 
     @Test
     public void testGetParticipantData() throws Exception {
-        when(dashboardService.getParticipants(ID)).thenReturn(participantData);
+        when(participantService.getParticipantNames(ID)).thenReturn(participantData);
         mvc.perform(get("/dashboard/data/participants")
                         .param(ID_PARAM, ID_STRING)
                         .contentType(MediaType.ALL)
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(content().string("[]"));
-        verify(dashboardService).getParticipants(ID);
+        verify(participantService).getParticipantNames(ID);
     }
 
     @Test

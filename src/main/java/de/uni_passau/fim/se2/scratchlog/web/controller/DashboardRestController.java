@@ -20,6 +20,7 @@
 package de.uni_passau.fim.se2.scratchlog.web.controller;
 
 import de.uni_passau.fim.se2.scratchlog.application.service.DashboardService;
+import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
@@ -43,6 +44,8 @@ public class DashboardRestController {
      */
     private final DashboardService dashboardService;
 
+    private final ParticipantService participantService;
+
     /**
      * String corresponding to the id request parameter.
      */
@@ -58,14 +61,12 @@ public class DashboardRestController {
      */
     private static final String EVENT = "event";
 
-    /**
-     * Constructs a new dashboard REST controller with the given dependencies.
-     *
-     * @param dashboardService The {@link DashboardService} to use.
-     */
     @Autowired
-    public DashboardRestController(final DashboardService dashboardService) {
+    public DashboardRestController(
+        final DashboardService dashboardService, final ParticipantService participantService
+    ) {
         this.dashboardService = dashboardService;
+        this.participantService = participantService;
     }
 
     /**
@@ -89,8 +90,8 @@ public class DashboardRestController {
      * @throws IllegalArgumentException if the passed id is invalid.
      */
     @GetMapping("/participants")
-    public List<DashboardService.ParticipantIdName> getParticipantData(@RequestParam(ID) final int experimentId) {
-        return dashboardService.getParticipants(experimentId);
+    public List<ParticipantService.ParticipantIdName> getParticipantData(@RequestParam(ID) final int experimentId) {
+        return participantService.getParticipantNames(experimentId);
     }
 
     /**

@@ -20,6 +20,7 @@
 package de.uni_passau.fim.se2.scratchlog.web;
 
 import de.uni_passau.fim.se2.scratchlog.application.service.DashboardService;
+import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
@@ -49,10 +50,13 @@ public class DashboardRestControllerTest {
     @Mock
     private DashboardService dashboardService;
 
+    @Mock
+    private ParticipantService participantService;
+
     private static final int ID = 5;
     private static final List<Integer> userIds = List.of(1, 5);
     private static final DashboardService.ExperimentDataDto experimentData = new DashboardService.ExperimentDataDto(11, 7, 5);
-    private static final List<DashboardService.ParticipantIdName> participantData = new ArrayList<>();
+    private static final List<ParticipantService.ParticipantIdName> participantData = new ArrayList<>();
     private static final List<Integer[]> eventData = new ArrayList<>();
 
     @Test
@@ -64,9 +68,9 @@ public class DashboardRestControllerTest {
 
     @Test
     public void testGetParticipantData() {
-        when(dashboardService.getParticipants(ID)).thenReturn(participantData);
+        when(participantService.getParticipantNames(ID)).thenReturn(participantData);
         assertEquals(participantData, dashboardRestController.getParticipantData(ID));
-        verify(dashboardService).getParticipants(ID);
+        verify(participantService).getParticipantNames(ID);
     }
 
     @Test

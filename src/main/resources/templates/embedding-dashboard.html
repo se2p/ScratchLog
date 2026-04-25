@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{embedding_dashboard}"></title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/chart.js/dist/chart.umd.js}"></script>
+</head>
+<body>
+<!-- Navigation bar -->
+<header th:insert="~{header :: header}"></header>
+
+<!-- Page content -->
+<div class="container mt-4" sec:authorize="hasRole('ADMIN')">
+    <div class="card">
+
+        <!-- The page title and button to return to the experiment page. -->
+        <div class="card-header">
+            <h5 class="mb-0" th:text="#{embedding_dashboard}"></h5>
+            <div>
+                <a class="btn btn-secondary" th:href="@{/dashboard(id=${experiment})}">
+                    <span th:text="#{dashboard_title}"></span>
+                </a>
+                <a class="btn btn-secondary" th:href="@{/experiment(id=${experiment})}">
+                    <span th:text="#{experiment_return}"></span>
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <canvas id="chart-all-latest"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Script to fetch and update the dashboard information. -->
+<script type="module" th:src="@{/js/embeddingDashboard.js}"></script>
+
+<!-- Let Thymeleaf fetch the ID of the current experiment and the events for which information should be fetched
+initially. -->
+<script th:inline="javascript">
+    let experimentId = [[${experiment}]];
+    let participants = [[${participants}]];
+</script>
+
+<!-- Footer -->
+<div th:insert="~{footer :: footer}"></div>
+</body>
+</html>
