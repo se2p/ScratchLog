@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestClient;
 
 import java.io.ByteArrayInputStream;
@@ -94,6 +95,9 @@ public class EmbeddingModelService {
     public ProgressVarianceProjection getProgressVarianceProjectionAllLatest(
         final int experimentId
     ) throws IOException {
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         final Map<Integer, String> studentProjectsById = new HashMap<>();
         blockEventRepository
             .findLastPerUserInExperiment(experimentId)
@@ -106,6 +110,8 @@ public class EmbeddingModelService {
                 "Progress-Variance-Projection can only be constructed if start and solution projects are given."
             );
         }
+        watch.stop();
+        log.debug("Database fetching finished in {}ms.", watch.getTotalTimeMillis());
 
         final var starterProject = getProjectJson(starterProjectSb3);
         final var solutionProject = getProjectJson(solutionSb3.getSb3Project());
@@ -133,15 +139,24 @@ public class EmbeddingModelService {
         final Map<Integer, String> studentProjects
     ) {
         try {
+            StopWatch watch = new StopWatch();
+            watch.start();
             final var request = buildProgressVarianceProjectionRequest(
                 templateProject, solutionProject, studentProjects
             );
+            watch.stop();
+            log.debug("GGNN preprocessing done in {}ms.", watch.getTotalTimeMillis());
 
-            return restClient.post()
+            watch.start();
+            var response = restClient.post()
                 .uri("ggnn/progress-variance-projection")
                 .body(request)
                 .retrieve()
                 .body(ProgressVarianceProjection.class);
+            watch.stop();
+            log.debug("Embedding API request done in {}ms.", watch.getTotalTimeMillis());
+
+            return response;
         } catch (Exception e) {
             // todo: actual error handling
             throw new RuntimeException(e);
