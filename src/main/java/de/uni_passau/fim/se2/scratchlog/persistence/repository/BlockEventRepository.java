@@ -112,7 +112,7 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
                     and be2.experiment.id = :experimentId
                 group by be2.user.id
             )
-            select new de.uni_passau.fim.se2.scratchlog.persistence.repository.Project(be.user.id, be.code)
+            select new de.uni_passau.fim.se2.scratchlog.persistence.repository.Project(be.id, be.user.id, be.code)
             from BlockEvent be, latest_events e
             where be.experiment.id = :experimentId
                 and be.id = e.id

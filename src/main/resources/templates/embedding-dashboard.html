@@ -20,7 +20,7 @@
 
         <!-- The page title and button to return to the experiment page. -->
         <div class="card-header">
-            <h5 class="mb-0" th:text="#{embedding_dashboard}"></h5>
+            <h3 class="mb-0" th:text="#{embedding_dashboard}"></h3>
             <div>
                 <a class="btn btn-secondary" th:href="@{/dashboard(id=${experiment})}">
                     <span th:text="#{dashboard_title}"></span>
@@ -31,8 +31,19 @@
             </div>
         </div>
 
-        <div class="card-body">
-            <canvas id="chart-all-latest"></canvas>
+        <div>
+            <h4 th:text="#{embedding_dashboard_chart_latest}"></h4>
+            <div class="card-body">
+                <canvas id="chart-all-latest"></canvas>
+            </div>
+        </div>
+
+        <div>
+            <h4 th:text="#{embedding_dashboard_chart_timeline}"></h4>
+            <!-- todo: student selector -->
+            <div class="card-body">
+                <canvas id="chart-timeline"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -45,6 +56,9 @@ initially. -->
 <script th:inline="javascript">
     let experimentId = [[${experiment}]];
     let participants = [[${participants}]];
+    const translations = {
+        latestChart: [[#{embedding_dashboard_chart_latest}]],
+    };
 </script>
 
 <!-- Footer -->

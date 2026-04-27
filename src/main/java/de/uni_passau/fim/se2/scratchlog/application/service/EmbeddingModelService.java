@@ -14,8 +14,10 @@ import de.uni_passau.fim.se2.litterbox.ast.parser.Scratch3Parser;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExampleSolution;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.Project;
 import de.uni_passau.fim.se2.scratchlog.spring.configuration.CodeEmbeddingConfiguration;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +30,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -42,13 +49,13 @@ public class EmbeddingModelService {
 
     private static final Logger log = LoggerFactory.getLogger(EmbeddingModelService.class);
 
-    private final CodeEmbeddingConfiguration configuration;
-
     private final BlockEventRepository blockEventRepository;
 
     private final ExperimentRepository experimentRepository;
 
     private final ExperimentService experimentService;
+
+    private final CodeService codeService;
 
     private final RestClient restClient;
 
@@ -59,14 +66,15 @@ public class EmbeddingModelService {
         final CodeEmbeddingConfiguration codeEmbeddingConfiguration,
         final BlockEventRepository blockEventRepository,
         final ExperimentRepository experimentRepository,
-        final ExperimentService experimentService
+        final ExperimentService experimentService,
+        final CodeService codeService
     ) {
-        this.configuration = codeEmbeddingConfiguration;
         this.blockEventRepository = blockEventRepository;
         this.experimentRepository = experimentRepository;
         this.experimentService = experimentService;
+        this.codeService = codeService;
 
-        this.restClient = RestClient.create(configuration.getEmbeddingConnectorUrl());
+        this.restClient = RestClient.create(codeEmbeddingConfiguration.getEmbeddingConnectorUrl());
 
         MLPreprocessorCommonOptions mlOptions = new MLPreprocessorCommonOptions(
             MLOutputPath.console(),
@@ -98,14 +106,18 @@ public class EmbeddingModelService {
         StopWatch watch = new StopWatch();
         watch.start();
 
-        final Map<Integer, String> studentProjectsById = new HashMap<>();
+        final Map<Integer, Integer> projectIdToStudentId = new HashMap<>();
+        final Map<Integer, String> projectsById = new HashMap<>();
         blockEventRepository
             .findLastPerUserInExperiment(experimentId)
-            .forEach(project -> studentProjectsById.put(project.id(), project.projectJson()));
+            .forEach(project -> {
+                projectsById.put(project.id(), project.projectJson());
+                projectIdToStudentId.put(project.id(), project.userId());
+            });
 
-        final byte[] starterProjectSb3 = experimentRepository.getExperimentStarterProject(experimentId);
-        final ExampleSolution solutionSb3 = experimentService.getExampleSolution(experimentId);
-        if (starterProjectSb3 == null || solutionSb3 == null) {
+        final var starterProject = getStarterProject(experimentId);
+        final var solutionProject = getSolutionProject(experimentId);
+        if (starterProject == null || solutionProject == null) {
             throw new IllegalArgumentException(
                 "Progress-Variance-Projection can only be constructed if start and solution projects are given."
             );
@@ -113,14 +125,117 @@ public class EmbeddingModelService {
         watch.stop();
         log.debug("Database fetching finished in {}ms.", watch.getTotalTimeMillis());
 
-        final var starterProject = getProjectJson(starterProjectSb3);
-        final var solutionProject = getProjectJson(solutionSb3.getSb3Project());
-
-        return getProgressVarianceProjection(
+        final ProgressVarianceProjectionResponse response = getProgressVarianceProjection(
             starterProject,
             solutionProject,
-            studentProjectsById
+            projectsById
         );
+
+        return convertResponse(response, projectIdToStudentId);
+    }
+
+    /**
+     * Computes the progress-variance-projection for the given experiment.
+     *
+     * <p>As a timeline of program states of all given users in the experiment.
+     *
+     * @param experimentId The experiment id.
+     * @param userIds The set of users for which the progression timeline should be generated.
+     * @param stepMinutes The step in minutes between program states.
+     * @return The progress-variance projection.
+     * @throws IOException In case the example/solution projects cannot be parsed.
+     */
+    public ProgressVarianceProjection getProgressVarianceProjectionForUsers(
+        final int experimentId,
+        final Set<Integer> userIds,
+        final int stepMinutes
+    ) throws IOException {
+        if (userIds.isEmpty()) {
+            return new ProgressVarianceProjection(Collections.emptyList());
+        }
+
+        StopWatch watch = new StopWatch();
+        watch.start();
+
+        final Map<Integer, String> projectsByProjectId = new HashMap<>();
+        final Map<Integer, Integer> projectIdToStudentId = new HashMap<>();
+        for (final int userId : userIds) {
+            final List<Project> studentProjects = getProjectsForUser(experimentId, userId, stepMinutes);
+            studentProjects.forEach(project -> {
+                projectsByProjectId.put(project.id(), project.projectJson());
+                projectIdToStudentId.put(project.id(), project.userId());
+            });
+        }
+
+        final var starterProject = getStarterProject(experimentId);
+        final var solutionProject = getSolutionProject(experimentId);
+        if (starterProject == null || solutionProject == null) {
+            throw new IllegalArgumentException(
+                "Progress-Variance-Projection can only be constructed if start and solution projects are given."
+            );
+        }
+        watch.stop();
+        log.debug("Database fetching finished in {}ms.", watch.getTotalTimeMillis());
+
+        final ProgressVarianceProjectionResponse response = getProgressVarianceProjection(
+            starterProject,
+            solutionProject,
+            projectsByProjectId
+        );
+
+        return convertResponse(response, projectIdToStudentId);
+    }
+
+    private List<Project> getProjectsForUser(final int experimentId, final int userId, final int stepMinutes) {
+        return codeService.getFilteredJsons(userId, experimentId, stepMinutes, 0, 0, Optional.empty())
+            .stream()
+            .map(projection -> new Project(projection.getId(), userId, projection.getCode()))
+            .sorted(Comparator.comparing(Project::id))
+            .toList();
+    }
+
+    private ProgressVarianceProjection convertResponse(
+        final ProgressVarianceProjectionResponse response,
+        final Map<Integer, Integer> projectIdToStudentId
+    ) {
+        final Map<Integer, List<List<Double>>> datapoints = new HashMap<>();
+        for (final Projection projection : response.projections()) {
+            final int userId = projectIdToStudentId.get(projection.id());
+            datapoints.compute(userId, (k, ps) -> {
+                if (ps == null) {
+                    ps = new ArrayList<>();
+                }
+                ps.add(projection.xy());
+                return ps;
+            });
+        }
+
+        final List<DataSeries> data = new ArrayList<>(datapoints.size());
+        for (final var entry : datapoints.entrySet()) {
+            data.add(new DataSeries(entry.getKey(), entry.getValue()));
+        }
+
+        return new ProgressVarianceProjection(data);
+    }
+
+    @Nullable
+    private String getStarterProject(final int experimentId) throws IOException {
+        final byte[] starterProjectSb3 = experimentRepository.getExperimentStarterProject(experimentId);
+        if (starterProjectSb3 == null) {
+            return null;
+        }
+
+        return getProjectJson(starterProjectSb3);
+    }
+
+    @Nullable
+    private String getSolutionProject(final int experimentId) throws IOException {
+        final ExampleSolution solutionSb3 = experimentService.getExampleSolution(experimentId);
+        if (solutionSb3 == null) {
+            return null;
+        }
+
+        return getProjectJson(solutionSb3.getSb3Project());
     }
 
     /**
@@ -133,7 +248,7 @@ public class EmbeddingModelService {
      *                        single student over time.
      * @return The 2D-progress-variance-projection of the student projects.
      */
-    public ProgressVarianceProjection getProgressVarianceProjection(
+    private ProgressVarianceProjectionResponse getProgressVarianceProjection(
         final String templateProject,
         final String solutionProject,
         final Map<Integer, String> studentProjects
@@ -152,7 +267,7 @@ public class EmbeddingModelService {
                 .uri("ggnn/progress-variance-projection")
                 .body(request)
                 .retrieve()
-                .body(ProgressVarianceProjection.class);
+                .body(ProgressVarianceProjectionResponse.class);
             watch.stop();
             log.debug("Embedding API request done in {}ms.", watch.getTotalTimeMillis());
 
@@ -236,9 +351,24 @@ public class EmbeddingModelService {
     ) {
     }
 
-    public record ProgressVarianceProjection(
-        Map<String, List<Double>> projections
+    private record ProgressVarianceProjectionResponse(
+        List<Projection> projections
     ) {
+    }
+
+    private record Projection(int id, List<Double> xy) {
+    }
+
+    public record ProgressVarianceProjection(List<DataSeries> data) {
+    }
+
+    /**
+     * A series of data.
+     *
+     * @param userId The user which created the datapoints.
+     * @param datapoints The series of datapoints with their x/y coordinates.
+     */
+    public record DataSeries(int userId, List<List<Double>> datapoints) {
     }
 
 }

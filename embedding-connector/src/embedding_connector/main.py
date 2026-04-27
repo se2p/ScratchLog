@@ -70,11 +70,18 @@ ProcessedGgnnProgram = dict[str, Any]
 class GgnnProgressVarianceProjectionRequest(BaseModel):
     template_program: ProcessedGgnnProgram = Field(..., alias="templateProgram")
     solution_program: ProcessedGgnnProgram = Field(..., alias="solutionProgram")
-    student_programs: dict[int, ProcessedGgnnProgram] = Field(..., alias="studentPrograms")
+    student_programs: dict[int, ProcessedGgnnProgram] = Field(
+        ..., alias="studentPrograms"
+    )
+
+
+class Projection(BaseModel):
+    id: int
+    xy: tuple[float, float]
 
 
 class ProgressVarianceProjection(BaseModel):
-    projections: dict[int, tuple[float, float]]
+    projections: list[Projection]
 
 
 @app.post("/ggnn/progress-variance-projection")
@@ -83,10 +90,10 @@ def get_progress_variance_projection(
     model: ApiModel = Depends(_get_ggnn_model),
 ) -> ProgressVarianceProjection:
     return ProgressVarianceProjection(
-        projections={
-            project_id: (random.random(), random.random())
+        projections=[
+            Projection(id=project_id, xy=(random.random(), random.random()))
             for project_id, project in req.student_programs.items()
-        }
+        ]
     )
 
 
