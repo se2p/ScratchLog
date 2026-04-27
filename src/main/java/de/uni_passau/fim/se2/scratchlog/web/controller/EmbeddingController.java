@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/embeddings/")
@@ -43,6 +44,23 @@ public class EmbeddingController {
         return embeddingModelService.getProgressVarianceProjectionAllLatest(experimentId);
     }
 
-    // todo: p-v-projection for a subset of users and over time
-
+    /**
+     * Computes the progress-variance-projection for the given experiment.
+     *
+     * <p>As a timeline of program states of all given users in the experiment.
+     *
+     * @param experimentId The experiment id.
+     * @param userIds The set of users for which the progression timeline should be generated.
+     * @param stepMinutes The step in minutes between program states.
+     * @return The progress-variance projection.
+     * @throws IOException In case the example/solution projects cannot be parsed.
+     */
+    @GetMapping("/progress-variance-projection/timeline")
+    public EmbeddingModelService.ProgressVarianceProjection getProgressVarianceProjectionOverTime(
+        @RequestParam("experimentId") final int experimentId,
+        @RequestParam(value = "userIds", defaultValue = "") final Set<Integer> userIds,
+        @RequestParam(value = "stepMinutes", defaultValue = "1") final int stepMinutes
+    ) throws IOException {
+        return embeddingModelService.getProgressVarianceProjectionForUsers(experimentId, userIds, stepMinutes);
+    }
 }
