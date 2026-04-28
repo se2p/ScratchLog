@@ -49,7 +49,7 @@ import java.util.zip.ZipInputStream;
 @Profile(Constants.PROFILE_CODE_EMBEDDINGS)
 public class EmbeddingModelService {
 
-    private static final int CACHE_SIZE = 1_000;
+    private static final int CACHE_SIZE = 5_000;
 
     private static final Logger log = LoggerFactory.getLogger(EmbeddingModelService.class);
 

@@ -33,6 +33,6 @@ class ApiModel:
 
         return numpy.max(per_sprite_embeddings, axis=0)
 
-    @functools.lru_cache(maxsize=1_000)
+    @functools.lru_cache(maxsize=5_000)
     def _compute(self, program: str) -> list[float]:
         return self._embedding_tool.embedding(program)
