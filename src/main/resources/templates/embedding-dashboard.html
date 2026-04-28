@@ -9,6 +9,7 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
     <script type="text/javascript" th:src="@{/webjars/chart.js/dist/chart.umd.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js}"></script>
 </head>
 <body>
 <!-- Navigation bar -->
@@ -35,6 +36,9 @@
             <h4 th:text="#{embedding_dashboard_chart_latest}"></h4>
             <div>
                 <canvas id="chart-all-latest"></canvas>
+                <div>
+                    <button id="chart-all-latest-reset-zoom" class="btn btn-outline-primary" th:text="#{reset_zoom}"></button>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -53,6 +57,9 @@
             </ul>
             <div>
                 <canvas id="chart-timeline"></canvas>
+                <div>
+                    <button id="chart-timeline-reset-zoom" class="btn btn-outline-primary" th:text="#{reset_zoom}"></button>
+                </div>
             </div>
         </div>
     </div>

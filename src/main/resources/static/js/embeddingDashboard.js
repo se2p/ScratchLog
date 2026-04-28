@@ -22,6 +22,21 @@ const chartCommonOptions = {
                 text: "Variance"
             }
         }
+    },
+    plugins: {
+        zoom: {
+            pan: {
+                enabled: true,
+            },
+            zoom: {
+                wheel: {
+                    enabled: true,
+                },
+                pinch: {
+                    enabled: true
+                },
+            }
+        }
     }
 };
 
@@ -63,22 +78,28 @@ function updateAllLatestChart() {
             }
 
             if (latestChart) {
-                latestChart.destroy();
+                latestChart.data.labels = labels;
+                latestChart.data.datasets = [{
+                    label: translations.latestChart,
+                    data: chartData,
+                }];
+                latestChart.update();
+            } else {
+                latestChart = new Chart(element, {
+                    type: "bubble",
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: translations.latestChart,
+                                data: chartData,
+                            }
+                        ],
+                    },
+                    options: chartCommonOptions,
+                });
+                addResetZoomEventHandler("chart-all-latest-reset-zoom", latestChart);
             }
-
-            latestChart = new Chart(element, {
-                type: "bubble",
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: translations.latestChart,
-                            data: chartData,
-                        }
-                    ],
-                },
-                options: chartCommonOptions,
-            });
         },
         error: function (err) {
             console.log(err.statusText);
@@ -96,7 +117,9 @@ function updateTimelineChart() {
 
     if (userIds.length === 0) {
         if (timelineChart) {
-            timelineChart.destroy();
+            timelineChart.data.labels = [];
+            timelineChart.data.datasets = [];
+            timelineChart.update();
         }
         return;
     }
@@ -123,20 +146,33 @@ function updateTimelineChart() {
             }
 
             if (timelineChart) {
-                timelineChart.destroy();
+                timelineChart.data.labels = labels;
+                timelineChart.data.datasets = datasets;
+                timelineChart.update();
+            } else {
+                timelineChart = new Chart(element, {
+                    type: "line",
+                    data: {
+                        labels: labels,
+                        datasets: datasets,
+                    },
+                    options: chartCommonOptions,
+                });
+                addResetZoomEventHandler("chart-timeline-reset-zoom", timelineChart);
             }
 
-            timelineChart = new Chart(element, {
-                type: "line",
-                data: {
-                    labels: labels,
-                    datasets: datasets,
-                },
-                options: chartCommonOptions,
-            });
         },
         error: function (err) {
             console.log(err.statusText);
+        }
+    });
+}
+
+function addResetZoomEventHandler(elementId, targetChart) {
+    const element = document.getElementById(elementId);
+    element.addEventListener("click", () => {
+        if (targetChart) {
+            targetChart.resetZoom();
         }
     });
 }
