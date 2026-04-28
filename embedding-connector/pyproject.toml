@@ -9,10 +9,11 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]>=0.136.0",
-    "pydantic>=2.13.2",
-    "uvicorn>=0.44.0",
     "ggnn>=0.1.0",
+    "numpy>=2.4.4",
+    "pydantic>=2.13.2",
     "torch>=2.10.0,<2.11.0",
+    "uvicorn>=0.44.0",
 ]
 
 [dependency-groups]

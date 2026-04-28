@@ -1,18 +1,19 @@
 import logging
 import os
-import random
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import numpy
 import uvicorn
 from fastapi import FastAPI, Depends, Request
-from typing import Final, Any
+from typing import Final
 from collections.abc import AsyncIterator
 
 from pydantic import BaseModel, Field
 
 from embedding_connector.ggnn_api import ApiModel
+from embedding_connector.projection import progress_variance_projection
 
 log: Final[logging.Logger] = logging.getLogger("uvicorn")
 
@@ -22,14 +23,13 @@ async def _app_init(app: FastAPI) -> AsyncIterator[None]:
     log.info("Initialising model...")
     config_env = os.getenv("MODEL_CONFIG_FILE")
     if config_env is None:
-        config = Path("/ggnn-model-config.yaml")
+        config = Path("/ggnn/model-config.yaml")
         log.warning(
             "Missing environment value 'GGNN_CONFIG_FILE'! Using default %s.", config
         )
     else:
         config = Path(config_env)
-    # app.state.ggnn_model = ApiModel(config)
-    app.state.ggnn_model = "dummy model"
+    app.state.ggnn_model = ApiModel(config)
     log.info("Model has been initialised successfully!")
     yield
 
@@ -55,16 +55,14 @@ class GgnnEmbeddingResponse(BaseModel):
 
 
 @app.post("/ggnn/embedding/")
-def get_ggnn_embedding(
+async def get_ggnn_embedding(
     req: GgnnEmbeddingRequest, model: ApiModel = Depends(_get_ggnn_model)
 ) -> GgnnEmbeddingResponse:
-    log.info(model)
-    log.info(req)
-    # todo: query `model` and return actual embedding
-    return GgnnEmbeddingResponse(embedding=list(range(128)))
+    embedding = await model.embed(req.processed_project)
+    return GgnnEmbeddingResponse(embedding=embedding.tolist())
 
 
-ProcessedGgnnProgram = dict[str, Any]
+ProcessedGgnnProgram = str
 
 
 class GgnnProgressVarianceProjectionRequest(BaseModel):
@@ -85,14 +83,30 @@ class ProgressVarianceProjection(BaseModel):
 
 
 @app.post("/ggnn/progress-variance-projection")
-def get_progress_variance_projection(
+async def get_progress_variance_projection(
     req: GgnnProgressVarianceProjectionRequest,
     model: ApiModel = Depends(_get_ggnn_model),
 ) -> ProgressVarianceProjection:
+    start_embedding = await model.embed(req.template_program)
+    solution_embedding = await model.embed(req.solution_program)
+    embeddings = [
+        (project_id, await model.embed(project))
+        for project_id, project in req.student_programs.items()
+    ]
+    student_embeddings = numpy.stack([e[1] for e in embeddings])
+
+    projections = progress_variance_projection(
+        student_embeddings, start_embedding, solution_embedding
+    )
+
     return ProgressVarianceProjection(
         projections=[
-            Projection(id=project_id, xy=(random.random(), random.random()))
-            for project_id, project in req.student_programs.items()
+            Projection(id=project_id, xy=(projection[0], projection[1]))
+            for project_id, projection in zip(
+                (e[0] for e in embeddings),
+                projections,
+                strict=True,
+            )
         ]
     )
 
