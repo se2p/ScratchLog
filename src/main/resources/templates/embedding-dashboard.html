@@ -31,25 +31,32 @@
             </div>
         </div>
 
-        <div>
+        <div class="card-body">
             <h4 th:text="#{embedding_dashboard_chart_latest}"></h4>
-            <div class="card-body">
+            <div>
                 <canvas id="chart-all-latest"></canvas>
             </div>
         </div>
-
-        <div>
+        <div class="card-body">
             <h4 th:text="#{embedding_dashboard_chart_timeline}"></h4>
-            <!-- todo: student selector -->
-            <div class="card-body">
+            <ul class="list-group list-group-horizontal flex-wrap mx-3">
+                <li class="list-group-item" th:each="participant: ${participants}">
+                    <input
+                        type="checkbox"
+                        th:id="'user-select-' + ${participant.id()}"
+                    />
+                    <label
+                        th:for="'user-select-' + ${participant.id()}"
+                        th:text="${participant.username()}"
+                    ></label>
+                </li>
+            </ul>
+            <div>
                 <canvas id="chart-timeline"></canvas>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Script to fetch and update the dashboard information. -->
-<script type="module" th:src="@{/js/embeddingDashboard.js}"></script>
 
 <!-- Let Thymeleaf fetch the ID of the current experiment and the events for which information should be fetched
 initially. -->
@@ -60,6 +67,9 @@ initially. -->
         latestChart: [[#{embedding_dashboard_chart_latest}]],
     };
 </script>
+
+<!-- Script to fetch and update the dashboard information. -->
+<script type="module" th:src="@{/js/embeddingDashboard.js}"></script>
 
 <!-- Footer -->
 <div th:insert="~{footer :: footer}"></div>

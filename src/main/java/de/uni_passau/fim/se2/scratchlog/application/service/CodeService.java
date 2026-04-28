@@ -169,20 +169,12 @@ public class CodeService {
                     blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user, experiment);
 
             if (json.isEmpty()) {
-                log.error(
-                    "Could not find any json data for user with id {} for experiment with id {}!",
-                    user, experimentId
-                );
                 throw new NotFoundException("Could not find any json data for user with id " + user + " for experiment "
                         + "with id " + experimentId + "!");
             }
 
             return json;
         } catch (EntityNotFoundException e) {
-            log.error(
-                "Could not find user with id {} or experiment with id {} when trying to download the json files!",
-                userId, experimentId, e
-            );
             throw new NotFoundException("Could not find user with id " + userId + " or experiment with id "
                     + experimentId + " when trying to download the json files!", e);
         }

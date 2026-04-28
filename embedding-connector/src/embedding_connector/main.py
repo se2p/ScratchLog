@@ -87,6 +87,9 @@ async def get_progress_variance_projection(
     req: GgnnProgressVarianceProjectionRequest,
     model: ApiModel = Depends(_get_ggnn_model),
 ) -> ProgressVarianceProjection:
+    if len(req.student_programs) == 0:
+        return ProgressVarianceProjection(projections=[])
+
     start_embedding = await model.embed(req.template_program)
     solution_embedding = await model.embed(req.solution_program)
     embeddings = [

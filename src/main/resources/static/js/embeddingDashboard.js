@@ -4,6 +4,8 @@
  * `enabled` marks the user as visible in the user-history trace.
  */
 let participantsMap;
+let latestChart;
+let timelineChart;
 
 const chartCommonOptions = {
     scales: {
@@ -27,11 +29,22 @@ $(document).ready(() => {
     participantsMap = new Map();
     for (const p of participants) {
         participantsMap.set(p.id, {name: p.username, enabled: false});
+        addUserSelectionEventListener(p);
     }
 
     setTimeout(() => updateAllLatestChart(), 0);
     setTimeout(() => updateTimelineChart(), 0);
 });
+
+function addUserSelectionEventListener(participant) {
+    const checkbox = document.getElementById(`user-select-${participant.id}`)
+    checkbox.addEventListener("change", () => toggleUserForTimeline(participant.id, checkbox.checked));
+}
+
+function toggleUserForTimeline(userId, isEnabled) {
+    participantsMap.get(userId).enabled = isEnabled;
+    setTimeout(() => updateTimelineChart(), 0);
+}
 
 function updateAllLatestChart() {
     $.ajax({
@@ -49,7 +62,11 @@ function updateAllLatestChart() {
                 chartData.push(dataSeries.datapoints[0]);
             }
 
-            new Chart(element, {
+            if (latestChart) {
+                latestChart.destroy();
+            }
+
+            latestChart = new Chart(element, {
                 type: "bubble",
                 data: {
                     labels: labels,
@@ -77,6 +94,13 @@ function updateTimelineChart() {
         }
     });
 
+    if (userIds.length === 0) {
+        if (timelineChart) {
+            timelineChart.destroy();
+        }
+        return;
+    }
+
     $.ajax({
         type: "get",
         url: contextPath + "embeddings/progress-variance-projection/timeline",
@@ -91,14 +115,18 @@ function updateTimelineChart() {
                 datasets.push({
                     label: participantsMap.get(dataSeries.userId).name,
                     data: dataSeries.datapoints,
-                    tension: 0.2,
+                    tension: 0.1,
                 });
                 for (let idx = 1; idx <= dataSeries.datapoints.length; ++idx) {
                     labels.push(idx.toString());
                 }
             }
 
-            new Chart(element, {
+            if (timelineChart) {
+                timelineChart.destroy();
+            }
+
+            timelineChart = new Chart(element, {
                 type: "line",
                 data: {
                     labels: labels,
