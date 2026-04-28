@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestClient;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -49,6 +50,8 @@ public class EmbeddingModelService {
 
     private static final Logger log = LoggerFactory.getLogger(EmbeddingModelService.class);
 
+    private final JsonMapper jsonMapper;
+
     private final BlockEventRepository blockEventRepository;
 
     private final ExperimentRepository experimentRepository;
@@ -64,11 +67,13 @@ public class EmbeddingModelService {
     @Autowired
     public EmbeddingModelService(
         final CodeEmbeddingConfiguration codeEmbeddingConfiguration,
+        final JsonMapper jsonMapper,
         final BlockEventRepository blockEventRepository,
         final ExperimentRepository experimentRepository,
         final ExperimentService experimentService,
         final CodeService codeService
     ) {
+        this.jsonMapper = jsonMapper;
         this.blockEventRepository = blockEventRepository;
         this.experimentRepository = experimentRepository;
         this.experimentService = experimentService;
@@ -286,14 +291,14 @@ public class EmbeddingModelService {
         final var templateProgram = processProgramForGgnn(templateProgramJson);
         final var solutionProgram = processProgramForGgnn(solutionProgramJson);
 
-        final Map<Integer, WholeProgramOutput<GgnnAnalyzerOutput>> studentPrograms = studentProgramJsons
+        final Map<Integer, String> studentPrograms = studentProgramJsons
             .entrySet()
             .parallelStream()
             .map(entry -> {
                 try {
                     return new AbstractMap.SimpleImmutableEntry<>(
                         entry.getKey(),
-                        processProgramForGgnn(entry.getValue())
+                        jsonMapper.writeValueAsString(processedProject)
                     );
                 } catch (ParsingException e) {
                     // ignore projects we cannot parse -> we cannot compute an embedding in this case
@@ -303,7 +308,11 @@ public class EmbeddingModelService {
             .filter(Objects::nonNull)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        return new ProgressVarianceProjectionRequest<>(templateProgram, solutionProgram, studentPrograms);
+        return new ProgressVarianceProjectionRequest<>(
+            jsonMapper.writeValueAsString(templateProgram),
+            jsonMapper.writeValueAsString(solutionProgram),
+            studentPrograms
+        );
     }
 
     private WholeProgramOutput<GgnnAnalyzerOutput> processProgramForGgnn(final Program program) {
@@ -345,9 +354,9 @@ public class EmbeddingModelService {
     }
 
     public record ProgressVarianceProjectionRequest<T>(
-        WholeProgramOutput<T> templateProgram,
-        WholeProgramOutput<T> solutionProgram,
-        Map<Integer, WholeProgramOutput<T>> studentPrograms
+        String templateProgram,
+        String solutionProgram,
+        Map<Integer, String> studentPrograms
     ) {
     }
 

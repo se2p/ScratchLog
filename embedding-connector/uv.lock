@@ -329,6 +329,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "ggnn" },
+    { name = "numpy" },
     { name = "pydantic" },
     { name = "torch" },
     { name = "uvicorn" },
@@ -344,6 +345,7 @@ dev = [
 requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.136.0" },
     { name = "ggnn", specifier = ">=0.1.0", index = "https://gitlab.infosun.fim.uni-passau.de/api/v4/projects/1040/packages/pypi/simple" },
+    { name = "numpy", specifier = ">=2.4.4" },
     { name = "pydantic", specifier = ">=2.13.2" },
     { name = "torch", specifier = ">=2.10.0,<2.11.0" },
     { name = "uvicorn", specifier = ">=0.44.0" },
