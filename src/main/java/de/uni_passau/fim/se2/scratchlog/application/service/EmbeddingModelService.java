@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ConcurrentLruCache;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.json.JsonMapper;
@@ -48,6 +49,8 @@ import java.util.zip.ZipInputStream;
 @Profile(Constants.PROFILE_CODE_EMBEDDINGS)
 public class EmbeddingModelService {
 
+    private static final int CACHE_SIZE = 1_000;
+
     private static final Logger log = LoggerFactory.getLogger(EmbeddingModelService.class);
 
     private final JsonMapper jsonMapper;
@@ -63,6 +66,8 @@ public class EmbeddingModelService {
     private final RestClient restClient;
 
     private final WholeProgramJsonProcessor<GgnnAnalyzerOutput> ggnnProgramPreprocessor;
+
+    private final ConcurrentLruCache<String, WholeProgramOutput<GgnnAnalyzerOutput>> ggnnCache;
 
     @Autowired
     public EmbeddingModelService(
@@ -94,6 +99,14 @@ public class EmbeddingModelService {
             "project"
         );
         this.ggnnProgramPreprocessor = new WholeProgramJsonProcessor<>(mlOptions, ggnnPreprocessor);
+
+        ggnnCache = new ConcurrentLruCache<>(CACHE_SIZE, (programJson) -> {
+            try {
+                return processProgramForGgnn(programJson);
+            } catch (ParsingException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     /**
@@ -287,20 +300,21 @@ public class EmbeddingModelService {
         final String templateProgramJson,
         final String solutionProgramJson,
         final Map<Integer, String> studentProgramJsons
-    ) throws ParsingException {
-        final var templateProgram = processProgramForGgnn(templateProgramJson);
-        final var solutionProgram = processProgramForGgnn(solutionProgramJson);
+    ) {
+        final var templateProgram = ggnnCache.get(templateProgramJson);
+        final var solutionProgram = ggnnCache.get(solutionProgramJson);
 
         final Map<Integer, String> studentPrograms = studentProgramJsons
             .entrySet()
             .parallelStream()
             .map(entry -> {
                 try {
+                    final var processedProject = ggnnCache.get(entry.getValue());
                     return new AbstractMap.SimpleImmutableEntry<>(
                         entry.getKey(),
                         jsonMapper.writeValueAsString(processedProject)
                     );
-                } catch (ParsingException e) {
+                } catch (RuntimeException e) {
                     // ignore projects we cannot parse -> we cannot compute an embedding in this case
                     return null;
                 }
