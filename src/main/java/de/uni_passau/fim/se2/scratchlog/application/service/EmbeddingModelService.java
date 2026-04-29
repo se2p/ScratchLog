@@ -12,6 +12,7 @@ import de.uni_passau.fim.se2.litterbox.ast.ParsingException;
 import de.uni_passau.fim.se2.litterbox.ast.model.Program;
 import de.uni_passau.fim.se2.litterbox.ast.parser.Scratch3Parser;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExampleSolution;
+import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.Project;
@@ -176,13 +177,13 @@ public class EmbeddingModelService {
         watch.start();
 
         final Map<Integer, String> projectsByProjectId = new HashMap<>();
-        final Map<Integer, Integer> projectIdToStudentId = new HashMap<>();
+        final Map<Integer, List<Integer>> projectsByStudent = new HashMap<>();
         for (final int userId : userIds) {
             final List<Project> studentProjects = getProjectsForUser(experimentId, userId, stepMinutes);
             studentProjects.forEach(project -> {
                 projectsByProjectId.put(project.id(), project.projectJson());
-                projectIdToStudentId.put(project.id(), project.userId());
             });
+            projectsByStudent.put(userId, studentProjects.stream().map(Project::id).toList());
         }
 
         final var starterProject = getStarterProject(experimentId);
@@ -201,14 +202,14 @@ public class EmbeddingModelService {
             projectsByProjectId
         );
 
-        return convertResponse(response, projectIdToStudentId);
+        return convertPerStudentResponse(response, projectsByStudent);
     }
 
     private List<Project> getProjectsForUser(final int experimentId, final int userId, final int stepMinutes) {
         return codeService.getFilteredJsons(userId, experimentId, stepMinutes, 0, 0, Optional.empty())
             .stream()
+            .sorted(Comparator.comparing(BlockEventJSONProjection::getDate))
             .map(projection -> new Project(projection.getId(), userId, projection.getCode()))
-            .sorted(Comparator.comparing(Project::id))
             .toList();
     }
 
@@ -226,6 +227,32 @@ public class EmbeddingModelService {
                 ps.add(projection.xy());
                 return ps;
             });
+        }
+
+        final List<DataSeries> data = new ArrayList<>(datapoints.size());
+        for (final var entry : datapoints.entrySet()) {
+            data.add(new DataSeries(entry.getKey(), entry.getValue()));
+        }
+
+        return new ProgressVarianceProjection(data);
+    }
+
+    private ProgressVarianceProjection convertPerStudentResponse(
+        final ProgressVarianceProjectionResponse response,
+        final Map<Integer, List<Integer>> studentProjects
+    ) {
+        final Map<Integer, List<Double>> rawDatapointsByProjectId = new HashMap<>();
+        for (final Projection projection : response.projections()) {
+            rawDatapointsByProjectId.put(projection.id(), projection.xy());
+        }
+
+        final Map<Integer, List<List<Double>>> datapoints = new HashMap<>();
+        for (final var entry : studentProjects.entrySet()) {
+            final List<List<Double>> studentProjections = new ArrayList<>();
+            for (final var projectId : entry.getValue()) {
+                studentProjections.add(rawDatapointsByProjectId.get(projectId));
+            }
+            datapoints.put(entry.getKey(), studentProjections);
         }
 
         final List<DataSeries> data = new ArrayList<>(datapoints.size());
