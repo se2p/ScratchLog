@@ -6,6 +6,7 @@
 let participantsMap;
 let latestChart;
 let timelineChart;
+let timelineChartInterval = 5;
 
 const chartCommonOptions = {
     scales: {
@@ -46,6 +47,9 @@ $(document).ready(() => {
         participantsMap.set(p.id, {name: p.username, enabled: false});
         addUserSelectionEventListener(p);
     }
+
+    const timelineChartIntervalInput = document.getElementById("chart-timeline-interval");
+    timelineChartIntervalInput.addEventListener("change", (event) => onTimelineIntervalChange(event.target.value));
 
     setTimeout(() => updateAllLatestChart(), 0);
     setTimeout(() => updateTimelineChart(), 0);
@@ -127,7 +131,7 @@ function updateTimelineChart() {
     $.ajax({
         type: "get",
         url: contextPath + "embeddings/progress-variance-projection/timeline",
-        data: {experimentId, userIds},
+        data: {experimentId, userIds, stepMinutes: timelineChartInterval},
         accept: "application/json",
         success: function (data) {
             const element = document.getElementById("chart-timeline");
@@ -175,4 +179,11 @@ function addResetZoomEventHandler(elementId, targetChart) {
             targetChart.resetZoom();
         }
     });
+}
+
+function onTimelineIntervalChange(newValue) {
+    if (newValue !== timelineChartInterval) {
+        timelineChartInterval = newValue;
+        setTimeout(() => updateTimelineChart(), 0);
+    }
 }
