@@ -41,7 +41,7 @@ public class WhiskerService {
      * @return The test case execution results.
      */
     @Nullable
-    public WhiskerApiResponse runTests(final byte[] projectSb3, final String testSuite) {
+    WhiskerApiResponse runTests(final byte[] projectSb3, final String testSuite) {
         final MultiValueMap<String, Resource> body = new LinkedMultiValueMap<>();
         body.add("project", new ByteArrayResource(projectSb3));
         body.add("testsuite", new ByteArrayResource(testSuite.getBytes(StandardCharsets.UTF_8)));
