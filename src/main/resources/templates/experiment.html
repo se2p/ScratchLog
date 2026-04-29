@@ -90,8 +90,14 @@
                             type="button" role="tab" aria-controls="nav-sb3" aria-selected="true"
                             th:text="#{heading_sb3_start}"></button>
                     <button class="nav-link" id="nav-sb3-solution-tab" data-bs-toggle="tab" data-bs-target="#nav-sb3-solution"
-                            type="button" role="tab" aria-controls="nav-sb3-solution" aria-selected="true"
+                            type="button" role="tab" aria-controls="nav-sb3-solution" aria-selected="false"
                             th:text="#{heading_sb3_solution}"></button>
+                    <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+                    <button class="nav-link" id="nav-testsuite-tab" data-bs-toggle="tab" data-bs-target="#nav-testsuite"
+                            type="button" role="tab" aria-controls="nav-testsuite" aria-selected="false"
+                            th:text="#{heading_testsuite}"
+                            th:if="${applicationConfig.whiskerActive()}"
+                    ></button>
                     <button class="nav-link" id="nav-downloadsb3-tab" data-bs-toggle="tab"
                             data-bs-target="#nav-downloadsb3" type="button" role="tab" aria-controls="nav-downloadsb3"
                             aria-selected="false" th:unless="${participants.isEmpty()}"
@@ -147,6 +153,30 @@
                         <div class="card-footer" style="width: 100%">
                             <div id="openDeleteSb3ExampleSolutionModal" class="btn btn-sm btn-danger" style="float: left;"
                                  type="submit" th:text="#{delete_sb3}" th:unless="${exampleSolutionName == null}"></div>
+                            <input class="btn btn-sm btn-primary" type="submit" style="float: right;"
+                                   th:value="#{upload}" />
+                        </div>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="nav-testsuite" role="tabpanel" aria-labelledby="nav-testsuite-tab"
+                     tabindex="1">
+                    <!-- The button to upload an example solution as sb3 or delete an existing one. -->
+                    <form method="post"
+                          th:action="@{/experiment/test-suite/upload}"
+                          th:object="${testSuite}"
+                          enctype="multipart/form-data"
+                          class="align-items-start d-flex flex-column"
+                    >
+                        <div class="p-5">
+                            <label for="testSuite" class="form-label" th:text="#{heading_testsuite}"></label>
+                            <input type="hidden" name="id" th:value="${experimentDTO.id}" />
+                            <input type="file" id="testSuite" class="form-control" th:field="*{file}" accept=".js"/>
+                        </div>
+
+                        <div class="card-footer" style="width: 100%">
+                            <div id="openDeleteTestSuiteModal" class="btn btn-sm btn-danger" style="float: left;"
+                                 type="submit" th:text="#{delete_testsuite}" th:unless="${testSuiteName == null}"></div>
                             <input class="btn btn-sm btn-primary" type="submit" style="float: right;"
                                    th:value="#{upload}" />
                         </div>
@@ -536,6 +566,18 @@
         <div class="d-flex justify-content-between">
             <input id="abortSb3SolutionDelete" class="btn btn-secondary" type="submit" th:value="#{abort}">
             <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/example-solution/delete(id=${experimentDTO.id})}"></a>
+        </div>
+    </div>
+</div>
+
+<!-- The popup dialogue to delete the current test suite. -->
+<div id="deleteTestSuiteModal" class="modal" sec:authorize="hasRole('ADMIN')">
+    <div class="modal-content">
+        <h2 th:text="#{delete_testsuite}"></h2>
+        <div class="mb-3" th:text="#{delete_testsuite_warn}"></div>
+        <div class="d-flex justify-content-between">
+            <input id="abortTestSuiteDelete" class="btn btn-secondary" type="submit" th:value="#{abort}">
+            <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/test-suite/delete(id=${experimentDTO.id})}"></a>
         </div>
     </div>
 </div>

@@ -24,9 +24,11 @@ package de.uni_passau.fim.se2.scratchlog.application.service;
 import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExampleSolution;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.TestSuite;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExampleSolutionRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.TestSuiteRepository;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ProjectFileDTO;
 import jakarta.validation.Valid;
@@ -61,13 +63,17 @@ public class ExperimentService {
 
     private final ExampleSolutionRepository exampleSolutionRepository;
 
+    private final TestSuiteRepository testSuiteRepository;
+
     @Autowired
     public ExperimentService(
         final ExperimentRepository experimentRepository,
-        final ExampleSolutionRepository exampleSolutionRepository
+        final ExampleSolutionRepository exampleSolutionRepository,
+        final TestSuiteRepository testSuiteRepository
     ) {
         this.experimentRepository = experimentRepository;
         this.exampleSolutionRepository = exampleSolutionRepository;
+        this.testSuiteRepository = testSuiteRepository;
     }
 
     /**
@@ -230,6 +236,41 @@ public class ExperimentService {
     }
 
     /**
+     * Adds a test suite to an experiment.
+     *
+     * @param experimentId The id of an experiment.
+     * @param filename The filename of the test suite file.
+     * @param testSuite The test suite content.
+     */
+    public void addTestSuite(final int experimentId, final String filename, final String testSuite) {
+        if (testSuite == null) {
+            throw new IllegalArgumentException("Cannot upload empty test suite!");
+        }
+
+        deleteTestSuite(experimentId);
+
+        final Experiment experiment = experimentRepository.getReferenceById(experimentId);
+
+        final TestSuite suite = new TestSuite();
+        suite.setExperiment(experiment);
+        suite.setFilename(filename);
+        suite.setTestImplementation(testSuite);
+
+        testSuiteRepository.save(suite);
+    }
+
+    /**
+     * Finds the test suite of the experiment.
+     *
+     * @param experimentId The ID of an experiment.
+     * @return The test suite for this experiment, or {@code null} if none exists.
+     */
+    @Nullable
+    public TestSuite getTestSuite(final int experimentId) {
+        return testSuiteRepository.getByExperiment_Id(experimentId).orElse(null);
+    }
+
+    /**
      * Deletes the current sb3 project for the experiment with the given id.
      *
      * @param id The experiment ID.
@@ -248,6 +289,15 @@ public class ExperimentService {
      */
     public void deleteExampleSolution(final int id) {
         exampleSolutionRepository.deleteExampleSolutionByExperiment_Id(id);
+    }
+
+    /**
+     * Deletes the test suite of an experiment.
+     *
+     * @param id The id of an experiment.
+     */
+    public void deleteTestSuite(final int id) {
+        testSuiteRepository.deleteByExperiment_Id(id);
     }
 
     /**

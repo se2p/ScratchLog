@@ -166,16 +166,12 @@ public class ExperimentControllerTest extends AbstractControllerTest {
     private static final String PARTICIPANT2 = "participant2";
     private static final List<String> PARTICIPANT_LIST = List.of(PARTICIPANT1, PARTICIPANT2);
     private static final int PAGE = 3;
-    private static final int LAST = 4;
     private static final String FILETYPE_SB3 = "application/octet-stream";
-    private static final String FILENAME_SB3 = "project.sb3";
     private static final String FILETYPE_CSV = "text/csv";
     private static final String FILENAME_CSV = "participants.csv";
-    private static final String ERROR_ATTRIBUTE = "error";
     private static final int LAST_PAGE = 3;
     private static final int ID = 1;
     private static final String GUI_URL = "scratch";
-    private static final byte[] CONTENT = new byte[]{1, 2, 3};
     private final ExperimentDTO experimentDTO = new ExperimentDTO(ID, TITLE, DESCRIPTION, INFO, POSTSCRIPT, false,
             false, GUI_URL);
     private final UserDTO userDTO = new UserDTO(USERNAME, "admin1@admin.de", Role.ADMIN, Language.ENGLISH, PASSWORD,
@@ -962,7 +958,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(pageService).getLastParticipantPage(ID);
         verify(pageService).getParticipantPage(anyInt(), anyInt());
-        verify(model, times(8)).addAttribute(anyString(), any());
+        verify(model, times(10)).addAttribute(anyString(), any());
     }
 
     @Test
