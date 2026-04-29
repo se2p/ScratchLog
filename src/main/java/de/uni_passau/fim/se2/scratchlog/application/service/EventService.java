@@ -44,6 +44,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.repository.JsonEventReposito
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ResourceEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
+import de.uni_passau.fim.se2.scratchlog.spring.events.TestExecutionRequestEvent;
 import de.uni_passau.fim.se2.scratchlog.util.enums.LibraryResource;
 import de.uni_passau.fim.se2.scratchlog.web.dto.BlockEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ClickEventDTO;
@@ -59,6 +60,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
@@ -81,6 +83,8 @@ public class EventService {
     private static final Logger log = LoggerFactory.getLogger(EventService.class);
 
     private final JsonMapper jsonMapper;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * The event count repository to use for event count queries.
@@ -138,18 +142,21 @@ public class EventService {
     private final ExperimentRepository experimentRepository;
 
     @Autowired
-    public EventService(final JsonMapper jsonMapper,
-                        final EventCountRepository eventCountRepository,
-                        final CodesDataRepository codesDataRepository,
-                        final BlockEventRepository blockEventRepository,
-                        final ClickEventRepository clickEventRepository,
-                        final DebuggerEventRepository debuggerEventRepository,
-                        final DebuggerQuestionEventRepository debuggerQuestionEventRepository,
-                        final JsonEventRepository jsonEventRepository,
-                        final ResourceEventRepository resourceEventRepository,
-                        final ParticipantRepository participantRepository,
-                        final UserRepository userRepository,
-                        final ExperimentRepository experimentRepository) {
+    public EventService(
+        final JsonMapper jsonMapper,
+        final EventCountRepository eventCountRepository,
+        final CodesDataRepository codesDataRepository,
+        final BlockEventRepository blockEventRepository,
+        final ClickEventRepository clickEventRepository,
+        final DebuggerEventRepository debuggerEventRepository,
+        final DebuggerQuestionEventRepository debuggerQuestionEventRepository,
+        final JsonEventRepository jsonEventRepository,
+        final ResourceEventRepository resourceEventRepository,
+        final ParticipantRepository participantRepository,
+        final UserRepository userRepository,
+        final ExperimentRepository experimentRepository,
+        final ApplicationEventPublisher applicationEventPublisher
+    ) {
         this.jsonMapper = jsonMapper;
         this.eventCountRepository = eventCountRepository;
         this.codesDataRepository = codesDataRepository;
@@ -162,6 +169,7 @@ public class EventService {
         this.participantRepository = participantRepository;
         this.userRepository = userRepository;
         this.experimentRepository = experimentRepository;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     /**
@@ -178,13 +186,23 @@ public class EventService {
             if (isParticipant(user, experiment, blockEventDTO.getUser(), blockEventDTO.getExperiment())
                     && isValidEvent(user, experiment, blockEventDTO.getDate())) {
                 BlockEvent blockEvent = createBlockEvent(blockEventDTO, user, experiment);
-                blockEventRepository.save(blockEvent);
+                blockEvent = blockEventRepository.save(blockEvent);
+
+                publishBlockEventUploadMessage(experiment.getId(), blockEvent);
             }
         } catch (ConstraintViolationException e) {
             log.error(
                     "Could not store the block event data for user with id {} for experiment with id {} "
                             + "since the block event violates the block event table constraints!",
                     blockEventDTO.getUser(), blockEventDTO.getExperiment(), e
+            );
+        }
+    }
+
+    private void publishBlockEventUploadMessage(final int experimentId, final BlockEvent blockEvent) {
+        if (blockEvent != null && blockEvent.getCode() != null) {
+            applicationEventPublisher.publishEvent(
+                new TestExecutionRequestEvent(this, experimentId, blockEvent.getId())
             );
         }
     }

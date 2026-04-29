@@ -37,6 +37,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProject
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.FileProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.web.controller.ResultController;
 import de.uni_passau.fim.se2.scratchlog.web.dto.CodesDataDTO;
@@ -54,7 +55,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
@@ -113,6 +113,9 @@ public class ResultControllerTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private BlockEventRepository blockEventRepository;
 
     @Mock
     private Model model;
@@ -189,7 +192,7 @@ public class ResultControllerTest {
         zip.setContent(new byte[]{1, 2, 3, 4});
 
         ZipExportService zipExportService = new ZipExportService(
-            codeService, experimentService, fileService, participantService, userRepository
+            codeService, experimentService, fileService, participantService, userRepository, blockEventRepository
         );
         resultController = new ResultController(
             userService, eventService, experimentDataService, codeService, fileService, zipExportService, pageService
