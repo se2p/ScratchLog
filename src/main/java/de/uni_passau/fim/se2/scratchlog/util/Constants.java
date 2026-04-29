@@ -152,4 +152,9 @@ public final class Constants {
      */
     public static final String PROFILE_CODE_EMBEDDINGS = "embeddings";
 
+    /**
+     * The Spring profile name for the Whisker integration feature.
+     */
+    public static final String PROFILE_WHISKER = "whisker";
+
 }
