@@ -57,8 +57,14 @@
             </ul>
             <div>
                 <canvas id="chart-timeline"></canvas>
-                <div>
-                    <button id="chart-timeline-reset-zoom" class="btn btn-outline-primary" th:text="#{reset_zoom}"></button>
+                <div class="row gy-2 gx-3 align-items-center">
+                    <button id="chart-timeline-reset-zoom" class="btn btn-outline-primary col-auto" th:text="#{reset_zoom}"></button>
+                    <div class="col-auto ms-5 mt-3">
+                        <label for="chart-timeline-interval" class="form-label" th:text="#{embedding_timeline_interval}"></label>
+                    </div>
+                    <div class="col-auto">
+                        <input id="chart-timeline-interval" type="number" min="1" max="100" step="1" value="5" class="form-control"/>
+                    </div>
                 </div>
             </div>
         </div>
