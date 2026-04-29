@@ -12,12 +12,10 @@ import java.net.URI;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties(prefix = "code-embeddings")
-@Profile(Constants.PROFILE_CODE_EMBEDDINGS)
-public class CodeEmbeddingConfiguration {
+@ConfigurationProperties(prefix = "whisker")
+@Profile(Constants.PROFILE_WHISKER)
+public class WhiskerConfiguration {
 
-    private String model;
-
-    private URI embeddingConnectorUrl;
+    private URI baseUrl;
 
 }
