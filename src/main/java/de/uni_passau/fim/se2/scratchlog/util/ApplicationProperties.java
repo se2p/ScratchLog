@@ -140,6 +140,15 @@ public class ApplicationProperties {
         return springProfiles.contains(Constants.PROFILE_CODE_EMBEDDINGS);
     }
 
+    /**
+     * Checks if the Whisker feature is enabled.
+     *
+     * @return True, if enabled.
+     */
+    public boolean whiskerActive() {
+        return springProfiles.contains(Constants.PROFILE_WHISKER);
+    }
+
     @Override
     public final String toString() {
         return "ApplicationProperties{"

@@ -961,7 +961,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(experimentService).getExperiment(ID);
         verify(pageService).getLastParticipantPage(ID);
         verify(pageService).getParticipantPage(anyInt(), anyInt());
-        verify(model, times(7)).addAttribute(anyString(), any());
+        verify(model, times(9)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1113,7 +1113,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file, times(2)).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(8)).addAttribute(anyString(), any());
+        verify(model, times(10)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1127,7 +1127,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(8)).addAttribute(anyString(), any());
+        verify(model, times(10)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1141,7 +1141,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file, never()).getOriginalFilename();
         verify(file, times(2)).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(8)).addAttribute(anyString(), any());
+        verify(model, times(10)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1154,7 +1154,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file, never()).getOriginalFilename();
         verify(file).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(8)).addAttribute(anyString(), any());
+        verify(model, times(10)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -1168,7 +1168,7 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         verify(file, never()).getOriginalFilename();
         verify(file, never()).getContentType();
         verify(file, never()).getBytes();
-        verify(model, times(8)).addAttribute(anyString(), any());
+        verify(model, times(10)).addAttribute(anyString(), any());
     }
 
     @Test

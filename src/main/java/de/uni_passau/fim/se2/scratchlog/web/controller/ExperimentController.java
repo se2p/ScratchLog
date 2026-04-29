@@ -32,6 +32,7 @@ import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExampleSolution;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.TestSuite;
 import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
@@ -41,6 +42,7 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
 import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
 import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.JsFileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3FileDTO;
@@ -68,6 +70,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -731,6 +734,49 @@ public class ExperimentController {
     }
 
     /**
+     * Adds a test suite to the given experiment.
+     *
+     * @param testSuite The test suite JavaScript file.
+     * @param experimentId The id of some experiment.
+     * @param model The model attribute container.
+     * @return A redirect to the experiment page.
+     */
+    @PostMapping("/test-suite/upload")
+    @Secured(Constants.ROLE_ADMIN)
+    public String uploadTestSuite(
+        @Valid @ModelAttribute("testSuite") final JsFileDTO testSuite,
+        @RequestParam(ID) final int experimentId,
+        final Model model
+    ) {
+        final String fileContents;
+        try {
+            fileContents = new String(testSuite.getFile().getBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("Could not read test suite.", e);
+            model.addAttribute(ERROR, "Could not read the test suite file.");
+            return REDIRECT_EXPERIMENT + experimentId;
+        }
+
+        experimentService.addTestSuite(
+            experimentId, testSuite.getFile().getOriginalFilename(), fileContents
+        );
+
+        return REDIRECT_EXPERIMENT + experimentId;
+    }
+
+    /**
+     * Deletes the test suite of the given experiment.
+     *
+     * @param experimentId The id of some experiment.
+     * @return A redirect to the experiment page.
+     */
+    @GetMapping("/test-suite/delete")
+    public String deleteTestSuite(@RequestParam(ID) final int experimentId) {
+        experimentService.deleteTestSuite(experimentId);
+        return REDIRECT_EXPERIMENT + experimentId;
+    }
+
+    /**
      * Sends an email with a participation link for the experiment with the given id to the email address of the given
      * {@link UserDTO}.
      *
@@ -830,9 +876,15 @@ public class ExperimentController {
         if (!model.containsAttribute("exampleSolution")) {
             model.addAttribute("exampleSolution", new Sb3FileDTO());
         }
+        if (!model.containsAttribute("testSuite")) {
+            model.addAttribute("testSuite", new JsFileDTO());
+        }
 
         final ExampleSolution exampleSolution = experimentService.getExampleSolution(experimentDTO.getId());
         model.addAttribute("exampleSolutionName", exampleSolution != null ? exampleSolution.getFilename() : null);
+
+        final TestSuite testSuite = experimentService.getTestSuite(experimentDTO.getId());
+        model.addAttribute("testSuiteName", testSuite != null ? testSuite.getFilename() : null);
     }
 
     /**
