@@ -101,7 +101,7 @@ public class EmbeddingModelService {
         );
         this.ggnnProgramPreprocessor = new WholeProgramJsonProcessor<>(mlOptions, ggnnPreprocessor);
 
-        ggnnCache = new ConcurrentLruCache<>(CACHE_SIZE, (programJson) -> {
+        ggnnCache = new ConcurrentLruCache<>(CACHE_SIZE, programJson -> {
             try {
                 return processProgramForGgnn(programJson);
             } catch (ParsingException e) {
@@ -180,9 +180,7 @@ public class EmbeddingModelService {
         final Map<Integer, List<Integer>> projectsByStudent = new HashMap<>();
         for (final int userId : userIds) {
             final List<Project> studentProjects = getProjectsForUser(experimentId, userId, stepMinutes);
-            studentProjects.forEach(project -> {
-                projectsByProjectId.put(project.id(), project.projectJson());
-            });
+            studentProjects.forEach(project -> projectsByProjectId.put(project.id(), project.projectJson()));
             projectsByStudent.put(userId, studentProjects.stream().map(Project::id).toList());
         }
 
@@ -201,6 +199,9 @@ public class EmbeddingModelService {
             solutionProject,
             projectsByProjectId
         );
+        if (response == null) {
+            return new ProgressVarianceProjection(Collections.emptyList());
+        }
 
         return convertPerStudentResponse(response, projectsByStudent);
     }
@@ -298,32 +299,18 @@ public class EmbeddingModelService {
         final String solutionProject,
         final Map<Integer, String> studentProjects
     ) {
-        try {
-            StopWatch watch = new StopWatch();
-            watch.start();
-            final var request = buildProgressVarianceProjectionRequest(
-                templateProject, solutionProject, studentProjects
-            );
-            watch.stop();
-            log.debug("GGNN preprocessing done in {}ms.", watch.getTotalTimeMillis());
+        final StopWatch watch = new StopWatch();
+        watch.start();
+        final var request = buildProgressVarianceProjectionRequest(
+            templateProject, solutionProject, studentProjects
+        );
+        watch.stop();
+        log.debug("GGNN preprocessing done in {}ms.", watch.getTotalTimeMillis());
 
-            watch.start();
-            var response = restClient.post()
-                .uri("ggnn/progress-variance-projection")
-                .body(request)
-                .retrieve()
-                .body(ProgressVarianceProjectionResponse.class);
-            watch.stop();
-            log.debug("Embedding API request done in {}ms.", watch.getTotalTimeMillis());
-
-            return response;
-        } catch (Exception e) {
-            // todo: actual error handling
-            throw new RuntimeException(e);
-        }
+        return apiRequest("ggnn/progress-variance-projection", request, ProgressVarianceProjectionResponse.class);
     }
 
-    private ProgressVarianceProjectionRequest<GgnnAnalyzerOutput> buildProgressVarianceProjectionRequest(
+    private ProgressVarianceProjectionRequest buildProgressVarianceProjectionRequest(
         final String templateProgramJson,
         final String solutionProgramJson,
         final Map<Integer, String> studentProgramJsons
@@ -331,7 +318,19 @@ public class EmbeddingModelService {
         final var templateProgram = ggnnCache.get(templateProgramJson);
         final var solutionProgram = ggnnCache.get(solutionProgramJson);
 
-        final Map<Integer, String> studentPrograms = studentProgramJsons
+        final Map<Integer, String> studentPrograms = preprocessStudentProgramJsons(studentProgramJsons);
+
+        return new ProgressVarianceProjectionRequest(
+            jsonMapper.writeValueAsString(templateProgram),
+            jsonMapper.writeValueAsString(solutionProgram),
+            studentPrograms
+        );
+    }
+
+    private Map<Integer, String> preprocessStudentProgramJsons(
+        final Map<Integer, String> studentProgramJsons
+    ) {
+        return studentProgramJsons
             .entrySet()
             .parallelStream()
             .map(entry -> {
@@ -348,9 +347,74 @@ public class EmbeddingModelService {
             })
             .filter(Objects::nonNull)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
 
-        return new ProgressVarianceProjectionRequest<>(
-            jsonMapper.writeValueAsString(templateProgram),
+    /**
+     * Retrieves the embedding distances between latest student projects and the example solution.
+     *
+     * @param experimentId Some experiment.
+     * @return A mapping of user ID to embedding distance in range {@code [0, 1]}.
+     * @throws IOException In case the solution project cannot be parsed.
+     */
+    public Map<Integer, Double> getEmbeddingDistancesAllLatest(
+        final int experimentId
+    ) throws IOException {
+        final StopWatch watch = new StopWatch();
+        watch.start();
+
+        final Map<Integer, String> projectsById = new HashMap<>();
+        blockEventRepository
+            .findLastPerUserInExperiment(experimentId)
+            .forEach(project -> projectsById.put(project.userId(), project.projectJson()));
+
+        final var solutionProject = getSolutionProject(experimentId);
+        if (solutionProject == null) {
+            throw new IllegalArgumentException(
+                "Embedding distance can only be computed if solution projects is given."
+            );
+        }
+        watch.stop();
+        log.debug("Database fetching finished in {}ms.", watch.getTotalTimeMillis());
+
+        final EmbeddingDistanceResponse response = getEmbeddingDistances(
+            solutionProject,
+            projectsById
+        );
+        if (response == null) {
+            return Collections.emptyMap();
+        }
+
+        final Map<Integer, Double> distances = new HashMap<>();
+        for (final var distance : response.distances()) {
+            distances.put(distance.id(), distance.d());
+        }
+        return distances;
+    }
+
+    private EmbeddingDistanceResponse getEmbeddingDistances(
+        final String solutionProject,
+        final Map<Integer, String> studentProjects
+    ) {
+        final StopWatch watch = new StopWatch();
+        watch.start();
+        final var request = buildEmbeddingDistanceRequest(
+            solutionProject, studentProjects
+        );
+        watch.stop();
+        log.debug("GGNN preprocessing done in {}ms.", watch.getTotalTimeMillis());
+
+        return apiRequest("ggnn/embedding-distance", request, EmbeddingDistanceResponse.class);
+    }
+
+    private EmbeddingDistanceRequest buildEmbeddingDistanceRequest(
+        final String solutionProgramJson,
+        final Map<Integer, String> studentProgramJsons
+    ) {
+        final var solutionProgram = ggnnCache.get(solutionProgramJson);
+
+        final Map<Integer, String> studentPrograms = preprocessStudentProgramJsons(studentProgramJsons);
+
+        return new EmbeddingDistanceRequest(
             jsonMapper.writeValueAsString(solutionProgram),
             studentPrograms
         );
@@ -394,7 +458,22 @@ public class EmbeddingModelService {
         return null;
     }
 
-    public record ProgressVarianceProjectionRequest<T>(
+    private <B, R> R apiRequest(final String path, final B body, final Class<R> responseType) {
+        final StopWatch watch = new StopWatch();
+
+        watch.start();
+        var response = restClient.post()
+            .uri(path)
+            .body(body)
+            .retrieve()
+            .body(responseType);
+        watch.stop();
+        log.debug("Embedding API request done in {}ms.", watch.getTotalTimeMillis());
+
+        return response;
+    }
+
+    public record ProgressVarianceProjectionRequest(
         String templateProgram,
         String solutionProgram,
         Map<Integer, String> studentPrograms
@@ -419,6 +498,18 @@ public class EmbeddingModelService {
      * @param datapoints The series of datapoints with their x/y coordinates.
      */
     public record DataSeries(int userId, List<List<Double>> datapoints) {
+    }
+
+    private record EmbeddingDistanceRequest(
+        String solutionProgram,
+        Map<Integer, String> studentPrograms
+    ) {
+    }
+
+    private record EmbeddingDistanceResponse(List<Distance> distances) {
+    }
+
+    private record Distance(int id, double d) {
     }
 
 }

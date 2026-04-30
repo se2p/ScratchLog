@@ -21,7 +21,7 @@ log: Final[logging.Logger] = logging.getLogger("uvicorn")
 @asynccontextmanager
 async def _app_init(app: FastAPI) -> AsyncIterator[None]:
     log.info("Initialising model...")
-    config_env = os.getenv("MODEL_CONFIG_FILE")
+    config_env = os.getenv("GGNN_CONFIG_FILE")
     if config_env is None:
         config = Path("/ggnn/model-config.yaml")
         log.warning(
@@ -39,11 +39,6 @@ app: Final[FastAPI] = FastAPI(lifespan=_app_init)
 
 def _get_ggnn_model(request: Request) -> ApiModel:
     return request.app.state.ggnn_model
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
 
 
 class GgnnEmbeddingRequest(BaseModel):
@@ -112,6 +107,47 @@ async def get_progress_variance_projection(
             )
         ]
     )
+
+
+class GgnnEmbeddingDistanceRequest(BaseModel):
+    solution_program: ProcessedGgnnProgram = Field(..., alias="solutionProgram")
+    student_programs: dict[int, ProcessedGgnnProgram] = Field(
+        ..., alias="studentPrograms"
+    )
+
+
+class EmbeddingDistance(BaseModel):
+    id: int
+    d: float
+
+
+class EmbeddingDistanceResponse(BaseModel):
+    distances: list[EmbeddingDistance]
+
+
+@app.post("/ggnn/embedding-distance")
+async def get_embedding_distance(
+    req: GgnnEmbeddingDistanceRequest, model: ApiModel = Depends(_get_ggnn_model)
+) -> EmbeddingDistanceResponse:
+    if len(req.student_programs) == 0:
+        return EmbeddingDistanceResponse(distances=[])
+
+    solution_embedding = await model.embed(req.solution_program)
+    embeddings = {
+        project_id: await model.embed(project)
+        for project_id, project in req.student_programs.items()
+    }
+    distances = {
+        project_id: numpy.linalg.norm(embedding - solution_embedding)
+        for project_id, embedding in embeddings.items()
+    }
+    max_distance = max(distances.values())
+    distances = [
+        EmbeddingDistance(id=project_id, d=d / max_distance)
+        for project_id, d in distances.items()
+    ]
+
+    return EmbeddingDistanceResponse(distances=distances)
 
 
 def main(argv: list[str] | None = None) -> int:
