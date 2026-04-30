@@ -18,4 +18,6 @@ public class WhiskerConfiguration {
 
     private URI baseUrl;
 
+    private int maxParallel = 1;
+
 }
