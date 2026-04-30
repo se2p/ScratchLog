@@ -147,7 +147,6 @@ public class TestExecutionService {
             sb3, testSuite.getTestImplementation()
         );
         if (result != null) {
-            log.debug("Saving whisker results: {}", result);
             return saveTestResults(testSuite, event, result);
         } else {
             log.debug("Whisker test execution failed (experiment={}, event={}).", experimentId, event.getId());
