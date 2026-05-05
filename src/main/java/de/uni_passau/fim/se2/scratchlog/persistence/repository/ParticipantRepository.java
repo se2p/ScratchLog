@@ -26,6 +26,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -105,4 +106,17 @@ public interface ParticipantRepository extends JpaRepository<Participant, Partic
      */
     List<Participant> findAllByEndIsNullAndUser(User user);
 
+    @Query("""
+            select p
+            from Participant p
+            where p.experiment.id = :experimentId
+                and exists (
+                    select be.user.id
+                    from BlockEvent be
+                    where be.experiment.id = :experimentId
+                        and be.code is not null
+                        and p.user.id = be.user.id
+                )
+            """)
+    List<Participant> findByExperimentWithBlockEvents(int experimentId);
 }

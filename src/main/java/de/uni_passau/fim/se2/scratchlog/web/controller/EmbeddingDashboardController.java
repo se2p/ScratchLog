@@ -32,7 +32,7 @@ public class EmbeddingDashboardController {
     @Secured(Constants.ROLE_ADMIN)
     public String getDashboard(@RequestParam("id") final int experimentId, final Model model) {
         model.addAttribute("experiment", experimentId);
-        model.addAttribute("participants", participantService.getParticipantNames(experimentId));
+        model.addAttribute("participants", participantService.getActiveParticipantNames(experimentId));
 
         return "embedding-dashboard";
     }

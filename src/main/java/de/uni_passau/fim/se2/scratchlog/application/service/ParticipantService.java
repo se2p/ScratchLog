@@ -186,6 +186,21 @@ public class ParticipantService {
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
 
         List<Participant> participants = participantRepository.findAllByExperiment(experiment);
+        return sortByIdAsc(participants);
+    }
+
+    /**
+     * Retrieves participants of the experiment that made at least one change to the program.
+     *
+     * @param experimentId The experiment id.
+     * @return A list of participant ids and usernames.
+     */
+    public List<ParticipantIdName> getActiveParticipantNames(final int experimentId) {
+        final List<Participant> participants = participantRepository.findByExperimentWithBlockEvents(experimentId);
+        return sortByIdAsc(participants);
+    }
+
+    private List<ParticipantIdName> sortByIdAsc(final List<Participant> participants) {
         return participants
             .stream()
             .map(participant -> new ParticipantIdName(
