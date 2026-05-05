@@ -70,6 +70,10 @@ function toggleUserForTimeline(userId, isEnabled) {
     setTimeout(() => buildTestResultTable(), 0);
 }
 
+function xyToBubble(xy) {
+    return {x: xy[0], y: xy[1], r: 5}
+}
+
 function updateAllLatestChart() {
     $.ajax({
         type: "get",
@@ -83,7 +87,8 @@ function updateAllLatestChart() {
             const chartData = [];
             for (const dataSeries of data.data) {
                 labels.push(participantsMap.get(dataSeries.userId).name);
-                chartData.push(dataSeries.datapoints[0]);
+                const datapoint = dataSeries.datapoints[0];
+                chartData.push(xyToBubble(datapoint));
             }
 
             if (latestChart) {
@@ -102,7 +107,15 @@ function updateAllLatestChart() {
                             {
                                 label: translations.latestChart,
                                 data: chartData,
-                            }
+                            },
+                            {
+                                label: "Starting Project",
+                                data: [{x: 0, y: 0, r: 7}]
+                            },
+                            {
+                                label: "Example Solution",
+                                data: [{x: 1, y: 0, r: 7}]
+                            },
                         ],
                     },
                     options: chartCommonOptions,
@@ -149,7 +162,7 @@ function updateTimelineChart() {
             for (const dataSeries of data.data) {
                 datasets.push({
                     label: participantsMap.get(dataSeries.userId).name,
-                    data: dataSeries.datapoints,
+                    data: dataSeries.datapoints.map(xyToBubble),
                     tension: 0.1,
                 });
                 for (let idx = 1; idx <= dataSeries.datapoints.length; ++idx) {
@@ -200,7 +213,7 @@ function updateTestDistanceChart() {
                 if (datapoint[0] === 0 && datapoint[1] === 0) {
                     continue;
                 }
-                chartData.push(datapoint);
+                chartData.push(xyToBubble(datapoint));
             }
 
             if (embeddingTestDistanceChart) {
