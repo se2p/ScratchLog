@@ -69,10 +69,17 @@
             </div>
         </div>
         <div class="card-body">
+            <h4 th:text="#{embedding_dashboard_chart_embedding_test_distance}"></h4>
+            <p th:text="#{embedding_dashboard_embedding_test_distance_explanation}"></p>
+            <div>
+                <canvas id="chart-embedding-test-distances"></canvas>
+            </div>
+        </div>
+        <div class="card-body">
             <h4 th:text="#{whisker_test_results_heading}"></h4>
             <p th:text="#{whisker_test_results_explanation}"></p>
             <div class="table-responsive">
-                <table class="table table-hover table-striped table-sm" id="test-results-latest-table">
+                <table class="table table-hover table-striped" id="test-results-latest-table">
                 </table>
             </div>
         </div>
@@ -86,6 +93,7 @@ initially. -->
     let participants = [[${participants}]];
     const translations = {
         latestChart: [[#{embedding_dashboard_chart_latest}]],
+        embeddingTestDistanceChart: [[#{embedding_dashboard_chart_embedding_test_distance}]],
     };
 </script>
 

@@ -2,8 +2,6 @@ package de.uni_passau.fim.se2.scratchlog.web.controller;
 
 import de.uni_passau.fim.se2.scratchlog.application.service.EmbeddingModelService;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,8 +16,6 @@ import java.util.Set;
 @RequestMapping("/embeddings/")
 @Profile(Constants.PROFILE_CODE_EMBEDDINGS)
 public class EmbeddingController {
-
-    private static final Logger log = LoggerFactory.getLogger(EmbeddingController.class);
 
     private final EmbeddingModelService embeddingModelService;
 
@@ -38,7 +34,7 @@ public class EmbeddingController {
      * @throws IOException In case the example/solution projects cannot be parsed.
      */
     @GetMapping("/progress-variance-projection/all/latest")
-    public EmbeddingModelService.ProgressVarianceProjection getProgressVarianceProjectionAllLatest(
+    public EmbeddingModelService.ProgramProjection2D getProgressVarianceProjectionAllLatest(
         @RequestParam("experimentId") final int experimentId
     ) throws IOException {
         return embeddingModelService.getProgressVarianceProjectionAllLatest(experimentId);
@@ -56,11 +52,31 @@ public class EmbeddingController {
      * @throws IOException In case the example/solution projects cannot be parsed.
      */
     @GetMapping("/progress-variance-projection/timeline")
-    public EmbeddingModelService.ProgressVarianceProjection getProgressVarianceProjectionOverTime(
+    public EmbeddingModelService.ProgramProjection2D getProgressVarianceProjectionOverTime(
         @RequestParam("experimentId") final int experimentId,
         @RequestParam(value = "userIds", defaultValue = "") final Set<Integer> userIds,
         @RequestParam(value = "stepMinutes", defaultValue = "1") final int stepMinutes
     ) throws IOException {
         return embeddingModelService.getProgressVarianceProjectionForUsers(experimentId, userIds, stepMinutes);
     }
+
+    /**
+     * Fetches the embedding and test distances for the latest project of all users in the experiment.
+     *
+     * <p>The resulting datapoints will have the test distance on the x-Axis (0th list element) and the embedding
+     * distance as y-Axis (1st element).
+     *
+     * <p>Requires the {@link Constants#PROFILE_WHISKER} profile to be active.
+     *
+     * @param experimentId Some experiment.
+     * @return For each user a datapoint representing the latest project’s test and embedding distances.
+     * @throws IOException In case the solution project cannot be parsed.
+     */
+    @GetMapping("/embedding-test-distance/all/latest")
+    public EmbeddingModelService.ProgramProjection2D getTestVsEmbeddingDistanceAllLatest(
+        @RequestParam("experimentId") final int experimentId
+    ) throws IOException {
+        return embeddingModelService.getEmbeddingVsTestDistanceLatestProjects(experimentId);
+    }
+
 }

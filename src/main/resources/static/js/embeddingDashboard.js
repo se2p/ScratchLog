@@ -7,6 +7,7 @@ let participantsMap;
 let latestChart;
 let timelineChart;
 let timelineChartInterval = 5;
+let embeddingTestDistanceChart;
 
 const chartCommonOptions = {
     scales: {
@@ -53,6 +54,7 @@ $(document).ready(() => {
 
     setTimeout(() => updateAllLatestChart(), 0);
     setTimeout(() => updateTimelineChart(), 0);
+    setTimeout(() => updateTestDistanceChart(), 0);
     setTimeout(() => updateTestResultTable(), 0);
 });
 
@@ -166,6 +168,71 @@ function updateTimelineChart() {
                 addResetZoomEventHandler("chart-timeline-reset-zoom", timelineChart);
             }
 
+        },
+        error: function (err) {
+            console.log(err.statusText);
+        }
+    });
+}
+
+function updateTestDistanceChart() {
+    $.ajax({
+        type: "get",
+        url: contextPath + "embeddings/embedding-test-distance/all/latest",
+        data: {experimentId},
+        accept: "application/json",
+        success: function (data) {
+            const element = document.getElementById("chart-embedding-test-distances");
+
+            const labels = [];
+            const chartData = [];
+            for (const dataSeries of data.data) {
+                labels.push(participantsMap.get(dataSeries.userId).name);
+                const datapoint = dataSeries.datapoints[0];
+                if (datapoint[0] === 0 && datapoint[1] === 0) {
+                    continue;
+                }
+                chartData.push(datapoint);
+            }
+
+            if (embeddingTestDistanceChart) {
+                embeddingTestDistanceChart.data.labels = labels;
+                embeddingTestDistanceChart.data.datasets = [{
+                    label: translations.embeddingTestDistanceChart,
+                    data: chartData,
+                }];
+                embeddingTestDistanceChart.update();
+            } else {
+                embeddingTestDistanceChart = new Chart(element, {
+                    type: "bubble",
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: translations.embeddingTestDistanceChart,
+                                data: chartData,
+                            }
+                        ],
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                        text: "Test Fitness"
+                                },
+                                type: "linear",
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                        text: "Embedding Fitness"
+                                }
+                            }
+                        },
+                    },
+                });
+            }
         },
         error: function (err) {
             console.log(err.statusText);

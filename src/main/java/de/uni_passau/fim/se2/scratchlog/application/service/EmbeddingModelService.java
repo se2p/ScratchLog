@@ -64,6 +64,8 @@ public class EmbeddingModelService {
 
     private final CodeService codeService;
 
+    private final Optional<TestFitnessService> testFitnessService;
+
     private final RestClient restClient;
 
     private final WholeProgramJsonProcessor<GgnnAnalyzerOutput> ggnnProgramPreprocessor;
@@ -77,13 +79,15 @@ public class EmbeddingModelService {
         final BlockEventRepository blockEventRepository,
         final ExperimentRepository experimentRepository,
         final ExperimentService experimentService,
-        final CodeService codeService
+        final CodeService codeService,
+        final Optional<TestFitnessService> testFitnessService
     ) {
         this.jsonMapper = jsonMapper;
         this.blockEventRepository = blockEventRepository;
         this.experimentRepository = experimentRepository;
         this.experimentService = experimentService;
         this.codeService = codeService;
+        this.testFitnessService = testFitnessService;
 
         this.restClient = RestClient.create(codeEmbeddingConfiguration.getEmbeddingConnectorUrl());
 
@@ -119,7 +123,7 @@ public class EmbeddingModelService {
      * @return The progress-variance projection.
      * @throws IOException In case the example/solution projects cannot be parsed.
      */
-    public ProgressVarianceProjection getProgressVarianceProjectionAllLatest(
+    public ProgramProjection2D getProgressVarianceProjectionAllLatest(
         final int experimentId
     ) throws IOException {
         StopWatch watch = new StopWatch();
@@ -164,13 +168,13 @@ public class EmbeddingModelService {
      * @return The progress-variance projection.
      * @throws IOException In case the example/solution projects cannot be parsed.
      */
-    public ProgressVarianceProjection getProgressVarianceProjectionForUsers(
+    public ProgramProjection2D getProgressVarianceProjectionForUsers(
         final int experimentId,
         final Set<Integer> userIds,
         final int stepMinutes
     ) throws IOException {
         if (userIds.isEmpty()) {
-            return new ProgressVarianceProjection(Collections.emptyList());
+            return new ProgramProjection2D(Collections.emptyList());
         }
 
         StopWatch watch = new StopWatch();
@@ -200,7 +204,7 @@ public class EmbeddingModelService {
             projectsByProjectId
         );
         if (response == null) {
-            return new ProgressVarianceProjection(Collections.emptyList());
+            return new ProgramProjection2D(Collections.emptyList());
         }
 
         return convertPerStudentResponse(response, projectsByStudent);
@@ -214,7 +218,7 @@ public class EmbeddingModelService {
             .toList();
     }
 
-    private ProgressVarianceProjection convertResponse(
+    private ProgramProjection2D convertResponse(
         final ProgressVarianceProjectionResponse response,
         final Map<Integer, Integer> projectIdToStudentId
     ) {
@@ -235,10 +239,10 @@ public class EmbeddingModelService {
             data.add(new DataSeries(entry.getKey(), entry.getValue()));
         }
 
-        return new ProgressVarianceProjection(data);
+        return new ProgramProjection2D(data);
     }
 
-    private ProgressVarianceProjection convertPerStudentResponse(
+    private ProgramProjection2D convertPerStudentResponse(
         final ProgressVarianceProjectionResponse response,
         final Map<Integer, List<Integer>> studentProjects
     ) {
@@ -261,7 +265,7 @@ public class EmbeddingModelService {
             data.add(new DataSeries(entry.getKey(), entry.getValue()));
         }
 
-        return new ProgressVarianceProjection(data);
+        return new ProgramProjection2D(data);
     }
 
     @Nullable
@@ -356,16 +360,42 @@ public class EmbeddingModelService {
      * @return A mapping of user ID to embedding distance in range {@code [0, 1]}.
      * @throws IOException In case the solution project cannot be parsed.
      */
-    public Map<Integer, Double> getEmbeddingDistancesAllLatest(
-        final int experimentId
+    public Map<Integer, Double> getEmbeddingDistancesAllLatest(final int experimentId) throws IOException {
+        final StopWatch watch = new StopWatch();
+        watch.start();
+
+        final List<Project> projects = blockEventRepository.findLastPerUserInExperiment(experimentId);
+
+        final Map<Integer, Integer> projectIdToUserId = new HashMap<>();
+        projects.forEach(project -> projectIdToUserId.put(project.id(), project.userId()));
+
+        final Map<Integer, Double> distancesByProjectId = getEmbeddingDistances(experimentId, projects);
+
+        final Map<Integer, Double> distancesByUserId = new HashMap<>();
+        distancesByProjectId.forEach((projectId, distance) -> {
+            final int userId = projectIdToUserId.get(projectId);
+            distancesByUserId.put(userId, distance);
+        });
+
+        return distancesByUserId;
+    }
+
+    /**
+     * Retrieves the embedding distances between the given projects and the example solution.
+     *
+     * @param experimentId Some experiment.
+     * @param projects Some projects in the experiment.
+     * @return A mapping of project ID to embedding distance in range {@code [0, 1]}.
+     * @throws IOException In case the solution project cannot be parsed.
+     */
+    public Map<Integer, Double> getEmbeddingDistances(
+        final int experimentId, final List<Project> projects
     ) throws IOException {
         final StopWatch watch = new StopWatch();
         watch.start();
 
         final Map<Integer, String> projectsById = new HashMap<>();
-        blockEventRepository
-            .findLastPerUserInExperiment(experimentId)
-            .forEach(project -> projectsById.put(project.userId(), project.projectJson()));
+        projects.forEach(project -> projectsById.put(project.id(), project.projectJson()));
 
         final var solutionProject = getSolutionProject(experimentId);
         if (solutionProject == null) {
@@ -418,6 +448,44 @@ public class EmbeddingModelService {
             jsonMapper.writeValueAsString(solutionProgram),
             studentPrograms
         );
+    }
+
+    /**
+     * Fetches the embedding and test distances for the latest project of all users in the experiment.
+     *
+     * <p>The resulting datapoints will have the test distance on the x-Axis (0th list element) and the embedding
+     * distance as y-Axis (1st element).
+     *
+     * <p>Requires the {@link Constants#PROFILE_WHISKER} profile to be active.
+     *
+     * @param experimentId Some experiment.
+     * @return The embedding/test-distance projection for the latest projects of all users.
+     * @throws IllegalStateException In case the {@link Constants#PROFILE_WHISKER} profile is not active.
+     */
+    public ProgramProjection2D getEmbeddingVsTestDistanceLatestProjects(final int experimentId) throws IOException {
+        if (testFitnessService.isEmpty()) {
+            throw new IllegalStateException(
+                "Missing the Whisker test data. Cannot compute embeding/test distance projection."
+            );
+        }
+
+        final List<Project> latestProjects = blockEventRepository.findLastPerUserInExperiment(experimentId);
+
+        final Map<Integer, Double> embeddingDistances = getEmbeddingDistances(experimentId, latestProjects);
+        final Map<Integer, Double> testFitnesses = testFitnessService.orElseThrow().getTestFitnesses(
+            latestProjects.stream().map(Project::id).collect(Collectors.toSet())
+        );
+
+        final List<DataSeries> data = new ArrayList<>();
+        for (final Project project : latestProjects) {
+            final double embeddingDistance = embeddingDistances.getOrDefault(project.id(), 1.0);
+            final double testFitness = testFitnesses.getOrDefault(project.id(), 0.0);
+            final List<Double> datapoint = List.of(testFitness, 1 - embeddingDistance);
+
+            data.add(new DataSeries(project.userId(), List.of(datapoint)));
+        }
+
+        return new ProgramProjection2D(data);
     }
 
     private WholeProgramOutput<GgnnAnalyzerOutput> processProgramForGgnn(final Program program) {
@@ -488,7 +556,7 @@ public class EmbeddingModelService {
     private record Projection(int id, List<Double> xy) {
     }
 
-    public record ProgressVarianceProjection(List<DataSeries> data) {
+    public record ProgramProjection2D(List<DataSeries> data) {
     }
 
     /**
