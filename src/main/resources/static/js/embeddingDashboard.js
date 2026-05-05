@@ -8,6 +8,7 @@ let latestChart;
 let timelineChart;
 let timelineChartInterval = 5;
 let embeddingTestDistanceChart;
+let testResults;
 
 const chartCommonOptions = {
     scales: {
@@ -66,6 +67,7 @@ function addUserSelectionEventListener(participant) {
 function toggleUserForTimeline(userId, isEnabled) {
     participantsMap.get(userId).enabled = isEnabled;
     setTimeout(() => updateTimelineChart(), 0);
+    setTimeout(() => buildTestResultTable(), 0);
 }
 
 function updateAllLatestChart() {
@@ -121,6 +123,9 @@ function updateTimelineChart() {
             userIds.push(k);
         }
     });
+
+    document.getElementById("chart-timeline").hidden = userIds.length === 0;
+    document.getElementById("chart-timeline-reset-zoom").hidden = userIds.length === 0;
 
     if (userIds.length === 0) {
         if (timelineChart) {
@@ -270,13 +275,14 @@ function updateTestResultTable() {
         url: contextPath + "whisker/test/latest",
         data: {experimentId},
         accept: "application/json",
-        success: (testResults) => {
-            buildTestResultTable(testResults);
+        success: (data) => {
+            testResults = data;
+            buildTestResultTable();
         },
     });
 }
 
-function buildTestResultTable(testResults) {
+function buildTestResultTable() {
     const table = document.getElementById("test-results-latest-table");
 
     const {
@@ -288,7 +294,15 @@ function buildTestResultTable(testResults) {
     testCaseNames.forEach(name => html += `<th scope="col">${name}</th>`);
     html += "</tr></thead><tbody>";
 
+    let atLeastOneEnabled = false
+
     for (const user of userProgramTestResults) {
+        if (!participantsMap.get(user.userId).enabled) {
+            continue;
+        }
+
+        atLeastOneEnabled = true;
+
         const username = user.username;
         const userTestResults = user.testResults;
 
@@ -311,5 +325,9 @@ function buildTestResultTable(testResults) {
     }
     html += "</tbody>"
 
-    table.innerHTML = html;
+    if (atLeastOneEnabled) {
+        table.innerHTML = html;
+    } else {
+        table.innerHTML = "<tr><td>No Users Selected</td></tr>";
+    }
 }
