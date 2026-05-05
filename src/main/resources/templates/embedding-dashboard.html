@@ -46,6 +46,15 @@
             </div>
         </div>
 
+        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+        <div class="card-body" th:if="${applicationConfig.whiskerActive()}">
+            <h4 th:text="#{embedding_dashboard_chart_embedding_test_distance}"></h4>
+            <p th:text="#{embedding_dashboard_embedding_test_distance_explanation}"></p>
+            <div>
+                <canvas id="chart-embedding-test-distances"></canvas>
+            </div>
+        </div>
+
         <div class="card-body">
             <h4 th:text="#{embedding_dashboard_chart_timeline}"></h4>
             <p th:text="#{embedding_dashboard_chart_timeline_explanation}"></p>
@@ -75,14 +84,6 @@
             </div>
         </div>
 
-        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
-        <div class="card-body" th:if="${applicationConfig.whiskerActive()}">
-            <h4 th:text="#{embedding_dashboard_chart_embedding_test_distance}"></h4>
-            <p th:text="#{embedding_dashboard_embedding_test_distance_explanation}"></p>
-            <div>
-                <canvas id="chart-embedding-test-distances"></canvas>
-            </div>
-        </div>
         <div class="card-body">
             <h4 th:text="#{whisker_test_results_heading}"></h4>
             <p th:text="#{whisker_test_results_explanation}"></p>
