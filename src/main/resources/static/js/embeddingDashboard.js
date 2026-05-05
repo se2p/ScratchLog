@@ -53,6 +53,7 @@ $(document).ready(() => {
 
     setTimeout(() => updateAllLatestChart(), 0);
     setTimeout(() => updateTimelineChart(), 0);
+    setTimeout(() => updateTestResultTable(), 0);
 });
 
 function addUserSelectionEventListener(participant) {
@@ -186,4 +187,54 @@ function onTimelineIntervalChange(newValue) {
         timelineChartInterval = newValue;
         setTimeout(() => updateTimelineChart(), 0);
     }
+}
+
+function updateTestResultTable() {
+    $.ajax({
+        type: "get",
+        url: contextPath + "whisker/test/latest",
+        data: {experimentId},
+        accept: "application/json",
+        success: (testResults) => {
+            buildTestResultTable(testResults);
+        },
+    });
+}
+
+function buildTestResultTable(testResults) {
+    const table = document.getElementById("test-results-latest-table");
+
+    const {
+        testCaseNames,
+        userProgramTestResults
+    } = testResults;
+
+    let html = `<thead><tr><th scope="col">User</th>`;
+    testCaseNames.forEach(name => html += `<th scope="col">${name}</th>`);
+    html += "</tr></thead><tbody>";
+
+    for (const user of userProgramTestResults) {
+        const username = user.username;
+        const userTestResults = user.testResults;
+
+        html += `<tr><th scope="row">${username}</th>`;
+        testCaseNames.forEach(name => {
+            const testResult = userTestResults[name];
+            let label;
+            if (testResult === undefined) {
+                label = "?";
+            } else if (testResult === "pass") {
+                label = "✓";
+            } else if (testResult === "fail") {
+                label = "✗";
+            } else {
+                label = testResult;
+            }
+            html += `<td style="text-align: center;">${label}</td>`
+        });
+        html += "</tr>";
+    }
+    html += "</tbody>"
+
+    table.innerHTML = html;
 }

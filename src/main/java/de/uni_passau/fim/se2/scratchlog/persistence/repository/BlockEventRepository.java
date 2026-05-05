@@ -120,7 +120,9 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
                     and be2.experiment.id = :experimentId
                 group by be2.user.id
             )
-            select new de.uni_passau.fim.se2.scratchlog.persistence.repository.Project(be.id, be.user.id, be.code)
+            select new de.uni_passau.fim.se2.scratchlog.persistence.repository.Project(
+                        be.id, be.user.id, be.user.username, be.code
+            )
             from BlockEvent be, latest_events e
             where be.experiment.id = :experimentId
                 and be.id = e.id
@@ -144,6 +146,7 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
      * @param experimentId Some experiment.
      * @return The IDs of all block events with code but without test results in the experiment.
      */
+    // implementation note `order by be.id desc`: run tests for latest projects first, then backfill with older ones
     @Query("""
             select distinct be.id
             from BlockEvent be
@@ -154,6 +157,7 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
                     from TestResult tr
                     where tr.testCase.testSuite.experiment.id = :experimentId
                 )
+            order by be.id desc
             """)
     Set<Integer> findBlockEventIdsWithoutTestResults(int experimentId);
 

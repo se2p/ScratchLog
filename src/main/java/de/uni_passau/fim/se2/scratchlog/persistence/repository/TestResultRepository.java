@@ -2,6 +2,7 @@ package de.uni_passau.fim.se2.scratchlog.persistence.repository;
 
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.TestResult;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.TestCaseCountSummary;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,9 @@ public interface TestResultRepository extends JpaRepository<TestResult, Integer>
     @Modifying
     @Transactional
     void deleteAllByProject_Id(int projectId);
+
+    @EntityGraph(attributePaths = {"testCase"})
+    List<TestResult> findAllByProjectIdIn(Set<Integer> projectIds);
 
     /**
      * Counts how many test case results exist for the given block events.

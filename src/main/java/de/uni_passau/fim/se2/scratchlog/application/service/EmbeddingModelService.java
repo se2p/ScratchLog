@@ -210,7 +210,7 @@ public class EmbeddingModelService {
         return codeService.getFilteredJsons(userId, experimentId, stepMinutes, 0, 0, Optional.empty())
             .stream()
             .sorted(Comparator.comparing(BlockEventJSONProjection::getDate))
-            .map(projection -> new Project(projection.getId(), userId, projection.getCode()))
+            .map(projection -> new Project(projection.getId(), userId, null, projection.getCode()))
             .toList();
     }
 
