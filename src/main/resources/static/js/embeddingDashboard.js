@@ -176,14 +176,17 @@ function updateTimelineChart() {
 }
 
 function updateTestDistanceChart() {
+    const element = document.getElementById("chart-embedding-test-distances");
+    if (!element) {
+        return;
+    }
+
     $.ajax({
         type: "get",
         url: contextPath + "embeddings/embedding-test-distance/all/latest",
         data: {experimentId},
         accept: "application/json",
         success: function (data) {
-            const element = document.getElementById("chart-embedding-test-distances");
-
             const labels = [];
             const chartData = [];
             for (const dataSeries of data.data) {
@@ -257,6 +260,11 @@ function onTimelineIntervalChange(newValue) {
 }
 
 function updateTestResultTable() {
+    const table = document.getElementById("test-results-latest-table");
+    if (!table) {
+        return
+    }
+
     $.ajax({
         type: "get",
         url: contextPath + "whisker/test/latest",

@@ -75,7 +75,8 @@
             </div>
         </div>
 
-        <div class="card-body">
+        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+        <div class="card-body" th:if="${applicationConfig.whiskerActive()}">
             <h4 th:text="#{embedding_dashboard_chart_embedding_test_distance}"></h4>
             <p th:text="#{embedding_dashboard_embedding_test_distance_explanation}"></p>
             <div>
