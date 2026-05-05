@@ -58,18 +58,15 @@
         <div class="card-body">
             <h4 th:text="#{embedding_dashboard_chart_timeline}"></h4>
             <p th:text="#{embedding_dashboard_chart_timeline_explanation}"></p>
-            <ul class="list-group list-group-horizontal flex-wrap mx-3">
-                <li class="list-group-item" th:each="participant: ${participants}">
-                    <input
-                        type="checkbox"
-                        th:id="'user-select-' + ${participant.id()}"
-                    />
-                    <label
-                        th:for="'user-select-' + ${participant.id()}"
+            <div>
+                <select id="participant-selector" class="form-select" multiple size="6">
+                    <option
+                        th:each="participant: ${participants}"
                         th:text="${participant.username()}"
-                    ></label>
-                </li>
-            </ul>
+                        th:value="${participant.id()}"
+                    ></option>
+                </select>
+            </div>
             <div>
                 <canvas id="chart-timeline"></canvas>
                 <div class="row gy-2 gx-3 align-items-center">

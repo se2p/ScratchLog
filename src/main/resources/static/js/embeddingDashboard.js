@@ -47,8 +47,8 @@ $(document).ready(() => {
     participantsMap = new Map();
     for (const p of participants) {
         participantsMap.set(p.id, {name: p.username, enabled: false});
-        addUserSelectionEventListener(p);
     }
+    addUserSelectionEventListener()
 
     const timelineChartIntervalInput = document.getElementById("chart-timeline-interval");
     timelineChartIntervalInput.addEventListener("change", (event) => onTimelineIntervalChange(event.target.value));
@@ -59,9 +59,17 @@ $(document).ready(() => {
     setTimeout(() => updateTestResultTable(), 0);
 });
 
-function addUserSelectionEventListener(participant) {
-    const checkbox = document.getElementById(`user-select-${participant.id}`)
-    checkbox.addEventListener("change", () => toggleUserForTimeline(participant.id, checkbox.checked));
+function addUserSelectionEventListener() {
+    const selection = document.getElementById("participant-selector");
+    selection.addEventListener("change", () => {
+        const values = new Set($('#participant-selector').val().map(Number));
+        participantsMap.forEach((v, k) => {
+            const enabled = values.has(k);
+            if (enabled !== v.enabled) {
+                toggleUserForTimeline(k, enabled);
+            }
+        });
+    });
 }
 
 function toggleUserForTimeline(userId, isEnabled) {
