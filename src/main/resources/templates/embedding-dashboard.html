@@ -33,6 +33,10 @@
         </div>
 
         <div class="card-body">
+            <p th:text="#{progress_variance_explanation}"></p>
+        </div>
+
+        <div class="card-body">
             <h4 th:text="#{embedding_dashboard_chart_latest}"></h4>
             <div>
                 <canvas id="chart-all-latest"></canvas>
@@ -41,8 +45,10 @@
                 </div>
             </div>
         </div>
+
         <div class="card-body">
             <h4 th:text="#{embedding_dashboard_chart_timeline}"></h4>
+            <p th:text="#{embedding_dashboard_chart_timeline_explanation}"></p>
             <ul class="list-group list-group-horizontal flex-wrap mx-3">
                 <li class="list-group-item" th:each="participant: ${participants}">
                     <input
@@ -68,6 +74,7 @@
                 </div>
             </div>
         </div>
+
         <div class="card-body">
             <h4 th:text="#{embedding_dashboard_chart_embedding_test_distance}"></h4>
             <p th:text="#{embedding_dashboard_embedding_test_distance_explanation}"></p>
