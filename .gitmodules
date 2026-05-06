@@ -1,0 +1,3 @@
+[submodule "whisker-connector"]
+	path = whisker-connector
+	url = git@github.com:se2p/whisker.git
