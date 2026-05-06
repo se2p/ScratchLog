@@ -82,6 +82,7 @@ public class User {
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "language")
+    @Builder.Default
     private Language language = Constants.DEFAULT_LANGUAGE;
 
     /**

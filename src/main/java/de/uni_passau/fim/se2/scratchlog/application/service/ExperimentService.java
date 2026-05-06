@@ -80,6 +80,7 @@ public class ExperimentService {
      * @throws IllegalArgumentException if the passed title is null or blank or the id is invalid.
      * @deprecated This method should not exist since its purpose is confusing.
      */
+    @Deprecated
     public boolean existsExperiment(final String title, final int id) {
         Optional<Experiment> experiment = experimentRepository.findByTitle(title);
 

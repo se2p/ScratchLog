@@ -50,6 +50,7 @@ public class UserBulkDTO {
      */
     @Min(1)
     @Max(Constants.MAX_BULK_USER_ADD_AMOUNT)
+    @Builder.Default
     private int amount = 1;
 
     /**
