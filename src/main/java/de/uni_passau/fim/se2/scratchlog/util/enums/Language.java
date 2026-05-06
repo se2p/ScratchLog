@@ -28,7 +28,14 @@ import java.util.Locale;
  */
 public enum Language {
 
+    /**
+     * German.
+     */
     GERMAN(Locale.GERMAN),
+
+    /**
+     * English.
+     */
     ENGLISH(Locale.ENGLISH);
 
     private final Locale locale;
