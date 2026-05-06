@@ -16,6 +16,9 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventType;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 /**
@@ -62,6 +65,24 @@ public class EventUtilService {
     }
 
     /**
+     * Generates a new block event that contains a valid JSON.
+     *
+     * @param user The user that initiated the event. Must already exist in the database.
+     * @param experiment The experiment the event was created in. Must already exist in the database.
+     * @param type The event type.
+     * @param specificType The specific event type.
+     * @return The event as stored to the database.
+     */
+    public BlockEvent generateBlockEventWithCode(
+        final User user, final Experiment experiment, final BlockEventType type, final BlockEventSpecific specificType
+    ) {
+        final BlockEvent event = new BlockEvent(
+            user, experiment, LocalDateTime.now(), type, specificType, "figure 1", "meta", "xml", readJsonFixture()
+        );
+        return blockEventRepository.save(event);
+    }
+
+    /**
      * Generates a new click event.
      *
      * @param user The user that initiated the event. Must already exist in the database.
@@ -95,5 +116,14 @@ public class EventUtilService {
             user, experiment, LocalDateTime.now(), type, specificType, "name", "hash", "type", 0
         );
         return resourceEventRepository.save(event);
+    }
+
+    private String readJsonFixture() {
+        final URL url = getClass().getClassLoader().getResource("json.txt");
+        try (var is = url.openStream()) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not read json.txt fixture.", e);
+        }
     }
 }

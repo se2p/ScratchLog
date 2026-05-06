@@ -27,7 +27,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentLruCache;
 import org.springframework.util.StopWatch;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.ByteArrayInputStream;
@@ -93,7 +95,7 @@ public class EmbeddingModelService {
         this.codeService = codeService;
         this.testFitnessService = testFitnessService;
 
-        this.restClient = RestClient.create(codeEmbeddingConfiguration.getEmbeddingConnectorUrl());
+        this.restClient = RestClient.create();
 
         MLPreprocessorCommonOptions mlOptions = new MLPreprocessorCommonOptions(
             MLOutputPath.console(),
@@ -141,6 +143,9 @@ public class EmbeddingModelService {
                 projectsById.put(project.id(), project.projectJson());
                 projectIdToStudentId.put(project.id(), project.userId());
             });
+        if (projectsById.isEmpty()) {
+            return new ProgramProjection2D(Collections.emptyList());
+        }
 
         final var starterProject = getStarterProject(experimentId);
         final var solutionProject = getSolutionProject(experimentId);
@@ -558,16 +563,21 @@ public class EmbeddingModelService {
     private <B, R> R apiRequest(final String path, final B body, final Class<R> responseType) {
         final StopWatch watch = new StopWatch();
 
-        watch.start();
-        var response = restClient.post()
-            .uri(path)
-            .body(body)
-            .retrieve()
-            .body(responseType);
-        watch.stop();
-        log.debug("Embedding API request done in {}ms.", watch.getTotalTimeMillis());
+        try {
+            watch.start();
+            var response = restClient.post()
+                .uri(codeEmbeddingConfiguration.getEmbeddingConnectorUrl().resolve(path))
+                .body(body)
+                .retrieve()
+                .body(responseType);
+            watch.stop();
+            log.debug("Embedding API request done in {}ms.", watch.getTotalTimeMillis());
 
-        return response;
+            return response;
+        } catch (RestClientResponseException | ResourceAccessException e) {
+            log.error("Could not make API call to embedding model.", e);
+            throw e;
+        }
     }
 
     public record ProgressVarianceProjectionRequest(
@@ -577,12 +587,12 @@ public class EmbeddingModelService {
     ) {
     }
 
-    private record ProgressVarianceProjectionResponse(
+    public record ProgressVarianceProjectionResponse(
         List<Projection> projections
     ) {
     }
 
-    private record Projection(int id, List<Double> xy) {
+    public record Projection(int id, List<Double> xy) {
     }
 
     public record ProgramProjection2D(List<DataSeries> data) {
