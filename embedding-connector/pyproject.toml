@@ -11,6 +11,7 @@ dependencies = [
     "fastapi[standard]>=0.136.0",
     "ggnn>=0.1.0",
     "numpy>=2.4.4",
+    "openai>=2.34.0",
     "pydantic>=2.13.2",
     "torch>=2.10.0,<2.11.0",
     "uvicorn>=0.44.0",
