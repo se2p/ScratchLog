@@ -48,11 +48,22 @@
         <div class="row" style="z-index: 0;">
             <div class="col-12 mb-2" th:text="${experimentDTO.description}"></div>
 
-            <a class="btn btn-link btn-sm ps-0 mt-2 df-color" th:href="@{/dashboard(id=${experimentDTO.id})}"
-               sec:authorize="hasRole('ADMIN')">
-                <span th:text="#{see_dashboard}"></span>
-                <span class="fas fa-chevron-right ms-1 fs-11"></span>
-            </a>
+            <div class="d-flex flex-column justify-content-start">
+                <a class="btn-link ps-0 mt-2 df-color" th:href="@{/dashboard(id=${experimentDTO.id})}"
+                   sec:authorize="hasRole('ADMIN')">
+                    <span th:text="#{see_dashboard}"></span>
+                    <span class="fas fa-chevron-right ms-1 fs-11"></span>
+                </a>
+                <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+                <a class="btn-link ps-0 mt-2 df-color"
+                   th:href="@{/embedding-dashboard(id=${experimentDTO.id})}"
+                   th:if="${applicationConfig.codeEmbeddingsActive()}"
+                   sec:authorize="hasRole('ADMIN')"
+                >
+                    <span th:text="#{see_embedding_dashboard}"></span>
+                    <span class="fas fa-chevron-right ms-1 fs-11"></span>
+                </a>
+            </div>
 
             <!-- The button to start the experiment. -->
             <div th:if="${participant != null}">
