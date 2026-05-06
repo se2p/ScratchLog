@@ -26,11 +26,14 @@ public class WhiskerService {
 
     private static final Logger log = LoggerFactory.getLogger(WhiskerService.class);
 
+    private final WhiskerConfiguration whiskerConfiguration;
+
     private final RestClient restClient;
 
     @Autowired
     public WhiskerService(final WhiskerConfiguration whiskerConfiguration) {
-        this.restClient = RestClient.create(whiskerConfiguration.getBaseUrl());
+        this.whiskerConfiguration = whiskerConfiguration;
+        this.restClient = RestClient.create();
     }
 
     /**
@@ -49,7 +52,7 @@ public class WhiskerService {
         try {
             return restClient
                 .post()
-                .uri("/test")
+                .uri(whiskerConfiguration.getBaseUrl().resolve("/test"))
                 .body(body)
                 .retrieve()
                 .body(WhiskerApiResponse.class);

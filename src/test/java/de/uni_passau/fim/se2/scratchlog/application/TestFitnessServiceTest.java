@@ -12,14 +12,12 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.TestCaseRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.TestResultRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.TestSuiteRepository;
-import de.uni_passau.fim.se2.scratchlog.spring.configuration.WhiskerConfiguration;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,9 +31,6 @@ class TestFitnessServiceTest extends AbstractScratchLogTest {
 
     @Autowired
     private TestFitnessService testFitnessService;
-
-    @Autowired
-    private WhiskerConfiguration whiskerConfiguration;
 
     @Autowired
     private TestSuiteRepository testSuiteRepository;
@@ -54,9 +49,6 @@ class TestFitnessServiceTest extends AbstractScratchLogTest {
 
     @BeforeEach
     void setUp() {
-        final URI uri = URI.create("http://localhost:" + mockWebServer.getPort());
-        whiskerConfiguration.setBaseUrl(uri);
-
         final User user = entityUtilService.generateUser("testFitness");
         final Experiment experiment = entityUtilService.generateExperiment("testFitness");
         blockEvent = eventUtilService.generateBlockEvent(
