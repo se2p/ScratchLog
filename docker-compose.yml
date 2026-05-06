@@ -6,10 +6,15 @@ services:
       dockerfile: Containerfile
     restart: on-failure
     environment:
-      spring.profiles.active: prod
+      spring.profiles.active: embeddings,whisker,prod
       spring.datasource.url: "jdbc:mariadb://database:3306/scratchlog"
       spring.datasource.user: scratchlog
       spring.datasource.password: scratchlog
+      # TODO: any other options from the properties that should be overriden?
+      code-embeddings.model: llm
+      code-embeddings.embedding-connector-url: http://embedding-connector:8080
+      whisker.base-url: http://whisker:8091
+      whisker.max-parallel: 1
     networks:
       - scratchlog
     ports:
@@ -29,11 +34,32 @@ services:
       MYSQL_PASSWORD: scratchlog
       MYSQL_ROOT_PASSWORD: scratchlog
     volumes:
+      # seed database with some initial data
+      # - scratchlog_demo_db.sql.zst:/docker-entrypoint-initdb.d/init.sql.zst
       - scratchlog-db:/var/lib/mysql
     networks:
       - scratchlog
     ports:
       - "127.0.0.1:3306:3306/tcp"
+
+  embedding-connector:
+    build:
+      context: ./embedding-connector
+      dockerfile: Containerfile
+    restart: on-failure
+    env_file:
+      - .env
+    networks:
+      - scratchlog
+
+  whisker:
+    build:
+      context: ./whisker-connector
+      dockerfile: build-for-apptainer.Dockerfile
+      target: api
+    restart: on-failure
+    networks:
+      - scratchlog
 
 volumes:
   scratchlog-db:
