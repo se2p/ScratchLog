@@ -62,6 +62,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.empty;
@@ -459,7 +460,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .accept(MediaType.ALL))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
-        verify(experimentService).existsExperiment(TITLE, ID);
         verify(experimentService).updateExperiment(experimentDTO);
     }
 
@@ -476,7 +476,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
         verify(courseService).existsActiveCourse(ID);
-        verify(experimentService).existsExperiment(TITLE, ID);
         verify(experimentService).updateExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
         verify(participantService).addAllCourseParticipantsToExperiment(ID, ID);
@@ -497,7 +496,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .andExpect(status().is3xxRedirection())
                 .andExpect(view().name(Constants.ERROR));
         verify(courseService).existsActiveCourse(ID);
-        verify(experimentService).existsExperiment(TITLE, ID);
         verify(experimentService).updateExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
         verify(participantService, never()).addAllCourseParticipantsToExperiment(anyInt(), anyInt());
@@ -506,15 +504,17 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
 
     @Test
     public void testEditExperimentExists() throws Exception {
+        final Experiment experiment = new Experiment();
+        experiment.setTitle(experimentDTO.getTitle());
+
         when(experimentService.updateExperiment(experimentDTO)).thenReturn(experimentDTO);
-        when(experimentService.existsExperiment(TITLE, ID)).thenReturn(true);
+        when(experimentService.findByTitle(TITLE)).thenReturn(Optional.of(experiment));
         mvc.perform(post("/experiment/update")
                 .flashAttr(EXPERIMENT_DTO, experimentDTO)
                 .contentType(MediaType.ALL)
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT_EDIT));
-        verify(experimentService).existsExperiment(TITLE, ID);
         verify(experimentService, never()).updateExperiment(experimentDTO);
     }
 
@@ -557,7 +557,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                 .accept(MediaType.ALL))
                 .andExpect(status().isOk())
                 .andExpect(view().name(EXPERIMENT_EDIT));
-        verify(experimentService, never()).existsExperiment(anyString(), anyInt());
         verify(experimentService, never()).existsExperiment(anyString());
         verify(experimentService, never()).updateExperiment(experimentDTO);
     }

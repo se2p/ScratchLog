@@ -71,24 +71,13 @@ public class ExperimentService {
     }
 
     /**
-     * Checks, whether any experiment with the given title exists in the database where the id does not match the
-     * given id.
+     * Finds an experiment with the given title.
      *
      * @param title The title to search for.
-     * @param id The id to compare to.
-     * @return {@code true} if such an experiment exists, or {@code false} if not.
-     * @throws IllegalArgumentException if the passed title is null or blank or the id is invalid.
-     * @deprecated This method should not exist since its purpose is confusing.
+     * @return An experiment with the given title, if one exists.
      */
-    @Deprecated
-    public boolean existsExperiment(final String title, final int id) {
-        Optional<Experiment> experiment = experimentRepository.findByTitle(title);
-
-        if (experiment.isEmpty()) {
-            return false;
-        } else {
-            return experiment.get().getId() != id;
-        }
+    public Optional<Experiment> findByTitle(final String title) {
+        return experimentRepository.findByTitle(title);
     }
 
     /**

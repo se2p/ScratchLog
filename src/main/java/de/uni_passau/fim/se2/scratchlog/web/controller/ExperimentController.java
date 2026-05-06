@@ -29,6 +29,7 @@ import de.uni_passau.fim.se2.scratchlog.application.service.MailService;
 import de.uni_passau.fim.se2.scratchlog.application.service.PageService;
 import de.uni_passau.fim.se2.scratchlog.application.service.ParticipantService;
 import de.uni_passau.fim.se2.scratchlog.application.service.UserService;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
@@ -68,6 +69,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -808,7 +810,10 @@ public class ExperimentController {
                 FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
             }
         } else {
-            if (experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())) {
+            final Optional<Experiment> existingExperiment = experimentService.findByTitle(experimentDTO.getTitle());
+            if (existingExperiment.isPresent()
+                && !Objects.equals(existingExperiment.get().getId(), experimentDTO.getId())
+            ) {
                 log.error("Experiment with same name but different id exists!");
                 FieldErrorHandler.addTitleExistsError(bindingResult, "experimentDTO", resourceBundle);
             }

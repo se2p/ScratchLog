@@ -70,6 +70,7 @@ import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -395,7 +396,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(REDIRECT_EXPERIMENT + ID, returnString);
         verify(bindingResult, never()).addError(any());
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService).updateExperiment(experimentDTO);
     }
 
@@ -409,7 +409,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
                 bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(courseService).existsActiveCourse(ID);
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService).updateExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
         verify(participantService).addAllCourseParticipantsToExperiment(ID, ID);
@@ -427,7 +426,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
                 bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(courseService).existsActiveCourse(ID);
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService).updateExperiment(experimentDTO);
         verify(courseService).saveCourseExperiment(ID, ID);
         verify(participantService).addAllCourseParticipantsToExperiment(ID, ID);
@@ -436,12 +434,15 @@ public class ExperimentControllerTest extends AbstractControllerTest {
 
     @Test
     public void testEditExperimentTitleExists() {
-        when(experimentService.existsExperiment(experimentDTO.getTitle(), experimentDTO.getId())).thenReturn(true);
+        final Experiment experiment = new Experiment();
+        experiment.setId(null);
+        experiment.setTitle(experimentDTO.getTitle());
+
+        when(experimentService.findByTitle(experimentDTO.getTitle())).thenReturn(Optional.of(experiment));
         when(bindingResult.hasErrors()).thenReturn(true);
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult).addError(any());
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService, never()).updateExperiment(any());
     }
 
@@ -477,7 +478,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult).addError(any());
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService, never()).updateExperiment(any());
     }
 
@@ -489,7 +489,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult, times(2)).addError(any());
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService, never()).updateExperiment(any());
     }
 
@@ -501,7 +500,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult, times(2)).addError(any());
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService, never()).updateExperiment(any());
     }
 
@@ -512,7 +510,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         String returnString = experimentController.editExperiment(experimentDTO, bindingResult);
         assertEquals(EXPERIMENT_EDIT, returnString);
         verify(bindingResult).addError(any());
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService, never()).updateExperiment(any());
     }
 
@@ -522,7 +519,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(EXPERIMENT_EDIT, experimentController.editExperiment(experimentDTO, bindingResult));
         verify(bindingResult).addError(any());
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService, never()).updateExperiment(any());
     }
 
@@ -532,7 +528,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         when(bindingResult.hasErrors()).thenReturn(true);
         assertEquals(EXPERIMENT_EDIT, experimentController.editExperiment(experimentDTO, bindingResult));
         verify(bindingResult).addError(any());
-        verify(experimentService).existsExperiment(experimentDTO.getTitle(), experimentDTO.getId());
         verify(experimentService, never()).updateExperiment(any());
     }
 
@@ -542,7 +537,6 @@ public class ExperimentControllerTest extends AbstractControllerTest {
         assertEquals(Constants.ERROR, experimentController.editExperiment(experimentDTO, bindingResult));
         verify(bindingResult, never()).addError(any());
         verify(courseService).existsActiveCourse(ID);
-        verify(experimentService, never()).existsExperiment(anyString(), anyInt());
         verify(experimentService, never()).updateExperiment(any());
     }
 
