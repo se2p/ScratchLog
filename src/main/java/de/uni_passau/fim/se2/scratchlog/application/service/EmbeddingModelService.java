@@ -11,6 +11,7 @@ import de.uni_passau.fim.se2.embedded_kittens.shared.WholeProgramOutput;
 import de.uni_passau.fim.se2.litterbox.ast.ParsingException;
 import de.uni_passau.fim.se2.litterbox.ast.model.Program;
 import de.uni_passau.fim.se2.litterbox.ast.parser.Scratch3Parser;
+import de.uni_passau.fim.se2.litterbox.export.scratchblocks.ScratchBlocksVisitor;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExampleSolution;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
@@ -56,6 +57,8 @@ public class EmbeddingModelService {
 
     private final JsonMapper jsonMapper;
 
+    private final CodeEmbeddingConfiguration codeEmbeddingConfiguration;
+
     private final BlockEventRepository blockEventRepository;
 
     private final ExperimentRepository experimentRepository;
@@ -82,6 +85,7 @@ public class EmbeddingModelService {
         final CodeService codeService,
         final Optional<TestFitnessService> testFitnessService
     ) {
+        this.codeEmbeddingConfiguration = codeEmbeddingConfiguration;
         this.jsonMapper = jsonMapper;
         this.blockEventRepository = blockEventRepository;
         this.experimentRepository = experimentRepository;
@@ -309,9 +313,13 @@ public class EmbeddingModelService {
             templateProject, solutionProject, studentProjects
         );
         watch.stop();
-        log.debug("GGNN preprocessing done in {}ms.", watch.getTotalTimeMillis());
+        log.debug("preprocessing done in {}ms.", watch.getTotalTimeMillis());
 
-        return apiRequest("ggnn/progress-variance-projection", request, ProgressVarianceProjectionResponse.class);
+        return apiRequest(
+            codeEmbeddingConfiguration.getModel() + "/progress-variance-projection",
+            request,
+            ProgressVarianceProjectionResponse.class
+        );
     }
 
     private ProgressVarianceProjectionRequest buildProgressVarianceProjectionRequest(
@@ -319,14 +327,14 @@ public class EmbeddingModelService {
         final String solutionProgramJson,
         final Map<Integer, String> studentProgramJsons
     ) {
-        final var templateProgram = ggnnCache.get(templateProgramJson);
-        final var solutionProgram = ggnnCache.get(solutionProgramJson);
+        final var templateProgram = getProcessedProgram(templateProgramJson);
+        final var solutionProgram = getProcessedProgram(solutionProgramJson);
 
         final Map<Integer, String> studentPrograms = preprocessStudentProgramJsons(studentProgramJsons);
 
         return new ProgressVarianceProjectionRequest(
-            jsonMapper.writeValueAsString(templateProgram),
-            jsonMapper.writeValueAsString(solutionProgram),
+            templateProgram,
+            solutionProgram,
             studentPrograms
         );
     }
@@ -339,10 +347,10 @@ public class EmbeddingModelService {
             .parallelStream()
             .map(entry -> {
                 try {
-                    final var processedProject = ggnnCache.get(entry.getValue());
+                    final var processedProject = getProcessedProgram(entry.getValue());
                     return new AbstractMap.SimpleImmutableEntry<>(
                         entry.getKey(),
-                        jsonMapper.writeValueAsString(processedProject)
+                        processedProject
                     );
                 } catch (RuntimeException e) {
                     // ignore projects we cannot parse -> we cannot compute an embedding in this case
@@ -433,21 +441,21 @@ public class EmbeddingModelService {
         watch.stop();
         log.debug("GGNN preprocessing done in {}ms.", watch.getTotalTimeMillis());
 
-        return apiRequest("ggnn/embedding-distance", request, EmbeddingDistanceResponse.class);
+        return apiRequest(
+            codeEmbeddingConfiguration.getModel() + "/embedding-distance",
+            request,
+            EmbeddingDistanceResponse.class
+        );
     }
 
     private EmbeddingDistanceRequest buildEmbeddingDistanceRequest(
         final String solutionProgramJson,
         final Map<Integer, String> studentProgramJsons
     ) {
-        final var solutionProgram = ggnnCache.get(solutionProgramJson);
-
+        final var solutionProgram = getProcessedProgram(solutionProgramJson);
         final Map<Integer, String> studentPrograms = preprocessStudentProgramJsons(studentProgramJsons);
 
-        return new EmbeddingDistanceRequest(
-            jsonMapper.writeValueAsString(solutionProgram),
-            studentPrograms
-        );
+        return new EmbeddingDistanceRequest(solutionProgram, studentPrograms);
     }
 
     /**
@@ -494,11 +502,32 @@ public class EmbeddingModelService {
             .orElseThrow();
     }
 
+    private String getProcessedProgram(final String programJson) {
+        try {
+            return switch (codeEmbeddingConfiguration.getModel()) {
+                case "ggnn" -> jsonMapper.writeValueAsString(ggnnCache.get(programJson));
+                case "llm" -> processProgramForLlm(programJson);
+                default -> throw new IllegalStateException("Unknown model: " + codeEmbeddingConfiguration.getModel());
+            };
+        } catch (ParsingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private WholeProgramOutput<GgnnAnalyzerOutput> processProgramForGgnn(
         final String programJson
     ) throws ParsingException {
         final Program program = parseProgram(programJson);
         return processProgramForGgnn(program);
+    }
+
+    private String processProgramForLlm(final String programJson) throws ParsingException {
+        final Program program = parseProgram(programJson);
+        return processProgramForLlm(program);
+    }
+
+    private String processProgramForLlm(final Program program) {
+        return ScratchBlocksVisitor.of(program);
     }
 
     private Program parseProgram(final String programJson) throws ParsingException {

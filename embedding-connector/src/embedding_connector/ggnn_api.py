@@ -7,17 +7,11 @@ from typing import Final
 import numpy
 from ggnn.config import load_config
 from ggnn.program_embedding.train import ProgramEmbeddingTool
-from pydantic import BaseModel
 
 log: Final[logging.Logger] = logging.getLogger(__name__)
 
 
-class Prediction(BaseModel):
-    predicted_sub_tokens: list[list[str]]
-    predicted_scores: list[float]
-
-
-class ApiModel:
+class GgnnApiModel:
     _lock: asyncio.Lock
     _embedding_tool: ProgramEmbeddingTool
 
@@ -31,7 +25,7 @@ class ApiModel:
         async with self._lock:
             per_sprite_embeddings = self._compute(program)
 
-        return numpy.max(per_sprite_embeddings, axis=0)
+        return numpy.mean(per_sprite_embeddings, axis=0)
 
     @functools.lru_cache(maxsize=5_000)
     def _compute(self, program: str) -> list[float]:
