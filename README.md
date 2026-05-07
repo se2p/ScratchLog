@@ -8,7 +8,7 @@
   - Note: ScratchLog uses the Lombok compiler plugin to automatically generate getter/setter methods,
     so newer JDK versions might not (yet) work.
 - Apache Maven
-- A MySQL database
+- A MariaDB or MySQL database
 - for data acquisition: instrumented Scratch GUI and Scratch VM
   - https://github.com/se2p/nuzzlebug
 
@@ -26,6 +26,36 @@ You can then start the application directly via its main method in the `ScratchL
 > `application-local.properties` in the `resources` folder, uncomment them and adapt them there. This file has been
 > added to the `.gitignore` file and the *spring.profiles.active* configuration in the `application.properties` file
 > has been set accordingly for Spring to automatically pick up the configurations.
+
+
+### Run via Docker Compose
+
+The provided `docker-compose.yml` sets up ScratchLog itself and the required database using [Docker Compose](https://docs.docker.com/compose/):
+```bash
+docker compose up -d
+```
+By default, the ScratchLog instance and also the database are only reachable on the local host.
+For an actual deployment, you probably want to make ScratchLog available over the network.
+For the database it is fine if it remains available locally.
+
+You can find additional configuration options in `src/main/resources/application.properties` or in the ‘Standard Configuration’ section below.
+These can be added in the `docker-compose.yml` in the `services>scratchlog>environment` section.
+They will become active after a restart (`docker compose restart scratchlog`).
+
+To get the automatically generated initial password for the admin user search the log output for something like the following
+```console
+$ docker compose logs scratchlog
+# ... other output ...
+********************
+User "admin" was added to the database as a first administrator with password ...
+"********************"
+# ... other output ...
+```
+
+> 🗒️
+> The Docker Compose at the moment does not deploy an instance of the [Scratch UI](https://github.com/se2p/nuzzlebug).
+> It needs to be deployed separately using a regular web server.
+> Remember to update the `app.gui` and `app.gui.base` configuration options.
 
 
 ### Build and Deployment
