@@ -59,7 +59,7 @@
             <h4 th:text="#{embedding_dashboard_chart_timeline}"></h4>
             <p th:text="#{embedding_dashboard_chart_timeline_explanation}"></p>
             <div>
-                <select id="participant-selector" class="form-select" multiple size="6">
+                <select id="participant-selector" class="form-select mb-2" multiple size="6">
                     <option
                         th:each="participant: ${participants}"
                         th:text="${participant.username()}"

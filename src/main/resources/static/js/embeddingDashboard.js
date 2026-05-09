@@ -10,19 +10,38 @@ let timelineChartInterval = 5;
 let embeddingTestDistanceChart;
 let testResults;
 
+const fontSize = 14;
+
 const chartCommonOptions = {
+    responsive: true,
     scales: {
         x: {
             title: {
                 display: true,
-                text: "Progress"
+                text: "Progress",
+                font: {
+                    size: fontSize,
+                }
             },
             type: "linear",
+            ticks: {
+                font: {
+                    size: fontSize,
+                }
+            }
         },
         y: {
             title: {
                 display: true,
-                text: "Variance"
+                text: "Variance",
+                font: {
+                    size: fontSize,
+                }
+            },
+            ticks: {
+                font: {
+                    size: fontSize,
+                }
             }
         }
     },
@@ -39,7 +58,24 @@ const chartCommonOptions = {
                     enabled: true
                 },
             }
+        },
+        legend: {
+            position: 'top',
+            labels: {
+                font: {
+                    size: fontSize,
+                }
+            }
+        },
+        tooltip: {
+            titleFont: {
+                size: 14,
+            },
+            bodyFont: {
+                size: 12,
+            }
         }
+
     }
 };
 
@@ -113,7 +149,7 @@ function updateAllLatestChart() {
                         labels: labels,
                         datasets: [
                             {
-                                label: translations.latestChart,
+                                label: "Latest Projects",
                                 data: chartData,
                             },
                             {
@@ -166,12 +202,25 @@ function updateTimelineChart() {
             const element = document.getElementById("chart-timeline");
 
             const labels = [];
-            const datasets = [];
+            const datasets = [
+                {
+                    label: "Starting Project",
+                    data: [{x: 0, y: 0, r: 7}],
+                    type: "bubble",
+                },
+                {
+                    label: "Example Solution",
+                    data: [{x: 1, y: 0, r: 7}],
+                    type: "bubble",
+                },
+            ];
             for (const dataSeries of data.data) {
                 datasets.push({
                     label: participantsMap.get(dataSeries.userId).name,
                     data: dataSeries.datapoints.map(xyToBubble),
                     tension: 0.1,
+                    borderWidth: 3,
+                    pointBorderWidth: 5,
                 });
                 for (let idx = 1; idx <= dataSeries.datapoints.length; ++idx) {
                     labels.push(idx.toString());
@@ -248,16 +297,42 @@ function updateTestDistanceChart() {
                             x: {
                                 title: {
                                     display: true,
-                                        text: "Test Fitness"
+                                    text: "Test Fitness",
+                                    font: {
+                                        size: fontSize,
+                                    },
                                 },
                                 type: "linear",
+                                ticks: {
+                                    font: {
+                                        size: fontSize,
+                                    },
+                                },
                             },
                             y: {
                                 title: {
                                     display: true,
-                                        text: "Embedding Fitness"
-                                }
-                            }
+                                    text: "Embedding Fitness",
+                                    font: {
+                                        size: fontSize,
+                                    },
+                                },
+                                ticks: {
+                                    font: {
+                                        size: fontSize,
+                                    },
+                                },
+                            },
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: {
+                                        size: fontSize,
+                                    },
+                                },
+                            },
                         },
                     },
                 });
