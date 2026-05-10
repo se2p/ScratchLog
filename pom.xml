@@ -48,7 +48,7 @@
         <webjars.bootstrap.version>5.3.8</webjars.bootstrap.version>
         <webjars.chartjs.version>4.5.1</webjars.chartjs.version>
         <webjars.fontawesome.version>7.2.0</webjars.fontawesome.version>
-        <webjars.jquery.version>3.7.1</webjars.jquery.version>
+        <webjars.jquery.version>4.0.0</webjars.jquery.version>
         <webjars.nouislider.version>15.8.1</webjars.nouislider.version>
         <webjars.simplemde.version>1.11.2</webjars.simplemde.version>
     </properties>

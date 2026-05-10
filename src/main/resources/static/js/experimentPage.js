@@ -15,7 +15,7 @@ let deleteSb3Modal = document.getElementById("deleteSb3Modal");
 $(document).ready(function () {
     addEventListeners();
 
-    $("#addParticipantsInput").keyup(function() {
+    $("#addParticipantsInput").on("keyup", function() {
         getSearchSuggestions(
             "/search/user",
             { query: $("#addParticipantsInput").val(), id: $("#experimentId").val() },
@@ -23,7 +23,7 @@ $(document).ready(function () {
         )
     });
 
-    $("#deleteParticipantsInput").keyup(function() {
+    $("#deleteParticipantsInput").on("keyup", function() {
         getSearchSuggestions(
             "/search/delete",
             { query: $("#deleteParticipantsInput").val(), id: $("#deleteParticipantsExperimentId").val() },

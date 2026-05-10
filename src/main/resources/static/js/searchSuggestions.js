@@ -3,7 +3,7 @@
  * search rest controller.
  */
 $(document).ready(function () {
-    $("#search").keyup(function() {
+    $("#search").on("keyup", function() {
         $('#searchResults').html("");
         getSuggestions();
     });
