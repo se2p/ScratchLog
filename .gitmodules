@@ -1,3 +1,6 @@
 [submodule "whisker-connector"]
 	path = whisker-connector
 	url = git@github.com:se2p/whisker.git
+[submodule "scratch-gui"]
+	path = scratch-gui
+	url = git@github.com:se2p/NuzzleBug.git
