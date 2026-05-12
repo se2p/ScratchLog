@@ -289,7 +289,12 @@ function updateTestDistanceChart() {
                             {
                                 label: translations.embeddingTestDistanceChart,
                                 data: chartData,
-                            }
+                            },
+                            {
+                                label: "ignored",
+                                data: [{x: 0, y: 0}, {x: 1, y: 1}],
+                                type: "line",
+                            },
                         ],
                     },
                     options: {
@@ -330,6 +335,9 @@ function updateTestDistanceChart() {
                                 labels: {
                                     font: {
                                         size: fontSize,
+                                    },
+                                    filter: function(item, chart) {
+                                        return !item.text.includes("ignored");
                                     },
                                 },
                             },
