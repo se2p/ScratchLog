@@ -324,11 +324,11 @@ public class EventRestController {
      * Checks whether Scratch project JSON is indeed JSON.
      *
      * @param code Some Scratch project json.
-     * @return {@code true} if and only if {@code code} is non-null and a valid JSON object.
+     * @return {@code true} if and only if {@code code} is null or a valid JSON object.
      */
     private boolean isValidJSON(final String code) {
         if (code == null) {
-            return false;
+            return true;
         }
 
         try {
