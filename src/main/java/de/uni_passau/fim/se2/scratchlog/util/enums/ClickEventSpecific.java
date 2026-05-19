@@ -139,4 +139,68 @@ public enum ClickEventSpecific {
      */
     BBT_STACKCLICK,
 
+    /**
+     * The user clicked on the icon to open LitterBox.
+     */
+    LB_OPEN,
+
+    /**
+    * The user clicked to close LitterBox.
+    */
+    LB_CLOSE,
+
+    /**
+    * The user clicked the Code Quality button in LitterBox.
+    */
+    LB_CODE_QUALITY,
+
+    /**
+    * The user clicked the Check Again! button in LitterBox.
+    */
+    LB_CHECK_AGAIN,
+
+    /**
+    * The user clicked the Bugs button in LitterBox.
+    */
+    LB_BUGS,
+
+    /**
+    * The user clicked the Smells button in LitterBox.
+    */
+    LB_SMELLS,
+
+    /**
+    * The user clicked the Elegant Code button in LitterBox.
+    */
+    LB_ELEGANT_CODE,
+
+    /**
+    * The user clicked the Ask about Code button in LitterBox.
+    */
+    LB_ASK,
+
+    /**
+    * The user clicked the Ask about whole program button in LitterBox.
+    */
+    LB_ASK_PROGRAM,
+
+    /**
+     * The user clicked the Ask about whole program button in LitterBox.
+     */
+    LB_ASK_SPRITE,
+
+    /**
+     * The user clicked the GPT: Fix the issue! button in LitterBox.
+     */
+    LB_GPT_FIX,
+
+    /**
+     * The user clicked the GPT: Explain the issue! button in LitterBox.
+     */
+    LB_GPT_EXPLAIN,
+
+    /**
+     * The user clicked the Revert Fix button in LitterBox.
+     */
+    LB_REVERT_FIX,
 }
