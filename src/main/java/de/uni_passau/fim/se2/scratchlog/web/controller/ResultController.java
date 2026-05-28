@@ -159,6 +159,7 @@ public class ResultController {
             List<EventCountDTO> blockEvents = eventService.getBlockEventCounts(userId, experimentId);
             List<EventCountDTO> clickEvents = eventService.getClickEventCounts(userId, experimentId);
             List<EventCountDTO> resourceEvents = eventService.getResourceEventCounts(userId, experimentId);
+            List<EventCountDTO> jsonEvents = eventService.getJsonEventCounts(userId, experimentId);
             List<FileProjection> files = fileService.getFiles(userId, experimentId);
             List<Integer> zipIds = fileService.getZipIds(userId, experimentId);
             List<BlockEventJSONProjection> filteredJsons = codeService.getFilteredJsons(userId, experimentId, 1, 0, 0,
@@ -170,6 +171,7 @@ public class ResultController {
             model.addAttribute("blockEvents", blockEvents);
             model.addAttribute("clickEvents", clickEvents);
             model.addAttribute("resourceEvents", resourceEvents);
+            model.addAttribute("jsonEvents", jsonEvents);
             model.addAttribute("files", files);
             model.addAttribute("zips", zipIds);
             model.addAttribute("user", userId);

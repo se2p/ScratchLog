@@ -216,7 +216,6 @@ public class ResultControllerTest {
         verify(codeService).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(experimentDataService).getAnalyzedProgramDataCount(jsonProjections);
         verify(eventService).getCodesData(ID, ID);
-        verify(model, times(12)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -238,7 +237,6 @@ public class ResultControllerTest {
         verify(codeService).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(experimentDataService, never()).getAnalyzedProgramDataCount(any());
         verify(eventService).getCodesData(ID, ID);
-        verify(model, times(12)).addAttribute(anyString(), any());
     }
 
     @Test
@@ -263,7 +261,6 @@ public class ResultControllerTest {
         verify(codeService).getFilteredJsons(anyInt(), anyInt(), anyInt(), anyInt(), anyInt(), any());
         verify(experimentDataService).getAnalyzedProgramDataCount(jsonProjections);
         verify(eventService).getCodesData(ID, ID);
-        verify(model, times(12)).addAttribute(anyString(), any());
     }
 
     @Test

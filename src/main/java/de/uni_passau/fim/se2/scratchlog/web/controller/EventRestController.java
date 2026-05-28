@@ -35,7 +35,8 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.ClickEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.DebuggerEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.EventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
-import de.uni_passau.fim.se2.scratchlog.web.dto.QuestionEventDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.DebuggerQuestionEventDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.JsonEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ResourceEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
 import jakarta.servlet.ServletOutputStream;
@@ -163,15 +164,29 @@ public class EventRestController {
     /**
      * Saves the question event data passed in the request body.
      *
-     * @param questionEventDTO The JSON containing the question event data.
+     * @param debuggerQuestionEventDTO The JSON containing the question event data.
      */
     @PostMapping("/question")
-    public void storeQuestionEvent(@RequestBody final QuestionEventDTO questionEventDTO) {
-        if (questionEventDTO == null || hasInvalidParticipant(questionEventDTO)) {
+    public void storeQuestionEvent(@RequestBody final DebuggerQuestionEventDTO debuggerQuestionEventDTO) {
+        if (debuggerQuestionEventDTO == null || hasInvalidParticipant(debuggerQuestionEventDTO)) {
             return;
         }
 
-        eventService.saveQuestionEvent(questionEventDTO);
+        eventService.saveQuestionEvent(debuggerQuestionEventDTO);
+    }
+
+    /**
+     * Saves the JSON event data passed in the request body.
+     *
+     * @param jsonEventDTO The JSON containing the JSON event data.
+     */
+    @PostMapping("/jsonevent")
+    public void storeJsonEvent(@RequestBody final JsonEventDTO jsonEventDTO) {
+        if (jsonEventDTO == null || hasInvalidParticipant(jsonEventDTO)) {
+            return;
+        }
+
+        eventService.saveJsonEvent(jsonEventDTO);
     }
 
     /**

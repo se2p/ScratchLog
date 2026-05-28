@@ -22,7 +22,7 @@ package de.uni_passau.fim.se2.scratchlog.util.enums;
 /**
  * All possible specific events for a question event.
  */
-public enum QuestionEventSpecific {
+public enum DebuggerQuestionEventSpecific {
 
     /**
      * The user opened a question category.

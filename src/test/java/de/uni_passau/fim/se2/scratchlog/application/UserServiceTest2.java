@@ -115,7 +115,7 @@ public class UserServiceTest2 extends AbstractScratchLogTest {
          username,password
          csvuser1,password1!
          csvuser2,password2!
-         """, csv);
+         """, csv.replaceAll("\r",""));
     }
 
     @Test
