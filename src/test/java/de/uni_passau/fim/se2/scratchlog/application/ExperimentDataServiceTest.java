@@ -25,6 +25,7 @@ import de.uni_passau.fim.se2.scratchlog.application.service.ExperimentDataServic
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.BlockEvent;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ClickEvent;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.JsonEvent;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ResourceEvent;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
@@ -32,12 +33,15 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONPro
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ClickEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.JsonEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ResourceEventRepository;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventType;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventType;
+import de.uni_passau.fim.se2.scratchlog.util.enums.JsonEventSpecific;
+import de.uni_passau.fim.se2.scratchlog.util.enums.JsonEventType;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Language;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventType;
@@ -100,26 +104,30 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
     @Mock
     private ParticipantRepository participantRepository;
 
+    @Mock
+    private JsonEventRepository jsonEventRepository;
+
     private static final int ID = 1;
     private final User user = new User("participant", "email", Role.PARTICIPANT, Language.GERMAN, "password", "secret");
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "postscript", true,
-            false, "url");
+        false, "url");
     private static final String[] EVENT_DATA_HEADER = {"id", "user", "username", "experiment", "date", "eventType",
-            "event", "spritename", "metadata", "xml", "json", "name", "md5", "filetype", "library", "table"};
+        "event", "spritename", "metadata", "xml", "json", "name", "md5", "filetype", "library", "content", "table"};
     private static final String[] ISSUE_HEADER = {"user", "issue id", "finder name", "translated finder name",
-            "issue type", "severity", "actor name", "location", "hint", "costumes", "current costumes", "json",
-            "timestamp"};
+        "issue type", "severity", "actor name", "location", "hint", "costumes", "current costumes", "json",
+        "timestamp"};
     private final Participant participant = new Participant(user, experiment, null, null);
     private final Stream<BlockEvent> blockEventData = getBlockEvents(3);
     private final Stream<ClickEvent> clickEventData = getClickEvents(2);
     private final Stream<ResourceEvent> resourceEventData = getResourceEvents(2);
+    private final Stream<JsonEvent> jsonEventData = getJsonEvents(2);
     private final List<Participant> participants = List.of(participant, participant);
 
     @BeforeEach
     void setup() {
         experimentDataService = new ExperimentDataService(
             entityManager, blockEventRepository, clickEventRepository, resourceEventRepository,
-            experimentRepository, participantRepository
+            experimentRepository, participantRepository, jsonEventRepository
         );
         user.setId(ID);
     }
@@ -130,12 +138,13 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
         when(blockEventRepository.findAllByExperiment(experiment)).thenReturn(blockEventData);
         when(clickEventRepository.findAllByExperiment(experiment)).thenReturn(clickEventData);
         when(resourceEventRepository.findAllByExperiment(experiment)).thenReturn(resourceEventData);
+        when(jsonEventRepository.findAllByExperiment(experiment)).thenReturn(jsonEventData);
 
         try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
             experimentDataService.getEventDataCsv(ID, pw);
             List<String> events = sw.toString().lines().toList();
             assertAll(
-                () -> assertEquals(8, events.size()),
+                () -> assertEquals(10, events.size()),
                 () -> assertEquals(
                     Arrays.stream(EVENT_DATA_HEADER).map(s -> "\"" + s + "\"").collect(Collectors.joining(",")),
                     String.join(",", events.getFirst())
@@ -147,6 +156,7 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
         verify(blockEventRepository).findAllByExperiment(experiment);
         verify(clickEventRepository).findAllByExperiment(experiment);
         verify(resourceEventRepository).findAllByExperiment(experiment);
+        verify(jsonEventRepository).findAllByExperiment(experiment);
     }
 
     @Test
@@ -203,7 +213,7 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
         };
         List<BlockEventJSONProjection> blockEventJSONProjections = List.of(projection);
         assertThrows(RuntimeException.class,
-                () -> experimentDataService.getAnalyzedProgramDataCount(blockEventJSONProjections)
+            () -> experimentDataService.getAnalyzedProgramDataCount(blockEventJSONProjections)
         );
     }
 
@@ -211,7 +221,7 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
     public void testGetAnalyzedProgramDataCountNoJsons() {
         List<BlockEventJSONProjection> blockEventJSONProjections = new ArrayList<>();
         assertThrows(IllegalArgumentException.class,
-                () -> experimentDataService.getAnalyzedProgramDataCount(blockEventJSONProjections)
+            () -> experimentDataService.getAnalyzedProgramDataCount(blockEventJSONProjections)
         );
     }
 
@@ -244,16 +254,16 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
         when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment));
         when(participantRepository.findAllByExperiment(experiment)).thenReturn(participants);
         when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
-                experiment)).thenReturn(blockEventJSONProjections);
+            experiment)).thenReturn(blockEventJSONProjections);
         List<String[]> results = experimentDataService.getLitterBoxAnalysisResults(ID);
         assertAll(
-                () -> assertFalse(results.isEmpty()),
-                () -> assertEquals(Arrays.toString(ISSUE_HEADER), Arrays.toString(results.getFirst()))
+            () -> assertFalse(results.isEmpty()),
+            () -> assertEquals(Arrays.toString(ISSUE_HEADER), Arrays.toString(results.getFirst()))
         );
         verify(experimentRepository).findById(ID);
         verify(participantRepository).findAllByExperiment(experiment);
         verify(blockEventRepository, times(2)).findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
-                experiment);
+            experiment);
     }
 
     @Test
@@ -283,9 +293,9 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
         when(experimentRepository.findById(ID)).thenReturn(Optional.of(experiment));
         when(participantRepository.findAllByExperiment(experiment)).thenReturn(participants);
         when(blockEventRepository.findAllByCodeIsNotNullAndUserAndExperimentOrderByDateAsc(user,
-                experiment)).thenReturn(blockEventJSONProjections);
+            experiment)).thenReturn(blockEventJSONProjections);
         assertThrows(RuntimeException.class,
-                () -> experimentDataService.getLitterBoxAnalysisResults(ID)
+            () -> experimentDataService.getLitterBoxAnalysisResults(ID)
         );
         verify(experimentRepository).findById(ID);
         verify(participantRepository).findAllByExperiment(experiment);
@@ -296,7 +306,7 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
     public void testGetLitterBoxAnalysisResultsExperimentNotFound() {
         when(experimentRepository.findById(ID)).thenReturn(Optional.empty());
         assertThrows(NotFoundException.class,
-                () -> experimentDataService.getLitterBoxAnalysisResults(ID)
+            () -> experimentDataService.getLitterBoxAnalysisResults(ID)
         );
         verify(experimentRepository).findById(ID);
         verify(participantRepository, never()).findAllByExperiment(experiment);
@@ -307,7 +317,7 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
         List<BlockEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             BlockEvent blockEvent = new BlockEvent(user, experiment, LocalDateTime.now(), BlockEventType.CLICK,
-                    BlockEventSpecific.STOPALL, "sprite", "meta", "xml" + i, "json.txt" + i);
+                BlockEventSpecific.STOPALL, "sprite", "meta", "xml" + i, "json.txt" + i);
             blockEvent.setId(i);
             events.add(blockEvent);
         }
@@ -318,7 +328,7 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
         List<ClickEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             ClickEvent clickEvent = new ClickEvent(user, experiment, LocalDateTime.now(),
-                    ClickEventType.BUTTON, ClickEventSpecific.CLOSE_DEBUGGER, "meta");
+                ClickEventType.BUTTON, ClickEventSpecific.CLOSE_DEBUGGER, "meta");
             clickEvent.setId(i);
             events.add(clickEvent);
         }
@@ -329,9 +339,20 @@ class ExperimentDataServiceTest extends AbstractScratchLogTest {
         List<ResourceEvent> events = new ArrayList<>();
         for (int i = 0; i < number; i++) {
             ResourceEvent resourceEvent = new ResourceEvent(user, experiment, LocalDateTime.now(),
-                    ResourceEventType.ADD, ResourceEventSpecific.ADD_SOUND, "name", "hash", "type", i == 0 ? 1 : null);
+                ResourceEventType.ADD, ResourceEventSpecific.ADD_SOUND, "name", "hash", "type", i == 0 ? 1 : null);
             resourceEvent.setId(i);
             events.add(resourceEvent);
+        }
+        return events.stream();
+    }
+
+    private Stream<JsonEvent> getJsonEvents(int number) {
+        List<JsonEvent> events = new ArrayList<>();
+        for (int i = 0; i < number; i++) {
+            JsonEvent jsonEvent = new JsonEvent(user, experiment, LocalDateTime.now(),
+                JsonEventType.LITTERBOX, JsonEventSpecific.LLM, "name", "content");
+            jsonEvent.setId(i);
+            events.add(jsonEvent);
         }
         return events.stream();
     }

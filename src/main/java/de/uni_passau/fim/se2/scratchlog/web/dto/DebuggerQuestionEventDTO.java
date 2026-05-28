@@ -23,8 +23,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import de.uni_passau.fim.se2.scratchlog.util.enums.QuestionEventSpecific;
-import de.uni_passau.fim.se2.scratchlog.util.enums.QuestionEventType;
+import de.uni_passau.fim.se2.scratchlog.util.enums.DebuggerQuestionEventSpecific;
+import de.uni_passau.fim.se2.scratchlog.util.enums.DebuggerQuestionEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,7 +45,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class QuestionEventDTO implements EventDTO {
+public class DebuggerQuestionEventDTO implements EventDTO {
 
     /**
      * The unique ID of the question event.
@@ -73,12 +73,12 @@ public class QuestionEventDTO implements EventDTO {
      * The type of question event that occurred.
      */
     @JsonProperty("type")
-    private QuestionEventType eventType;
+    private DebuggerQuestionEventType eventType;
 
     /**
      * The specific event that occurred.
      */
-    private QuestionEventSpecific event;
+    private DebuggerQuestionEventSpecific event;
 
     /**
      * The feedback for the question, if any.
@@ -139,10 +139,11 @@ public class QuestionEventDTO implements EventDTO {
      * @param opcode     The block opcode of the event.
      * @param date       The time at which the event occurred.
      */
-    public QuestionEventDTO(final Integer user, final Integer experiment, final String secret,
-                            final QuestionEventType eventType, final QuestionEventSpecific event,
-                            final Integer feedback, final String type, final String[] values, final String category,
-                            final String form, final String blockID, final String opcode, final LocalDateTime date) {
+    public DebuggerQuestionEventDTO(final Integer user, final Integer experiment, final String secret,
+                                    final DebuggerQuestionEventType eventType,
+                                    final DebuggerQuestionEventSpecific event, final Integer feedback,
+                                    final String type, final String[] values, final String category, final String form,
+                                    final String blockID, final String opcode, final LocalDateTime date) {
         this.user = user;
         this.experiment = experiment;
         this.date = date;
@@ -174,7 +175,7 @@ public class QuestionEventDTO implements EventDTO {
             return false;
         }
 
-        QuestionEventDTO that = (QuestionEventDTO) other;
+        DebuggerQuestionEventDTO that = (DebuggerQuestionEventDTO) other;
         return Objects.equals(id, that.id);
     }
 

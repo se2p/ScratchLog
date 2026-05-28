@@ -99,4 +99,16 @@ public interface EventCountRepository extends JpaRepository<EventCount, EventCou
     List<EventCount> findAllResourceEventsByUserIdAndExperimentId(@Param("uId") Integer user,
                                                                   @Param("expId") Integer experiment);
 
+    /**
+     * Returns all file count data for the given user during the given experiment, if any exist.
+     *
+     * @param user The user to search for.
+     * @param experiment The experiment to search for.
+     * @return A list of event counts that is empty if no entry could be found.
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM user_num_json_events AS n WHERE n.`user` = :uId AND "
+        + "n.experiment = :expId")
+    List<EventCount> findAllJsonEventsByUserIdAndExperimentId(@Param("uId") Integer user,
+                                                                  @Param("expId") Integer experiment);
+
 }

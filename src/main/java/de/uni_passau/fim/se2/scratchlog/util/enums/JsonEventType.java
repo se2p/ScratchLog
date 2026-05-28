@@ -20,18 +20,24 @@
 package de.uni_passau.fim.se2.scratchlog.util.enums;
 
 /**
- * All possible event types for a question event.
+ * All possible event types for a JSON event.
  */
-public enum QuestionEventType {
+public enum JsonEventType {
+
 
     /**
-     * The event was caused by selecting or rating a question.
+     * The event is related to the tutorial system.
      */
-    QUESTION,
+    TUTORIAL,
 
     /**
-     * The event was caused by opening a question category.
+     * The event is related to the LitterBox integration.
      */
-    QUESTION_CATEGORY
+    LITTERBOX,
+
+    /**
+     * The event is related to something else.
+     */
+    GENERIC
 
 }

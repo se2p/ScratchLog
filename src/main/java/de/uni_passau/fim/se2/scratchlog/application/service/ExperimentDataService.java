@@ -36,12 +36,14 @@ import de.uni_passau.fim.se2.scratchlog.application.exception.NotFoundException;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.BlockEvent;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ClickEvent;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.JsonEvent;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ResourceEvent;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ClickEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.JsonEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ParticipantRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ResourceEventRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
@@ -100,6 +102,11 @@ public class ExperimentDataService {
     private final ParticipantRepository participantRepository;
 
     /**
+     * The JSON event repository to use for JSON event queries.
+     */
+    private final JsonEventRepository jsonEventRepository;
+
+    /**
      * String used to search for bug patterns in JSON code using LitterBox.
      */
     private static final String BUGS = "bugs";
@@ -122,13 +129,15 @@ public class ExperimentDataService {
                                  final ClickEventRepository clickEventRepository,
                                  final ResourceEventRepository resourceEventRepository,
                                  final ExperimentRepository experimentRepository,
-                                 final ParticipantRepository participantRepository) {
+                                 final ParticipantRepository participantRepository,
+                                 final JsonEventRepository jsonEventRepository) {
         this.entityManager = entityManager;
         this.blockEventRepository = blockEventRepository;
         this.clickEventRepository = clickEventRepository;
         this.resourceEventRepository = resourceEventRepository;
         this.experimentRepository = experimentRepository;
         this.participantRepository = participantRepository;
+        this.jsonEventRepository = jsonEventRepository;
     }
 
     /**
@@ -145,7 +154,7 @@ public class ExperimentDataService {
         final CSVWriter csvWriter = new CSVWriter(outputStream);
 
         final String[] header = {"id", "user", "username", "experiment", "date", "eventType", "event", "spritename",
-            "metadata", "xml", "json", "name", "md5", "filetype", "library", "table"};
+            "metadata", "xml", "json", "name", "md5", "filetype", "library", "content", "table"};
         csvWriter.writeNext(header);
 
         try (Stream<BlockEvent> blockEvents = blockEventRepository.findAllByExperiment(experiment)) {
@@ -164,6 +173,12 @@ public class ExperimentDataService {
             resourceEvents
                 .peek(entityManager::detach)
                 .map(this::mapResourceEventToCsvRow)
+                .forEach(csvWriter::writeNext);
+        }
+        try (Stream<JsonEvent> jsonEvents = jsonEventRepository.findAllByExperiment(experiment)) {
+            jsonEvents
+                .peek(entityManager::detach)
+                .map(this::mapJsonEventToCsvRow)
                 .forEach(csvWriter::writeNext);
         }
 
@@ -225,7 +240,7 @@ public class ExperimentDataService {
                     blockEvent.getUser().getUsername(), blockEvent.getExperiment().getId().toString(),
                     blockEvent.getDate().toString(), blockEvent.getEventType().toString(),
                     blockEvent.getEvent().toString(), blockEvent.getSprite(), blockEvent.getMetadata(),
-                    blockEvent.getXml(), blockEvent.getCode(), null, null, null, null, "block_event"};
+                    blockEvent.getXml(), blockEvent.getCode(), null, null, null, null, null, "block_event"};
     }
 
     /**
@@ -238,7 +253,7 @@ public class ExperimentDataService {
                     clickEvent.getUser().getUsername(), clickEvent.getExperiment().getId().toString(),
                     clickEvent.getDate().toString(), clickEvent.getEventType().toString(),
                     clickEvent.getEvent().toString(), null, clickEvent.getMetadata(), null, null, null, null, null,
-                    null, "click_event"};
+                    null, null, "click_event"};
     }
 
     /**
@@ -252,7 +267,21 @@ public class ExperimentDataService {
                     resourceEvent.getDate().toString(), resourceEvent.getEventType().toString(),
                     resourceEvent.getEvent().toString(), null, null, null, null, resourceEvent.getResourceName(),
                     resourceEvent.getHash(), resourceEvent.getResourceType(), resourceEvent.getLibraryResource() == null
-                    ? null : resourceEvent.getLibraryResource().toString(), "resource_event"};
+                    ? null : resourceEvent.getLibraryResource().toString(), null, "resource_event"};
+    }
+
+
+    /**
+     * Adds the information contained in the given JSON events to the passed list.
+     *
+     * @param jsonEvent The resource events.
+     */
+    private String[] mapJsonEventToCsvRow(final JsonEvent jsonEvent) {
+        return new String[] {jsonEvent.getId().toString(), jsonEvent.getUser().getId().toString(),
+            jsonEvent.getUser().getUsername(), jsonEvent.getExperiment().getId().toString(),
+            jsonEvent.getDate().toString(), jsonEvent.getEventType().toString(),
+            jsonEvent.getEvent().toString(), null, null, null, null, null,
+            null, null, null, jsonEvent.getContent(), "json_event"};
     }
 
     /**

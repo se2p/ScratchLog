@@ -19,11 +19,11 @@
 
 package de.uni_passau.fim.se2.scratchlog.persistence.repository;
 
-import de.uni_passau.fim.se2.scratchlog.persistence.entity.QuestionEvent;
+import de.uni_passau.fim.se2.scratchlog.persistence.entity.DebuggerQuestionEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
  * A repository providing functionality for retrieving the question event data.
  */
-public interface QuestionEventRepository extends JpaRepository<QuestionEvent, Integer> {
+public interface DebuggerQuestionEventRepository extends JpaRepository<DebuggerQuestionEvent, Integer> {
 }

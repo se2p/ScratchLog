@@ -19,8 +19,8 @@
 
 package de.uni_passau.fim.se2.scratchlog.persistence.entity;
 
-import de.uni_passau.fim.se2.scratchlog.util.enums.QuestionEventSpecific;
-import de.uni_passau.fim.se2.scratchlog.util.enums.QuestionEventType;
+import de.uni_passau.fim.se2.scratchlog.util.enums.DebuggerQuestionEventSpecific;
+import de.uni_passau.fim.se2.scratchlog.util.enums.DebuggerQuestionEventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -49,7 +49,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Entity
-public class QuestionEvent implements Event {
+public class DebuggerQuestionEvent implements Event {
 
     /**
      * The unique ID of the question event.
@@ -84,14 +84,14 @@ public class QuestionEvent implements Event {
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type")
-    private QuestionEventType eventType;
+    private DebuggerQuestionEventType eventType;
 
     /**
      * The specific event that occurred.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "event")
-    private QuestionEventSpecific event;
+    private DebuggerQuestionEventSpecific event;
 
     /**
      * The feedback for the question, if any.

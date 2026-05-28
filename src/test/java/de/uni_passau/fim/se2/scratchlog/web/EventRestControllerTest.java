@@ -33,9 +33,11 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ClickEventType;
 import de.uni_passau.fim.se2.scratchlog.util.enums.DebuggerEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.DebuggerEventType;
+import de.uni_passau.fim.se2.scratchlog.util.enums.JsonEventSpecific;
+import de.uni_passau.fim.se2.scratchlog.util.enums.JsonEventType;
 import de.uni_passau.fim.se2.scratchlog.util.enums.LibraryResource;
-import de.uni_passau.fim.se2.scratchlog.util.enums.QuestionEventSpecific;
-import de.uni_passau.fim.se2.scratchlog.util.enums.QuestionEventType;
+import de.uni_passau.fim.se2.scratchlog.util.enums.DebuggerQuestionEventSpecific;
+import de.uni_passau.fim.se2.scratchlog.util.enums.DebuggerQuestionEventType;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventSpecific;
 import de.uni_passau.fim.se2.scratchlog.util.enums.ResourceEventType;
 import de.uni_passau.fim.se2.scratchlog.web.controller.EventRestController;
@@ -43,7 +45,8 @@ import de.uni_passau.fim.se2.scratchlog.web.dto.BlockEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ClickEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.DebuggerEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
-import de.uni_passau.fim.se2.scratchlog.web.dto.QuestionEventDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.DebuggerQuestionEventDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.JsonEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ResourceEventDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.Sb3ZipDTO;
 import jakarta.servlet.ServletOutputStream;
@@ -60,6 +63,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -102,8 +106,9 @@ public class EventRestControllerTest {
     private BlockEventDTO blockEvent;
     private ClickEventDTO clickEvent;
     private DebuggerEventDTO debuggerEvent;
-    private QuestionEventDTO questionEvent;
+    private DebuggerQuestionEventDTO questionEvent;
     private ResourceEventDTO resourceEvent;
+    private JsonEventDTO jsonEvent;
     private FileDTO fileEvent;
     private Sb3ZipDTO sb3Zip;
     private EventRestController.UserDataRequestDTO dataRequest;
@@ -132,11 +137,14 @@ public class EventRestControllerTest {
             ClickEventSpecific.STOPALL, "meta", LocalDateTime.now());
         debuggerEvent = new DebuggerEventDTO(USER_ID, Experiment_ID, SECRET, DebuggerEventType.SPRITE,
             DebuggerEventSpecific.SELECT_SPRITE, "id", "opcode", 1, 5, LocalDateTime.now());
-        questionEvent = new QuestionEventDTO(USER_ID, Experiment_ID, SECRET, QuestionEventType.QUESTION,
-            QuestionEventSpecific.SELECT, 1, "block-execution", new String[]{"Cat", "Costume"}, "execution",
+        questionEvent = new DebuggerQuestionEventDTO(USER_ID, Experiment_ID, SECRET, DebuggerQuestionEventType.QUESTION,
+            DebuggerQuestionEventSpecific.SELECT, 1, "block-execution", new String[]{"Cat", "Costume"}, "execution",
             "negative", "id", "opcode", LocalDateTime.MIN);
         resourceEvent = new ResourceEventDTO(USER_ID, Experiment_ID, SECRET, ResourceEventType.DELETE,
             ResourceEventSpecific.DELETE_SOUND, "Miau", "md5", "wav", LibraryResource.UNKNOWN, LocalDateTime.MAX);
+        jsonEvent = new JsonEventDTO(USER_ID, Experiment_ID, SECRET, JsonEventType.LITTERBOX,
+            JsonEventSpecific.LLM, "name",  LocalDateTime.now(), new HashMap<String, Object>());
+
         fileEvent = new FileDTO(USER_ID, Experiment_ID, SECRET, "Miau.wav", "audio/x-wav", new byte[]{},
             LocalDateTime.now());
         sb3Zip = new Sb3ZipDTO(USER_ID, Experiment_ID, SECRET, "sb3zip.sb3", new byte[]{}, LocalDateTime.now());
@@ -236,6 +244,25 @@ public class EventRestControllerTest {
         );
         verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
         verify(eventService, never()).saveBlockEvent(any());
+    }
+
+    @Test
+    public void testStoreJsonEvent() {
+        assertDoesNotThrow(
+            () -> eventRestController.storeJsonEvent(jsonEvent)
+        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
+        verify(eventService).saveJsonEvent(any());
+    }
+
+    @Test
+    public void testStoreJsonEventInvalidParticipant() {
+        when(participantService.isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true)).thenReturn(true);
+        assertDoesNotThrow(
+            () -> eventRestController.storeJsonEvent(jsonEvent)
+        );
+        verify(participantService).isInvalidParticipant(USER_ID, Experiment_ID, SECRET, true);
+        verify(eventService, never()).saveJsonEvent(any());
     }
 
     @Test
