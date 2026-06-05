@@ -203,4 +203,19 @@ public enum ClickEventSpecific {
      * The user clicked the Revert Fix button in LitterBox.
      */
     LB_REVERT_FIX,
+
+    /**
+     * The user clicked the Code Understanding button in LitterBox.
+     */
+    LB_CODE_UNDERSTANDING,
+
+    /**
+     * The user clicked the Code Understanding Check Again! button in LitterBox.
+     */
+    LB_CODE_UNDERSTANDING_CHECK_AGAIN,
+
+    /**
+     * The user clicked the Check Answer! button in LitterBox.
+     */
+    LB_CHECK_ANSWER,
 }
