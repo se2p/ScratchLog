@@ -21,21 +21,21 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Library versions -->
-        <bouncycastle.version>1.83</bouncycastle.version>
-        <checkstyle.version>13.3.0</checkstyle.version>
-        <codec.version>1.21.0</codec.version>
-        <commonmark.version>0.27.1</commonmark.version>
-        <glassfish-jaxb.version>4.0.7</glassfish-jaxb.version>
+        <bouncycastle.version>1.84</bouncycastle.version>
+        <checkstyle.version>13.5.0</checkstyle.version>
+        <codec.version>1.22.0</codec.version>
+        <commonmark.version>0.28.0</commonmark.version>
+        <glassfish-jaxb.version>4.0.9</glassfish-jaxb.version>
         <h2.version>2.3.232</h2.version>
-        <jacoco.version>0.8.14</jacoco.version>
+        <jacoco.version>0.8.15</jacoco.version>
         <jakarta.validation.version>3.1.1</jakarta.validation.version>
         <jaxb.version>4.0.5</jaxb.version>
         <json.version>20251224</json.version>
         <!-- check https://gitlab.infosun.fim.uni-passau.de/se2/litterbox/-/packages/ for available versions -->
         <litterbox.version>1.12</litterbox.version>
-        <lombok.version>1.18.44</lombok.version>
+        <lombok.version>1.18.46</lombok.version>
         <maven.checkstyle.version>3.6.0</maven.checkstyle.version>
-        <maven.surefire.version>3.5.5</maven.surefire.version>
+        <maven.surefire.version>3.5.6</maven.surefire.version>
         <mockito-inline.version>5.2.0</mockito-inline.version>
         <mockito.version>5.23.0</mockito.version>
         <mycila.version>4.2</mycila.version>
@@ -224,7 +224,7 @@
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
-            <version>3.5.7</version>
+            <version>3.5.8</version>
         </dependency>
 
         <!-- Annotations for entities -->
@@ -325,7 +325,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.2</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
