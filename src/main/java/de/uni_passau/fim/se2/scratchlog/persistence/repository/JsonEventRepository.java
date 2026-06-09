@@ -25,7 +25,6 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.JsonEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -37,7 +36,7 @@ public interface JsonEventRepository extends JpaRepository<JsonEvent, Integer> {
      * Returns all {@link JsonEvent}s that occurred during the given experiment.
      *
      * @param experiment The experiment to search for.
-     * @return A {@link List} of all JSON events.
+     * @return A {@link Stream} of all JSON events.
      */
     Stream<JsonEvent> findAllByExperiment(Experiment experiment);
 

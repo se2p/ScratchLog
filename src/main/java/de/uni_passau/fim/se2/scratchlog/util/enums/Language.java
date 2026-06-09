@@ -50,6 +50,13 @@ public enum Language {
         return locale;
     }
 
+    /**
+     * Tries to convert the given string into a language.
+     *
+     * @param value Some string.
+     * @return The language, or {@link Constants#DEFAULT_LANGUAGE} if the given value cannot be
+     *         interpreted as any of the defined languages.
+     */
     public static Language fromString(final String value) {
         if (value == null) {
             return Constants.DEFAULT_LANGUAGE;
