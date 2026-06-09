@@ -24,19 +24,24 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.ExperimentRepository;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
-import jakarta.persistence.EntityNotFoundException;
+import de.uni_passau.fim.se2.scratchlog.web.dto.ProjectFileDTO;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
+import java.io.IOException;
 import java.util.Optional;
 
 /**
  * A service providing methods related to experiments.
  */
 @Service
+@Validated
 public class ExperimentService {
 
     /**
@@ -163,49 +168,28 @@ public class ExperimentService {
     }
 
     /**
-     * Uploads the given byte array representing an sb3 project that is to be loaded when starting an experiment with
-     * the given id.
+     * Uploads the given sb3 project file that is to be loaded when starting an experiment with the given id.
      *
      * @param id The experiment ID.
      * @param project The sb3 project to upload.
-     * @throws IllegalArgumentException if the passed project is null or the id is invalid.
-     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
-    public void uploadSb3Project(final int id, final byte[] project) {
-        if (project == null) {
-            throw new IllegalArgumentException("Cannot upload sb3 project null!");
-        }
-
-        try {
-            Experiment experiment = experimentRepository.getReferenceById(id);
-            experiment.setProject(project);
-            experimentRepository.save(experiment);
-        } catch (EntityNotFoundException e) {
-            log.error("Could not find experiment with id {} when trying to upload an sb3 project!", id, e);
-            throw new NotFoundException("Could not find experiment with id " + id + " when trying to upload an sb3 "
-                    + "project!", e);
-        }
+    public void uploadSb3Project(final int id, @NotNull @Valid final ProjectFileDTO project) throws IOException {
+        Experiment experiment = experimentRepository.getReferenceById(id);
+        experiment.setProject(project.getFile().getBytes());
+        experimentRepository.save(experiment);
     }
 
     /**
      * Deletes the current sb3 project for the experiment with the given id.
      *
      * @param id The experiment ID.
-     * @throws IllegalArgumentException if the passed id is invalid.
-     * @throws NotFoundException if no corresponding experiment could be found.
      */
     @Transactional
     public void deleteSb3Project(final int id) {
-        try {
-            Experiment experiment = experimentRepository.getReferenceById(id);
-            experiment.setProject(null);
-            experimentRepository.save(experiment);
-        } catch (EntityNotFoundException e) {
-            log.error("Could not find experiment with id {} when trying to delete an sb3 project!", id, e);
-            throw new NotFoundException("Could not find experiment with id " + id + " when trying to delete an sb3 "
-                    + "project!", e);
-        }
+        Experiment experiment = experimentRepository.getReferenceById(id);
+        experiment.setProject(null);
+        experimentRepository.save(experiment);
     }
 
     /**

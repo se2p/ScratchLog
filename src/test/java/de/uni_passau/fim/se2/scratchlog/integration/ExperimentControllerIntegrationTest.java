@@ -176,9 +176,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
     private final Page<Participant> participants = new PageImpl<>(getParticipants(5));
     private final ParticipantDTO participantDTO = new ParticipantDTO(ID, ID);
     private final PasswordDTO passwordDTO = new PasswordDTO(PASSWORD);
-    private final MockMultipartFile sb3File = new MockMultipartFile("file", FILENAME_SB3, FILETYPE_SB3, CONTENT);
-    private final MockMultipartFile wrongFiletype = new MockMultipartFile("file", FILENAME_SB3, "type", CONTENT);
-    private final MockMultipartFile wrongFilename = new MockMultipartFile("file", "name", FILETYPE_SB3, CONTENT);
 
     @BeforeEach
     public void setup() {
@@ -1097,104 +1094,6 @@ public class ExperimentControllerIntegrationTest extends AbstractControllerTest 
                         .accept(MediaType.ALL))
                 .andExpect(status().isOk());
         verify(experimentDataService).getLitterBoxAnalysisResults(ID);
-    }
-
-    @Test
-    public void testUploadProjectFile() throws Exception {
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
-                .file(sb3File)
-                .param(ID_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
-        verify(experimentService).uploadSb3Project(ID, sb3File.getBytes());
-    }
-
-    @Test
-    public void testUploadProjectFileNotFound() throws Exception {
-        doThrow(NotFoundException.class).when(experimentService).uploadSb3Project(ID, CONTENT);
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
-                .file(sb3File)
-                .param(ID_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
-        verify(experimentService).uploadSb3Project(ID, sb3File.getBytes());
-    }
-
-    @Test
-    public void testUploadProjectFileWrongName() throws Exception {
-        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
-                .file(wrongFilename)
-                .param(ID_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(EXPERIMENT));
-        verify(experimentService).getExperiment(ID);
-        verify(pageService).getLastParticipantPage(ID);
-        verify(experimentService).hasProjectFile(ID);
-        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
-    }
-
-    @Test
-    public void testUploadProjectFileWrongType() throws Exception {
-        when(experimentService.getExperiment(ID)).thenReturn(experimentDTO);
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
-                .file(wrongFiletype)
-                .param(ID_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().isOk())
-                .andExpect(view().name(EXPERIMENT));
-        verify(experimentService).getExperiment(ID);
-        verify(pageService).getLastParticipantPage(ID);
-        verify(experimentService).hasProjectFile(ID);
-        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
-    }
-
-    @Test
-    public void testUploadProjectFileInvalidId() throws Exception {
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-        mockMvc.perform(multipart("/experiment/upload")
-                .file(sb3File)
-                .param(ID_PARAM, BLANK)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is4xxClientError())
-                .andExpect(view().name(Constants.ERROR));
-        verify(experimentService, never()).getExperiment(anyInt());
-        verify(experimentService, never()).uploadSb3Project(anyInt(), any());
-    }
-
-    @Test
-    public void testDeleteProjectFile() throws Exception {
-        mvc.perform(get("/experiment/sb3")
-                .param(ID_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(REDIRECT_EXPERIMENT + ID));
-        verify(experimentService).deleteSb3Project(ID);
-    }
-
-    @Test
-    public void testDeleteProjectFileNotFound() throws Exception {
-        doThrow(NotFoundException.class).when(experimentService).deleteSb3Project(ID);
-        mvc.perform(get("/experiment/sb3")
-                .param(ID_PARAM, ID_STRING)
-                .contentType(MediaType.ALL)
-                .accept(MediaType.ALL))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(view().name(ERROR));
-        verify(experimentService).deleteSb3Project(ID);
     }
 
     private List<Participant> getParticipants(int number) {

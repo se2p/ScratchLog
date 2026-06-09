@@ -107,12 +107,14 @@
                 <div class="tab-pane fade show active" id="nav-sb3" role="tabpanel" aria-labelledby="nav-sb3-tab"
                      tabindex="0">
                     <!-- The button to upload an initial sb3 template or delete an existing one. -->
-                    <form method="post" th:action="@{/experiment/upload}" enctype="multipart/form-data"
-                          class="align-items-start d-flex flex-column">
+                    <form method="post" th:action="@{/experiment/upload}" th:object="${fileDTO}"
+                          enctype="multipart/form-data" class="align-items-start d-flex flex-column">
                         <div class="p-5">
-                            <label for="scratchFile" class="form-label">SB3 File</label>
+                            <label for="scratchFile" class="form-label" th:text="#{project}"></label>
                             <input type="hidden" name="id" th:value="${experimentDTO.id}" />
-                            <input type="file" id="scratchFile" class="form-control" name="file" />
+                            <input type="file" id="scratchFile" class="form-control" th:field="*{file}" accept=".sb3"/>
+                            <div class="alert alert-danger pt-2" th:if="${#fields.hasErrors('file')}"
+                                 th:errors="*{file}"></div>
                         </div>
 
                         <div class="card-footer" style="width: 100%">
@@ -494,7 +496,8 @@
         <div class="mb-3" th:text="#{delete_sb3_warn}"></div>
         <div class="d-flex justify-content-between">
             <input id="abortSb3Delete" class="btn btn-secondary" type="submit" th:value="#{abort}">
-            <a class="btn btn-danger" th:text="#{delete}" th:href="@{/experiment/sb3(id=${experimentDTO.id})}"></a>
+            <a class="btn btn-danger" th:text="#{delete}"
+               th:href="@{/experiment/project/delete(id=${experimentDTO.id})}"></a>
         </div>
     </div>
 </div>
