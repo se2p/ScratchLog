@@ -58,6 +58,12 @@ Checkstyle:
       codequality:
         - checkstyle-report.json
 
+LicenceHeaders:
+  stage: validate
+  needs: []
+  script:
+    - "mvn $MAVEN_ARGS license:check"
+
 Compile:
   stage: build
   needs: []
