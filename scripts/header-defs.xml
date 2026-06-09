@@ -1,0 +1,18 @@
+<!--
+adapted from
+https://github.com/mathieucarbou/license-maven-plugin/issues/78#issuecomment-1878531619
+-->
+<additionalHeaders>
+    <slashstar_style>
+        <firstLine>/*</firstLine>
+        <beforeEachLine> * </beforeEachLine>
+        <endLine> */EOL</endLine>
+        <afterEachLine> </afterEachLine>
+        <!--skipLine></skipLine-->
+        <firstLineDetectionPattern>(\s|\t)*/\*.*$</firstLineDetectionPattern>
+        <lastLineDetectionPattern>.*\*/(\s|\t)*$</lastLineDetectionPattern>
+        <allowBlankLines>true</allowBlankLines>
+        <multiLine>true</multiLine>
+        <padLines>false</padLines>
+    </slashstar_style>
+</additionalHeaders>

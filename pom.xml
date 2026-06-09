@@ -358,26 +358,25 @@
                 </executions>
             </plugin>
 
-            <!-- License text in source files -->
-            <!--
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
-                <version>${mycila.version}</version>
+                <version>5.0.0</version>
                 <configuration>
-                    <header>src/main/resources/static/license-header.txt</header>
                     <properties>
-                        <year>2023</year>
+                        <year>2021-2026</year>
                     </properties>
-                    <excludes>
-                        <exclude>**/README</exclude>
-                        <exclude>**/.gitlab-ci.yml</exclude>
-                        <exclude>**/pom.xml</exclude>
-                        <exclude>src/test/resources/**</exclude>
-                        <exclude>src/main/resources/**</exclude>
-                        <exclude>**/*.properties</exclude>
-                        <exclude>checkstyle.xml</exclude>
-                    </excludes>
+                    <headerDefinitions>${project.basedir}/scripts/header-defs.xml</headerDefinitions>
+                    <licenseSets>
+                        <licenseSet>
+                            <header>src/etc/header.txt</header>
+                            <basedir>src/</basedir>
+                            <excludes>
+                                <exclude>main/resources/**</exclude>
+                                <exclude>test/resources/**</exclude>
+                            </excludes>
+                        </licenseSet>
+                    </licenseSets>
                     <mapping>
                         <java>SLASHSTAR_STYLE</java>
                     </mapping>
@@ -390,7 +389,6 @@
                     </execution>
                 </executions>
             </plugin>
-            -->
 
             <!-- Checkstyle -->
             <plugin>
