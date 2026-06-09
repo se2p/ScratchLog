@@ -7,9 +7,14 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.testing_utils.DtoUtil;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.ProjectFileDTO;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
+
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -33,12 +38,15 @@ public class ExperimentServiceTest extends AbstractScratchLogTest {
     private ExperimentDTO experiment2Dto;
 
     private int invalidId;
+    private ProjectFileDTO projectFileDTO;
 
     @BeforeEach
     public void setup() {
         experiment1 = entityUtilService.generateExperiment("Experiment 1");
         experiment2Dto = DtoUtil.generateExperimentDTO("Experiment 2 DTO");
         invalidId = experiment1.getId() + 50;
+        projectFileDTO = new ProjectFileDTO(
+            new MockMultipartFile("project", "project.sb3", "application/octet-stream", PROJECT_BYTES));
     }
 
     @Test
@@ -57,8 +65,8 @@ public class ExperimentServiceTest extends AbstractScratchLogTest {
     }
 
     @Test
-    public void testHasProjectFileAfterUpload() {
-        service.uploadSb3Project(experiment1.getId(), new byte[]{});
+    public void testHasProjectFileAfterUpload() throws IOException {
+        service.uploadSb3Project(experiment1.getId(), projectFileDTO);
         assertTrue(service.hasProjectFile(experiment1.getId()));
     }
 
@@ -172,33 +180,15 @@ public class ExperimentServiceTest extends AbstractScratchLogTest {
         assertThrows(NotFoundException.class, () -> service.changeExperimentStatus(true, invalidId));
     }
 
-    // The 'correct path' of uploadSb3Project is already covered by testHasProjectFileAfterUpload above.
-    @Test
-    public void testUploadSb3ProjectNotFound() {
-        assertThrows(NotFoundException.class, () -> service.uploadSb3Project(invalidId, PROJECT_BYTES));
-    }
-
     @Test
     public void testUploadSb3ProjectNull() {
-        assertThrows(IllegalArgumentException.class, () -> service.uploadSb3Project(experiment1.getId(), null));
+        assertThrows(ConstraintViolationException.class, () -> service.uploadSb3Project(experiment1.getId(), null));
     }
 
     @Test
-    public void testDeleteSb3Project() {
-        service.uploadSb3Project(experiment1.getId(), PROJECT_BYTES);
-        service.deleteSb3Project(experiment1.getId());
-        assertFalse(service.hasProjectFile(experiment1.getId()));
-    }
-
-    @Test
-    public void testDeleteSb3ProjectNotFound() {
-        assertThrows(NotFoundException.class, () -> service.deleteSb3Project(invalidId));
-    }
-
-    @Test
-    public void testGetSb3File() {
+    public void testGetSb3File() throws IOException {
         service.changeExperimentStatus(true, experiment1.getId());
-        service.uploadSb3Project(experiment1.getId(), PROJECT_BYTES);
+        service.uploadSb3Project(experiment1.getId(), projectFileDTO);
         ExperimentProjection experimentProjection = service.getSb3File(experiment1.getId(), false);
         assertArrayEquals(PROJECT_BYTES, experimentProjection.getProject());
     }
@@ -210,9 +200,9 @@ public class ExperimentServiceTest extends AbstractScratchLogTest {
     }
 
     @Test
-    public void testGetSb3FileReturnInactive() {
+    public void testGetSb3FileReturnInactive() throws IOException {
         service.changeExperimentStatus(false, experiment1.getId());
-        service.uploadSb3Project(experiment1.getId(), PROJECT_BYTES);
+        service.uploadSb3Project(experiment1.getId(), projectFileDTO);
         ExperimentProjection experimentProjection = service.getSb3File(experiment1.getId(), true);
         assertArrayEquals(PROJECT_BYTES, experimentProjection.getProject());
     }

@@ -37,14 +37,15 @@ import de.uni_passau.fim.se2.scratchlog.util.FieldErrorHandler;
 import de.uni_passau.fim.se2.scratchlog.util.MarkdownHandler;
 import de.uni_passau.fim.se2.scratchlog.util.Secrets;
 import de.uni_passau.fim.se2.scratchlog.util.enums.Role;
-import de.uni_passau.fim.se2.scratchlog.util.validation.FiletypeValidator;
 import de.uni_passau.fim.se2.scratchlog.util.validation.StringValidator;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ExperimentDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.PasswordDTO;
+import de.uni_passau.fim.se2.scratchlog.web.dto.ProjectFileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.UserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -627,66 +628,48 @@ public class ExperimentController {
 
     /**
      * Saves the content of the given sb3 file to the database for the experiment with the given id. If the file does
-     * not meet the requirements, the user returns to the experiment page where an error message is displayed. If the
-     * parameters are invalid, no corresponding experiment could be found, or an {@link IOException} occurred, the user
-     * is redirected to the error page instead.
+     * not meet the requirements or an {@link IOException} occurred, the user returns to the experiment page where an
+     * error message is displayed.
      *
-     * @param experimentId The experiment id to search for.
-     * @param file The sb3 file to be uploaded.
+     * @param experimentId The id of the experiment to upload the project to.
+     * @param fileDTO The project file to be uploaded.
+     * @param bindingResult The binding result for storing errors for the uploaded file.
      * @param model The model used to return error messages.
-     * @return The experiment page on success, or if the file was invalid, or the error page otherwise.
+     * @return The experiment page.
      */
-    @PostMapping("/upload")
+    @PostMapping("/project")
     @Secured(Constants.ROLE_ADMIN)
-    public String uploadProjectFile(@RequestParam("file") final MultipartFile file,
-                                    @RequestParam(ID) final int experimentId, final Model model) {
-        if (file == null) {
-            log.error("Cannot upload file for experiment with file null!");
-            return Constants.ERROR;
-        }
+    public String uploadProjectFile(@Valid @ModelAttribute("fileDTO") final ProjectFileDTO fileDTO,
+                                    final BindingResult bindingResult, @RequestParam(ID) final int experimentId,
+                                    final Model model) {
+        ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
+        addModelInfo(0, experimentDTO, model);
 
-        ResourceBundle resourceBundle = ResourceBundle.getBundle("i18n/messages",
-                LocaleContextHolder.getLocale());
-        String fileValidation = FiletypeValidator.validate(file, "application/octet-stream", Constants.SB3);
-
-        if (fileValidation != null) {
-            log.error("Could not upload sb3 file due to invalid filetype or empty file!");
-            model.addAttribute(ERROR, resourceBundle.getString(fileValidation));
-        }
-
-        if (model.getAttribute(ERROR) != null) {
-            ExperimentDTO experimentDTO = experimentService.getExperiment(experimentId);
-            addModelInfo(0, experimentDTO, model);
+        if (bindingResult.hasErrors()) {
             return EXPERIMENT;
         }
 
         try {
-            experimentService.uploadSb3Project(experimentId, file.getBytes());
+            experimentService.uploadSb3Project(experimentId, fileDTO);
             return REDIRECT_EXPERIMENT + experimentId;
-        } catch (NotFoundException e) {
-            return Constants.ERROR;
         } catch (IOException e) {
             log.error("Could not upload file due to IOException", e);
-            return Constants.ERROR;
+            bindingResult.rejectValue("file", "error_io");
+            return EXPERIMENT;
         }
     }
 
     /**
-     * Deletes the sb3 file currently saved for the experiment with the given id. If the id is invalid, or no
-     * corresponding experiment could be found, the user is redirected to the error page instead.
+     * Deletes the sb3 file currently saved for the experiment with the given id.
      *
-     * @param experimentId The experiment id to search for.
-     * @return The experiment page on success, or the error page otherwise.
+     * @param experimentId The id of the experiment to delete the project file of.
+     * @return The experiment page.
      */
-    @GetMapping("/sb3")
+    @GetMapping("/project/delete")
     @Secured(Constants.ROLE_ADMIN)
     public String deleteProjectFile(@RequestParam(ID) final int experimentId) {
-        try {
-            experimentService.deleteSb3Project(experimentId);
-            return REDIRECT_EXPERIMENT + experimentId;
-        } catch (NotFoundException e) {
-            return Constants.ERROR;
-        }
+        experimentService.deleteSb3Project(experimentId);
+        return REDIRECT_EXPERIMENT + experimentId;
     }
 
     /**
@@ -785,6 +768,9 @@ public class ExperimentController {
 
         model.addAttribute("experimentDTO", experimentDTO);
         model.addAttribute("passwordDTO", new PasswordDTO());
+        if (!model.containsAttribute("fileDTO")) {
+            model.addAttribute("fileDTO", new ProjectFileDTO());
+        }
     }
 
     /**
