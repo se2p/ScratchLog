@@ -639,7 +639,7 @@ public class ExperimentController {
      * @param model The model used to return error messages.
      * @return The experiment page.
      */
-    @PostMapping("/project")
+    @PostMapping("/project/upload")
     @Secured(Constants.ROLE_ADMIN)
     public String uploadProjectFile(@Valid @ModelAttribute("fileDTO") final ProjectFileDTO fileDTO,
                                     final BindingResult bindingResult, @RequestParam(ID) final int experimentId,

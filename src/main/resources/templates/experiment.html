@@ -107,7 +107,7 @@
                 <div class="tab-pane fade show active" id="nav-sb3" role="tabpanel" aria-labelledby="nav-sb3-tab"
                      tabindex="0">
                     <!-- The button to upload an initial sb3 template or delete an existing one. -->
-                    <form method="post" th:action="@{/experiment/upload}" th:object="${fileDTO}"
+                    <form method="post" th:action="@{/experiment/project/upload}" th:object="${fileDTO}"
                           enctype="multipart/form-data" class="align-items-start d-flex flex-column">
                         <div class="p-5">
                             <label for="scratchFile" class="form-label" th:text="#{project}"></label>

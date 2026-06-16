@@ -72,7 +72,7 @@ public class ExperimentControllerIntegrationTest2 extends AbstractScratchLogCont
 
     @Test
     public void testUploadProjectFile() throws Exception {
-        mvc.perform(multipart("/experiment/project")
+        mvc.perform(multipart("/experiment/project/upload")
                 .file(sb3File)
                 .param(PARAM_ID, experimentIdString))
             .andExpect(status().is3xxRedirection())
@@ -84,7 +84,7 @@ public class ExperimentControllerIntegrationTest2 extends AbstractScratchLogCont
 
     @Test
     public void testUploadProjectFileExperimentNotFound() throws Exception {
-        mvc.perform(multipart("/experiment/project")
+        mvc.perform(multipart("/experiment/project/upload")
                 .file(sb3File)
                 .param(PARAM_ID, INVALID_ID))
             .andExpect(status().isNotFound());
@@ -93,7 +93,7 @@ public class ExperimentControllerIntegrationTest2 extends AbstractScratchLogCont
     @Test
     public void testUploadProjectInvalidFileName() throws Exception {
         sb3File = new MockMultipartFile(sb3File.getName(), "invalid", sb3File.getContentType(), sb3File.getBytes());
-        mvc.perform(multipart("/experiment/project")
+        mvc.perform(multipart("/experiment/project/upload")
                 .file(sb3File)
                 .param(PARAM_ID, experimentIdString))
             .andExpect(status().isOk())
@@ -105,7 +105,7 @@ public class ExperimentControllerIntegrationTest2 extends AbstractScratchLogCont
     public void testUploadProjectInvalidFileType() throws Exception {
         sb3File = new MockMultipartFile(sb3File.getName(),sb3File.getOriginalFilename(), "image/png",
             sb3File.getBytes());
-        mvc.perform(multipart("/experiment/project")
+        mvc.perform(multipart("/experiment/project/upload")
                 .file(sb3File)
                 .param(PARAM_ID, experimentIdString))
             .andExpect(status().isOk())
@@ -117,7 +117,7 @@ public class ExperimentControllerIntegrationTest2 extends AbstractScratchLogCont
     public void testUploadProjectFileEmpty() throws Exception {
         sb3File = new MockMultipartFile(sb3File.getName(),sb3File.getOriginalFilename(), sb3File.getContentType(),
             new byte[] {});
-        mvc.perform(multipart("/experiment/project")
+        mvc.perform(multipart("/experiment/project/upload")
                 .file(sb3File)
                 .param(PARAM_ID, experimentIdString))
             .andExpect(status().isOk())
@@ -127,7 +127,7 @@ public class ExperimentControllerIntegrationTest2 extends AbstractScratchLogCont
 
     @Test
     public void testUploadProjectIOException() throws Exception {
-        mvc.perform(multipart("/experiment/project")
+        mvc.perform(multipart("/experiment/project/upload")
                 .file(new ThrowingMockMultiPartFile(sb3File))
                 .param(PARAM_ID, experimentIdString))
             .andExpect(status().isOk())
@@ -137,7 +137,9 @@ public class ExperimentControllerIntegrationTest2 extends AbstractScratchLogCont
 
     @Test
     public void testDeleteProject() throws Exception {
-        mvc.perform(multipart("/experiment/project").file(sb3File).param(PARAM_ID, experimentIdString));
+        mvc.perform(
+            multipart("/experiment/project/upload").file(sb3File).param(PARAM_ID, experimentIdString)
+        );
         mvc.perform(get("/experiment/project/delete")
                 .param(PARAM_ID, experimentIdString))
             .andExpect(status().is3xxRedirection())
