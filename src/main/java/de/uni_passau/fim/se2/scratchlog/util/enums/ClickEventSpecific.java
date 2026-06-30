@@ -220,4 +220,9 @@ public enum ClickEventSpecific {
      * The user clicked the Check Answer! button in LitterBox.
      */
     LB_CHECK_ANSWER,
+
+    /**
+     * The user clicked the Questions button in the tutorial.
+     */
+    TUTORIAL_TO_QUESTION,
 }
