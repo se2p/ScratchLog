@@ -78,7 +78,7 @@ ProcessedGgnnProgram = str
 Embedding = numpy.typing.NDArray[numpy.float64]
 
 
-class GgnnProgressVarianceProjectionRequest(BaseModel):
+class ProgressVarianceProjectionRequest(BaseModel):
     template_program: ProcessedGgnnProgram = Field(..., alias="templateProgram")
     solution_program: ProcessedGgnnProgram = Field(..., alias="solutionProgram")
     student_programs: dict[int, ProcessedGgnnProgram] = Field(
@@ -97,7 +97,7 @@ class ProgressVarianceProjection(BaseModel):
 
 @app.post("/ggnn/progress-variance-projection")
 async def get_progress_variance_projection_ggnn(
-    req: GgnnProgressVarianceProjectionRequest,
+    req: ProgressVarianceProjectionRequest,
     model: GgnnApiModel = Depends(_get_ggnn_model),
 ) -> ProgressVarianceProjection:
     if len(req.student_programs) == 0:
@@ -114,7 +114,7 @@ async def get_progress_variance_projection_ggnn(
 
 @app.post("/llm/progress-variance-projection")
 async def get_progress_variance_projection_llm(
-    req: GgnnProgressVarianceProjectionRequest,
+    req: ProgressVarianceProjectionRequest,
     model: LlmApiModel = Depends(_get_llm_model),
 ) -> ProgressVarianceProjection:
     if len(req.student_programs) == 0:
@@ -151,7 +151,7 @@ def _pv_projection(
     )
 
 
-class GgnnEmbeddingDistanceRequest(BaseModel):
+class EmbeddingDistanceRequest(BaseModel):
     solution_program: ProcessedGgnnProgram = Field(..., alias="solutionProgram")
     student_programs: dict[int, ProcessedGgnnProgram] = Field(
         ..., alias="studentPrograms"
@@ -169,7 +169,7 @@ class EmbeddingDistanceResponse(BaseModel):
 
 @app.post("/ggnn/embedding-distance")
 async def get_embedding_distance_ggnn(
-    req: GgnnEmbeddingDistanceRequest, model: GgnnApiModel = Depends(_get_ggnn_model)
+    req: EmbeddingDistanceRequest, model: GgnnApiModel = Depends(_get_ggnn_model)
 ) -> EmbeddingDistanceResponse:
     if len(req.student_programs) == 0:
         return EmbeddingDistanceResponse(distances=[])
@@ -184,7 +184,7 @@ async def get_embedding_distance_ggnn(
 
 @app.post("/llm/embedding-distance")
 async def get_embedding_distance_llm(
-    req: GgnnEmbeddingDistanceRequest, model: LlmApiModel = Depends(_get_llm_model)
+    req: EmbeddingDistanceRequest, model: LlmApiModel = Depends(_get_llm_model)
 ) -> EmbeddingDistanceResponse:
     if len(req.student_programs) == 0:
         return EmbeddingDistanceResponse(distances=[])

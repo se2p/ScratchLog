@@ -12,7 +12,6 @@ services:
       spring.datasource.password: scratchlog
       app.gui: http://localhost:8601
       app.gui.base: http://localhost:8601
-      # TODO: any other options from the properties that should be overriden?
       code-embeddings.model: llm
       code-embeddings.embedding-connector-url: http://embedding-connector:8080
       whisker.base-url: http://whisker:8091

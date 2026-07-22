@@ -1,7 +1,8 @@
 [project]
 name = "embedding-connector"
 version = "0.1.0"
-description = "Add your description here"
+license = "GPL-3.0-or-later"
+description = "Embedding provider for ScratchLog"
 readme = "README.md"
 authors = [
     { name = "Benedikt Fein", email = "fein@fim.uni-passau.de" }

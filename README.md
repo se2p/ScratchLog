@@ -41,6 +41,7 @@ For the database it is fine if it remains available locally.
 You can find additional configuration options in `src/main/resources/application.properties` or in the ‘Standard Configuration’ section below.
 These can be added in the `docker-compose.yml` in the `services>scratchlog>environment` section.
 They will become active after a restart (`docker compose restart scratchlog`).
+You can find relevant environment variables for the embedding connector in `embedding-connector/README.md`.
 
 To get the automatically generated initial password for the admin user search the log output for something like the following
 ```console
@@ -161,4 +162,6 @@ authenticates via SSO again, a new user profile will be created.
 
 ## Publications
 
-Laura Caspari, Luisa Greifenstein, Ute Heuer, and Gordon Fraser. 2023. ScratchLog: Live Learning Analytics for Scratch. In Proceedings of the 2023 Conference on Innovation and Technology in Computer Science Education V. 1 (ITiCSE 2023). Association for Computing Machinery, New York, NY, USA, 403–409. https://doi.org/10.1145/3587102.3588836
+* Laura Caspari, Luisa Greifenstein, Ute Heuer, and Gordon Fraser. 2023. ScratchLog: Live Learning Analytics for Scratch. In Proceedings of the 2023 Conference on Innovation and Technology in Computer Science Education V. 1 (ITiCSE 2023). Association for Computing Machinery, New York, NY, USA, 403–409. https://doi.org/10.1145/3587102.3588836
+
+* Benedikt Fein and Gordon Fraser. 2026. ScratchLog+: Live Learning Analytics of Learners’ Exercise Progress. 2026 In IEEE/ACM Automated Software Engineering (ASE): Tool and Datasets Track. ACM. https://doi.org/10.1145/3832783.3834618
