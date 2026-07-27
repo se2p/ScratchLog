@@ -24,7 +24,6 @@ package de.uni_passau.fim.se2.scratchlog.application.service;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.EventCount;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.Experiment;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.ExperimentData;
-import de.uni_passau.fim.se2.scratchlog.persistence.entity.Participant;
 import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.EventProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
@@ -164,28 +163,6 @@ public class DashboardService {
     }
 
     public record ExperimentDataDto(int participants, int started, int finished) {
-    }
-
-    /**
-     * Retrieves the ids and usernames of all participants of the experiment with the given id.
-     *
-     * @param id The experiment id.
-     * @return A list of participant ids and usernames.
-     * @throws IllegalArgumentException if the passed id is invalid.
-     */
-    public List<ParticipantIdName> getParticipants(final int id) {
-        Experiment experiment = experimentRepository.getReferenceById(id);
-
-        List<Participant> participants = participantRepository.findAllByExperiment(experiment);
-        return participants
-            .stream()
-            .map(participant -> new ParticipantIdName(
-                participant.getUser().getId(), participant.getUser().getUsername()
-            ))
-            .toList();
-    }
-
-    public record ParticipantIdName(int id, String username) {
     }
 
     /**

@@ -27,6 +27,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.entity.User;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventJSONProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.web.dto.FileDTO;
 import de.uni_passau.fim.se2.scratchlog.web.dto.ParticipantDTO;
@@ -57,6 +58,8 @@ public class ZipExportService {
 
     private static final Logger log = LoggerFactory.getLogger(ZipExportService.class);
 
+    private final BlockEventRepository blockEventRepository;
+
     private final CodeService codeService;
 
     private final ExperimentService experimentService;
@@ -72,12 +75,38 @@ public class ZipExportService {
         final ExperimentService experimentService,
         final FileService fileService,
         final ParticipantService participantService,
-        final UserRepository userRepository) {
+        final UserRepository userRepository,
+        final BlockEventRepository blockEventRepository
+    ) {
         this.codeService = codeService;
         this.experimentService = experimentService;
         this.fileService = fileService;
         this.participantService = participantService;
         this.userRepository = userRepository;
+        this.blockEventRepository = blockEventRepository;
+    }
+
+    /**
+     * Exports the SB3 archive for a single event.
+     *
+     * @param experimentId The experiment the event was generated in.
+     * @param eventId The event id.
+     * @return The bytes of the SB3 archive, or an empty array in case no event was found.
+     */
+    public byte[] exportSb3ForEvent(final int experimentId, final int eventId) {
+        final Optional<Integer> userId = blockEventRepository.getCreatorIdOfEvent(eventId);
+        if (userId.isEmpty()) {
+            return new byte[0];
+        }
+
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            exportSb3ForEvent(baos, experimentId, userId.get(), eventId);
+        } catch (IOException e) {
+            return new byte[0];
+        }
+
+        return baos.toByteArray();
     }
 
     /**

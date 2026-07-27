@@ -32,14 +32,19 @@ import de.uni_passau.fim.se2.scratchlog.util.enums.BlockEventSpecific;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
  * A repository providing functionality for retrieving the block event data.
  */
 public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer> {
+
+    List<BlockEvent> event(BlockEventSpecific event);
 
     /**
      * Returns all xml data with the corresponding id of the block event saved for the given user in the given
@@ -94,6 +99,8 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
     List<EventProjection> findAllByUserAndExperimentAndEvent(User user, Experiment experiment,
                                                              BlockEventSpecific event);
 
+    Optional<BlockEvent> findBlockEventById(int blockEventId);
+
     /**
      * Returns a {@link BlockEventJSONProjection} containing the last non-null JSON code that was saved for the given
      * user during the given experiment.
@@ -105,4 +112,66 @@ public interface BlockEventRepository extends JpaRepository<BlockEvent, Integer>
     BlockEventJSONProjection findFirstByUserAndExperimentAndCodeIsNotNullOrderByDateDesc(User user,
                                                                                          Experiment experiment);
 
+    @Query("""
+            with latest_events as (
+                select be2.user.id as user_id, max(be2.id) as id, max(be2.date) as date
+                from BlockEvent be2
+                where be2.code is not null
+                    and be2.experiment.id = :experimentId
+                group by be2.user.id
+            )
+            select new de.uni_passau.fim.se2.scratchlog.persistence.repository.Project(
+                        be.id, be.user.id, be.user.username, be.code
+            )
+            from BlockEvent be, latest_events e
+            where be.experiment.id = :experimentId
+                and be.id = e.id
+                and be.user.id = e.user_id
+                and be.date = e.date
+            """)
+    List<Project> findLastPerUserInExperiment(int experimentId);
+
+    @Query("""
+            select be.user.id
+            from BlockEvent be
+            where be.id = :eventId
+            """)
+    Optional<Integer> getCreatorIdOfEvent(int eventId);
+
+    /**
+     * Finds all block events in the experiment that do not yet have test results.
+     *
+     * <p>Block events that do not have associated {@link BlockEvent::getCode} are ignored.
+     *
+     * @param experimentId Some experiment.
+     * @return The IDs of all block events with code but without test results in the experiment.
+     */
+    // implementation note `order by be.id desc`: run tests for latest projects first, then backfill with older ones
+    @Query("""
+            select distinct be.id
+            from BlockEvent be
+            where be.code is not null
+                and be.experiment.id = :experimentId
+                and be.id not in (
+                    select distinct tr.project.id
+                    from TestResult tr
+                    where tr.testCase.testSuite.experiment.id = :experimentId
+                )
+            order by be.id desc
+            """)
+    Set<Integer> findBlockEventIdsWithoutTestResults(int experimentId);
+
+    /**
+     * Finds all block events in the experiment which contain code.
+     *
+     * @param experimentId Some experiment.
+     * @return The IDs of all block events with code in the experiment.
+     */
+    @Query("""
+            select distinct be.id
+            from BlockEvent be
+            where be.code is not null
+                and be.experiment.id = :experimentId
+            """)
+    Set<Integer> findBlockEventIdsWithCodeInExercise(int experimentId);
 }

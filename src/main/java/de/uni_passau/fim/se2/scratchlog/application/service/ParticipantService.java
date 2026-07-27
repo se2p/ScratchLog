@@ -49,6 +49,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,6 +176,43 @@ public class ParticipantService {
         Experiment experiment = experimentRepository.getReferenceById(experimentId);
         return participantRepository.findAllByExperiment(experiment).stream()
                 .map(this::createParticipantDTO).toList();
+    }
+
+    /**
+     * Retrieves the ids and usernames of all participants of the experiment with the given id.
+     *
+     * @param experimentId The experiment id.
+     * @return A list of participant ids and usernames.
+     */
+    public List<ParticipantIdName> getParticipantNames(final int experimentId) {
+        Experiment experiment = experimentRepository.getReferenceById(experimentId);
+
+        List<Participant> participants = participantRepository.findAllByExperiment(experiment);
+        return sortByIdAsc(participants);
+    }
+
+    /**
+     * Retrieves participants of the experiment that made at least one change to the program.
+     *
+     * @param experimentId The experiment id.
+     * @return A list of participant ids and usernames.
+     */
+    public List<ParticipantIdName> getActiveParticipantNames(final int experimentId) {
+        final List<Participant> participants = participantRepository.findByExperimentWithBlockEvents(experimentId);
+        return sortByIdAsc(participants);
+    }
+
+    private List<ParticipantIdName> sortByIdAsc(final List<Participant> participants) {
+        return participants
+            .stream()
+            .map(participant -> new ParticipantIdName(
+                participant.getUser().getId(), participant.getUser().getUsername()
+            ))
+            .sorted(Comparator.comparingInt(ParticipantIdName::id))
+            .toList();
+    }
+
+    public record ParticipantIdName(int id, String username) {
     }
 
     /**

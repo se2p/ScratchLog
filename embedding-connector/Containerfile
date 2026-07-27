@@ -1,0 +1,27 @@
+FROM docker.io/library/python:3.13-slim AS builder
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+ENV UV_PYTHON_DOWNLOADS=0 UV_LINK_MODE=copy
+
+WORKDIR /app
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-editable
+
+COPY . /app
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-editable
+
+FROM docker.io/library/python:3.13-slim
+
+COPY --from=builder /app/.venv /app/.venv
+
+EXPOSE 8080
+
+ENV MODEL_CONFIG_FILE=/ggnn-model-config.yaml
+
+ENTRYPOINT ["/app/.venv/bin/uvicorn", "embedding_connector.main:app"]
+CMD ["--host", "0.0.0.0", "--port", "8080"]

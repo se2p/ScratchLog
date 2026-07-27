@@ -25,6 +25,10 @@
                 <a class="btn btn-secondary" th:href="@{/experiment(id=${experiment})}">
                     <span th:text="#{experiment_return}"></span>
                 </a>
+                <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+                <a class="btn btn-secondary" th:if="${applicationConfig.codeEmbeddingsActive()}" th:href="@{/embedding-dashboard(id=${experiment})}">
+                    <span th:text="#{embedding_dashboard}"></span>
+                </a>
             </div>
         </div>
 

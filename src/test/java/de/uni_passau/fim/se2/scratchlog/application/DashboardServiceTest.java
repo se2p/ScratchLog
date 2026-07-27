@@ -99,15 +99,12 @@ public class DashboardServiceTest {
     private final Experiment experiment = new Experiment(ID, "title", "description", "info", "post", true, false, "");
     private final User user1 = new User("user1", "email1", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
     private final User user2 = new User("user2", "email2", Role.PARTICIPANT, Language.ENGLISH, "password", "secret");
-    private final Participant participant1 = new Participant(user1, experiment, null, null);
-    private final Participant participant2 = new Participant(user2, experiment, null, null);
     private final ExperimentData experimentData = new ExperimentData(ID, 15, 10, 7);
     private final DashboardService.ExperimentDataDto experimentDataDto = new DashboardService.ExperimentDataDto(
         experimentData.getParticipants(),
         experimentData.getStarted(),
         experimentData.getFinished()
     );
-    private final List<Participant> participants = List.of(participant1, participant2);
     private final List<Integer> userIds = List.of(ID, ID);
     private final List<EventProjection> eventProjections1 = getBlockEventProjections(1);
     private final List<EventProjection> eventProjections2 = getBlockEventProjections(2);
@@ -139,22 +136,6 @@ public class DashboardServiceTest {
         when(experimentDataRepository.getReferenceById(ID)).thenReturn(experimentData);
         assertEquals(experimentDataDto, dashboardService.getExperimentData(ID));
         verify(experimentDataRepository).getReferenceById(ID);
-    }
-
-    @Test
-    public void testGetParticipants() {
-        when(experimentRepository.getReferenceById(ID)).thenReturn(experiment);
-        when(participantRepository.findAllByExperiment(experiment)).thenReturn(participants);
-        List<DashboardService.ParticipantIdName> userInfo = dashboardService.getParticipants(ID);
-        assertAll(
-                () -> assertEquals(2, userInfo.size()),
-                () -> assertEquals(user1.getId(), userInfo.getFirst().id()),
-                () -> assertEquals(user1.getUsername(), userInfo.getFirst().username()),
-                () -> assertEquals(user2.getId(), userInfo.get(1).id()),
-                () -> assertEquals(user2.getUsername(), userInfo.get(1).username())
-        );
-        verify(experimentRepository).getReferenceById(ID);
-        verify(participantRepository).findAllByExperiment(experiment);
     }
 
     @Test

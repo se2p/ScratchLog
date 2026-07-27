@@ -7,6 +7,8 @@ let addModal = document.getElementById("addParticipantModal");
 let addParticipantsCsvModal = document.getElementById("addParticipantCsvModal");
 let deleteParticipantModal = document.getElementById("deleteParticipantModal");
 let deleteSb3Modal = document.getElementById("deleteSb3Modal");
+let deleteSb3ExampleSolutionModal = document.getElementById("deleteSb3ExampleSolutionModal");
+let deleteTestSuiteModal = document.getElementById("deleteTestSuiteModal");
 
 /**
  * Readies all necessary event listeners for buttons on the experiment page and enables suggestion/multi-select
@@ -47,5 +49,9 @@ function addEventListeners() {
     addClickEventListenerOpenModal("openDeleteParticipantModal", deleteParticipantModal);
     addClickEventListenerCloseModal("abortDeleteParticipant", deleteParticipantModal);
     addClickEventListenerOpenModal("openDeleteSb3Modal", deleteSb3Modal);
+    addClickEventListenerOpenModal("openDeleteSb3ExampleSolutionModal", deleteSb3ExampleSolutionModal);
+    addClickEventListenerOpenModal("openDeleteTestSuiteModal", deleteTestSuiteModal);
     addClickEventListenerCloseModal("abortSb3Delete", deleteSb3Modal);
+    addClickEventListenerCloseModal("abortSb3SolutionDelete", deleteSb3ExampleSolutionModal);
+    addClickEventListenerCloseModal("abortTestSuiteDelete", deleteTestSuiteModal);
 }

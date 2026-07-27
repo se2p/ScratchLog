@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{embedding_dashboard}"></title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/font-awesome/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script type="text/javascript" th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/chart.js/dist/chart.umd.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js}"></script>
+</head>
+<body>
+<!-- Navigation bar -->
+<header th:insert="~{header :: header}"></header>
+
+<!-- Page content -->
+<div class="container mt-4" sec:authorize="hasRole('ADMIN')">
+    <div class="card">
+
+        <!-- The page title and button to return to the experiment page. -->
+        <div class="card-header">
+            <h3 class="mb-0" th:text="#{embedding_dashboard}"></h3>
+            <div>
+                <a class="btn btn-secondary" th:href="@{/dashboard(id=${experiment})}">
+                    <span th:text="#{dashboard_title}"></span>
+                </a>
+                <a class="btn btn-secondary" th:href="@{/experiment(id=${experiment})}">
+                    <span th:text="#{experiment_return}"></span>
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <p th:text="#{progress_variance_explanation}"></p>
+        </div>
+
+        <div class="card-body">
+            <h4 th:text="#{embedding_dashboard_chart_latest}"></h4>
+            <div>
+                <canvas id="chart-all-latest"></canvas>
+                <div>
+                    <button id="chart-all-latest-reset-zoom" class="btn btn-outline-primary" th:text="#{reset_zoom}"></button>
+                </div>
+            </div>
+        </div>
+
+        <!--/*@thymesVar id="applicationConfig" type="de.uni_passau.fim.se2.scratchlog.util.ApplicationProperties"*/-->
+        <div class="card-body" th:if="${applicationConfig.whiskerActive()}">
+            <h4 th:text="#{embedding_dashboard_chart_embedding_test_distance}"></h4>
+            <p th:text="#{embedding_dashboard_embedding_test_distance_explanation}"></p>
+            <div>
+                <canvas id="chart-embedding-test-distances"></canvas>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <h4 th:text="#{embedding_dashboard_chart_timeline}"></h4>
+            <p th:text="#{embedding_dashboard_chart_timeline_explanation}"></p>
+            <div>
+                <select id="participant-selector" class="form-select mb-2" multiple size="6">
+                    <option
+                        th:each="participant: ${participants}"
+                        th:text="${participant.username()}"
+                        th:value="${participant.id()}"
+                    ></option>
+                </select>
+            </div>
+            <div>
+                <canvas id="chart-timeline"></canvas>
+                <div class="row gy-2 gx-3 align-items-center">
+                    <button id="chart-timeline-reset-zoom" class="btn btn-outline-primary col-auto" th:text="#{reset_zoom}"></button>
+                    <div class="col-auto ms-5 mt-3">
+                        <label for="chart-timeline-interval" class="form-label" th:text="#{embedding_timeline_interval}"></label>
+                    </div>
+                    <div class="col-auto">
+                        <input id="chart-timeline-interval" type="number" min="1" max="100" step="1" value="5" class="form-control"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <h4 th:text="#{whisker_test_results_heading}"></h4>
+            <p th:text="#{whisker_test_results_explanation}"></p>
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="test-results-latest-table">
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Let Thymeleaf fetch the ID of the current experiment and the events for which information should be fetched
+initially. -->
+<script th:inline="javascript">
+    let experimentId = [[${experiment}]];
+    let participants = [[${participants}]];
+    const translations = {
+        latestChart: [[#{embedding_dashboard_chart_latest}]],
+        embeddingTestDistanceChart: [[#{embedding_dashboard_chart_embedding_test_distance}]],
+    };
+</script>
+
+<!-- Script to fetch and update the dashboard information. -->
+<script type="module" th:src="@{/js/embeddingDashboard.js}"></script>
+
+<!-- Footer -->
+<div th:insert="~{footer :: footer}"></div>
+</body>
+</html>

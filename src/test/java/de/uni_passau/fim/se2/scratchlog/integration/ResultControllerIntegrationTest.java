@@ -36,6 +36,7 @@ import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventProject
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.BlockEventXMLProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.ExperimentProjection;
 import de.uni_passau.fim.se2.scratchlog.persistence.projection.FileProjection;
+import de.uni_passau.fim.se2.scratchlog.persistence.repository.BlockEventRepository;
 import de.uni_passau.fim.se2.scratchlog.persistence.repository.UserRepository;
 import de.uni_passau.fim.se2.scratchlog.util.Constants;
 import de.uni_passau.fim.se2.scratchlog.web.AbstractControllerTest;
@@ -118,6 +119,9 @@ public class ResultControllerIntegrationTest extends AbstractControllerTest {
 
     @MockitoBean
     private UserRepository userRepository;
+
+    @MockitoBean
+    private BlockEventRepository blockEventRepository;
 
     private static final String RESULT = "result";
     private static final String ERROR = "redirect:/error";

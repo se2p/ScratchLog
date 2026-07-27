@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
  */
 @SpringBootApplication
 @EnableScheduling
+@EnableConfigurationProperties
 public class ScratchLogApplication implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ScratchLogApplication.class);
