@@ -417,9 +417,9 @@ function buildTestResultTable() {
             if (testResult === undefined) {
                 label = "?";
             } else if (testResult === "pass") {
-                label = "✓";
+                label = "✅";
             } else if (testResult === "fail") {
-                label = "✗";
+                label = "❌";
             } else {
                 label = testResult;
             }
