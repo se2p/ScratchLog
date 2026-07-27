@@ -76,7 +76,7 @@ In order for the project to work properly, however, it still requires a running 
 To run the jar, copy the `application.properties` from `src/main/resources/` next to the JAR, make the required changes
 as outlined below, and execute
 ```bash
-java -jar scratchLog-0.0.1-SNAPSHOT.jar
+java -jar scratchLog-1.1.0.jar
 ```
 
 #### Running the tests
